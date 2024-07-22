@@ -51,9 +51,7 @@ type lsp_base struct {
 	wk   workroot
 }
 
-type lsp_cpp struct {
-	lsp_base
-}
+
 
 // DidOpen implements lspclient.
 // Subtle: this method shadows the method (lsp_base).DidOpen of lsp_cpp.lsp_base.
@@ -70,22 +68,6 @@ func new_lsp_base(wk workroot) lsp_base {
 }
 
 // Initialize implements lspclient.
-func (l lsp_cpp) InitializeLsp(wk workroot) error {
-	result, err := l.core.Initialize(wk)
-	if err != nil {
-		return err
-	}
-	if result.ServerInfo.Name == "clangd" {
-		return nil
-	}
-	return fmt.Errorf("%s", result.ServerInfo.Name)
-}
-
-// Launch_Lsp_Server implements lspclient.
-func (l lsp_cpp) Launch_Lsp_Server() error {
-	l.core.cmd = exec.Command("clangd")
-	return l.core.Lauch_Lsp_Server(l.core.cmd)
-}
 func (l lsp_base) DidOpen(file string) error {
 	return l.core.DidOpen(file)
 }
@@ -94,7 +76,7 @@ func (l lsp_base) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.Call
 	return l.core.TextDocumentPrepareCallHierarchy(loc)
 }
 func (l lsp_base) CallHierarchyIncomingCalls(param []lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
-	return l.core.CallHierarchyIncomingCalls(&param)
+	return l.core.CallHierarchyIncomingCalls(param)
 }
 func (l lsp_base) GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error) {
 	path := LocationContent{
@@ -214,10 +196,17 @@ func (core lspcore) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.Ca
 	}
 	return result, nil
 }
-func (client *lspcore) CallHierarchyIncomingCalls(param *[]lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
-	var result []lsp.CallHierarchyIncomingCall
-	err:=client.conn.Call(context.Background(),"callHierarchy/incomingCalls",param,&result)
-	return result, err
+func (core *lspcore) CallHierarchyIncomingCalls(param []lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
+	var referenced = param
+	var result []interface{}
+	var ret []lsp.CallHierarchyIncomingCall
+	err := core.conn.Call(context.Background(), "callHierarchy/incomingCalls", referenced, &result)
+	if err != nil {
+		return ret, err
+	}
+
+	// json.Unmarshal(buf, &ret)
+	return ret, nil
 }
 func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
 	var referenced = lsp.ReferenceParams{}
