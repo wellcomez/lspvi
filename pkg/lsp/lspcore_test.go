@@ -6,12 +6,15 @@ import (
 	"log"
 	"os/exec"
 	"testing"
+
+	"github.com/tectiv3/go-lsp"
 	// "github.com/tectiv3/go-lsp"
 )
 
 var path = "/home/z/dev/lsp/pylspclient/tests/cpp/"
+
 // var d_cpp = "/home/z/dev/lsp/pylspclient/tests/cpp/d.cpp"
-var d_cpp="/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
+var d_cpp = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
 var wk = workroot{path: path}
 
 func Test_lspcore_init(t *testing.T) {
@@ -59,9 +62,42 @@ func Test_lspcpp_open(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, v := range symbol.DocumentSymbols{
-		t.Log(v.Name)	
+	for _, v := range symbol.SymbolInformation {
+		t.Log(v.Name)
 	}
+
+	data, err := client.GetReferences(d_cpp, lsp.Position{
+		Line:      12,
+		Character: 7,
+	})
+	print(data, err)
+	if len(data)==0{
+		t.Fatalf("fail to get reference")
+	}
+	// for _, v := range symbol.SymbolInformation{
+	// 	uri := v.Location.URI.String()
+	// 	index := strings.Index(uri,"file://")
+	// 	var path = uri[index+7:]
+	// 	var loc =LocationContent{location: v.Location}
+	// 	ttt,err := loc.Text()
+	// 	print(ttt)
+	// 	data, err := client.GetReferences(path, lsp.Position{
+	// 		Line:      v.Location.Range.Start.Line,
+	// 		Character: v.Location.Range.Start.Character,
+	// 	})
+	// 	if err != nil {
+	// 		print(err)
+	// 	}
+	// 	print(data)
+	// 	decl, err := client.GetDeclare(d_cpp, lsp.Position{
+	// 		Line:      v.Location.Range.Start.Line,
+	// 		Character: v.Location.Range.Start.Character,
+	// 	})
+	// 	if err != nil {
+	// 		print(err)
+	// 	}
+	// 	print(decl)
+	// }
 	t.Log(symbol)
 }
 

@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
@@ -39,6 +40,8 @@ type lspclient interface {
 	Launch_Lsp_Server() error
 	DidOpen(file string) error
 	GetDocumentSymbol(file string) (*document_symbol, error)
+	GetReferences(file string, pos lsp.Position) ([]lsp.Location, error)
+	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
 }
 type lsp_base struct {
 	core *lspcore
@@ -82,6 +85,13 @@ func (l lsp_cpp) Launch_Lsp_Server() error {
 }
 func (l lsp_base) DidOpen(file string) error {
 	return l.core.DidOpen(file)
+}
+func (l lsp_base) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
+
+	return l.core.GetDeclare(file, pos)
+}
+func (l lsp_base) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
+	return l.core.GetReferences(file, pos)
 }
 func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
 	return l.core.GetDocumentSymbol(file)
@@ -157,6 +167,57 @@ func (core *lspcore) DidOpen(file string) error {
 	})
 	return err
 }
+func (core *lspcore) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
+	var referenced = lsp.DeclarationParams{}
+	referenced.TextDocument.URI = lsp.NewDocumentURI(file)
+	referenced.Position = pos
+	var result []interface{}
+	var ret []lsp.Location
+	err := core.conn.Call(context.Background(), "textDocument/declaration", referenced, &result)
+	if err != nil {
+		return ret, err
+	}
+	return convert_result_to_lsp_location(result)
+}
+func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
+	var referenced = lsp.ReferenceParams{}
+	referenced.TextDocument.URI = lsp.NewDocumentURI(file)
+	referenced.Position = pos
+	referenced.Context = &lsp.ReferenceContext{
+		IncludeDeclaration: true,
+	}
+	var result []interface{}
+	var ret []lsp.Location
+	err := core.conn.Call(context.Background(), "textDocument/references", referenced, &result)
+	if err != nil {
+		return ret, err
+	}
+	buf, err := json.Marshal(result)
+	if err != nil {
+		return ret, err
+	}
+
+	json.Unmarshal(buf, &ret)
+	return ret, nil
+}
+
+func convert_result_to_lsp_location(result []interface{}) ([]lsp.Location, error) {
+	var ret []lsp.Location
+	var result_location lsp.Location
+	location_decode_config, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result: &result_location,
+	})
+	if err != nil {
+		return ret, err
+	}
+	for _, v := range result {
+		err := location_decode_config.Decode(v)
+		if err == nil {
+			ret = append(ret, result_location)
+		}
+	}
+	return ret, nil
+}
 
 type document_symbol struct {
 	DocumentSymbols   []lsp.DocumentSymbol
@@ -165,6 +226,26 @@ type document_symbol struct {
 type symbol_location struct {
 	location      []lsp.Location
 	LocationLinkk []lsp.LocationLink
+}
+
+type LocationContent struct {
+	location lsp.Location
+}
+
+func (loc LocationContent) Path() string {
+	index := strings.Index(loc.location.URI.String(), "file://")
+	file := loc.location.URI.String()[index+7:]
+	return file
+}
+func (loc LocationContent) Text() (string, error) {
+	file := loc.Path()
+	s, err := os.ReadFile(file)
+	if err != nil {
+		return "", err
+	}
+	txt := string(s)
+	lines := strings.Split(txt, "\n")
+	return lines[loc.location.Range.Start.Line][loc.location.Range.Start.Character:], nil
 }
 
 func (core *lspcore) TextDocumentDeclaration(file string, pos lsp.Position) (*symbol_location, error) {
@@ -217,49 +298,49 @@ func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result_symbol lsp.SymbolInformation
-	symbol_decode, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result: &result_symbol,
-	})
-	if err != nil {
-		return nil, err
-	}
-	var result_document lsp.DocumentSymbol
-	doc_decode, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result: &result_document,
-	})
-
-	ret := &document_symbol{}
-
-	for _, v := range result {
-
-		err := symbol_decode.Decode(v)
-		if err == nil {
-			ret.SymbolInformation = append(ret.SymbolInformation, result_symbol)
-		}
-		err = doc_decode.Decode(v)
-		if err == nil {
-			ret.DocumentSymbols = append(ret.DocumentSymbols, result_document)
-			continue
-		}
-	}
-	// resp, err := json.Marshal(result)
+	// var result_symbol lsp.SymbolInformation
+	// symbol_decode, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+	// 	Result: &result_symbol,
+	// })
 	// if err != nil {
 	// 	return nil, err
 	// }
-	// var documentSymbols []lsp.DocumentSymbol
-	// if err := json.Unmarshal(resp, &documentSymbols); err == nil {
-	// 	return &document_symbol{
-	// 		DocumentSymbols: &documentSymbols,
-	// 	}, nil
+	// var result_document lsp.DocumentSymbol
+	// doc_decode, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+	// 	Result: &result_document,
+	// })
+
+	// ret := &document_symbol{}
+
+	// for _, v := range result {
+
+	// 	err := symbol_decode.Decode(v)
+	// 	if err == nil {
+	// 		ret.SymbolInformation = append(ret.SymbolInformation, result_symbol)
+	// 	}
+	// 	err = doc_decode.Decode(v)
+	// 	if err == nil {
+	// 		ret.DocumentSymbols = append(ret.DocumentSymbols, result_document)
+	// 	}
 	// }
-	// var sym []lsp.SymbolInformation
-	// if err := json.Unmarshal(resp, &sym); err == nil {
-	// 	return &document_symbol{
-	// 		SymbolInformation: &sym,
-	// 	}, nil
-	// }
-	return ret, err
+	// return ret, err
+	resp, err := json.Marshal(result)
+	if err != nil {
+		return nil, err
+	}
+	var documentSymbols []lsp.DocumentSymbol
+	if err := json.Unmarshal(resp, &documentSymbols); err == nil {
+		return &document_symbol{
+			DocumentSymbols: documentSymbols,
+		}, nil
+	}
+	var sym []lsp.SymbolInformation
+	if err := json.Unmarshal(resp, &sym); err == nil {
+		return &document_symbol{
+			SymbolInformation: sym,
+		}, nil
+	}
+	return nil, fmt.Errorf("not found")
 }
 func mainxx2() {
 	// 启动clangd进程
