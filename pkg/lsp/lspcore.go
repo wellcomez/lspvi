@@ -56,7 +56,14 @@ func new_lsp_py(wk workroot) *lsp_py {
 
 // Initialize implements lspclient.
 func (l lsp_cpp) InitializeLsp(wk workroot) error {
-	return l.core.Initialize(wk)
+	result,err:=l.core.Initialize(wk)
+	if err!=nil{
+		return err
+	}
+	if result.ServerInfo.Name=="clangd"{
+		return nil
+	}
+	return  fmt.Errorf("%s",result.ServerInfo.Name)
 }
 
 // Launch_Lsp_Server implements lspclient.
@@ -105,7 +112,7 @@ type workroot struct {
 	path string
 }
 
-func (core *lspcore) Initialize(wk workroot) error {
+func (core *lspcore) Initialize(wk workroot) (lsp.InitializeResult ,error) {
 	var ProcessID = -1
 	// 发送initialize请求
 	var result lsp.InitializeResult
@@ -116,9 +123,9 @@ func (core *lspcore) Initialize(wk workroot) error {
 		InitializationOptions: core.initializationOptions,
 		Capabilities:          core.capabilities,
 	}, &result); err != nil {
-		return err
+		return result,err
 	}
-	return nil
+	return result,nil
 }
 
 func main2() {

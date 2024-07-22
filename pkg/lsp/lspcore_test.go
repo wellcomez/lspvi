@@ -16,10 +16,11 @@ func Test_lspcore_init(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = lspcore.Initialize(wk)
+	resutl,err := lspcore.Initialize(wk)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Print(resutl)
 }
 func Test_lspcpp_init(t *testing.T) {
 	cpp := lsp_cpp{core: &lspcore{}}
