@@ -2,7 +2,6 @@
 package mainui
 
 import (
-	"log"
 	"os"
 
 	"github.com/rivo/tview"
@@ -68,6 +67,21 @@ var main = mainui{
 func (m *mainui) Init() {
 	m.lspmgr.Handle = m
 }
+func (m *mainui) OnSelectedSymobolNode(node *tview.TreeNode) {
+	if node.IsExpanded() {
+		node.Collapse()
+	} else {
+		node.Expand()
+	}
+	value := node.GetReference()
+	if value != nil {
+		if sym, ok := value.(lspcore.Symbol); ok {
+
+			line := sym.SymInfo.Location.Range.Start.Line
+			m.codeview.view.ScrollTo(line, 0)
+		}
+	}
+}
 func (m *mainui) OpenFile(file string) {
 	m.codeview.Load(file)
 	m.lspmgr.Open(file)
@@ -80,9 +94,9 @@ func MainUI() {
 	symbol_tree := NewSymbolTreeView()
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetSelectedFunc(
-		func(node *tview.TreeNode){
-			log.Printf("%s",node.GetText())
-		});
+		func(node *tview.TreeNode) {
+			main.OnSelectedSymobolNode(node)
+		})
 	main.codeview = codeview
 	main.lspmgr.Handle = &main
 	main.OpenFile(filearg)
