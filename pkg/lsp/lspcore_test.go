@@ -54,10 +54,11 @@ func Test_lspcpp_open(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = client.GetDocumentSymbol(d_cpp)
+	symbol, err := client.GetDocumentSymbol(d_cpp)
 	if err != nil {
 		log.Fatal(err)
 	}
+	t.Log(symbol)
 }
 
 // func Test_new_client(t *testing.T) {

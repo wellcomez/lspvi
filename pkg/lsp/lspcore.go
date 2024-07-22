@@ -37,7 +37,7 @@ type lspclient interface {
 	InitializeLsp(wk workroot) error
 	Launch_Lsp_Server() error
 	DidOpen(file string) error
-	GetDocumentSymbol(file string) error
+	GetDocumentSymbol(file string) (*document_symbol, error)
 }
 type lsp_base struct {
 	core *lspcore
@@ -50,7 +50,6 @@ type lsp_cpp struct {
 
 // DidOpen implements lspclient.
 // Subtle: this method shadows the method (lsp_base).DidOpen of lsp_cpp.lsp_base.
-
 
 type lsp_py struct {
 	lsp_base
@@ -83,7 +82,7 @@ func (l lsp_cpp) Launch_Lsp_Server() error {
 func (l lsp_base) DidOpen(file string) error {
 	return l.core.DidOpen(file)
 }
-func (l lsp_base) GetDocumentSymbol(file string) error {
+func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
 	return l.core.GetDocumentSymbol(file)
 }
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
@@ -157,7 +156,13 @@ func (core *lspcore) DidOpen(file string) error {
 	})
 	return err
 }
-func (core *lspcore) GetDocumentSymbol(file string) error {
+
+type document_symbol struct {
+	DocumentSymbols   *[]lsp.DocumentSymbol
+	SymbolInformation *[]lsp.SymbolInformation
+}
+
+func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 	uri := lsp.NewDocumentURI(file)
 	var parameter = lsp.DocumentSymbolParams{
 		TextDocument: lsp.TextDocumentIdentifier{
@@ -166,7 +171,26 @@ func (core *lspcore) GetDocumentSymbol(file string) error {
 	}
 	var result []interface{}
 	err := core.conn.Call(context.Background(), "textDocument/documentSymbol", parameter, &result)
-	return err
+	if err!=nil{
+		return nil, err
+	}
+	resp, err := json.Marshal(result)
+	if err != nil {
+		return nil, err
+	}
+	var documentSymbols []lsp.DocumentSymbol
+	if err := json.Unmarshal(resp, &documentSymbols); err == nil {
+		return &document_symbol{
+			DocumentSymbols: &documentSymbols,
+		}, nil
+	}
+	var sym []lsp.SymbolInformation
+	if err := json.Unmarshal(resp, &sym); err == nil {
+		return &document_symbol{
+			SymbolInformation: &sym,
+		}, nil
+	}
+	return nil, err
 }
 func main2() {
 	// 启动clangd进程
