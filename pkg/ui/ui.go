@@ -43,26 +43,60 @@ func NewCodeView(app *tview.Application) *CodeView {
 	root.SetColorscheme(colorscheme)
 
 	root.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		x, y := event.Position()
-		log.Printf("mount action=%d  x=%d y=%d", action, x, y)
+		// x, y := event.Position()
+		// log.Printf("mount action=%d  x=%d y=%d", action, x, y)
+		x1, y1, x2, y2 := root.GetInnerRect()
+		posX, posY := event.Position()
+		if posX < x1 || posY > y2 || posY < y1 || posX > x2 {
+			return action, event
+		}
+
+		log.Print(x1, y1, x2, y2)
+		if action == tview.MouseLeftClick {
+			x, y := event.Position()
+			pos := femto.Loc{
+				X: x,
+				Y: y,
+			}
+			root.Cursor.SelectTo(pos)
+			root.SelectLine()
+			return tview.MouseConsumed, nil
+		}
 		if action == 14 {
+			root.SelectDown()
 			root.ScrollDown(2)
+			root.SelectLine()
 			return tview.MouseConsumed, nil
 		} else if action == 13 {
 			root.ScrollUp(1)
+			root.SelectUp()
+			root.SelectLine()
 			return tview.MouseConsumed, nil
 		}
 		return action, event
 	})
 	root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
+		case tcell.KeyUp:
+			root.Buf.LinesNum()
+			// root.CursorUp()
+			root.SelectUp()
+			root.ScrollUp(1)
+			root.SelectLine()
+			log.Println("cursor up ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
+		case tcell.KeyDown:
+			root.SelectDown()
+			root.ScrollDown(1)
+			root.SelectLine()
+			// root.SelectLine()
+			log.Println("cursor down ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
 		case tcell.KeyCtrlS:
 			// saveBuffer(buffer, path)
 			return nil
 		case tcell.KeyCtrlQ:
 			return nil
 		}
-		return event
+		return nil
 	})
 	ret.view = root
 	return &ret
@@ -128,10 +162,20 @@ func (m *mainui) OnSelectedSymobolNode(node *tview.TreeNode) {
 	}
 	value := node.GetReference()
 	if value != nil {
-		// if sym, ok := value.(lspcore.Symbol); ok {
-		// line := sym.SymInfo.Location.Range.Start.Line
-		// m.codeview.view.ScrollTo(line, 0)
-		// }
+
+		if sym, ok := value.(lspcore.Symbol); ok {
+			line := sym.SymInfo.Location.Range.Start.Line
+			m.codeview.view.Topline = line
+			len := len(m.codeview.view.Buf.Line(line))
+			m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
+				X: 0,
+				Y: line,
+			}
+			m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
+				X: len,
+				Y: line,
+			}
+		}
 	}
 }
 func (m *mainui) OpenFile(file string) {
