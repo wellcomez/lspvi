@@ -2,6 +2,7 @@
 package mainui
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -150,6 +151,8 @@ type mainui struct {
 	lspmgr     *lspcore.LspWorkspace
 	symboltree *SymbolTreeView
 	fzf        *fzfview
+	page       *tview.Pages
+	callinview *callinview
 }
 
 // OnCallInViewChanged implements lspcore.lsp_data_changed.
@@ -212,13 +215,25 @@ func (m *mainui) OnClickSymobolNode(node *tview.TreeNode) {
 	}
 }
 
+type callinview struct {
+	view *tview.TreeView
+	Name string
+}
 type fzfview struct {
 	view *tview.List
+	Name string
 }
 
+func new_callview() *callinview {
+	return &callinview{
+		view: tview.NewTreeView(),
+		Name: "callinview",
+	}
+}
 func new_fzfview() *fzfview {
 	return &fzfview{
 		view: tview.NewList(),
+		Name: "fzf",
 	}
 }
 func (fzf *fzfview) UpdateReferrence(references []lsp.Location) {
@@ -227,11 +242,14 @@ func (fzf *fzfview) UpdateReferrence(references []lsp.Location) {
 		fzf.view.AddItem(ref.URI.String(), "", 0, nil)
 	}
 }
-func(m *mainui)onfzf(){
+func (m *mainui) onfzf() {
+	m.page.SwitchToPage(m.fzf.Name)
 }
-func(m *mainui)onlog(){
+func (m *mainui) onlog() {
+	m.page.SwitchToPage("0")
 }
-func(m *mainui)oncallin(){
+func (m *mainui) oncallin() {
+	m.page.SwitchToPage(m.callinview.Name)
 }
 func (m *mainui) OpenFile(file string) {
 	m.codeview.Load(file)
@@ -244,7 +262,7 @@ func MainUI() {
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
 	codeview := NewCodeView(&main)
-	main.fzf = new_fzfview()
+	// main.fzf = new_fzfview()
 	symbol_tree := NewSymbolTreeView()
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetSelectedFunc(
@@ -254,7 +272,8 @@ func MainUI() {
 	main.codeview = codeview
 	main.lspmgr.Handle = &main
 	main.OpenFile(filearg)
-
+	main.fzf = new_fzfview()
+	main.callinview = new_callview()
 	// symbol_tree.update()
 
 	list := tview.NewList().
@@ -268,7 +287,14 @@ func MainUI() {
 	list.ShowSecondaryText(false)
 	cmdline := tview.NewInputField()
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
-	console := main.fzf.view.SetBorder(true)
+	console := tview.NewPages()
+	page := 0
+	console.AddPage(fmt.Sprintf("%d", page), tview.NewButton("button"), true, page == 0)
+	page = 1
+	console.AddPage(main.codeview.main.callinview.Name, main.callinview.view, true, page == 0)
+	page = 2
+	console.AddPage(main.fzf.Name, main.fzf.view, true, page == 0)
+	main.page = console
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
 	file := list
 	editor_area :=
@@ -278,10 +304,10 @@ func MainUI() {
 			AddItem(symbol_tree.view, 0, 1, false)
 	// fzfbtn := tview.NewButton("fzf")
 	// logbtn := tview.NewButton("log")
-	tab_area:=	tview.NewFlex().
-			AddItem(tview.NewButton("fzf").SetSelectedFunc(main.onfzf), 10, 1, true).
-			AddItem(tview.NewButton("log").SetSelectedFunc(main.onlog), 10, 1, true).
-			AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin), 10, 1, true)
+	tab_area := tview.NewFlex().
+		AddItem(tview.NewButton("fzf").SetSelectedFunc(main.onfzf), 10, 1, true).
+		AddItem(tview.NewButton("log").SetSelectedFunc(main.onlog), 10, 1, true).
+		AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin), 10, 1, true)
 
 	main_layout :=
 		tview.NewFlex().SetDirection(tview.FlexRow).
