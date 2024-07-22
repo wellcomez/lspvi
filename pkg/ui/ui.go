@@ -6,6 +6,7 @@ import (
 
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
 type View interface {
@@ -33,12 +34,56 @@ func (code *CodeView) Load(filename string) error {
 	code.view.SetTitle(filename)
 	return nil
 }
+
+var filearg = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
+var root = "/home/z/dev/lsp/pylspclient/tests/cpp/"
+
+type mainui struct {
+	codeview   *CodeView
+	lspmgr     *lspcore.LspWorkspace
+	symboltree *SymbolTreeView
+}
+
+// OnCallInViewChanged implements lspcore.lsp_data_changed.
+func (m *mainui) OnCallInViewChanged(file lspcore.Symbol_file) {
+	// panic("unimplemented")
+	m.symboltree.update(file)
+}
+
+// OnCodeViewChanged implements lspcore.lsp_data_changed.
+func (m *mainui) OnCodeViewChanged(file lspcore.Symbol_file) {
+	// panic("unimplemented")
+}
+
+// OnSymbolistChanged implements lspcore.lsp_data_changed.
+func (m *mainui) OnSymbolistChanged(file lspcore.Symbol_file) {
+	m.symboltree.update(file)
+}
+
+var main = mainui{
+	lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root}),
+}
+
+func (m *mainui) Init() {
+	m.lspmgr.Handle = m
+}
+func (m *mainui) OpenFile(file string) {
+	m.codeview.Load(file)
+	m.lspmgr.Open(file)
+	m.lspmgr.Current.LoadSymbol()
+}
+
 func MainUI() {
 	app := tview.NewApplication()
 	codeview := NewCodeView()
-	codeview.Load("/home/ubuntu/dev/goview/lspcode/main.go")
 	symbol_tree := NewSymbolTreeView()
-	symbol_tree.update()
+	main.symboltree = symbol_tree
+
+	main.codeview = codeview
+	main.lspmgr.Handle = &main
+	main.OpenFile(filearg)
+
+	// symbol_tree.update()
 
 	list := tview.NewList().
 		AddItem("List item 1", "", 'a', nil).
@@ -110,13 +155,27 @@ func (v SymbolTreeView) Findall(key string) []int {
 	}
 	return ret
 }
-func (v *SymbolTreeView) update() {
-	root_note := tview.NewTreeNode("xxx")
-	root_note.SetReference("1")
-	childnode := tview.NewTreeNode("children")
-	root_note.AddChild(childnode)
-	v.view.SetRoot(root_note)
-
+func (v *SymbolTreeView) update(file lspcore.Symbol_file) {
+	root_node := tview.NewTreeNode("symbol")
+	root_node.SetReference("1")
+	for _, v := range file.Class_object {
+		if v.Is_class() {
+			c := tview.NewTreeNode(v.SymInfo.Name)
+			root_node.AddChild(c)
+			if len(v.Members) > 0 {
+				childnode := tview.NewTreeNode(v.SymInfo.Name)
+				for _, c := range v.Members {
+					cc := tview.NewTreeNode(c.SymInfo.Name)
+					childnode.AddChild(cc)
+				}
+				root_node.AddChild(childnode)
+			}
+		} else {
+			c := tview.NewTreeNode(v.SymInfo.Name)
+			root_node.AddChild(c)
+		}
+	}
+	v.view.SetRoot(root_node)
 }
 
 type SymbolTreeView struct {

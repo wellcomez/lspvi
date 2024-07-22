@@ -21,7 +21,7 @@ type lsp_cpp struct {
 	lsp_base
 }
 
-func new_lsp_cpp(wk workroot) lsp_cpp {
+func new_lsp_cpp(wk WorkSpace) lsp_cpp {
 	ret := lsp_cpp{
 		new_lsp_base(wk),
 	}
@@ -30,13 +30,16 @@ func new_lsp_cpp(wk workroot) lsp_cpp {
 	return ret
 }
 
-
-func (l lsp_cpp) InitializeLsp(wk workroot) error {
+func (l *lsp_cpp) InitializeLsp(wk WorkSpace) error {
+	if l.inited {
+		return nil
+	}
 	result, err := l.core.Initialize(wk)
 	if err != nil {
 		return err
 	}
 	if result.ServerInfo.Name == "clangd" {
+		l.inited = true
 		return nil
 	}
 	return fmt.Errorf("%s", result.ServerInfo.Name)
@@ -44,7 +47,12 @@ func (l lsp_cpp) InitializeLsp(wk workroot) error {
 
 // Launch_Lsp_Server implements lspclient.
 func (l lsp_cpp) Launch_Lsp_Server() error {
-	root := "--compile-commands-dir=" + l.wk.path
+	if l.started {
+		return nil
+	}
+	root := "--compile-commands-dir=" + l.wk.Path
 	l.core.cmd = exec.Command("clangd", root)
-	return l.core.Lauch_Lsp_Server(l.core.cmd)
+	err := l.core.Lauch_Lsp_Server(l.core.cmd)
+	l.started = err == nil
+	return err
 }

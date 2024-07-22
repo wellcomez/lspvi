@@ -37,7 +37,7 @@ type lspcore struct {
 	LanguageID string
 }
 type lspclient interface {
-	InitializeLsp(wk workroot) error
+	InitializeLsp(wk WorkSpace) error
 	Launch_Lsp_Server() error
 	DidOpen(file string) error
 	GetDocumentSymbol(file string) (*document_symbol, error)
@@ -50,9 +50,11 @@ type lspclient interface {
 }
 type lsp_base struct {
 	core            *lspcore
-	wk              workroot
+	wk              WorkSpace
 	file_extensions []string
 	root_files      []string
+	started bool
+	inited bool
 }
 type sourcefile struct {
 	filename string
@@ -68,6 +70,7 @@ type lsp_py struct {
 
 func (l lsp_base) IsMe(filename string) bool {
 	ext := filepath.Ext(filename)
+	ext  = strings.TrimPrefix(ext,".")	
 	for _, v := range l.file_extensions {
 		if v == ext {
 			return true
@@ -75,10 +78,12 @@ func (l lsp_base) IsMe(filename string) bool {
 	}
 	return false
 }
-func new_lsp_base(wk workroot) lsp_base {
+func new_lsp_base(wk WorkSpace) lsp_base {
 	return lsp_base{
 		core: &lspcore{},
 		wk:   wk,
+		started: false,
+		inited: false,
 	}
 }
 
@@ -151,18 +156,18 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 	return nil
 }
 
-type workroot struct {
-	path string
+type WorkSpace struct {
+	Path string
 }
 
-func (core *lspcore) Initialize(wk workroot) (lsp.InitializeResult, error) {
+func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1
 	// 发送initialize请求
 	var result lsp.InitializeResult
 
 	if err := core.conn.Call(context.Background(), "initialize", lsp.InitializeParams{
 		ProcessID:             &ProcessID,
-		RootURI:               lsp.NewDocumentURI(wk.path),
+		RootURI:               lsp.NewDocumentURI(wk.Path),
 		InitializationOptions: core.initializationOptions,
 		Capabilities:          core.capabilities,
 	}, &result); err != nil {
