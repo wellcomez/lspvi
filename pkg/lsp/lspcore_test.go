@@ -20,14 +20,14 @@ func Test_lspcore_init(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	resutl,err := lspcore.Initialize(wk)
+	resutl, err := lspcore.Initialize(wk)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Print(resutl)
 }
 func Test_lspcpp_init(t *testing.T) {
-	cpp := lsp_cpp{core: &lspcore{}}
+	cpp := lsp_cpp{new_lsp_base(wk)}
 	var client lspclient = cpp
 	err := client.Launch_Lsp_Server()
 	if err != nil {
@@ -38,7 +38,20 @@ func Test_lspcpp_init(t *testing.T) {
 		log.Fatal(err)
 	}
 }
-func Test_new_client(t *testing.T){
+func Test_lspcpp_open(t *testing.T) {
+	cpp := lsp_cpp{new_lsp_base(wk)}
+	var client lspclient = cpp
+	err := client.Launch_Lsp_Server()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = client.InitializeLsp(wk)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+func Test_new_client(t *testing.T) {
 	// 启动clangd进程
 	cmd := exec.Command("clangd", "--log=verbose")
 	stdin, err := cmd.StdinPipe()
@@ -85,7 +98,7 @@ func Test_new_client(t *testing.T){
 		},
 	)
 
-	fmt.Printf("%v",err_resp)
+	fmt.Printf("%v%v", err_resp, err)
 	fmt.Printf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
 
 }

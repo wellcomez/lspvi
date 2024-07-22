@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 
 	"github.com/sourcegraph/jsonrpc2"
@@ -28,32 +29,35 @@ type lspcore struct {
 	capabilities          map[string]interface{}
 	initializationOptions map[string]interface{}
 	// arguments             []string
-	handle rpchandle
-	rw     io.ReadWriteCloser
+	handle     rpchandle
+	rw         io.ReadWriteCloser
+	LanguageID string
 }
 type lspclient interface {
 	InitializeLsp(wk workroot) error
 	Launch_Lsp_Server() error
 }
-type lsp_cpp struct {
-	core *lspcore
-	wk   workroot
-}
-type lsp_py struct {
+type lsp_base struct {
 	core *lspcore
 	wk   workroot
 }
 
-func new_lsp_cpp(wk workroot) *lsp_cpp {
-	return &lsp_cpp{
-		core: &lspcore{},
+type lsp_cpp struct {
+	lsp_base
+}
+type lsp_py struct {
+	lsp_base
+}
+
+func new_lsp_base(wk workroot) lsp_base {
+	return lsp_base{
+		core: &lspcore{LanguageID: "cpp"},
 		wk:   wk,
 	}
 }
 func new_lsp_py(wk workroot) *lsp_py {
 	return &lsp_py{
-		core: &lspcore{},
-		wk:   wk,
+		new_lsp_base(wk),
 	}
 }
 
@@ -73,6 +77,9 @@ func (l lsp_cpp) InitializeLsp(wk workroot) error {
 func (l lsp_cpp) Launch_Lsp_Server() error {
 	l.core.cmd = exec.Command("clangd")
 	return l.core.Lauch_Lsp_Server(l.core.cmd)
+}
+func (l lsp_base) DidOpen(file string) error {
+	return l.core.DidOpen(file)
 }
 
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
@@ -130,6 +137,21 @@ func (core *lspcore) Initialize(wk workroot) (lsp.InitializeResult, error) {
 		return result, err
 	}
 	return result, nil
+}
+func (core *lspcore) DidOpen(file string) error {
+	content, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	err = core.conn.Notify(context.Background(), "textDocument/didOpen", lsp.DidOpenTextDocumentParams{
+		TextDocument: lsp.TextDocumentItem{
+			URI:        lsp.NewDocumentURI(file),
+			LanguageID: core.LanguageID,
+			Text:       string(content),
+			Version:    0,
+		},
+	})
+	return err
 }
 func (core *lspcore) GetDocumentSymbol(file string) error {
 	return nil
