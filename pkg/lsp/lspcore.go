@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 	"github.com/tectiv3/go-lsp/jsonrpc"
@@ -158,10 +159,52 @@ func (core *lspcore) DidOpen(file string) error {
 }
 
 type document_symbol struct {
-	DocumentSymbols   *[]lsp.DocumentSymbol
-	SymbolInformation *[]lsp.SymbolInformation
+	DocumentSymbols   []lsp.DocumentSymbol
+	SymbolInformation []lsp.SymbolInformation
+}
+type symbol_location struct {
+	location      []lsp.Location
+	LocationLinkk []lsp.LocationLink
 }
 
+func (core *lspcore) TextDocumentDeclaration(file string, pos lsp.Position) (*symbol_location, error) {
+	var result []interface{}
+	var parameter = lsp.DeclarationParams{}
+	parameter.TextDocument = lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(file)}
+	parameter.Position = pos
+	err := core.conn.Call(context.Background(), "textDocument/declaration", parameter, &result)
+	if err != nil {
+		return nil, err
+	}
+	ret := symbol_location{}
+	var result_link lsp.LocationLink
+	link_decode, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result: &result_link,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var result_location lsp.Location
+	location_decode_config, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result: &result_location,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range result {
+		err := location_decode_config.Decode(v)
+		if err == nil {
+			ret.location = append(ret.location, result_location)
+			continue
+		}
+		err = link_decode.Decode(v)
+		if err == nil {
+			ret.LocationLinkk = append(ret.LocationLinkk, result_link)
+		}
+	}
+	return &ret, nil
+}
 func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 	uri := lsp.NewDocumentURI(file)
 	var parameter = lsp.DocumentSymbolParams{
@@ -171,28 +214,54 @@ func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 	}
 	var result []interface{}
 	err := core.conn.Call(context.Background(), "textDocument/documentSymbol", parameter, &result)
-	if err!=nil{
-		return nil, err
-	}
-	resp, err := json.Marshal(result)
 	if err != nil {
 		return nil, err
 	}
-	var documentSymbols []lsp.DocumentSymbol
-	if err := json.Unmarshal(resp, &documentSymbols); err == nil {
-		return &document_symbol{
-			DocumentSymbols: &documentSymbols,
-		}, nil
+	var result_symbol lsp.SymbolInformation
+	symbol_decode, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result: &result_symbol,
+	})
+	if err != nil {
+		return nil, err
 	}
-	var sym []lsp.SymbolInformation
-	if err := json.Unmarshal(resp, &sym); err == nil {
-		return &document_symbol{
-			SymbolInformation: &sym,
-		}, nil
+	var result_document lsp.DocumentSymbol
+	doc_decode, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result: &result_document,
+	})
+
+	ret := &document_symbol{}
+
+	for _, v := range result {
+
+		err := symbol_decode.Decode(v)
+		if err == nil {
+			ret.SymbolInformation = append(ret.SymbolInformation, result_symbol)
+		}
+		err = doc_decode.Decode(v)
+		if err == nil {
+			ret.DocumentSymbols = append(ret.DocumentSymbols, result_document)
+			continue
+		}
 	}
-	return nil, err
+	// resp, err := json.Marshal(result)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// var documentSymbols []lsp.DocumentSymbol
+	// if err := json.Unmarshal(resp, &documentSymbols); err == nil {
+	// 	return &document_symbol{
+	// 		DocumentSymbols: &documentSymbols,
+	// 	}, nil
+	// }
+	// var sym []lsp.SymbolInformation
+	// if err := json.Unmarshal(resp, &sym); err == nil {
+	// 	return &document_symbol{
+	// 		SymbolInformation: &sym,
+	// 	}, nil
+	// }
+	return ret, err
 }
-func main2() {
+func mainxx2() {
 	// 启动clangd进程
 	cmd := exec.Command("clangd", "--log=verbose")
 	stdin, err := cmd.StdinPipe()

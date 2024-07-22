@@ -16,6 +16,7 @@ require (
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/tview v0.0.0-20240625185742-b0a7293b8130 // indirect

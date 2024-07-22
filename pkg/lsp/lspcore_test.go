@@ -59,7 +59,7 @@ func Test_lspcpp_open(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, v := range *symbol.SymbolInformation {
+	for _, v := range symbol.DocumentSymbols{
 		t.Log(v.Name)	
 	}
 	t.Log(symbol)
