@@ -5,9 +5,31 @@ import (
 	"os/exec"
 )
 
+var file_extensions = []string{"cc", "cpp", "h", "hpp", "cxx", "hxx",
+	"inl", "c", "cpp", "objc", "objcpp", "cuda", "proto"}
+var root_files = []string{
+
+	".clangd",
+	".clang-tidy",
+	".clang-format",
+	"compile_commands.json",
+	"compile_flags.txt",
+	"configure.ac",
+}
+
 type lsp_cpp struct {
 	lsp_base
 }
+
+func new_lsp_cpp(wk workroot) lsp_cpp {
+	ret := lsp_cpp{
+		new_lsp_base(wk),
+	}
+	ret.file_extensions = file_extensions
+	ret.root_files = root_files
+	return ret
+}
+
 
 func (l lsp_cpp) InitializeLsp(wk workroot) error {
 	result, err := l.core.Initialize(wk)

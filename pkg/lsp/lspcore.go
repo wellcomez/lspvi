@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -45,10 +46,17 @@ type lspclient interface {
 	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
 	PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
 	CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error)
+	IsMe(filename string) bool
 }
 type lsp_base struct {
-	core *lspcore
-	wk   workroot
+	core            *lspcore
+	wk              workroot
+	file_extensions []string
+	root_files      []string
+}
+type sourcefile struct {
+	filename string
+	client   lsp_base
 }
 
 // DidOpen implements lspclient.
@@ -58,9 +66,18 @@ type lsp_py struct {
 	lsp_base
 }
 
+func (l lsp_base) IsMe(filename string) bool {
+	ext := filepath.Ext(filename)
+	for _, v := range l.file_extensions {
+		if v == ext {
+			return true
+		}
+	}
+	return false
+}
 func new_lsp_base(wk workroot) lsp_base {
 	return lsp_base{
-		core: &lspcore{LanguageID: "cpp"},
+		core: &lspcore{},
 		wk:   wk,
 	}
 }

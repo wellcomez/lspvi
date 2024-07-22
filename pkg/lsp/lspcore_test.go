@@ -5,7 +5,6 @@ import (
 	// "fmt"
 	"log"
 	"os/exec"
-	"path/filepath"
 	"testing"
 
 	"github.com/tectiv3/go-lsp"
@@ -41,37 +40,6 @@ func Test_lspcpp_init(t *testing.T) {
 	err = client.InitializeLsp(wk)
 	if err != nil {
 		log.Fatal(err)
-	}
-}
-func Test_callin(t *testing.T) {
-	cpp := lsp_cpp{new_lsp_base(wk)}
-	var client lspclient = cpp
-	err := client.Launch_Lsp_Server()
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = client.InitializeLsp(wk)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var d_h = filepath.Join(wk.path, "d.h")
-	err = client.DidOpen(d_h)
-	if err != nil {
-		log.Fatal(err)
-	}
-	symbols, err := client.GetDocumentSymbol(d_h)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, v := range symbols.SymbolInformation {
-		if v.Name == "call_1" {
-			prepare, err := client.PrepareCallHierarchy(v.Location)
-			if err != nil {
-				t.Fatal(prepare)
-			}
-			ret, err := client.CallHierarchyIncomingCalls(prepare[0])
-			print(ret, err)
-		}
 	}
 }
 func Test_lspcpp_open(t *testing.T) {
@@ -113,7 +81,7 @@ func Test_lspcpp_open(t *testing.T) {
 		Character: 7,
 	}
 	call_in_range.End = call_in_range.Start
-	call_preare_item, err := client.PrepareCallHierarchy(lsp.Location{
+	call_preare_item, err := client.TextDocumentPrepareCallHierarchy(lsp.Location{
 		URI:   lsp.NewDocumentURI(d_cpp),
 		Range: call_in_range,
 	})

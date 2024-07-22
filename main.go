@@ -34,6 +34,7 @@ type lspclient interface {
 }
 type lsp_cpp struct {
 }
+
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 
 	// cmd := exec.Command("clangd", "--log=verbose")
@@ -93,7 +94,8 @@ func Test_lspcore_init() {
 	lspcore := &lspcore{}
 	var path = "/home/z/dev/lsp/pylspclient/tests"
 	wk := workroot{path: path}
-	err := lspcore.Lauch_Lsp_Server()
+	cmd := exec.Command("clangd")
+	err := lspcore.Lauch_Lsp_Server(cmd)
 	if err != nil {
 		log.Fatal(err)
 	}
