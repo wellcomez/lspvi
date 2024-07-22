@@ -191,15 +191,15 @@ func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 	})
 	for _, v := range refs {
 		line := main.codeview.view.Buf.Line(v.Range.Start.Line)
-		begin := max(0, v.Range.Start.Character-10)
-		end := min(len(line), v.Range.Start.Character+10)
+		begin := max(0, v.Range.Start.Character-20)
+		end := min(len(line), v.Range.Start.Character+20)
 		path := ""
 		uri := v.URI.AsPath()
 		if uri != nil {
 			path = uri.String()
 		}
-		s := fmt.Sprintf("%s %s:%d", line[begin:end], path, v.Range.Start.Line)
-		m.fzf.view.AddItem(s, "", 0, nil)
+		secondline := fmt.Sprintf("%s:%d", path, v.Range.Start.Line)
+		m.fzf.view.AddItem(line[begin:end], secondline, 0, nil)
 	}
 }
 
