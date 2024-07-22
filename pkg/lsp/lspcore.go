@@ -44,7 +44,7 @@ type lspclient interface {
 	GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
 	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
 	TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
-	CallHierarchyIncomingCalls(param []lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error)
+	CallHierarchyIncomingCalls(param lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error)
 }
 type lsp_base struct {
 	core *lspcore
@@ -75,7 +75,7 @@ func (l lsp_base) DidOpen(file string) error {
 func (l lsp_base) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
 	return l.core.TextDocumentPrepareCallHierarchy(loc)
 }
-func (l lsp_base) CallHierarchyIncomingCalls(param []lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
+func (l lsp_base) CallHierarchyIncomingCalls(param lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
 	return l.core.CallHierarchyIncomingCalls(param)
 }
 func (l lsp_base) GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error) {
@@ -196,17 +196,16 @@ func (core lspcore) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.Ca
 	}
 	return result, nil
 }
-func (core *lspcore) CallHierarchyIncomingCalls(param []lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
+func (core *lspcore) CallHierarchyIncomingCalls(param lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
 	var referenced = param
-	var result []interface{}
-	var ret []lsp.CallHierarchyIncomingCall
+	var result []lsp.CallHierarchyIncomingCall
 	err := core.conn.Call(context.Background(), "callHierarchy/incomingCalls", referenced, &result)
 	if err != nil {
-		return ret, err
+		return result, err
 	}
 
 	// json.Unmarshal(buf, &ret)
-	return ret, nil
+	return result, nil
 }
 func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
 	var referenced = lsp.ReferenceParams{}
