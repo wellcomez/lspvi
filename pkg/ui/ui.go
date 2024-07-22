@@ -2,6 +2,7 @@
 package mainui
 
 import (
+	"log"
 	"os"
 
 	"github.com/rivo/tview"
@@ -78,7 +79,10 @@ func MainUI() {
 	codeview := NewCodeView()
 	symbol_tree := NewSymbolTreeView()
 	main.symboltree = symbol_tree
-
+	symbol_tree.view.SetSelectedFunc(
+		func(node *tview.TreeNode){
+			log.Printf("%s",node.GetText())
+		});
 	main.codeview = codeview
 	main.lspmgr.Handle = &main
 	main.OpenFile(filearg)
@@ -162,16 +166,19 @@ func (v *SymbolTreeView) update(file lspcore.Symbol_file) {
 		if v.Is_class() {
 			c := tview.NewTreeNode(v.SymbolListStrint())
 			root_node.AddChild(c)
+			c.SetReference(v)
 			if len(v.Members) > 0 {
 				childnode := tview.NewTreeNode(v.SymbolListStrint())
 				for _, c := range v.Members {
 					cc := tview.NewTreeNode(c.SymbolListStrint())
+					cc.SetReference(c)
 					childnode.AddChild(cc)
 				}
 				root_node.AddChild(childnode)
 			}
 		} else {
 			c := tview.NewTreeNode(v.SymbolListStrint())
+			c.SetReference(v)
 			root_node.AddChild(c)
 		}
 	}
