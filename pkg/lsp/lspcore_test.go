@@ -10,7 +10,8 @@ import (
 )
 
 var path = "/home/z/dev/lsp/pylspclient/tests/cpp/"
-var d_cpp = "/home/z/dev/lsp/pylspclient/tests/cpp/d.cpp"
+// var d_cpp = "/home/z/dev/lsp/pylspclient/tests/cpp/d.cpp"
+var d_cpp="/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
 var wk = workroot{path: path}
 
 func Test_lspcore_init(t *testing.T) {
@@ -57,6 +58,9 @@ func Test_lspcpp_open(t *testing.T) {
 	symbol, err := client.GetDocumentSymbol(d_cpp)
 	if err != nil {
 		log.Fatal(err)
+	}
+	for _, v := range *symbol.SymbolInformation {
+		t.Log(v.Name)	
 	}
 	t.Log(symbol)
 }
