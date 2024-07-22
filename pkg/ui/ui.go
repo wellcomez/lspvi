@@ -1,5 +1,5 @@
 // Demo code for the Flex primitive.
-package main
+package mainui
 
 import (
 	"os"
@@ -33,7 +33,7 @@ func (code *CodeView) Load(filename string) error {
 	code.view.SetTitle(filename)
 	return nil
 }
-func mainui() {
+func MainUI() {
 	app := tview.NewApplication()
 	codeview := NewCodeView()
 	codeview.Load("/home/ubuntu/dev/goview/lspcode/main.go")
