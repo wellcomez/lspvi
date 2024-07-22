@@ -56,7 +56,7 @@ func NewCodeView(app *tview.Application) *CodeView {
 		if action == tview.MouseLeftClick {
 			// x, y := event.Position()
 			posY = posY + root.Topline
-			posX = posX - leftX
+			posX = posX - leftX - 3
 			root.Cursor.Loc = femto.Loc{X: posX, Y: posY}
 			root.Cursor.SetSelectionStart(femto.Loc{X: posX, Y: posY})
 			root.Cursor.SetSelectionEnd(femto.Loc{X: posX, Y: posY})
