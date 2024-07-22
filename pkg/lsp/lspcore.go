@@ -36,6 +36,7 @@ type lspcore struct {
 type lspclient interface {
 	InitializeLsp(wk workroot) error
 	Launch_Lsp_Server() error
+	DidOpen(file string) error
 }
 type lsp_base struct {
 	core *lspcore
@@ -53,11 +54,6 @@ func new_lsp_base(wk workroot) lsp_base {
 	return lsp_base{
 		core: &lspcore{LanguageID: "cpp"},
 		wk:   wk,
-	}
-}
-func new_lsp_py(wk workroot) *lsp_py {
-	return &lsp_py{
-		new_lsp_base(wk),
 	}
 }
 
