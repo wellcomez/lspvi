@@ -37,6 +37,7 @@ type lspclient interface {
 	InitializeLsp(wk workroot) error
 	Launch_Lsp_Server() error
 	DidOpen(file string) error
+	GetDocumentSymbol(file string) error
 }
 type lsp_base struct {
 	core *lspcore
@@ -46,6 +47,11 @@ type lsp_base struct {
 type lsp_cpp struct {
 	lsp_base
 }
+
+// DidOpen implements lspclient.
+// Subtle: this method shadows the method (lsp_base).DidOpen of lsp_cpp.lsp_base.
+
+
 type lsp_py struct {
 	lsp_base
 }
@@ -77,7 +83,9 @@ func (l lsp_cpp) Launch_Lsp_Server() error {
 func (l lsp_base) DidOpen(file string) error {
 	return l.core.DidOpen(file)
 }
-
+func (l lsp_base) GetDocumentSymbol(file string) error {
+	return l.core.GetDocumentSymbol(file)
+}
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 
 	// cmd := exec.Command("clangd", "--log=verbose")
@@ -150,7 +158,15 @@ func (core *lspcore) DidOpen(file string) error {
 	return err
 }
 func (core *lspcore) GetDocumentSymbol(file string) error {
-	return nil
+	uri := lsp.NewDocumentURI(file)
+	var parameter = lsp.DocumentSymbolParams{
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: uri,
+		},
+	}
+	var result []interface{}
+	err := core.conn.Call(context.Background(), "textDocument/documentSymbol", parameter, &result)
+	return err
 }
 func main2() {
 	// 启动clangd进程

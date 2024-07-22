@@ -6,12 +6,11 @@ import (
 	"log"
 	"os/exec"
 	"testing"
-
 	// "github.com/tectiv3/go-lsp"
 )
 
 var path = "/home/z/dev/lsp/pylspclient/tests/cpp/"
-var d_cpp="/home/z/dev/lsp/pylspclient/tests/cpp/d.cpp"
+var d_cpp = "/home/z/dev/lsp/pylspclient/tests/cpp/d.cpp"
 var wk = workroot{path: path}
 
 func Test_lspcore_init(t *testing.T) {
@@ -51,9 +50,16 @@ func Test_lspcpp_open(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	client.DidOpen(d_cpp)
-
+	err = client.DidOpen(d_cpp)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = client.GetDocumentSymbol(d_cpp)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
+
 // func Test_new_client(t *testing.T) {
 // 	// 启动clangd进程
 // 	cmd := exec.Command("clangd", "--log=verbose")
