@@ -41,6 +41,7 @@ type lspclient interface {
 	DidOpen(file string) error
 	GetDocumentSymbol(file string) (*document_symbol, error)
 	GetReferences(file string, pos lsp.Position) ([]lsp.Location, error)
+	GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
 	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
 }
 type lsp_base struct {
@@ -85,6 +86,15 @@ func (l lsp_cpp) Launch_Lsp_Server() error {
 }
 func (l lsp_base) DidOpen(file string) error {
 	return l.core.DidOpen(file)
+}
+func (l lsp_base) GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error) {
+	path := LocationContent{
+		location: loc,
+	}.Path()
+	return l.core.GetDeclare(path, lsp.Position{
+		Line:      loc.Range.Start.Line,
+		Character: loc.Range.Start.Character,
+	})
 }
 func (l lsp_base) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
 

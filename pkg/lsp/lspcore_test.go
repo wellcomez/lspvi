@@ -71,8 +71,16 @@ func Test_lspcpp_open(t *testing.T) {
 		Character: 7,
 	})
 	print(data, err)
-	if len(data)==0{
+	if len(data) == 0 {
 		t.Fatalf("fail to get reference")
+	}
+	for _, v := range data {
+		var a = LocationContent{
+			location: v,
+		}
+		code, _ := a.Text()
+		t.Logf("!!! REFERENCE >%s<\n", code)
+		client.GetDeclare(a.Path(),lsp.Position{Line: v.Range.Start.Line,Character: v.Range.Start.Character})
 	}
 	// for _, v := range symbol.SymbolInformation{
 	// 	uri := v.Location.URI.String()
