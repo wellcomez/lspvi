@@ -2,8 +2,14 @@
 package mainui
 
 import (
+	"log"
 	"os"
 
+	"github.com/gdamore/tcell/v2"
+	"github.com/pgavlin/femto"
+	"github.com/pgavlin/femto/runtime"
+
+	// "github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
@@ -14,14 +20,51 @@ type View interface {
 }
 type CodeView struct {
 	filename string
-	view     *tview.TextView
+	view     *femto.View
+	app      *tview.Application
 }
 
-func NewCodeView() *CodeView {
+func NewCodeView(app *tview.Application) *CodeView {
 	view := tview.NewTextView()
 	view.SetBorder(true)
 	ret := CodeView{}
-	ret.view = view
+	ret.app = app
+	var colorscheme femto.Colorscheme
+	if monokai := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); monokai != nil {
+		if data, err := monokai.Data(); err == nil {
+			colorscheme = femto.ParseColorscheme(string(data))
+		}
+	}
+	path := ""
+	content := ""
+	buffer := femto.NewBufferFromString(string(content), path)
+	root := femto.NewView(buffer)
+	root.SetRuntimeFiles(runtime.Files)
+	root.SetColorscheme(colorscheme)
+
+	root.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		x, y := event.Position()
+		log.Printf("mount action=%d  x=%d y=%d", action, x, y)
+		if action == 14 {
+			root.ScrollDown(2)
+			return tview.MouseConsumed, nil
+		} else if action == 13 {
+			root.ScrollUp(1)
+			return tview.MouseConsumed, nil
+		}
+		return action, event
+	})
+	root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyCtrlS:
+			// saveBuffer(buffer, path)
+			return nil
+		case tcell.KeyCtrlQ:
+			return nil
+		}
+		return event
+	})
+	ret.view = root
 	return &ret
 }
 func (code *CodeView) Load(filename string) error {
@@ -29,8 +72,18 @@ func (code *CodeView) Load(filename string) error {
 	if err != nil {
 		return err
 	}
+	buffer := femto.NewBufferFromString(string(data), filename)
+	code.view.OpenBuffer(buffer)
 	code.filename = filename
-	code.view.SetText(string(data))
+
+	var colorscheme femto.Colorscheme
+	if monokai := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); monokai != nil {
+		if data, err := monokai.Data(); err == nil {
+			colorscheme = femto.ParseColorscheme(string(data))
+		}
+	}
+	code.view.SetColorscheme(colorscheme)
+
 	code.view.SetTitle(filename)
 	return nil
 }
@@ -75,11 +128,10 @@ func (m *mainui) OnSelectedSymobolNode(node *tview.TreeNode) {
 	}
 	value := node.GetReference()
 	if value != nil {
-		if sym, ok := value.(lspcore.Symbol); ok {
-
-			line := sym.SymInfo.Location.Range.Start.Line
-			m.codeview.view.ScrollTo(line, 0)
-		}
+		// if sym, ok := value.(lspcore.Symbol); ok {
+		// line := sym.SymInfo.Location.Range.Start.Line
+		// m.codeview.view.ScrollTo(line, 0)
+		// }
 	}
 }
 func (m *mainui) OpenFile(file string) {
@@ -89,8 +141,10 @@ func (m *mainui) OpenFile(file string) {
 }
 
 func MainUI() {
+	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	log.SetOutput(logfile)
 	app := tview.NewApplication()
-	codeview := NewCodeView()
+	codeview := NewCodeView(app)
 	symbol_tree := NewSymbolTreeView()
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetSelectedFunc(
