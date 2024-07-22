@@ -26,4 +26,3 @@ func (l lsp_cpp) Launch_Lsp_Server() error {
 	l.core.cmd = exec.Command("clangd", root)
 	return l.core.Lauch_Lsp_Server(l.core.cmd)
 }
-

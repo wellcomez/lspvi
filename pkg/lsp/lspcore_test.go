@@ -65,11 +65,11 @@ func Test_callin(t *testing.T) {
 	}
 	for _, v := range symbols.SymbolInformation {
 		if v.Name == "call_1" {
-			prepare, err := client.TextDocumentPrepareCallHierarchy(v.Location)
+			prepare, err := client.PrepareCallHierarchy(v.Location)
 			if err != nil {
 				t.Fatal(prepare)
 			}
-			ret, err := client.CallHierarchyIncomingCalls(lsp.CallHierarchyIncomingCallsParams{Item: prepare[0]})
+			ret, err := client.CallHierarchyIncomingCalls(prepare[0])
 			print(ret, err)
 		}
 	}
@@ -113,21 +113,14 @@ func Test_lspcpp_open(t *testing.T) {
 		Character: 7,
 	}
 	call_in_range.End = call_in_range.Start
-	call_preare_item, err := client.TextDocumentPrepareCallHierarchy(lsp.Location{
+	call_preare_item, err := client.PrepareCallHierarchy(lsp.Location{
 		URI:   lsp.NewDocumentURI(d_cpp),
 		Range: call_in_range,
 	})
 	if len(call_preare_item) == 0 || err != nil {
 		t.Fatalf("fail to call_prepare")
 	}
-	var call_in_param []lsp.CallHierarchyIncomingCallsParams
-	for _, v := range call_preare_item {
-		p := lsp.CallHierarchyIncomingCallsParams{
-			Item: v,
-		}
-		call_in_param = append(call_in_param, p)
-	}
-	callin, err := client.CallHierarchyIncomingCalls(call_in_param[0])
+	callin, err := client.CallHierarchyIncomingCalls(call_preare_item[0])
 	if len(callin) == 0 || err != nil {
 		t.Fatalf("fail to call in")
 	}

@@ -43,15 +43,13 @@ type lspclient interface {
 	GetReferences(file string, pos lsp.Position) ([]lsp.Location, error)
 	GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
 	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
-	TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
-	CallHierarchyIncomingCalls(param lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error)
+	PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
+	CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error)
 }
 type lsp_base struct {
 	core *lspcore
 	wk   workroot
 }
-
-
 
 // DidOpen implements lspclient.
 // Subtle: this method shadows the method (lsp_base).DidOpen of lsp_cpp.lsp_base.
@@ -72,11 +70,13 @@ func (l lsp_base) DidOpen(file string) error {
 	return l.core.DidOpen(file)
 }
 
-func (l lsp_base) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
+func (l lsp_base) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
 	return l.core.TextDocumentPrepareCallHierarchy(loc)
 }
-func (l lsp_base) CallHierarchyIncomingCalls(param lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
-	return l.core.CallHierarchyIncomingCalls(param)
+func (l lsp_base) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
+	return l.core.CallHierarchyIncomingCalls(lsp.CallHierarchyIncomingCallsParams{
+		Item: param,
+	})
 }
 func (l lsp_base) GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error) {
 	path := LocationContent{
