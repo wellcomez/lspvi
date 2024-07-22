@@ -10,7 +10,7 @@ type Symbol_file struct {
 	lsp          *lsp_base
 	filename     string
 	Handle       lsp_data_changed
-	Class_object []Symbol
+	Class_object []*Symbol
 }
 
 func (sym Symbol) Is_class() bool {
@@ -53,7 +53,8 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 			SymInfo: v,
 		}
 		if is_class(v.Kind) {
-			sym.Class_object = append(sym.Class_object, s)
+			sym.Class_object = append(sym.Class_object, &s)
+			
 			i = sym.build_class_symbol(symbols, i+1, &s)
 			continue
 		}
@@ -63,11 +64,11 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 					parent.Members = append(parent.Members, s)
 				}
 			} else {
-				sym.Class_object = append(sym.Class_object, s)
+				sym.Class_object = append(sym.Class_object, &s)
 				return i + 1
 			}
 		} else {
-			sym.Class_object = append(sym.Class_object, s)
+			sym.Class_object = append(sym.Class_object, &s)
 		}
 		i = i + 1
 	}
