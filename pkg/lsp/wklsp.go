@@ -92,6 +92,9 @@ func (sym *Symbol_file) LoadSymbol() {
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
 	sym.Handle.OnSymbolistChanged(*sym)
 }
+func (sym *Symbol_file) Reference(ranges lsp.Range) {
+	sym.lsp.GetReferences(sym.filename, ranges.Start)
+}
 func (sym Symbol) contain(a Symbol) bool {
 	return symbol_contain(sym.SymInfo, a.SymInfo)
 }

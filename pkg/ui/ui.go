@@ -21,14 +21,14 @@ type View interface {
 type CodeView struct {
 	filename string
 	view     *femto.View
-	app      *tview.Application
+	main     *mainui
 }
 
-func NewCodeView(app *tview.Application) *CodeView {
+func NewCodeView(main *mainui) *CodeView {
 	view := tview.NewTextView()
 	view.SetBorder(true)
 	ret := CodeView{}
-	ret.app = app
+	ret.main = main
 	var colorscheme femto.Colorscheme
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
@@ -81,6 +81,21 @@ func NewCodeView(app *tview.Application) *CodeView {
 		return action, event
 	})
 	root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Rune() {
+		case 'r':
+			loc := root.Cursor.CurSelection
+			ret.main.OnReference(lsp.Range{
+				Start: lsp.Position{
+					Line:      loc[0].Y,
+					Character: loc[0].X,
+				},
+				End: lsp.Position{
+					Line:      loc[1].Y,
+					Character: loc[1].X,
+				},
+			}, main.codeview.filename)
+			return nil
+		}
 		switch event.Key() {
 		case tcell.KeyUp:
 			root.Buf.LinesNum()
@@ -134,12 +149,20 @@ type mainui struct {
 	codeview   *CodeView
 	lspmgr     *lspcore.LspWorkspace
 	symboltree *SymbolTreeView
+	fzf        *fzfview
 }
 
 // OnCallInViewChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnCallInViewChanged(file lspcore.Symbol_file) {
 	// panic("unimplemented")
 	m.symboltree.update(file)
+}
+func (m *mainui) OnReference(pos lsp.Range, filepath string) {
+	lsp, err := m.lspmgr.Open(filepath)
+	if err != nil {
+		return
+	}
+	lsp.Reference(pos)
 }
 
 // OnCodeViewChanged implements lspcore.lsp_data_changed.
@@ -159,7 +182,7 @@ var main = mainui{
 func (m *mainui) Init() {
 	m.lspmgr.Handle = m
 }
-func (m *mainui) OnSelectedSymobolNode(node *tview.TreeNode) {
+func (m *mainui) OnClickSymobolNode(node *tview.TreeNode) {
 	if node.IsExpanded() {
 		node.Collapse()
 	} else {
@@ -188,6 +211,28 @@ func (m *mainui) OnSelectedSymobolNode(node *tview.TreeNode) {
 		}
 	}
 }
+
+type fzfview struct {
+	view *tview.List
+}
+
+func new_fzfview() *fzfview {
+	return &fzfview{
+		view: tview.NewList(),
+	}
+}
+func (fzf *fzfview) UpdateReferrence(references []lsp.Location) {
+	fzf.view.Clear()
+	for _, ref := range references {
+		fzf.view.AddItem(ref.URI.String(), "", 0, nil)
+	}
+}
+func(m *mainui)onfzf(){
+}
+func(m *mainui)onlog(){
+}
+func(m *mainui)oncallin(){
+}
 func (m *mainui) OpenFile(file string) {
 	m.codeview.Load(file)
 	m.lspmgr.Open(file)
@@ -198,12 +243,13 @@ func MainUI() {
 	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
-	codeview := NewCodeView(app)
+	codeview := NewCodeView(&main)
+	main.fzf = new_fzfview()
 	symbol_tree := NewSymbolTreeView()
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetSelectedFunc(
 		func(node *tview.TreeNode) {
-			main.OnSelectedSymobolNode(node)
+			main.OnClickSymobolNode(node)
 		})
 	main.codeview = codeview
 	main.lspmgr.Handle = &main
@@ -221,7 +267,8 @@ func MainUI() {
 		})
 	list.ShowSecondaryText(false)
 	cmdline := tview.NewInputField()
-	console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
+	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
+	console := main.fzf.view.SetBorder(true)
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
 	file := list
 	editor_area :=
@@ -229,11 +276,19 @@ func MainUI() {
 			AddItem(file, 0, 1, false).
 			AddItem(codeview.view, 0, 4, false).
 			AddItem(symbol_tree.view, 0, 1, false)
+	// fzfbtn := tview.NewButton("fzf")
+	// logbtn := tview.NewButton("log")
+	tab_area:=	tview.NewFlex().
+			AddItem(tview.NewButton("fzf").SetSelectedFunc(main.onfzf), 10, 1, true).
+			AddItem(tview.NewButton("log").SetSelectedFunc(main.onlog), 10, 1, true).
+			AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin), 10, 1, true)
+
 	main_layout :=
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(editor_area, 0, 3, false).
 			AddItem(console, 0, 2, false).
-			AddItem(cmdline, 4, 1, false)
+			AddItem(tab_area, 1, 0, false).
+			AddItem(cmdline, 1, 1, false)
 
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
