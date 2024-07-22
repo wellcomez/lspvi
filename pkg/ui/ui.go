@@ -46,6 +46,7 @@ func NewCodeView(app *tview.Application) *CodeView {
 		// x, y := event.Position()
 		// log.Printf("mount action=%d  x=%d y=%d", action, x, y)
 		x1, y1, x2, y2 := root.GetInnerRect()
+		leftX, _, _, _ := root.GetRect()
 		posX, posY := event.Position()
 		if posX < x1 || posY > y2 || posY < y1 || posX > x2 {
 			return action, event
@@ -55,10 +56,11 @@ func NewCodeView(app *tview.Application) *CodeView {
 		if action == tview.MouseLeftClick {
 			// x, y := event.Position()
 			posY = posY + root.Topline
+			posX = posX - leftX
 			root.Cursor.Loc = femto.Loc{X: posX, Y: posY}
-			root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: posY})
-			root.Cursor.SetSelectionEnd(femto.Loc{X: len(root.Buf.Line(posY)), Y: posY})
-			root.SelectLine()
+			root.Cursor.SetSelectionStart(femto.Loc{X: posX, Y: posY})
+			root.Cursor.SetSelectionEnd(femto.Loc{X: posX, Y: posY})
+			// root.SelectLine()
 			return tview.MouseConsumed, nil
 		}
 		if action == 14 {
