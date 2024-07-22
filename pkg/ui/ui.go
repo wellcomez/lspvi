@@ -165,15 +165,20 @@ func (m *mainui) OnSelectedSymobolNode(node *tview.TreeNode) {
 		if sym, ok := value.(lspcore.Symbol); ok {
 			line := sym.SymInfo.Location.Range.Start.Line
 			m.codeview.view.Topline = line
-			len := len(m.codeview.view.Buf.Line(line))
+			RightX := len(m.codeview.view.Buf.Line(line))
 			m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
 				X: 0,
 				Y: line,
 			}
 			m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
-				X: len,
+				X: RightX,
 				Y: line,
 			}
+			root := m.codeview.view
+			root.Cursor.Loc = femto.Loc{X: 0, Y: line}
+			root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: line})
+			text := root.Buf.Line(line)
+			root.Cursor.SetSelectionEnd(femto.Loc{X: len(text), Y: line})
 		}
 	}
 }
