@@ -63,14 +63,18 @@ func NewCodeView(app *tview.Application) *CodeView {
 			// root.SelectLine()
 			return tview.MouseConsumed, nil
 		}
-		if action == 14 {
-			root.SelectDown()
-			root.ScrollDown(2)
-			root.SelectLine()
-			return tview.MouseConsumed, nil
-		} else if action == 13 {
-			root.ScrollUp(1)
-			root.SelectUp()
+		if action == 14 || action == 13 {
+			gap := 2
+			if action == 14 {
+				posY = posY + gap
+				root.ScrollDown(gap)
+			} else {
+				posY = posY - gap
+				root.ScrollUp(gap)
+			}
+			posX = posX - leftX
+			root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline, root.Buf.NumLines))}
+			log.Println(root.Cursor.Loc)
 			root.SelectLine()
 			return tview.MouseConsumed, nil
 		}
