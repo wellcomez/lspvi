@@ -43,6 +43,8 @@ type lspclient interface {
 	GetReferences(file string, pos lsp.Position) ([]lsp.Location, error)
 	GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
 	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
+	TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
+	CallHierarchyIncomingCalls(param []lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error)
 }
 type lsp_base struct {
 	core *lspcore
@@ -86,6 +88,13 @@ func (l lsp_cpp) Launch_Lsp_Server() error {
 }
 func (l lsp_base) DidOpen(file string) error {
 	return l.core.DidOpen(file)
+}
+
+func (l lsp_base) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
+	return l.core.TextDocumentPrepareCallHierarchy(loc)
+}
+func (l lsp_base) CallHierarchyIncomingCalls(param []lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
+	return l.core.CallHierarchyIncomingCalls(&param)
 }
 func (l lsp_base) GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error) {
 	path := LocationContent{
@@ -188,6 +197,27 @@ func (core *lspcore) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, 
 		return ret, err
 	}
 	return convert_result_to_lsp_location(result)
+}
+func (core lspcore) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
+	var params = lsp.CallHierarchyPrepareParams{}
+	file := LocationContent{
+		location: loc,
+	}.Path()
+	params.TextDocument = lsp.TextDocumentIdentifier{
+		URI: lsp.NewDocumentURI(file),
+	}
+	params.Position = loc.Range.Start
+	var result []lsp.CallHierarchyItem
+	err := core.conn.Call(context.Background(), "textDocument/prepareCallHierarchy", params, &result)
+	if err != nil {
+		return result, nil
+	}
+	return result, nil
+}
+func (client *lspcore) CallHierarchyIncomingCalls(param *[]lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
+	var result []lsp.CallHierarchyIncomingCall
+	err:=client.conn.Call(context.Background(),"callHierarchy/incomingCalls",param,&result)
+	return result, err
 }
 func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
 	var referenced = lsp.ReferenceParams{}

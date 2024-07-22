@@ -74,13 +74,40 @@ func Test_lspcpp_open(t *testing.T) {
 	if len(data) == 0 {
 		t.Fatalf("fail to get reference")
 	}
+	var call_in_range = lsp.Range{}
+	call_in_range.Start = lsp.Position{
+
+		Line:      12,
+		Character: 7,
+	}
+	call_in_range.End = call_in_range.Start
+	call_preare_item, err := client.TextDocumentPrepareCallHierarchy(lsp.Location{
+		URI:   lsp.NewDocumentURI(d_cpp),
+		Range: call_in_range,
+	})
+	if len(call_preare_item) == 0 || err != nil {
+		t.Fatalf("fail to call_prepare")
+	}
+	var call_in_param []lsp.CallHierarchyIncomingCallsParams
+	for _, v := range call_preare_item {
+		p:=lsp.CallHierarchyIncomingCallsParams{
+			Item: v,
+		}	
+		call_in_param = append(call_in_param, p)
+	}
+	callin,err:=client.CallHierarchyIncomingCalls(call_in_param)
+	if len(callin)==0 || err!=nil{
+		t.Fatalf("fail to call in")
+	}
+
+
 	for _, v := range data {
 		var a = LocationContent{
 			location: v,
 		}
 		code, _ := a.Text()
 		t.Logf("!!! REFERENCE >%s<\n", code)
-		client.GetDeclare(a.Path(),lsp.Position{Line: v.Range.Start.Line,Character: v.Range.Start.Character})
+		client.GetDeclare(a.Path(), lsp.Position{Line: v.Range.Start.Line, Character: v.Range.Start.Character})
 	}
 	// for _, v := range symbol.SymbolInformation{
 	// 	uri := v.Location.URI.String()
