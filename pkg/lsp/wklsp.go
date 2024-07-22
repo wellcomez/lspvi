@@ -93,7 +93,11 @@ func (sym *Symbol_file) LoadSymbol() {
 	sym.Handle.OnSymbolistChanged(*sym)
 }
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
-	sym.lsp.GetReferences(sym.filename, ranges.Start)
+	loc,err:=sym.lsp.GetReferences(sym.filename, ranges.Start)
+	if err!=nil{
+		return
+	}
+	sym.Handle.OnRefenceChanged(loc)
 }
 func (sym Symbol) contain(a Symbol) bool {
 	return symbol_contain(sym.SymInfo, a.SymInfo)
@@ -192,5 +196,6 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 type lsp_data_changed interface {
 	OnSymbolistChanged(file Symbol_file)
 	OnCodeViewChanged(file Symbol_file)
+	OnRefenceChanged(file []lsp.Location)
 	OnCallInViewChanged(file Symbol_file)
 }

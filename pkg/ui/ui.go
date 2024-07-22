@@ -155,6 +155,52 @@ type mainui struct {
 	callinview *callinview
 }
 
+func (codeview *CodeView) gotoline(line int) {
+	log.Println("gotoline", line)
+	codeview.view.Topline = line
+	RightX := len(codeview.view.Buf.Line(line))
+	codeview.view.Cursor.CurSelection[0] = femto.Loc{
+		X: 0,
+		Y: line,
+	}
+	codeview.view.Cursor.CurSelection[0] = femto.Loc{
+		X: RightX,
+		Y: line,
+	}
+	root := codeview.view
+	root.Cursor.Loc = femto.Loc{X: 0, Y: line}
+	root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: line})
+	text := root.Buf.Line(line)
+	root.Cursor.SetSelectionEnd(femto.Loc{X: len(text), Y: line})
+}
+
+type search_result struct {
+}
+type search_reference_result struct {
+	refs []lsp.Location
+}
+
+// OnRefenceChanged implements lspcore.lsp_data_changed.
+func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
+	// panic("unimplemented")
+	m.fzf.view.Clear()
+	m.fzf.refs.refs = refs
+	m.fzf.view.SetSelectedFunc(func(index int, _ string, _ string, _ rune) {
+		vvv := m.fzf.refs.refs[index]
+		m.codeview.gotoline(vvv.Range.Start.Line)
+	})
+	for _, v := range refs {
+		b := lspcore.NewBody(v)
+		path := ""
+		uri := b.Location.URI.AsPath()
+		if uri != nil {
+			path = uri.String()
+		}
+		s := fmt.Sprintf("%s %s:%d", b.String(), path, b.Location.Range.Start.Line)
+		m.fzf.view.AddItem(s, "", 0, nil)
+	}
+}
+
 // OnCallInViewChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnCallInViewChanged(file lspcore.Symbol_file) {
 	// panic("unimplemented")
@@ -196,21 +242,22 @@ func (m *mainui) OnClickSymobolNode(node *tview.TreeNode) {
 
 		if sym, ok := value.(lspcore.Symbol); ok {
 			line := sym.SymInfo.Location.Range.Start.Line
-			m.codeview.view.Topline = line
-			RightX := len(m.codeview.view.Buf.Line(line))
-			m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
-				X: 0,
-				Y: line,
-			}
-			m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
-				X: RightX,
-				Y: line,
-			}
-			root := m.codeview.view
-			root.Cursor.Loc = femto.Loc{X: 0, Y: line}
-			root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: line})
-			text := root.Buf.Line(line)
-			root.Cursor.SetSelectionEnd(femto.Loc{X: len(text), Y: line})
+			m.codeview.gotoline(line)
+			// m.codeview.view.Topline = line
+			// RightX := len(m.codeview.view.Buf.Line(line))
+			// m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
+			// 	X: 0,
+			// 	Y: line,
+			// }
+			// m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
+			// 	X: RightX,
+			// 	Y: line,
+			// }
+			// root := m.codeview.view
+			// root.Cursor.Loc = femto.Loc{X: 0, Y: line}
+			// root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: line})
+			// text := root.Buf.Line(line)
+			// root.Cursor.SetSelectionEnd(femto.Loc{X: len(text), Y: line})
 		}
 	}
 }
@@ -222,6 +269,7 @@ type callinview struct {
 type fzfview struct {
 	view *tview.List
 	Name string
+	refs search_reference_result
 }
 
 func new_callview() *callinview {
