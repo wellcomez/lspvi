@@ -160,18 +160,18 @@ func (v *SymbolTreeView) update(file lspcore.Symbol_file) {
 	root_node.SetReference("1")
 	for _, v := range file.Class_object {
 		if v.Is_class() {
-			c := tview.NewTreeNode(v.SymInfo.Name)
+			c := tview.NewTreeNode(v.SymbolListStrint())
 			root_node.AddChild(c)
 			if len(v.Members) > 0 {
-				childnode := tview.NewTreeNode(v.SymInfo.Name)
+				childnode := tview.NewTreeNode(v.SymbolListStrint())
 				for _, c := range v.Members {
-					cc := tview.NewTreeNode(c.SymInfo.Name)
+					cc := tview.NewTreeNode(c.SymbolListStrint())
 					childnode.AddChild(cc)
 				}
 				root_node.AddChild(childnode)
 			}
 		} else {
-			c := tview.NewTreeNode(v.SymInfo.Name)
+			c := tview.NewTreeNode(v.SymbolListStrint())
 			root_node.AddChild(c)
 		}
 	}

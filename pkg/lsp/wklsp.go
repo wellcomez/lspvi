@@ -2,10 +2,68 @@ package lspcore
 
 import "github.com/tectiv3/go-lsp"
 
+var Text = "󰉿"
+var Method = "ƒ"
+var Function = ""
+var Constructor = ""
+var Field = "󰜢"
+var Variable = "󰀫"
+var Class = "𝓒"
+var Interface = ""
+var Module = ""
+var Property = "󰜢"
+var Unit = "󰑭"
+var Value = "󰎠"
+var Enum = ""
+var Keyword = "󰌋"
+var Snippet = ""
+var Color = "󰏘"
+var File = "󰈙"
+var Reference = "󰈇"
+var Folder = "󰉋"
+var EnumMember = ""
+var Constant = "󰏿"
+var Struct = "𝓢"
+var Event = ""
+var Operator = "󰆕"
+var TypeParameter = ""
+
 type Symbol struct {
 	SymInfo lsp.SymbolInformation
 	Members []Symbol
 }
+
+func (s Symbol) Icon() string {
+	switch s.SymInfo.Kind {
+	case lsp.SymbolKindMethod:
+		return Method
+	case lsp.SymbolKindField:
+		return Field
+	case lsp.SymbolKindClass:
+		return Class
+	case lsp.SymbolKindFunction:
+		return Function
+	case lsp.SymbolKindConstructor:
+		return Constructor
+	case lsp.SymbolKindInterface:
+		return Interface
+	case lsp.SymbolKindVariable:
+		return Variable
+	case lsp.SymbolKindConstant:
+		return Constant
+	case lsp.SymbolKindEnum:
+		return Enum
+	case lsp.SymbolKindEnumMember:
+		return EnumMember
+	case lsp.SymbolKindOperator:
+		return Operator
+	case lsp.SymbolKindTypeParameter:
+		return TypeParameter
+	default:
+		return ""
+	}
+}
+
 type Symbol_file struct {
 	lsp          *lsp_base
 	filename     string
@@ -13,6 +71,9 @@ type Symbol_file struct {
 	Class_object []*Symbol
 }
 
+func (sym Symbol) SymbolListStrint() string {
+	return sym.Icon() + " " + sym.SymInfo.Name
+}
 func (sym Symbol) Is_class() bool {
 	return is_class(sym.SymInfo.Kind)
 }
@@ -54,7 +115,7 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 		}
 		if is_class(v.Kind) {
 			sym.Class_object = append(sym.Class_object, &s)
-			
+
 			i = sym.build_class_symbol(symbols, i+1, &s)
 			continue
 		}
