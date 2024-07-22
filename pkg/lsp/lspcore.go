@@ -34,8 +34,25 @@ type lspclient interface {
 }
 type lsp_cpp struct {
 	core *lspcore
+	wk   workroot
+}
+type lsp_py struct {
+	core *lspcore
+	wk   workroot
 }
 
+func new_lsp_cpp(wk workroot) *lsp_cpp {
+	return &lsp_cpp{
+		core: &lspcore{},
+		wk:   wk,
+	}
+}
+func new_lsp_py(wk workroot) *lsp_py {
+	return &lsp_py{
+		core: &lspcore{},
+		wk:   wk,
+	}
+}
 
 // Initialize implements lspclient.
 func (l lsp_cpp) InitializeLsp(wk workroot) error {
