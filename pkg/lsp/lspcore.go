@@ -27,6 +27,7 @@ type lspcore struct {
 	initializationOptions map[string]interface{}
 	// arguments             []string
 	handle rpchandle
+	rw     io.ReadWriteCloser
 }
 type lspclient interface {
 	InitializeLsp(wk workroot) error
@@ -56,14 +57,14 @@ func new_lsp_py(wk workroot) *lsp_py {
 
 // Initialize implements lspclient.
 func (l lsp_cpp) InitializeLsp(wk workroot) error {
-	result,err:=l.core.Initialize(wk)
-	if err!=nil{
+	result, err := l.core.Initialize(wk)
+	if err != nil {
 		return err
 	}
-	if result.ServerInfo.Name=="clangd"{
+	if result.ServerInfo.Name == "clangd" {
 		return nil
 	}
-	return  fmt.Errorf("%s",result.ServerInfo.Name)
+	return fmt.Errorf("%s", result.ServerInfo.Name)
 }
 
 // Launch_Lsp_Server implements lspclient.
@@ -99,6 +100,7 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 		Writer: stdin,
 		Closer: stdin,
 	}
+	core.rw = rwc
 	conn := jsonrpc2.NewConn(
 		context.Background(),
 		jsonrpc2.NewBufferedStream(rwc, jsonrpc2.VSCodeObjectCodec{}),
@@ -112,7 +114,7 @@ type workroot struct {
 	path string
 }
 
-func (core *lspcore) Initialize(wk workroot) (lsp.InitializeResult ,error) {
+func (core *lspcore) Initialize(wk workroot) (lsp.InitializeResult, error) {
 	var ProcessID = -1
 	// 发送initialize请求
 	var result lsp.InitializeResult
@@ -123,9 +125,9 @@ func (core *lspcore) Initialize(wk workroot) (lsp.InitializeResult ,error) {
 		InitializationOptions: core.initializationOptions,
 		Capabilities:          core.capabilities,
 	}, &result); err != nil {
-		return result,err
+		return result, err
 	}
-	return result,nil
+	return result, nil
 }
 
 func main2() {
