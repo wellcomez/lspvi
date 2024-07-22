@@ -282,7 +282,7 @@ func new_callview() *callinview {
 }
 func new_fzfview() *fzfview {
 	return &fzfview{
-		view: tview.NewList(),
+		view: tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal()),
 		Name: "fzf",
 	}
 }
