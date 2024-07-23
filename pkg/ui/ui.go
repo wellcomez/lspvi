@@ -26,6 +26,7 @@ type mainui struct {
 	fzf        *fzfview
 	page       *tview.Pages
 	callinview *callinview
+	tabs       *ButtonGroup
 }
 
 // OnRefenceChanged implements lspcore.lsp_data_changed.
@@ -84,11 +85,39 @@ func (m *mainui) OnReference(pos lsp.Range, filepath string) {
 	lsp.Reference(pos)
 }
 
+var view_log = 1
+var view_fzf = 2
+var view_callin = 3
+
+func (m *mainui) ActiveTab(id int) {
+	var name = ""
+	if view_fzf == id {
+		m.fzf.view.Focus(nil)
+		name = m.fzf.Name
+	} else if view_callin == id {
+		m.callinview.view.Focus(nil)
+		name = m.callinview.Name
+	}
+	if len(name) > 0 {
+		m.page.SwitchToPage(name)
+		tab := m.tabs.Find(name)
+		for _, v := range m.tabs.tabs {
+			if v == tab {
+				v.view.Focus(nil)
+			} else {
+				v.view.Blur()
+			}
+		}
+	}
+}
+
 // OnCodeViewChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnCodeViewChanged(file lspcore.Symbol_file) {
 	// panic("unimplemented")
 }
-
+func(m *mainui)gotoline(line int){
+	m.codeview.gotoline(line)
+}
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file lspcore.Symbol_file) {
 	m.symboltree.update(file)
@@ -143,7 +172,7 @@ func MainUI() {
 	main.lspmgr.Handle = &main
 	main.OpenFile(filearg)
 	main.fzf = new_fzfview()
-	main.callinview = new_callview()
+	main.callinview = new_callview(&main)
 	// symbol_tree.update()
 
 	list := tview.NewList().
@@ -175,6 +204,7 @@ func MainUI() {
 		// logbtn := tview.NewButton("log")
 	var tabs []string = []string{main.fzf.Name, "log", main.callinview.Name}
 	group := NewButtonGroup(tabs, main.OnTabChanged)
+	main.tabs = group
 	tab_area := tview.NewFlex()
 	for _, v := range group.tabs {
 		tab_area.AddItem(v.view, 10, 1, true)

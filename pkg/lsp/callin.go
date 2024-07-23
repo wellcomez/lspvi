@@ -13,18 +13,18 @@ func key(call lsp.CallHierarchyItem) string {
 // CallStackEntry
 type CallStackEntry struct {
 	Name string
-	item lsp.CallHierarchyItem
+	Item lsp.CallHierarchyItem
 }
 
 func (c CallStackEntry) DisplayName() string {
-	return fmt.Sprintf("%s %s:%d", c.Name, c.item.URI.AsPath().String(), c.item.Range.Start.Line)
+	return fmt.Sprintf("%s %s:%d", c.Name, c.Item.URI.AsPath().String(), c.Item.Range.Start.Line)
 }
 
 // NewCallStackEntry
 func NewCallStackEntry(item lsp.CallHierarchyItem) *CallStackEntry {
 	return &CallStackEntry{
 		Name: item.Name,
-		item: item,
+		Item: item,
 	}
 }
 

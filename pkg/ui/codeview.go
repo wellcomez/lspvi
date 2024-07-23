@@ -77,56 +77,10 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
 		case 'c':
-			loc := root.Cursor.CurSelection
-			line := root.Buf.Line(loc[0].Y)
-
-			var x = loc[0].X
-			Start := lsp.Position{
-				Line:      loc[0].Y,
-				Character: loc[0].X,
-			}
-			for ; x >= 0; x-- {
-				if femto.IsWordChar(string(line[x])) == false {
-					break
-				} else {
-					Start.Character = x
-				}
-			}
-
-			End := lsp.Position{
-				Line:      loc[1].Y,
-				Character: loc[1].X,
-			}
-			line = root.Buf.Line(loc[1].Y)
-			x = loc[1].X
-			for ; x < len(line); x++ {
-				if femto.IsWordChar(string(line[x])) == false {
-					break
-				} else {
-					End.Character = x
-				}
-			}
-			r := lsp.Range{
-				Start: Start,
-				End:   End,
-			}
-			ret.main.OnGetCallIn(lsp.Location{
-				Range: r,
-				URI:   lsp.NewDocumentURI(ret.filename),
-			}, ret.filename)
+			ret.key_call_in()
 
 		case 'r':
-			loc := root.Cursor.CurSelection
-			ret.main.OnReference(lsp.Range{
-				Start: lsp.Position{
-					Line:      loc[0].Y,
-					Character: loc[0].X,
-				},
-				End: lsp.Position{
-					Line:      loc[1].Y,
-					Character: loc[1].X,
-				},
-			}, main.codeview.filename)
+			ret.key_refer()
 			return nil
 		}
 		switch event.Key() {
@@ -153,6 +107,66 @@ func NewCodeView(main *mainui) *CodeView {
 	})
 	ret.view = root
 	return &ret
+}
+
+func (code *CodeView) key_refer() {
+	root := code.view
+	main := code.main
+	loc := root.Cursor.CurSelection
+	code.main.OnReference(lsp.Range{
+		Start: lsp.Position{
+			Line:      loc[0].Y,
+			Character: loc[0].X,
+		},
+		End: lsp.Position{
+			Line:      loc[1].Y,
+			Character: loc[1].X,
+		},
+	}, main.codeview.filename)
+	main.ActiveTab(view_fzf)
+
+}
+
+func (code *CodeView) key_call_in() {
+	root := code.view
+	loc := root.Cursor.CurSelection
+	line := root.Buf.Line(loc[0].Y)
+
+	var x = loc[0].X
+	Start := lsp.Position{
+		Line:      loc[0].Y,
+		Character: loc[0].X,
+	}
+	for ; x >= 0; x-- {
+		if femto.IsWordChar(string(line[x])) == false {
+			break
+		} else {
+			Start.Character = x
+		}
+	}
+
+	End := lsp.Position{
+		Line:      loc[1].Y,
+		Character: loc[1].X,
+	}
+	line = root.Buf.Line(loc[1].Y)
+	x = loc[1].X
+	for ; x < len(line); x++ {
+		if femto.IsWordChar(string(line[x])) == false {
+			break
+		} else {
+			End.Character = x
+		}
+	}
+	r := lsp.Range{
+		Start: Start,
+		End:   End,
+	}
+	code.main.OnGetCallIn(lsp.Location{
+		Range: r,
+		URI:   lsp.NewDocumentURI(code.filename),
+	}, code.filename)
+	main.ActiveTab(view_callin)
 }
 func (code *CodeView) Load(filename string) error {
 	data, err := os.ReadFile(filename)
