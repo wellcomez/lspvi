@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
@@ -96,31 +97,55 @@ func (m *mainui) OnClickSymobolNode(node *tview.TreeNode) {
 	}
 }
 
-type callinview struct {
-	view *tview.TreeView
-	Name string
+type TabButton struct {
+	view  *tview.Button
+	Name  string
+	group *ButtonGroup
 }
 
-func new_callview() *callinview {
-	return &callinview{
-		view: tview.NewTreeView(),
-		Name: "callinview",
-	}
-}
-
-func (m *mainui) onfzf() {
-	m.page.SwitchToPage(m.fzf.Name)
-}
-func (m *mainui) onlog() {
-	m.page.SwitchToPage("0")
-}
-func (m *mainui) oncallin() {
-	m.page.SwitchToPage(m.callinview.Name)
+func (m mainui) OnTabChanged(tab *TabButton) {
+	m.page.SwitchToPage(tab.Name)
+  m.page.SetTitle(tab.Name)
 }
 func (m *mainui) OpenFile(file string) {
 	m.codeview.Load(file)
 	m.lspmgr.Open(file)
 	m.lspmgr.Current.LoadSymbol()
+}
+
+func (btn *TabButton) selected() {
+	btn.group.onselected(btn)
+}
+func NewTab(name string, group *ButtonGroup) *TabButton {
+	var style tcell.Style
+	// var style1 tcell.Style
+	// style1.Foreground(tcell.ColorGreen)
+	ret := &TabButton{
+		Name:  name,
+		view:  tview.NewButton(name).SetStyle(style),
+		group: group,
+	}
+	ret.view.SetSelectedFunc(ret.selected)
+	return ret
+}
+
+type ButtonGroup struct {
+	tabs    []*TabButton
+	handler func(tab *TabButton)
+}
+
+func (group ButtonGroup) onselected(tab *TabButton) {
+	group.handler(tab)
+}
+func NewButtonGroup(tabs []string, handler func(tab *TabButton)) *ButtonGroup {
+	ret := &ButtonGroup{
+		handler: handler,
+	}
+	var i = 0
+	for i = 0; i < len(tabs); i++ {
+		ret.tabs = append(ret.tabs, NewTab(tabs[i], ret))
+	}
+	return ret
 }
 
 func MainUI() {
@@ -161,6 +186,7 @@ func MainUI() {
 	page = 2
 	console.AddPage(main.fzf.Name, main.fzf.view, true, page == 0)
 	main.page = console
+//   console.SetBorder(true)
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
 	file := list
 	editor_area :=
@@ -168,12 +194,17 @@ func MainUI() {
 			AddItem(file, 0, 1, false).
 			AddItem(codeview.view, 0, 4, false).
 			AddItem(symbol_tree.view, 0, 1, false)
-	// fzfbtn := tview.NewButton("fzf")
-	// logbtn := tview.NewButton("log")
-	tab_area := tview.NewFlex().
-		AddItem(tview.NewButton("fzf").SetSelectedFunc(main.onfzf), 10, 1, true).
-		AddItem(tview.NewButton("log").SetSelectedFunc(main.onlog), 10, 1, true).
-		AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin), 10, 1, true)
+		// fzfbtn := tview.NewButton("fzf")
+		// logbtn := tview.NewButton("log")
+	var tabs []string = []string{"fzf", "log", "callin"}
+	group := NewButtonGroup(tabs, main.OnTabChanged)
+	tab_area := tview.NewFlex()
+	for _, v := range group.tabs {
+		tab_area.AddItem(v.view, 10, 1, true)
+	}
+	// tab_area.(tview.NewButton("fzf").SetSelectedFunc(main.onfzf).SetStyle(style), 10, 1, true).
+	// AddItem(tview.NewButton("log").SetSelectedFunc(main.onlog).SetStyle(style), 10, 1, true).
+	// AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin).SetStyle(style), 10, 1, true)
 
 	main_layout :=
 		tview.NewFlex().SetDirection(tview.FlexRow).
@@ -186,7 +217,6 @@ func MainUI() {
 		panic(err)
 	}
 }
-
 
 type Search interface {
 	Findall(key string) []int
