@@ -78,15 +78,37 @@ func NewCodeView(main *mainui) *CodeView {
 		switch event.Rune() {
 		case 'c':
 			loc := root.Cursor.CurSelection
+			line := root.Buf.Line(loc[0].Y)
+
+			var x = loc[0].X
+			Start := lsp.Position{
+				Line:      loc[0].Y,
+				Character: loc[0].X,
+			}
+			for ; x >= 0; x-- {
+				if femto.IsWordChar(string(line[x])) == false {
+					break
+				} else {
+					Start.Character = x
+				}
+			}
+
+			End := lsp.Position{
+				Line:      loc[1].Y,
+				Character: loc[1].X,
+			}
+			line = root.Buf.Line(loc[1].Y)
+			x = loc[1].X
+			for ; x < len(line); x++ {
+				if femto.IsWordChar(string(line[x])) == false {
+					break
+				} else {
+					End.Character = x
+				}
+			}
 			r := lsp.Range{
-				Start: lsp.Position{
-					Line:      loc[0].Y,
-					Character: loc[0].X,
-				},
-				End: lsp.Position{
-					Line:      loc[1].Y,
-					Character: loc[1].X,
-				},
+				Start: Start,
+				End:   End,
 			}
 			ret.main.OnGetCallIn(lsp.Location{
 				Range: r,
