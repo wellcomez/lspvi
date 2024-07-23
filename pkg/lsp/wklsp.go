@@ -153,6 +153,9 @@ func (sym *Symbol_file) LoadSymbol() {
 }
 
 func (sym *Symbol_file) __load_symbol_impl() error {
+	if sym.lsp == nil {
+		return fmt.Errorf("lsp is nil")
+	}
 	if len(sym.Class_object) > 0 {
 		sym.Handle.OnSymbolistChanged(*sym)
 		return nil
@@ -189,6 +192,9 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 }
 func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 	var ret []CallStack
+	if sym.lsp == nil {
+		return ret, fmt.Errorf("lsp is null")
+	}
 	c1, err := sym.lsp.PrepareCallHierarchy(loc)
 	if err != nil {
 		return ret, err
@@ -206,6 +212,9 @@ func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 	return ret, nil
 }
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
+	if sym.lsp == nil {
+		return
+	}
 	loc, err := sym.lsp.GetReferences(sym.Filename, ranges.Start)
 	if err != nil {
 		return
@@ -322,6 +331,9 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 	}
 
 	ret := wk.filemap[filename]
+	if ret.lsp == nil {
+		return nil, false, fmt.Errorf("fail to open %s", filename)
+	}
 	err := ret.lsp.DidOpen(filename)
 	return ret, true, err
 }

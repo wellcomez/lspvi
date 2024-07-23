@@ -17,17 +17,18 @@ type View interface {
 }
 
 type mainui struct {
-	codeview    *CodeView
-	lspmgr      *lspcore.LspWorkspace
-	symboltree  *SymbolTreeView
-	fzf         *fzfview
-	page        *tview.Pages
-	callinview  *callinview
-	tabs        *ButtonGroup
-	main_layout *tview.Flex
-	root        string
-	app         *tview.Application
-	bf          *BackForward
+	fileexplorer *file_tree_view
+	codeview     *CodeView
+	lspmgr       *lspcore.LspWorkspace
+	symboltree   *SymbolTreeView
+	fzf          *fzfview
+	page         *tview.Pages
+	callinview   *callinview
+	tabs         *ButtonGroup
+	main_layout  *tview.Flex
+	root         string
+	app          *tview.Application
+	bf           *BackForward
 }
 
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
@@ -165,8 +166,10 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	go m.async_open(file)
 }
 func (m *mainui) async_open(file string) {
-	m.lspmgr.Open(file)
-	m.lspmgr.Current.LoadSymbol()
+	_,err:=m.lspmgr.Open(file)
+	if err==nil{
+		m.lspmgr.Current.LoadSymbol()
+	}
 	m.app.QueueUpdate(func() {
 		m.app.ForceDraw()
 	})
@@ -207,15 +210,8 @@ func MainUI(arg *Arguments) {
 	main.callinview = new_callview(&main)
 	// symbol_tree.update()
 
-	list := tview.NewList().
-		AddItem("List item 1", "", 'a', nil).
-		AddItem("List item 2", "", 'b', nil).
-		AddItem("List item 3", "", 'c', nil).
-		AddItem("List item 4", "", 'd', nil).
-		AddItem("Quit", "", 'q', func() {
-			app.Stop()
-		})
-	list.ShowSecondaryText(false)
+	main.fileexplorer = new_file_tree(&main, "FileExplore", main.root, func(filename string) bool { return true })
+	main.fileexplorer.Init()
 	cmdline := tview.NewInputField()
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
@@ -227,10 +223,9 @@ func MainUI(arg *Arguments) {
 	main.page = console
 	//   console.SetBorder(true)
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
-	file := list
 	editor_area :=
 		tview.NewFlex().SetDirection(tview.FlexColumn).
-			AddItem(file, 0, 1, false).
+			AddItem(main.fileexplorer.view, 0, 1, false).
 			AddItem(codeview.view, 0, 4, false).
 			AddItem(symbol_tree.view, 0, 2, false)
 		// fzfbtn := tview.NewButton("fzf")
