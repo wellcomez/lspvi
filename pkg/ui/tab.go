@@ -15,7 +15,22 @@ type ButtonGroup struct {
 	handler func(tab *TabButton)
 }
 
+func (group ButtonGroup) Find(tab string) *TabButton {
+	for _, v := range group.tabs {
+		if v.Name == tab {
+			return v
+		}
+	}
+	return nil
+}
 func (group ButtonGroup) onselected(tab *TabButton) {
+  for _, v := range group.tabs{
+    if v == tab{
+      v.view.Focus(nil)
+    }else{
+      v.view.Blur()
+    }
+  }
 	group.handler(tab)
 }
 func NewButtonGroup(tabs []string, handler func(tab *TabButton)) *ButtonGroup {

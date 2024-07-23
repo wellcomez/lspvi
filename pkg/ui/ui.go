@@ -97,22 +97,15 @@ func (m *mainui) OnClickSymobolNode(node *tview.TreeNode) {
 	}
 }
 
-
-
 func (m mainui) OnTabChanged(tab *TabButton) {
 	m.page.SwitchToPage(tab.Name)
-  m.page.SetTitle(tab.Name)
+	m.page.SetTitle(tab.Name)
 }
 func (m *mainui) OpenFile(file string) {
 	m.codeview.Load(file)
 	m.lspmgr.Open(file)
 	m.lspmgr.Current.LoadSymbol()
 }
-
-
-
-
-
 
 func MainUI() {
 	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -145,14 +138,12 @@ func MainUI() {
 	cmdline := tview.NewInputField()
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
-	page := 0
-	console.AddPage(fmt.Sprintf("%d", page), tview.NewButton("button"), true, page == 0)
-	page = 1
-	console.AddPage(main.codeview.main.callinview.Name, main.callinview.view, true, page == 0)
-	page = 2
-	console.AddPage(main.fzf.Name, main.fzf.view, true, page == 0)
+	console.AddPage("log", tview.NewButton("button"), true, false)
+	console.AddPage(main.codeview.main.callinview.Name, main.callinview.view, true, false)
+	console.AddPage(main.fzf.Name, main.fzf.view, true, true)
+
 	main.page = console
-//   console.SetBorder(true)
+	//   console.SetBorder(true)
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
 	file := list
 	editor_area :=
@@ -168,6 +159,8 @@ func MainUI() {
 	for _, v := range group.tabs {
 		tab_area.AddItem(v.view, 10, 1, true)
 	}
+  fzttab:=group.Find("fzf")
+  fzttab.view.Focus(nil)
 	// tab_area.(tview.NewButton("fzf").SetSelectedFunc(main.onfzf).SetStyle(style), 10, 1, true).
 	// AddItem(tview.NewButton("log").SetSelectedFunc(main.onlog).SetStyle(style), 10, 1, true).
 	// AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin).SetStyle(style), 10, 1, true)
