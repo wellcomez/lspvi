@@ -30,6 +30,7 @@ type mainui struct {
 	app          *tview.Application
 	uml          *file_tree_view
 	bf           *BackForward
+	log          *tview.TextArea
 }
 
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
@@ -150,9 +151,9 @@ func (m *mainui) Init() {
 
 func (m mainui) OnTabChanged(tab *TabButton) {
 	if tab.Name == "uml" {
-    if m.uml!=nil{
-      m.uml.Init()
-    }
+		if m.uml != nil {
+			m.uml.Init()
+		}
 
 	}
 	m.page.SwitchToPage(tab.Name)
@@ -222,8 +223,9 @@ func MainUI(arg *Arguments) {
 	cmdline := tview.NewInputField()
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
+	main.log = tview.NewTextArea()
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
-	console.AddPage("log", tview.NewButton("button"), true, false)
+	console.AddPage("log", main.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
 	console.AddPage(main.fzf.Name, main.fzf.view, true, true)
 
