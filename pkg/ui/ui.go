@@ -2,7 +2,6 @@
 package mainui
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -33,29 +32,7 @@ type mainui struct {
 // OnRefenceChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 	// panic("unimplemented")
-	m.fzf.view.Clear()
-	m.fzf.Refs.refs = refs
-	for _, v := range refs {
-		source_file_path := v.URI.AsPath().String()
-		data, err := os.ReadFile(source_file_path)
-		if err != nil {
-			continue
-		}
-		lines := strings.Split(string(data), "\n")
-		line := lines[v.Range.Start.Line]
-		if len(line) == 0 {
-			continue
-		}
-		begin := max(0, v.Range.Start.Character-20)
-		end := min(len(line), v.Range.Start.Character+20)
-		path := ""
-		uri := v.URI.AsPath()
-		if uri != nil {
-			path = uri.String()
-		}
-		secondline := fmt.Sprintf("%s:%d", path, v.Range.Start.Line+1)
-		m.fzf.view.AddItem(line[begin:end], secondline, 0, nil)
-	}
+  m.fzf.OnRefenceChanged(refs)
 }
 
 func (m *mainui) OnCallTaskInViewChanged(task *lspcore.CallInTask) {
