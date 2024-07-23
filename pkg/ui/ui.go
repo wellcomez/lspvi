@@ -51,11 +51,25 @@ func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 	}
 }
 
+func (m *mainui) OnCallTaskInViewChanged(task *lspcore.CallInTask) {
+	m.callinview.updatetask(task)
+}
+
 // OnCallInViewChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnCallInViewChanged(stacks []lspcore.CallStack) {
 	m.callinview.update(stacks)
 }
+func (m *mainui) OnGetCallInTask(loc lsp.Location, filepath string) {
+	lsp, err := m.lspmgr.Open(filepath)
+	if err != nil {
+		return
+	}
+	lsp.CallinTask(loc)
+}
 func (m *mainui) OnGetCallIn(loc lsp.Location, filepath string) {
+	m.OnGetCallInTask(loc, filepath)
+}
+func (m *mainui) OnGetCallInStack(loc lsp.Location, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
 	if err != nil {
 		return

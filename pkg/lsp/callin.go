@@ -1,8 +1,14 @@
 package lspcore
 
 import (
+	"fmt"
+
 	"github.com/tectiv3/go-lsp"
 )
+
+func key(call lsp.CallHierarchyItem) string {
+	return fmt.Sprintf("%s%s%d%d%d", call.Name, call.URI.String(), call.Range.End.Line, call.Range.End.Character, call.Range.Start.Line, call.Range.Start.Character)
+}
 
 // CallStackEntry
 type CallStackEntry struct {
@@ -23,7 +29,7 @@ type CallInTask struct {
 	Allstack []*CallStack
 	loc      lsp.Location
 	lsp      *lsp_base
-	set      map[lsp.Range]bool
+	set      map[string]bool
 }
 type CallStack struct {
 	Items []*CallStackEntry
@@ -44,6 +50,7 @@ func NewCallInTask(loc lsp.Location, lsp *lsp_base) *CallInTask {
 		loc:  loc,
 		lsp:  lsp,
 	}
+	task.set = make(map[string]bool)
 	return task
 }
 
@@ -64,7 +71,7 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 	}
 	add := false
 	for _, cc := range child {
-		if task.set[cc.From.Range] {
+		if task.set[key(cc.From)] {
 			continue
 		}
 		top := &callchain{
@@ -72,6 +79,7 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 			parent: parent,
 			level:  parent.level + 1,
 		}
+		task.set[key(cc.From)]=true
 		task.addchild(top, leaf)
 		add = true
 	}
@@ -80,6 +88,7 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 	}
 	return nil
 }
+
 func (task *CallInTask) run() error {
 	c1, err := task.lsp.PrepareCallHierarchy(task.loc)
 	if err != nil {
@@ -92,7 +101,7 @@ func (task *CallInTask) run() error {
 			parent: nil,
 			level:  0,
 		}
-		task.set[item.Range] = true
+		task.set[key(item)] = true
 		task.addchild(top, &leaf)
 		for _, v := range leaf.set {
 			stacks := &CallStack{}

@@ -93,7 +93,10 @@ func (sym *Symbol_file) LoadSymbol() {
 	sym.Handle.OnSymbolistChanged(*sym)
 }
 func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
-	return nil, nil
+	task := NewCallInTask(loc, sym.lsp)
+	task.run()
+	sym.Handle.OnCallTaskInViewChanged(task)
+	return task, nil
 }
 func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 	var ret []CallStack
@@ -219,4 +222,5 @@ type lsp_data_changed interface {
 	OnCodeViewChanged(file Symbol_file)
 	OnRefenceChanged(file []lsp.Location)
 	OnCallInViewChanged(stacks []CallStack)
+	OnCallTaskInViewChanged(stacks* CallInTask)
 }
