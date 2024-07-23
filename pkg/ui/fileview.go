@@ -101,6 +101,9 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 	}
 	for _, file := range files {
 		fullpath := filepath.Join(dir, file.Name())
+		if !view.handle(fullpath) {
+			continue
+		}
 		prefix := ""
 		if file.IsDir() {
 			prefix = "+"
