@@ -48,7 +48,7 @@ type lspclient interface {
 	CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error)
 	IsMe(filename string) bool
 	IsSource(filename string) bool
-	Resolve(sym lsp.SymbolInformation) (*lsp.SymbolInformation, bool)
+	Resolve(sym lsp.SymbolInformation, symbolfile *Symbol_file) bool
 }
 type lsp_base struct {
 	core            *lspcore
@@ -83,8 +83,8 @@ func (l lsp_py) Launch_Lsp_Server() error {
 
 // Resolve implements lspclient.
 // Subtle: this method shadows the method (lsp_base).Resolve of lsp_py.lsp_base.
-func (l lsp_py) Resolve(sym lsp.SymbolInformation) (*lsp.SymbolInformation, bool) {
-	return nil,false
+func (l lsp_py) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {
+	return false
 }
 
 // InitializeLsp implements lspclient.

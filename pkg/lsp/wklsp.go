@@ -156,16 +156,16 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 					parent.Members = append(parent.Members, s)
 				}
 			} else {
-				sym.Class_object = append(sym.Class_object, &s)
+				yes := sym.lsp.Resolve(v, sym)
+				if !yes  {
+					sym.Class_object = append(sym.Class_object, &s)
+				}
 				return i + 1
 			}
 		} else {
-			newsym, yes := sym.lsp.Resolve(v)
-			if !yes || newsym == nil {
+			yes := sym.lsp.Resolve(v, sym)
+			if !yes  {
 				sym.Class_object = append(sym.Class_object, &s)
-			} else {
-				// sss := []lsp.SymbolInformation{*newsym}
-
 			}
 		}
 		i = i + 1
@@ -182,7 +182,7 @@ type LspWorkspace struct {
 	Handle  lsp_data_changed
 }
 
-func (wk LspWorkspace) getClient(filename string) lspclient{
+func (wk LspWorkspace) getClient(filename string) lspclient {
 	if wk.cpp.IsMe(filename) {
 		err := wk.cpp.Launch_Lsp_Server()
 		if err == nil {
