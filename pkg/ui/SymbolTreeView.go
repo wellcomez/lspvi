@@ -25,7 +25,7 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 		main: main,
 		view: symbol_tree,
 	}
-	symbol_tree.SetInputCapture(ret.Handle)
+	symbol_tree.SetInputCapture(ret.HandleKey)
 	symbol_tree.SetSelectedFunc(ret.OnClickSymobolNode)
 	return &ret
 }
@@ -43,7 +43,7 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 		}
 	}
 }
-func (c *SymbolTreeView) Handle(event *tcell.EventKey) *tcell.EventKey {
+func (c *SymbolTreeView) HandleKey(event *tcell.EventKey) *tcell.EventKey {
 	cur := c.view.GetCurrentNode()
 	value := cur.GetReference()
 	var chr = event.Rune()
@@ -77,7 +77,7 @@ func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 	startIndex := strings.Index(beginline, sym.SymInfo.Name)
 	if startIndex > 0 {
 		loc.Range.Start.Character = startIndex
-		loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex - 1
+		loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex 
 		loc.Range.End.Line = loc.Range.Start.Line
 	}
 	// println(ss)

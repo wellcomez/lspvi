@@ -222,7 +222,7 @@ func MainUI(arg *Arguments) {
 	cmdline := tview.NewInputField()
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
-	console.SetBorder(true)
+	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
 	console.AddPage("log", tview.NewButton("button"), true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
 	console.AddPage(main.fzf.Name, main.fzf.view, true, true)
