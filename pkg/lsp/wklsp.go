@@ -85,6 +85,10 @@ func is_memeber(kind lsp.SymbolKind) bool {
 	return kind == lsp.SymbolKindMethod || kind == lsp.SymbolKindField || kind == lsp.SymbolKindConstructor
 }
 func (sym *Symbol_file) LoadSymbol() {
+	if len(sym.Class_object) > 0 {
+		sym.Handle.OnSymbolistChanged(*sym)
+		return
+	}
 	symbols, err := sym.lsp.GetDocumentSymbol(sym.Filename)
 	if err != nil {
 		return
@@ -157,14 +161,14 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 				}
 			} else {
 				yes := sym.lsp.Resolve(v, sym)
-				if !yes  {
+				if !yes {
 					sym.Class_object = append(sym.Class_object, &s)
 				}
 				return i + 1
 			}
 		} else {
 			yes := sym.lsp.Resolve(v, sym)
-			if !yes  {
+			if !yes {
 				sym.Class_object = append(sym.Class_object, &s)
 			}
 		}
