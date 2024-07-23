@@ -145,6 +145,10 @@ func (l lsp_cpp) InitializeLsp(wk WorkSpace) error {
 	return fmt.Errorf("%s", result.ServerInfo.Name)
 }
 
+func (l lsp_cpp) Close() {
+	l.core.cmd.Process.Kill()
+}
+
 // Launch_Lsp_Server implements lspclient.
 func (l lsp_cpp) Launch_Lsp_Server() error {
 	if l.started {

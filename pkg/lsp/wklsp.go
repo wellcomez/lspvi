@@ -186,6 +186,10 @@ type LspWorkspace struct {
 	Handle  lsp_data_changed
 }
 
+func (wk LspWorkspace) Close() {
+	wk.cpp.Close()
+	wk.py.Close()
+}
 func (wk LspWorkspace) getClient(filename string) lspclient {
 	if wk.cpp.IsMe(filename) {
 		err := wk.cpp.Launch_Lsp_Server()

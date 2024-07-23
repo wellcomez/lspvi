@@ -49,6 +49,7 @@ type lspclient interface {
 	IsMe(filename string) bool
 	IsSource(filename string) bool
 	Resolve(sym lsp.SymbolInformation, symbolfile *Symbol_file) bool
+	Close()
 }
 type lsp_base struct {
 	core            *lspcore
@@ -101,7 +102,8 @@ func (l lsp_py) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.C
 func (l lsp_py) DidOpen(file string) error {
 	return lsp_base.DidOpen(l.lsp_base, file)
 }
-
+// Close 
+func (l lsp_py) Close() {}
 // GetDeclare implements lspclient.
 // Subtle: this method shadows the method (lsp_base).GetDeclare of lsp_py.lsp_base.
 func (l lsp_py) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
