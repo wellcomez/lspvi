@@ -2,6 +2,8 @@ package lspcore
 
 import (
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/tectiv3/go-lsp"
 )
@@ -141,6 +143,10 @@ func (c *class_resolve_task) Run() error {
 	return nil
 }
 func (c *class_resolve_task) resolve(entry *CallStackEntry) {
+	// sss :=entry.DisplayName()
+	// if strings.Index(sss,"ExecuteNavigationEvent")>-1{
+	// 	log.Println("xxxxxxxxx")
+	// }
 	sym, _ := c.wklsp.find_from_stackentry(entry)
 	if sym != nil {
 		entry.PtrSymobl = sym

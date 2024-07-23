@@ -2,6 +2,7 @@ package lspcore
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
@@ -54,6 +55,9 @@ func (call CallStack) Uml(markdown bool) string {
 			rightPrefix = s.uml_class_name() + "::"
 		}
 		right := rightPrefix + s.symboldefine_name()
+		if strings.Index(right, "ProcessInternal")>0{
+			log.Println(right,s.symboldefine_name(),s.uml_class_name())
+		}
 		if len(ret) == 0 {
 			title = fmt.Sprintf("==%s==", right)
 		}
@@ -72,7 +76,7 @@ func (call CallStack) Uml(markdown bool) string {
 		} else {
 			if caller != nil {
 				left := caller.uml_class_name()
-				if !caller.isFunction() {
+				if caller.isFunction() {
 					left = caller.symboldefine_name()
 				}
 				ret = append(ret, fmt.Sprintf("%s -> %s", left, right))
