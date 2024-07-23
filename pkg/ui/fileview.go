@@ -25,6 +25,7 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 		rootdir: rootdir,
 		handle:  handle,
 	}
+	view.SetBorder(true)
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
 	return ret
@@ -76,9 +77,11 @@ func (view *file_tree_view) node_selected(node *tview.TreeNode) {
 				}
 				node.Collapse()
 			} else {
+				dirname:=filepath.Dir(filename)
 				// node.Expand()
+				view.view.SetTitle(dirname)
 				root2 := tview.NewTreeNode(node.GetText())
-				parent := tview.NewTreeNode("..")
+				parent := tview.NewTreeNode(dirname)
 				parent.SetReference(filepath.Dir(filename))
 				root2.AddChild(parent)
 				for _, v := range node.GetChildren() {
