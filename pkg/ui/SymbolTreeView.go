@@ -38,8 +38,8 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 	value := node.GetReference()
 	if value != nil {
 
-		if sym, ok := value.(lspcore.Symbol); ok {
-			symview.main.gotoline(sym.SymInfo.Location)
+		if sym, ok := value.(lsp.SymbolInformation); ok {
+			symview.main.gotoline(sym.Location)
 		}
 	}
 }
@@ -51,13 +51,17 @@ func (c *SymbolTreeView) Handle(event *tcell.EventKey) *tcell.EventKey {
 	var action_call_in = chr == 'c'
 	if action_call_in || action_refer {
 		if value != nil {
-			if sym, ok := value.(lspcore.Symbol); ok {
+			if sym, ok := value.(lsp.SymbolInformation); ok {
 				if action_refer {
-					c.get_refer(sym)
+					c.get_refer(lspcore.Symbol{
+						SymInfo: sym,
+					})
 					return nil
 				}
 				if action_call_in {
-					c.get_callin(sym)
+					c.get_callin(lspcore.Symbol{
+						SymInfo: sym,
+					})
 					return nil
 				}
 
@@ -127,19 +131,19 @@ func (v *SymbolTreeView) update(file lspcore.Symbol_file) {
 		if v.Is_class() {
 			c := tview.NewTreeNode(v.SymbolListStrint())
 			root_node.AddChild(c)
-			c.SetReference(v)
+			c.SetReference(v.SymInfo)
 			if len(v.Members) > 0 {
 				childnode := tview.NewTreeNode(v.SymbolListStrint())
 				for _, c := range v.Members {
 					cc := tview.NewTreeNode(c.SymbolListStrint())
-					cc.SetReference(c)
+					cc.SetReference(c.SymInfo)
 					childnode.AddChild(cc)
 				}
 				root_node.AddChild(childnode)
 			}
 		} else {
 			c := tview.NewTreeNode(v.SymbolListStrint())
-			c.SetReference(v)
+			c.SetReference(v.SymInfo)
 			root_node.AddChild(c)
 		}
 	}

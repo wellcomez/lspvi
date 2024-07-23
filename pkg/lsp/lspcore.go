@@ -47,14 +47,16 @@ type lspclient interface {
 	PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
 	CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error)
 	IsMe(filename string) bool
+	IsSource(filename string) bool
+	Resolve(sym lsp.SymbolInformation) (*lsp.SymbolInformation, bool)
 }
 type lsp_base struct {
 	core            *lspcore
 	wk              WorkSpace
 	file_extensions []string
 	root_files      []string
-	started bool
-	inited bool
+	started         bool
+	inited          bool
 }
 type sourcefile struct {
 	filename string
@@ -68,9 +70,16 @@ type lsp_py struct {
 	lsp_base
 }
 
+// IsSource
+func (l lsp_base) Resolve(sym lsp.SymbolInformation) (*lsp.SymbolInformation, bool) {
+	return nil,false 
+}
+func (l lsp_base) IsSource(filename string) bool {
+	return false
+}
 func (l lsp_base) IsMe(filename string) bool {
 	ext := filepath.Ext(filename)
-	ext  = strings.TrimPrefix(ext,".")	
+	ext = strings.TrimPrefix(ext, ".")
 	for _, v := range l.file_extensions {
 		if v == ext {
 			return true
@@ -80,10 +89,10 @@ func (l lsp_base) IsMe(filename string) bool {
 }
 func new_lsp_base(wk WorkSpace) lsp_base {
 	return lsp_base{
-		core: &lspcore{},
-		wk:   wk,
+		core:    &lspcore{},
+		wk:      wk,
 		started: false,
-		inited: false,
+		inited:  false,
 	}
 }
 

@@ -160,7 +160,13 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 				return i + 1
 			}
 		} else {
-			sym.Class_object = append(sym.Class_object, &s)
+			newsym, yes := sym.lsp.Resolve(v)
+			if !yes || newsym == nil {
+				sym.Class_object = append(sym.Class_object, &s)
+			} else {
+				// sss := []lsp.SymbolInformation{*newsym}
+
+			}
 		}
 		i = i + 1
 	}
@@ -222,5 +228,5 @@ type lsp_data_changed interface {
 	OnCodeViewChanged(file Symbol_file)
 	OnRefenceChanged(file []lsp.Location)
 	OnCallInViewChanged(stacks []CallStack)
-	OnCallTaskInViewChanged(stacks* CallInTask)
+	OnCallTaskInViewChanged(stacks *CallInTask)
 }

@@ -3,6 +3,10 @@ package lspcore
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/tectiv3/go-lsp"
 )
 
 var file_extensions = []string{"cc", "cpp", "h", "hpp", "cxx", "hxx",
@@ -29,7 +33,25 @@ func new_lsp_cpp(wk WorkSpace) lsp_cpp {
 	ret.root_files = root_files
 	return ret
 }
-
+func (l lsp_cpp) Resolve(sym lsp.SymbolInformation) (*lsp.SymbolInformation, bool) {
+	filename := sym.Location.URI.AsPath().String()
+	yes := l.IsSource(filename)
+	if yes == false {
+		return nil, false
+	}
+	return nil, false
+}
+func (l lsp_cpp) IsSource(filename string) bool {
+	ext := filepath.Ext(filename)
+	ext = strings.TrimPrefix(ext, ".")
+	source := []string{"cpp", "cc"}
+	for _, s := range source {
+		if s == ext {
+			return true
+		}
+	}
+	return false
+}
 func (l *lsp_cpp) InitializeLsp(wk WorkSpace) error {
 	if l.inited {
 		return nil
