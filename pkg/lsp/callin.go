@@ -7,7 +7,7 @@ import (
 )
 
 func key(call lsp.CallHierarchyItem) string {
-	return fmt.Sprintf("%s%s%d%d%d", call.Name, call.URI.String(), call.Range.End.Line, call.Range.End.Character, call.Range.Start.Line, call.Range.Start.Character)
+	return fmt.Sprintf("%s%s%d%d%d%d", call.Name, call.URI.String(), call.Range.End.Line, call.Range.End.Character, call.Range.Start.Line, call.Range.Start.Character)
 }
 
 // CallStackEntry

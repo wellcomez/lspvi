@@ -53,7 +53,7 @@ func (c *SymbolTreeView) Handle(event *tcell.EventKey) *tcell.EventKey {
 }
 func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 	loc := sym.SymInfo.Location
-	ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	beginline := c.main.codeview.view.Buf.Line(loc.Range.Start.Line)
 	startIndex := strings.Index(beginline, sym.SymInfo.Name)
 	if startIndex > 0 {
@@ -61,13 +61,13 @@ func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 		loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex - 1
 		loc.Range.End.Line = loc.Range.Start.Line
 	}
-	println(ss)
+	// println(ss)
 	c.main.OnGetCallInTask(loc, c.main.codeview.filename)
 	c.main.ActiveTab(view_callin)
 }
 func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 	r := sym.SymInfo.Location.Range
-	ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	beginline := c.main.codeview.view.Buf.Line(r.Start.Line)
 	startIndex := strings.Index(beginline, sym.SymInfo.Name)
 	if startIndex > 0 {
@@ -75,7 +75,7 @@ func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 		r.End.Character = len(sym.SymInfo.Name) + startIndex - 1
 		r.End.Line = r.Start.Line
 	}
-	println(ss)
+	// println(ss)
 	c.main.OnReference(r, c.main.codeview.filename)
 	c.main.ActiveTab(view_fzf)
 }
@@ -95,6 +95,10 @@ func (v SymbolTreeView) Findall(key string) []int {
 	return ret
 }
 func (v *SymbolTreeView) update(file lspcore.Symbol_file) {
+  root:=v.view.GetRoot()
+  if root!=nil{
+    root.ClearChildren()
+  }
 	root_node := tview.NewTreeNode("symbol")
 	root_node.SetReference("1")
 	for _, v := range file.Class_object {
