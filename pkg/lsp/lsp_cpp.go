@@ -79,8 +79,8 @@ func new_lsp_cpp(wk WorkSpace,core *lspcore ) lsp_cpp {
 	ret := lsp_cpp{
 		new_lsp_base(wk,core),
 	}
-	ret.file_extensions = file_extensions
-	ret.root_files = root_files
+	ret.core.file_extensions = file_extensions
+	ret.core.root_files = root_files
 	return ret
 }
 func (l lsp_cpp) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {

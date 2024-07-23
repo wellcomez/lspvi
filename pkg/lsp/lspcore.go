@@ -35,8 +35,11 @@ type lspcore struct {
 	handle     rpchandle
 	rw         io.ReadWriteCloser
 	LanguageID string
-	started bool
-	inited  bool
+	started    bool
+	inited     bool
+
+	file_extensions []string
+	root_files      []string
 }
 type lspclient interface {
 	InitializeLsp(wk WorkSpace) error
@@ -54,14 +57,8 @@ type lspclient interface {
 	Close()
 }
 type lsp_base struct {
-	core            *lspcore
-	wk              WorkSpace
-	file_extensions []string
-	root_files      []string
-}
-type sourcefile struct {
-	filename string
-	client   lsp_base
+	core *lspcore
+	wk   *WorkSpace
 }
 
 // DidOpen implements lspclient.
@@ -77,7 +74,7 @@ func (l lsp_base) IsSource(filename string) bool {
 func (l lsp_base) IsMe(filename string) bool {
 	ext := filepath.Ext(filename)
 	ext = strings.TrimPrefix(ext, ".")
-	for _, v := range l.file_extensions {
+	for _, v := range l.core.file_extensions {
 		if v == ext {
 			return true
 		}
@@ -87,7 +84,7 @@ func (l lsp_base) IsMe(filename string) bool {
 func new_lsp_base(wk WorkSpace, core *lspcore) lsp_base {
 	return lsp_base{
 		core: core,
-		wk:   wk,
+		wk:   &wk,
 	}
 }
 
@@ -459,7 +456,6 @@ func mainxx2() {
 	fmt.Printf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
 
 }
-
 
 type readwriter struct {
 	w io.WriteCloser
