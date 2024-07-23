@@ -141,21 +141,7 @@ func (m *mainui) OnSymbolistChanged(file lspcore.Symbol_file) {
 func (m *mainui) Init() {
 	m.lspmgr.Handle = m
 }
-func (m *mainui) OnClickSymobolNode(node *tview.TreeNode) {
-	if node.IsExpanded() {
-		node.Collapse()
-	} else {
-		node.Expand()
-	}
-	value := node.GetReference()
-	if value != nil {
 
-		if sym, ok := value.(lspcore.Symbol); ok {
-			line := sym.SymInfo.Location.Range.Start.Line
-			m.codeview.gotoline(line)
-		}
-	}
-}
 
 func (m mainui) OnTabChanged(tab *TabButton) {
 	m.page.SwitchToPage(tab.Name)
@@ -209,10 +195,7 @@ func MainUI(arg *Arguments) {
 	// main.fzf = new_fzfview()
 	symbol_tree := NewSymbolTreeView(&main)
 	main.symboltree = symbol_tree
-	symbol_tree.view.SetSelectedFunc(
-		func(node *tview.TreeNode) {
-			main.OnClickSymobolNode(node)
-		})
+
 	main.codeview = codeview
 	main.lspmgr.Handle = &main
 	main.fzf = new_fzfview(&main)

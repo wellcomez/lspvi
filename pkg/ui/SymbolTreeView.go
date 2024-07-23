@@ -26,7 +26,22 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 		view: symbol_tree,
 	}
 	symbol_tree.SetInputCapture(ret.Handle)
+	symbol_tree.SetSelectedFunc(ret.OnClickSymobolNode)
 	return &ret
+}
+func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
+	if node.IsExpanded() {
+		node.Collapse()
+	} else {
+		node.Expand()
+	}
+	value := node.GetReference()
+	if value != nil {
+
+		if sym, ok := value.(lspcore.Symbol); ok {
+			symview.main.gotoline(sym.SymInfo.Location)
+		}
+	}
 }
 func (c *SymbolTreeView) Handle(event *tcell.EventKey) *tcell.EventKey {
 	cur := c.view.GetCurrentNode()
@@ -94,7 +109,8 @@ func (v SymbolTreeView) Findall(key string) []int {
 	}
 	return ret
 }
-// Clear 
+
+// Clear
 func (v *SymbolTreeView) Clear() {
 	root_node := tview.NewTreeNode("symbol loading .....")
 	root_node.SetReference("1")
