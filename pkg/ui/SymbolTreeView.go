@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
@@ -36,13 +38,46 @@ func (c *SymbolTreeView) Handle(event *tcell.EventKey) *tcell.EventKey {
 		if value != nil {
 			if sym, ok := value.(lspcore.Symbol); ok {
 				if action_refer {
-					line := sym.SymInfo.Location.Range.Start.Line
-					c.main.gotoline(line)
+					c.get_refer(sym)
+					return nil
 				}
+				if action_call_in {
+					c.get_callin(sym)
+					return nil
+				}
+
 			}
 		}
 	}
 	return event
+}
+func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
+	loc := sym.SymInfo.Location
+	ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	beginline := c.main.codeview.view.Buf.Line(loc.Range.Start.Line)
+	startIndex := strings.Index(beginline, sym.SymInfo.Name)
+	if startIndex > 0 {
+		loc.Range.Start.Character = startIndex
+		loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex - 1
+		loc.Range.End.Line = loc.Range.Start.Line
+	}
+	println(ss)
+	c.main.OnGetCallInTask(loc, c.main.codeview.filename)
+	c.main.ActiveTab(view_callin)
+}
+func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
+	r := sym.SymInfo.Location.Range
+	ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	beginline := c.main.codeview.view.Buf.Line(r.Start.Line)
+	startIndex := strings.Index(beginline, sym.SymInfo.Name)
+	if startIndex > 0 {
+		r.Start.Character = startIndex
+		r.End.Character = len(sym.SymInfo.Name) + startIndex - 1
+		r.End.Line = r.Start.Line
+	}
+	println(ss)
+	c.main.OnReference(r, c.main.codeview.filename)
+	c.main.ActiveTab(view_fzf)
 }
 
 func (s SymbolListItem) displayname() string {
