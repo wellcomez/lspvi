@@ -16,6 +16,10 @@ type CallStackEntry struct {
 	item lsp.CallHierarchyItem
 }
 
+func (c CallStackEntry) DisplayName() string {
+	return fmt.Sprintf("%s %s:%d", c.Name, c.item.URI.AsPath().String(), c.item.Range.Start.Line)
+}
+
 // NewCallStackEntry
 func NewCallStackEntry(item lsp.CallHierarchyItem) *CallStackEntry {
 	return &CallStackEntry{
@@ -79,7 +83,7 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 			parent: parent,
 			level:  parent.level + 1,
 		}
-		task.set[key(cc.From)]=true
+		task.set[key(cc.From)] = true
 		task.addchild(top, leaf)
 		add = true
 	}

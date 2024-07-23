@@ -24,12 +24,12 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	for _, stack := range task.Allstack {
 		var i = 0
 		c := stack.Items[0]
-		parent := tview.NewTreeNode(c.Name)
+		parent := tview.NewTreeNode(c.DisplayName())
 		root_node.AddChild(parent)
 		parent.SetReference(c)
 		for i = 1; i < len(stack.Items); i++ {
 			c = stack.Items[i]
-			parent1 := tview.NewTreeNode(c.Name)
+			parent1 := tview.NewTreeNode(c.DisplayName())
 			parent1.SetReference(c)
 			parent.AddChild(parent1)
 			parent = parent1
@@ -43,12 +43,12 @@ func (callin *callinview) update(stacks []lspcore.CallStack) {
 	for _, stack := range stacks {
 		var i = 0
 		c := stack.Items[0]
-		parent := tview.NewTreeNode(c.Name)
+		parent := tview.NewTreeNode(c.DisplayName())
 		root_node.AddChild(parent)
 		parent.SetReference(c)
 		for i = 1; i < len(stack.Items); i++ {
 			c = stack.Items[i]
-			parent1 := tview.NewTreeNode(c.Name)
+			parent1 := tview.NewTreeNode(c.DisplayName())
 			parent1.SetReference(c)
 			parent.AddChild(parent1)
 			parent = parent1
