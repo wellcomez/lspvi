@@ -149,6 +149,9 @@ func (m *mainui) Init() {
 	m.lspmgr.Handle = m
 }
 
+func (m mainui) OnCodeLineChange(line int) {
+	m.symboltree.OnCodeLineChange(line)
+}
 func (m mainui) OnTabChanged(tab *TabButton) {
 	if tab.Name == "uml" {
 		if m.uml != nil {

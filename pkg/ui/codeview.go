@@ -14,15 +14,15 @@ import (
 )
 
 type CodeView struct {
-	filename string
-	view     *femto.View
-	main     *mainui
-  call_task_map map[string]lspcore.CallInTask
+	filename      string
+	view          *femto.View
+	main          *mainui
+	call_task_map map[string]lspcore.CallInTask
 }
 
 func NewCodeView(main *mainui) *CodeView {
-	view := tview.NewTextView()
-	view.SetBorder(true)
+	// view := tview.NewTextView()
+	// view.SetBorder(true)
 	ret := CodeView{}
 	ret.main = main
 	var colorscheme femto.Colorscheme
@@ -61,7 +61,7 @@ func (ret *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMo
 		root.Cursor.Loc = femto.Loc{X: posX, Y: posY}
 		root.Cursor.SetSelectionStart(femto.Loc{X: posX, Y: posY})
 		root.Cursor.SetSelectionEnd(femto.Loc{X: posX, Y: posY})
-
+		ret.update_current_line()
 		return tview.MouseConsumed, nil
 	}
 	if action == 14 || action == 13 {
@@ -77,6 +77,7 @@ func (ret *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMo
 		root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline, root.Buf.NumLines))}
 		log.Println(root.Cursor.Loc)
 		root.SelectLine()
+		ret.update_current_line()
 		return tview.MouseConsumed, nil
 	}
 	return action, event
@@ -100,12 +101,14 @@ func (ret *CodeView) keyhandle(event *tcell.EventKey) *tcell.EventKey {
 		root.ScrollUp(1)
 		root.SelectLine()
 		log.Println("cursor up ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
+		ret.update_current_line()
 	case tcell.KeyDown:
 		root.SelectDown()
 		root.ScrollDown(1)
 		root.SelectLine()
 
 		log.Println("cursor down ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
+		ret.update_current_line()
 	case tcell.KeyCtrlS:
 
 		return nil
@@ -113,6 +116,12 @@ func (ret *CodeView) keyhandle(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 	return nil
+}
+
+func (ret *CodeView) update_current_line() {
+	root := ret.view
+	line := root.Cursor.Loc.Y
+	ret.main.OnCodeLineChange(line)
 }
 
 func (code *CodeView) key_refer() {

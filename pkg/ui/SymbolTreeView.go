@@ -14,9 +14,50 @@ type SymbolTreeView struct {
 	symbols []SymbolListItem
 	main    *mainui
 }
+type Filter struct {
+	line int
+	ret  *tview.TreeNode
+	gap  int
+}
+
+func (m *Filter) compare(node, parent *tview.TreeNode) bool {
+	value := node.GetReference()
+	if value != nil {
+		if sym, ok := value.(lsp.SymbolInformation); ok {
+			if m.ret == nil {
+				m.ret = node
+				m.gap = m.line - sym.Location.Range.Start.Line
+				if m.gap < 0 {
+					m.gap = -m.gap
+				}
+			} else {
+				gap2 := m.line - sym.Location.Range.Start.Line
+				if gap2 < 0 {
+					gap2 = -gap2
+				}
+				if gap2 < m.gap {
+					m.gap = gap2
+					m.ret = node
+				}
+
+			}
+		}
+	}
+	return true 
+}
+func (m *SymbolTreeView) OnCodeLineChange(line int) {
+	ss := Filter{line: line}
+	if m.view.GetRoot() != nil {
+		m.view.GetRoot().Walk(ss.compare)
+	}
+	if ss.ret !=nil {
+		m.view.SetCurrentNode(ss.ret)
+	}
+}
+
 type SymbolListItem struct {
 	name string
-	sym  lsp.SymbolInformation
+	// sym  lsp.SymbolInformation
 }
 
 func NewSymbolTreeView(main *mainui) *SymbolTreeView {
@@ -77,7 +118,7 @@ func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 	startIndex := strings.Index(beginline, sym.SymInfo.Name)
 	if startIndex > 0 {
 		loc.Range.Start.Character = startIndex
-		loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex 
+		loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex
 		loc.Range.End.Line = loc.Range.Start.Line
 	}
 	// println(ss)
