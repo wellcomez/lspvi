@@ -46,7 +46,7 @@ func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 		if uri != nil {
 			path = uri.String()
 		}
-		secondline := fmt.Sprintf("%s:%d", path, v.Range.Start.Line)
+		secondline := fmt.Sprintf("%s:%d", path, v.Range.Start.Line+1)
 		m.fzf.view.AddItem(line[begin:end], secondline, 0, nil)
 	}
 }
@@ -159,8 +159,8 @@ func MainUI() {
 	for _, v := range group.tabs {
 		tab_area.AddItem(v.view, 10, 1, true)
 	}
-  fzttab:=group.Find("fzf")
-  fzttab.view.Focus(nil)
+	fzttab := group.Find("fzf")
+	fzttab.view.Focus(nil)
 	// tab_area.(tview.NewButton("fzf").SetSelectedFunc(main.onfzf).SetStyle(style), 10, 1, true).
 	// AddItem(tview.NewButton("log").SetSelectedFunc(main.onlog).SetStyle(style), 10, 1, true).
 	// AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin).SetStyle(style), 10, 1, true)

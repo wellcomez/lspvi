@@ -137,7 +137,7 @@ func (code *CodeView) Load(filename string) error {
 }
 func (codeview *CodeView) gotoline(line int) {
 	log.Println("gotoline", line)
-	codeview.view.Topline = line
+	codeview.view.Topline = max(line-5, 0)
 	RightX := len(codeview.view.Buf.Line(line))
 	codeview.view.Cursor.CurSelection[0] = femto.Loc{
 		X: 0,
