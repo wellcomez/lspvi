@@ -174,7 +174,7 @@ func MainUI(arg *Arguments) {
 	app := tview.NewApplication()
 	codeview := NewCodeView(&main)
 	// main.fzf = new_fzfview()
-	symbol_tree := NewSymbolTreeView()
+	symbol_tree := NewSymbolTreeView(&main)
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetSelectedFunc(
 		func(node *tview.TreeNode) {

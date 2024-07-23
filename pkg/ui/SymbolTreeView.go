@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
@@ -9,18 +10,41 @@ import (
 type SymbolTreeView struct {
 	view    *tview.TreeView
 	symbols []SymbolListItem
+	main    *mainui
 }
 type SymbolListItem struct {
 	name string
 	sym  lsp.SymbolInformation
 }
 
-func NewSymbolTreeView() *SymbolTreeView {
+func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
-	ret := SymbolTreeView{}
-	ret.view = symbol_tree
+	ret := SymbolTreeView{
+		main: main,
+		view: symbol_tree,
+	}
+	symbol_tree.SetInputCapture(ret.Handle)
 	return &ret
 }
+func (c *SymbolTreeView) Handle(event *tcell.EventKey) *tcell.EventKey {
+	cur := c.view.GetCurrentNode()
+	value := cur.GetReference()
+	var chr = event.Rune()
+	var action_refer = chr == 'r'
+	var action_call_in = chr == 'c'
+	if action_call_in || action_refer {
+		if value != nil {
+			if sym, ok := value.(lspcore.Symbol); ok {
+				if action_refer {
+					line := sym.SymInfo.Location.Range.Start.Line
+					c.main.gotoline(line)
+				}
+			}
+		}
+	}
+	return event
+}
+
 func (s SymbolListItem) displayname() string {
 	return s.name
 }
