@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
@@ -15,10 +14,6 @@ import (
 type View interface {
 	Getview() tview.Primitive
 }
-
-
-
-
 
 var filearg = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
 var root = "/home/z/dev/lsp/pylspclient/tests/cpp/"
@@ -30,14 +25,6 @@ type mainui struct {
 	fzf        *fzfview
 	page       *tview.Pages
 	callinview *callinview
-}
-
-
-
-type search_result struct {
-}
-type search_reference_result struct {
-	refs []lsp.Location
 }
 
 // OnRefenceChanged implements lspcore.lsp_data_changed.
@@ -105,21 +92,6 @@ func (m *mainui) OnClickSymobolNode(node *tview.TreeNode) {
 		if sym, ok := value.(lspcore.Symbol); ok {
 			line := sym.SymInfo.Location.Range.Start.Line
 			m.codeview.gotoline(line)
-			// m.codeview.view.Topline = line
-			// RightX := len(m.codeview.view.Buf.Line(line))
-			// m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
-			// 	X: 0,
-			// 	Y: line,
-			// }
-			// m.codeview.view.Cursor.CurSelection[0] = femto.Loc{
-			// 	X: RightX,
-			// 	Y: line,
-			// }
-			// root := m.codeview.view
-			// root.Cursor.Loc = femto.Loc{X: 0, Y: line}
-			// root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: line})
-			// text := root.Buf.Line(line)
-			// root.Cursor.SetSelectionEnd(femto.Loc{X: len(text), Y: line})
 		}
 	}
 }
@@ -128,11 +100,6 @@ type callinview struct {
 	view *tview.TreeView
 	Name string
 }
-type fzfview struct {
-	view *tview.List
-	Name string
-	refs search_reference_result
-}
 
 func new_callview() *callinview {
 	return &callinview{
@@ -140,18 +107,7 @@ func new_callview() *callinview {
 		Name: "callinview",
 	}
 }
-func new_fzfview() *fzfview {
-	return &fzfview{
-		view: tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal()),
-		Name: "fzf",
-	}
-}
-func (fzf *fzfview) UpdateReferrence(references []lsp.Location) {
-	fzf.view.Clear()
-	for _, ref := range references {
-		fzf.view.AddItem(ref.URI.String(), "", 0, nil)
-	}
-}
+
 func (m *mainui) onfzf() {
 	m.page.SwitchToPage(m.fzf.Name)
 }
@@ -231,8 +187,6 @@ func MainUI() {
 	}
 }
 
-
-
 type CallStackEntry struct {
 	name string
 }
@@ -253,10 +207,3 @@ type LspCallInRecord struct {
 type Search interface {
 	Findall(key string) []int
 }
-
-
-
-
-
-
-
