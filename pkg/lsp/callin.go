@@ -2,8 +2,8 @@ package lspcore
 
 import (
 	"fmt"
-	"log"
-	"strings"
+	// "log"
+	// "strings"
 
 	"github.com/tectiv3/go-lsp"
 )

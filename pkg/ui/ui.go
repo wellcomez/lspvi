@@ -68,7 +68,7 @@ func (m *mainui) OnCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
 
 // OnCallInViewChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnCallInViewChanged(stacks []lspcore.CallStack) {
-	m.callinview.update(stacks)
+	// m.callinview.update(stacks)
 }
 func (m *mainui) OnGetCallInTask(loc lsp.Location, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
