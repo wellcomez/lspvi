@@ -65,7 +65,7 @@ func (s Symbol) Icon() string {
 }
 
 type Symbol_file struct {
-	lsp          *lsp_base
+	lsp          lspclient
 	Filename     string
 	Handle       lsp_data_changed
 	Class_object []*Symbol
@@ -182,16 +182,16 @@ type LspWorkspace struct {
 	Handle  lsp_data_changed
 }
 
-func (wk LspWorkspace) getClient(filename string) *lsp_base {
+func (wk LspWorkspace) getClient(filename string) lspclient{
 	if wk.cpp.IsMe(filename) {
 		err := wk.cpp.Launch_Lsp_Server()
 		if err == nil {
 			wk.cpp.InitializeLsp(wk.wk)
 		}
-		return &wk.cpp.lsp_base
+		return wk.cpp
 	}
 	if wk.py.IsMe(filename) {
-		return &wk.py.lsp_base
+		return wk.py
 	}
 	return nil
 }

@@ -32,7 +32,7 @@ type CallInTask struct {
 	Name     string
 	Allstack []*CallStack
 	loc      lsp.Location
-	lsp      *lsp_base
+	lsp      lspclient
 	set      map[string]bool
 }
 type CallStack struct {
@@ -47,7 +47,7 @@ func NewCallStack() *CallStack {
 	ret := CallStack{}
 	return &ret
 }
-func NewCallInTask(loc lsp.Location, lsp *lsp_base) *CallInTask {
+func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
 	name := NewBody(loc).String()
 	task := &CallInTask{
 		Name: name,
