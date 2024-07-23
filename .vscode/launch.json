@@ -18,6 +18,12 @@
             "mode": "auto",
             "program": "/home/z/dev/lsp/goui/main.go",
             "console": "externalTerminal",
+            "args": [
+                "-root",
+                "/chrome/buildcef/chromium/src",
+                "-file",
+                "/chrome/buildcef/chromium/src/content/public/browser/navigation_throttle.h"
+            ]
         }
     ]
 }

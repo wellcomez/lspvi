@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	//"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -36,7 +37,16 @@ func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 		m.codeview.gotoline(vvv.Range.Start.Line)
 	})
 	for _, v := range refs {
-		line := m.codeview.view.Buf.Line(v.Range.Start.Line)
+		source_file_path := v.URI.AsPath().String()
+		data, err := os.ReadFile(source_file_path)
+		if err != nil {
+			continue
+		}
+		lines := strings.Split(string(data), "\n")
+		line := lines[v.Range.Start.Line]
+		if len(line) == 0 {
+			continue
+		}
 		begin := max(0, v.Range.Start.Character-20)
 		end := min(len(line), v.Range.Start.Character+20)
 		path := ""
@@ -158,17 +168,16 @@ type Arguments struct {
 func MainUI(arg *Arguments) {
 	var filearg = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
 	var root = "/home/z/dev/lsp/pylspclient/tests/cpp/"
-
-	var main = mainui{
-		lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root}),
-	}
-
 	if len(arg.File) > 0 {
 		filearg = arg.File
 	}
 	if len(arg.Root) > 0 {
 		root = arg.Root
 	}
+	var main = mainui{
+		lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root}),
+	}
+
 	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
