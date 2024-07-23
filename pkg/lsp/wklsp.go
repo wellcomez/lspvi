@@ -175,6 +175,8 @@ func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
 }
 
 func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func()) {
+	bin, binerr := NewPlanUmlBin()
+	export_root, export_err := NewExportRoot(&sym.Wk.Wk)
 	for _, s := range task.Allstack {
 		var xx = class_resolve_task{
 			wklsp:     sym.Wk,
@@ -182,9 +184,22 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 		}
 		xx.Run()
 		if hanlde != nil {
-			content := s.Uml(true)
+			content := s.Uml(false)
+			name := ""
 			if len(s.Items) > 0 {
+				name = s.Items[0].Name
 				os.WriteFile(s.Items[0].Name+".md", []byte(content), 0644)
+			}
+			if binerr == nil && export_err == nil && len(name) > 0 {
+				fileuml, err := export_root.SavePlanUml(task.Dir(), name, content)
+				if err == nil {
+					err = bin.Convert(fileuml)
+					if err != nil {
+						log.Println(err)
+					}
+				} else {
+					log.Println(err)
+				}
 			}
 			hanlde()
 		}
@@ -275,7 +290,7 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 type LspWorkspace struct {
 	cpp     lsp_cpp
 	py      lsp_py
-	wk      WorkSpace
+	Wk      WorkSpace
 	Current *Symbol_file
 	filemap map[string]*Symbol_file
 	Handle  lsp_data_changed
@@ -307,7 +322,7 @@ func (wk LspWorkspace) getClient(filename string) lspclient {
 	if wk.cpp.IsMe(filename) {
 		err := wk.cpp.Launch_Lsp_Server()
 		if err == nil {
-			wk.cpp.InitializeLsp(wk.wk)
+			wk.cpp.InitializeLsp(wk.Wk)
 		}
 		return wk.cpp
 	}
@@ -349,7 +364,7 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 	ret := &LspWorkspace{
 		cpp:     new_lsp_cpp(wk, cppcore),
 		py:      lsp_py{new_lsp_base(wk, pycore)},
-		wk:      wk,
+		Wk:      wk,
 		pycore:  pycore,
 		cppcore: cppcore,
 	}

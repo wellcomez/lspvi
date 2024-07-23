@@ -30,6 +30,29 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	return ret
 
 }
+func CheckIfDir(path string) (bool, error) {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+	return fileInfo.IsDir(), nil
+}
+
+func uml_filter(filename string) bool {
+	if filepath.Ext(filename) == ".utxt" {
+		return true
+	}
+	yes, err := CheckIfDir(filename)
+	if err != nil {
+		return false
+	}
+	return yes
+}
+func new_uml_tree(main *mainui, name string, rootdir string) *file_tree_view {
+	ret := new_file_tree(main, name, rootdir, uml_filter)
+	ret.Init()
+	return ret
+}
 func isDirectory(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -65,10 +88,11 @@ func (view *file_tree_view) node_selected(node *tview.TreeNode) {
 func (view *file_tree_view) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
-func (view *file_tree_view) Init() {
+func (view *file_tree_view) Init() *file_tree_view {
 	root := tview.NewTreeNode(view.rootdir)
 	view.opendir(root, view.rootdir)
 	view.view.SetRoot(root)
+	return view
 }
 func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 	files, err := os.ReadDir(dir)

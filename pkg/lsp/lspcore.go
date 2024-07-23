@@ -13,6 +13,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
+
 	// "github.com/tectiv3/go-lsp/jsonrpc"
 	"go.bug.st/json"
 )
@@ -158,7 +159,8 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 }
 
 type WorkSpace struct {
-	Path string
+	Path   string
+	Export string
 }
 
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {

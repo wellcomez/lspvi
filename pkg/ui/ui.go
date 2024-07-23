@@ -166,8 +166,8 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	go m.async_open(file)
 }
 func (m *mainui) async_open(file string) {
-	_,err:=m.lspmgr.Open(file)
-	if err==nil{
+	_, err := m.lspmgr.Open(file)
+	if err == nil {
 		m.lspmgr.Current.LoadSymbol()
 	}
 	m.app.QueueUpdate(func() {
@@ -190,7 +190,7 @@ func MainUI(arg *Arguments) {
 		root = arg.Root
 	}
 	var main = mainui{
-		lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root}),
+		lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: "/home/z/dev/lsp/goui"}),
 		bf:     NewBackForward(NewHistory("history.log")),
 	}
 	main.root = root
@@ -230,7 +230,17 @@ func MainUI(arg *Arguments) {
 			AddItem(symbol_tree.view, 0, 2, false)
 		// fzfbtn := tview.NewButton("fzf")
 		// logbtn := tview.NewButton("log")
+	var uml *file_tree_view
+	ex, err := lspcore.NewExportRoot(&main.lspmgr.Wk)
+	if err == nil {
+		uml = new_uml_tree(&main, "uml", ex.Dir)
+	}
 	var tabs []string = []string{main.fzf.Name, "log", main.callinview.Name}
+	if uml != nil {
+		tabs = append(tabs, uml.Name)
+		console.AddPage(uml.Name, uml.view, true, false)
+	}
+
 	group := NewButtonGroup(tabs, main.OnTabChanged)
 	main.tabs = group
 	tab_area := tview.NewFlex()

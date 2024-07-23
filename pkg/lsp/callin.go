@@ -68,6 +68,9 @@ func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
 	task.set = make(map[string]bool)
 	return task
 }
+func (c CallInTask) Dir() string {
+	return c.Name
+}
 
 type callchain struct {
 	parent *callchain
