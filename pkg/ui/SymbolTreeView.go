@@ -94,8 +94,9 @@ func (v SymbolTreeView) Findall(key string) []int {
 	}
 	return ret
 }
+// Clear 
 func (v *SymbolTreeView) Clear() {
-	root_node := tview.NewTreeNode("symbol")
+	root_node := tview.NewTreeNode("symbol loading .....")
 	root_node.SetReference("1")
 	v.view.SetRoot(root_node)
 }

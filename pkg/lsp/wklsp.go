@@ -66,7 +66,7 @@ func (s Symbol) Icon() string {
 
 type Symbol_file struct {
 	lsp          *lsp_base
-	filename     string
+	Filename     string
 	Handle       lsp_data_changed
 	Class_object []*Symbol
 }
@@ -85,7 +85,7 @@ func is_memeber(kind lsp.SymbolKind) bool {
 	return kind == lsp.SymbolKindMethod || kind == lsp.SymbolKindField || kind == lsp.SymbolKindConstructor
 }
 func (sym *Symbol_file) LoadSymbol() {
-	symbols, err := sym.lsp.GetDocumentSymbol(sym.filename)
+	symbols, err := sym.lsp.GetDocumentSymbol(sym.Filename)
 	if err != nil {
 		return
 	}
@@ -117,7 +117,7 @@ func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 	return ret, nil
 }
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
-	loc, err := sym.lsp.GetReferences(sym.filename, ranges.Start)
+	loc, err := sym.lsp.GetReferences(sym.Filename, ranges.Start)
 	if err != nil {
 		return
 	}
@@ -197,7 +197,7 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 		return val, nil
 	}
 	wk.filemap[filename] = &Symbol_file{
-		filename: filename,
+		Filename: filename,
 		lsp:      wk.getClient(filename),
 		Handle:   wk.Handle,
 	}

@@ -27,6 +27,7 @@ type mainui struct {
 	tabs        *ButtonGroup
 	main_layout *tview.Flex
 	root        string
+	app         *tview.Application
 }
 
 // OnRefenceChanged implements lspcore.lsp_data_changed.
@@ -123,7 +124,7 @@ func (m *mainui) OnCodeViewChanged(file lspcore.Symbol_file) {
 func (m *mainui) gotoline(loc lsp.Location) {
 	file := loc.URI.AsPath().String()
 	if file != m.codeview.filename {
-		m.OpenFile(file)
+		m.OpenFile(file,&loc)
 	} else {
 		m.codeview.gotoline(loc.Range.Start.Line)
 	}
@@ -131,6 +132,9 @@ func (m *mainui) gotoline(loc lsp.Location) {
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file lspcore.Symbol_file) {
+	if file.Filename != m.codeview.filename {
+		return
+	}
 	m.symboltree.update(file)
 }
 
@@ -157,13 +161,25 @@ func (m mainui) OnTabChanged(tab *TabButton) {
 	m.page.SwitchToPage(tab.Name)
 	m.page.SetTitle(tab.Name)
 }
-func (m *mainui) OpenFile(file string) {
+
+// OpenFile 
+// OpenFile 
+func (m *mainui) OpenFile(file string,loc *lsp.Location) {
 	title := strings.Replace(file, m.root, "", -1)
 	m.main_layout.SetTitle(title)
 	m.symboltree.Clear()
 	m.codeview.Load(file)
+  if loc!=nil{
+		m.codeview.gotoline(loc.Range.Start.Line)
+  }
+	go m.async_open(file)
+}
+func (m *mainui) async_open(file string) {
 	m.lspmgr.Open(file)
 	m.lspmgr.Current.LoadSymbol()
+	m.app.QueueUpdate(func() {
+		m.app.ForceDraw()
+	})
 }
 
 type Arguments struct {
@@ -188,6 +204,7 @@ func MainUI(arg *Arguments) {
 	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
+	main.app = app
 	codeview := NewCodeView(&main)
 	// main.fzf = new_fzfview()
 	symbol_tree := NewSymbolTreeView(&main)
@@ -226,7 +243,7 @@ func MainUI(arg *Arguments) {
 		tview.NewFlex().SetDirection(tview.FlexColumn).
 			AddItem(file, 0, 1, false).
 			AddItem(codeview.view, 0, 4, false).
-			AddItem(symbol_tree.view, 0, 1, false)
+			AddItem(symbol_tree.view, 0, 2, false)
 		// fzfbtn := tview.NewButton("fzf")
 		// logbtn := tview.NewButton("log")
 	var tabs []string = []string{main.fzf.Name, "log", main.callinview.Name}
@@ -250,7 +267,7 @@ func MainUI(arg *Arguments) {
 			AddItem(cmdline, 1, 1, false)
 	main.main_layout = main_layout
 	main_layout.SetBorder(true)
-	main.OpenFile(filearg)
+	main.OpenFile(filearg,nil)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}

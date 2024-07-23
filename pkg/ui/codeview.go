@@ -176,7 +176,7 @@ func (code *CodeView) Load(filename string) error {
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
 	code.filename = filename
-  code.view.SetTitle(filename)
+	code.view.SetTitle(filename)
 	var colorscheme femto.Colorscheme
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
