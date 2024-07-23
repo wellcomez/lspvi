@@ -76,6 +76,23 @@ func NewCodeView(main *mainui) *CodeView {
 	})
 	root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
+		case 'c':
+			loc := root.Cursor.CurSelection
+			r := lsp.Range{
+				Start: lsp.Position{
+					Line:      loc[0].Y,
+					Character: loc[0].X,
+				},
+				End: lsp.Position{
+					Line:      loc[1].Y,
+					Character: loc[1].X,
+				},
+			}
+			ret.main.OnGetCallIn(lsp.Location{
+				Range: r,
+				URI:   lsp.NewDocumentURI(ret.filename),
+			}, ret.filename)
+
 		case 'r':
 			loc := root.Cursor.CurSelection
 			ret.main.OnReference(lsp.Range{

@@ -92,9 +92,27 @@ func (sym *Symbol_file) LoadSymbol() {
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
 	sym.Handle.OnSymbolistChanged(*sym)
 }
+func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
+	var ret []CallStack
+	c1, err := sym.lsp.PrepareCallHierarchy(loc)
+	if err != nil {
+		return ret, err
+	}
+	var stack CallStack
+	if len(c1) > 0 {
+		stack.Add(NewCallStackEntry(c1[0]))
+		c2, err := sym.lsp.CallHierarchyIncomingCalls(c1[0])
+		if err == nil && len(c2) > 0 {
+			stack.Add(NewCallStackEntry(c2[0].From))
+		}
+	}
+	ret = append(ret, stack)
+	sym.Handle.OnCallInViewChanged(ret)
+	return ret, nil
+}
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
-	loc,err:=sym.lsp.GetReferences(sym.filename, ranges.Start)
-	if err!=nil{
+	loc, err := sym.lsp.GetReferences(sym.filename, ranges.Start)
+	if err != nil {
 		return
 	}
 	sym.Handle.OnRefenceChanged(loc)
@@ -197,5 +215,5 @@ type lsp_data_changed interface {
 	OnSymbolistChanged(file Symbol_file)
 	OnCodeViewChanged(file Symbol_file)
 	OnRefenceChanged(file []lsp.Location)
-	OnCallInViewChanged(file Symbol_file)
+	OnCallInViewChanged(stacks []CallStack)
 }
