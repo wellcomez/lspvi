@@ -33,11 +33,11 @@ import (
 func (entry CallStackEntry) isFunction() bool {
 	return entry.Item.Kind == lsp.SymbolKindFunction
 }
-func (entry CallStackEntry) class_name() string {
+func (entry CallStackEntry) uml_class_name() string {
 	if entry.PtrSymobl == nil {
 		return ""
 	}
-	return entry.PtrSymobl.classname
+	return strings.ReplaceAll(entry.PtrSymobl.classname, ":", ".")
 }
 func (entry CallStackEntry) symboldefine_name() string {
 	return entry.Item.Name
@@ -51,31 +51,31 @@ func (call CallStack) Uml(markdown bool) string {
 	for _, s := range call.Items {
 		rightPrefix := ""
 		if !s.isFunction() {
-			rightPrefix = strings.ReplaceAll(s.class_name(), "::", ".")+"::"
+			rightPrefix = s.uml_class_name() + "::"
 		}
 		right := rightPrefix + s.symboldefine_name()
 		if len(ret) == 0 {
 			title = fmt.Sprintf("==%s==", right)
 		}
 		if !s.isFunction() {
-			left := s.class_name()
+			left := s.uml_class_name()
 			if caller != nil {
 				if caller.isFunction() {
 					left = caller.symboldefine_name()
 				} else {
-					if caller.class_name() != s.class_name() {
-						left = caller.class_name()
+					if caller.uml_class_name() != s.uml_class_name() {
+						left = caller.uml_class_name()
 					}
 				}
 			}
-			ret = append(ret, fmt.Sprintf("%s -> %s", strings.Replace(left, "::", ".", -1), right))
+			ret = append(ret, fmt.Sprintf("%s -> %s", left, right))
 		} else {
 			if caller != nil {
-				left := caller.class_name()
+				left := caller.uml_class_name()
 				if !caller.isFunction() {
 					left = caller.symboldefine_name()
 				}
-				ret = append(ret, fmt.Sprintf("%s -> %s", strings.Replace(left, "::", ".", -1), right))
+				ret = append(ret, fmt.Sprintf("%s -> %s", left, right))
 			}
 		}
 		caller = s
