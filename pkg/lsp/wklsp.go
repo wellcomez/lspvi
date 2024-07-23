@@ -3,7 +3,6 @@ package lspcore
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
@@ -184,13 +183,14 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 		}
 		xx.Run()
 		if hanlde != nil {
-			content := s.Uml(false)
 			name := ""
 			if len(s.Items) > 0 {
 				name = s.Items[0].Name
-				os.WriteFile(s.Items[0].Name+".md", []byte(content), 0644)
 			}
 			if binerr == nil && export_err == nil && len(name) > 0 {
+				content := s.Uml(true)
+				export_root.SaveMD(task.Dir(), name, content)
+				content = s.Uml(false)
 				fileuml, err := export_root.SavePlanUml(task.Dir(), name, content)
 				if err == nil {
 					err = bin.Convert(fileuml)

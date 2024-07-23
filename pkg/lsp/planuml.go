@@ -78,6 +78,13 @@ func (d *export_root) Init() error {
 	err := os.Mkdir(d.Dir, 0755)
 	return err
 }
+func (d export_root) SaveMD(dir, name, content string) (string, error) {
+	newdir := path.Join(d.Dir, dir)
+	os.Mkdir(newdir, 0755)
+	filename := path.Join(newdir, name+".md")
+	err := os.WriteFile(filename, []byte(content), 0644)
+	return filename, err
+}
 func (d export_root) SavePlanUml(dir, name, content string) (string, error) {
 	newdir := path.Join(d.Dir, dir)
 	os.Mkdir(newdir, 0755)
