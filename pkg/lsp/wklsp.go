@@ -92,6 +92,29 @@ func (sym *Symbol_file) LoadSymbol() {
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
 	sym.Handle.OnSymbolistChanged(*sym)
 }
+func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
+  name:=NewBody(loc).String()
+  task:=&CallInTask{
+    Name:name,
+  }
+
+	var ret []CallStack
+	c1, err := sym.lsp.PrepareCallHierarchy(loc)
+	if err != nil {
+		return ret, err
+	}
+	var stack CallStack
+	if len(c1) > 0 {
+		stack.Add(NewCallStackEntry(c1[0]))
+		c2, err := sym.lsp.CallHierarchyIncomingCalls(c1[0])
+		if err == nil && len(c2) > 0 {
+			stack.Add(NewCallStackEntry(c2[0].From))
+		}
+	}
+	ret = append(ret, stack)
+	sym.Handle.OnCallInViewChanged(ret)
+	return ret, nil
+}
 func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 	var ret []CallStack
 	c1, err := sym.lsp.PrepareCallHierarchy(loc)
