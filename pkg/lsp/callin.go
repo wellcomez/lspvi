@@ -34,6 +34,7 @@ type CallInTask struct {
 	loc      lsp.Location
 	lsp      lspclient
 	set      map[string]bool
+	cb       *func(task CallInTask)
 }
 type CallStack struct {
 	Items []*CallStackEntry
