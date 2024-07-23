@@ -36,77 +36,81 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetRuntimeFiles(runtime.Files)
 	root.SetColorscheme(colorscheme)
 
-	root.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		// x, y := event.Position()
-		// log.Printf("mount action=%d  x=%d y=%d", action, x, y)
-		x1, y1, x2, y2 := root.GetInnerRect()
-		leftX, _, _, _ := root.GetRect()
-		posX, posY := event.Position()
-		if posX < x1 || posY > y2 || posY < y1 || posX > x2 {
-			return action, event
-		}
-
-		log.Print(x1, y1, x2, y2)
-		if action == tview.MouseLeftClick {
-			// x, y := event.Position()
-			posY = posY + root.Topline-1
-			posX = posX - leftX - 3
-			root.Cursor.Loc = femto.Loc{X: posX, Y: posY}
-			root.Cursor.SetSelectionStart(femto.Loc{X: posX, Y: posY})
-			root.Cursor.SetSelectionEnd(femto.Loc{X: posX, Y: posY})
-			// root.SelectLine()
-			return tview.MouseConsumed, nil
-		}
-		if action == 14 || action == 13 {
-			gap := 2
-			if action == 14 {
-				posY = posY + gap
-				root.ScrollDown(gap)
-			} else {
-				posY = posY - gap
-				root.ScrollUp(gap)
-			}
-			posX = posX - leftX
-			root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline, root.Buf.NumLines))}
-			log.Println(root.Cursor.Loc)
-			root.SelectLine()
-			return tview.MouseConsumed, nil
-		}
-		return action, event
-	})
-	root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Rune() {
-		case 'c':
-			ret.key_call_in()
-
-		case 'r':
-			ret.key_refer()
-			return nil
-		}
-		switch event.Key() {
-		case tcell.KeyUp:
-			root.Buf.LinesNum()
-			// root.CursorUp()
-			root.SelectUp()
-			root.ScrollUp(1)
-			root.SelectLine()
-			log.Println("cursor up ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
-		case tcell.KeyDown:
-			root.SelectDown()
-			root.ScrollDown(1)
-			root.SelectLine()
-			// root.SelectLine()
-			log.Println("cursor down ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
-		case tcell.KeyCtrlS:
-			// saveBuffer(buffer, path)
-			return nil
-		case tcell.KeyCtrlQ:
-			return nil
-		}
-		return nil
-	})
+	root.SetMouseCapture(ret.handle_mouse)
+	root.SetInputCapture(ret.keyhandle)
 	ret.view = root
 	return &ret
+}
+
+func (ret *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	root := ret.view
+	x1, y1, x2, y2 := root.GetInnerRect()
+	leftX, _, _, _ := root.GetRect()
+	posX, posY := event.Position()
+	if posX < x1 || posY > y2 || posY < y1 || posX > x2 {
+		return action, event
+	}
+
+	log.Print(x1, y1, x2, y2)
+	if action == tview.MouseLeftClick {
+
+		posY = posY + root.Topline - 1
+		posX = posX - leftX - 3
+		root.Cursor.Loc = femto.Loc{X: posX, Y: posY}
+		root.Cursor.SetSelectionStart(femto.Loc{X: posX, Y: posY})
+		root.Cursor.SetSelectionEnd(femto.Loc{X: posX, Y: posY})
+
+		return tview.MouseConsumed, nil
+	}
+	if action == 14 || action == 13 {
+		gap := 2
+		if action == 14 {
+			posY = posY + gap
+			root.ScrollDown(gap)
+		} else {
+			posY = posY - gap
+			root.ScrollUp(gap)
+		}
+		posX = posX - leftX
+		root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline, root.Buf.NumLines))}
+		log.Println(root.Cursor.Loc)
+		root.SelectLine()
+		return tview.MouseConsumed, nil
+	}
+	return action, event
+}
+
+func (ret *CodeView) keyhandle(event *tcell.EventKey) *tcell.EventKey {
+	root := ret.view
+	switch event.Rune() {
+	case 'c':
+		ret.key_call_in()
+
+	case 'r':
+		ret.key_refer()
+		return nil
+	}
+	switch event.Key() {
+	case tcell.KeyUp:
+		root.Buf.LinesNum()
+
+		root.SelectUp()
+		root.ScrollUp(1)
+		root.SelectLine()
+		log.Println("cursor up ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
+	case tcell.KeyDown:
+		root.SelectDown()
+		root.ScrollDown(1)
+		root.SelectLine()
+
+		log.Println("cursor down ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
+	case tcell.KeyCtrlS:
+
+		return nil
+	case tcell.KeyCtrlQ:
+		return nil
+	}
+	return nil
 }
 
 func (code *CodeView) key_refer() {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	//"github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
@@ -32,7 +32,7 @@ type mainui struct {
 // OnRefenceChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 	// panic("unimplemented")
-  m.fzf.OnRefenceChanged(refs)
+	m.fzf.OnRefenceChanged(refs)
 }
 
 func (m *mainui) OnCallTaskInViewChanged(task *lspcore.CallInTask) {
@@ -228,6 +228,12 @@ func MainUI(arg *Arguments) {
 	main.main_layout = main_layout
 	main_layout.SetBorder(true)
 	main.OpenFile(filearg, nil)
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key()==tcell.KeyCtrlC {
+			main.lspmgr.Close()			
+		}
+		return event
+	})
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
