@@ -46,18 +46,27 @@ func NewCallStackEntry(item lsp.CallHierarchyItem) *CallStackEntry {
 	}
 }
 
+var callstack_task_id = 0
+
 type CallInTask struct {
 	Name     string
 	Allstack []*CallStack
 	loc      lsp.Location
 	lsp      lspclient
 	set      map[string]bool
-	cb       *func(task CallInTask)
+	UID      int
+	// cb       *func(task CallInTask)
 }
+func(task CallInTask)TreeNodeid()string{
+	return string(task.UID)
+}
+
+var callstack_id = 0
 
 type CallStack struct {
 	Items    []*CallStackEntry
 	resovled bool
+	UID      int
 }
 
 func (c *CallStack) Add(item *CallStackEntry) {
@@ -71,10 +80,12 @@ func NewCallStack() *CallStack {
 }
 func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
 	name := NewBody(loc).String()
+	callstack_task_id++
 	task := &CallInTask{
 		Name: name,
 		loc:  loc,
 		lsp:  lsp,
+		UID:  callstack_task_id,
 	}
 	task.set = make(map[string]bool)
 	return task
@@ -139,7 +150,8 @@ func (task *CallInTask) run() error {
 		task.set[key(item)] = true
 		task.addchild(top, &leaf)
 		for _, v := range leaf.set {
-			stacks := &CallStack{resovled: false}
+			callstack_id++
+			stacks := &CallStack{resovled: false, UID: callstack_id}
 			for v != nil {
 				stacks.Add(NewCallStackEntry(v.data))
 				v = v.parent

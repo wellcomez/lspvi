@@ -72,11 +72,11 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 		}
 	}
 }
-func NewRootNode(call lsp.CallHierarchyItem, root bool) dom_node {
+func NewRootNode(call lsp.CallHierarchyItem, root bool, id int) dom_node {
 	return dom_node{
 		call:  call,
 		root:  root,
-		id:    0,
+		id:    id,
 		state: 0,
 	}
 }
@@ -108,31 +108,45 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 func (callin *callinview) callroot(task *lspcore.CallInTask) *tview.TreeNode {
 	var children []*tview.TreeNode
 	var root_node *tview.TreeNode
-	root:=callin.view.GetRoot()
-	if root!=nil{
+	root := callin.view.GetRoot()
+	if root != nil {
 		children = root.GetChildren()
 		for _, v := range children {
-			if v.GetReference() == task.Name {
+			if v.GetReference() == task.TreeNodeid(){
 				root_node = v
-				v.ClearChildren()
+				// v.ClearChildren()
 			}
 		}
 	}
-	if root_node==nil{
+	if root_node == nil {
 		root_node = tview.NewTreeNode(task.Name)
+		root_node.SetReference(task.TreeNodeid())
 	}
-	root_node.SetReference(task.Name)
 	for _, stack := range task.Allstack {
 		var i = 0
 		c := stack.Items[0]
-		parent := tview.NewTreeNode("+" + callin.itemdisp(c))
-		parent.Collapse()
-		root_node.AddChild(parent)
-		parent.SetReference(NewRootNode(c.Item, true))
+		var parent *tview.TreeNode
+		for _, v := range root_node.GetChildren() {
+			value := v.GetReference()
+			if ref, ok := value.(dom_node); ok {
+				if ref.id == stack.UID {
+					parent = v
+					parent.ClearChildren()
+					parent.SetText("+" + callin.itemdisp(c))
+					break
+				}
+			}
+		}
+		if parent == nil {
+			parent = tview.NewTreeNode("+" + callin.itemdisp(c))
+			parent.Collapse()
+			parent.SetReference(NewRootNode(c.Item, true, stack.UID))
+			root_node.AddChild(parent)
+		}
 		for i = 1; i < len(stack.Items); i++ {
 			c = stack.Items[i]
 			parent1 := tview.NewTreeNode(callin.itemdisp(c))
-			parent1.SetReference(NewRootNode(c.Item, false))
+			parent1.SetReference(NewRootNode(c.Item, false, -1))
 			parent.AddChild(parent1)
 			parent = parent1
 		}
