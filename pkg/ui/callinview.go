@@ -3,6 +3,7 @@ package mainui
 import (
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
@@ -22,11 +23,15 @@ func new_callview(main *mainui) *callinview {
 		Name: "callin",
 		main: main,
 	}
-	view.SetSelectedFunc(ret.Handler)
+	view.SetSelectedFunc(ret.node_selected)
+	view.SetInputCapture(ret.KeyHandle)
 	return ret
 
 }
-func (view *callinview) Handler(node *tview.TreeNode) {
+func (view *callinview) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
+	return event
+}
+func (view *callinview) node_selected(node *tview.TreeNode) {
 	value := node.GetReference()
 	if value != nil {
 		if sym, ok := value.(lsp.CallHierarchyItem); ok {
