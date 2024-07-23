@@ -94,11 +94,16 @@ func (v SymbolTreeView) Findall(key string) []int {
 	}
 	return ret
 }
+func (v *SymbolTreeView) Clear() {
+	root_node := tview.NewTreeNode("symbol")
+	root_node.SetReference("1")
+	v.view.SetRoot(root_node)
+}
 func (v *SymbolTreeView) update(file lspcore.Symbol_file) {
-  root:=v.view.GetRoot()
-  if root!=nil{
-    root.ClearChildren()
-  }
+	root := v.view.GetRoot()
+	if root != nil {
+		root.ClearChildren()
+	}
 	root_node := tview.NewTreeNode("symbol")
 	root_node.SetReference("1")
 	for _, v := range file.Class_object {

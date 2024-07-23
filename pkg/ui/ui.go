@@ -18,13 +18,15 @@ type View interface {
 }
 
 type mainui struct {
-	codeview   *CodeView
-	lspmgr     *lspcore.LspWorkspace
-	symboltree *SymbolTreeView
-	fzf        *fzfview
-	page       *tview.Pages
-	callinview *callinview
-	tabs       *ButtonGroup
+	codeview    *CodeView
+	lspmgr      *lspcore.LspWorkspace
+	symboltree  *SymbolTreeView
+	fzf         *fzfview
+	page        *tview.Pages
+	callinview  *callinview
+	tabs        *ButtonGroup
+	main_layout *tview.Flex
+	root        string
 }
 
 // OnRefenceChanged implements lspcore.lsp_data_changed.
@@ -156,6 +158,9 @@ func (m mainui) OnTabChanged(tab *TabButton) {
 	m.page.SetTitle(tab.Name)
 }
 func (m *mainui) OpenFile(file string) {
+	title := strings.Replace(file, m.root, "", -1)
+	m.main_layout.SetTitle(title)
+	m.symboltree.Clear()
 	m.codeview.Load(file)
 	m.lspmgr.Open(file)
 	m.lspmgr.Current.LoadSymbol()
@@ -178,6 +183,7 @@ func MainUI(arg *Arguments) {
 	var main = mainui{
 		lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root}),
 	}
+	main.root = root
 
 	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
@@ -192,7 +198,6 @@ func MainUI(arg *Arguments) {
 		})
 	main.codeview = codeview
 	main.lspmgr.Handle = &main
-	main.OpenFile(filearg)
 	main.fzf = new_fzfview(&main)
 	main.callinview = new_callview(&main)
 	// symbol_tree.update()
@@ -243,7 +248,9 @@ func MainUI(arg *Arguments) {
 			AddItem(console, 0, 2, false).
 			AddItem(tab_area, 1, 0, false).
 			AddItem(cmdline, 1, 1, false)
-
+	main.main_layout = main_layout
+	main_layout.SetBorder(true)
+	main.OpenFile(filearg)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
