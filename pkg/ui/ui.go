@@ -124,7 +124,7 @@ func (m *mainui) OnCodeViewChanged(file lspcore.Symbol_file) {
 func (m *mainui) gotoline(loc lsp.Location) {
 	file := loc.URI.AsPath().String()
 	if file != m.codeview.filename {
-		m.OpenFile(file,&loc)
+		m.OpenFile(file, &loc)
 	} else {
 		m.codeview.gotoline(loc.Range.Start.Line)
 	}
@@ -142,22 +142,21 @@ func (m *mainui) Init() {
 	m.lspmgr.Handle = m
 }
 
-
 func (m mainui) OnTabChanged(tab *TabButton) {
 	m.page.SwitchToPage(tab.Name)
 	m.page.SetTitle(tab.Name)
 }
 
-// OpenFile 
-// OpenFile 
-func (m *mainui) OpenFile(file string,loc *lsp.Location) {
+// OpenFile
+// OpenFile
+func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	title := strings.Replace(file, m.root, "", -1)
 	m.main_layout.SetTitle(title)
 	m.symboltree.Clear()
 	m.codeview.Load(file)
-  if loc!=nil{
+	if loc != nil {
 		m.codeview.gotoline(loc.Range.Start.Line)
-  }
+	}
 	go m.async_open(file)
 }
 func (m *mainui) async_open(file string) {
@@ -214,6 +213,7 @@ func MainUI(arg *Arguments) {
 	cmdline := tview.NewInputField()
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
+	console.SetBorder(true)
 	console.AddPage("log", tview.NewButton("button"), true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
 	console.AddPage(main.fzf.Name, main.fzf.view, true, true)
@@ -250,7 +250,7 @@ func MainUI(arg *Arguments) {
 			AddItem(cmdline, 1, 1, false)
 	main.main_layout = main_layout
 	main_layout.SetBorder(true)
-	main.OpenFile(filearg,nil)
+	main.OpenFile(filearg, nil)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
