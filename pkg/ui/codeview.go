@@ -166,7 +166,7 @@ func (code *CodeView) key_call_in() {
 		Range: r,
 		URI:   lsp.NewDocumentURI(code.filename),
 	}, code.filename)
-	main.ActiveTab(view_callin)
+	code.main.ActiveTab(view_callin)
 }
 func (code *CodeView) Load(filename string) error {
 	data, err := os.ReadFile(filename)

@@ -16,9 +16,6 @@ type View interface {
 	Getview() tview.Primitive
 }
 
-var filearg = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
-var root = "/home/z/dev/lsp/pylspclient/tests/cpp/"
-
 type mainui struct {
 	codeview   *CodeView
 	lspmgr     *lspcore.LspWorkspace
@@ -39,7 +36,7 @@ func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 		m.codeview.gotoline(vvv.Range.Start.Line)
 	})
 	for _, v := range refs {
-		line := main.codeview.view.Buf.Line(v.Range.Start.Line)
+		line := m.codeview.view.Buf.Line(v.Range.Start.Line)
 		begin := max(0, v.Range.Start.Character-20)
 		end := min(len(line), v.Range.Start.Character+20)
 		path := ""
@@ -115,16 +112,13 @@ func (m *mainui) ActiveTab(id int) {
 func (m *mainui) OnCodeViewChanged(file lspcore.Symbol_file) {
 	// panic("unimplemented")
 }
-func(m *mainui)gotoline(line int){
+func (m *mainui) gotoline(line int) {
 	m.codeview.gotoline(line)
 }
+
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file lspcore.Symbol_file) {
 	m.symboltree.update(file)
-}
-
-var main = mainui{
-	lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root}),
 }
 
 func (m *mainui) Init() {
@@ -156,7 +150,25 @@ func (m *mainui) OpenFile(file string) {
 	m.lspmgr.Current.LoadSymbol()
 }
 
-func MainUI() {
+type Arguments struct {
+	File string
+	Root string
+}
+
+func MainUI(arg *Arguments) {
+	var filearg = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
+	var root = "/home/z/dev/lsp/pylspclient/tests/cpp/"
+
+	var main = mainui{
+		lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root}),
+	}
+
+	if len(arg.File) > 0 {
+		filearg = arg.File
+	}
+	if len(arg.Root) > 0 {
+		root = arg.Root
+	}
 	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
