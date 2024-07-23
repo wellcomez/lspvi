@@ -28,6 +28,7 @@ type mainui struct {
 	main_layout  *tview.Flex
 	root         string
 	app          *tview.Application
+	uml          *file_tree_view
 	bf           *BackForward
 }
 
@@ -148,6 +149,12 @@ func (m *mainui) Init() {
 }
 
 func (m mainui) OnTabChanged(tab *TabButton) {
+	if tab.Name == "uml" {
+    if m.uml!=nil{
+      m.uml.Init()
+    }
+
+	}
 	m.page.SwitchToPage(tab.Name)
 	m.page.SetTitle(tab.Name)
 }
@@ -234,6 +241,7 @@ func MainUI(arg *Arguments) {
 	ex, err := lspcore.NewExportRoot(&main.lspmgr.Wk)
 	if err == nil {
 		uml = new_uml_tree(&main, "uml", ex.Dir)
+		main.uml = uml
 	}
 	var tabs []string = []string{main.fzf.Name, "log", main.callinview.Name}
 	if uml != nil {

@@ -19,6 +19,15 @@ type CallStackEntry struct {
 	PtrSymobl *Symbol
 }
 
+func (c CallStackEntry) DirName() string {
+	if c.PtrSymobl != nil {
+		if len(c.PtrSymobl.classname) > 0 {
+			s := fmt.Sprintf("%s::%s", c.PtrSymobl.classname, c.PtrSymobl.SymInfo.Name)
+			return s
+		}
+	}
+	return c.Name
+}
 func (c CallStackEntry) DisplayName() string {
 	if c.PtrSymobl != nil {
 		if len(c.PtrSymobl.classname) > 0 {
@@ -45,8 +54,10 @@ type CallInTask struct {
 	set      map[string]bool
 	cb       *func(task CallInTask)
 }
+
 type CallStack struct {
-	Items []*CallStackEntry
+	Items    []*CallStackEntry
+	resovled bool
 }
 
 func (c *CallStack) Add(item *CallStackEntry) {
@@ -55,7 +66,7 @@ func (c *CallStack) Add(item *CallStackEntry) {
 
 }
 func NewCallStack() *CallStack {
-	ret := CallStack{}
+	ret := CallStack{resovled: false}
 	return &ret
 }
 func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
@@ -69,6 +80,12 @@ func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
 	return task
 }
 func (c CallInTask) Dir() string {
+	for _, v := range c.Allstack {
+		if v.resovled && len(v.Items) > 0 {
+			a := v.Items[len(v.Items)-1]
+			return a.DirName()
+		}
+	}
 	return c.Name
 }
 
@@ -122,7 +139,7 @@ func (task *CallInTask) run() error {
 		task.set[key(item)] = true
 		task.addchild(top, &leaf)
 		for _, v := range leaf.set {
-			stacks := &CallStack{}
+			stacks := &CallStack{resovled: false}
 			for v != nil {
 				stacks.Add(NewCallStackEntry(v.data))
 				v = v.parent
@@ -143,6 +160,7 @@ func (c *class_resolve_task) Run() error {
 	for _, v := range c.callstack.Items {
 		c.resolve(v)
 	}
+	c.callstack.resovled = true
 	return nil
 }
 func (c *class_resolve_task) resolve(entry *CallStackEntry) {
