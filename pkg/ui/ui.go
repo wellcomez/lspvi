@@ -31,11 +31,7 @@ type mainui struct {
 func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 	// panic("unimplemented")
 	m.fzf.view.Clear()
-	m.fzf.refs.refs = refs
-	m.fzf.view.SetSelectedFunc(func(index int, _ string, _ string, _ rune) {
-		vvv := m.fzf.refs.refs[index]
-		m.codeview.gotoline(vvv.Range.Start.Line)
-	})
+	m.fzf.Refs.refs = refs
 	for _, v := range refs {
 		source_file_path := v.URI.AsPath().String()
 		data, err := os.ReadFile(source_file_path)
@@ -122,8 +118,13 @@ func (m *mainui) ActiveTab(id int) {
 func (m *mainui) OnCodeViewChanged(file lspcore.Symbol_file) {
 	// panic("unimplemented")
 }
-func (m *mainui) gotoline(line int) {
-	m.codeview.gotoline(line)
+func (m *mainui) gotoline(loc lsp.Location) {
+	file := loc.URI.AsPath().String()
+	if file != m.codeview.filename {
+		m.OpenFile(file)
+	} else {
+		m.codeview.gotoline(loc.Range.Start.Line)
+	}
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
@@ -192,7 +193,7 @@ func MainUI(arg *Arguments) {
 	main.codeview = codeview
 	main.lspmgr.Handle = &main
 	main.OpenFile(filearg)
-	main.fzf = new_fzfview()
+	main.fzf = new_fzfview(&main)
 	main.callinview = new_callview(&main)
 	// symbol_tree.update()
 

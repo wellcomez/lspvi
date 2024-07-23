@@ -7,19 +7,29 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-func new_fzfview() *fzfview {
-	return &fzfview{
-		view: tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal()),
+func new_fzfview(main *mainui) *fzfview {
+	view := tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal())
+	ret := &fzfview{
 		Name: "fzf",
+		view: view,
+		main: main,
 	}
+	view.SetSelectedFunc(ret.Hanlde)
+	return ret
+
 }
 
 type fzfview struct {
 	view *tview.List
 	Name string
-	refs search_reference_result
+	Refs search_reference_result
+	main *mainui
 }
 
+func (fzf *fzfview) Hanlde(index int, _ string, _ string, _ rune) {
+	vvv := fzf.Refs.refs[index]
+	fzf.main.gotoline(vvv)
+}
 func (fzf *fzfview) UpdateReferrence(references []lsp.Location) {
 	fzf.view.Clear()
 	for _, ref := range references {

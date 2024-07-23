@@ -28,8 +28,10 @@ func (view *callinview) Handler(node *tview.TreeNode) {
 	value := node.GetReference()
 	if value != nil {
 		if sym, ok := value.(lsp.CallHierarchyItem); ok {
-			line := sym.SelectionRange.Start.Line
-			view.main.gotoline(line)
+			view.main.gotoline(lsp.Location{
+				URI:   sym.URI,
+				Range: sym.SelectionRange,
+			})
 		}
 	}
 }
