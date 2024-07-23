@@ -69,7 +69,7 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 		if inside_location(S.SymInfo.Location, loc) {
 			return true
 		}
-		yes:=strings.Contains(S.SymInfo.Name, calr.Name)
+		yes := strings.Contains(S.SymInfo.Name, calr.Name)
 		if yes {
 			log.Printf("Error Resovle failed %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
 				NewBody(S.SymInfo.Location).Info(),
@@ -162,13 +162,17 @@ func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
 	task := NewCallInTask(loc, sym.lsp)
 	task.run()
 	sym.Handle.OnCallTaskInViewChanged(task)
-	var xx = class_resolve_task{
-		wklsp: sym.Wk,
-		task:  task,
-	}
-	xx.Run()
-	sym.Handle.OnCallTaskInViewChanged(task)
 	return task, nil
+}
+
+func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask) {
+	for _, s := range task.Allstack {
+		var xx = class_resolve_task{
+			wklsp:     sym.Wk,
+			callstack: s,
+		}
+		xx.Run()
+	}
 }
 func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 	var ret []CallStack
@@ -325,4 +329,5 @@ type lsp_data_changed interface {
 	OnRefenceChanged(file []lsp.Location)
 	OnCallInViewChanged(stacks []CallStack)
 	OnCallTaskInViewChanged(stacks *CallInTask)
+	OnCallTaskInViewResovled(stacks *CallInTask)
 }

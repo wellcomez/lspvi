@@ -128,15 +128,14 @@ func (task *CallInTask) run() error {
 }
 
 type class_resolve_task struct {
-	task  *CallInTask
-	wklsp *LspWorkspace
+	callstack *CallStack
+	wklsp     *LspWorkspace
 }
 
+// Run jj
 func (c *class_resolve_task) Run() error {
-	for _, v := range c.task.Allstack {
-		for _, v1 := range v.Items {
-			c.resolve(v1)
-		}
+	for _, v := range c.callstack.Items {
+		c.resolve(v)
 	}
 	return nil
 }

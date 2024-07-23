@@ -29,14 +29,35 @@ type mainui struct {
 	app         *tview.Application
 }
 
+// OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
+func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
+	// panic("unimplemented")
+}
+
+func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
+	m.lspmgr.Current.Async_resolve_stacksymbol(call_in_task)
+	m.app.QueueUpdate(func() {
+		m.callinview.updatetask(call_in_task)
+		m.app.ForceDraw()
+	})
+}
+
+// OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
+func (m *mainui) async_resolve_callstack(call_in_task *lspcore.CallInTask) {
+	// panic("unimplemented")
+	go m.__resolve_task(call_in_task)
+}
+
 // OnRefenceChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 	// panic("unimplemented")
 	m.fzf.OnRefenceChanged(refs)
+
 }
 
-func (m *mainui) OnCallTaskInViewChanged(task *lspcore.CallInTask) {
-	m.callinview.updatetask(task)
+func (m *mainui) OnCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
+	m.callinview.updatetask(call_in_stack)
+	m.async_resolve_callstack(call_in_stack)
 }
 
 // OnCallInViewChanged implements lspcore.lsp_data_changed.
@@ -229,8 +250,8 @@ func MainUI(arg *Arguments) {
 	main_layout.SetBorder(true)
 	main.OpenFile(filearg, nil)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key()==tcell.KeyCtrlC {
-			main.lspmgr.Close()			
+		if event.Key() == tcell.KeyCtrlC {
+			main.lspmgr.Close()
 		}
 		return event
 	})
