@@ -265,6 +265,8 @@ type LspWorkspace struct {
 	Current *Symbol_file
 	filemap map[string]*Symbol_file
 	Handle  lsp_data_changed
+	cppcore *lspcore
+	pycore  *lspcore
 }
 
 func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, error) {
@@ -325,10 +327,14 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 
 }
 func NewLspWk(wk WorkSpace) *LspWorkspace {
+	cppcore := &lspcore{}
+	pycore := &lspcore{}
 	ret := &LspWorkspace{
-		cpp: new_lsp_cpp(wk),
-		py:  lsp_py{new_lsp_base(wk)},
-		wk:  wk,
+		cpp:     new_lsp_cpp(wk, cppcore),
+		py:      lsp_py{new_lsp_base(wk, pycore)},
+		wk:      wk,
+		pycore:  pycore,
+		cppcore: cppcore,
 	}
 	ret.filemap = make(map[string]*Symbol_file)
 	return ret

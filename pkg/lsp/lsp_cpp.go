@@ -75,9 +75,9 @@ func (l lsp_cpp) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem
 	return lsp_base.PrepareCallHierarchy(l.lsp_base, loc)
 }
 
-func new_lsp_cpp(wk WorkSpace) lsp_cpp {
+func new_lsp_cpp(wk WorkSpace,core *lspcore ) lsp_cpp {
 	ret := lsp_cpp{
-		new_lsp_base(wk),
+		new_lsp_base(wk,core),
 	}
 	ret.file_extensions = file_extensions
 	ret.root_files = root_files
@@ -135,7 +135,7 @@ func (l lsp_cpp) IsSource(filename string) bool {
 	return false
 }
 func (l lsp_cpp) InitializeLsp(wk WorkSpace) error {
-	if l.inited {
+	if l.core.inited {
 		return nil
 	}
 	result, err := l.core.Initialize(wk)
@@ -143,7 +143,7 @@ func (l lsp_cpp) InitializeLsp(wk WorkSpace) error {
 		return err
 	}
 	if result.ServerInfo.Name == "clangd" {
-		l.inited = true
+		l.core.inited = true
 		return nil
 	}
 	return fmt.Errorf("%s", result.ServerInfo.Name)
@@ -155,12 +155,12 @@ func (l lsp_cpp) Close() {
 
 // Launch_Lsp_Server implements lspclient.
 func (l lsp_cpp) Launch_Lsp_Server() error {
-	if l.started {
+	if l.core.started {
 		return nil
 	}
 	root := "--compile-commands-dir=" + l.wk.Path
 	l.core.cmd = exec.Command("clangd", root)
 	err := l.core.Lauch_Lsp_Server(l.core.cmd)
-	l.started = err == nil
+	l.core.started = err == nil
 	return err
 }

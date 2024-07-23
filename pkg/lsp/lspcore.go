@@ -13,7 +13,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
-	"github.com/tectiv3/go-lsp/jsonrpc"
+	// "github.com/tectiv3/go-lsp/jsonrpc"
 	"go.bug.st/json"
 )
 
@@ -35,6 +35,8 @@ type lspcore struct {
 	handle     rpchandle
 	rw         io.ReadWriteCloser
 	LanguageID string
+	started bool
+	inited  bool
 }
 type lspclient interface {
 	InitializeLsp(wk WorkSpace) error
@@ -56,8 +58,6 @@ type lsp_base struct {
 	wk              WorkSpace
 	file_extensions []string
 	root_files      []string
-	started         bool
-	inited          bool
 }
 type sourcefile struct {
 	filename string
@@ -84,12 +84,10 @@ func (l lsp_base) IsMe(filename string) bool {
 	}
 	return false
 }
-func new_lsp_base(wk WorkSpace) lsp_base {
+func new_lsp_base(wk WorkSpace, core *lspcore) lsp_base {
 	return lsp_base{
-		core:    &lspcore{},
-		wk:      wk,
-		started: false,
-		inited:  false,
+		core: core,
+		wk:   wk,
 	}
 }
 
@@ -462,88 +460,6 @@ func mainxx2() {
 
 }
 
-type servhandle struct {
-}
-
-// ClientRegisterCapability implements lsp.ServerMessagesHandler.
-func (s servhandle) ClientRegisterCapability(context.Context, jsonrpc.FunctionLogger, *lsp.RegistrationParams) *jsonrpc.ResponseError {
-	panic("unimplemented")
-}
-
-// ClientUnregisterCapability implements lsp.ServerMessagesHandler.
-func (s servhandle) ClientUnregisterCapability(context.Context, jsonrpc.FunctionLogger, *lsp.UnregistrationParams) *jsonrpc.ResponseError {
-	panic("unimplemented")
-}
-
-// GetDiagnosticChannel implements lsp.ServerMessagesHandler.
-func (s servhandle) GetDiagnosticChannel() chan *lsp.PublishDiagnosticsParams {
-	panic("unimplemented")
-}
-
-// LogTrace implements lsp.ServerMessagesHandler.
-func (s servhandle) LogTrace(jsonrpc.FunctionLogger, *lsp.LogTraceParams) {
-	panic("unimplemented")
-}
-
-// Progress implements lsp.ServerMessagesHandler.
-func (s servhandle) Progress(jsonrpc.FunctionLogger, *lsp.ProgressParams) {
-	panic("unimplemented")
-}
-
-// TelemetryEvent implements lsp.ServerMessagesHandler.
-func (s servhandle) TelemetryEvent(jsonrpc.FunctionLogger, json.RawMessage) {
-	panic("unimplemented")
-}
-
-// TextDocumentPublishDiagnostics implements lsp.ServerMessagesHandler.
-func (s servhandle) TextDocumentPublishDiagnostics(jsonrpc.FunctionLogger, *lsp.PublishDiagnosticsParams) {
-	panic("unimplemented")
-}
-
-// WindowLogMessage implements lsp.ServerMessagesHandler.
-func (s servhandle) WindowLogMessage(jsonrpc.FunctionLogger, *lsp.LogMessageParams) {
-	panic("unimplemented")
-}
-
-// WindowShowDocument implements lsp.ServerMessagesHandler.
-func (s servhandle) WindowShowDocument(context.Context, jsonrpc.FunctionLogger, *lsp.ShowDocumentParams) (*lsp.ShowDocumentResult, *jsonrpc.ResponseError) {
-	panic("unimplemented")
-}
-
-// WindowShowMessage implements lsp.ServerMessagesHandler.
-func (s servhandle) WindowShowMessage(jsonrpc.FunctionLogger, *lsp.ShowMessageParams) {
-	panic("unimplemented")
-}
-
-// WindowShowMessageRequest implements lsp.ServerMessagesHandler.
-func (s servhandle) WindowShowMessageRequest(context.Context, jsonrpc.FunctionLogger, *lsp.ShowMessageRequestParams) (*lsp.MessageActionItem, *jsonrpc.ResponseError) {
-	panic("unimplemented")
-}
-
-// WindowWorkDoneProgressCreate implements lsp.ServerMessagesHandler.
-func (s servhandle) WindowWorkDoneProgressCreate(context.Context, jsonrpc.FunctionLogger, *lsp.WorkDoneProgressCreateParams) *jsonrpc.ResponseError {
-	panic("unimplemented")
-}
-
-// WorkspaceApplyEdit implements lsp.ServerMessagesHandler.
-func (s servhandle) WorkspaceApplyEdit(context.Context, jsonrpc.FunctionLogger, *lsp.ApplyWorkspaceEditParams) (*lsp.ApplyWorkspaceEditResult, *jsonrpc.ResponseError) {
-	panic("unimplemented")
-}
-
-// WorkspaceCodeLensRefresh implements lsp.ServerMessagesHandler.
-func (s servhandle) WorkspaceCodeLensRefresh(context.Context, jsonrpc.FunctionLogger) *jsonrpc.ResponseError {
-	panic("unimplemented")
-}
-
-// WorkspaceConfiguration implements lsp.ServerMessagesHandler.
-func (s servhandle) WorkspaceConfiguration(context.Context, jsonrpc.FunctionLogger, *lsp.ConfigurationParams) ([]json.RawMessage, *jsonrpc.ResponseError) {
-	panic("unimplemented")
-}
-
-// WorkspaceWorkspaceFolders implements lsp.ServerMessagesHandler.
-func (s servhandle) WorkspaceWorkspaceFolders(context.Context, jsonrpc.FunctionLogger) ([]lsp.WorkspaceFolder, *jsonrpc.ResponseError) {
-	panic("unimplemented")
-}
 
 type readwriter struct {
 	w io.WriteCloser
