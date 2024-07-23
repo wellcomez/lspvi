@@ -83,6 +83,7 @@ func NewRootNode(call lsp.CallHierarchyItem, root bool) dom_node {
 
 // updatetask
 func (callin *callinview) updatetask(task *lspcore.CallInTask) {
+
 	found := false
 	for i, v := range callin.task_list {
 		if v.Name == task.Name {
@@ -97,16 +98,30 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	root_node := tview.NewTreeNode(
 		fmt.Sprintf("[%d]", len(callin.task_list)))
 	for _, v := range callin.task_list {
-		c := callin.newMethod(&v)
+		c := callin.callroot(&v)
 		root_node.AddChild(c)
 	}
 	root_node.Expand()
 	callin.view.SetRoot(root_node)
 }
 
-func (callin *callinview) newMethod(task *lspcore.CallInTask) *tview.TreeNode {
-	root_node := tview.NewTreeNode(task.Name)
-	root_node.SetReference("1")
+func (callin *callinview) callroot(task *lspcore.CallInTask) *tview.TreeNode {
+	var children []*tview.TreeNode
+	var root_node *tview.TreeNode
+	root:=callin.view.GetRoot()
+	if root!=nil{
+		children = root.GetChildren()
+		for _, v := range children {
+			if v.GetReference() == task.Name {
+				root_node = v
+				v.ClearChildren()
+			}
+		}
+	}
+	if root_node==nil{
+		root_node = tview.NewTreeNode(task.Name)
+	}
+	root_node.SetReference(task.Name)
 	for _, stack := range task.Allstack {
 		var i = 0
 		c := stack.Items[0]
