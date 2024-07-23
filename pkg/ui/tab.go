@@ -1,0 +1,45 @@
+package mainui
+
+import (
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+)
+
+type TabButton struct {
+	view  *tview.Button
+	Name  string
+	group *ButtonGroup
+}
+type ButtonGroup struct {
+	tabs    []*TabButton
+	handler func(tab *TabButton)
+}
+
+func (group ButtonGroup) onselected(tab *TabButton) {
+	group.handler(tab)
+}
+func NewButtonGroup(tabs []string, handler func(tab *TabButton)) *ButtonGroup {
+	ret := &ButtonGroup{
+		handler: handler,
+	}
+	var i = 0
+	for i = 0; i < len(tabs); i++ {
+		ret.tabs = append(ret.tabs, NewTab(tabs[i], ret))
+	}
+	return ret
+}
+func (btn *TabButton) selected() {
+	btn.group.onselected(btn)
+}
+func NewTab(name string, group *ButtonGroup) *TabButton {
+	var style tcell.Style
+	// var style1 tcell.Style
+	// style1.Foreground(tcell.ColorGreen)
+	ret := &TabButton{
+		Name:  name,
+		view:  tview.NewButton(name).SetStyle(style),
+		group: group,
+	}
+	ret.view.SetSelectedFunc(ret.selected)
+	return ret
+}

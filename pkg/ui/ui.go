@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/gdamore/tcell/v2"
+	//"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
@@ -97,11 +97,7 @@ func (m *mainui) OnClickSymobolNode(node *tview.TreeNode) {
 	}
 }
 
-type TabButton struct {
-	view  *tview.Button
-	Name  string
-	group *ButtonGroup
-}
+
 
 func (m mainui) OnTabChanged(tab *TabButton) {
 	m.page.SwitchToPage(tab.Name)
@@ -113,40 +109,10 @@ func (m *mainui) OpenFile(file string) {
 	m.lspmgr.Current.LoadSymbol()
 }
 
-func (btn *TabButton) selected() {
-	btn.group.onselected(btn)
-}
-func NewTab(name string, group *ButtonGroup) *TabButton {
-	var style tcell.Style
-	// var style1 tcell.Style
-	// style1.Foreground(tcell.ColorGreen)
-	ret := &TabButton{
-		Name:  name,
-		view:  tview.NewButton(name).SetStyle(style),
-		group: group,
-	}
-	ret.view.SetSelectedFunc(ret.selected)
-	return ret
-}
 
-type ButtonGroup struct {
-	tabs    []*TabButton
-	handler func(tab *TabButton)
-}
 
-func (group ButtonGroup) onselected(tab *TabButton) {
-	group.handler(tab)
-}
-func NewButtonGroup(tabs []string, handler func(tab *TabButton)) *ButtonGroup {
-	ret := &ButtonGroup{
-		handler: handler,
-	}
-	var i = 0
-	for i = 0; i < len(tabs); i++ {
-		ret.tabs = append(ret.tabs, NewTab(tabs[i], ret))
-	}
-	return ret
-}
+
+
 
 func MainUI() {
 	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
