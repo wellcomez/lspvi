@@ -31,7 +31,7 @@ import (
 // func (c *CallNode) get_cls() *Symbol { /* 实现 */ }
 // func (w *WorkSpaceSymbol) find(c *CallNode) { /* 实现 */ }
 func (entry CallStackEntry) isFunction() bool {
-	return entry.Item.Kind== lsp.SymbolKindFunction 
+	return entry.Item.Kind == lsp.SymbolKindFunction
 }
 func (entry CallStackEntry) class_name() string {
 	if entry.PtrSymobl == nil {
@@ -43,7 +43,7 @@ func (entry CallStackEntry) symboldefine_name() string {
 	return entry.Item.Name
 }
 
-func (call CallStack) Uml(wk *WorkSpace, markdown bool) string {
+func (call CallStack) Uml(markdown bool) string {
 	ret := make([]string, 0)
 	var caller *CallStackEntry = nil
 
@@ -51,8 +51,7 @@ func (call CallStack) Uml(wk *WorkSpace, markdown bool) string {
 	for _, s := range call.Items {
 		rightPrefix := ""
 		if !s.isFunction() {
-			rightPrefix = s.class_name() + "::" // type: ignore
-			rightPrefix = strings.Replace(rightPrefix, "::", ".", -1)
+			rightPrefix = strings.ReplaceAll(s.class_name(), "::", ".")+"::"
 		}
 		right := rightPrefix + s.symboldefine_name()
 		if len(ret) == 0 {

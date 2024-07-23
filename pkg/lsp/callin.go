@@ -48,7 +48,8 @@ type CallStack struct {
 }
 
 func (c *CallStack) Add(item *CallStackEntry) {
-	c.Items = append([]*CallStackEntry{item}, c.Items...)
+	// c.Items = append([]*CallStackEntry{item}, c.Items...)
+	c.Items = append(c.Items, item)
 
 }
 func NewCallStack() *CallStack {

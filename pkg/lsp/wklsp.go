@@ -3,6 +3,7 @@ package lspcore
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
@@ -178,6 +179,10 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 		}
 		xx.Run()
 		if hanlde != nil {
+			content := s.Uml(true)
+			if len(s.Items) > 0 {
+				os.WriteFile(s.Items[0].Name+".md", []byte(content), 0644)
+			}
 			hanlde()
 		}
 	}
