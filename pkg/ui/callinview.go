@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -11,9 +12,10 @@ import (
 )
 
 type callinview struct {
-	view *tview.TreeView
-	Name string
-	main *mainui
+	view      *tview.TreeView
+	Name      string
+	main      *mainui
+	task_list []lspcore.CallInTask
 }
 type dom_node struct {
 	call  lsp.CallHierarchyItem
@@ -44,19 +46,29 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			sym := ref.call
 			if ref.root {
 				text := node.GetText()
-				text=strings.TrimLeft(text,"+")
+				text = strings.TrimLeft(text, "+")
 				if !node.IsExpanded() {
 					node.Expand()
 					node.SetText(text)
-				}else{
+				} else {
 					node.Collapse()
-					node.SetText("+"+text)
+					node.SetText("+" + text)
 				}
 			}
 			view.main.gotoline(lsp.Location{
 				URI:   sym.URI,
 				Range: sym.SelectionRange,
 			})
+			return
+		}
+		text := node.GetText()
+		text = strings.TrimLeft(text, "+")
+		if node.IsExpanded() {
+			node.Collapse()
+			node.SetText("+" + text)
+		} else {
+			node.Expand()
+			node.SetText(text)
 		}
 	}
 }
@@ -71,12 +83,34 @@ func NewRootNode(call lsp.CallHierarchyItem, root bool) dom_node {
 
 // updatetask
 func (callin *callinview) updatetask(task *lspcore.CallInTask) {
+	found := false
+	for i, v := range callin.task_list {
+		if v.Name == task.Name {
+			found = true
+			callin.task_list[i] = *task
+			break
+		}
+	}
+	if !found {
+		callin.task_list = append(callin.task_list, *task)
+	}
+	root_node := tview.NewTreeNode(
+		fmt.Sprintf("[%d]", len(callin.task_list)))
+	for _, v := range callin.task_list {
+		c := callin.newMethod(&v)
+		root_node.AddChild(c)
+	}
+	root_node.Expand()
+	callin.view.SetRoot(root_node)
+}
+
+func (callin *callinview) newMethod(task *lspcore.CallInTask) *tview.TreeNode {
 	root_node := tview.NewTreeNode(task.Name)
 	root_node.SetReference("1")
 	for _, stack := range task.Allstack {
 		var i = 0
 		c := stack.Items[0]
-		parent := tview.NewTreeNode("+"+callin.itemdisp(c))
+		parent := tview.NewTreeNode("+" + callin.itemdisp(c))
 		parent.Collapse()
 		root_node.AddChild(parent)
 		parent.SetReference(NewRootNode(c.Item, true))
@@ -88,7 +122,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 			parent = parent1
 		}
 	}
-	callin.view.SetRoot(root_node)
+	return root_node
 }
 
 func (call *callinview) itemdisp(c *lspcore.CallStackEntry) string {

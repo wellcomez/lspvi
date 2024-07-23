@@ -9,6 +9,7 @@ import (
 	"github.com/pgavlin/femto/runtime"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	lspcore "zen108.com/lspui/pkg/lsp"
 	// "github.com/gdamore/tcell"
 )
 
@@ -16,6 +17,7 @@ type CodeView struct {
 	filename string
 	view     *femto.View
 	main     *mainui
+  call_task_map map[string]lspcore.CallInTask
 }
 
 func NewCodeView(main *mainui) *CodeView {
