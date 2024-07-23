@@ -147,16 +147,21 @@ func is_memeber(kind lsp.SymbolKind) bool {
 	return kind == lsp.SymbolKindMethod || kind == lsp.SymbolKindField || kind == lsp.SymbolKindConstructor
 }
 func (sym *Symbol_file) LoadSymbol() {
+	sym.__load_symbol_impl()
+	sym.Handle.OnSymbolistChanged(*sym)
+}
+
+func (sym *Symbol_file) __load_symbol_impl() error {
 	if len(sym.Class_object) > 0 {
 		sym.Handle.OnSymbolistChanged(*sym)
-		return
+		return nil
 	}
 	symbols, err := sym.lsp.GetDocumentSymbol(sym.Filename)
 	if err != nil {
-		return
+		return err
 	}
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
-	sym.Handle.OnSymbolistChanged(*sym)
+	return nil
 }
 func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
 	task := NewCallInTask(loc, sym.lsp)
@@ -165,13 +170,16 @@ func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
 	return task, nil
 }
 
-func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask) {
+func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func()) {
 	for _, s := range task.Allstack {
 		var xx = class_resolve_task{
 			wklsp:     sym.Wk,
 			callstack: s,
 		}
 		xx.Run()
+		if hanlde != nil {
+			hanlde()
+		}
 	}
 }
 func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
@@ -261,13 +269,16 @@ type LspWorkspace struct {
 
 func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, error) {
 	filename := entry.Item.URI.AsPath().String()
-	symbolfile, err := wk.open(filename)
+	symbolfile, isnew, err := wk.open(filename)
 	if err != nil {
 		return nil, err
 	}
+	if isnew {
+		symbolfile.__load_symbol_impl()
+	}
 	if symbolfile == nil {
 		log.Printf("fail to loadd  %s\n", filename)
-		return nil, fmt.Errorf("fail to loadd ", filename)
+		return nil, fmt.Errorf("fail to loadd %s", filename)
 	}
 	return symbolfile.find_stack_symbol(entry)
 
@@ -290,11 +301,11 @@ func (wk LspWorkspace) getClient(filename string) lspclient {
 	return nil
 }
 
-func (wk *LspWorkspace) open(filename string) (*Symbol_file, error) {
+func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 	val, ok := wk.filemap[filename]
 	if ok {
 		wk.Current = val
-		return val, nil
+		return val, false, nil
 	}
 	wk.filemap[filename] = &Symbol_file{
 		Filename: filename,
@@ -305,10 +316,10 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, error) {
 
 	ret := wk.filemap[filename]
 	err := ret.lsp.DidOpen(filename)
-	return ret, err
+	return ret, true, err
 }
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
-	ret, err := wk.open(filename)
+	ret, _, err := wk.open(filename)
 	wk.Current = wk.filemap[filename]
 	return ret, err
 

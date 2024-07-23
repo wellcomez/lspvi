@@ -27,6 +27,7 @@ type mainui struct {
 	main_layout *tview.Flex
 	root        string
 	app         *tview.Application
+	bf          *BackForward
 }
 
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
@@ -35,7 +36,12 @@ func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 }
 
 func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
-	m.lspmgr.Current.Async_resolve_stacksymbol(call_in_task)
+	m.lspmgr.Current.Async_resolve_stacksymbol(call_in_task, func() {
+		m.app.QueueUpdate(func() {
+			m.callinview.updatetask(call_in_task)
+			m.app.ForceDraw()
+		})
+	})
 	m.app.QueueUpdate(func() {
 		m.callinview.updatetask(call_in_task)
 		m.app.ForceDraw()
@@ -148,6 +154,7 @@ func (m mainui) OnTabChanged(tab *TabButton) {
 // OpenFile
 // OpenFile
 func (m *mainui) OpenFile(file string, loc *lsp.Location) {
+	m.bf.history.AddToHistory(file)
 	title := strings.Replace(file, m.root, "", -1)
 	m.main_layout.SetTitle(title)
 	m.symboltree.Clear()
@@ -181,6 +188,7 @@ func MainUI(arg *Arguments) {
 	}
 	var main = mainui{
 		lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root}),
+		bf:     NewBackForward(NewHistory("history.log")),
 	}
 	main.root = root
 
@@ -252,6 +260,9 @@ func MainUI(arg *Arguments) {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlC {
 			main.lspmgr.Close()
+		}
+		if event.Key() == tcell.KeyCtrlO {
+			main.OpenFile(main.bf.GoBack(), nil)
 		}
 		return event
 	})
