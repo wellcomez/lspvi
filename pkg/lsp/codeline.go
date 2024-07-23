@@ -21,14 +21,14 @@ func SubLine(begin, end lsp.Position, lines []string) []string {
 	subline := lines[begin.Line : end.Line+1]
 
 	if begin.Line == end.Line {
-		e := end.Character 
+		e := end.Character
 		if e < 0 {
 			e = -1
 		}
 		subline[0] = subline[0][begin.Character:e]
 	} else {
 		subline[0] = subline[0][begin.Character:]
-		e := end.Character 
+		e := end.Character
 		if e < 0 {
 			e = -1
 		}
@@ -84,6 +84,9 @@ func NewBody(location lsp.Location) *Body {
 }
 
 // String 方法返回 Body 的字符串表示
+func (b *Body) Info() string {
+	return fmt.Sprintf("%s %d:%d %d:%d", b.String(), b.Location.Range.Start.Line, b.Location.Range.Start.Character, b.Location.Range.End.Line, b.Location.Range.End.Character)
+}
 func (b *Body) String() string {
 	return strings.Join(b.Subline, "\n")
 }

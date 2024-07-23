@@ -12,11 +12,18 @@ func key(call lsp.CallHierarchyItem) string {
 
 // CallStackEntry
 type CallStackEntry struct {
-	Name string
-	Item lsp.CallHierarchyItem
+	Name      string
+	Item      lsp.CallHierarchyItem
+	PtrSymobl *Symbol
 }
 
 func (c CallStackEntry) DisplayName() string {
+	if c.PtrSymobl != nil {
+		if len(c.PtrSymobl.classname) > 0 {
+			s := fmt.Sprintf("%s::%s", c.PtrSymobl.classname, c.PtrSymobl.SymInfo.Name)
+			return fmt.Sprintf("%s %s:%d", s, c.Item.URI.AsPath().String(), c.Item.Range.Start.Line)
+		}
+	}
 	return fmt.Sprintf("%s %s:%d", c.Name, c.Item.URI.AsPath().String(), c.Item.Range.Start.Line)
 }
 
@@ -118,4 +125,24 @@ func (task *CallInTask) run() error {
 		}
 	}
 	return nil
+}
+
+type class_resolve_task struct {
+	task  *CallInTask
+	wklsp *LspWorkspace
+}
+
+func (c *class_resolve_task) Run() error {
+	for _, v := range c.task.Allstack {
+		for _, v1 := range v.Items {
+			c.resolve(v1)
+		}
+	}
+	return nil
+}
+func (c *class_resolve_task) resolve(entry *CallStackEntry) {
+	sym, _ := c.wklsp.find_from_stackentry(entry)
+	if sym != nil {
+		entry.PtrSymobl = sym
+	}
 }

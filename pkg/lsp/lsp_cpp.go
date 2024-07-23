@@ -100,7 +100,11 @@ func (l lsp_cpp) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {
 
 			for _, v := range symfile.Class_object {
 				if v.SymInfo.Name == classname {
-					v.Members = append(v.Members, Symbol{SymInfo: member})
+
+					v.Members = append(v.Members, Symbol{
+						SymInfo:   member,
+						classname: classname,
+					})
 					return true
 				}
 			}

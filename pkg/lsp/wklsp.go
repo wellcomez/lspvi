@@ -1,6 +1,12 @@
 package lspcore
 
-import "github.com/tectiv3/go-lsp"
+import (
+	"fmt"
+	"log"
+	"strings"
+
+	"github.com/tectiv3/go-lsp"
+)
 
 var Text = "󰉿"
 var Method = "ƒ"
@@ -29,8 +35,48 @@ var Operator = "󰆕"
 var TypeParameter = ""
 
 type Symbol struct {
-	SymInfo lsp.SymbolInformation
-	Members []Symbol
+	SymInfo   lsp.SymbolInformation
+	Members   []Symbol
+	classname string
+}
+
+func inside_location(bigger lsp.Location, smaller lsp.Location) bool {
+	if smaller.Range.Start.Line < bigger.Range.Start.Line {
+		return false
+	}
+	if smaller.Range.Start.Line == bigger.Range.Start.Line {
+		if smaller.Range.Start.Character < bigger.Range.Start.Character {
+			return false
+		}
+	}
+	if smaller.Range.End.Line == bigger.Range.End.Line {
+		if smaller.Range.End.Character > bigger.Range.End.Character {
+			return false
+		}
+	}
+	if smaller.Range.End.Line > bigger.Range.End.Line {
+		return false
+	}
+	return true
+
+}
+func (S Symbol) match(calr *CallStackEntry) bool {
+	loc := lsp.Location{
+		URI:   calr.Item.URI,
+		Range: calr.Item.Range,
+	}
+	if S.SymInfo.Kind == calr.Item.Kind {
+		if inside_location(S.SymInfo.Location, loc) {
+			return true
+		}
+		yes:=strings.Contains(S.SymInfo.Name, calr.Name)
+		if yes {
+			log.Printf("Error Resovle failed %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
+				NewBody(S.SymInfo.Location).Info(),
+				NewBody(loc).Info())
+		}
+	}
+	return false
 }
 
 func (s Symbol) Icon() string {
@@ -69,8 +115,24 @@ type Symbol_file struct {
 	Filename     string
 	Handle       lsp_data_changed
 	Class_object []*Symbol
+	Wk           *LspWorkspace
 }
 
+func (sym Symbol_file) find_stack_symbol(call *CallStackEntry) (*Symbol, error) {
+	for _, v := range sym.Class_object {
+		if len(v.Members) > 0 {
+			for _, v := range v.Members {
+				if v.match(call) {
+					return &v, nil
+				}
+			}
+		}
+		if v.match(call) {
+			return v, nil
+		}
+	}
+	return nil, nil
+}
 func (sym Symbol) SymbolListStrint() string {
 	return sym.Icon() + " " + sym.SymInfo.Name
 }
@@ -99,6 +161,12 @@ func (sym *Symbol_file) LoadSymbol() {
 func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
 	task := NewCallInTask(loc, sym.lsp)
 	task.run()
+	sym.Handle.OnCallTaskInViewChanged(task)
+	var xx = class_resolve_task{
+		wklsp: sym.Wk,
+		task:  task,
+	}
+	xx.Run()
 	sym.Handle.OnCallTaskInViewChanged(task)
 	return task, nil
 }
@@ -157,6 +225,7 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 		if parent != nil {
 			if parent.contain(s) {
 				if is_memeber(v.Kind) {
+					s.classname = parent.SymInfo.Name
 					parent.Members = append(parent.Members, s)
 				}
 			} else {
@@ -186,6 +255,19 @@ type LspWorkspace struct {
 	Handle  lsp_data_changed
 }
 
+func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, error) {
+	filename := entry.Item.URI.AsPath().String()
+	symbolfile, err := wk.open(filename)
+	if err != nil {
+		return nil, err
+	}
+	if symbolfile == nil {
+		log.Printf("fail to loadd  %s\n", filename)
+		return nil, fmt.Errorf("fail to loadd ", filename)
+	}
+	return symbolfile.find_stack_symbol(entry)
+
+}
 func (wk LspWorkspace) Close() {
 	wk.cpp.Close()
 	wk.py.Close()
@@ -204,7 +286,7 @@ func (wk LspWorkspace) getClient(filename string) lspclient {
 	return nil
 }
 
-func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
+func (wk *LspWorkspace) open(filename string) (*Symbol_file, error) {
 	val, ok := wk.filemap[filename]
 	if ok {
 		wk.Current = val
@@ -214,12 +296,18 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 		Filename: filename,
 		lsp:      wk.getClient(filename),
 		Handle:   wk.Handle,
+		Wk:       wk,
 	}
 
-	wk.Current = wk.filemap[filename]
 	ret := wk.filemap[filename]
 	err := ret.lsp.DidOpen(filename)
 	return ret, err
+}
+func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
+	ret, err := wk.open(filename)
+	wk.Current = wk.filemap[filename]
+	return ret, err
+
 }
 func NewLspWk(wk WorkSpace) *LspWorkspace {
 	ret := &LspWorkspace{
