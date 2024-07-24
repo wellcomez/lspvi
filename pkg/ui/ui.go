@@ -50,6 +50,8 @@ func (m *mainui) MoveFocus() {
 		m.prefocused = view_fzf
 	} else if m.symboltree.view.HasFocus() {
 		m.prefocused = view_sym_list
+	}else{
+		m.prefocused = view_other
 	}
 	m.app.SetFocus(m.cmdline.view)
 }
@@ -122,6 +124,7 @@ const (
 	view_code
 	view_cmd
 	view_sym_list
+	view_other
 )
 
 func (m *mainui) ActiveTab(id int) {
@@ -284,6 +287,7 @@ func MainUI(arg *Arguments) {
 	}
 	fzttab := group.Find("fzf")
 	fzttab.view.Focus(nil)
+	app.SetFocus(codeview.view)
 	// tab_area.(tview.NewButton("fzf").SetSelectedFunc(main.onfzf).SetStyle(style), 10, 1, true).
 	// AddItem(tview.NewButton("log").SetSelectedFunc(main.onlog).SetStyle(style), 10, 1, true).
 	// AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin).SetStyle(style), 10, 1, true)
