@@ -44,16 +44,20 @@ func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	}
 }
 func (m *mainui) MoveFocus() {
+	m.SavePrevFocus()
+	m.app.SetFocus(m.cmdline.view)
+}
+
+func (m *mainui) SavePrevFocus() {
 	if m.codeview.view.HasFocus() {
 		m.prefocused = view_code
 	} else if m.fzf.view.HasFocus() {
 		m.prefocused = view_fzf
 	} else if m.symboltree.view.HasFocus() {
 		m.prefocused = view_sym_list
-	}else{
+	} else {
 		m.prefocused = view_other
 	}
-	m.app.SetFocus(m.cmdline.view)
 }
 func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
 	m.lspmgr.Current.Async_resolve_stacksymbol(call_in_task, func() {
@@ -313,7 +317,7 @@ func (main *mainui) Close() {
 	main.lspmgr.Close()
 	main.app.Stop()
 }
-func (main *mainui) OnSearch(txt string) {
+func (main *mainui) OnSearch(txt string,fzf bool) {
 	if len(txt) == 0 {
 		return
 	}
@@ -356,11 +360,17 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return main.cmdline.Keyhandle(event)
 	} else if main.cmdline.vim.vi.Command {
 		return main.cmdline.Keyhandle(event)
+	} else if main.cmdline.vim.vi.Escape{
+		return main.cmdline.HandleKeyUnderEscape(event)
 	}
 
 	return event
 }
-
+func (m *mainui)OnGrep(){
+	if m.prefocused==view_code{
+		m.codeview.OnGrep();
+	}
+}
 type Search interface {
 	Findall(key string) []int
 }

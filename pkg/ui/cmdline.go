@@ -34,6 +34,12 @@ func (cmd *cmdline) OnComand(command string) {
 	}
 }
 
+func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey {
+	if event.Rune()=='f'{
+		cmd.main.OnGrep();
+	}
+	return nil
+}
 func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 	vim := cmd.vim
 	if cmd.vim.vi.Find || cmd.vim.vi.Command {
@@ -54,21 +60,21 @@ func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 				if vim.vi.Command {
 					cmd.OnComand(vim.vi.FindEnter)
 				} else if vim.vi.Find {
-					cmd.main.OnSearch(txt[1:])
+					cmd.main.OnSearch(txt[1:],false)
 				}
 				return nil
 			}
 		}
 		if vim.vi.Find && len(vim.vi.FindEnter) > 0 {
 			if event.Rune() == 'n' {
-				cmd.main.OnSearch(vim.vi.FindEnter)
+				cmd.main.OnSearch(vim.vi.FindEnter,false)
 				return nil
 			}
 		}
 		txt = txt + string(event.Rune())
 		cmd.view.SetText(txt)
 		if cmd.vim.vi.Find {
-			cmd.main.OnSearch(txt[1:])
+			cmd.main.OnSearch(txt[1:],false)
 			return nil
 		}
 	}
@@ -156,6 +162,7 @@ func (v *vim) EnterEscape() {
 	if f == v.app.cmdline.view {
 		v.app.codeview.view.Focus(nil)
 	}
+	v.app.SavePrevFocus()
 }
 
 // EnterCommand enters command mode.

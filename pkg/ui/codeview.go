@@ -21,10 +21,22 @@ type CodeView struct {
 	call_task_map map[string]lspcore.CallInTask
 }
 
-func (code *CodeView) MoveTo(index int) {
-	if index == -1 {
-		return
+func (code *CodeView) OnGrep() {
+	codeview := code.view
+	codeview.Cursor.SelectWord()
+	sel := codeview.Cursor.CurSelection
+	Buf := codeview.Buf
+	word := ""
+	if sel[0].Y == sel[1].Y {
+		word = Buf.Line(sel[0].Y)[sel[0].X:sel[1].X]
+	} else {
+		p1 := Buf.Line(sel[0].Y)[sel[0].X:]
+		p2 := Buf.Line(sel[1].Y)[:sel[0].X]
+		word = p1 + p2
 	}
+	code.main.OnSearch(word,true)
+}
+func (code *CodeView) MoveTo(index int) {
 	code.view.Cursor.GotoLoc(femto.Loc{
 		X: 0,
 		Y: index,
