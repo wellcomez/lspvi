@@ -53,9 +53,6 @@ func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 		if vim.vi.Command || vim.vi.Find {
-      if !cmd.view.HasFocus(){
-        return nil
-      }
 			if event.Key() == tcell.KeyEnter {
 				if len(txt) > 1 {
 					vim.vi.FindEnter = txt[1:]
@@ -67,6 +64,9 @@ func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 				}
 				return nil
 			}
+		}
+		if !cmd.view.HasFocus() {
+			return nil
 		}
 		if vim.vi.Find && len(vim.vi.FindEnter) > 0 {
 			if event.Rune() == 'n' {
