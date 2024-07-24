@@ -33,6 +33,7 @@ type mainui struct {
 	cmdline       *cmdline
 	prefocused    view_id
 	searchcontext *GenericSearch
+	statusbar     *tview.TextView
 }
 
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
@@ -301,6 +302,12 @@ func MainUI(arg *Arguments) {
 	for _, v := range group.tabs {
 		tab_area.AddItem(v.view, 10, 1, true)
 	}
+	main.statusbar = tview.NewTextView()
+  main.statusbar.SetText("------------------------------------------------------------------")
+  tab_area.AddItem(tview.NewBox(),1,0,false)
+  tab_area.AddItem(main.statusbar,0,10,false)
+
+
 	fzttab := group.Find("fzf")
 	fzttab.view.Focus(nil)
 	app.SetFocus(codeview.view)
@@ -341,7 +348,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 		if changed {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
 		}
-		if fzf{
+		if fzf {
 			main.cmdline.vim.EnterGrep(txt)
 		}
 	}
