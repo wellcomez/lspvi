@@ -57,6 +57,6 @@ func (fzf *fzfview) OnRefenceChanged(refs []lsp.Location) {
 		end := min(len(line), v.Range.Start.Character+gap)
 		path := strings.Replace(v.URI.AsPath().String(), fzf.main.root, "", -1)
 		secondline := fmt.Sprintf("%s:%d", path, v.Range.Start.Line+1)
-		fzf.view.AddItem(line[begin:end], secondline, 0, nil)
+		fzf.view.AddItem(secondline, line[begin:end],  0, nil)
 	}
 }
