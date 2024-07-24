@@ -478,18 +478,3 @@ func mainxx2() {
 	fmt.Printf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
 
 }
-
-type readwriter struct {
-	w io.WriteCloser
-	r io.ReadCloser
-}
-
-// Read implements io.Reader.
-func (r readwriter) Read(p []byte) (n int, err error) {
-	return r.r.Read(p)
-}
-
-// Write implements io.Writer.
-func (r readwriter) Write(p []byte) (n int, err error) {
-	return r.w.Write(p)
-}
