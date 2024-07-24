@@ -89,10 +89,20 @@ func (c *SymbolTreeView) HandleKey(event *tcell.EventKey) *tcell.EventKey {
 	value := cur.GetReference()
 	var chr = event.Rune()
 	var action_refer = chr == 'r'
+	var action_define = chr == 'D'
+	var action_declare = chr == 'd'
 	var action_call_in = chr == 'c'
-	if action_call_in || action_refer {
+	if action_call_in || action_refer || action_define || action_declare {
 		if value != nil {
 			if sym, ok := value.(lsp.SymbolInformation); ok {
+				if action_declare {
+					c.get_declare(lspcore.Symbol{SymInfo: sym})
+					return nil
+				}
+				if action_define {
+					c.get_define(lspcore.Symbol{SymInfo: sym})
+					return nil
+				}
 				if action_refer {
 					c.get_refer(lspcore.Symbol{
 						SymInfo: sym,
@@ -125,9 +135,29 @@ func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 	c.main.OnGetCallInTask(loc, c.main.codeview.filename)
 	c.main.ActiveTab(view_callin)
 }
-func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
-	r := sym.SymInfo.Location.Range
+func (c *SymbolTreeView) get_declare(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	r := c.get_symbol_range(sym)
+	// println(ss)
+	c.main.get_declare(r, c.main.codeview.filename)
+}
+func (c *SymbolTreeView) get_define(sym lspcore.Symbol) {
+	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	r := c.get_symbol_range(sym)
+	// println(ss)
+	c.main.get_define(r, c.main.codeview.filename)
+}
+func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
+	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	r := c.get_symbol_range(sym)
+	// println(ss)
+	c.main.get_refer(r, c.main.codeview.filename)
+	c.main.ActiveTab(view_fzf)
+}
+
+func (c *SymbolTreeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
+	r := sym.SymInfo.Location.Range
+
 	beginline := c.main.codeview.view.Buf.Line(r.Start.Line)
 	startIndex := strings.Index(beginline, sym.SymInfo.Name)
 	if startIndex > 0 {
@@ -135,9 +165,7 @@ func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 		r.End.Character = len(sym.SymInfo.Name) + startIndex - 1
 		r.End.Line = r.Start.Line
 	}
-	// println(ss)
-	c.main.get_refer(r, c.main.codeview.filename)
-	c.main.ActiveTab(view_fzf)
+	return r
 }
 
 func (s SymbolListItem) displayname() string {
