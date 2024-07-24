@@ -78,10 +78,22 @@ func (m *mainui) async_resolve_callstack(call_in_task *lspcore.CallInTask) {
 	go m.__resolve_task(call_in_task)
 }
 
+// UpdatePageTitle
+func (m *mainui) UpdatePageTitle() {
+
+	if m.fzf.view.HasFocus() {
+		m.page.SetTitle(m.fzf.String())
+	}
+
+}
+
 // OnRefenceChanged implements lspcore.lsp_data_changed.
+// OnRefenceChanged
+// OnRefenceChanged
 func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 	// panic("unimplemented")
-	m.fzf.OnRefenceChanged(refs)
+	m.fzf.OnRefenceChanged(refs,data_refs)
+  m.UpdatePageTitle()
 
 }
 
@@ -354,11 +366,12 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 					}
 					locs = append(locs, loc)
 				}
-				main.fzf.main.fzf.OnRefenceChanged(locs)
+				main.fzf.main.fzf.OnRefenceChanged(locs,data_search)
 			}
 		} else {
 			main.codeview.MoveTo(gs.GetNext())
 		}
+		main.page.SetTitle(gs.String())
 	} else if prev == view_fzf {
 		main.fzf.OnSearch(txt)
 	}
