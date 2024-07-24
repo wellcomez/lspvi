@@ -345,13 +345,13 @@ func (code *CodeView) Load(filename string) error {
 func (code *CodeView) gotoline(line int) {
 	key := ""
 	if code.main.searchcontext.view == view_code {
-		key = code.main.searchcontext.key
+		key = strings.ToLower(code.main.searchcontext.key)
 	}
 	log.Println("gotoline", line)
 	if line < code.view.Topline || code.view.Bottomline() < line {
 		code.view.Topline = max(line-5, 0)
 	}
-	text := code.view.Buf.Line(line)
+	text := strings.ToLower(code.view.Buf.Line(line))
 	RightX := len(text)
 	leftX := 0
 	if len(key) > 0 {
