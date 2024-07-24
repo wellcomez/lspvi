@@ -424,7 +424,14 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 		main.page.SetTitle(gs.String())
 	} else if prev == view_fzf {
 		main.fzf.OnSearch(txt)
-	}
+	} else if prev == view_sym_list{
+    if changed{
+      gs.indexList= main.symboltree.OnSearch(txt)
+      main.symboltree.movetonode(gs.GetIndex())
+    }else{
+      main.symboltree.movetonode(gs.GetNext())
+    }
+  }
 }
 
 func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {

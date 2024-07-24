@@ -10,9 +10,10 @@ import (
 )
 
 type SymbolTreeView struct {
-	view    *tview.TreeView
-	symbols []SymbolListItem
-	main    *mainui
+	view          *tview.TreeView
+	symbols       []SymbolListItem
+	main          *mainui
+	searcheresult *TextFilter
 }
 type Filter struct {
 	line int
@@ -44,6 +45,49 @@ func (m *Filter) compare(node, parent *tview.TreeNode) bool {
 		}
 	}
 	return true
+}
+
+type TextFilter struct {
+	key   string
+	nodes []*tview.TreeNode
+}
+
+func (m *SymbolTreeView) movetonode(index int) {
+	if m.searcheresult == nil {
+		return
+	}
+	length := len(m.searcheresult.nodes)
+	if length == 0 {
+		return
+	}
+	if index < length {
+		m.view.SetCurrentNode(m.searcheresult.nodes[index])
+	}
+}
+func (m *TextFilter) compare(node, parent *tview.TreeNode) bool {
+	value := node.GetReference()
+	if value != nil {
+		if sym, ok := value.(lsp.SymbolInformation); ok {
+			name := strings.ToLower(sym.Name)
+			if strings.Contains(name, m.key) {
+				m.nodes = append(m.nodes, node)
+			}
+		}
+	}
+	return true
+}
+func (m *SymbolTreeView) OnSearch(key string) []int {
+	m.searcheresult = &TextFilter{
+		key: key,
+	}
+	if m.view.GetRoot() != nil {
+		m.view.GetRoot().Walk(m.searcheresult.compare)
+	}
+	var ret []int
+	for i, _ := range m.searcheresult.nodes {
+		ret = append(ret, i)
+	}
+	return ret
 }
 func (m *SymbolTreeView) OnCodeLineChange(line int) {
 	ss := Filter{line: line}
@@ -190,10 +234,10 @@ func (v *SymbolTreeView) Clear() {
 	v.view.SetRoot(root_node)
 }
 func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
-	if file==nil{
+	if file == nil {
 		v.view.SetRoot(tview.NewTreeNode("need lsp client"))
 		return
-	}	
+	}
 	root := v.view.GetRoot()
 	if root != nil {
 		root.ClearChildren()
