@@ -42,18 +42,6 @@ func (code *CodeView) OnGrep() string {
 	return word
 }
 
-//	func (code *CodeView) MoveTo(index int) {
-//		if index == -1 {
-//			return
-//		}
-//		code.view.Cursor.GotoLoc(femto.Loc{
-//			X: 0,
-//			Y: index,
-//		})
-//		code.view.SelectLine()
-//		code.view.Topline = femto.Max(0, index-5)
-//		code.update_current_line()
-//	}
 func (code *CodeView) OnSearch(txt string) []int {
 	var ret []int
 	var lino = 0
@@ -150,7 +138,7 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 		root.Cursor.Loc = femto.Loc{X: posX, Y: posY}
 		root.Cursor.SetSelectionStart(femto.Loc{X: posX, Y: posY})
 		root.Cursor.SetSelectionEnd(femto.Loc{X: posX, Y: posY})
-		code.update_current_line()
+		code.update_with_line_changed()
 		return tview.MouseConsumed, nil
 	}
 	if action == 14 || action == 13 {
@@ -167,7 +155,7 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 		root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline, root.Buf.NumLines))}
 		log.Println(root.Cursor.Loc)
 		root.SelectLine()
-		code.update_current_line()
+		code.update_with_line_changed()
 		return tview.MouseConsumed, nil
 	}
 	return action, event
@@ -190,19 +178,15 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	case 'k':
 		{
 			code.action_key_up()
-			return nil
 		}
 	case 'j':
 		{
 			code.action_key_down()
-			return nil
 		}
 	case 42: //'*':
 		code.OnGrep()
-		return nil
 	case 'f':
 		code.OnGrep()
-		return nil
 	case 'c':
 		code.key_call_in()
 		return nil
@@ -229,7 +213,9 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		code.action_key_down()
 	case tcell.KeyCtrlS:
 	case tcell.KeyCtrlQ:
+		return nil
 	}
+	code.update_with_line_changed()
 	return nil
 }
 
@@ -261,7 +247,7 @@ func (code *CodeView) action_key_up() {
 	// ret.update_current_line()
 }
 
-func (ret *CodeView) update_current_line() {
+func (ret *CodeView) update_with_line_changed() {
 	root := ret.view
 	line := root.Cursor.Loc.Y
 	ret.main.OnCodeLineChange(line)
@@ -352,7 +338,9 @@ func (code *CodeView) gotoline(line int) {
 		key = code.main.searchcontext.key
 	}
 	log.Println("gotoline", line)
-	code.view.Topline = max(line-5, 0)
+	if line < code.view.Topline || code.view.Bottomline() < line {
+		code.view.Topline = max(line-5, 0)
+	}
 	text := code.view.Buf.Line(line)
 	RightX := len(text)
 	leftX := 0
@@ -371,6 +359,8 @@ func (code *CodeView) gotoline(line int) {
 		X: RightX,
 		Y: line,
 	})
+	Cur.Loc = Cur.CurSelection[0]
+	code.update_with_line_changed()
 
 	// codeview.view.Cursor.CurSelection[0] = femto.Loc{
 	// 	X: 0,
