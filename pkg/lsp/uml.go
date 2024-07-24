@@ -55,8 +55,8 @@ func (call CallStack) Uml(markdown bool) string {
 			rightPrefix = s.uml_class_name() + "::"
 		}
 		right := rightPrefix + s.symboldefine_name()
-		if strings.Index(right, "ProcessInternal")>0{
-			log.Println(right,s.symboldefine_name(),s.uml_class_name())
+		if strings.Index(right, "ProcessInternal") > 0 {
+			log.Println(right, s.symboldefine_name(), s.uml_class_name())
 		}
 		if len(ret) == 0 {
 			title = fmt.Sprintf("==%s==", right)
@@ -88,7 +88,9 @@ func (call CallStack) Uml(markdown bool) string {
 	if markdown {
 		markBegin = "```plantuml"
 	}
-	sss := []string{markBegin, "@startuml", "autoactivate on", title}
+	var black = "skinparam monochrome true"
+
+	sss := []string{markBegin, "@startuml", black, "autoactivate on", title}
 	sss = append(sss, ret...)
 	markEnd := ""
 	if markdown {

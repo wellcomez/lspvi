@@ -2,8 +2,10 @@
 package mainui
 
 import (
+	"image/png"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -27,13 +29,73 @@ type mainui struct {
 	main_layout   *tview.Flex
 	root          string
 	app           *tview.Application
-	uml           *file_tree_view
+	uml           *umlview
 	bf            *BackForward
 	log           *tview.TextArea
 	cmdline       *cmdline
 	prefocused    view_id
 	searchcontext *GenericSearch
 	statusbar     *tview.TextView
+}
+type umlview struct {
+	//image  *tview.Image
+	preview *tview.Flex
+	file    *file_tree_view
+	layout  *tview.Flex
+	Name    string
+}
+
+func (v *umlview) openfile(name string) {
+	ext := filepath.Ext(name)
+	v.preview.Clear()
+	if ext == ".png" {
+		image := tview.NewImage()
+		v.preview.AddItem(image, 0, 1, false)
+		log.Printf("")
+		// 打开文件
+		file, err := os.Open(name)
+		if err != nil {
+			log.Println(err)
+		}
+		defer file.Close()
+		img, err := png.Decode(file)
+		if err != nil {
+			log.Println(err)
+		}
+    image.SetColors(256)
+		image.SetImage(img)
+	} else if ext == ".utxt" {
+		b, err := os.ReadFile(name)
+		if err != nil {
+			return
+		}
+		t := tview.NewTextView()
+		v.preview.AddItem(t,0,1,false)
+		t.SetText(string(b))
+	}
+	log.Printf("")
+}
+func (v *umlview) Init() {
+	v.file.Init()
+}
+func NewUmlView(main *mainui, wk *lspcore.WorkSpace) *umlview {
+	ex, err := lspcore.NewExportRoot(wk)
+	if err != nil {
+		return nil
+	}
+	file := new_uml_tree(main, "uml", ex.Dir)
+	layout := tview.NewFlex()
+	layout.AddItem(file.view, 0, 3, false)
+	preview := tview.NewFlex()
+	layout.AddItem(preview, 0, 7, false)
+	ret := &umlview{
+		preview: preview,
+		file:    file,
+		layout:  layout,
+		Name:    file.Name,
+	}
+	file.openfile = ret.openfile
+	return ret
 }
 
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
@@ -243,6 +305,9 @@ type Arguments struct {
 	Root string
 }
 
+func (m *mainui) open_file(file string) {
+	m.OpenFile(file, nil)
+}
 func MainUI(arg *Arguments) {
 	var filearg = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
 	var root = "/home/z/dev/lsp/pylspclient/tests/cpp/"
@@ -276,6 +341,7 @@ func MainUI(arg *Arguments) {
 
 	main.fileexplorer = new_file_tree(&main, "FileExplore", main.root, func(filename string) bool { return true })
 	main.fileexplorer.Init()
+	main.fileexplorer.openfile = main.open_file
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
 	main.log = tview.NewTextArea()
@@ -292,18 +358,13 @@ func MainUI(arg *Arguments) {
 			AddItem(main.fileexplorer.view, 0, 1, false).
 			AddItem(codeview.view, 0, 4, false).
 			AddItem(symbol_tree.view, 0, 2, false)
-		// fzfbtn := tview.NewButton("fzf")
-		// logbtn := tview.NewButton("log")
-	var uml *file_tree_view
-	ex, err := lspcore.NewExportRoot(&main.lspmgr.Wk)
-	if err == nil {
-		uml = new_uml_tree(&main, "uml", ex.Dir)
-		main.uml = uml
-	}
+	// fzfbtn := tview.NewButton("fzf")
+	// logbtn := tview.NewButton("log")
+	uml := NewUmlView(&main, &main.lspmgr.Wk)
 	var tabs []string = []string{main.fzf.Name, "log", main.callinview.Name}
 	if uml != nil {
 		tabs = append(tabs, uml.Name)
-		console.AddPage(uml.Name, uml.view, true, false)
+		console.AddPage(uml.Name, uml.layout, true, false)
 	}
 
 	group := NewButtonGroup(tabs, main.OnTabChanged)

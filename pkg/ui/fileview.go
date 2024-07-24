@@ -10,11 +10,12 @@ import (
 )
 
 type file_tree_view struct {
-	view    *tview.TreeView
-	Name    string
-	main    *mainui
-	rootdir string
-	handle  func(filename string) bool
+	view     *tview.TreeView
+	Name     string
+	main     *mainui
+	rootdir  string
+	handle   func(filename string) bool
+	openfile func(filename string)
 }
 
 func new_file_tree(main *mainui, name string, rootdir string, handle func(filename string) bool) *file_tree_view {
@@ -78,7 +79,7 @@ func (view *file_tree_view) node_selected(node *tview.TreeNode) {
 				}
 				node.Collapse()
 			} else {
-				dirname:=filepath.Dir(filename)
+				dirname := filepath.Dir(filename)
 				// node.Expand()
 				view.view.SetTitle(dirname)
 				root2 := tview.NewTreeNode(node.GetText())
@@ -92,7 +93,7 @@ func (view *file_tree_view) node_selected(node *tview.TreeNode) {
 			}
 
 		} else {
-			view.main.OpenFile(filename, nil)
+			view.openfile(filename)
 		}
 	}
 }
