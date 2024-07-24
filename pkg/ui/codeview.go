@@ -34,7 +34,7 @@ func (code *CodeView) OnGrep() {
 		p2 := Buf.Line(sel[1].Y)[:sel[0].X]
 		word = p1 + p2
 	}
-	code.main.prefocused=view_code
+	code.main.prefocused = view_code
 	code.main.OnSearch(word, true)
 }
 func (code *CodeView) MoveTo(index int) {
@@ -83,7 +83,7 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetColorscheme(colorscheme)
 
 	root.SetMouseCapture(ret.handle_mouse)
-	root.SetInputCapture(ret.keyhandle)
+	root.SetInputCapture(ret.handle_key)
 	ret.view = root
 	return &ret
 }
@@ -127,10 +127,19 @@ func (ret *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMo
 	return action, event
 }
 
-func (ret *CodeView) keyhandle(event *tcell.EventKey) *tcell.EventKey {
-	root := ret.view
+func (ret *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := event.Rune()
 	switch ch {
+	case 'k':
+		{
+			ret.action_key_up()
+			return nil
+		}
+	case 'j':
+		{
+			ret.action_key_down()
+			return nil
+		}
 	case 'f':
 		ret.OnGrep()
 		return nil
@@ -143,27 +152,36 @@ func (ret *CodeView) keyhandle(event *tcell.EventKey) *tcell.EventKey {
 	}
 	switch event.Key() {
 	case tcell.KeyUp:
-		root.Buf.LinesNum()
-
-		root.SelectUp()
-		root.ScrollUp(1)
-		root.SelectLine()
-		log.Println("cursor up ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
-		ret.update_current_line()
+		ret.action_key_up()
 	case tcell.KeyDown:
-		root.SelectDown()
-		root.ScrollDown(1)
-		root.SelectLine()
-
-		log.Println("cursor down ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
-		ret.update_current_line()
+		ret.action_key_down()
 	case tcell.KeyCtrlS:
-
 		return nil
 	case tcell.KeyCtrlQ:
 		return nil
 	}
 	return nil
+}
+
+func (ret *CodeView) action_key_down() {
+	root := ret.view
+	root.SelectDown()
+	root.ScrollDown(1)
+	root.SelectLine()
+
+	log.Println("cursor down ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
+	ret.update_current_line()
+}
+
+func (ret *CodeView) action_key_up() {
+	root := ret.view
+	root.Buf.LinesNum()
+
+	root.SelectUp()
+	root.ScrollUp(1)
+	root.SelectLine()
+	log.Println("cursor up ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
+	ret.update_current_line()
 }
 
 func (ret *CodeView) update_current_line() {
