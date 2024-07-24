@@ -290,6 +290,10 @@ func MainUI(arg *Arguments) {
 	}
 }
 
+func (main *mainui) Close() {
+	main.lspmgr.Close()
+	main.app.Stop()
+}
 func (main *mainui) OnSearch(txt string) {
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
@@ -302,12 +306,15 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	} else if event.Key() == tcell.KeyEscape {
 		main.cmdline.vim.EnterEscape()
 	} else if event.Key() == tcell.KeyCtrlC {
-		main.lspmgr.Close()
+		main.Close()
 	} else if event.Key() == tcell.KeyCtrlO {
 		main.OpenFile(main.bf.GoBack(), nil)
 	} else if main.cmdline.vim.vi.Find {
 		return main.cmdline.Keyhandle(event)
+	} else if main.cmdline.vim.vi.Command {
+		return main.cmdline.Keyhandle(event)
 	}
+
 	return event
 }
 

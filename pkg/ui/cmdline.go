@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -24,14 +26,29 @@ func new_cmdline(main *mainui) *cmdline {
 	ret.vim = NewVim(main)
 	return ret
 }
+func (cmd *cmdline) OnComand(command string) {
+	command = strings.TrimRight(command, "\r")
+	command = strings.TrimRight(command, "\n")
+	if command == "q" {
+		cmd.main.app.Stop()
+	}
+}
 
 func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
-	if cmd.vim.vi.Find ||cmd.vim.vi.Command {
+	if cmd.vim.vi.Find || cmd.vim.vi.Command {
 		txt := cmd.view.GetText()
 		txt = txt + string(event.Rune())
+		if cmd.vim.vi.Command {
+			if event.Key() == tcell.KeyEnter {
+				cmd.OnComand(txt[1:])
+				return nil
+			}
+		}
 		cmd.view.SetText(txt)
-		cmd.main.OnSearch(txt[1:])
-		return nil
+		if cmd.vim.vi.Find {
+			cmd.main.OnSearch(txt[1:])
+			return nil
+		}
 	}
 	switch event.Key() {
 	case tcell.KeyEnter:
@@ -137,5 +154,6 @@ func (v *vim) EnterCommand() {
 		v.vi = vimstate{Command: true}
 		v.MoveFocus()
 		v.app.cmdline.view.Focus(nil)
+		v.app.cmdline.SetValue(":")
 	}
 }
