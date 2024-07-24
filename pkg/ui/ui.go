@@ -12,10 +12,6 @@ import (
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
-
-
-
-
 type rootlayout struct {
 	editor_area *tview.Flex
 	console     *tview.Pages
@@ -23,6 +19,10 @@ type rootlayout struct {
 	tab_area    *tview.Flex
 	parent      *tview.Flex
 }
+
+// editor_area_fouched
+
+
 type baseview struct {
 	box *tview.Box
 }
@@ -46,7 +46,11 @@ type mainui struct {
 	statusbar     *tview.TextView
 	layout        *rootlayout
 }
-
+func (r *mainui) editor_area_fouched() {
+	log.Println("change foucse",r.GetFocusViewId())
+	r.layout.parent.ResizeItem(r.layout.editor_area, 0, 3)
+	r.layout.parent.ResizeItem(r.layout.console, 0, 2)
+}
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
 func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	// panic("unimplemented")
@@ -347,6 +351,8 @@ func MainUI(arg *Arguments) {
 		cmdline:     main.cmdline.view,
 		parent:      main_layout,
 	}
+
+	codeview.view.SetFocusFunc(main.editor_area_fouched)
 	main.OpenFile(filearg, nil)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
