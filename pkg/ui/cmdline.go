@@ -29,8 +29,8 @@ func new_cmdline(main *mainui) *cmdline {
 func (cmd *cmdline) OnComand(command string) {
 	command = strings.TrimRight(command, "\r")
 	command = strings.TrimRight(command, "\n")
-	if command == "q" {
-		cmd.main.app.Stop()
+	if command == "q" || command == "quit" || command == "q!" || command == "qa" {
+		cmd.main.Close()
 	}
 }
 
