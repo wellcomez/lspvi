@@ -31,7 +31,7 @@ func (code *CodeView) OnGrep() {
 		word = Buf.Line(sel[0].Y)[sel[0].X:sel[1].X]
 	} else {
 		p1 := Buf.Line(sel[0].Y)[sel[0].X:]
-		p2 := Buf.Line(sel[1].Y)[:sel[0].X]
+		p2 := Buf.Line(sel[1].Y)[:sel[1].X]
 		word = p1 + p2
 	}
 	code.main.prefocused = view_code
