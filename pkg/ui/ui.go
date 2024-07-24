@@ -16,22 +16,23 @@ type baseview struct {
 	box *tview.Box
 }
 type mainui struct {
-	fileexplorer *file_tree_view
-	codeview     *CodeView
-	lspmgr       *lspcore.LspWorkspace
-	symboltree   *SymbolTreeView
-	fzf          *fzfview
-	page         *tview.Pages
-	callinview   *callinview
-	tabs         *ButtonGroup
-	main_layout  *tview.Flex
-	root         string
-	app          *tview.Application
-	uml          *file_tree_view
-	bf           *BackForward
-	log          *tview.TextArea
-	cmdline      *cmdline
-	prefocused   *interface{}
+	fileexplorer  *file_tree_view
+	codeview      *CodeView
+	lspmgr        *lspcore.LspWorkspace
+	symboltree    *SymbolTreeView
+	fzf           *fzfview
+	page          *tview.Pages
+	callinview    *callinview
+	tabs          *ButtonGroup
+	main_layout   *tview.Flex
+	root          string
+	app           *tview.Application
+	uml           *file_tree_view
+	bf            *BackForward
+	log           *tview.TextArea
+	cmdline       *cmdline
+	prefocused    view_id
+	searchcontext *GenericSearch
 }
 
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
@@ -43,6 +44,13 @@ func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	}
 }
 func (m *mainui) MoveFocus() {
+	if m.codeview.view.HasFocus() {
+		m.prefocused = view_code
+	} else if m.fzf.view.HasFocus() {
+		m.prefocused = view_fzf
+	} else if m.symboltree.view.HasFocus() {
+		m.prefocused = view_sym_list
+	}
 	m.app.SetFocus(m.cmdline.view)
 }
 func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
@@ -105,9 +113,16 @@ func (m *mainui) OnReference(pos lsp.Range, filepath string) {
 	lsp.Reference(pos)
 }
 
-var view_log = 1
-var view_fzf = 2
-var view_callin = 3
+type view_id int
+
+const (
+	view_log = iota
+	view_fzf
+	view_callin
+	view_code
+	view_cmd
+	view_sym_list
+)
 
 func (m *mainui) ActiveTab(id int) {
 	var name = ""
@@ -295,6 +310,30 @@ func (main *mainui) Close() {
 	main.app.Stop()
 }
 func (main *mainui) OnSearch(txt string) {
+	if len(txt) == 0 {
+		return
+	}
+	changed := true
+	if main.searchcontext == nil {
+		main.searchcontext = NewGenericSearch(main.prefocused, txt)
+	} else {
+		changed = main.searchcontext.Changed(main.prefocused, txt)
+		if changed {
+			main.searchcontext = NewGenericSearch(main.prefocused, txt)
+		}
+	}
+	gs := main.searchcontext
+	prev := main.prefocused
+	if prev == view_code {
+		if changed {
+			gs.indexList = main.codeview.OnSearch(txt)
+			main.codeview.MoveTo(gs.GetIndex())
+		} else {
+			main.codeview.MoveTo(gs.GetNext())
+		}
+	} else if prev == view_fzf {
+		main.fzf.OnSearch(txt)
+	}
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if event.Rune() == ':' {

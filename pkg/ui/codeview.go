@@ -3,6 +3,7 @@ package mainui
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
@@ -20,6 +21,36 @@ type CodeView struct {
 	call_task_map map[string]lspcore.CallInTask
 }
 
+func (code *CodeView) MoveTo(index int) {
+	if index == -1 {
+		return
+	}
+	code.view.Cursor.GotoLoc(femto.Loc{
+		X: 0,
+		Y: index,
+	})
+	code.view.SelectLine()
+	code.view.Topline = femto.Max(0, index-5)
+	code.update_current_line()
+}
+func (code *CodeView) OnSearch(txt string) []int {
+	var ret []int
+	var lino = 0
+	txt = strings.ToLower(txt)
+	Buf := code.view.Buf
+	for ; lino < Buf.LinesNum(); lino++ {
+		s := Buf.Line(lino)
+		s = strings.ToLower(s)
+		index := strings.Index(s, txt)
+		if index >= 0 {
+			ret = append(ret, lino)
+		}
+	}
+	return ret
+	// codeview.view.Buf.LineArray
+	// for _, v := range  {
+	// }
+}
 func NewCodeView(main *mainui) *CodeView {
 	// view := tview.NewTextView()
 	// view.SetBorder(true)

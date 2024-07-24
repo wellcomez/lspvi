@@ -29,6 +29,8 @@ type fzfview struct {
 	Refs search_reference_result
 	main *mainui
 }
+func (main *fzfview) OnSearch(txt string) {
+}
 
 func (fzf *fzfview) Hanlde(index int, _ string, _ string, _ rune) {
 	vvv := fzf.Refs.refs[index]

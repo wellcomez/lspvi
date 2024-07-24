@@ -35,15 +35,37 @@ func (cmd *cmdline) OnComand(command string) {
 }
 
 func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
+	vim := cmd.vim
 	if cmd.vim.vi.Find || cmd.vim.vi.Command {
 		txt := cmd.view.GetText()
-		txt = txt + string(event.Rune())
-		if cmd.vim.vi.Command {
+		if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
+			if len(txt) > 1 {
+				txt = txt[0 : len(txt)-1]
+				cmd.view.SetText(txt)
+				vim.vi.FindEnter = ""
+			}
+			return nil
+		}
+		if vim.vi.Command || vim.vi.Find {
 			if event.Key() == tcell.KeyEnter {
-				cmd.OnComand(txt[1:])
+				if len(txt) > 1 {
+					vim.vi.FindEnter = txt[1:]
+				}
+				if vim.vi.Command {
+					cmd.OnComand(vim.vi.FindEnter)
+				} else if vim.vi.Find {
+					cmd.main.OnSearch(txt[1:])
+				}
 				return nil
 			}
 		}
+		if vim.vi.Find && len(vim.vi.FindEnter) > 0 {
+			if event.Rune() == 'n' {
+				cmd.main.OnSearch(vim.vi.FindEnter)
+				return nil
+			}
+		}
+		txt = txt + string(event.Rune())
 		cmd.view.SetText(txt)
 		if cmd.vim.vi.Find {
 			cmd.main.OnSearch(txt[1:])
@@ -76,7 +98,7 @@ type vimstate struct {
 	Find      bool
 	Command   bool
 	Insert    bool
-	FindEnter *string
+	FindEnter string
 }
 
 // vim structure
@@ -92,7 +114,7 @@ func NewVimState() vimstate {
 		Find:      false,
 		Command:   false,
 		Insert:    false,
-		FindEnter: nil,
+		FindEnter: "",
 	}
 }
 
@@ -102,18 +124,6 @@ func NewVim(app *mainui) *vim {
 		app: app,
 		vi:  NewVimState(),
 	}
-}
-
-// CheckInput checks and updates the input based on the current state.
-func (v *vim) CheckInput() string {
-	if v.vi.FindEnter != nil {
-		if len(*v.vi.FindEnter) > len(v.app.cmdline.Value()) {
-			v.vi.FindEnter = nil
-		} else {
-			v.app.cmdline.SetValue(*v.vi.FindEnter)
-		}
-	}
-	return v.app.cmdline.Value()
 }
 
 // MoveFocus moves the focus in the application.
