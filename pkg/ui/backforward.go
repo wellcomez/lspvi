@@ -8,15 +8,13 @@ import (
 type History struct {
 	datalist []string
 	file     string
-	dataSet  map[string]struct{}
 	index    int
 }
 
 func NewHistory(file string) *History {
 	history := &History{
-		file:    file,
-		dataSet: make(map[string]struct{}),
-		index:   0,
+		file:  file,
+		index: 0,
 	}
 	if file != "" {
 		content, err := os.ReadFile(file)
@@ -30,12 +28,15 @@ func NewHistory(file string) *History {
 	return history
 }
 
-func (h *History) AddToHistory(data string) {
-	h.dataSet[data] = struct{}{}
-	h.datalist = filter(h.datalist, func(x string) bool {
-		return x != data
-	})
-	h.datalist = h.insertAtFront(h.datalist, data)
+func (h *History) AddToHistory(newdata string) {
+	var lll []string
+	for _, line := range h.datalist {
+		if newdata != line {
+			lll = append(lll, line)
+		}
+	}
+	h.datalist = h.insertAtFront(lll, newdata)
+
 	if h.file != "" {
 		os.WriteFile(h.file, []byte(strings.Join(h.datalist, "\n")), 0644)
 	}
@@ -44,16 +45,6 @@ func (h *History) AddToHistory(data string) {
 func (h *History) insertAtFront(slice []string, element string) []string {
 	slice = append([]string{element}, slice...)
 	return slice
-}
-
-func filter(slice []string, condition func(string) bool) []string {
-	var result []string
-	for _, v := range slice {
-		if !condition(v) {
-			result = append(result, v)
-		}
-	}
-	return result
 }
 
 type BackForward struct {
@@ -75,4 +66,3 @@ func (bf *BackForward) GoForward() string {
 	bf.history.index = max(0, bf.history.index)
 	return bf.history.datalist[bf.history.index]
 }
-
