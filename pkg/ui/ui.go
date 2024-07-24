@@ -317,7 +317,7 @@ func (main *mainui) Close() {
 	main.lspmgr.Close()
 	main.app.Stop()
 }
-func (main *mainui) OnSearch(txt string,fzf bool) {
+func (main *mainui) OnSearch(txt string, fzf bool) {
 	if len(txt) == 0 {
 		return
 	}
@@ -336,6 +336,26 @@ func (main *mainui) OnSearch(txt string,fzf bool) {
 		if changed {
 			gs.indexList = main.codeview.OnSearch(txt)
 			main.codeview.MoveTo(gs.GetIndex())
+			if fzf {
+				var locs []lsp.Location
+				for _, linno := range gs.indexList {
+					loc := lsp.Location{
+						URI: lsp.NewDocumentURI(main.codeview.filename),
+						Range: lsp.Range{
+							Start: lsp.Position{
+								Line:      linno,
+								Character: 0,
+							},
+							End: lsp.Position{
+								Line:      linno,
+								Character: 0,
+							},
+						},
+					}
+					locs = append(locs, loc)
+				}
+				main.fzf.main.fzf.OnRefenceChanged(locs)
+			}
 		} else {
 			main.codeview.MoveTo(gs.GetNext())
 		}
@@ -360,17 +380,18 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return main.cmdline.Keyhandle(event)
 	} else if main.cmdline.vim.vi.Command {
 		return main.cmdline.Keyhandle(event)
-	} else if main.cmdline.vim.vi.Escape{
+	} else if main.cmdline.vim.vi.Escape {
 		return main.cmdline.HandleKeyUnderEscape(event)
 	}
 
 	return event
 }
-func (m *mainui)OnGrep(){
-	if m.prefocused==view_code{
-		m.codeview.OnGrep();
+func (m *mainui) OnGrep() {
+	if m.prefocused == view_code {
+		m.codeview.OnGrep()
 	}
 }
+
 type Search interface {
 	Findall(key string) []int
 }
