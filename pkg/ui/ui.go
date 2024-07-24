@@ -50,14 +50,24 @@ func (m *mainui) MoveFocus() {
 }
 
 func (m *mainui) SavePrevFocus() {
+	m.prefocused = m.GetFocusViewId()
+}
+
+func (m *mainui) GetFocusViewId() view_id {
 	if m.codeview.view.HasFocus() {
-		m.prefocused = view_code
+		return view_code
+	} else if m.callinview.view.HasFocus() {
+		return view_callin
+	} else if m.cmdline.view.HasFocus() {
+		return view_cmd
+	} else if m.log.HasFocus() {
+		return view_log
 	} else if m.fzf.view.HasFocus() {
-		m.prefocused = view_fzf
+		return view_fzf
 	} else if m.symboltree.view.HasFocus() {
-		m.prefocused = view_sym_list
+		return view_sym_list
 	} else {
-		m.prefocused = view_other
+		return view_other
 	}
 }
 func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
@@ -303,10 +313,9 @@ func MainUI(arg *Arguments) {
 		tab_area.AddItem(v.view, 10, 1, true)
 	}
 	main.statusbar = tview.NewTextView()
-  main.statusbar.SetText("------------------------------------------------------------------")
-  tab_area.AddItem(tview.NewBox(),1,0,false)
-  tab_area.AddItem(main.statusbar,0,10,false)
-
+	main.statusbar.SetText("------------------------------------------------------------------")
+	tab_area.AddItem(tview.NewBox(), 1, 0, false)
+	tab_area.AddItem(main.statusbar, 0, 10, false)
 
 	fzttab := group.Find("fzf")
 	fzttab.view.Focus(nil)
@@ -419,7 +428,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 func (m *mainui) OnGrep() {
-	if m.prefocused == view_code {
+	if m.prefocused == view_code || m.codeview.view.HasFocus() {
 		m.app.SetFocus(m.fzf.view)
 		m.codeview.OnGrep()
 	}

@@ -15,31 +15,34 @@ import (
 )
 
 type CodeView struct {
-	filename      string
-	view          *femto.View
-	main          *mainui
-	call_task_map map[string]lspcore.CallInTask
+	filename          string
+	view              *femto.View
+	main              *mainui
+	call_task_map     map[string]lspcore.CallInTask
+	mouse_select_area bool
 }
 
 func (code *CodeView) OnGrep() string {
 	codeview := code.view
-	codeview.Cursor.SelectWord()
-	sel := codeview.Cursor.CurSelection
-	Buf := codeview.Buf
-	word := ""
-	if sel[0].Y == sel[1].Y {
-		word = Buf.Line(sel[0].Y)[sel[0].X:sel[1].X]
-	} else {
-		p1 := Buf.Line(sel[0].Y)[sel[0].X:]
-		p2 := Buf.Line(sel[1].Y)[:sel[1].X]
-		word = p1 + p2
+	word := codeview.Cursor.GetSelection()
+	if len(word) < 2 {
+		codeview.Cursor.SelectWord()
+		sel := codeview.Cursor.CurSelection
+		Buf := codeview.Buf
+		if sel[0].Y == sel[1].Y {
+			word = Buf.Line(sel[0].Y)[sel[0].X:sel[1].X]
+		} else {
+			p1 := Buf.Line(sel[0].Y)[sel[0].X:]
+			p2 := Buf.Line(sel[1].Y)[:sel[1].X]
+			word = p1 + p2
+		}
 	}
 	code.main.prefocused = view_code
 	code.main.OnSearch(word, true)
-  return word
+	return word
 }
 func (code *CodeView) MoveTo(index int) {
-	if index==-1{
+	if index == -1 {
 		return
 	}
 	code.view.Cursor.GotoLoc(femto.Loc{
@@ -92,27 +95,53 @@ func NewCodeView(main *mainui) *CodeView {
 	return &ret
 }
 
-func (ret *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-	root := ret.view
+func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	root := code.view
 	x1, y1, x2, y2 := root.GetInnerRect()
 	leftX, _, _, _ := root.GetRect()
 	posX, posY := event.Position()
 	if posX < x1 || posY > y2 || posY < y1 || posX > x2 {
 		return action, event
 	}
-
-	log.Print(x1, y1, x2, y2)
+	code.main.app.SetFocus(code.view)
+	pos := femto.Loc{
+		Y: posY + root.Topline - 1,
+		X: posX - leftX - 3,
+	}
+	if action == tview.MouseLeftDown {
+		code.mouse_select_area = true
+		log.Print(x1, y1, x2, y2, "down")
+		code.view.Cursor.SetSelectionStart(pos)
+		code.view.Cursor.SetSelectionEnd(pos)
+		return tview.MouseConsumed, nil
+	}
+	if action == tview.MouseMove {
+		if code.mouse_select_area {
+			log.Print(x1, y1, x2, y2, "move")
+			code.view.Cursor.SetSelectionEnd(pos)
+		}
+		return tview.MouseConsumed, nil
+	}
+	if action == tview.MouseLeftUp {
+		if code.mouse_select_area {
+			code.view.Cursor.SetSelectionEnd(pos)
+			code.mouse_select_area = false
+		}
+		log.Print(x1, y1, x2, y2, "up")
+		return tview.MouseConsumed, nil
+	}
 	if action == tview.MouseLeftClick {
-
+		code.mouse_select_area = false
 		posY = posY + root.Topline - 1
 		posX = posX - leftX - 3
 		root.Cursor.Loc = femto.Loc{X: posX, Y: posY}
 		root.Cursor.SetSelectionStart(femto.Loc{X: posX, Y: posY})
 		root.Cursor.SetSelectionEnd(femto.Loc{X: posX, Y: posY})
-		ret.update_current_line()
+		code.update_current_line()
 		return tview.MouseConsumed, nil
 	}
 	if action == 14 || action == 13 {
+		code.mouse_select_area = false
 		gap := 2
 		if action == 14 {
 			posY = posY + gap
@@ -125,7 +154,7 @@ func (ret *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMo
 		root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline, root.Buf.NumLines))}
 		log.Println(root.Cursor.Loc)
 		root.SelectLine()
-		ret.update_current_line()
+		code.update_current_line()
 		return tview.MouseConsumed, nil
 	}
 	return action, event
@@ -146,7 +175,7 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			code.action_key_down()
 			return nil
 		}
-	case 42://'*':
+	case 42: //'*':
 		code.OnGrep()
 		return nil
 	case 'f':

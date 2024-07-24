@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -66,6 +67,9 @@ func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 			}
 		}
 		if !cmd.view.HasFocus() {
+			x, y, x1, y1 := cmd.main.app.GetFocus().GetRect()
+
+			log.Println("wrong focus", x, y, x1, y1, "id", cmd.main.GetFocusViewId())
 			return nil
 		}
 		if vim.vi.Find && len(vim.vi.FindEnter) > 0 {
