@@ -146,6 +146,9 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			code.action_key_down()
 			return nil
 		}
+	case 42://'*':
+		code.OnGrep()
+		return nil
 	case 'f':
 		code.OnGrep()
 		return nil
