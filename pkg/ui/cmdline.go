@@ -137,6 +137,13 @@ func (v *vim) MoveFocus() {
 	v.app.MoveFocus()
 }
 
+// EnterGrep
+func (v *vim) EnterGrep(txt string) {
+	v.vi = vimstate{Find: true}
+	v.vi.FindEnter = txt
+	v.app.cmdline.SetValue("/" + txt)
+}
+
 // EnterFind enters find mode.
 func (v *vim) EnterFind() bool {
 	if v.vi.Escape {

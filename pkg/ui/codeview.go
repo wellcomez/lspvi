@@ -21,7 +21,7 @@ type CodeView struct {
 	call_task_map map[string]lspcore.CallInTask
 }
 
-func (code *CodeView) OnGrep() {
+func (code *CodeView) OnGrep() string {
 	codeview := code.view
 	codeview.Cursor.SelectWord()
 	sel := codeview.Cursor.CurSelection
@@ -36,6 +36,7 @@ func (code *CodeView) OnGrep() {
 	}
 	code.main.prefocused = view_code
 	code.main.OnSearch(word, true)
+  return word
 }
 func (code *CodeView) MoveTo(index int) {
 	if index==-1{

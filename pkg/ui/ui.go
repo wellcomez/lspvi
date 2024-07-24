@@ -341,6 +341,9 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 		if changed {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
 		}
+		if fzf{
+			main.cmdline.vim.EnterGrep(txt)
+		}
 	}
 	gs := main.searchcontext
 	prev := main.prefocused
