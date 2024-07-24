@@ -8,6 +8,8 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
+var FolderEmoji = "\U0001f4c1"
+var FileIcon = "\U0001f4c4"
 var Text = "󰉿"
 var Method = "ƒ"
 var Function = ""

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
 type file_tree_view struct {
@@ -81,7 +82,7 @@ func (view *file_tree_view) node_selected(node *tview.TreeNode) {
 				// node.Expand()
 				view.view.SetTitle(dirname)
 				root2 := tview.NewTreeNode(node.GetText())
-				parent := tview.NewTreeNode(dirname)
+				parent := tview.NewTreeNode("..")
 				parent.SetReference(filepath.Dir(filename))
 				root2.AddChild(parent)
 				for _, v := range node.GetChildren() {
@@ -114,7 +115,7 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 		fullpath := filepath.Join(dir, file.Name())
 		prefix := ""
 		if file.IsDir() {
-			prefix = "+"
+			prefix = lspcore.FolderEmoji
 		}
 		c := tview.NewTreeNode(prefix + file.Name())
 		c.SetReference(fullpath)
