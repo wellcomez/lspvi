@@ -212,7 +212,7 @@ func (m *mainui) ActiveTab(id int) {
 }
 
 // OnCodeViewChanged implements lspcore.lsp_data_changed.
-func (m *mainui) OnCodeViewChanged(file lspcore.Symbol_file) {
+func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 	// panic("unimplemented")
 }
 func (m *mainui) gotoline(loc lsp.Location) {
@@ -225,7 +225,7 @@ func (m *mainui) gotoline(loc lsp.Location) {
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
-func (m *mainui) OnSymbolistChanged(file lspcore.Symbol_file) {
+func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file) {
 	if file.Filename != m.codeview.filename {
 		return
 	}
@@ -264,13 +264,19 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	go m.async_open(file)
 }
 func (m *mainui) async_open(file string) {
-	_, err := m.lspmgr.Open(file)
+	symbolfile, err := m.lspmgr.Open(file)
 	if err == nil {
 		m.lspmgr.Current.LoadSymbol()
+		m.app.QueueUpdate(func() {
+			m.app.ForceDraw()
+		})
+	} else {
+		m.app.QueueUpdate(func() {
+			m.symboltree.update(symbolfile)
+			m.app.ForceDraw()
+		})
 	}
-	m.app.QueueUpdate(func() {
-		m.app.ForceDraw()
-	})
+
 }
 
 type Arguments struct {

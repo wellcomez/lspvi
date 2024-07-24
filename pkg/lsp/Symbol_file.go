@@ -146,7 +146,7 @@ func (sym *Symbol_file) __load_symbol_impl() error {
 		return fmt.Errorf("lsp is nil")
 	}
 	if len(sym.Class_object) > 0 {
-		sym.Handle.OnSymbolistChanged(*sym)
+		sym.Handle.OnSymbolistChanged(sym)
 		return nil
 	}
 	symbols, err := sym.lsp.GetDocumentSymbol(sym.Filename)
@@ -158,7 +158,7 @@ func (sym *Symbol_file) __load_symbol_impl() error {
 }
 func (sym *Symbol_file) LoadSymbol() {
 	sym.__load_symbol_impl()
-	sym.Handle.OnSymbolistChanged(*sym)
+	sym.Handle.OnSymbolistChanged(sym)
 }
 func (sym Symbol_file) find_stack_symbol(call *CallStackEntry) (*Symbol, error) {
 	for _, v := range sym.Class_object {

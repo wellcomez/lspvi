@@ -189,7 +189,11 @@ func (v *SymbolTreeView) Clear() {
 	root_node.SetReference("1")
 	v.view.SetRoot(root_node)
 }
-func (v *SymbolTreeView) update(file lspcore.Symbol_file) {
+func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
+	if file==nil{
+		v.view.SetRoot(tview.NewTreeNode("need lsp client"))
+		return
+	}	
 	root := v.view.GetRoot()
 	if root != nil {
 		root.ClearChildren()
