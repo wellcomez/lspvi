@@ -325,7 +325,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 	if main.searchcontext == nil {
 		main.searchcontext = NewGenericSearch(main.prefocused, txt)
 	} else {
-		changed = main.searchcontext.Changed(main.prefocused, txt)
+		changed = main.searchcontext.Changed(main.prefocused, txt) || changed
 		if changed {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
 		}
@@ -365,19 +365,19 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if event.Rune() == ':' {
-		if main.cmdline.vim.EnterCommand(){
-      return nil
-    }
+		if main.cmdline.vim.EnterCommand() {
+			return nil
+		}
 	}
 	if event.Rune() == 'i' {
-		if main.cmdline.vim.EnterInsert(){
-      return nil
-    }
+		if main.cmdline.vim.EnterInsert() {
+			return nil
+		}
 	}
 	if event.Rune() == '/' {
-		if main.cmdline.vim.EnterFind(){
-      return nil
-    }
+		if main.cmdline.vim.EnterFind() {
+			return nil
+		}
 	}
 	if event.Key() == tcell.KeyEscape {
 		main.cmdline.vim.EnterEscape()
