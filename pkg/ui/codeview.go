@@ -41,18 +41,19 @@ func (code *CodeView) OnGrep() string {
 	code.main.OnSearch(word, true)
 	return word
 }
-// func (code *CodeView) MoveTo(index int) {
-// 	if index == -1 {
-// 		return
-// 	}
-// 	code.view.Cursor.GotoLoc(femto.Loc{
-// 		X: 0,
-// 		Y: index,
-// 	})
-// 	code.view.SelectLine()
-// 	code.view.Topline = femto.Max(0, index-5)
-// 	code.update_current_line()
-// }
+
+//	func (code *CodeView) MoveTo(index int) {
+//		if index == -1 {
+//			return
+//		}
+//		code.view.Cursor.GotoLoc(femto.Loc{
+//			X: 0,
+//			Y: index,
+//		})
+//		code.view.SelectLine()
+//		code.view.Topline = femto.Max(0, index-5)
+//		code.update_current_line()
+//	}
 func (code *CodeView) OnSearch(txt string) []int {
 	var ret []int
 	var lino = 0
@@ -176,7 +177,16 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := event.Rune()
 	main := code.main
 	vim := main.cmdline.vim
+	Cur := code.view.Cursor
 	switch ch {
+	case 'b':
+		{
+			Cur.WordLeft()
+		}
+	case 'e':
+		{
+			Cur.WordRight()
+		}
 	case 'k':
 		{
 			code.action_key_up()
@@ -206,7 +216,6 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 	}
-	Cur := code.view.Cursor
 	switch event.Key() {
 	case tcell.KeyRight:
 		Cur.DeleteSelection()
@@ -221,13 +230,13 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	case tcell.KeyCtrlS:
 	case tcell.KeyCtrlQ:
 	}
-	return nil 
+	return nil
 }
 
 func (code *CodeView) action_key_down() {
 	Cur := code.view.Cursor
 	Cur.Down()
-	view :=code.view
+	view := code.view
 	view.ScrollDown(1)
 	// root := code.view
 	// root.SelectDown()
@@ -239,7 +248,7 @@ func (code *CodeView) action_key_down() {
 }
 
 func (code *CodeView) action_key_up() {
-	code.view.Cursor.Up()	
+	code.view.Cursor.Up()
 	code.view.ScrollUp(1)
 
 	// root := ret.view
@@ -346,7 +355,7 @@ func (code *CodeView) gotoline(line int) {
 	code.view.Topline = max(line-5, 0)
 	text := code.view.Buf.Line(line)
 	RightX := len(text)
-	leftX :=0
+	leftX := 0
 	if len(key) > 0 {
 		if index := strings.Index(text, key); index >= 0 {
 			leftX = index
