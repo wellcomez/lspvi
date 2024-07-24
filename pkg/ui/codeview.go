@@ -361,6 +361,9 @@ func (code *CodeView) Load(filename string) error {
 	return nil
 }
 func (code *CodeView) gotoline(line int) {
+	if line==-1 {
+		return
+	}
 	key := ""
 	gs := code.main.searchcontext
 	if gs != nil && gs.view == view_code {
