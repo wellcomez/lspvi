@@ -410,6 +410,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 }
 func (m *mainui) OnGrep() {
 	if m.prefocused == view_code {
+    m.app.SetFocus(m.fzf.view)
 		m.codeview.OnGrep()
 	}
 }
