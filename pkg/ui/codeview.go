@@ -66,6 +66,18 @@ func (code *CodeView) OnSearch(txt string) []int {
 			ret = append(ret, lino)
 		}
 	}
+	if code.view.HasFocus() {
+		Y := code.view.Cursor.Loc.Y
+		closeI := 0
+		for i := 0; i < len(ret); i++ {
+			if femto.Abs(ret[i]-Y) < femto.Abs(ret[closeI]-Y) {
+				closeI = i
+			}
+		}
+		ret2 := ret[closeI:]
+		ret1 := ret[0 : closeI]
+		return append(ret2,ret1...)
+	}
 	return ret
 	// codeview.view.Buf.LineArray
 	// for _, v := range  {
