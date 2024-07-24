@@ -1,6 +1,12 @@
 package lspcore
 
-import "github.com/tectiv3/go-lsp"
+import (
+	"fmt"
+	"os/exec"
+	"path/filepath"
+
+	"github.com/tectiv3/go-lsp"
+)
 
 type lsp_py struct {
 	lsp_base
@@ -14,12 +20,28 @@ func (l lsp_py) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error)
 // IsSource implements lspclient.
 // Subtle: this method shadows the method (lsp_base).IsSource of lsp_py.lsp_base.
 func (l lsp_py) IsSource(filename string) bool {
-	return lsp_base.IsSource(l.lsp_base, filename)
+	return false
+}
+
+var rootFiles = []string{
+	"pyproject.toml",
+	"setup.py",
+	"setup.cfg",
+	"requirements.txt",
+	"Pipfile",
+	"pyrightconfig.json",
+	".git",
 }
 
 // Launch_Lsp_Server implements lspclient.
 func (l lsp_py) Launch_Lsp_Server() error {
-	panic("unimplemented")
+	if l.core.started {
+		return nil
+	}
+	l.core.cmd = exec.Command("python3", "-m", "pylsp")
+	err := l.core.Lauch_Lsp_Server(l.core.cmd)
+	l.core.started = err == nil
+	return err
 }
 
 // Resolve implements lspclient.
@@ -29,8 +51,23 @@ func (l lsp_py) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {
 }
 
 // InitializeLsp implements lspclient.
+//
+//	func (l lsp_py) InitializeLsp(wk WorkSpace) error {
+//		return nil
+//	}
 func (l lsp_py) InitializeLsp(wk WorkSpace) error {
-	return nil
+	if l.core.inited {
+		return nil
+	}
+	result, err := l.core.Initialize(wk)
+	if err != nil {
+		return err
+	}
+	if result.ServerInfo.Name == "pylsp" {
+		l.core.inited = true
+		return nil
+	}
+	return fmt.Errorf("%s", result.ServerInfo.Name)
 }
 
 func (l lsp_py) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
@@ -75,7 +112,7 @@ func (l lsp_py) GetReferences(file string, pos lsp.Position) ([]lsp.Location, er
 // IsMe implements lspclient.
 // Subtle: this method shadows the method (lsp_base).IsMe of lsp_py.lsp_base.
 func (l lsp_py) IsMe(filename string) bool {
-	return lsp_base.IsMe(l.lsp_base, filename)
+	return filepath.Ext(filename) == ".py"
 }
 
 // PrepareCallHierarchy implements lspclient.

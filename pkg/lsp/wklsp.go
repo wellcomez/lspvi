@@ -349,7 +349,13 @@ func (wk LspWorkspace) getClient(filename string) lspclient {
 		return wk.cpp
 	}
 	if wk.py.IsMe(filename) {
-		return wk.py
+		err := wk.py.Launch_Lsp_Server()
+		if err == nil {
+			err=wk.py.InitializeLsp(wk.Wk)
+			if err==nil{
+				return wk.py
+			}
+		}
 	}
 	return nil
 }
