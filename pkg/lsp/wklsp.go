@@ -310,14 +310,11 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 }
 
 type LspWorkspace struct {
-	cpp     lsp_cpp
-	py      lsp_py
+	clients []lspclient
 	Wk      WorkSpace
 	Current *Symbol_file
 	filemap map[string]*Symbol_file
 	Handle  lsp_data_changed
-	cppcore *lspcore
-	pycore  *lspcore
 }
 
 func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, error) {
@@ -337,24 +334,30 @@ func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, err
 
 }
 func (wk LspWorkspace) Close() {
-	wk.cpp.Close()
-	wk.py.Close()
+	for _, v := range wk.clients {
+		v.Close()
+	}
 }
 func (wk LspWorkspace) getClient(filename string) lspclient {
-	if wk.cpp.IsMe(filename) {
-		err := wk.cpp.Launch_Lsp_Server()
-		if err == nil {
-			wk.cpp.InitializeLsp(wk.Wk)
+	for _, c := range wk.clients {
+		ret := wk.new_client(c, filename)
+		if ret != nil {
+			return ret
 		}
-		return wk.cpp
+
 	}
-	if wk.py.IsMe(filename) {
-		err := wk.py.Launch_Lsp_Server()
+	return nil
+}
+
+func (wk LspWorkspace) new_client(c lspclient, filename string) lspclient {
+	if !c.IsMe(filename) {
+		return nil
+	}
+	err := c.Launch_Lsp_Server()
+	if err == nil {
+		err = c.InitializeLsp(wk.Wk)
 		if err == nil {
-			err=wk.py.InitializeLsp(wk.Wk)
-			if err==nil{
-				return wk.py
-			}
+			return c
 		}
 	}
 	return nil
@@ -387,14 +390,12 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 
 }
 func NewLspWk(wk WorkSpace) *LspWorkspace {
-	cppcore := &lspcore{}
-	pycore := &lspcore{}
 	ret := &LspWorkspace{
-		cpp:     new_lsp_cpp(wk, cppcore),
-		py:      lsp_py{new_lsp_base(wk, pycore)},
-		Wk:      wk,
-		pycore:  pycore,
-		cppcore: cppcore,
+		clients: []lspclient{
+			new_lsp_cpp(wk, &lspcore{}),
+			lsp_py{new_lsp_base(wk, &lspcore{})},
+		},
+		Wk: wk,
 	}
 	ret.filemap = make(map[string]*Symbol_file)
 	return ret
