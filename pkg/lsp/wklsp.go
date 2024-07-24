@@ -112,9 +112,6 @@ func (s Symbol) Icon() string {
 	}
 }
 
-
-
-
 func (sym Symbol) SymbolListStrint() string {
 	return sym.Icon() + " " + sym.SymInfo.Name
 }
@@ -128,13 +125,6 @@ func is_class(kind lsp.SymbolKind) bool {
 func is_memeber(kind lsp.SymbolKind) bool {
 	return kind == lsp.SymbolKindMethod || kind == lsp.SymbolKindField || kind == lsp.SymbolKindConstructor
 }
-
-
-
-
-
-
-
 
 func (sym Symbol) contain(a Symbol) bool {
 	return symbol_contain(sym.SymInfo, a.SymInfo)
@@ -150,7 +140,6 @@ func symbol_contain(a lsp.SymbolInformation, b lsp.SymbolInformation) bool {
 	}
 	return false
 }
-
 
 type LspWorkspace struct {
 	clients []lspclient
@@ -233,10 +222,17 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 
 }
 func NewLspWk(wk WorkSpace) *LspWorkspace {
+	cpp := lsp_base{
+		wk:   &wk,
+		core: &lspcore{lang: lsp_lang_cpp{}},
+	}
+	py := lsp_base{
+		wk:   &wk,
+		core: &lspcore{lang: lsp_lang_py{}},
+	}
 	ret := &LspWorkspace{
 		clients: []lspclient{
-			new_lsp_cpp(wk, &lspcore{}),
-			lsp_py{new_lsp_base(wk, &lspcore{})},
+			cpp, py,
 		},
 		Wk: wk,
 	}

@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -39,92 +38,9 @@ type lspcore struct {
 	started    bool
 	inited     bool
 
-	file_extensions []string
-	root_files      []string
-}
-type lspclient interface {
-	InitializeLsp(wk WorkSpace) error
-	Launch_Lsp_Server() error
-	DidOpen(file string) error
-	GetDocumentSymbol(file string) (*document_symbol, error)
-	GetReferences(file string, pos lsp.Position) ([]lsp.Location, error)
-	GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
-	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
-	GetDefine(file string, pos lsp.Position) ([]lsp.Location, error)
-	PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
-	CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error)
-	IsMe(filename string) bool
-	IsSource(filename string) bool
-	Resolve(sym lsp.SymbolInformation, symbolfile *Symbol_file) bool
-	Close()
-}
-type lsp_base struct {
-	core *lspcore
-	wk   *WorkSpace
+	lang            lsplang
 }
 
-// DidOpen implements lspclient.
-// Subtle: this method shadows the method (lsp_base).DidOpen of lsp_py.lsp_base.
-
-// IsSource
-func (l lsp_base) Resolve(sym lsp.SymbolInformation) (*lsp.SymbolInformation, bool) {
-	return nil, false
-}
-func (l lsp_base) IsSource(filename string) bool {
-	return false
-}
-func (l lsp_base) IsMe(filename string) bool {
-	ext := filepath.Ext(filename)
-	ext = strings.TrimPrefix(ext, ".")
-	for _, v := range l.core.file_extensions {
-		if v == ext {
-			return true
-		}
-	}
-	return false
-}
-func new_lsp_base(wk WorkSpace, core *lspcore) lsp_base {
-	return lsp_base{
-		core: core,
-		wk:   &wk,
-	}
-}
-
-// Initialize implements lspclient.
-func (l lsp_base) DidOpen(file string) error {
-	return l.core.DidOpen(file)
-}
-
-func (l lsp_base) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
-	return l.core.TextDocumentPrepareCallHierarchy(loc)
-}
-func (l lsp_base) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error) {
-	return l.core.GetDefine(file, pos)
-}
-func (l lsp_base) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
-	return l.core.CallHierarchyIncomingCalls(lsp.CallHierarchyIncomingCallsParams{
-		Item: param,
-	})
-}
-func (l lsp_base) GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error) {
-	path := LocationContent{
-		location: loc,
-	}.Path()
-	return l.core.GetDeclare(path, lsp.Position{
-		Line:      loc.Range.Start.Line,
-		Character: loc.Range.Start.Character,
-	})
-}
-func (l lsp_base) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
-
-	return l.core.GetDeclare(file, pos)
-}
-func (l lsp_base) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
-	return l.core.GetReferences(file, pos)
-}
-func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
-	return l.core.GetDocumentSymbol(file)
-}
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 
 	// cmd := exec.Command("clangd", "--log=verbose")
@@ -275,19 +191,19 @@ func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Locatio
 
 func convert_result_to_lsp_location(result []interface{}) ([]lsp.Location, error) {
 	var ret []lsp.Location
-	data,err:=json.Marshal(result)
-	if err!=nil{
-		return  ret,err
+	data, err := json.Marshal(result)
+	if err != nil {
+		return ret, err
 	}
-	err=json.Unmarshal(data,&ret)
+	err = json.Unmarshal(data, &ret)
 
-	if err!=nil{
+	if err != nil {
 		var loc lsp.Location
-		err=json.Unmarshal(data,&loc)
-		if err!=nil{
-			return ret,err
+		err = json.Unmarshal(data, &loc)
+		if err != nil {
+			return ret, err
 		}
-		return []lsp.Location{loc},nil	
+		return []lsp.Location{loc}, nil
 	}
 	return ret, nil
 }
