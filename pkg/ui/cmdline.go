@@ -69,8 +69,8 @@ func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 		if !cmd.view.HasFocus() {
 			x, y, x1, y1 := cmd.main.app.GetFocus().GetRect()
 
-			log.Println("wrong focus", x, y, x1, y1, "id", cmd.main.GetFocusViewId())
-			return nil
+			log.Println("wrong focus", x, y, x1, y1, "id", cmd.main.GetFocusViewId(),cmd.vim.String())
+			return event 
 		}
 		if vim.vi.Find && len(vim.vi.FindEnter) > 0 {
 			if event.Rune() == 'n' {
@@ -114,10 +114,31 @@ type vimstate struct {
 	FindEnter string
 }
 
+func (v vimstate) String() string {
+	if v.Escape {
+		return "Escape"
+	}
+	if v.Command {
+		return "Command"
+	}
+	if v.Insert {
+		return "Insert"
+	}
+	if v.Find {
+		return "Find"
+	}
+	return "none"
+
+}
+
 // vim structure
 type vim struct {
 	app *mainui
 	vi  vimstate
+}
+
+func (v vim) String() string {
+	return v.vi.String()
 }
 
 // NewVimState creates a new vimstate instance.
