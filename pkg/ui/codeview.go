@@ -38,6 +38,9 @@ func (code *CodeView) OnGrep() {
 	code.main.OnSearch(word, true)
 }
 func (code *CodeView) MoveTo(index int) {
+	if index==-1{
+		return
+	}
 	code.view.Cursor.GotoLoc(femto.Loc{
 		X: 0,
 		Y: index,
@@ -127,34 +130,42 @@ func (ret *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMo
 	return action, event
 }
 
-func (ret *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
+func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := event.Rune()
+	main := code.main
+	vim := main.cmdline.vim
 	switch ch {
 	case 'k':
 		{
-			ret.action_key_up()
+			code.action_key_up()
 			return nil
 		}
 	case 'j':
 		{
-			ret.action_key_down()
+			code.action_key_down()
 			return nil
 		}
 	case 'f':
-		ret.OnGrep()
+		code.OnGrep()
 		return nil
 	case 'c':
-		ret.key_call_in()
+		code.key_call_in()
 		return nil
 	case 'r':
-		ret.key_refer()
+		code.key_refer()
 		return nil
+	case '/':
+		{
+			vim.EnterEscape()
+			vim.EnterFind()
+			return nil
+		}
 	}
 	switch event.Key() {
 	case tcell.KeyUp:
-		ret.action_key_up()
+		code.action_key_up()
 	case tcell.KeyDown:
-		ret.action_key_down()
+		code.action_key_down()
 	case tcell.KeyCtrlS:
 		return nil
 	case tcell.KeyCtrlQ:

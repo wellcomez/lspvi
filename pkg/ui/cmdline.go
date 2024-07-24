@@ -35,8 +35,8 @@ func (cmd *cmdline) OnComand(command string) {
 }
 
 func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey {
-	if event.Rune()=='f'{
-		cmd.main.OnGrep();
+	if event.Rune() == 'f' {
+		cmd.main.OnGrep()
 	}
 	return nil
 }
@@ -60,21 +60,21 @@ func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 				if vim.vi.Command {
 					cmd.OnComand(vim.vi.FindEnter)
 				} else if vim.vi.Find {
-					cmd.main.OnSearch(txt[1:],false)
+					cmd.main.OnSearch(txt[1:], false)
 				}
 				return nil
 			}
 		}
 		if vim.vi.Find && len(vim.vi.FindEnter) > 0 {
 			if event.Rune() == 'n' {
-				cmd.main.OnSearch(vim.vi.FindEnter,false)
+				cmd.main.OnSearch(vim.vi.FindEnter, false)
 				return nil
 			}
 		}
 		txt = txt + string(event.Rune())
 		cmd.view.SetText(txt)
 		if cmd.vim.vi.Find {
-			cmd.main.OnSearch(txt[1:],false)
+			cmd.main.OnSearch(txt[1:], false)
 			return nil
 		}
 	}
@@ -138,18 +138,24 @@ func (v *vim) MoveFocus() {
 }
 
 // EnterFind enters find mode.
-func (v *vim) EnterFind() {
+func (v *vim) EnterFind() bool {
 	if v.vi.Escape {
 		v.MoveFocus()
 		v.vi = vimstate{Find: true}
 		v.app.cmdline.SetValue("/")
+		return true
+	} else {
+		return false
 	}
 }
 
 // EnterInsert enters insert mode.
-func (v *vim) EnterInsert() {
+func (v *vim) EnterInsert() bool {
 	if v.vi.Escape {
 		v.vi = vimstate{Insert: true}
+		return true
+	} else {
+		return false
 	}
 }
 
@@ -166,11 +172,13 @@ func (v *vim) EnterEscape() {
 }
 
 // EnterCommand enters command mode.
-func (v *vim) EnterCommand() {
+func (v *vim) EnterCommand() bool {
 	if v.vi.Escape {
 		v.vi = vimstate{Command: true}
 		v.MoveFocus()
 		v.app.cmdline.view.Focus(nil)
 		v.app.cmdline.SetValue(":")
+		return true
 	}
+	return false
 }

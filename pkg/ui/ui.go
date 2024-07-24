@@ -365,12 +365,21 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if event.Rune() == ':' {
-		main.cmdline.vim.EnterCommand()
-	} else if event.Rune() == 'i' {
-		main.cmdline.vim.EnterInsert()
-	} else if event.Rune() == '/' {
-		main.cmdline.vim.EnterFind()
-	} else if event.Key() == tcell.KeyEscape {
+		if main.cmdline.vim.EnterCommand(){
+      return nil
+    }
+	}
+	if event.Rune() == 'i' {
+		if main.cmdline.vim.EnterInsert(){
+      return nil
+    }
+	}
+	if event.Rune() == '/' {
+		if main.cmdline.vim.EnterFind(){
+      return nil
+    }
+	}
+	if event.Key() == tcell.KeyEscape {
 		main.cmdline.vim.EnterEscape()
 	} else if event.Key() == tcell.KeyCtrlC {
 		main.Close()
