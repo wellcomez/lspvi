@@ -110,14 +110,14 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	}
 	if action == tview.MouseLeftDown {
 		code.mouse_select_area = true
-		log.Print(x1, y1, x2, y2, "down")
+		//log.Print(x1, y1, x2, y2, "down")
 		code.view.Cursor.SetSelectionStart(pos)
 		code.view.Cursor.SetSelectionEnd(pos)
 		return tview.MouseConsumed, nil
 	}
 	if action == tview.MouseMove {
 		if code.mouse_select_area {
-			log.Print(x1, y1, x2, y2, "move")
+			//log.Print(x1, y1, x2, y2, "move")
 			code.view.Cursor.SetSelectionEnd(pos)
 		}
 		return tview.MouseConsumed, nil
@@ -127,7 +127,7 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 			code.view.Cursor.SetSelectionEnd(pos)
 			code.mouse_select_area = false
 		}
-		log.Print(x1, y1, x2, y2, "up")
+		//log.Print(x1, y1, x2, y2, "up")
 		return tview.MouseConsumed, nil
 	}
 	if action == tview.MouseLeftClick {
