@@ -34,7 +34,8 @@ func (code *CodeView) OnGrep() {
 		p2 := Buf.Line(sel[1].Y)[:sel[0].X]
 		word = p1 + p2
 	}
-	code.main.OnSearch(word,true)
+	code.main.prefocused=view_code
+	code.main.OnSearch(word, true)
 }
 func (code *CodeView) MoveTo(index int) {
 	code.view.Cursor.GotoLoc(femto.Loc{
@@ -128,10 +129,14 @@ func (ret *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMo
 
 func (ret *CodeView) keyhandle(event *tcell.EventKey) *tcell.EventKey {
 	root := ret.view
-	switch event.Rune() {
+	ch := event.Rune()
+	switch ch {
+	case 'f':
+		ret.OnGrep()
+		return nil
 	case 'c':
 		ret.key_call_in()
-
+		return nil
 	case 'r':
 		ret.key_refer()
 		return nil
