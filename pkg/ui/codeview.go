@@ -41,18 +41,18 @@ func (code *CodeView) OnGrep() string {
 	code.main.OnSearch(word, true)
 	return word
 }
-func (code *CodeView) MoveTo(index int) {
-	if index == -1 {
-		return
-	}
-	code.view.Cursor.GotoLoc(femto.Loc{
-		X: 0,
-		Y: index,
-	})
-	code.view.SelectLine()
-	code.view.Topline = femto.Max(0, index-5)
-	code.update_current_line()
-}
+// func (code *CodeView) MoveTo(index int) {
+// 	if index == -1 {
+// 		return
+// 	}
+// 	code.view.Cursor.GotoLoc(femto.Loc{
+// 		X: 0,
+// 		Y: index,
+// 	})
+// 	code.view.SelectLine()
+// 	code.view.Topline = femto.Max(0, index-5)
+// 	code.update_current_line()
+// }
 func (code *CodeView) OnSearch(txt string) []int {
 	var ret []int
 	var lino = 0
@@ -75,8 +75,8 @@ func (code *CodeView) OnSearch(txt string) []int {
 			}
 		}
 		ret2 := ret[closeI:]
-		ret1 := ret[0 : closeI]
-		return append(ret2,ret1...)
+		ret1 := ret[0:closeI]
+		return append(ret2, ret1...)
 	}
 	return ret
 	// codeview.view.Buf.LineArray
@@ -206,38 +206,50 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 	}
+	Cur := code.view.Cursor
 	switch event.Key() {
+	case tcell.KeyRight:
+		Cur.DeleteSelection()
+		Cur.Right()
+	case tcell.KeyLeft:
+		Cur.DeleteSelection()
+		Cur.Left()
 	case tcell.KeyUp:
 		code.action_key_up()
 	case tcell.KeyDown:
 		code.action_key_down()
 	case tcell.KeyCtrlS:
-		return nil
 	case tcell.KeyCtrlQ:
-		return nil
 	}
-	return nil
+	return nil 
 }
 
-func (ret *CodeView) action_key_down() {
-	root := ret.view
-	root.SelectDown()
-	root.ScrollDown(1)
-	root.SelectLine()
+func (code *CodeView) action_key_down() {
+	Cur := code.view.Cursor
+	Cur.Down()
+	view :=code.view
+	view.ScrollDown(1)
+	// root := code.view
+	// root.SelectDown()
+	// root.ScrollDown(1)
+	// root.SelectLine()
 
-	log.Println("cursor down ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
-	ret.update_current_line()
+	// log.Println("cursor down ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
+	// code.update_current_line()
 }
 
-func (ret *CodeView) action_key_up() {
-	root := ret.view
-	root.Buf.LinesNum()
+func (code *CodeView) action_key_up() {
+	code.view.Cursor.Up()	
+	code.view.ScrollUp(1)
 
-	root.SelectUp()
-	root.ScrollUp(1)
-	root.SelectLine()
-	log.Println("cursor up ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
-	ret.update_current_line()
+	// root := ret.view
+	// root.Buf.LinesNum()
+
+	// root.SelectUp()
+	// root.ScrollUp(1)
+	// root.SelectLine()
+	// log.Println("cursor up ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
+	// ret.update_current_line()
 }
 
 func (ret *CodeView) update_current_line() {
@@ -325,21 +337,43 @@ func (code *CodeView) Load(filename string) error {
 	code.view.SetTitle(filename)
 	return nil
 }
-func (codeview *CodeView) gotoline(line int) {
-	log.Println("gotoline", line)
-	codeview.view.Topline = max(line-5, 0)
-	RightX := len(codeview.view.Buf.Line(line))
-	codeview.view.Cursor.CurSelection[0] = femto.Loc{
-		X: 0,
-		Y: line,
+func (code *CodeView) gotoline(line int) {
+	key := ""
+	if code.main.searchcontext.view == view_code {
+		key = code.main.searchcontext.key
 	}
-	codeview.view.Cursor.CurSelection[0] = femto.Loc{
+	log.Println("gotoline", line)
+	code.view.Topline = max(line-5, 0)
+	text := code.view.Buf.Line(line)
+	RightX := len(text)
+	leftX :=0
+	if len(key) > 0 {
+		if index := strings.Index(text, key); index >= 0 {
+			leftX = index
+			RightX = index + len(key)
+		}
+	}
+	Cur := code.view.Cursor
+	Cur.SetSelectionStart(femto.Loc{
+		X: leftX,
+		Y: line,
+	})
+	Cur.SetSelectionEnd(femto.Loc{
 		X: RightX,
 		Y: line,
-	}
-	root := codeview.view
-	root.Cursor.Loc = femto.Loc{X: 0, Y: line}
-	root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: line})
-	text := root.Buf.Line(line)
-	root.Cursor.SetSelectionEnd(femto.Loc{X: len(text), Y: line})
+	})
+
+	// codeview.view.Cursor.CurSelection[0] = femto.Loc{
+	// 	X: 0,
+	// 	Y: line,
+	// }
+	// codeview.view.Cursor.CurSelection[0] = femto.Loc{
+	// 	X: RightX,
+	// 	Y: line,
+	// }
+	// root := codeview.view
+	// root.Cursor.Loc = femto.Loc{X: 0, Y: line}
+	// root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: line})
+	// text := root.Buf.Line(line)
+	// root.Cursor.SetSelectionEnd(femto.Loc{X: len(text), Y: line})
 }

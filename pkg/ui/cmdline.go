@@ -15,17 +15,17 @@ type cmdline struct {
 }
 
 func new_cmdline(main *mainui) *cmdline {
-	ret := &cmdline{
+	code := &cmdline{
 		main: main,
 		view: tview.NewInputField(),
 	}
-	ret.view.SetBorder(true)
-	root := ret.view
-	root.SetMouseCapture(ret.handle_mouse)
+	code.view.SetBorder(true)
+	root := code.view
+	root.SetMouseCapture(code.handle_mouse)
 	root.SetFieldBackgroundColor(tcell.ColorBlack)
-	root.SetInputCapture(ret.Keyhandle)
-	ret.vim = NewVim(main)
-	return ret
+	root.SetInputCapture(code.Keyhandle)
+	code.vim = NewVim(main)
+	return code
 }
 func (cmd *cmdline) OnComand(command string) {
 	command = strings.TrimRight(command, "\r")

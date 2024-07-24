@@ -22,7 +22,6 @@ type rootlayout struct {
 
 // editor_area_fouched
 
-
 type baseview struct {
 	box *tview.Box
 }
@@ -46,11 +45,13 @@ type mainui struct {
 	statusbar     *tview.TextView
 	layout        *rootlayout
 }
+
 func (r *mainui) editor_area_fouched() {
-	log.Println("change foucse",r.GetFocusViewId())
+	log.Println("change foucse", r.GetFocusViewId())
 	r.layout.parent.ResizeItem(r.layout.editor_area, 0, 3)
 	r.layout.parent.ResizeItem(r.layout.console, 0, 2)
 }
+
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
 func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	// panic("unimplemented")
@@ -387,7 +388,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 	if prev == view_code {
 		if changed {
 			gs.indexList = main.codeview.OnSearch(txt)
-			main.codeview.MoveTo(gs.GetIndex())
+			main.codeview.gotoline(gs.GetIndex())
 			if fzf {
 				var locs []lsp.Location
 				for _, linno := range gs.indexList {
@@ -409,7 +410,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 				main.fzf.main.fzf.OnRefenceChanged(locs, data_search)
 			}
 		} else {
-			main.codeview.MoveTo(gs.GetNext())
+			main.codeview.gotoline(gs.GetNext())
 		}
 		main.page.SetTitle(gs.String())
 	} else if prev == view_fzf {
@@ -417,6 +418,8 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 	}
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
+	log.Println("main ui recieved ",
+		main.GetFocusViewId(), event.Key(), event.Rune())
 	if event.Rune() == ':' {
 		if main.cmdline.vim.EnterCommand() {
 			return nil
@@ -434,17 +437,23 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	if event.Key() == tcell.KeyEscape {
 		main.cmdline.vim.EnterEscape()
+		return nil
 	} else if event.Key() == tcell.KeyCtrlC {
 		main.Close()
 	} else if event.Key() == tcell.KeyCtrlO {
 		main.OpenFile(main.bf.GoBack(), nil)
-	} else if main.cmdline.vim.vi.Find {
+		return nil
+	}
+	if main.GetFocusViewId() == view_cmd {
+		return main.cmdline.Keyhandle(event)
+	}
+	/*else if main.cmdline.vim.vi.Find {
 		return main.cmdline.Keyhandle(event)
 	} else if main.cmdline.vim.vi.Command {
 		return main.cmdline.Keyhandle(event)
 	} else if main.cmdline.vim.vi.Escape {
 		return main.cmdline.HandleKeyUnderEscape(event)
-	}
+	}*/
 
 	return event
 }
