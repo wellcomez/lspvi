@@ -390,23 +390,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 			gs.indexList = main.codeview.OnSearch(txt)
 			main.codeview.gotoline(gs.GetIndex())
 			if fzf {
-				var locs []lsp.Location
-				for _, linno := range gs.indexList {
-					loc := lsp.Location{
-						URI: lsp.NewDocumentURI(main.codeview.filename),
-						Range: lsp.Range{
-							Start: lsp.Position{
-								Line:      linno,
-								Character: 0,
-							},
-							End: lsp.Position{
-								Line:      linno,
-								Character: 0,
-							},
-						},
-					}
-					locs = append(locs, loc)
-				}
+				locs := main.convert_to_fzfsearch(gs)
 				main.fzf.main.fzf.OnRefenceChanged(locs, data_search)
 			}
 		} else {
@@ -416,6 +400,27 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 	} else if prev == view_fzf {
 		main.fzf.OnSearch(txt)
 	}
+}
+
+func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {
+	var locs []lsp.Location
+	for _, linno := range gs.indexList {
+		loc := lsp.Location{
+			URI: lsp.NewDocumentURI(main.codeview.filename),
+			Range: lsp.Range{
+				Start: lsp.Position{
+					Line:      linno,
+					Character: 0,
+				},
+				End: lsp.Position{
+					Line:      linno,
+					Character: 0,
+				},
+			},
+		}
+		locs = append(locs, loc)
+	}
+	return locs
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",
