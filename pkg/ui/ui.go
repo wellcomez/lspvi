@@ -12,10 +12,9 @@ import (
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
-type View interface {
-	Getview() tview.Primitive
+type baseview struct {
+	box *tview.Box
 }
-
 type mainui struct {
 	fileexplorer *file_tree_view
 	codeview     *CodeView
@@ -31,13 +30,21 @@ type mainui struct {
 	uml          *file_tree_view
 	bf           *BackForward
 	log          *tview.TextArea
+	cmdline      *cmdline
+	prefocused   *interface{}
 }
 
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
 func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	// panic("unimplemented")
+	focus := m.app.GetFocus()
+	if focus == m.cmdline.view {
+		m.cmdline.Clear()
+	}
 }
-
+func (m *mainui) MoveFocus() {
+	m.app.SetFocus(m.cmdline.view)
+}
 func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
 	m.lspmgr.Current.Async_resolve_stacksymbol(call_in_task, func() {
 		m.app.QueueUpdate(func() {
@@ -206,6 +213,7 @@ func MainUI(arg *Arguments) {
 	}
 	main.root = root
 
+	main.cmdline = new_cmdline(&main)
 	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
@@ -223,7 +231,6 @@ func MainUI(arg *Arguments) {
 
 	main.fileexplorer = new_file_tree(&main, "FileExplore", main.root, func(filename string) bool { return true })
 	main.fileexplorer.Init()
-	cmdline := tview.NewInputField()
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
 	main.log = tview.NewTextArea()
@@ -271,22 +278,43 @@ func MainUI(arg *Arguments) {
 			AddItem(editor_area, 0, 3, false).
 			AddItem(console, 0, 2, false).
 			AddItem(tab_area, 1, 0, false).
-			AddItem(cmdline, 1, 1, false)
+			AddItem(main.cmdline.view, 3, 1, false)
 	main.main_layout = main_layout
 	main_layout.SetBorder(true)
 	main.OpenFile(filearg, nil)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyCtrlC {
-			main.lspmgr.Close()
-		}
-		if event.Key() == tcell.KeyCtrlO {
-			main.OpenFile(main.bf.GoBack(), nil)
-		}
-		return event
+		return main.handle_key(event)
 	})
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
+}
+
+func (main *mainui) OnSearch(txt string) {
+}
+func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
+	if main.cmdline.vim.vi.Find {
+		return main.cmdline.Keyhandle(event)
+	}
+	if event.Rune() == ':' {
+		main.cmdline.vim.EnterCommand()
+	}
+	if event.Rune() == 'i' {
+		main.cmdline.vim.EnterInsert()
+	}
+	if event.Rune() == '/' {
+		main.cmdline.vim.EnterFind()
+	}
+	if event.Key() == tcell.KeyEscape {
+		main.cmdline.vim.EnterEscape()
+	}
+	if event.Key() == tcell.KeyCtrlC {
+		main.lspmgr.Close()
+	}
+	if event.Key() == tcell.KeyCtrlO {
+		main.OpenFile(main.bf.GoBack(), nil)
+	}
+	return event
 }
 
 type Search interface {
