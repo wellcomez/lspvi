@@ -166,14 +166,22 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	main := code.main
 	vim := main.cmdline.vim
 	Cur := code.view.Cursor
+	view := code.view
+	pagesize := view.Bottomline()-view.Topline
 	switch ch {
 	case 'b':
 		{
 			Cur.WordLeft()
+			if Cur.Loc.Y<=view.Topline{
+				view.ScrollUp(pagesize/2)	
+			}
 		}
 	case 'e':
 		{
 			Cur.WordRight()
+			if Cur.Loc.Y>=view.Bottomline(){
+				view.ScrollDown(pagesize/2)	
+			}
 		}
 	case 'k':
 		{
