@@ -92,8 +92,8 @@ func (m *mainui) UpdatePageTitle() {
 // OnRefenceChanged
 func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
 	// panic("unimplemented")
-	m.fzf.OnRefenceChanged(refs,data_refs)
-  m.UpdatePageTitle()
+	m.fzf.OnRefenceChanged(refs, data_refs)
+	m.UpdatePageTitle()
 
 }
 
@@ -337,7 +337,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 	if main.searchcontext == nil {
 		main.searchcontext = NewGenericSearch(main.prefocused, txt)
 	} else {
-		changed = main.searchcontext.Changed(main.prefocused, txt) || changed
+		changed = main.searchcontext.Changed(main.prefocused, txt) || fzf
 		if changed {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
 		}
@@ -366,7 +366,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 					}
 					locs = append(locs, loc)
 				}
-				main.fzf.main.fzf.OnRefenceChanged(locs,data_search)
+				main.fzf.main.fzf.OnRefenceChanged(locs, data_search)
 			}
 		} else {
 			main.codeview.MoveTo(gs.GetNext())
@@ -410,7 +410,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 }
 func (m *mainui) OnGrep() {
 	if m.prefocused == view_code {
-    m.app.SetFocus(m.fzf.view)
+		m.app.SetFocus(m.fzf.view)
 		m.codeview.OnGrep()
 	}
 }
