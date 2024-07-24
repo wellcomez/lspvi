@@ -293,26 +293,20 @@ func MainUI(arg *Arguments) {
 func (main *mainui) OnSearch(txt string) {
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
-	if main.cmdline.vim.vi.Find {
-		return main.cmdline.Keyhandle(event)
-	}
 	if event.Rune() == ':' {
 		main.cmdline.vim.EnterCommand()
-	}
-	if event.Rune() == 'i' {
+	} else if event.Rune() == 'i' {
 		main.cmdline.vim.EnterInsert()
-	}
-	if event.Rune() == '/' {
+	} else if event.Rune() == '/' {
 		main.cmdline.vim.EnterFind()
-	}
-	if event.Key() == tcell.KeyEscape {
+	} else if event.Key() == tcell.KeyEscape {
 		main.cmdline.vim.EnterEscape()
-	}
-	if event.Key() == tcell.KeyCtrlC {
+	} else if event.Key() == tcell.KeyCtrlC {
 		main.lspmgr.Close()
-	}
-	if event.Key() == tcell.KeyCtrlO {
+	} else if event.Key() == tcell.KeyCtrlO {
 		main.OpenFile(main.bf.GoBack(), nil)
+	} else if main.cmdline.vim.vi.Find {
+		return main.cmdline.Keyhandle(event)
 	}
 	return event
 }
