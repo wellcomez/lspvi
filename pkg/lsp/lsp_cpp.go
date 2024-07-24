@@ -25,6 +25,11 @@ type lsp_cpp struct {
 	lsp_base
 }
 
+// GetDefine implements lspclient.
+func (l lsp_cpp) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error) {
+	return lsp_base.GetDefine(l.lsp_base, file, pos)
+}
+
 // CallHierarchyIncomingCalls implements lspclient.
 // Subtle: this method shadows the method (lsp_base).CallHierarchyIncomingCalls of lsp_cpp.lsp_base.
 func (l lsp_cpp) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
@@ -75,9 +80,9 @@ func (l lsp_cpp) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem
 	return lsp_base.PrepareCallHierarchy(l.lsp_base, loc)
 }
 
-func new_lsp_cpp(wk WorkSpace,core *lspcore ) lsp_cpp {
+func new_lsp_cpp(wk WorkSpace, core *lspcore) lsp_cpp {
 	ret := lsp_cpp{
-		new_lsp_base(wk,core),
+		new_lsp_base(wk, core),
 	}
 	ret.core.file_extensions = file_extensions
 	ret.core.root_files = root_files

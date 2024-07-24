@@ -6,6 +6,11 @@ type lsp_py struct {
 	lsp_base
 }
 
+// GetDefine implements lspclient.
+func (l lsp_py) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error) {
+	return lsp_base.GetDefine(l.lsp_base, file, pos)
+}
+
 // IsSource implements lspclient.
 // Subtle: this method shadows the method (lsp_base).IsSource of lsp_py.lsp_base.
 func (l lsp_py) IsSource(filename string) bool {
@@ -37,8 +42,10 @@ func (l lsp_py) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.C
 func (l lsp_py) DidOpen(file string) error {
 	return lsp_base.DidOpen(l.lsp_base, file)
 }
-// Close 
+
+// Close
 func (l lsp_py) Close() {}
+
 // GetDeclare implements lspclient.
 // Subtle: this method shadows the method (lsp_base).GetDeclare of lsp_py.lsp_base.
 func (l lsp_py) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
@@ -76,5 +83,3 @@ func (l lsp_py) IsMe(filename string) bool {
 func (l lsp_py) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
 	return lsp_base.PrepareCallHierarchy(l.lsp_base, loc)
 }
-
-

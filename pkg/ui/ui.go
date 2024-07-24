@@ -46,6 +46,11 @@ type mainui struct {
 	layout        *rootlayout
 }
 
+// OnFileChange implements lspcore.lsp_data_changed.
+func (m *mainui) OnFileChange(file []lsp.Location) {
+	m.OpenFile(file[0].URI.AsPath().String(), &file[0])
+}
+
 func (r *mainui) editor_area_fouched() {
 	log.Println("change foucse", r.GetFocusViewId())
 	r.layout.parent.ResizeItem(r.layout.editor_area, 0, 3)
@@ -150,7 +155,21 @@ func (m *mainui) OnGetCallInStack(loc lsp.Location, filepath string) {
 	}
 	lsp.Callin(loc)
 }
-func (m *mainui) OnReference(pos lsp.Range, filepath string) {
+func (m *mainui) get_define(pos lsp.Range, filepath string) {
+	lsp, err := m.lspmgr.Open(filepath)
+	if err != nil {
+		return
+	}
+	lsp.GotoDefine(pos)
+}
+func (m *mainui) get_declare(pos lsp.Range, filepath string) {
+	lsp, err := m.lspmgr.Open(filepath)
+	if err != nil {
+		return
+	}
+	lsp.Declare(pos)
+}
+func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
 	if err != nil {
 		return

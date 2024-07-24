@@ -43,14 +43,14 @@ func (m *Filter) compare(node, parent *tview.TreeNode) bool {
 			}
 		}
 	}
-	return true 
+	return true
 }
 func (m *SymbolTreeView) OnCodeLineChange(line int) {
 	ss := Filter{line: line}
 	if m.view.GetRoot() != nil {
 		m.view.GetRoot().Walk(ss.compare)
 	}
-	if ss.ret !=nil {
+	if ss.ret != nil {
 		m.view.SetCurrentNode(ss.ret)
 	}
 }
@@ -136,7 +136,7 @@ func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 		r.End.Line = r.Start.Line
 	}
 	// println(ss)
-	c.main.OnReference(r, c.main.codeview.filename)
+	c.main.get_refer(r, c.main.codeview.filename)
 	c.main.ActiveTab(view_fzf)
 }
 

@@ -228,6 +228,26 @@ func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 	sym.Handle.OnCallInViewChanged(ret)
 	return ret, nil
 }
+func (sym *Symbol_file) GotoDefine(ranges lsp.Range) {
+	if sym.lsp == nil {
+		return
+	}
+	loc, err := sym.lsp.GetDefine(sym.Filename, ranges.Start)
+	if err != nil {
+		return
+	}
+	sym.Handle.OnFileChange(loc)
+}
+func (sym *Symbol_file) Declare(ranges lsp.Range) {
+	if sym.lsp == nil {
+		return
+	}
+	loc, err := sym.lsp.GetDeclare(sym.Filename, ranges.Start)
+	if err != nil {
+		return
+	}
+	sym.Handle.OnFileChange(loc)
+}
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if sym.lsp == nil {
 		return
@@ -378,6 +398,7 @@ type lsp_data_changed interface {
 	OnSymbolistChanged(file Symbol_file)
 	OnCodeViewChanged(file Symbol_file)
 	OnRefenceChanged(file []lsp.Location)
+	OnFileChange(file []lsp.Location)
 	OnCallInViewChanged(stacks []CallStack)
 	OnCallTaskInViewChanged(stacks *CallInTask)
 	OnCallTaskInViewResovled(stacks *CallInTask)

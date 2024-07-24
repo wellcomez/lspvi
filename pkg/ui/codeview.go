@@ -169,6 +169,14 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	view := code.view
 	pagesize := view.Bottomline() - view.Topline
 	switch ch {
+	case 'D':
+		{
+			code.action_goto_define()
+		}
+	case 'd':
+		{
+			code.action_goto_declaration()
+		}
 	case 'b':
 		{
 			Cur.WordLeft()
@@ -201,7 +209,7 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		code.key_call_in()
 		return nil
 	case 'r':
-		code.key_refer()
+		code.action_get_refer()
 		return nil
 	case '/':
 		{
@@ -256,12 +264,29 @@ func (ret *CodeView) update_with_line_changed() {
 	line := root.Cursor.Loc.Y
 	ret.main.OnCodeLineChange(line)
 }
-
-func (code *CodeView) key_refer() {
-	root := code.view
+func (code *CodeView) action_goto_define() {
 	main := code.main
+	loc := code.lsp_cursor_loc()
+	code.main.get_define(loc, main.codeview.filename)
+}
+func (code *CodeView) action_goto_declaration() {
+	main := code.main
+	loc := code.lsp_cursor_loc()
+	code.main.get_declare(loc, main.codeview.filename)
+}
+
+func (code *CodeView) action_get_refer() {
+	main := code.main
+	loc := code.lsp_cursor_loc()
+	code.main.get_refer(loc, main.codeview.filename)
+	main.ActiveTab(view_fzf)
+
+}
+
+func (code *CodeView) lsp_cursor_loc() lsp.Range {
+	root := code.view
 	loc := root.Cursor.CurSelection
-	code.main.OnReference(lsp.Range{
+	x := lsp.Range{
 		Start: lsp.Position{
 			Line:      loc[0].Y,
 			Character: loc[0].X,
@@ -270,9 +295,8 @@ func (code *CodeView) key_refer() {
 			Line:      loc[1].Y,
 			Character: loc[1].X,
 		},
-	}, main.codeview.filename)
-	main.ActiveTab(view_fzf)
-
+	}
+	return x
 }
 
 func (code *CodeView) key_call_in() {
@@ -338,8 +362,9 @@ func (code *CodeView) Load(filename string) error {
 }
 func (code *CodeView) gotoline(line int) {
 	key := ""
-	if code.main.searchcontext.view == view_code {
-		key = strings.ToLower(code.main.searchcontext.key)
+	gs := code.main.searchcontext
+	if gs != nil && gs.view == view_code {
+		key = strings.ToLower(gs.key)
 	}
 	log.Println("gotoline", line)
 	if line < code.view.Topline || code.view.Bottomline() < line {

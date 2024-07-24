@@ -50,6 +50,7 @@ type lspclient interface {
 	GetReferences(file string, pos lsp.Position) ([]lsp.Location, error)
 	GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
 	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
+	GetDefine(file string, pos lsp.Position) ([]lsp.Location, error)
 	PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
 	CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error)
 	IsMe(filename string) bool
@@ -96,6 +97,9 @@ func (l lsp_base) DidOpen(file string) error {
 
 func (l lsp_base) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
 	return l.core.TextDocumentPrepareCallHierarchy(loc)
+}
+func (l lsp_base) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error) {
+	return l.core.GetDefine(file, pos)
 }
 func (l lsp_base) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
 	return l.core.CallHierarchyIncomingCalls(lsp.CallHierarchyIncomingCallsParams{
@@ -195,12 +199,14 @@ func (core *lspcore) DidOpen(file string) error {
 }
 func (core *lspcore) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
 	var referenced = lsp.DeclarationParams{}
-	referenced.TextDocument.URI = lsp.NewDocumentURI(file)
+	referenced.TextDocument = lsp.TextDocumentIdentifier{
+		URI: lsp.NewDocumentURI(file),
+	}
 	referenced.Position = pos
 	var result []interface{}
-	var ret []lsp.Location
 	err := core.conn.Call(context.Background(), "textDocument/declaration", referenced, &result)
 	if err != nil {
+		var ret []lsp.Location
 		return ret, err
 	}
 	return convert_result_to_lsp_location(result)
@@ -232,6 +238,19 @@ func (core *lspcore) CallHierarchyIncomingCalls(param lsp.CallHierarchyIncomingC
 	// json.Unmarshal(buf, &ret)
 	return result, nil
 }
+func (core *lspcore) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error) {
+	var ret []lsp.Location
+	param := lsp.DefinitionParams{}
+	param.TextDocument = lsp.TextDocumentIdentifier{
+		URI: lsp.NewDocumentURI(file),
+	}
+	param.Position = pos
+	var result []interface{}
+	if err := core.conn.Call(context.Background(), "textDocument/definition", param, &result); err != nil {
+		return ret, err
+	}
+	return convert_result_to_lsp_location(result)
+}
 func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
 	var referenced = lsp.ReferenceParams{}
 	referenced.TextDocument.URI = lsp.NewDocumentURI(file)
@@ -256,18 +275,19 @@ func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Locatio
 
 func convert_result_to_lsp_location(result []interface{}) ([]lsp.Location, error) {
 	var ret []lsp.Location
-	var result_location lsp.Location
-	location_decode_config, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result: &result_location,
-	})
-	if err != nil {
-		return ret, err
+	data,err:=json.Marshal(result)
+	if err!=nil{
+		return  ret,err
 	}
-	for _, v := range result {
-		err := location_decode_config.Decode(v)
-		if err == nil {
-			ret = append(ret, result_location)
+	err=json.Unmarshal(data,&ret)
+
+	if err!=nil{
+		var loc lsp.Location
+		err=json.Unmarshal(data,&loc)
+		if err!=nil{
+			return ret,err
 		}
+		return []lsp.Location{loc},nil	
 	}
 	return ret, nil
 }
