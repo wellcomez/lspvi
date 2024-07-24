@@ -230,31 +230,25 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (code *CodeView) action_key_down() {
-	Cur := code.view.Cursor
-	Cur.Down()
-	view := code.view
-	view.ScrollDown(1)
-	// root := code.view
-	// root.SelectDown()
-	// root.ScrollDown(1)
-	// root.SelectLine()
-
-	// log.Println("cursor down ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
-	// code.update_current_line()
+	code.move_up_down(false)
 }
 
 func (code *CodeView) action_key_up() {
-	code.view.Cursor.Up()
-	code.view.ScrollUp(1)
+	code.move_up_down(true)
+}
 
-	// root := ret.view
-	// root.Buf.LinesNum()
-
-	// root.SelectUp()
-	// root.ScrollUp(1)
-	// root.SelectLine()
-	// log.Println("cursor up ", root.Cursor.CurSelection[0], root.Cursor.CurSelection[1])
-	// ret.update_current_line()
+func (code *CodeView) move_up_down(up bool) {
+	Cur := code.view.Cursor
+	if up {
+		code.view.Cursor.Up()
+		code.view.ScrollUp(1)
+	} else {
+		code.view.Cursor.Down()
+		code.view.ScrollDown(1)
+	}
+	Cur.DeleteSelection()
+	Cur.SetSelectionStart(Cur.Loc)
+	Cur.SetSelectionEnd(Cur.Loc)
 }
 
 func (ret *CodeView) update_with_line_changed() {

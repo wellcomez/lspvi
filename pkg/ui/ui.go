@@ -447,6 +447,14 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if main.GetFocusViewId() == view_cmd {
 		return main.cmdline.Keyhandle(event)
 	}
+	if event.Rune() == 'n' {
+		if main.cmdline.vim.vi.Find {
+			gs := main.searchcontext
+			if gs.view == main.GetFocusViewId() {
+				main.OnSearch(gs.key, false)
+			}
+		}
+	}
 	/*else if main.cmdline.vim.vi.Find {
 		return main.cmdline.Keyhandle(event)
 	} else if main.cmdline.vim.vi.Command {
