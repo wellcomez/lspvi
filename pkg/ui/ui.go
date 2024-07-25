@@ -228,7 +228,7 @@ func (m *mainui) gotoline(loc lsp.Location) {
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
-func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file) {
+func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file,err error) {
 	if file.Filename != m.codeview.filename {
 		return
 	}
