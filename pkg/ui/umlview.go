@@ -43,12 +43,14 @@ func (v *umlview) openfile(name string) {
 		}
 		image.SetColors(256)
 		image.SetImage(img)
-	} else if ext == ".utxt" {
+	} else if ext == ".utxt" || ext == ".puml" {
 		b, err := os.ReadFile(name)
 		if err != nil {
 			return
 		}
 		t := tview.NewTextView()
+		t.SetWrap(false)
+		t.SetWordWrap(false)
 		v.preview.AddItem(t, 0, 1, false)
 		t.SetText(string(b))
 	}
