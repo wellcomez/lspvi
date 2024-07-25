@@ -224,11 +224,11 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 func NewLspWk(wk WorkSpace) *LspWorkspace {
 	cpp := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_cpp{}},
+		core: &lspcore{lang: lsp_lang_cpp{}, handle: wk.Callback},
 	}
 	py := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_py{}},
+		core: &lspcore{lang: lsp_lang_py{}, handle: wk.Callback},
 	}
 	ret := &LspWorkspace{
 		clients: []lspclient{

@@ -2,12 +2,15 @@
 package mainui
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
@@ -38,7 +41,7 @@ type mainui struct {
 	app           *tview.Application
 	uml           *umlview
 	bf            *BackForward
-	log           *tview.TextArea
+	log           *tview.TextView
 	cmdline       *cmdline
 	prefocused    view_id
 	searchcontext *GenericSearch
@@ -287,6 +290,32 @@ type Arguments struct {
 func (m *mainui) open_file(file string) {
 	m.OpenFile(file, nil)
 }
+
+type LspHandle struct {
+	main *mainui
+}
+
+func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	if h.main != nil {
+		// h.main.log.T
+		main := h.main
+		main.app.QueueUpdate(func() {
+			if main.log == nil {
+				return
+			}
+			t := main.log.GetText(true)
+			if req != nil {
+				data, err := req.MarshalJSON()
+				detail := ""
+				if err != nil {
+					detail = string(data)
+				}
+				s := fmt.Sprintf("\nlog: %s  [%s]", req.Method, detail)
+				main.log.SetText(t + s)
+			}
+		})
+	}
+}
 func MainUI(arg *Arguments) {
 	var filearg = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
 	var root = "/home/z/dev/lsp/pylspclient/tests/cpp/"
@@ -296,10 +325,13 @@ func MainUI(arg *Arguments) {
 	if len(arg.Root) > 0 {
 		root = arg.Root
 	}
+	handle := LspHandle{}
 	var main = mainui{
-		lspmgr: lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: "/home/z/dev/lsp/goui"}),
-		bf:     NewBackForward(NewHistory("history.log")),
+		bf: NewBackForward(NewHistory("history.log")),
 	}
+	handle.main = &main
+	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: "/home/z/dev/lsp/goui", Callback: handle})
+	main.lspmgr = lspmgr
 	main.root = root
 
 	main.cmdline = new_cmdline(&main)
@@ -323,7 +355,7 @@ func MainUI(arg *Arguments) {
 	main.fileexplorer.openfile = main.open_file
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
-	main.log = tview.NewTextArea()
+	main.log = tview.NewTextView()
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
 	console.AddPage("log", main.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
@@ -424,14 +456,14 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 		main.page.SetTitle(gs.String())
 	} else if prev == view_fzf {
 		main.fzf.OnSearch(txt)
-	} else if prev == view_sym_list{
-    if changed{
-      gs.indexList= main.symboltree.OnSearch(txt)
-      main.symboltree.movetonode(gs.GetIndex())
-    }else{
-      main.symboltree.movetonode(gs.GetNext())
-    }
-  }
+	} else if prev == view_sym_list {
+		if changed {
+			gs.indexList = main.symboltree.OnSearch(txt)
+			main.symboltree.movetonode(gs.GetIndex())
+		} else {
+			main.symboltree.movetonode(gs.GetNext())
+		}
+	}
 }
 
 func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {

@@ -12,6 +12,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
+	"github.com/tectiv3/go-lsp/jsonrpc"
 
 	// "github.com/tectiv3/go-lsp/jsonrpc"
 	"go.bug.st/json"
@@ -32,13 +33,13 @@ type lspcore struct {
 	capabilities          map[string]interface{}
 	initializationOptions map[string]interface{}
 	// arguments             []string
-	handle     rpchandle
+	handle     jsonrpc2.Handler
 	rw         io.ReadWriteCloser
 	LanguageID string
 	started    bool
 	inited     bool
 
-	lang            lsplang
+	lang lsplang
 }
 
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
@@ -79,8 +80,9 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 }
 
 type WorkSpace struct {
-	Path   string
-	Export string
+	Path     string
+	Export   string
+	Callback jsonrpc2.Handler
 }
 
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
@@ -114,7 +116,14 @@ func (core *lspcore) DidOpen(file string) error {
 	return err
 }
 func (core *lspcore) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
-	var referenced = lsp.DeclarationParams{}
+	var referenced = lsp.DeclarationParams{
+		PartialResultParams: &lsp.PartialResultParams{
+			PartialResultToken: jsonrpc.ProgressToken(file),
+		},
+		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+			WorkDoneToken: jsonrpc.ProgressToken(file),
+		},
+	}
 	referenced.TextDocument = lsp.TextDocumentIdentifier{
 		URI: lsp.NewDocumentURI(file),
 	}
