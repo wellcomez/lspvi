@@ -197,9 +197,10 @@ func (wk LspWorkspace) new_client(c lspclient, filename string) lspclient {
 
 func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 	val, ok := wk.filemap[filename]
+	is_new := false
 	if ok {
 		wk.Current = val
-		return val, false, nil
+		return val, is_new, nil
 	}
 	wk.filemap[filename] = &Symbol_file{
 		Filename: filename,
@@ -210,10 +211,18 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 
 	ret := wk.filemap[filename]
 	if ret.lsp == nil {
-		return nil, false, fmt.Errorf("fail to open %s", filename)
+		return nil, is_new, fmt.Errorf("fail to open %s", filename)
 	}
+	is_new = true
 	err := ret.lsp.DidOpen(filename)
-	return ret, true, err
+	if err != nil {
+		return ret, is_new, err
+	}
+	token, err := ret.lsp.Semantictokens_full(filename)
+	if err == nil {
+		ret.tokens = token
+	}
+	return ret, is_new, err
 }
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)

@@ -6,7 +6,9 @@ import (
 
 	"github.com/tectiv3/go-lsp"
 )
+
 type lspclient interface {
+	Semantictokens_full(file string) (*lsp.SemanticTokens, error)
 	InitializeLsp(wk WorkSpace) error
 	Launch_Lsp_Server() error
 	DidOpen(file string) error
@@ -27,6 +29,9 @@ type lsp_base struct {
 	wk   *WorkSpace
 }
 
+func (l lsp_base) Semantictokens_full(file string) (*lsp.SemanticTokens, error) {
+	return l.core.document_semantictokens_full(file)
+}
 func (l lsp_base) InitializeLsp(wk WorkSpace) error {
 	return l.core.lang.InitializeLsp(l.core, wk)
 }
@@ -46,7 +51,7 @@ func (l lsp_base) Resolve(sym lsp.SymbolInformation, symbolfile *Symbol_file) bo
 func (l lsp_base) Close() {
 	l.core.cmd.Process.Kill()
 }
-func  IsMe(filename string, file_extensions []string) bool {
+func IsMe(filename string, file_extensions []string) bool {
 	ext := filepath.Ext(filename)
 	ext = strings.TrimPrefix(ext, ".")
 	for _, v := range file_extensions {

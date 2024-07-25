@@ -13,6 +13,7 @@ type Symbol_file struct {
 	Handle       lsp_data_changed
 	Class_object []*Symbol
 	Wk           *LspWorkspace
+	tokens *lsp.SemanticTokens
 }
 
 func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begin int, parent *Symbol) int {

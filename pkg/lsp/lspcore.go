@@ -100,21 +100,56 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	}
 	return result, nil
 }
+func (core *lspcore) progress_notify() error {
+	params :=&lsp.ProgressParams{
+
+	}
+	return core.conn.Notify(context.Background(), "$/progress", params)
+}
 func (core *lspcore) DidOpen(file string) error {
-	content, err := os.ReadFile(file)
+	x, err := core.newTextDocument(file)
 	if err != nil {
 		return err
 	}
 	err = core.conn.Notify(context.Background(), "textDocument/didOpen", lsp.DidOpenTextDocumentParams{
-		TextDocument: lsp.TextDocumentItem{
-			URI:        lsp.NewDocumentURI(file),
-			LanguageID: core.LanguageID,
-			Text:       string(content),
-			Version:    0,
-		},
+		TextDocument: x,
 	})
 	return err
 }
+
+func (core *lspcore) newTextDocument(file string) (lsp.TextDocumentItem, error) {
+	content, err := os.ReadFile(file)
+	if err != nil {
+		return lsp.TextDocumentItem{}, err
+	}
+	x := lsp.TextDocumentItem{
+		URI:        lsp.NewDocumentURI(file),
+		LanguageID: core.LanguageID,
+		Text:       string(content),
+		Version:    2,
+	}
+	return x, err
+}
+func (core *lspcore) document_semantictokens_full(file string) (*lsp.SemanticTokens, error) {
+	params := lsp.SemanticTokensParams{
+		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+			WorkDoneToken: jsonrpc.ProgressToken(file),
+		},
+		PartialResultParams: &lsp.PartialResultParams{
+			PartialResultToken: jsonrpc.ProgressToken(file),
+		},
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: lsp.NewDocumentURI(file),
+		},
+	}
+	var result lsp.SemanticTokens
+	err := core.conn.Call(context.Background(), "textDocument/semanticTokens/full", params, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (core *lspcore) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
 	var referenced = lsp.DeclarationParams{
 		PartialResultParams: &lsp.PartialResultParams{
