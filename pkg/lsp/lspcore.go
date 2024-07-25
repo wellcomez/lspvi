@@ -101,9 +101,7 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	return result, nil
 }
 func (core *lspcore) progress_notify() error {
-	params :=&lsp.ProgressParams{
-
-	}
+	params := &lsp.ProgressParams{}
 	return core.conn.Notify(context.Background(), "$/progress", params)
 }
 func (core *lspcore) DidOpen(file string) error {
@@ -212,7 +210,14 @@ func (core *lspcore) GetDefine(file string, pos lsp.Position) ([]lsp.Location, e
 	return convert_result_to_lsp_location(result)
 }
 func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
-	var referenced = lsp.ReferenceParams{}
+	var referenced = lsp.ReferenceParams{
+		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+			WorkDoneToken: jsonrpc.ProgressToken(file + "refer"),
+		},
+		PartialResultParams: &lsp.PartialResultParams{
+			PartialResultToken: jsonrpc.ProgressToken(file + "refer"),
+		},
+	}
 	referenced.TextDocument.URI = lsp.NewDocumentURI(file)
 	referenced.Position = pos
 	referenced.Context = &lsp.ReferenceContext{
@@ -324,6 +329,12 @@ func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 	var parameter = lsp.DocumentSymbolParams{
 		TextDocument: lsp.TextDocumentIdentifier{
 			URI: uri,
+		},
+		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+			WorkDoneToken: jsonrpc.ProgressToken(file + "symbol"),
+		},
+		PartialResultParams: &lsp.PartialResultParams{
+			PartialResultToken: jsonrpc.ProgressToken(file + "symol"),
 		},
 	}
 	var result []interface{}
