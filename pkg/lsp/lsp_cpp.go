@@ -26,7 +26,7 @@ type lsp_lang_cpp struct {
 
 // IsMe implements lsplang.
 func (l lsp_lang_cpp) IsMe(filename string) bool {
-	return IsMe(filename,file_extensions)
+	return IsMe(filename, file_extensions)
 }
 
 // Resolve implements lsplang.
@@ -87,6 +87,24 @@ func (l lsp_lang_cpp) InitializeLsp(core *lspcore, wk WorkSpace) error {
 	if core.inited {
 		return nil
 	}
+	initializationOptions := map[string]interface{}{
+		"ClangdFileStatus": true,
+	}
+	core.initializationOptions = initializationOptions
+	capabilities := map[string]interface{}{
+		"window": map[string]interface{}{
+			"workDoneProgress": true,
+		},
+		"textDocument": map[string]interface{}{
+			"completion": map[string]interface{}{
+				"completionItem": map[string]interface{}{
+					"commitCharactersSupport": true,
+					"snippetSupport":          true,
+				},
+			},
+		},
+	}
+	core.capabilities = capabilities
 	result, err := core.Initialize(wk)
 	if err != nil {
 		return err

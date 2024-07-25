@@ -356,6 +356,7 @@ func MainUI(arg *Arguments) {
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
 	main.log = tview.NewTextView()
+  main.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
 	console.AddPage("log", main.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
