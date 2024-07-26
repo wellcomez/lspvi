@@ -92,8 +92,8 @@ func (core *lspcore) Initialized() (error) {
 	}
 	core.inited_called=true
 	var result interface{}
-	err:=core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{},&result)
-	return err
+	core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{},&result)
+	return nil 
 }
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1

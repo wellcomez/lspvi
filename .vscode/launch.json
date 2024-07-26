@@ -20,11 +20,11 @@
             "console": "externalTerminal",
             "args": [
                 "-root",
-                "/home/z/dev/lsp/goui/",
-                // "/chrome/buildcef/chromium/src",
+                // "/home/z/dev/lsp/goui/",
+                "/chrome/buildcef/chromium/src",
                 "-file",
-                "/home/z/dev/lsp/goui/main.go",
-                // "/chrome/buildcef/chromium/src/content/public/browser/navigation_throttle.h"
+                // "/home/z/dev/lsp/goui/main.go",
+                "/chrome/buildcef/chromium/src/content/public/browser/navigation_throttle.h"
             ]
         }
     ]
