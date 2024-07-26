@@ -38,6 +38,7 @@ type lspcore struct {
 	LanguageID string
 	started    bool
 	inited     bool
+	inited_called     bool
 
 	lang lsplang
 }
@@ -85,6 +86,15 @@ type WorkSpace struct {
 	Callback jsonrpc2.Handler
 }
 
+func (core *lspcore) Initialized() (error) {
+	if core.inited_called{
+		return nil
+	}
+	core.inited_called=true
+	var result interface{}
+	err:=core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{},&result)
+	return err
+}
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1
 	// 发送initialize请求

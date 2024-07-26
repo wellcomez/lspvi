@@ -34,6 +34,21 @@ func (l lsp_lang_go) InitializeLsp(core *lspcore, wk WorkSpace) error {
 	if core.inited {
 		return nil
 	}
+
+	defaultCapabilities := map[string]interface{}{
+		"textDocument": map[string]interface{}{
+			"completion": map[string]interface{}{
+				"completionItem": map[string]interface{}{
+					"commitCharactersSupport": true,
+					"documentationFormat":     []interface{}{"markdown", "plaintext"},
+					"snippetSupport":          true,
+				},
+			},
+		},
+	}
+	core.capabilities = defaultCapabilities
+	core.initializationOptions = map[string]interface{}{
+	}
 	result, err := core.Initialize(wk)
 	if err != nil {
 		return err
@@ -47,5 +62,7 @@ func (l lsp_lang_go) InitializeLsp(core *lspcore, wk WorkSpace) error {
 
 // IsMe implements lsplang.
 func (l lsp_lang_go) IsMe(filename string) bool {
-	return IsMe(filename, []string{"go"})
+
+	var ext = []string{"go", "gomod", "gowork", "gotmpl"}
+	return IsMe(filename, ext)
 }

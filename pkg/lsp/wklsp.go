@@ -233,13 +233,14 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 func NewLspWk(wk WorkSpace) *LspWorkspace {
 	cpp := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_cpp{}, handle: wk.Callback},
+		core: &lspcore{lang: lsp_lang_cpp{}, handle: wk.Callback, LanguageID: string(CPP)},
 	}
 	py := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_py{}, handle: wk.Callback},
+		core: &lspcore{lang: lsp_lang_py{}, handle: wk.Callback, LanguageID: string(PYTHON)},
 	}
-	golang := lsp_base{wk:   &wk, core: &lspcore{lang: lsp_lang_go{}, handle: wk.Callback}}
+    
+	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{}, handle: wk.Callback, LanguageID: string(GO)}}
 	ret := &LspWorkspace{
 		clients: []lspclient{
 			cpp, py, golang,
@@ -251,7 +252,7 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 }
 
 type lsp_data_changed interface {
-	OnSymbolistChanged(file *Symbol_file,err error)
+	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)
 	OnRefenceChanged(file []lsp.Location)
 	OnFileChange(file []lsp.Location)

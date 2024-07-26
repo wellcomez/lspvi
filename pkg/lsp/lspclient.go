@@ -33,7 +33,11 @@ func (l lsp_base) Semantictokens_full(file string) (*lsp.SemanticTokens, error) 
 	return l.core.document_semantictokens_full(file)
 }
 func (l lsp_base) InitializeLsp(wk WorkSpace) error {
-	return l.core.lang.InitializeLsp(l.core, wk)
+	err:=l.core.lang.InitializeLsp(l.core, wk)
+	if err!=nil{
+		return err
+	}
+	return l.core.Initialized()
 }
 func (l lsp_base) Launch_Lsp_Server() error {
 	return l.core.lang.Launch_Lsp_Server(l.core, *l.wk)

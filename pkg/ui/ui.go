@@ -55,7 +55,7 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 }
 
 func (r *mainui) editor_area_fouched() {
-	log.Println("change foucse", r.GetFocusViewId())
+	// log.Println("change foucse", r.GetFocusViewId())
 	r.layout.parent.ResizeItem(r.layout.editor_area, 0, 3)
 	r.layout.parent.ResizeItem(r.layout.console, 0, 2)
 }
@@ -228,11 +228,21 @@ func (m *mainui) gotoline(loc lsp.Location) {
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
-func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file,err error) {
+func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	if file.Filename != m.codeview.filename {
 		return
 	}
+	if err != nil {
+		m.logerr(err)
+	}
 	m.symboltree.update(file)
+}
+
+func (m *mainui) logerr(err error) {
+	msg := fmt.Sprintf("load symbol error:%v", err)
+	old := m.log.GetText(true)
+	m.log.SetText(old + "\n" + msg)
+	log.Printf("%s\n", msg)
 }
 
 func (m *mainui) Init() {
@@ -356,7 +366,7 @@ func MainUI(arg *Arguments) {
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
 	main.log = tview.NewTextView()
-  main.log.SetText("Started")
+	main.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
 	console.AddPage("log", main.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)

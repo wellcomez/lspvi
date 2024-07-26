@@ -124,7 +124,7 @@ func (l lsp_lang_cpp) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 		return nil
 	}
 	root := "--compile-commands-dir=" + wk.Path
-	core.cmd = exec.Command("clangd", root)
+	core.cmd = exec.Command("clangd", root,"--background-index")
 	err := core.Lauch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
