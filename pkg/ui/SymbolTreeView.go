@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -14,6 +15,8 @@ type SymbolTreeView struct {
 	symbols       []SymbolListItem
 	main          *mainui
 	searcheresult *TextFilter
+	show_wait       bool
+	waiter 		 *tview.TextView
 }
 type Filter struct {
 	line int
@@ -106,13 +109,24 @@ type SymbolListItem struct {
 
 func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
-	ret := SymbolTreeView{
+	ret := &SymbolTreeView{
 		main: main,
 		view: symbol_tree,
 	}
 	symbol_tree.SetInputCapture(ret.HandleKey)
 	symbol_tree.SetSelectedFunc(ret.OnClickSymobolNode)
-	return &ret
+	ret.waiter= tview.NewTextView().SetText("loading").SetTextColor(tcell.ColorDarkGray)
+	ret.view.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		if ret.show_wait {
+			log.Println("click", x, y, width, height)
+			bw := width / 2
+			bh := height / 2
+			ret.waiter.SetRect((width-bw)/2+x, y+(height-bh)/2, bw, bh)
+			ret.waiter.Draw(screen)
+		}
+		return ret.view.GetInnerRect()
+	})
+	return ret
 }
 func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 	if node.IsExpanded() {
@@ -229,15 +243,18 @@ func (v SymbolTreeView) Findall(key string) []int {
 
 // Clear
 func (v *SymbolTreeView) Clear() {
-	root_node := tview.NewTreeNode("symbol loading .....")
+	root_node := tview.NewTreeNode("")
+	v.show_wait = true
+	v.waiter.SetText("loading...").SetTextColor(tcell.ColorDarkGray)
 	root_node.SetReference("1")
 	v.view.SetRoot(root_node)
 }
 func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 	if file == nil {
-		v.view.SetRoot(tview.NewTreeNode("need lsp client"))
+		v.waiter.SetText("no lsp client").SetTextColor(tcell.ColorDarkRed)
 		return
 	}
+	v.show_wait = false 
 	root := v.view.GetRoot()
 	if root != nil {
 		root.ClearChildren()
