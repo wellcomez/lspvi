@@ -37,7 +37,9 @@ func (l lsp_base) InitializeLsp(wk WorkSpace) error {
 	if err!=nil{
 		return err
 	}
-	return l.core.Initialized()
+	l.core.Initialized()
+	l.core.Progress_notify()
+	return nil
 }
 func (l lsp_base) Launch_Lsp_Server() error {
 	return l.core.lang.Launch_Lsp_Server(l.core, *l.wk)

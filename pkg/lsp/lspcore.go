@@ -92,8 +92,8 @@ func (core *lspcore) Initialized() (error) {
 	}
 	core.inited_called=true
 	var result interface{}
-	core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{},&result)
-	return nil 
+	return core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{},&result)
+	// return nil 
 }
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1
@@ -110,7 +110,7 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	}
 	return result, nil
 }
-func (core *lspcore) progress_notify() error {
+func (core *lspcore) Progress_notify() error {
 	params := &lsp.ProgressParams{}
 	return core.conn.Notify(context.Background(), "$/progress", params)
 }

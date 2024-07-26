@@ -313,18 +313,20 @@ func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 			if main.log == nil {
 				return
 			}
-			t := main.log.GetText(true)
-			if req != nil {
-				data, err := req.MarshalJSON()
-				detail := ""
-				if err != nil {
-					detail = string(data)
-				}
-				s := fmt.Sprintf("\nlog: %s  [%s]", req.Method, detail)
-				main.log.SetText(t + s)
+			data, err := req.MarshalJSON()
+			detail := ""
+			if err != nil {
+				detail = string(data)
 			}
+			s := fmt.Sprintf("\nlog: %s  [%s]", req.Method, detail)
+			main.update_log_view(s)
 		})
 	}
+}
+
+func (main *mainui) update_log_view(s string) {
+	t := main.log.GetText(true)
+	main.log.SetText(t + s)
 }
 func MainUI(arg *Arguments) {
 	var filearg = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
