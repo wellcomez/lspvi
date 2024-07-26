@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -340,6 +341,9 @@ func MainUI(arg *Arguments) {
 		bf: NewBackForward(NewHistory("history.log")),
 	}
 	handle.main = &main
+	if !filepath.IsAbs(root){
+		root, _ = filepath.Abs(root)
+	}
 	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: "/home/z/dev/lsp/goui", Callback: handle})
 	main.lspmgr = lspmgr
 	main.root = root

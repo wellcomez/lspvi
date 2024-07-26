@@ -35,7 +35,7 @@ func (l lsp_lang_go) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bo
 			classname := strings.TrimLeft(sss, "*")
 			member := sym
 			member.Name = member.Name[e+2:]
-			symfile.newMethod(classname, member, sym)
+			symfile.Convert_function_method(classname, member, sym)
 			return true
 		}
 		return true
@@ -43,10 +43,9 @@ func (l lsp_lang_go) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bo
 	return false
 }
 
-func (symfile *Symbol_file) newMethod(classname string, member lsp.SymbolInformation, sym lsp.SymbolInformation) {
+func (symfile *Symbol_file) Convert_function_method(classname string, member lsp.SymbolInformation, sym lsp.SymbolInformation) {
 	for _, v := range symfile.Class_object {
 		if v.SymInfo.Name == classname {
-
 			v.Members = append(v.Members, Symbol{
 				SymInfo:   member,
 				classname: classname,

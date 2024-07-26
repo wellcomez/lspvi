@@ -13,7 +13,7 @@ type Symbol_file struct {
 	Handle       lsp_data_changed
 	Class_object []*Symbol
 	Wk           *LspWorkspace
-	tokens *lsp.SemanticTokens
+	tokens       *lsp.SemanticTokens
 }
 
 func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begin int, parent *Symbol) int {
@@ -24,9 +24,19 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 			SymInfo: v,
 		}
 		if is_class(v.Kind) {
-			sym.Class_object = append(sym.Class_object, &s)
-
-			i = sym.build_class_symbol(symbols, i+1, &s)
+			var found = false
+			for _, c := range sym.Class_object {
+				if s.SymInfo.Name == c.SymInfo.Name {
+					i = sym.build_class_symbol(symbols, i+1, &s)
+					c.Members = append(c.Members, s.Members...)
+					found = true
+					break
+				}
+			}
+			if !found {
+				sym.Class_object = append(sym.Class_object, &s)
+				i = sym.build_class_symbol(symbols, i+1, &s)
+			}
 			continue
 		}
 		if parent != nil {
@@ -147,7 +157,7 @@ func (sym *Symbol_file) __load_symbol_impl() error {
 		return fmt.Errorf("lsp is nil")
 	}
 	if len(sym.Class_object) > 0 {
-		sym.Handle.OnSymbolistChanged(sym,nil)
+		sym.Handle.OnSymbolistChanged(sym, nil)
 		return nil
 	}
 	symbols, err := sym.lsp.GetDocumentSymbol(sym.Filename)
@@ -158,8 +168,8 @@ func (sym *Symbol_file) __load_symbol_impl() error {
 	return nil
 }
 func (sym *Symbol_file) LoadSymbol() {
-	err:=sym.__load_symbol_impl()
-	sym.Handle.OnSymbolistChanged(sym,err)
+	err := sym.__load_symbol_impl()
+	sym.Handle.OnSymbolistChanged(sym, err)
 }
 func (sym Symbol_file) find_stack_symbol(call *CallStackEntry) (*Symbol, error) {
 	for _, v := range sym.Class_object {
