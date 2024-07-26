@@ -328,8 +328,10 @@ func (main *mainui) update_log_view(s string) {
 	main.log.SetText(t + s)
 }
 func MainUI(arg *Arguments) {
-	var filearg = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
-	var root = "/home/z/dev/lsp/pylspclient/tests/cpp/"
+	var filearg =""
+	//  "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
+	root,_:=filepath.Abs(".")
+	// "/home/z/dev/lsp/pylspclient/tests/cpp/"
 	if len(arg.File) > 0 {
 		filearg = arg.File
 	}
