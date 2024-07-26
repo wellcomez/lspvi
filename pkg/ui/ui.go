@@ -240,9 +240,7 @@ func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 
 func (m *mainui) logerr(err error) {
 	msg := fmt.Sprintf("load symbol error:%v", err)
-	old := m.log.GetText(true)
-	m.log.SetText(old + "\n" + msg)
-	log.Printf("%s\n", msg)
+  m.update_log_view(msg)
 }
 
 func (m *mainui) Init() {

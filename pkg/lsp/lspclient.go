@@ -33,8 +33,8 @@ func (l lsp_base) Semantictokens_full(file string) (*lsp.SemanticTokens, error) 
 	return l.core.document_semantictokens_full(file)
 }
 func (l lsp_base) InitializeLsp(wk WorkSpace) error {
-	err:=l.core.lang.InitializeLsp(l.core, wk)
-	if err!=nil{
+	err := l.core.lang.InitializeLsp(l.core, wk)
+	if err != nil {
 		return err
 	}
 	l.core.Initialized()
@@ -55,6 +55,9 @@ func (l lsp_base) Resolve(sym lsp.SymbolInformation, symbolfile *Symbol_file) bo
 // DidOpen implements lspclient.
 // Subtle: this method shadows the method (lsp_base).DidOpen of lsp_py.lsp_base.
 func (l lsp_base) Close() {
+	if l.core.cmd == nil {
+		return
+	}
 	l.core.cmd.Process.Kill()
 }
 func IsMe(filename string, file_extensions []string) bool {
