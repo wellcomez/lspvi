@@ -9,7 +9,29 @@ import (
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
-
+type TreeViewLoadding struct {
+	*tview.TreeView
+	show_wait       bool
+	waiter 		 *tview.TextView
+}
+func NewWaitingTreeView() *TreeViewLoadding {
+	w := &TreeViewLoadding{
+        TreeView: tview.NewTreeView(),
+        waiter: tview.NewTextView(),
+        show_wait: false,
+    }
+    return w
+}
+func (t *TreeViewLoadding) Draw(screen tcell.Screen) {
+	t.TreeView.DrawForSubclass(screen, t)
+	if t.show_wait {
+		x,y,w,h:=t.GetRect()
+		width:=w/2
+		height:=h/2
+		t.waiter.SetRect((w-width)/2+x, (h-height)/2+y, width, height)
+        t.Box.DrawForSubclass(screen,t.waiter)
+    }
+}
 type SymbolTreeView struct {
 	view          *tview.TreeView
 	symbols       []SymbolListItem
