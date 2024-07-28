@@ -22,13 +22,11 @@ type rootlayout struct {
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
 	parent      *tview.Flex
+	dialog      *Fuzzpicker
 }
 
 // editor_area_fouched
 
-type baseview struct {
-	box *tview.Box
-}
 type mainui struct {
 	fileexplorer  *file_tree_view
 	codeview      *CodeView
@@ -65,13 +63,13 @@ func (r *mainui) editor_area_fouched() {
 func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	// panic("unimplemented")
 	focus := m.app.GetFocus()
-	if focus == m.cmdline.view {
+	if focus == m.cmdline.input {
 		m.cmdline.Clear()
 	}
 }
 func (m *mainui) MoveFocus() {
 	m.SavePrevFocus()
-	m.app.SetFocus(m.cmdline.view)
+	m.app.SetFocus(m.cmdline.input)
 }
 
 func (m *mainui) SavePrevFocus() {
@@ -83,7 +81,7 @@ func (m *mainui) GetFocusViewId() view_id {
 		return view_code
 	} else if m.callinview.view.HasFocus() {
 		return view_callin
-	} else if m.cmdline.view.HasFocus() {
+	} else if m.cmdline.input.HasFocus() {
 		return view_cmd
 	} else if m.log.HasFocus() {
 		return view_log
@@ -241,7 +239,7 @@ func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 
 func (m *mainui) logerr(err error) {
 	msg := fmt.Sprintf("load symbol error:%v", err)
-  m.update_log_view(msg)
+	m.update_log_view(msg)
 }
 
 func (m *mainui) Init() {
@@ -328,9 +326,9 @@ func (main *mainui) update_log_view(s string) {
 	main.log.SetText(t + s)
 }
 func MainUI(arg *Arguments) {
-	var filearg =""
+	var filearg = ""
 	//  "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
-	root,_:=filepath.Abs(".")
+	root, _ := filepath.Abs(".")
 	// "/home/z/dev/lsp/pylspclient/tests/cpp/"
 	if len(arg.File) > 0 {
 		filearg = arg.File
@@ -343,7 +341,7 @@ func MainUI(arg *Arguments) {
 		bf: NewBackForward(NewHistory("history.log")),
 	}
 	handle.main = &main
-	if !filepath.IsAbs(root){
+	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)
 	}
 	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: "/home/z/dev/lsp/goui", Callback: handle})
@@ -417,20 +415,26 @@ func MainUI(arg *Arguments) {
 			AddItem(editor_area, 0, 3, false).
 			AddItem(console, 0, 2, false).
 			AddItem(tab_area, 1, 0, false).
-			AddItem(main.cmdline.view, 3, 1, false)
+			AddItem(main.cmdline.input, 3, 1, false)
 	main_layout.SetBorder(true)
 	main.layout = &rootlayout{
 		editor_area: editor_area,
 		console:     console,
 		tab_area:    tab_area,
-		cmdline:     main.cmdline.view,
+		cmdline:     main.cmdline.input,
 		parent:      main_layout,
+		dialog:      Newfuzzpicker(),
 	}
 
 	codeview.view.SetFocusFunc(main.editor_area_fouched)
 	main.OpenFile(filearg, nil)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
+	})
+	app.SetAfterDrawFunc(func(screen tcell.Screen) {
+		if main.layout.dialog.Visible {
+			main.layout.dialog.Draw(screen)
+		}
 	})
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
@@ -454,7 +458,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
 		}
 		if fzf {
-			main.cmdline.vim.EnterGrep(txt)
+			main.cmdline.Vim.EnterGrep(txt)
 		}
 	}
 	gs := main.searchcontext
@@ -503,27 +507,19 @@ func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {
 	}
 	return locs
 }
+
+var leadkey = ' '
+
+func (main *mainui) UpdateStatus() {
+	main.statusbar.SetText(fmt.Sprintf("VIM:%s", main.cmdline.Vim.String()))
+}
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",
 		main.GetFocusViewId(), event.Key(), event.Rune())
-	if event.Rune() == ':' {
-		if main.cmdline.vim.EnterCommand() {
-			return nil
-		}
-	}
-	if event.Rune() == 'i' {
-		if main.cmdline.vim.EnterInsert() {
-			return nil
-		}
-	}
-	if event.Rune() == '/' {
-		if main.cmdline.vim.EnterFind() {
-			return nil
-		}
-	}
-	if event.Key() == tcell.KeyEscape {
-		main.cmdline.vim.EnterEscape()
-		return nil
+	shouldReturn, returnValue := main.cmdline.Vim.VimKeyModelMethod(event)
+	main.UpdateStatus()
+	if shouldReturn {
+		return returnValue
 	} else if event.Key() == tcell.KeyCtrlC {
 		main.Close()
 	} else if event.Key() == tcell.KeyCtrlO {
@@ -534,12 +530,16 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return main.cmdline.Keyhandle(event)
 	}
 	if event.Rune() == 'n' {
-		if main.cmdline.vim.vi.Find {
+		if main.cmdline.Vim.vi.Find {
 			gs := main.searchcontext
 			if gs.view == main.GetFocusViewId() {
 				main.OnSearch(gs.key, false)
 			}
 		}
+	}
+	if event.Key() == tcell.KeyCtrlP {
+		main.layout.dialog.Visible = true
+		return nil
 	}
 	/*else if main.cmdline.vim.vi.Find {
 		return main.cmdline.Keyhandle(event)
@@ -551,6 +551,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 
 	return event
 }
+
 func (m *mainui) OnGrep() {
 	if m.prefocused == view_code || m.codeview.view.HasFocus() {
 		m.app.SetFocus(m.fzf.view)

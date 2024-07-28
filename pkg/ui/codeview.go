@@ -164,7 +164,7 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := event.Rune()
 	main := code.main
-	vim := main.cmdline.vim
+	vim := main.cmdline.Vim
 	Cur := code.view.Cursor
 	view := code.view
 	pagesize := view.Bottomline() - view.Topline
@@ -361,7 +361,7 @@ func (code *CodeView) Load(filename string) error {
 	return nil
 }
 func (code *CodeView) gotoline(line int) {
-	if line==-1 {
+	if line == -1 {
 		return
 	}
 	key := ""

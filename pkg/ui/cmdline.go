@@ -10,21 +10,21 @@ import (
 
 type cmdline struct {
 	main *mainui
-	view *tview.InputField
-	vim  *vim
+	input *tview.InputField
+	Vim  *Vim
 }
 
 func new_cmdline(main *mainui) *cmdline {
 	code := &cmdline{
 		main: main,
-		view: tview.NewInputField(),
+		input: tview.NewInputField(),
 	}
-	code.view.SetBorder(true)
-	root := code.view
-	root.SetMouseCapture(code.handle_mouse)
-	root.SetFieldBackgroundColor(tcell.ColorBlack)
-	root.SetInputCapture(code.Keyhandle)
-	code.vim = NewVim(main)
+	code.input.SetBorder(true)
+	input := code.input
+	input.SetMouseCapture(code.handle_mouse)
+	input.SetFieldBackgroundColor(tcell.ColorBlack)
+	input.SetInputCapture(code.Keyhandle)
+	code.Vim = NewVim(main)
 	return code
 }
 func (cmd *cmdline) OnComand(command string) {
@@ -42,13 +42,13 @@ func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey 
 	return nil
 }
 func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
-	vim := cmd.vim
-	if cmd.vim.vi.Find || cmd.vim.vi.Command {
-		txt := cmd.view.GetText()
+	vim := cmd.Vim
+	if cmd.Vim.vi.Find || cmd.Vim.vi.Command {
+		txt := cmd.input.GetText()
 		if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
 			if len(txt) > 1 {
 				txt = txt[0 : len(txt)-1]
-				cmd.view.SetText(txt)
+				cmd.input.SetText(txt)
 				vim.vi.FindEnter = ""
 			}
 			return nil
@@ -66,11 +66,11 @@ func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 				return nil
 			}
 		}
-		if !cmd.view.HasFocus() {
+		if !cmd.input.HasFocus() {
 			x, y, x1, y1 := cmd.main.app.GetFocus().GetRect()
 
-			log.Println("wrong focus", x, y, x1, y1, "id", cmd.main.GetFocusViewId(),cmd.vim.String())
-			return event 
+			log.Println("wrong focus", x, y, x1, y1, "id", cmd.main.GetFocusViewId(), cmd.Vim.String())
+			return event
 		}
 		if vim.vi.Find && len(vim.vi.FindEnter) > 0 {
 			if event.Rune() == 'n' {
@@ -79,8 +79,8 @@ func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 			}
 		}
 		txt = txt + string(event.Rune())
-		cmd.view.SetText(txt)
-		if cmd.vim.vi.Find {
+		cmd.input.SetText(txt)
+		if cmd.Vim.vi.Find {
 			cmd.main.OnSearch(txt[1:], false)
 			return nil
 		}
@@ -96,13 +96,13 @@ func (ret *cmdline) handle_mouse(action tview.MouseAction, event *tcell.EventMou
 }
 
 func (cmd *cmdline) SetValue(value string) {
-	cmd.view.SetText(value)
+	cmd.input.SetText(value)
 }
 func (cmd cmdline) Value() string {
-	return cmd.view.GetText()
+	return cmd.input.GetText()
 }
 func (cmd cmdline) Clear() {
-	cmd.view.SetText("")
+	cmd.input.SetText("")
 }
 
 // vimstate structure
@@ -111,6 +111,7 @@ type vimstate struct {
 	Find      bool
 	Command   bool
 	Insert    bool
+	Leader    bool
 	FindEnter string
 }
 
@@ -127,17 +128,20 @@ func (v vimstate) String() string {
 	if v.Find {
 		return "Find"
 	}
+	if v.Leader{
+		return "Leader"
+	}
 	return "none"
 
 }
 
-// vim structure
-type vim struct {
+// Vim structure
+type Vim struct {
 	app *mainui
 	vi  vimstate
 }
 
-func (v vim) String() string {
+func (v Vim) String() string {
 	return v.vi.String()
 }
 
@@ -153,27 +157,57 @@ func NewVimState() vimstate {
 }
 
 // NewVim creates a new vim instance.
-func NewVim(app *mainui) *vim {
-	return &vim{
+func NewVim(app *mainui) *Vim {
+	return &Vim{
 		app: app,
 		vi:  NewVimState(),
 	}
 }
 
 // MoveFocus moves the focus in the application.
-func (v *vim) MoveFocus() {
+func (v *Vim) MoveFocus() {
 	v.app.MoveFocus()
 }
 
 // EnterGrep
-func (v *vim) EnterGrep(txt string) {
+func (v *Vim) EnterGrep(txt string) {
 	v.vi = vimstate{Find: true}
 	v.vi.FindEnter = txt
 	v.app.cmdline.SetValue("/" + txt)
 }
+func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
+	if event.Rune() == ':' {
+		if v.EnterCommand() {
+			return true, nil
+		}
+	}
+	if event.Rune() == leadkey {
+		if v.EnterLead() {
+			return true, nil
+		}
+	}
+	if event.Rune() == 'i' {
+		if v.EnterInsert() {
+			return true, nil
+		}
+	}
+	if event.Rune() == '/' {
+		if v.EnterFind() {
+			return true, nil
+		}
+	}
+	if event.Key() == tcell.KeyEscape {
+		v.EnterEscape()
+		return true, nil
+	}
+	if v.vi.Escape {
+		v.ExitEnterEscape()
+	}
+	return false, event
+}
 
 // EnterFind enters find mode.
-func (v *vim) EnterFind() bool {
+func (v *Vim) EnterFind() bool {
 	if v.vi.Escape {
 		v.MoveFocus()
 		v.vi = vimstate{Find: true}
@@ -183,9 +217,17 @@ func (v *vim) EnterFind() bool {
 		return false
 	}
 }
+func (v *Vim) EnterLead() bool {
+	if v.vi.Escape {
+		v.vi = vimstate{Leader: true}
+		return true
+	} else {
+		return false
+	}
+}
 
 // EnterInsert enters insert mode.
-func (v *vim) EnterInsert() bool {
+func (v *Vim) EnterInsert() bool {
 	if v.vi.Escape {
 		v.vi = vimstate{Insert: true}
 		return true
@@ -194,24 +236,27 @@ func (v *vim) EnterInsert() bool {
 	}
 }
 
+func (v *Vim) ExitEnterEscape() {
+	v.vi = vimstate{}
+}
 // EnterEscape enters escape mode.
-func (v *vim) EnterEscape() {
+func (v *Vim) EnterEscape() {
 	v.app.cmdline.Clear()
 	v.vi = vimstate{Escape: true}
 
 	f := v.app.app.GetFocus()
-	if f == v.app.cmdline.view {
+	if f == v.app.cmdline.input {
 		v.app.codeview.view.Focus(nil)
 	}
 	v.app.SavePrevFocus()
 }
 
 // EnterCommand enters command mode.
-func (v *vim) EnterCommand() bool {
+func (v *Vim) EnterCommand() bool {
 	if v.vi.Escape {
 		v.vi = vimstate{Command: true}
 		v.MoveFocus()
-		v.app.cmdline.view.Focus(nil)
+		v.app.cmdline.input.Focus(nil)
 		v.app.cmdline.SetValue(":")
 		return true
 	}
