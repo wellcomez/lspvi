@@ -538,7 +538,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		}
 	}
 	if event.Key() == tcell.KeyCtrlP {
-		main.layout.dialog.Visible = true
+		main.layout.dialog.Open(fuzz_picker_file)
 		return nil
 	}
 	/*else if main.cmdline.vim.vi.Find {
