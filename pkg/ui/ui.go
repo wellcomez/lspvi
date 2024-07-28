@@ -423,7 +423,7 @@ func MainUI(arg *Arguments) {
 		tab_area:    tab_area,
 		cmdline:     main.cmdline.input,
 		parent:      main_layout,
-		dialog:      Newfuzzpicker(),
+		dialog:      Newfuzzpicker(app),
 	}
 
 	codeview.view.SetFocusFunc(main.editor_area_fouched)
@@ -516,6 +516,9 @@ func (main *mainui) UpdateStatus() {
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",
 		main.GetFocusViewId(), event.Key(), event.Rune())
+	if main.layout.dialog.Visible{
+        return main.layout.dialog.handle_key(event) 
+	}
 	shouldReturn, returnValue := main.cmdline.Vim.VimKeyModelMethod(event)
 	main.UpdateStatus()
 	if shouldReturn {
