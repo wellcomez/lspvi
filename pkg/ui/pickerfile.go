@@ -76,7 +76,14 @@ func (wk *DirWalk) Run() {
 	root := wk.root
 	walk := wk.cur
 	findfile(root, walk)
-	wk.cb(*wk.cur)
+	var ret querytask
+	var check =NewGitIgnore(root)
+	for _, v := range wk.cur.ret {
+		if !check.Ignore(v.path) {
+			ret.ret = append(ret.ret, v)
+		}
+	}
+	wk.cb(ret)
 	log.Printf("Run")
 }
 func findfile(root string, task *querytask) {

@@ -13,6 +13,7 @@ type Fuzzpicker struct {
 	input    *tview.InputField
 	Visible  bool
 	app      *tview.Application
+	main     *mainui
 	query    string
 	filewalk *DirWalk
 }
@@ -52,7 +53,10 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 			v.list.Clear()
 			for _, a := range t.ret {
 				v.list.AddItem(a.name, "", 0, func() {
-					log.Printf(a.path)
+					idx := v.list.GetCurrentItem()
+					f := t.ret[idx]
+					v.Visible = false
+					v.main.OpenFile(f.path, nil)
 				})
 			}
 		})
@@ -78,7 +82,8 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 	if event.Key() == tcell.KeyEnter {
-		v.list.GetCurrentItem()
+		handle := v.list.InputHandler()
+		handle(event, nil)
 		return nil
 	}
 	if event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
@@ -110,7 +115,7 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
-func Newfuzzpicker(app *tview.Application) *Fuzzpicker {
+func Newfuzzpicker(main *mainui, app *tview.Application) *Fuzzpicker {
 	list := tview.NewList()
 	list.ShowSecondaryText(false)
 	input := tview.NewInputField()
@@ -127,6 +132,7 @@ func Newfuzzpicker(app *tview.Application) *Fuzzpicker {
 		list:  list,
 		input: input,
 		app:   app,
+		main:  main,
 	}
 	return ret
 }

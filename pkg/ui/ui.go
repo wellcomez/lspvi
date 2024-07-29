@@ -423,7 +423,7 @@ func MainUI(arg *Arguments) {
 		tab_area:    tab_area,
 		cmdline:     main.cmdline.input,
 		parent:      main_layout,
-		dialog:      Newfuzzpicker(app),
+		dialog:      Newfuzzpicker(&main, app),
 	}
 
 	codeview.view.SetFocusFunc(main.editor_area_fouched)
