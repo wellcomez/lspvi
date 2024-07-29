@@ -12,16 +12,20 @@ type DirWalk struct {
 	query string
 	cur   *querytask
 	root  string
-	cb    func(t *querytask)
+	cb    func(t querytask)
 }
 type querytask struct {
 	// filename string
 	query string
-	ret   []string
+	ret   []file_picker_item
 	done  bool
 }
+type file_picker_item struct {
+	name string
+	path string
+}
 
-func NewDirWalk(root string, cb func(t *querytask)) *DirWalk {
+func NewDirWalk(root string, cb func(t querytask)) *DirWalk {
 	return &DirWalk{root: root, cb: cb}
 }
 
@@ -30,13 +34,13 @@ func (wk *DirWalk) UpdateQuery(query string) {
 	r := cur == nil || !strings.Contains(query, cur.query)
 	if cur != nil && cur.done {
 		r = true
-		cur.ret = []string{}
+		cur.ret = []file_picker_item{}
 	}
 	wk.query = query
 	if r {
 		wk.cur = &querytask{
 			query: query,
-			ret:   []string{},
+			ret:   []file_picker_item{},
 		}
 	}
 	if r {
@@ -72,7 +76,7 @@ func (wk *DirWalk) Run() {
 	root := wk.root
 	walk := wk.cur
 	findfile(root, walk)
-	wk.cb(wk.cur)
+	wk.cb(*wk.cur)
 	log.Printf("Run")
 }
 func findfile(root string, task *querytask) {
@@ -95,7 +99,7 @@ func findfile(root string, task *querytask) {
 	// 从通道中读取并处理结果
 	for file := range fileChan {
 		log.Println("File:", file)
-		task.ret = append(task.ret, file)
+		task.ret = append(task.ret, file_picker_item{path: file, name: strings.Replace(file, root, "", -1)})
 	}
 
 	// for dir := range dirChan {

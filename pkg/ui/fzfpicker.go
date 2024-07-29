@@ -47,11 +47,13 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 	v.query = ""
 	v.app.SetFocus(v.input)
 	v.Visible = true
-	v.filewalk = NewDirWalk(root, func(t *querytask) {
+	v.filewalk = NewDirWalk(root, func(t querytask) {
 		v.app.QueueUpdate(func() {
 			v.list.Clear()
 			for _, a := range t.ret {
-				v.list.AddItem(a, "", 0, nil)
+				v.list.AddItem(a.name, "", 0, func() {
+					log.Printf(a.path)
+				})
 			}
 		})
 	})
