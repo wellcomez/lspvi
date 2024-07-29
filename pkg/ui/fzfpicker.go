@@ -56,16 +56,23 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	return event
 }
+
+type grid_layout struct {
+	row, column, rowSpan, colSpan, minGridHeight, minGridWidth int
+}
+
 func Newfuzzpicker(app *tview.Application) *Fuzzpicker {
 	list := tview.NewList()
 	input := tview.NewInputField()
-	// input.SetBorder(true)
-	// input.SetFieldBackgroundColor(tcell.ColorBlack)
 
-	layout := tview.NewFlex().SetDirection(tview.FlexRow)
-	layout.AddItem(list, 0, 1, false).AddItem(input, 2, 1, true)
+	input.SetFieldBackgroundColor(tcell.ColorBlack)
+	layout := newFunction(input, list)
 	frame := tview.NewFrame(layout)
 	frame.SetBorder(true)
+	frame.SetBorderPadding(0, 0, 0, 0)
+	// // input.SetBorder(true)
+	// input.SetFieldTextColor(tcell.ColorGreen)
+	// input.SetFieldBackgroundColor(tcell.ColorBlack)
 	ret := &Fuzzpicker{
 		Frame: frame,
 		list:  list,
@@ -73,6 +80,15 @@ func Newfuzzpicker(app *tview.Application) *Fuzzpicker {
 		app:   app,
 	}
 	return ret
+}
+
+func newFunction(input *tview.InputField, list *tview.List) *tview.Grid {
+	layout := tview.NewGrid().
+		SetColumns(-1, 24, 16, -1).
+		SetRows(-1, 3, 3, 2).
+		AddItem(list.SetBorder(true), 0, 0, 3, 2, 0, 0, false).
+		AddItem(input, 3, 0, 1, 4, 0, 0, false)
+	return layout
 }
 func (v *Fuzzpicker) Draw(screen tcell.Screen) {
 	if v.Visible {
