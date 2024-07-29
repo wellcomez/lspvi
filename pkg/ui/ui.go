@@ -431,6 +431,12 @@ func MainUI(arg *Arguments) {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
 	})
+	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
+		if main.layout.dialog.Visible {
+			return main.layout.dialog.MouseHanlde(event, action)
+		}
+		return event, action
+	})
 	app.SetAfterDrawFunc(func(screen tcell.Screen) {
 		if main.layout.dialog.Visible {
 			main.layout.dialog.Draw(screen)

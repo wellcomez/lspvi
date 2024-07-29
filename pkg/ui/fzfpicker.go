@@ -1,9 +1,10 @@
 package mainui
 
 import (
+	"log"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"log"
 )
 
 type Fuzzpicker struct {
@@ -22,6 +23,24 @@ const (
 	fuzz_picker_symbol
 )
 
+func InRect(event *tcell.EventMouse, primitive tview.Primitive) bool {
+	px, py := event.Position()
+	x, y, w, h := primitive.GetRect()
+	return px >= x && px < x+w && py >= y && py < y+h
+}
+func (pick *Fuzzpicker) MouseHanlde(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
+	if !InRect(event, pick.Frame) {
+		return nil, tview.MouseConsumed
+	}
+	fn := pick.Frame.MouseHandler()
+	yes, ctrl := fn(action, event, func(p tview.Primitive) {})
+	log.Print(ctrl)
+	if yes {
+		return nil, tview.MouseConsumed
+	} else {
+		return event, action
+	}
+}
 func (v *Fuzzpicker) OpenFileFzf(root string) {
 	v.list.Clear()
 	v.Frame.SetTitle("Files")
@@ -67,18 +86,17 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 	ch := event.Rune()
-	if ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_' || ch == '.' || ch == '/' || ch == '\\' || ch == ':' || ch == ' ' {
-		v.query += string(ch)
-		log.Printf("recived char: %c, query: %s", ch, v.query)
-		v.input.SetText(v.query)
-		if v.filewalk != nil {
-			v.filewalk.UpdateQuery(v.query)
-		}
+	// if ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_' || ch == '.' || ch == '/' || ch == '\\' || ch == ':' || ch == ' ' {
+	v.query += string(ch)
+	log.Printf("recived char: %c, query: %s", ch, v.query)
+	v.input.SetText(v.query)
+	if v.filewalk != nil {
+		v.filewalk.UpdateQuery(v.query)
 	}
+	// }
 	// }
 	return event
 }
-
 
 func Newfuzzpicker(app *tview.Application) *Fuzzpicker {
 	list := tview.NewList()
