@@ -7,13 +7,13 @@ import (
 	"sync"
 )
 
-type dir_walk struct {
+type DirWalk struct {
 	wg            sync.WaitGroup
 	resultChannel chan string
 }
 
-func NewDirWalk() *dir_walk {
-	return &dir_walk{
+func NewDirWalk() *DirWalk {
+	return &DirWalk{
 		resultChannel: make(chan string),
 	}
 }
@@ -25,7 +25,7 @@ func NewDirWalk() *dir_walk {
 // var wg sync.WaitGroup
 
 // 递归遍历目录的函数
-func (wk *dir_walk) traverseDir(dirPath string) {
+func (wk *DirWalk) traverseDir(dirPath string) {
 	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println("Error accessing", path, ":", err)
@@ -52,7 +52,7 @@ func (wk *dir_walk) traverseDir(dirPath string) {
 	}
 }
 
-func (wk *dir_walk) Run(dir string) {
+func (wk *DirWalk) Run(dir string) {
 	// dir := "./" // 你想要遍历的目录路径
 
 	// 开始递归遍历

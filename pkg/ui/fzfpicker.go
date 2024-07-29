@@ -14,6 +14,7 @@ type Fuzzpicker struct {
 	Visible bool
 	app     *tview.Application
 	query   string
+
 }
 type fuzzpicktype int
 
