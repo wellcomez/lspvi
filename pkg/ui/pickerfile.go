@@ -1,10 +1,8 @@
 package mainui
 
 import (
-	"fmt"
 	"io/ioutil"
-	// "log"
-	// "os"
+	"log"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -12,9 +10,9 @@ import (
 
 type DirWalk struct {
 	query string
-	ret   []string
 	cur   *querytask
 	root  string
+	cb    func(t *querytask)
 }
 type querytask struct {
 	// filename string
@@ -23,8 +21,8 @@ type querytask struct {
 	done  bool
 }
 
-func NewDirWalk(root string) *DirWalk {
-	return &DirWalk{root: root}
+func NewDirWalk(root string, cb func(t *querytask)) *DirWalk {
+	return &DirWalk{root: root, cb: cb}
 }
 
 func (wk *DirWalk) UpdateQuery(query string) {
@@ -38,6 +36,7 @@ func (wk *DirWalk) UpdateQuery(query string) {
 	if r {
 		wk.cur = &querytask{
 			query: query,
+			ret:   []string{},
 		}
 	}
 	if r {
@@ -47,6 +46,7 @@ func (wk *DirWalk) UpdateQuery(query string) {
 
 func asyncWalk(wk *querytask, root string, wg *sync.WaitGroup, fileChan chan string, dirChan chan string) {
 	// 发送文件路径到通道
+	defer wg.Done()
 	newFunction1(root, wk, wg, fileChan, dirChan)
 }
 
@@ -72,13 +72,11 @@ func (wk *DirWalk) Run() {
 	root := wk.root
 	walk := wk.cur
 	findfile(root, walk)
-	println("Run")
+	wk.cb(wk.cur)
+	log.Printf("Run")
 }
-func findfile(root string, walk *querytask) {
+func findfile(root string, task *querytask) {
 	// task
-	task := &querytask{
-		query: walk.query,
-	}
 	var wg sync.WaitGroup
 	fileChan := make(chan string)
 	dirChan := make(chan string)
@@ -96,12 +94,12 @@ func findfile(root string, walk *querytask) {
 
 	// 从通道中读取并处理结果
 	for file := range fileChan {
-		fmt.Println("File:", file)
+		log.Println("File:", file)
 		task.ret = append(task.ret, file)
 	}
 
-	for dir := range dirChan {
-		fmt.Println("Directory:", dir)
-	}
-	walk.done = true
+	// for dir := range dirChan {
+	// 	log.Println("Directory:", dir)
+	// }
+	task.done = true
 }

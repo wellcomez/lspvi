@@ -1,9 +1,9 @@
 package mainui
 
 import (
-	"log"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"log"
 )
 
 type Fuzzpicker struct {
@@ -28,7 +28,14 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 	v.query = ""
 	v.app.SetFocus(v.input)
 	v.Visible = true
-	v.filewalk = NewDirWalk(root)
+	v.filewalk = NewDirWalk(root, func(t *querytask) {
+		v.app.QueueUpdate(func() {
+			v.list.Clear()
+			for _, a := range t.ret {
+				v.list.AddItem(a, "", 0, nil)
+			}
+		})
+	})
 }
 func (v *Fuzzpicker) Open(t fuzzpicktype) {
 	v.list.Clear()
@@ -60,7 +67,7 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 	ch := event.Rune()
-	if ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' {
+	if ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_' || ch == '.' || ch == '/' || ch == '\\' || ch == ':' || ch == ' ' {
 		v.query += string(ch)
 		log.Printf("recived char: %c, query: %s", ch, v.query)
 		v.input.SetText(v.query)
@@ -72,9 +79,6 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
-type grid_layout struct {
-	row, column, rowSpan, colSpan, minGridHeight, minGridWidth int
-}
 
 func Newfuzzpicker(app *tview.Application) *Fuzzpicker {
 	list := tview.NewList()
@@ -101,7 +105,7 @@ func newFunction(input *tview.InputField, list *tview.List) *tview.Grid {
 	layout := tview.NewGrid().
 		SetColumns(-1, 24, 16, -1).
 		SetRows(-1, 3, 3, 2).
-		AddItem(list.SetBorder(true), 0, 0, 3, 2, 0, 0, false).
+		AddItem(list, 0, 0, 3, 2, 0, 0, false).
 		AddItem(input, 3, 0, 1, 4, 0, 0, false)
 	return layout
 }
