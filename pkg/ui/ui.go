@@ -516,8 +516,8 @@ func (main *mainui) UpdateStatus() {
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",
 		main.GetFocusViewId(), event.Key(), event.Rune())
-	if main.layout.dialog.Visible{
-        return main.layout.dialog.handle_key(event) 
+	if main.layout.dialog.Visible {
+		return main.layout.dialog.handle_key(event)
 	}
 	shouldReturn, returnValue := main.cmdline.Vim.VimKeyModelMethod(event)
 	main.UpdateStatus()
@@ -541,7 +541,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		}
 	}
 	if event.Key() == tcell.KeyCtrlP {
-		main.layout.dialog.Open(fuzz_picker_file)
+		main.layout.dialog.OpenFileFzf(main.root)
 		return nil
 	}
 	/*else if main.cmdline.vim.vi.Find {

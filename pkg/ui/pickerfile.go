@@ -4,18 +4,27 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
 type DirWalk struct {
 	wg            sync.WaitGroup
 	resultChannel chan string
+	filename      string
+	query         string
 }
 
-func NewDirWalk() *DirWalk {
+func NewDirWalk(root string) *DirWalk {
 	return &DirWalk{
 		resultChannel: make(chan string),
+		filename:      root,
 	}
+}
+
+func (wk *DirWalk) UpdateQuery(query string) {
+	wk.query = query
+	wk.traverseDir(wk.filename)
 }
 
 // 定义一个channel来接收遍历结果
@@ -31,7 +40,6 @@ func (wk *DirWalk) traverseDir(dirPath string) {
 			fmt.Println("Error accessing", path, ":", err)
 			return nil
 		}
-
 		if info.IsDir() {
 			// 如果是目录，递归调用
 			wk.wg.Add(1)
@@ -40,8 +48,10 @@ func (wk *DirWalk) traverseDir(dirPath string) {
 				wk.traverseDir(subDir)
 			}(path)
 		} else {
+			if strings.Index(strings.ToLower(path), wk.query) > 0 {
+				wk.resultChannel <- path
+			}
 			// 如果是文件，发送到channel
-			wk.resultChannel <- path
 		}
 
 		return nil

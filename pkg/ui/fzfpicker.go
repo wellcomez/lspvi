@@ -8,13 +8,13 @@ import (
 )
 
 type Fuzzpicker struct {
-	Frame   *tview.Frame
-	list    *tview.List
-	input   *tview.InputField
-	Visible bool
-	app     *tview.Application
-	query   string
-
+	Frame    *tview.Frame
+	list     *tview.List
+	input    *tview.InputField
+	Visible  bool
+	app      *tview.Application
+	query    string
+	filewalk *DirWalk
 }
 type fuzzpicktype int
 
@@ -23,6 +23,14 @@ const (
 	fuzz_picker_symbol
 )
 
+func (v *Fuzzpicker) OpenFileFzf(root string) {
+	v.list.Clear()
+	v.Frame.SetTitle("Files")
+	v.query = ""
+	v.app.SetFocus(v.input)
+	v.Visible = true
+	v.filewalk = NewDirWalk(root)
+}
 func (v *Fuzzpicker) Open(t fuzzpicktype) {
 	v.list.Clear()
 	switch t {
@@ -31,7 +39,7 @@ func (v *Fuzzpicker) Open(t fuzzpicktype) {
 	case fuzz_picker_symbol:
 		v.Frame.SetTitle("Symbols")
 	}
-  v.query = ""
+	v.query = ""
 	v.app.SetFocus(v.input)
 	v.Visible = true
 }
@@ -41,21 +49,27 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		v.Visible = false
 		return nil
 	}
-	if v.input.HasFocus() {
-		if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
-			if len(v.query) > 0 {
-				v.query = v.query[:len(v.query)-1]
-			}
-			v.input.SetText(v.query)
-			return nil
+	// if v.input.HasFocus() {
+	if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
+		if len(v.query) > 0 {
+			v.query = v.query[:len(v.query)-1]
 		}
-		ch := event.Rune()
-		if ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' {
-			v.query += string(ch)
-			log.Printf("recived char: %c, query: %s", ch, v.query)
-			v.input.SetText(v.query)
+		v.input.SetText(v.query)
+		if v.filewalk != nil {
+			v.filewalk.UpdateQuery(v.query)
+		}
+		return nil
+	}
+	ch := event.Rune()
+	if ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' {
+		v.query += string(ch)
+		log.Printf("recived char: %c, query: %s", ch, v.query)
+		v.input.SetText(v.query)
+		if v.filewalk != nil {
+			v.filewalk.UpdateQuery(v.query)
 		}
 	}
+	// }
 	return event
 }
 
