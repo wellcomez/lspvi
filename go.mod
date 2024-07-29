@@ -14,6 +14,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.22.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/zyedidia/micro v1.4.1 // indirect
 	golang.org/x/crypto v0.19.0 // indirect

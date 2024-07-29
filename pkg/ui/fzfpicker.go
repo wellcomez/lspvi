@@ -46,6 +46,7 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 	v.list.Clear()
 	v.Frame.SetTitle("Files")
 	v.query = ""
+	v.input.SetText(">")
 	v.app.SetFocus(v.input)
 	v.Visible = true
 	v.filewalk = NewDirWalk(root, func(t querytask) {
@@ -96,7 +97,7 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		if len(v.query) > 0 {
 			v.query = v.query[:len(v.query)-1]
 		}
-		v.input.SetText(v.query)
+		v.input.SetText(">" + v.query)
 		if v.filewalk != nil {
 			v.filewalk.UpdateQuery(v.query)
 		}
@@ -106,7 +107,7 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// if ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_' || ch == '.' || ch == '/' || ch == '\\' || ch == ':' || ch == ' ' {
 	v.query += string(ch)
 	log.Printf("recived char: %c, query: %s", ch, v.query)
-	v.input.SetText(v.query)
+	v.input.SetText(">" + v.query)
 	if v.filewalk != nil {
 		v.filewalk.UpdateQuery(v.query)
 	}
