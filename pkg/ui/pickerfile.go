@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ type DirWalk struct {
 	resultChannel chan string
 	filename      string
 	query         string
+	ret           []string
 }
 
 func NewDirWalk(root string) *DirWalk {
@@ -26,49 +28,60 @@ func (wk *DirWalk) UpdateQuery(query string) {
 	var run = len(wk.query) == 0
 	wk.query = query
 	if run {
-		wk.Run(wk.filename)
+		go Run(wk)
 	}
 }
 
-func (wk *DirWalk) traverseDir(dirPath string) {
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+func asyncWalk(wk *DirWalk, root string, wg *sync.WaitGroup, fileChan chan string, dirChan chan string) {
+	defer wg.Done()
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println("Error accessing", path, ":", err)
-			return nil
+			log.Printf("Error walking path %s: %v\n", path, err)
+			return err
 		}
 		if info.IsDir() {
-			// 如果是目录，递归调用
-			wk.traverseDir(path)
+			asyncWalk(wk, path, wg, fileChan, dirChan)
 		} else {
-			if strings.Index(strings.ToLower(path), wk.query) > 0 {
-				wk.resultChannel <- path
+			if strings.Contains(strings.ToLower(path), wk.query) {
+				fileChan <- path // 发送文件路径到通道
 			}
-			// 如果是文件，发送到channel
 		}
-
 		return nil
 	})
 
 	if err != nil {
-		fmt.Println("Error walking the path:", err)
+		fmt.Printf("Error walking the path %s: %v\n", root, err)
 	}
 }
 
-func (wk *DirWalk) Run(dir string) {
-	// dir := "./" // 你想要遍历的目录路径
+func Run(walk *DirWalk) {
+	go findfile(walk)
+	println("Run")
+}
+func findfile(walk *DirWalk) {
 
-	// 开始递归遍历
-	go wk.traverseDir(dir)
+	var wg sync.WaitGroup
+	fileChan := make(chan string)
+	dirChan := make(chan string)
 
-	// 等待所有goroutine完成
+	// 启动异步遍历
+	wg.Add(1)
+	go asyncWalk(walk, walk.filename, &wg, fileChan, dirChan)
+
+	// 处理结果
 	go func() {
-		wk.wg.Wait()
-		close(wk.resultChannel)
+		wg.Wait()
+		close(fileChan)
+		close(dirChan)
 	}()
 
-	// 从channel中接收文件路径并处理
-	for filePath := range wk.resultChannel {
-		fmt.Println("Processed file:", filePath)
-		// 这里可以添加你的文件处理逻辑
+	// 从通道中读取并处理结果
+	for file := range fileChan {
+		fmt.Println("File:", file)
+		walk.ret = append(walk.ret, file)
+	}
+
+	for dir := range dirChan {
+		fmt.Println("Directory:", dir)
 	}
 }
