@@ -69,9 +69,19 @@ func (v *Fuzzpicker) Open(t fuzzpicktype) {
 	v.Visible = true
 }
 
+// handle_key
 func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyEsc {
 		v.Visible = false
+		return nil
+	}
+	if event.Key() == tcell.KeyEnter {
+		v.list.GetCurrentItem()
+		return nil
+	}
+	if event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+		handle := v.list.InputHandler()
+		handle(event, nil)
 		return nil
 	}
 	// if v.input.HasFocus() {
@@ -100,8 +110,8 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 
 func Newfuzzpicker(app *tview.Application) *Fuzzpicker {
 	list := tview.NewList()
+	list.ShowSecondaryText(false)
 	input := tview.NewInputField()
-
 	input.SetFieldBackgroundColor(tcell.ColorBlack)
 	layout := newFunction(input, list)
 	frame := tview.NewFrame(layout)
