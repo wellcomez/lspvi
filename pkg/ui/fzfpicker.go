@@ -30,6 +30,7 @@ func (v *Fuzzpicker) Open(t fuzzpicktype) {
 	case fuzz_picker_symbol:
 		v.Frame.SetTitle("Symbols")
 	}
+  v.query = ""
 	v.app.SetFocus(v.input)
 	v.Visible = true
 }
