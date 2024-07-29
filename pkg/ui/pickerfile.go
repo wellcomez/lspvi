@@ -23,17 +23,13 @@ func NewDirWalk(root string) *DirWalk {
 }
 
 func (wk *DirWalk) UpdateQuery(query string) {
+	var run = len(wk.query) == 0
 	wk.query = query
-	wk.traverseDir(wk.filename)
+	if run {
+		wk.Run(wk.filename)
+	}
 }
 
-// 定义一个channel来接收遍历结果
-// var resultChannel = make(chan string)
-
-// 用于等待所有goroutine完成
-// var wg sync.WaitGroup
-
-// 递归遍历目录的函数
 func (wk *DirWalk) traverseDir(dirPath string) {
 	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -42,11 +38,7 @@ func (wk *DirWalk) traverseDir(dirPath string) {
 		}
 		if info.IsDir() {
 			// 如果是目录，递归调用
-			wk.wg.Add(1)
-			go func(subDir string) {
-				defer wk.wg.Done()
-				wk.traverseDir(subDir)
-			}(path)
+			wk.traverseDir(path)
 		} else {
 			if strings.Index(strings.ToLower(path), wk.query) > 0 {
 				wk.resultChannel <- path

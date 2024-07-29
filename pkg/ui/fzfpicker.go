@@ -2,7 +2,6 @@ package mainui
 
 import (
 	"log"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
