@@ -9,11 +9,13 @@ require (
 
 require (
 	github.com/atotto/clipboard v0.1.2 // indirect
+	github.com/charlievieth/fastwalk v1.0.8 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.22.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/reinhrst/fzf-lib v0.9.0 // indirect
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/zyedidia/micro v1.4.1 // indirect
