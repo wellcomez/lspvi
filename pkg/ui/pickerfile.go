@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -254,7 +255,7 @@ func NewDirWalk(root string, cb func(t querytask)) *DirWalk {
 	var hayStack = walk(root, cb)
 	ret := &DirWalk{root: root, cb: cb, hayStack: hayStack}
 	var options = fzflib.DefaultOptions()
-	options.Fuzzy = false 
+	options.Fuzzy = false
 	options.Sort = []fzflib.Criterion{}
 	// update any options here
 	// var hayStack = walk(root)
@@ -290,28 +291,33 @@ func (wk *DirWalk) UpdateQuery(query string) {
 }
 
 func (wk *DirWalk) asyncWalk(task *querytask, root string) {
-	
+
 	var t querytask
 	t.count = len(wk.hayStack)
 	wk.cb(t)
 	var result fzflib.SearchResult
 	wk.fzf.Search(task.query)
 	result = <-wk.fzf.GetResultChannel()
-		cout := 0
-		t.match_count = len(result.Matches)
-		log.Println(t.match_count, len(wk.hayStack))
-		for _, v := range result.Matches {
-			task.ret = append(task.ret, file_picker_item{
-				name: strings.ReplaceAll(v.Key, root, ""),
-				path: v.Key,
-			})
-			cout++
-			if cout > 1000 {
-				break
-			}
+	cout := 0
+	t.match_count = len(result.Matches)
+	log.Println(t.match_count, len(wk.hayStack))
+	if len(result.Matches) < 1000 {
+		sort.Slice(result.Matches, func(i, j int) bool {
+			return result.Matches[i].Score > result.Matches[j].Score
+		})
+	}
+	for _, v := range result.Matches {
+		task.ret = append(task.ret, file_picker_item{
+			name: strings.ReplaceAll(v.Key, root, ""),
+			path: v.Key,
+		})
+		cout++
+		if cout > 1000 {
+			break
 		}
-		t.ret = append(t.ret, task.ret...)
-		wk.cb(t)
+	}
+	t.ret = append(t.ret, task.ret...)
+	wk.cb(t)
 }
 func walk(root string, cb func(t querytask)) []string {
 	walk := new_filewalk(root, cb)
