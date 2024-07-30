@@ -157,6 +157,8 @@ func (r *filewalk) pusher(s string) bool {
 	return true
 }
 
+var wrongfile = "/chrome/buildcef/chromium/src/out/Debug/obj/chrome/gpu/gpu/chrome_content_gpu_client.o"
+
 func (r *filewalk) readFiles(root string) bool {
 	opts := walkerOpts{
 		file:   true,
@@ -178,6 +180,7 @@ func (r *filewalk) readFiles(root string) bool {
 		if err != nil {
 			return nil
 		}
+
 		path = trimPath(path)
 		if path != "." {
 			dir := path
@@ -197,8 +200,8 @@ func (r *filewalk) readFiles(root string) bool {
 
 			defer r.mutex.Unlock()
 			isDir := de.IsDir()
-			notadd := ignore.Ignore(path)
 			if isDir || opts.follow && isSymlinkToDir(path, de) {
+				notadd := ignore.Ignore(path)
 				base := filepath.Base(path)
 				if !opts.hidden && base[0] == '.' {
 					return filepath.SkipDir
@@ -213,9 +216,14 @@ func (r *filewalk) readFiles(root string) bool {
 				}
 
 			}
-			if notadd {
-				return nil
+			if !isDir {
+				if path == wrongfile {
+					log.Print(path)
+				}
 			}
+			// if notadd {
+			// 	return nil
+			// }
 			if ((opts.file && !isDir) || (opts.dir && isDir)) && r.pusher(path) {
 				atomic.StoreInt32(&r.event, int32(EvtReadNew))
 				// global_walk.cb(querytask{
@@ -232,6 +240,7 @@ func (r *filewalk) readFiles(root string) bool {
 		return nil
 	}
 	yes := fastwalk.Walk(&conf, root, fn) == nil
+	log.Printf("file count %d",len(r.ret))
 	r.save()
 	return yes
 }
@@ -303,7 +312,7 @@ func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 	log.Println(t.match_count, len(wk.hayStack))
 	if len(result.Matches) < 1000 {
 		sort.Slice(result.Matches, func(i, j int) bool {
-			return result.Matches[i].Score > result.Matches[j].Score
+			return result.Matches[i].Score < result.Matches[j].Score
 		})
 	}
 	for _, v := range result.Matches {

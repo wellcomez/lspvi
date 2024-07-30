@@ -27,6 +27,20 @@ func TestXxxIgnore(t *testing.T) {
 		t.Fatal(check_dir)
 	}
 }
+func TestXxxIgnore_doto(t *testing.T) {
+	// var task = filewalk{}
+	root:="/chrome/buildcef/chromium/src"
+	a:=NewGitIgnore(root)
+	
+	file:="/out/Debug/obj/chrome/browser/browser/navigation_throttle.o"
+	check_dir := filepath.Join(root, file)
+	check_dir="/chrome/buildcef/chromium/src/out/Debug/obj/chrome/gpu/gpu/chrome_content_gpu_client.o"
+	yes:=a.Ignore(check_dir)
+	if yes==false{
+		t.Fatal(check_dir)
+	}
+}
+
 func TestXxxIgnore_cscsope(t *testing.T) {
 	// var task = filewalk{}
 	root:="/chrome/buildcef/chromium/src"

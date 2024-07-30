@@ -68,6 +68,7 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 					v.main.OpenFile(f.path, nil)
 				})
 			}
+			v.app.ForceDraw()
 		})
 	})
 }
@@ -100,27 +101,16 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		handle(event, nil)
 		return nil
 	}
-	// if v.input.HasFocus() {
+	v.input.InputHandler()(event, nil)
 	if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
-		if len(v.query) > 0 {
-			v.query = v.query[:len(v.query)-1]
+		if len(v.input.GetText()) == 0 {
+			v.input.SetText(">")
 		}
-		v.input.SetText(">" + v.query)
-		if v.filewalk != nil {
-			v.filewalk.UpdateQuery(v.query)
-		}
-		return nil
 	}
-	ch := event.Rune()
-	// if ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_' || ch == '.' || ch == '/' || ch == '\\' || ch == ':' || ch == ' ' {
-	v.query += string(ch)
-	log.Printf("recived char: %c, query: %s", ch, v.query)
-	v.input.SetText(">" + v.query)
+	v.query = v.input.GetText()[1:]
 	if v.filewalk != nil {
 		v.filewalk.UpdateQuery(v.query)
 	}
-	// }
-	// }
 	return event
 }
 
