@@ -251,17 +251,17 @@ func (c *SymbolTreeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
 func (s SymbolListItem) displayname() string {
 	return s.name
 }
-func (v SymbolTreeView) Findall(key string) []int {
-	var ret []int
-	for i := 0; i < len(v.symbols); i++ {
-		sss := v.symbols[i].displayname()
-		if len(sss) > 0 {
-			ret = append(ret, i)
-		}
+// func (v SymbolTreeView) Findall(key string) []int {
+// 	var ret []int
+// 	for i := 0; i < len(v.symbols); i++ {
+// 		sss := v.symbols[i].displayname()
+// 		if len(sss) > 0 {
+// 			ret = append(ret, i)
+// 		}
 
-	}
-	return ret
-}
+// 	}
+// 	return ret
+// }
 
 // Clear
 func (v *SymbolTreeView) Clear() {

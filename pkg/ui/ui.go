@@ -546,6 +546,10 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			}
 		}
 	}
+	if event.Key() == tcell.KeyCtrlS {
+		main.layout.dialog.OpenDocumntFzf(main.lspmgr.Current)
+		return nil
+	}
 	if event.Key() == tcell.KeyCtrlP {
 		main.layout.dialog.OpenFileFzf(main.root)
 		return nil
