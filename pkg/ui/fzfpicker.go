@@ -54,7 +54,7 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 	v.Visible = true
 	v.filewalk = NewDirWalk(root, func(t querytask) {
 		v.app.QueueUpdate(func() {
-			v.Frame.SetTitle(fmt.Sprintf("Files %d/%d", len(t.ret), t.count))
+			v.Frame.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
 			if t.update_count {
 				return
 			}

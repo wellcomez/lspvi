@@ -23,6 +23,7 @@ type DirWalk struct {
 	root     string
 	cb       func(t querytask)
 	hayStack []string
+	fzf      *fzflib.Fzf
 }
 
 type walkerOpts struct {
@@ -235,7 +236,8 @@ func (r *filewalk) readFiles(root string) bool {
 }
 
 type querytask struct {
-	count int
+	count       int
+	match_count int
 	// filename string
 	query        string
 	ret          []file_picker_item
@@ -250,7 +252,14 @@ type file_picker_item struct {
 func NewDirWalk(root string, cb func(t querytask)) *DirWalk {
 
 	var hayStack = walk(root, cb)
-	return &DirWalk{root: root, cb: cb, hayStack: hayStack}
+	ret := &DirWalk{root: root, cb: cb, hayStack: hayStack}
+	var options = fzflib.DefaultOptions()
+	// options.Fuzzy = true
+	options.Sort = []fzflib.Criterion{}
+	// update any options here
+	// var hayStack = walk(root)
+	ret.fzf = fzflib.New(ret.hayStack, options)
+	return ret
 }
 func (wk *DirWalk) UpdateQueryOld(query string) {
 	cur := wk.cur
@@ -281,21 +290,25 @@ func (wk *DirWalk) UpdateQuery(query string) {
 }
 
 func (wk *DirWalk) asyncWalk(task *querytask, root string) {
-	var options = fzflib.DefaultOptions()
-	// update any options here
-	// var hayStack = walk(root)
-	var myFzf = fzflib.New(wk.hayStack, options)
+
 	var t querytask
 	t.count = len(wk.hayStack)
 	wk.cb(t)
 	var result fzflib.SearchResult
-	myFzf.Search(task.query)
-	result = <-myFzf.GetResultChannel()
+	wk.fzf.Search(task.query)
+	result = <-wk.fzf.GetResultChannel()
+	cout := 0
+	t.match_count = len(result.Matches)
+	log.Println(t.match_count, len(wk.hayStack))
 	for _, v := range result.Matches {
 		task.ret = append(task.ret, file_picker_item{
 			name: strings.ReplaceAll(v.Key, root, ""),
 			path: v.Key,
 		})
+		cout++
+		if cout > 1000 {
+			break
+		}
 	}
 	t.ret = append(t.ret, task.ret...)
 	wk.cb(t)
