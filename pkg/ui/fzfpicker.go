@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/gdamore/tcell/v2"
@@ -51,6 +52,10 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 	v.Visible = true
 	v.filewalk = NewDirWalk(root, func(t querytask) {
 		v.app.QueueUpdate(func() {
+			v.Frame.SetTitle(fmt.Sprintf("Files %d/%d", len(t.ret), t.count))
+			if t.update_count {
+				return
+			}
 			v.list.Clear()
 			for _, a := range t.ret {
 				v.list.AddItem(a.name, "", 0, func() {

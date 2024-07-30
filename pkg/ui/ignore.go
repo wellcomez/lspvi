@@ -1,8 +1,12 @@
 package mainui
 
 import (
-	"github.com/sabhiram/go-gitignore"
+	"log"
+	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/sabhiram/go-gitignore"
 )
 
 type gitignore struct {
@@ -15,16 +19,32 @@ func NewGitIgnore(root string) *gitignore {
 	a.init()
 	return a
 }
-func (t *gitignore) init() {
-	f := filepath.Join(t.root, ".gitignore")
-	check, err := ignore.CompileIgnoreFileAndLines(f,".git")
+func (t *gitignore) init() error {
+	f, err := has_gitignore_file(t.root)
+	if err != nil {
+		return err
+	}
+	check, err := ignore.CompileIgnoreFileAndLines(f, ".git", "*.o")
 	if err == nil {
 		t.check = check
+		return nil
 	}
+	return err
+}
+
+func has_gitignore_file(root string) (string, error) {
+	f := filepath.Join(root, ".gitignore")
+	_, err := os.Stat(f)
+	return f, err
 }
 func (t gitignore) Ignore(filename string) bool {
 	if t.check != nil {
-		return t.check.MatchesPath(filename)
+		f:=strings.ReplaceAll(filename, t.root, "")
+		if t.check.MatchesPath(f){
+			log.Println(f,filename)
+			return true
+		}
+		return false 
 	}
 	return false
 }

@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"bufio"
 	"io/fs"
 	"log"
 	"os"
@@ -11,8 +12,10 @@ import (
 	"unsafe"
 
 	"github.com/charlievieth/fastwalk"
-	"github.com/reinhrst/fzf-lib"
+	fzflib "github.com/reinhrst/fzf-lib"
 )
+
+var WalkerSkip = []string{".git", "node_modules"}
 
 type DirWalk struct {
 	query    string
@@ -75,16 +78,63 @@ const (
 )
 
 type filewalk struct {
-	ret    []string
-	event  int32
-	killed bool
-	mutex  sync.Mutex
+	cb      func(t querytask)
+	ret     []string
+	event   int32
+	killed  bool
+	mutex   sync.Mutex
+	root    string
+	ignores []string
 }
 
-func new_filewalk(root string) *filewalk {
-	ret := &filewalk{
-		ret: []string{},
+func (f *filewalk) load() error {
+	fp, err := os.OpenFile(f.root+".files", os.O_RDONLY, 0666)
+	if err == nil {
+		defer fp.Close()
+		scanner := bufio.NewScanner(fp)
+		for scanner.Scan() {
+			f.ret = append(f.ret, scanner.Text())
+		}
+		return nil
 	}
+	return err
+}
+func (f filewalk) save() error {
+	fp, err := os.OpenFile(filepath.Join(f.root, ".files"), os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		return err
+	}
+	defer fp.Close()
+	for _, v := range f.ret {
+		fp.Write([]byte(v + "\n"))
+	}
+	return nil
+}
+
+var global_walk *filewalk = nil
+
+func new_filewalk(root string, cb func(t querytask)) *filewalk {
+	if global_walk != nil {
+		return global_walk
+	}
+	ret := &filewalk{
+		ret:     []string{},
+		root:    root,
+		ignores: WalkerSkip,
+		cb:      cb,
+	}
+	global_walk = ret
+	// filegit := filepath.Join(root, ".gitignore")
+	// fp, err := os.OpenFile(filegit, os.O_RDONLY, 0666)
+	// if err == nil {
+	// 	defer fp.Close()
+	// 	scanner := bufio.NewScanner(fp)
+	// 	for scanner.Scan() {
+	// 		ret.ignores = append(ret.ignores, scanner.Text())
+	// 	}
+	// }
+	global_walk.load()
+	go global_walk.readFiles(root)
 	return ret
 }
 func (r *filewalk) pusher(s string) bool {
@@ -92,15 +142,14 @@ func (r *filewalk) pusher(s string) bool {
 	return true
 }
 
-var WalkerSkip = []string{".git", "node_modules"}
-
-func (r *filewalk) readFiles(root string, ignores []string) bool {
+func (r *filewalk) readFiles(root string) bool {
 	opts := walkerOpts{
 		file:   true,
 		dir:    true,
 		hidden: false,
 		follow: false,
 	}
+	r.ret = []string{}
 	// r.killed = false
 	conf := fastwalk.Config{
 		Follow: opts.follow,
@@ -108,26 +157,56 @@ func (r *filewalk) readFiles(root string, ignores []string) bool {
 		ToSlash: fastwalk.DefaultToSlash(),
 		Sort:    fastwalk.SortFilesFirst,
 	}
+	var ignoremap map[string]*gitignore = map[string]*gitignore{}
+	ignoremap[root] = NewGitIgnore(root)
 	fn := func(path string, de os.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
 		path = trimPath(path)
 		if path != "." {
+			dir := path
+			if !de.IsDir() {
+				dir = filepath.Dir(path)
+			}
+			r.mutex.Lock()
+			ignore := ignoremap[dir]
+			if ignore == nil {
+				ignore = NewGitIgnore(dir)
+				if ignore.check == nil {
+					d := filepath.Dir(dir)
+					ignore = ignoremap[d]
+				}
+				ignoremap[dir] = ignore
+			}
+
+			defer r.mutex.Unlock()
 			isDir := de.IsDir()
+			notadd := ignore.Ignore(path)
 			if isDir || opts.follow && isSymlinkToDir(path, de) {
 				base := filepath.Base(path)
 				if !opts.hidden && base[0] == '.' {
 					return filepath.SkipDir
 				}
-				for _, ignore := range ignores {
+				for _, ignore := range r.ignores {
 					if ignore == base {
 						return filepath.SkipDir
 					}
 				}
+				if notadd {
+					return filepath.SkipDir
+				}
+
+			}
+			if notadd {
+				return nil
 			}
 			if ((opts.file && !isDir) || (opts.dir && isDir)) && r.pusher(path) {
 				atomic.StoreInt32(&r.event, int32(EvtReadNew))
+				global_walk.cb(querytask{
+					count:        len(r.ret),
+					update_count: true,
+				})
 			}
 		}
 		// r.mutex.Lock()
@@ -137,14 +216,18 @@ func (r *filewalk) readFiles(root string, ignores []string) bool {
 		// }
 		return nil
 	}
-	return fastwalk.Walk(&conf, root, fn) == nil
+	yes := fastwalk.Walk(&conf, root, fn) == nil
+	r.save()
+	return yes
 }
 
 type querytask struct {
+	count int
 	// filename string
-	query string
-	ret   []file_picker_item
-	done  bool
+	query        string
+	ret          []file_picker_item
+	done         bool
+	update_count bool
 }
 type file_picker_item struct {
 	name string
@@ -153,7 +236,7 @@ type file_picker_item struct {
 
 func NewDirWalk(root string, cb func(t querytask)) *DirWalk {
 
-	var hayStack = walk(root)
+	var hayStack = walk(root, cb)
 	return &DirWalk{root: root, cb: cb, hayStack: hayStack}
 }
 func (wk *DirWalk) UpdateQueryOld(query string) {
@@ -185,11 +268,14 @@ func (wk *DirWalk) UpdateQuery(query string) {
 }
 
 func (wk *DirWalk) asyncWalk(task *querytask, root string) {
-	var options = fzf.DefaultOptions()
+	var options = fzflib.DefaultOptions()
 	// update any options here
 	// var hayStack = walk(root)
-	var myFzf = fzf.New(wk.hayStack, options)
-	var result fzf.SearchResult
+	var myFzf = fzflib.New(wk.hayStack, options)
+	var t querytask
+	t.count = len(wk.hayStack)
+	wk.cb(t)
+	var result fzflib.SearchResult
 	myFzf.Search(task.query)
 	result = <-myFzf.GetResultChannel()
 	for _, v := range result.Matches {
@@ -198,7 +284,6 @@ func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 			path: v.Key,
 		})
 	}
-	var t querytask
 	var check = NewGitIgnore(root)
 	for _, v := range wk.cur.ret {
 		if !check.Ignore(v.path) {
@@ -207,9 +292,9 @@ func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 	}
 	wk.cb(t)
 }
-func walk(root string) []string {
-	walk := new_filewalk(root)
-	walk.readFiles(root, WalkerSkip)
+func walk(root string, cb func(t querytask)) []string {
+	walk := new_filewalk(root, cb)
+
 	return walk.ret
 }
 
