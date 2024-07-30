@@ -99,7 +99,7 @@ func (f *filewalk) load() error {
 	}
 	return err
 }
-func (f filewalk) save() error {
+func (f *filewalk) save() error {
 	fp, err := os.OpenFile(filepath.Join(f.root, ".files"), os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		return err
@@ -134,7 +134,17 @@ func new_filewalk(root string, cb func(t querytask)) *filewalk {
 	// 	}
 	// }
 	global_walk.load()
-	go global_walk.readFiles(root)
+	loader := &filewalk{
+		ret:     []string{},
+		root:    root,
+		ignores: WalkerSkip,
+	}
+	loader_cb := func(t querytask) {
+		global_walk = loader
+		cb(t)
+	}
+	loader.cb = loader_cb
+	go loader.readFiles(root)
 	return ret
 }
 func (r *filewalk) pusher(s string) bool {
