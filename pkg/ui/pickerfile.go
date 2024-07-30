@@ -138,6 +138,9 @@ func new_filewalk(root string, cb func(t querytask)) *filewalk {
 	return ret
 }
 func (r *filewalk) pusher(s string) bool {
+	if len(r.ret) > 1000 {
+		return false
+	}
 	r.ret = append(r.ret, s)
 	return true
 }
@@ -203,10 +206,10 @@ func (r *filewalk) readFiles(root string) bool {
 			}
 			if ((opts.file && !isDir) || (opts.dir && isDir)) && r.pusher(path) {
 				atomic.StoreInt32(&r.event, int32(EvtReadNew))
-				global_walk.cb(querytask{
-					count:        len(r.ret),
-					update_count: true,
-				})
+				// global_walk.cb(querytask{
+				// 	count:        len(r.ret),
+				// 	update_count: true,
+				// })
 			}
 		}
 		// r.mutex.Lock()
@@ -284,12 +287,7 @@ func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 			path: v.Key,
 		})
 	}
-	var check = NewGitIgnore(root)
-	for _, v := range wk.cur.ret {
-		if !check.Ignore(v.path) {
-			t.ret = append(t.ret, v)
-		}
-	}
+	t.ret = append(t.ret, task.ret...)
 	wk.cb(t)
 }
 func walk(root string, cb func(t querytask)) []string {

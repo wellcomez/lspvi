@@ -43,6 +43,8 @@ func (pick *Fuzzpicker) MouseHanlde(event *tcell.EventMouse, action tview.MouseA
 		return event, action
 	}
 }
+
+// OpenFileFzf
 func (v *Fuzzpicker) OpenFileFzf(root string) {
 	v.list.Clear()
 	v.Frame.SetTitle("Files")
@@ -57,7 +59,8 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 				return
 			}
 			v.list.Clear()
-			for _, a := range t.ret {
+			for i := 0; i < min(len(t.ret), 1000); i++ {
+				a := t.ret[i]
 				v.list.AddItem(a.name, "", 0, func() {
 					idx := v.list.GetCurrentItem()
 					f := t.ret[idx]
