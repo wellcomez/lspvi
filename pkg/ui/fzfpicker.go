@@ -125,7 +125,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *Fuzzpicker {
 	frame := tview.NewFrame(layout)
 	frame.SetBorder(true)
 	frame.SetBorderPadding(0, 0, 0, 0)
-	frame.SetBorderColor(tcell.ColorGreenYellow)
+  frame.SetBorderColor(tcell.ColorGreenYellow)
 	// // input.SetBorder(true)
 	// input.SetFieldTextColor(tcell.ColorGreen)
 	// input.SetFieldBackgroundColor(tcell.ColorBlack)

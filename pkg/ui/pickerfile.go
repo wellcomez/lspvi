@@ -2,7 +2,6 @@ package mainui
 
 import (
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -75,14 +74,27 @@ const (
 	EvtQuit
 )
 
-func (r *querytask) pusher(s file_picker_item) bool {
+type filewalk struct {
+	ret    []string
+	event  int32
+	killed bool
+	mutex  sync.Mutex
+}
+
+func new_filewalk(root string) *filewalk {
+	ret := &filewalk{
+		ret: []string{},
+	}
+	return ret
+}
+func (r *filewalk) pusher(s string) bool {
 	r.ret = append(r.ret, s)
 	return true
 }
 
 var WalkerSkip = []string{".git", "node_modules"}
 
-func (r *querytask) readFiles(root string, ignores []string) bool {
+func (r *filewalk) readFiles(root string, ignores []string) bool {
 	opts := walkerOpts{
 		file:   true,
 		dir:    true,
@@ -114,7 +126,7 @@ func (r *querytask) readFiles(root string, ignores []string) bool {
 					}
 				}
 			}
-			if ((opts.file && !isDir) || (opts.dir && isDir)) && r.pusher(file_picker_item{name: strings.ReplaceAll(path, root, ""), path: path}) {
+			if ((opts.file && !isDir) || (opts.dir && isDir)) && r.pusher(path) {
 				atomic.StoreInt32(&r.event, int32(EvtReadNew))
 			}
 		}
@@ -130,12 +142,9 @@ func (r *querytask) readFiles(root string, ignores []string) bool {
 
 type querytask struct {
 	// filename string
-	query  string
-	ret    []file_picker_item
-	done   bool
-	event  int32
-	killed bool
-	mutex  sync.Mutex
+	query string
+	ret   []file_picker_item
+	done  bool
 }
 type file_picker_item struct {
 	name string
@@ -199,20 +208,9 @@ func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 	wk.cb(t)
 }
 func walk(root string) []string {
-	ret := []string{}
-	files, err := ioutil.ReadDir(root)
-	if err == nil {
-		for _, v := range files {
-			path := filepath.Join(root, v.Name())
-			if v.IsDir() {
-				ret = append(ret, walk(path)...)
-			} else {
-				ret = append(ret, path)
-			}
-
-		}
-	}
-	return ret
+	walk := new_filewalk(root)
+	walk.readFiles(root, WalkerSkip)
+	return walk.ret
 }
 
 func (wk *DirWalk) Run() {
