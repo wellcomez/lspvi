@@ -54,6 +54,9 @@ func (l *LeaderHandle) on_leadkey(event *tcell.EventKey) bool {
 }
 func (vim *Vim) HanldeLeaderKye(event *tcell.EventKey) bool {
 	if vim.vi.Leader {
+		if event.Key() == tcell.KeyEscape {
+			return false
+		}
 		if event.Key() == tcell.KeyCtrlSpace {
 			vim.EnterLead()
 		}
