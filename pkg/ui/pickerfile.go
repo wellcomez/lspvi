@@ -240,7 +240,7 @@ func (r *filewalk) readFiles(root string) bool {
 		return nil
 	}
 	yes := fastwalk.Walk(&conf, root, fn) == nil
-	log.Printf("file count %d",len(r.ret))
+	log.Printf("file count %d", len(r.ret))
 	r.save()
 	return yes
 }
@@ -255,8 +255,9 @@ type querytask struct {
 	update_count bool
 }
 type file_picker_item struct {
-	name string
-	path string
+	name      string
+	path      string
+	Positions []int
 }
 
 func NewDirWalk(root string, cb func(t querytask)) *DirWalk {
@@ -301,7 +302,9 @@ func (wk *DirWalk) UpdateQuery(query string) {
 
 func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 
-	var t querytask
+	var t = querytask{
+		query: task.query,
+	}
 	t.count = len(wk.hayStack)
 	wk.cb(t)
 	var result fzflib.SearchResult
@@ -317,8 +320,9 @@ func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 	}
 	for _, v := range result.Matches {
 		task.ret = append(task.ret, file_picker_item{
-			name: strings.ReplaceAll(v.Key, root, ""),
-			path: v.Key,
+			name:      strings.ReplaceAll(v.Key, root, ""),
+			path:      v.Key,
+			Positions: v.Positions,
 		})
 		cout++
 		if cout > 1000 {

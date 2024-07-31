@@ -3,6 +3,7 @@ package mainui
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -10,11 +11,12 @@ import (
 )
 
 type hlItem struct {
-	MainText string // The main text of the list item.
+	Positions []int
 }
 type customlist struct {
 	*tview.List
 	hlitems []*hlItem
+	Key     string
 }
 
 func (l *customlist) Clear() *customlist {
@@ -28,31 +30,69 @@ func new_customlist() *customlist {
 	ret.hlitems = []*hlItem{}
 	return ret
 }
-func (l *customlist) AddItem(mainText, secondaryText string, shortcut rune, selected func()) *customlist {
-	l.hlitems = append(l.hlitems, &hlItem{mainText})
-	l.List.AddItem(mainText, secondaryText, shortcut, selected)
+func (l *customlist) AddItem(mainText string, Positions []int, selected func()) *customlist {
+	l.hlitems = append(l.hlitems, &hlItem{Positions: Positions})
+	l.List.AddItem(mainText, "", 0, selected)
 	return l
 }
+
+type keypattern struct {
+	begin int
+	width int
+}
+
+func find_key(s string, keys []string, offset int) []keypattern {
+	for _, v := range keys {
+		idx := strings.Index(s, v)
+		if idx >= 0 {
+			pth := keypattern{begin: idx + offset, width: len(v)}
+			a := []keypattern{pth}
+			subret := find_key(s[idx+len(v):], keys, pth.width+idx)
+			return append(a, subret...)
+		}
+	}
+	return []keypattern{}
+}
 func (l *customlist) Draw(screen tcell.Screen) {
-	x, y, width, height := l.GetInnerRect()
+	offset_x, y, width, height := l.GetInnerRect()
 
 	bottomLimit := y + height
 	style := tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor)
+	stylehl := tcell.StyleDefault.Foreground(tcell.ColorGreen).Background(tview.Styles.PrimaryTextColor)
 	itemoffset, horizontalOffset := l.GetOffset()
+	keys := strings.Split(l.Key, " ")
 	for index := itemoffset; index < len(l.hlitems); index++ {
 		MainText, _ := l.List.GetItemText(index)
+		if len(MainText) == 0 {
+			y++
+			continue
+		}
+		Positions := find_key(MainText, keys, 0)
 		if y >= bottomLimit {
 			break
 		}
-		// item := l.hlitems[index]
 		selected := index == l.List.GetCurrentItem()
 		if selected {
-			for bx := 0; bx < width; bx++ {
-				screen.SetContent(x+bx, y, ' ', nil, style)
+			begin := 0
+			for _, e := range Positions {
+				normal := MainText[begin:e.begin]
+				for i, r := range normal {
+					screen.SetContent(offset_x+i+begin, y, r, nil, style)
+				}
+				hltext := MainText[e.begin : e.begin+e.width]
+				for i, r := range hltext {
+					screen.SetContent(offset_x+i+e.begin, y, r, nil, stylehl)
+				}
+				begin = e.begin + e.width
 			}
-			tview.Print(screen, MainText, x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorBlack)
+			if begin < len(MainText) {
+				normal := MainText[begin:]
+				for i, r := range normal {
+					screen.SetContent(offset_x+i+begin, y, r, nil, style)
+				}
+			}
 		} else {
-			tview.Print(screen, MainText, x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorFloralWhite)
+			tview.Print(screen, MainText, offset_x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorFloralWhite)
 		}
 		y += 1
 	}
@@ -149,9 +189,10 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 				return
 			}
 			v.list.Clear()
+			v.list.Key = t.query
 			for i := 0; i < min(len(t.ret), 1000); i++ {
 				a := t.ret[i]
-				v.list.AddItem(a.name, "", 0, func() {
+				v.list.AddItem(a.name, a.Positions, func() {
 					idx := v.list.GetCurrentItem()
 					f := t.ret[idx]
 					v.Visible = false
