@@ -5,6 +5,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
@@ -45,9 +46,27 @@ type SymbolWalk struct {
 	impl *SymbolWalkImpl
 }
 
+func (wk SymbolWalk) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	handle := wk.impl.symview.view.InputHandler()
+	handle(event, setFocus)
+	wk.update_preview()
+}
+
+func (wk SymbolWalk) update_preview() {
+	cur := wk.impl.symview.view.GetCurrentNode()
+	if cur != nil {
+		value := cur.GetReference()
+		if value != nil {
+			if sym, ok := value.(lsp.SymbolInformation); ok {
+				wk.impl.codeprev.gotoline(sym.Location.Range.Start.Line)
+			}
+		}
+	}
+}
+
 // handle implements picker.
 func (wk SymbolWalk) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return wk.impl.symview.view.InputHandler()
+	return wk.handle_key_override
 }
 func (wk SymbolWalk) Updatequeryold(query string) {
 	wk.impl.gs = NewGenericSearch(view_sym_list, query)
@@ -64,7 +83,7 @@ func (wk SymbolWalk) UpdateQuery(query string) {
 		children := root.GetChildren()
 		if len(children) > 0 {
 			wk.impl.symview.view.SetCurrentNode(children[0])
+			wk.update_preview()
 		}
-
 	}
 }
