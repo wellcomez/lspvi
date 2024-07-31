@@ -547,7 +547,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		}
 	}
 	if event.Key() == tcell.KeyCtrlS {
-		main.layout.dialog.OpenDocumntFzf(main.lspmgr.Current)
+		main.OpenDocumntFzf()
 		return nil
 	}
 	if event.Key() == tcell.KeyCtrlP {
@@ -564,7 +564,9 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 
 	return event
 }
-
+func (main mainui) OpenDocumntFzf() {
+	main.layout.dialog.OpenDocumntFzf(main.lspmgr.Current)
+}
 func (m *mainui) OnGrep() {
 	if m.prefocused == view_code || m.codeview.view.HasFocus() {
 		m.app.SetFocus(m.fzf.view)

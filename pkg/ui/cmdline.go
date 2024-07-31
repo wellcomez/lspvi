@@ -9,14 +9,14 @@ import (
 )
 
 type cmdline struct {
-	main *mainui
+	main  *mainui
 	input *tview.InputField
-	Vim  *Vim
+	Vim   *Vim
 }
 
 func new_cmdline(main *mainui) *cmdline {
 	code := &cmdline{
-		main: main,
+		main:  main,
 		input: tview.NewInputField(),
 	}
 	code.input.SetBorder(true)
@@ -40,6 +40,35 @@ func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey 
 		cmd.main.OnGrep()
 	}
 	return nil
+}
+
+func (l *LeaderHandle) on_leadkey(event *tcell.EventKey) bool {
+	ch := event.Rune()
+	key := l.key + string(ch)
+
+	if key == "o" {
+		l.main.OpenDocumntFzf()
+		return true
+	}
+	return false
+}
+func (vim *Vim) HanldeLeaderKye(event *tcell.EventKey) bool {
+	if vim.vi.Leader {
+		if event.Key() == tcell.KeyCtrlSpace {
+			vim.EnterLead()
+		}
+		if vim.leader == nil {
+			vim.leader = &LeaderHandle{
+				main: vim.app,
+			}
+		}
+		if vim.leader.on_leadkey(event) {
+			vim.leader = nil
+		}
+		return true
+
+	}
+	return false
 }
 func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 	vim := cmd.Vim
@@ -128,17 +157,23 @@ func (v vimstate) String() string {
 	if v.Find {
 		return "Find"
 	}
-	if v.Leader{
+	if v.Leader {
 		return "Leader"
 	}
 	return "none"
 
 }
 
+type LeaderHandle struct {
+	key  string
+	main *mainui
+}
+
 // Vim structure
 type Vim struct {
-	app *mainui
-	vi  vimstate
+	app    *mainui
+	vi     vimstate
+	leader *LeaderHandle
 }
 
 func (v Vim) String() string {
@@ -186,6 +221,9 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 			return true, nil
 		}
 	}
+	if v.HanldeLeaderKye(event) {
+		return true, nil
+	}
 	if event.Rune() == 'i' {
 		if v.EnterInsert() {
 			return true, nil
@@ -220,6 +258,7 @@ func (v *Vim) EnterFind() bool {
 func (v *Vim) EnterLead() bool {
 	if v.vi.Escape {
 		v.vi = vimstate{Leader: true}
+		v.leader = nil
 		return true
 	} else {
 		return false
@@ -239,6 +278,7 @@ func (v *Vim) EnterInsert() bool {
 func (v *Vim) ExitEnterEscape() {
 	v.vi = vimstate{}
 }
+
 // EnterEscape enters escape mode.
 func (v *Vim) EnterEscape() {
 	v.app.cmdline.Clear()
