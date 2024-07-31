@@ -535,17 +535,10 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		main.OpenFile(main.bf.GoBack(), nil)
 		return nil
 	}
-	if main.GetFocusViewId() == view_cmd {
-		return main.cmdline.Keyhandle(event)
-	}
-	if event.Rune() == 'n' {
-		if main.cmdline.Vim.vi.Find {
-			gs := main.searchcontext
-			if gs.view == main.GetFocusViewId() {
-				main.OnSearch(gs.key, false)
-			}
-		}
-	}
+	// if main.GetFocusViewId() == view_cmd {
+	// 	return main.cmdline.Keyhandle(event)
+	// }
+
 	if event.Key() == tcell.KeyCtrlS {
 		main.OpenDocumntFzf()
 		return nil
