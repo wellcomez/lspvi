@@ -171,6 +171,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *Fuzzpicker {
 		app:   app,
 		main:  main,
 	}
+	NewDirWalk(main.root, func(t querytask) {})
 	return ret
 }
 

@@ -144,6 +144,7 @@ var global_walk *filewalk = nil
 
 func new_filewalk(root string, cb func(t querytask)) *filewalk {
 	if global_walk != nil {
+		global_walk.uicb = cb
 		return global_walk
 	}
 	ret := &filewalk{
