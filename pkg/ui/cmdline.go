@@ -324,6 +324,7 @@ func (v *Vim) EnterInsert() bool {
 
 func (v *Vim) ExitEnterEscape() {
 	v.vi = vimstate{}
+	v.vi_handle = nil
 }
 
 // EnterEscape enters escape mode.

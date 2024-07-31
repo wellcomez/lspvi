@@ -76,19 +76,25 @@ func (m *mainui) SavePrevFocus() {
 	m.prefocused = m.GetFocusViewId()
 }
 func (m *mainui) getfocusviewname() string {
-	if m.codeview.view.HasFocus() {
+	viewid := m.GetFocusViewId()
+	return get_viewid_name(viewid)
+}
+
+func get_viewid_name(viewid view_id) string {
+	switch viewid {
+	case view_code:
 		return "code"
-	} else if m.callinview.view.HasFocus() {
+	case view_callin:
 		return "callin"
-	} else if m.cmdline.input.HasFocus() {
+	case view_cmd:
 		return "cmd"
-	} else if m.log.HasFocus() {
+	case view_log:
 		return "log"
-	} else if m.fzf.view.HasFocus() {
+	case view_fzf:
 		return "fzf"
-	} else if m.symboltree.view.HasFocus() {
+	case view_sym_list:
 		return "outline"
-	} else {
+	default:
 		return "???"
 	}
 }
@@ -535,8 +541,28 @@ func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {
 
 var leadkey = ' '
 
+func (main *mainui) switch_tab_view() {
+	switch main.GetFocusViewId() {
+	case view_fzf:
+		main.app.SetFocus(main.symboltree.view)
+	case view_sym_list:
+		main.app.SetFocus(main.codeview.view)
+	case view_code:
+		main.app.SetFocus(main.fzf.view)
+	default:
+		main.app.SetFocus(main.codeview.view)
+	}
+	if main.GetFocusViewId()!=view_code{
+		main.cmdline.Vim.ExitEnterEscape()
+	}
+	main.UpdateStatus()
+}
 func (main *mainui) UpdateStatus() {
-	main.statusbar.SetText(fmt.Sprintf("vi:%-10s %10s", main.cmdline.Vim.String(), main.getfocusviewname()))
+	viewname := main.getfocusviewname()
+	if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
+		viewname = get_viewid_name(main.searchcontext.view)
+	}
+	main.statusbar.SetText(fmt.Sprintf("vi:%-10s %10s", main.cmdline.Vim.String(), viewname))
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",
@@ -544,7 +570,11 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if main.layout.dialog.Visible {
 		return main.layout.dialog.handle_key(event)
 	}
-	
+
+	if event.Key() == tcell.KeyTAB || event.Key() == tcell.KeyTab {
+		main.switch_tab_view()
+		return nil
+	}
 	if event.Key() == tcell.KeyCtrlS {
 		main.OpenDocumntFzf()
 		return nil
