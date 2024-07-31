@@ -57,12 +57,17 @@ func find_key(s string, keys []string, offset int) []keypattern {
 	return []keypattern{}
 }
 func (l *customlist) Draw(screen tcell.Screen) {
-	offset_x, y, width, height := l.GetInnerRect()
+	offset_x, y, _, height := l.GetInnerRect()
 
 	bottomLimit := y + height
-	style := tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor)
-	stylehl := tcell.StyleDefault.Foreground(tcell.ColorGreen).Background(tview.Styles.PrimaryTextColor)
-	itemoffset, horizontalOffset := l.GetOffset()
+
+	selected_style := tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor)
+	selected_stylehl := tcell.StyleDefault.Foreground(tcell.ColorGreen).Background(tview.Styles.PrimaryTextColor)
+
+	style := tcell.StyleDefault.Foreground(tview.Styles.PrimaryTextColor).Background(tview.Styles.PrimitiveBackgroundColor)
+	stylehl := tcell.StyleDefault.Foreground(tcell.ColorGreen).Background(tview.Styles.PrimitiveBackgroundColor)
+
+	itemoffset, _ := l.GetOffset()
 	keys := strings.Split(l.Key, " ")
 	if len(l.Key) == 0 {
 		keys = []string{}
@@ -83,30 +88,34 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		}
 		selected := index == l.List.GetCurrentItem()
 		if selected {
-			begin := 0
-			for _, e := range Positions {
-				normal := MainText[begin:e.begin]
-				for i, r := range normal {
-					screen.SetContent(offset_x+i+begin, y, r, nil, style)
-				}
-				hltext := MainText[e.begin : e.begin+e.width]
-				for i, r := range hltext {
-					screen.SetContent(offset_x+i+e.begin, y, r, nil, stylehl)
-				}
-				begin = e.begin + e.width
-			}
-			if begin < len(MainText) {
-				normal := MainText[begin:]
-				for i, r := range normal {
-					screen.SetContent(offset_x+i+begin, y, r, nil, style)
-				}
-			}
+			draw_item_color(Positions, MainText, screen, offset_x, y, selected_style, selected_stylehl)
 		} else {
-			tview.Print(screen, MainText, offset_x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorFloralWhite)
+			draw_item_color(Positions, MainText, screen, offset_x, y, style, stylehl)
 		}
 		y += 1
 	}
 
+}
+
+func draw_item_color(Positions []keypattern, MainText string, screen tcell.Screen, offset_x int, y int, selected_style tcell.Style, selected_stylehl tcell.Style) {
+	begin := 0
+	for _, e := range Positions {
+		normal := MainText[begin:e.begin]
+		for i, r := range normal {
+			screen.SetContent(offset_x+i+begin, y, r, nil, selected_style)
+		}
+		hltext := MainText[e.begin : e.begin+e.width]
+		for i, r := range hltext {
+			screen.SetContent(offset_x+i+e.begin, y, r, nil, selected_stylehl)
+		}
+		begin = e.begin + e.width
+	}
+	if begin < len(MainText) {
+		normal := MainText[begin:]
+		for i, r := range normal {
+			screen.SetContent(offset_x+i+begin, y, r, nil, selected_style)
+		}
+	}
 }
 
 type Fuzzpicker struct {
