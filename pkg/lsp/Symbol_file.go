@@ -3,6 +3,7 @@ package lspcore
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/tectiv3/go-lsp"
 )
@@ -16,6 +17,25 @@ type Symbol_file struct {
 	tokens       *lsp.SemanticTokens
 }
 
+func (sym *Symbol_file) Filter(key string) *Symbol_file {
+	if len(key) == 0 {
+		return sym
+	}
+	ret := []*Symbol{}
+	for k, v := range sym.Class_object {
+		if strings.Contains(strings.ToLower(v.SymInfo.Name), key) {
+			ret = append(ret, sym.Class_object[k])
+		}
+		for i, vv := range v.Members {
+			if strings.Contains(strings.ToLower(vv.SymInfo.Name), key) {
+				ret = append(ret, &v.Members[i])
+			}
+		}
+	}
+	return &Symbol_file{
+		Class_object: ret,
+	}
+}
 func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begin int, parent *Symbol) int {
 	var i = begin
 	for i = begin; i < len(symbols); {
