@@ -2,12 +2,11 @@ package mainui
 
 import (
 	"fmt"
-	"log"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"log"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
-
 
 type Fuzzpicker struct {
 	Frame   *tview.Frame
@@ -48,24 +47,26 @@ func (pick *Fuzzpicker) MouseHanlde(event *tcell.EventMouse, action tview.MouseA
 
 // NewSymboWalk
 
-
 func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
 	symbol := &SymbolTreeViewExt{}
 	symbol.SymbolTreeView = NewSymbolTreeView(v.main)
 	symbol.parent = v
 	symbol.SymbolTreeView.view.SetSelectedFunc(symbol.OnClickSymobolNode)
-	v.Frame = tview.NewFrame(new_fzf_symbol_view(v.input, symbol))
+
+	sym := SymbolWalk{
+		impl: &SymbolWalkImpl{
+			file:     file,
+			symview:  symbol,
+			codeprev: NewCodeView(v.main),
+		},
+	}
+	v.Frame = tview.NewFrame(sym.new_fzf_symbol_view(v.input))
 	v.Frame.SetBorder(true)
 	v.Frame.SetTitle("symbol")
 	v.input.SetText(">")
 	v.app.SetFocus(v.input)
 	v.Visible = true
-	sym := SymbolWalk{
-		impl: &SymbolWalkImpl{
-			file:    file,
-			symview: symbol,
-		},
-	}
+
 	v.currentpicker = sym
 	symbol.update(file)
 }

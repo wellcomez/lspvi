@@ -8,11 +8,16 @@ import (
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
-func new_fzf_symbol_view(input *tview.InputField, list *SymbolTreeViewExt) *tview.Grid {
+func (sym *SymbolWalk) new_fzf_symbol_view(input *tview.InputField) *tview.Grid {
+	list := sym.impl.symview.view
+	list.SetBorder(true)
+	code := sym.impl.codeprev.view
+	sym.impl.codeprev.Load(sym.impl.file.Filename)
 	layout := tview.NewGrid().
 		SetColumns(-1, 24, 16, -1).
 		SetRows(-1, 3, 3, 2).
-		AddItem(list.view, 0, 0, 3, 4, 0, 0, false).
+		AddItem(list, 0, 0, 3, 2, 0, 0, false).
+		AddItem(code, 0, 2, 3, 2, 0, 0, false).
 		AddItem(input, 3, 0, 1, 4, 0, 0, false)
 	return layout
 }
@@ -30,9 +35,10 @@ func (v SymbolTreeViewExt) OnClickSymobolNode(node *tview.TreeNode) {
 }
 
 type SymbolWalkImpl struct {
-	file    *lspcore.Symbol_file
-	symview *SymbolTreeViewExt
-	gs      *GenericSearch
+	file     *lspcore.Symbol_file
+	symview  *SymbolTreeViewExt
+	gs       *GenericSearch
+	codeprev *CodeView
 }
 
 type SymbolWalk struct {

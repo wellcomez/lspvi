@@ -9,36 +9,39 @@ import (
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
+
 type TreeViewLoadding struct {
 	*tview.TreeView
-	show_wait       bool
-	waiter 		 *tview.TextView
+	show_wait bool
+	waiter    *tview.TextView
 }
+
 func NewWaitingTreeView() *TreeViewLoadding {
 	w := &TreeViewLoadding{
-        TreeView: tview.NewTreeView(),
-        waiter: tview.NewTextView(),
-        show_wait: false,
-    }
-    return w
+		TreeView:  tview.NewTreeView(),
+		waiter:    tview.NewTextView(),
+		show_wait: false,
+	}
+	return w
 }
 func (t *TreeViewLoadding) Draw(screen tcell.Screen) {
 	t.TreeView.DrawForSubclass(screen, t)
 	if t.show_wait {
-		x,y,w,h:=t.GetRect()
-		width:=w/2
-		height:=h/2
+		x, y, w, h := t.GetRect()
+		width := w / 2
+		height := h / 2
 		t.waiter.SetRect((w-width)/2+x, (h-height)/2+y, width, height)
-        t.Box.DrawForSubclass(screen,t.waiter)
-    }
+		t.Box.DrawForSubclass(screen, t.waiter)
+	}
 }
+
 type SymbolTreeView struct {
 	view          *tview.TreeView
 	symbols       []SymbolListItem
 	main          *mainui
 	searcheresult *TextFilter
-	show_wait       bool
-	waiter 		 *tview.TextView
+	show_wait     bool
+	waiter        *tview.TextView
 }
 type Filter struct {
 	line int
@@ -137,7 +140,7 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	}
 	symbol_tree.SetInputCapture(ret.HandleKey)
 	symbol_tree.SetSelectedFunc(ret.OnClickSymobolNode)
-	ret.waiter= tview.NewTextView().SetText("loading").SetTextColor(tcell.ColorDarkGray)
+	ret.waiter = tview.NewTextView().SetText("loading").SetTextColor(tcell.ColorDarkGray)
 	ret.view.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		if ret.show_wait {
 			log.Println("click", x, y, width, height)
@@ -166,6 +169,9 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 }
 func (c *SymbolTreeView) HandleKey(event *tcell.EventKey) *tcell.EventKey {
 	cur := c.view.GetCurrentNode()
+	if cur == nil {
+		return event
+	}
 	value := cur.GetReference()
 	var chr = event.Rune()
 	var action_refer = chr == 'r'
@@ -251,6 +257,7 @@ func (c *SymbolTreeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
 func (s SymbolListItem) displayname() string {
 	return s.name
 }
+
 // func (v SymbolTreeView) Findall(key string) []int {
 // 	var ret []int
 // 	for i := 0; i < len(v.symbols); i++ {
@@ -276,7 +283,7 @@ func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 		v.waiter.SetText("no lsp client").SetTextColor(tcell.ColorDarkRed)
 		return
 	}
-	v.show_wait = false 
+	v.show_wait = false
 	root := v.view.GetRoot()
 	if root != nil {
 		root.ClearChildren()
