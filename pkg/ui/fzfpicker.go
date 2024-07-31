@@ -43,11 +43,14 @@ type keypattern struct {
 
 func find_key(s string, keys []string, offset int) []keypattern {
 	for _, v := range keys {
-		idx := strings.Index(s, v)
+		if len(v) == 0 {
+			continue
+		}
+		idx := strings.Index(strings.ToLower(s), v)
 		if idx >= 0 {
 			pth := keypattern{begin: idx + offset, width: len(v)}
 			a := []keypattern{pth}
-			subret := find_key(s[idx+len(v):], keys, pth.width+idx)
+			subret := find_key(s[idx+len(v):], keys, pth.width+idx+offset)
 			return append(a, subret...)
 		}
 	}
@@ -61,6 +64,13 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	stylehl := tcell.StyleDefault.Foreground(tcell.ColorGreen).Background(tview.Styles.PrimaryTextColor)
 	itemoffset, horizontalOffset := l.GetOffset()
 	keys := strings.Split(l.Key, " ")
+	if len(l.Key) == 0 {
+		keys = []string{}
+	} else {
+		for i, s := range keys {
+			keys[i] = strings.ToLower(s)
+		}
+	}
 	for index := itemoffset; index < len(l.hlitems); index++ {
 		MainText, _ := l.List.GetItemText(index)
 		if len(MainText) == 0 {
