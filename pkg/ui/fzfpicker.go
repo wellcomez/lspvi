@@ -119,16 +119,15 @@ func draw_item_color(Positions []keypattern, MainText string, screen tcell.Scree
 }
 
 type Fuzzpicker struct {
-	Frame      *tview.Frame
-	list       *customlist
-	symbol     *SymbolTreeViewExt
-	input      *tview.InputField
-	Visible    bool
-	app        *tview.Application
-	main       *mainui
-	query      string
-	filewalk   *DirWalk
-	symbolwalk *SymbolWalk
+	Frame   *tview.Frame
+	input   *tview.InputField
+	Visible bool
+	app     *tview.Application
+	main    *mainui
+	// query   string
+	// filewalk      *DirWalkk
+	// symbolwalk    *SymbolWalk
+	currentpicker picker
 }
 type fuzzpicktype int
 
@@ -156,27 +155,29 @@ func (pick *Fuzzpicker) MouseHanlde(event *tcell.EventMouse, action tview.MouseA
 	}
 }
 
-type SymbolWalk struct {
+type SymbolWalkImpl struct {
 	file    *lspcore.Symbol_file
 	symview *SymbolTreeViewExt
 	gs      *GenericSearch
 }
+type SymbolWalk struct {
+	impl *SymbolWalkImpl
+}
 
-func (wk *SymbolWalk) UpdateQuery(query string) {
-	wk.gs = NewGenericSearch(view_sym_list, query)
-	ret := wk.symview.OnSearch(query)
+// handle implements picker.
+func (wk SymbolWalk) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return wk.impl.symview.view.InputHandler()
+}
+
+func (wk SymbolWalk) UpdateQuery(query string) {
+	wk.impl.gs = NewGenericSearch(view_sym_list, query)
+	ret := wk.impl.symview.OnSearch(query)
 	if len(ret) > 0 {
-		wk.symview.movetonode(ret[0])
+		wk.impl.symview.movetonode(ret[0])
 	}
 }
 
 // NewSymboWalk
-func NewSymboWalk(file *lspcore.Symbol_file) *SymbolWalk {
-	ret := &SymbolWalk{
-		file: file,
-	}
-	return ret
-}
 
 type SymbolTreeViewExt struct {
 	*SymbolTreeView
@@ -190,44 +191,60 @@ func (v SymbolTreeViewExt) OnClickSymobolNode(node *tview.TreeNode) {
 	v.main.cmdline.Vim.EnterEscape()
 }
 func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
-	v.symbol = &SymbolTreeViewExt{}
-	v.symbol.SymbolTreeView = NewSymbolTreeView(v.main)
-	v.symbol.parent = v
-	v.symbol.SymbolTreeView.view.SetSelectedFunc(v.symbol.OnClickSymobolNode)
-	v.Frame = tview.NewFrame(new_fzf_symbol_view(v.input, v.symbol))
-	v.filewalk = nil
+	symbol := &SymbolTreeViewExt{}
+	symbol.SymbolTreeView = NewSymbolTreeView(v.main)
+	symbol.parent = v
+	symbol.SymbolTreeView.view.SetSelectedFunc(symbol.OnClickSymobolNode)
+	v.Frame = tview.NewFrame(new_fzf_symbol_view(v.input, symbol))
 	v.Frame.SetBorder(true)
 	v.Frame.SetTitle("symbol")
-	v.query = ""
 	v.input.SetText(">")
 	v.app.SetFocus(v.input)
 	v.Visible = true
-	v.symbolwalk = NewSymboWalk(file)
-	v.symbolwalk.symview = v.symbol
-	v.symbol.update(file)
+	sym := SymbolWalk{
+		impl: &SymbolWalkImpl{
+			file:    file,
+			symview: symbol,
+		},
+	}
+	v.currentpicker = sym
+	symbol.update(file)
+}
+
+type filepicker struct {
+	impl *DirWalk
+}
+
+// UpdateQuery implements picker.
+func (f filepicker) UpdateQuery(query string) {
+	f.impl.UpdateQuery(query)
+}
+
+// handle implements picker.
+func (f filepicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return f.impl.list.InputHandler()
 }
 
 // OpenFileFzf
 func (v *Fuzzpicker) OpenFileFzf(root string) {
-	v.list.Clear()
-	v.Frame = tview.NewFrame(new_fzf_list_view(v.input, v.list))
+	list := new_customlist()
+	v.Frame = tview.NewFrame(new_fzf_list_view(v.input, list))
 	v.Frame.SetTitle("Files")
-	v.query = ""
 	v.input.SetText(">")
 	v.app.SetFocus(v.input)
 	v.Visible = true
-	v.filewalk = NewDirWalk(root, func(t querytask) {
+	filewalk := NewDirWalk(root, func(t querytask) {
 		v.app.QueueUpdate(func() {
 			v.Frame.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
 			if t.update_count {
 				return
 			}
-			v.list.Clear()
-			v.list.Key = t.query
+			list.Clear()
+			list.Key = t.query
 			for i := 0; i < min(len(t.ret), 1000); i++ {
 				a := t.ret[i]
-				v.list.AddItem(a.name, a.Positions, func() {
-					idx := v.list.GetCurrentItem()
+				list.AddItem(a.name, a.Positions, func() {
+					idx := list.GetCurrentItem()
 					f := t.ret[idx]
 					v.Visible = false
 					v.main.OpenFile(f.path, nil)
@@ -236,18 +253,26 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 			v.app.ForceDraw()
 		})
 	})
+	filewalk.list = list
+	v.currentpicker = filepicker{
+		impl: filewalk,
+	}
 }
 func (v *Fuzzpicker) Open(t fuzzpicktype) {
-	v.list.Clear()
+	// v.list.Clear()
 	switch t {
 	case fuzz_picker_file:
 		v.Frame.SetTitle("Files")
 	case fuzz_picker_symbol:
 		v.Frame.SetTitle("Symbols")
 	}
-	v.query = ""
 	v.app.SetFocus(v.input)
 	v.Visible = true
+}
+
+type picker interface {
+	handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive))
+	UpdateQuery(query string)
 }
 
 // handle_key
@@ -257,25 +282,23 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 	if event.Key() == tcell.KeyEnter {
-		if v.symbolwalk != nil {
-			handle := v.symbol.view.InputHandler()
-			handle(event, nil)
-		}
-		if v.filewalk != nil {
-			handle := v.list.InputHandler()
-			handle(event, nil)
-		}
+		v.currentpicker.handle()(event, nil)
+		// if v.symbolwalk != nil {
+		// 	handle := v.symbol.view.InputHandler()
+		// 	handle(event, nil)
+		// }
+		// if v.filewalk != nil {
+		// 	handle := v.list.InputHandler()
+		// 	handle(event, nil)
+		// }
 		return nil
 	}
 	if event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
-		if v.filewalk != nil {
-			handle := v.list.InputHandler()
-			handle(event, nil)
-		}
-		if v.symbolwalk != nil {
-			handle := v.symbol.view.InputHandler()
-			handle(event, nil)
-		}
+		// if v.filewalk != nil {
+		// 	handle := v.list.InputHandler()
+		// 	handle(event, nil)
+		// }
+		v.currentpicker.handle()(event, nil)
 		return nil
 	}
 	v.input.InputHandler()(event, nil)
@@ -284,32 +307,20 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			v.input.SetText(">")
 		}
 	}
-	v.query = v.input.GetText()[1:]
-	if v.filewalk != nil {
-		v.filewalk.UpdateQuery(v.query)
-	}
-	if v.symbolwalk != nil {
-		v.symbolwalk.UpdateQuery(v.query)
-	}
+	query := v.input.GetText()[1:]
+	v.currentpicker.UpdateQuery(query)
 	return event
 }
 
 func Newfuzzpicker(main *mainui, app *tview.Application) *Fuzzpicker {
-	list := new_customlist()
-	list.ShowSecondaryText(false)
 	input := tview.NewInputField()
 	input.SetFieldBackgroundColor(tcell.ColorBlack)
-	layout := new_fzf_list_view(input, list)
-	frame := tview.NewFrame(layout)
+	frame := tview.NewFrame(tview.NewBox())
 	frame.SetBorder(true)
 	frame.SetBorderPadding(0, 0, 0, 0)
 	frame.SetBorderColor(tcell.ColorGreenYellow)
-	// // input.SetBorder(true)
-	// input.SetFieldTextColor(tcell.ColorGreen)
-	// input.SetFieldBackgroundColor(tcell.ColorBlack)
 	ret := &Fuzzpicker{
 		Frame: frame,
-		list:  list,
 		input: input,
 		app:   app,
 		main:  main,

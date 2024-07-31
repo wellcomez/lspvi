@@ -25,6 +25,7 @@ type DirWalk struct {
 	cb       func(t querytask)
 	hayStack []string
 	fzf      *fzflib.Fzf
+	list   	 *customlist
 }
 
 type walkerOpts struct {
@@ -87,6 +88,7 @@ type filewalk struct {
 	mutex   sync.Mutex
 	root    string
 	ignores []string
+	list    *customlist
 }
 
 func (f *filewalk) load() error {
