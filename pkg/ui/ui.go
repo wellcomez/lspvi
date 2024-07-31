@@ -544,6 +544,16 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if main.layout.dialog.Visible {
 		return main.layout.dialog.handle_key(event)
 	}
+	
+	if event.Key() == tcell.KeyCtrlS {
+		main.OpenDocumntFzf()
+		return nil
+	}
+	if event.Key() == tcell.KeyCtrlP {
+		main.layout.dialog.OpenFileFzf(main.root)
+		return nil
+	}
+
 	shouldReturn, returnValue := main.cmdline.Vim.VimKeyModelMethod(event)
 	main.UpdateStatus()
 	if shouldReturn {
@@ -554,26 +564,6 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		main.OpenFile(main.bf.GoBack(), nil)
 		return nil
 	}
-	// if main.GetFocusViewId() == view_cmd {
-	// 	return main.cmdline.Keyhandle(event)
-	// }
-
-	if event.Key() == tcell.KeyCtrlS {
-		main.OpenDocumntFzf()
-		return nil
-	}
-	if event.Key() == tcell.KeyCtrlP {
-		main.layout.dialog.OpenFileFzf(main.root)
-		return nil
-	}
-	/*else if main.cmdline.vim.vi.Find {
-		return main.cmdline.Keyhandle(event)
-	} else if main.cmdline.vim.vi.Command {
-		return main.cmdline.Keyhandle(event)
-	} else if main.cmdline.vim.vi.Escape {
-		return main.cmdline.HandleKeyUnderEscape(event)
-	}*/
-
 	return event
 }
 func (main mainui) OpenDocumntFzf() {
