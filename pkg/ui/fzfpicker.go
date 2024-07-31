@@ -121,7 +121,7 @@ func draw_item_color(Positions []keypattern, MainText string, screen tcell.Scree
 type Fuzzpicker struct {
 	Frame      *tview.Frame
 	list       *customlist
-	symbol     *SymbolTreeView
+	symbol     *SymbolTreeViewExt
 	input      *tview.InputField
 	Visible    bool
 	app        *tview.Application
@@ -158,7 +158,7 @@ func (pick *Fuzzpicker) MouseHanlde(event *tcell.EventMouse, action tview.MouseA
 
 type SymbolWalk struct {
 	file    *lspcore.Symbol_file
-	symview *SymbolTreeView
+	symview *SymbolTreeViewExt
 	gs      *GenericSearch
 }
 
@@ -177,8 +177,21 @@ func NewSymboWalk(file *lspcore.Symbol_file) *SymbolWalk {
 	}
 	return ret
 }
+
+type SymbolTreeViewExt struct {
+	*SymbolTreeView
+	parent *Fuzzpicker
+}
+
+func (v SymbolTreeViewExt) OnClickSymobolNode(node *tview.TreeNode) {
+	v.SymbolTreeView.OnClickSymobolNode(node)
+	v.parent.Visible = false
+}
 func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
-	v.symbol = NewSymbolTreeView(v.main)
+	v.symbol = &SymbolTreeViewExt{}
+	v.symbol.SymbolTreeView = NewSymbolTreeView(v.main)
+	v.symbol.parent = v
+	v.symbol.SymbolTreeView.view.SetSelectedFunc(v.symbol.OnClickSymobolNode)
 	v.Frame = tview.NewFrame(new_fzf_symbol_view(v.input, v.symbol))
 	v.filewalk = nil
 	v.Frame.SetBorder(true)
@@ -242,8 +255,14 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 	if event.Key() == tcell.KeyEnter {
-		handle := v.list.InputHandler()
-		handle(event, nil)
+		if v.symbolwalk!= nil {
+			handle := v.symbol.view.InputHandler()
+			handle(event, nil)
+		}
+		if v.filewalk != nil {
+			handle := v.list.InputHandler()
+			handle(event, nil)
+		}
 		return nil
 	}
 	if event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
@@ -295,7 +314,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *Fuzzpicker {
 	}
 	return ret
 }
-func new_fzf_symbol_view(input *tview.InputField, list *SymbolTreeView) *tview.Grid {
+func new_fzf_symbol_view(input *tview.InputField, list *SymbolTreeViewExt) *tview.Grid {
 	layout := tview.NewGrid().
 		SetColumns(-1, 24, 16, -1).
 		SetRows(-1, 3, 3, 2).
