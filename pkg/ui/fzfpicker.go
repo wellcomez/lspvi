@@ -40,18 +40,19 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	style := tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor)
 	itemoffset, horizontalOffset := l.GetOffset()
 	for index := itemoffset; index < len(l.hlitems); index++ {
+		MainText, _ := l.List.GetItemText(index)
 		if y >= bottomLimit {
 			break
 		}
-		item := l.hlitems[index]
+		// item := l.hlitems[index]
 		selected := index == l.List.GetCurrentItem()
 		if selected {
 			for bx := 0; bx < width; bx++ {
 				screen.SetContent(x+bx, y, ' ', nil, style)
 			}
-			tview.Print(screen, item.MainText, x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorBlack)
-		}else{
-			tview.Print(screen, item.MainText, x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorFloralWhite)
+			tview.Print(screen, MainText, x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorBlack)
+		} else {
+			tview.Print(screen, MainText, x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorFloralWhite)
 		}
 		y += 1
 	}
