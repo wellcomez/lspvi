@@ -5,6 +5,14 @@ import (
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
+func new_fzf_symbol_view(input *tview.InputField, list *SymbolTreeViewExt) *tview.Grid {
+	layout := tview.NewGrid().
+		SetColumns(-1, 24, 16, -1).
+		SetRows(-1, 3, 3, 2).
+		AddItem(list.view, 0, 0, 3, 4, 0, 0, false).
+		AddItem(input, 3, 0, 1, 4, 0, 0, false)
+	return layout
+}
 type SymbolTreeViewExt struct {
 	*SymbolTreeView
 	parent *Fuzzpicker

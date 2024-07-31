@@ -13,8 +13,18 @@ import (
 	"unsafe"
 
 	"github.com/charlievieth/fastwalk"
+	"github.com/gdamore/tcell/v2"
 	fzflib "github.com/reinhrst/fzf-lib"
+	"github.com/rivo/tview"
 )
+func new_fzf_list_view(input *tview.InputField, list *customlist) *tview.Grid {
+	layout := tview.NewGrid().
+		SetColumns(-1, 24, 16, -1).
+		SetRows(-1, 3, 3, 2).
+		AddItem(list, 0, 0, 3, 4, 0, 0, false).
+		AddItem(input, 3, 0, 1, 4, 0, 0, false)
+	return layout
+}
 
 var WalkerSkip = []string{".git", "node_modules"}
 
