@@ -155,41 +155,9 @@ func (pick *Fuzzpicker) MouseHanlde(event *tcell.EventMouse, action tview.MouseA
 	}
 }
 
-type SymbolWalkImpl struct {
-	file    *lspcore.Symbol_file
-	symview *SymbolTreeViewExt
-	gs      *GenericSearch
-}
-type SymbolWalk struct {
-	impl *SymbolWalkImpl
-}
-
-// handle implements picker.
-func (wk SymbolWalk) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return wk.impl.symview.view.InputHandler()
-}
-
-func (wk SymbolWalk) UpdateQuery(query string) {
-	wk.impl.gs = NewGenericSearch(view_sym_list, query)
-	ret := wk.impl.symview.OnSearch(query)
-	if len(ret) > 0 {
-		wk.impl.symview.movetonode(ret[0])
-	}
-}
-
 // NewSymboWalk
 
-type SymbolTreeViewExt struct {
-	*SymbolTreeView
-	parent *Fuzzpicker
-}
 
-func (v SymbolTreeViewExt) OnClickSymobolNode(node *tview.TreeNode) {
-	v.SymbolTreeView.OnClickSymobolNode(node)
-	v.parent.Visible = false
-	v.main.app.SetFocus(v.main.codeview.view)
-	v.main.cmdline.Vim.EnterEscape()
-}
 func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
 	symbol := &SymbolTreeViewExt{}
 	symbol.SymbolTreeView = NewSymbolTreeView(v.main)
@@ -209,20 +177,6 @@ func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
 	}
 	v.currentpicker = sym
 	symbol.update(file)
-}
-
-type filepicker struct {
-	impl *DirWalk
-}
-
-// UpdateQuery implements picker.
-func (f filepicker) UpdateQuery(query string) {
-	f.impl.UpdateQuery(query)
-}
-
-// handle implements picker.
-func (f filepicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return f.impl.list.InputHandler()
 }
 
 // OpenFileFzf

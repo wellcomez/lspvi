@@ -310,10 +310,12 @@ func (code *CodeView) key_call_in() {
 		Character: loc[0].X,
 	}
 	for ; x >= 0; x-- {
-		if femto.IsWordChar(string(line[x])) == false {
-			break
-		} else {
-			Start.Character = x
+		if x < len(line) {
+			if !femto.IsWordChar(string(line[x])) {
+				break
+			} else {
+				Start.Character = x
+			}
 		}
 	}
 

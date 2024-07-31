@@ -24,12 +24,12 @@ func TestXxx(t *testing.T) {
 	var dir = "/home/z/dev/lsp/goui"
 	dir = "/chrome/buildcef/chromium/src"
 	ret := &filewalk{
-		ret:     []string{},
-		root:    dir,
-		ignores: WalkerSkip,
+		filelist: []string{},
+		root:     dir,
+		ignores:  WalkerSkip,
 	}
 	ret.readFiles(ret.root)
-	t.Log(len(ret.ret))
+	t.Log(len(ret.filelist))
 }
 func TestXxxIgnore(t *testing.T) {
 	// var task = filewalk{}
