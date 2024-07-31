@@ -186,6 +186,8 @@ type SymbolTreeViewExt struct {
 func (v SymbolTreeViewExt) OnClickSymobolNode(node *tview.TreeNode) {
 	v.SymbolTreeView.OnClickSymobolNode(node)
 	v.parent.Visible = false
+	v.main.app.SetFocus(v.main.codeview.view)
+	v.main.cmdline.Vim.EnterEscape()
 }
 func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
 	v.symbol = &SymbolTreeViewExt{}
@@ -255,7 +257,7 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 	if event.Key() == tcell.KeyEnter {
-		if v.symbolwalk!= nil {
+		if v.symbolwalk != nil {
 			handle := v.symbol.view.InputHandler()
 			handle(event, nil)
 		}
