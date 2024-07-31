@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -26,12 +27,19 @@ func new_cmdline(main *mainui) *cmdline {
 	code.Vim = NewVim(main)
 	return code
 }
-func (cmd *cmdline) OnComand(command string) {
+func (cmd *cmdline) OnComand(command string) bool{
 	command = strings.TrimRight(command, "\r")
 	command = strings.TrimRight(command, "\n")
 	if command == "q" || command == "quit" || command == "q!" || command == "qa" {
 		cmd.main.Close()
+		return true
 	}
+	num, err := strconv.ParseInt(command, 10, 32)
+	if err == nil {
+		cmd.main.codeview.gotoline(int(num)-1)
+		return true
+	}
+	return false
 }
 
 func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey {
@@ -42,8 +50,8 @@ func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey 
 }
 
 func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
-	yes,event:=cmd.Vim.VimKeyModelMethod(event)
-	if yes{
+	yes, event := cmd.Vim.VimKeyModelMethod(event)
+	if yes {
 		return nil
 	}
 	return event
@@ -112,7 +120,9 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 		if len(txt) > 1 {
 			vim.vi.FindEnter = txt[1:]
 		}
-		cmd.OnComand(vim.vi.FindEnter)
+		if cmd.OnComand(vim.vi.FindEnter){
+			cmd.Vim.EnterEscape()
+		}
 		return true
 	}
 	txt = txt + string(event.Rune())
@@ -174,7 +184,7 @@ type EscapeHandle struct {
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	l.main.codeview.handle_key(event)
-	return false
+	return true 
 }
 
 type LeaderHandle struct {
