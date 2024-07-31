@@ -22,15 +22,23 @@ func (sym *Symbol_file) Filter(key string) *Symbol_file {
 		return sym
 	}
 	ret := []*Symbol{}
-	for k, v := range sym.Class_object {
-		if strings.Contains(strings.ToLower(v.SymInfo.Name), key) {
-			ret = append(ret, sym.Class_object[k])
-		}
+	for _, v := range sym.Class_object {
+		member := []Symbol{}
 		for i, vv := range v.Members {
 			if strings.Contains(strings.ToLower(vv.SymInfo.Name), key) {
-				ret = append(ret, &v.Members[i])
+				member = append(member, v.Members[i])
 			}
 		}
+		var sss = *v
+		root := &sss
+		if strings.Contains(strings.ToLower(v.SymInfo.Name), key) {
+			root.Members = member
+			ret = append(ret, root)
+		} else if len(member) > 0 {
+			root.Members = member
+			ret = append(ret, root)
+		}
+
 	}
 	return &Symbol_file{
 		Class_object: ret,
