@@ -9,9 +9,58 @@ import (
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
+type hlItem struct {
+	MainText string // The main text of the list item.
+}
+type customlist struct {
+	*tview.List
+	hlitems []*hlItem
+}
+
+func (l *customlist) Clear() *customlist {
+	l.List.Clear()
+	l.hlitems = []*hlItem{}
+	return l
+}
+func new_customlist() *customlist {
+	ret := &customlist{}
+	ret.List = tview.NewList()
+	ret.hlitems = []*hlItem{}
+	return ret
+}
+func (l *customlist) AddItem(mainText, secondaryText string, shortcut rune, selected func()) *customlist {
+	l.hlitems = append(l.hlitems, &hlItem{mainText})
+	l.List.AddItem(mainText, secondaryText, shortcut, selected)
+	return l
+}
+func (l *customlist) Draw(screen tcell.Screen) {
+	x, y, width, height := l.GetInnerRect()
+
+	bottomLimit := y + height
+	style := tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor)
+	itemoffset, horizontalOffset := l.GetOffset()
+	for index := itemoffset; index < len(l.hlitems); index++ {
+		if y >= bottomLimit {
+			break
+		}
+		item := l.hlitems[index]
+		selected := index == l.List.GetCurrentItem()
+		if selected {
+			for bx := 0; bx < width; bx++ {
+				screen.SetContent(x+bx, y, ' ', nil, style)
+			}
+			tview.Print(screen, item.MainText, x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorBlack)
+		}else{
+			tview.Print(screen, item.MainText, x, y+horizontalOffset, width, tview.AlignLeft, tcell.ColorFloralWhite)
+		}
+		y += 1
+	}
+
+}
+
 type Fuzzpicker struct {
 	Frame      *tview.Frame
-	list       *tview.List
+	list       *customlist
 	symbol     *SymbolTreeView
 	input      *tview.InputField
 	Visible    bool
@@ -164,7 +213,7 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func Newfuzzpicker(main *mainui, app *tview.Application) *Fuzzpicker {
-	list := tview.NewList()
+	list := new_customlist()
 	list.ShowSecondaryText(false)
 	input := tview.NewInputField()
 	input.SetFieldBackgroundColor(tcell.ColorBlack)
@@ -193,7 +242,7 @@ func new_fzf_symbol_view(input *tview.InputField, list *SymbolTreeView) *tview.G
 		AddItem(input, 3, 0, 1, 4, 0, 0, false)
 	return layout
 }
-func new_fzf_list_view(input *tview.InputField, list *tview.List) *tview.Grid {
+func new_fzf_list_view(input *tview.InputField, list *customlist) *tview.Grid {
 	layout := tview.NewGrid().
 		SetColumns(-1, 24, 16, -1).
 		SetRows(-1, 3, 3, 2).
@@ -204,8 +253,8 @@ func new_fzf_list_view(input *tview.InputField, list *tview.List) *tview.Grid {
 func (v *Fuzzpicker) Draw(screen tcell.Screen) {
 	if v.Visible {
 		width, height := screen.Size()
-		w := width / 2
-		h := height / 2
+		w := width * 3 / 4
+		h := height * 3 / 4
 		v.Frame.SetRect((width-w)/2, (height-h)/2, w, h)
 		v.Frame.Draw(screen)
 	}
