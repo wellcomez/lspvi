@@ -455,6 +455,9 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 	if len(txt) == 0 {
 		return
 	}
+	if main.prefocused == view_other || main.prefocused == view_cmd {
+		main.prefocused = view_code
+	}
 	changed := true
 	if main.searchcontext == nil {
 		main.searchcontext = NewGenericSearch(main.prefocused, txt)
