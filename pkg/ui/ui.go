@@ -75,7 +75,23 @@ func (m *mainui) MoveFocus() {
 func (m *mainui) SavePrevFocus() {
 	m.prefocused = m.GetFocusViewId()
 }
-
+func (m *mainui) getfocusviewname() string {
+	if m.codeview.view.HasFocus() {
+		return "code"
+	} else if m.callinview.view.HasFocus() {
+		return "callin"
+	} else if m.cmdline.input.HasFocus() {
+		return "cmd"
+	} else if m.log.HasFocus() {
+		return "log"
+	} else if m.fzf.view.HasFocus() {
+		return "fzf"
+	} else if m.symboltree.view.HasFocus() {
+		return "outline"
+	} else {
+		return "???"
+	}
+}
 func (m *mainui) GetFocusViewId() view_id {
 	if m.codeview.view.HasFocus() {
 		return view_code
@@ -520,7 +536,7 @@ func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {
 var leadkey = ' '
 
 func (main *mainui) UpdateStatus() {
-	main.statusbar.SetText(fmt.Sprintf("VIM:%s", main.cmdline.Vim.String()))
+	main.statusbar.SetText(fmt.Sprintf("vi:%-10s %10s", main.cmdline.Vim.String(), main.getfocusviewname()))
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",
