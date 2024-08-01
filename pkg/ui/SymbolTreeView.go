@@ -169,6 +169,9 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 			var beginline = Range.Start.Line
 			for i, v := range body.Subline {
 				idx := strings.Index(v, sym.Name)
+				if i == 0 {
+					idx = Range.Start.Character + idx
+				}
 				if idx >= 0 {
 					r := lsp.Range{
 						Start: lsp.Position{
