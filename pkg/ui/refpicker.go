@@ -126,6 +126,7 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 			parent:   v,
 		},
 	}
+	sym.impl.codeprev.view.SetBorder(true)
 	return sym
 }
 func (pk *refpicker) load(ranges lsp.Range) {
@@ -167,14 +168,4 @@ func (pk refpicker) UpdateQuery(query string) {
 		}
 	}
 	pk.update_preview()
-	// file := wk.impl.file.Filter(strings.ToLower(query))
-	// wk.impl.listview.update(file)
-	// root := wk.impl.listview.view.GetRoot()
-	// if root != nil {
-	// 	children := root.GetChildren()
-	// 	if len(children) > 0 {
-	// 		wk.impl.listview.view.SetCurrentNode(children[0])
-	// 		wk.update_preview()
-	// 	}
-	// }
 }
