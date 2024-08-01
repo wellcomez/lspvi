@@ -190,6 +190,12 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (code *CodeView) newMethod() {
+	code.arrow_map = code.vi_define_keymap()
+	code.commandmap = code.key_map_command()
+	code.key_map = code.key_map_arrow()
+}
+
+func (*CodeView) vi_define_keymap() map[rune]func(code *CodeView) {
 	arrow_map := map[rune]func(code *CodeView){}
 	arrow_map['b'] = func(code *CodeView) {
 		Cur := code.view.Cursor
@@ -215,8 +221,27 @@ func (code *CodeView) newMethod() {
 	arrow_map['j'] = func(code *CodeView) {
 		code.action_key_down()
 	}
-	code.arrow_map = arrow_map
+	return arrow_map
+}
 
+func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
+	key_map := map[tcell.Key]func(code *CodeView){}
+	key_map[tcell.KeyRight] = func(code *CodeView) {
+		code.view.Cursor.Right()
+	}
+	key_map[tcell.KeyLeft] = func(code *CodeView) {
+		code.view.Cursor.Left()
+	}
+	key_map[tcell.KeyUp] = func(code *CodeView) {
+		code.action_key_up()
+	}
+	key_map[tcell.KeyDown] = func(code *CodeView) {
+		code.action_key_down()
+	}
+	return key_map
+}
+
+func (*CodeView) key_map_command() map[rune]func(code *CodeView) {
 	commandmap := map[rune]func(code *CodeView){}
 	commandmap['0'] = func(code *CodeView) {
 		Cur := code.view.Cursor
@@ -243,22 +268,7 @@ func (code *CodeView) newMethod() {
 		vim.EnterEscape()
 		vim.EnterFind()
 	}
-	code.commandmap = commandmap
-
-	key_map := map[tcell.Key]func(code *CodeView){}
-	key_map[tcell.KeyRight] = func(code *CodeView) {
-		code.view.Cursor.Right()
-	}
-	key_map[tcell.KeyLeft] = func(code *CodeView) {
-		code.view.Cursor.Left()
-	}
-	key_map[tcell.KeyUp] = func(code *CodeView) {
-		code.action_key_up()
-	}
-	key_map[tcell.KeyDown] = func(code *CodeView) {
-		code.action_key_down()
-	}
-	code.key_map = key_map
+	return commandmap
 }
 
 func (code *CodeView) action_key_down() {
