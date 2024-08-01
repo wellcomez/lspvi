@@ -118,7 +118,9 @@ func (sym *Symbol_file) GotoDefine(ranges lsp.Range) {
 	if err != nil {
 		return
 	}
-	sym.Handle.OnFileChange(loc)
+	if len(loc)>0{
+		sym.Handle.OnFileChange(loc)
+	}	
 }
 func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 	var ret []CallStack
