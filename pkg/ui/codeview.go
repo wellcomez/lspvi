@@ -10,7 +10,6 @@ import (
 	"github.com/pgavlin/femto/runtime"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	lspcore "zen108.com/lspui/pkg/lsp"
 	// "github.com/gdamore/tcell"
 )
 
@@ -18,7 +17,9 @@ type CodeView struct {
 	filename          string
 	view              *femto.View
 	main              *mainui
-	call_task_map     map[string]lspcore.CallInTask
+	arrow_map         map[rune]func(code *CodeView)
+	commandmap        map[rune]func(code *CodeView)
+	key_map           map[tcell.Key]func(code *CodeView)
 	mouse_select_area bool
 }
 
@@ -77,6 +78,7 @@ func NewCodeView(main *mainui) *CodeView {
 	// view.SetBorder(true)
 	ret := CodeView{}
 	ret.main = main
+	ret.newMethod()
 	var colorscheme femto.Colorscheme
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
@@ -170,98 +172,93 @@ func (code *CodeView) cur_offset() (int, int) {
 }
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
-	ch := event.Rune()
-	main := code.main
-	vim := main.cmdline.Vim
-	Cur := code.view.Cursor
-	view := code.view
-	pagesize := view.Bottomline() - view.Topline
-	yes := false
-	switch ch {
-	case '0':
-		{
-			Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
-			yes = true
-		}
-	case 'D':
-		{
-			code.action_goto_define()
-			yes = true
-		}
-	case 'd':
-		{
-			code.action_goto_declaration()
-			yes = true
-		}
-	case 'b':
-		{
-			Cur.WordLeft()
-			if Cur.Loc.Y <= view.Topline {
-				view.ScrollUp(pagesize / 2)
-			}
-			yes = true
-		}
-	case 'e':
-		{
-			Cur.WordRight()
-			if Cur.Loc.Y >= view.Bottomline() {
-				view.ScrollDown(pagesize / 2)
-			}
-			yes = true
-		}
-	case 'k':
-		{
-			code.action_key_up()
-			yes = true
-		}
-	case 'j':
-		{
-			code.action_key_down()
-			yes = true
-		}
-	case 42: //'*':
-		code.OnGrep()
-		return nil
-	case 'f':
-		code.OnGrep()
-		return nil
-	case 'c':
-		code.key_call_in()
-		return nil
-	case 'r':
-		code.action_get_refer()
-		return nil
-	case '/':
-		{
-			vim.EnterEscape()
-			vim.EnterFind()
-			return nil
-		}
-	}
-	switch event.Key() {
-	case tcell.KeyRight:
-		// Cur.DeleteSelection()
-		Cur.Right()
-		yes = true
-	case tcell.KeyLeft:
-		// Cur.DeleteSelection()
-		Cur.Left()
-		yes = true
-	case tcell.KeyUp:
-		code.action_key_up()
-		yes = true
-	case tcell.KeyDown:
-		code.action_key_down()
-		yes = true
-	case tcell.KeyCtrlS:
-	case tcell.KeyCtrlQ:
+	if h, ok := code.arrow_map[event.Rune()]; ok {
+		h(code)
+		code.update_with_line_changed()
 		return nil
 	}
-	code.update_with_line_changed()
-	if yes {
+	if h, ok := code.key_map[event.Key()]; ok {
+		h(code)
+		code.update_with_line_changed()
+		return nil
+	}
+	if h, ok := code.commandmap[event.Rune()]; ok {
+		h(code)
 		return nil
 	}
 	return event
+}
+
+func (code *CodeView) newMethod() {
+	arrow_map := map[rune]func(code *CodeView){}
+	arrow_map['b'] = func(code *CodeView) {
+		Cur := code.view.Cursor
+		view := code.view
+		pagesize := view.Bottomline() - view.Topline
+		Cur.WordLeft()
+		if Cur.Loc.Y <= view.Topline {
+			view.ScrollUp(pagesize / 2)
+		}
+	}
+	arrow_map['e'] = func(code *CodeView) {
+		Cur := code.view.Cursor
+		view := code.view
+		Cur.WordRight()
+		pagesize := view.Bottomline() - view.Topline
+		if Cur.Loc.Y >= view.Bottomline() {
+			view.ScrollDown(pagesize / 2)
+		}
+	}
+	arrow_map['k'] = func(code *CodeView) {
+		code.action_key_up()
+	}
+	arrow_map['j'] = func(code *CodeView) {
+		code.action_key_down()
+	}
+	code.arrow_map = arrow_map
+
+	commandmap := map[rune]func(code *CodeView){}
+	commandmap['0'] = func(code *CodeView) {
+		Cur := code.view.Cursor
+		Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
+	}
+	commandmap['D'] = func(code *CodeView) {
+		code.action_goto_define()
+	}
+	commandmap['d'] = func(code *CodeView) {
+		code.action_goto_declaration()
+	}
+	commandmap[42] = func(code *CodeView) {
+		code.OnGrep()
+	}
+	commandmap['f'] = commandmap[42]
+	commandmap['c'] = func(code *CodeView) {
+		code.key_call_in()
+	}
+	commandmap['r'] = func(code *CodeView) {
+		code.action_get_refer()
+	}
+	commandmap['/'] = func(code *CodeView) {
+		vim := code.main.cmdline.Vim
+		vim.EnterEscape()
+		vim.EnterFind()
+	}
+	code.commandmap = commandmap
+
+	key_map := map[tcell.Key]func(code *CodeView){}
+	key_map[tcell.KeyRight] = func(code *CodeView) {
+		code.view.Cursor.Right()
+	}
+	key_map[tcell.KeyLeft] = func(code *CodeView) {
+		code.view.Cursor.Left()
+	}
+	key_map[tcell.KeyUp] = func(code *CodeView) {
+		code.action_key_up()
+	}
+	key_map[tcell.KeyDown] = func(code *CodeView) {
+		code.action_key_down()
+	}
+	code.key_map = key_map
 }
 
 func (code *CodeView) action_key_down() {
