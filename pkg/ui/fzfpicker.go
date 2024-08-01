@@ -77,7 +77,7 @@ func (v *fzfmain) OpenDocumntFzf(file *lspcore.Symbol_file) {
 // OpenFileFzf
 func (v *fzfmain) OpenFileFzf(root string) {
 	filewalk := NewDirWalk(root, v)
-	v.Frame = tview.NewFrame(filewalk.new_fzf_list_view(v.input))
+	v.Frame = tview.NewFrame(filewalk.new_fzf_file(v.input))
 	v.Frame.SetTitle("Files")
 	v.input.SetText(">")
 	v.app.SetFocus(v.input)
