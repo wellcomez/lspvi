@@ -98,7 +98,7 @@ func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if err != nil {
 		return
 	}
-	sym.Handle.OnRefenceChanged(loc)
+	sym.Handle.OnRefenceChanged(ranges,loc)
 }
 func (sym *Symbol_file) Declare(ranges lsp.Range) {
 	if sym.lsp == nil {

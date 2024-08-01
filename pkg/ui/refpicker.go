@@ -75,7 +75,7 @@ type ref_line struct {
 }
 
 // OnRefenceChanged implements lspcore.lsp_data_changed.
-func (pk refpicker) OnRefenceChanged(file []lsp.Location) {
+func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 	pk.impl.refs = file
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview

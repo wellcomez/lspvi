@@ -164,7 +164,7 @@ func (m *mainui) UpdatePageTitle() {
 // OnRefenceChanged implements lspcore.lsp_data_changed.
 // OnRefenceChanged
 // OnRefenceChanged
-func (m *mainui) OnRefenceChanged(refs []lsp.Location) {
+func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	// panic("unimplemented")
 	m.fzf.OnRefenceChanged(refs, data_refs)
 	m.UpdatePageTitle()

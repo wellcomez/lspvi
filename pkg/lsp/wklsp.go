@@ -254,7 +254,7 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)
-	OnRefenceChanged(file []lsp.Location)
+	OnRefenceChanged(ranges lsp.Range,file []lsp.Location)
 	OnFileChange(file []lsp.Location)
 	OnCallInViewChanged(stacks []CallStack)
 	OnCallTaskInViewChanged(stacks *CallInTask)
