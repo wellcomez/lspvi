@@ -362,6 +362,23 @@ func (code *CodeView) Load(filename string) error {
 	code.view.SetTitle(filename)
 	return nil
 }
+func (code *CodeView) goto_loation(loc lsp.Range) {
+	line:=loc.Start.Line	
+	log.Println("gotoline", line)
+	if line < code.view.Topline || code.view.Bottomline() < line {
+		code.view.Topline = max(line-5, 0)
+	}
+	Cur := code.view.Cursor
+	Cur.SetSelectionStart(femto.Loc{
+		X: loc.Start.Character,
+		Y: loc.Start.Line,
+	})
+	Cur.SetSelectionEnd(femto.Loc{
+		X: loc.End.Character,
+		Y: loc.End.Line,
+	})
+	code.update_with_line_changed()
+}
 func (code *CodeView) gotoline(line int) {
 	if line == -1 {
 		return

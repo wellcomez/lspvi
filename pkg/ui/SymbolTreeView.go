@@ -163,7 +163,32 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 	if value != nil {
 
 		if sym, ok := value.(lsp.SymbolInformation); ok {
-			symview.main.gotoline(sym.Location)
+			Range := sym.Location.Range
+			if Range.Start.Line != Range.End.Line {
+				body := lspcore.NewBody(sym.Location)
+				var beginline = Range.Start.Line
+				for i, v := range body.Subline {
+					idx := strings.Index(v, sym.Name)
+					if idx>=0{
+						r:=lsp.Range{
+							Start: lsp.Position{
+								Line: beginline + i,
+								Character: idx,
+							},
+							End: lsp.Position{
+								Line: beginline + i,
+								Character: idx+len(sym.Name),
+
+							},
+						}
+						symview.main.codeview.goto_loation(r)
+						break
+					}
+				}
+			} else {
+				symview.main.codeview.goto_loation(Range)
+			}
+
 		}
 	}
 }
