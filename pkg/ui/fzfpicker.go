@@ -47,30 +47,31 @@ func (pick *Fuzzpicker) MouseHanlde(event *tcell.EventMouse, action tview.MouseA
 }
 
 // NewSymboWalk
+func (v *Fuzzpicker) OpenRefFzf(file *lspcore.Symbol_file) {
+	main := v.main
+	sym := new_refer_picker(*file, main)
+	v.Frame = tview.NewFrame(sym.new_view(v.input))
+	v.Frame.SetBorder(true)
+	v.Frame.SetTitle("symbol")
+	v.input.SetText(">")
+	v.app.SetFocus(v.input)
+	v.Visible = true
+	v.currentpicker = sym
+	sym.load()
+}
 
 func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
-	symbol := &SymbolTreeViewExt{}
-	symbol.SymbolTreeView = NewSymbolTreeView(v.main)
-	symbol.parent = v
-	symbol.SymbolTreeView.view.SetSelectedFunc(symbol.OnClickSymobolNode)
-
-	sym := symbolpicker{
-		impl: &SymbolWalkImpl{
-			file:     file,
-			symview:  symbol,
-			codeprev: NewCodeView(v.main),
-		},
-	}
+	sym := new_outline_picker( v, file)
 	v.Frame = tview.NewFrame(sym.new_fzf_symbol_view(v.input))
 	v.Frame.SetBorder(true)
 	v.Frame.SetTitle("symbol")
 	v.input.SetText(">")
 	v.app.SetFocus(v.input)
 	v.Visible = true
-
 	v.currentpicker = sym
-	symbol.update(file)
 }
+
+
 
 // OpenFileFzf
 func (v *Fuzzpicker) OpenFileFzf(root string) {

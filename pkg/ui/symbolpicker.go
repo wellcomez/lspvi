@@ -22,7 +22,22 @@ func (sym *symbolpicker) new_fzf_symbol_view(input *tview.InputField) *tview.Gri
 		AddItem(input, 3, 0, 1, 4, 0, 0, false)
 	return layout
 }
+func new_outline_picker(v *Fuzzpicker, file *lspcore.Symbol_file) symbolpicker {
+	symbol := &SymbolTreeViewExt{}
+	symbol.SymbolTreeView = NewSymbolTreeView(v.main)
+	symbol.parent = v
+	symbol.SymbolTreeView.view.SetSelectedFunc(symbol.OnClickSymobolNode)
 
+	sym := symbolpicker{
+		impl: &SymbolWalkImpl{
+			file:     file,
+			symview:  symbol,
+			codeprev: NewCodeView(v.main),
+		},
+	}
+	symbol.update(file)
+	return sym
+}
 type SymbolTreeViewExt struct {
 	*SymbolTreeView
 	parent *Fuzzpicker
