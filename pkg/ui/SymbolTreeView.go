@@ -36,6 +36,7 @@ func (t *TreeViewLoadding) Draw(screen tcell.Screen) {
 }
 
 type SymbolTreeView struct {
+	*view_link
 	view          *tview.TreeView
 	symbols       []SymbolListItem
 	main          *mainui
@@ -135,8 +136,9 @@ type SymbolListItem struct {
 func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
 	ret := &SymbolTreeView{
-		main: main,
-		view: symbol_tree,
+		view_link: &view_link{left: view_code, down: view_fzf},
+		main:      main,
+		view:      symbol_tree,
 	}
 	symbol_tree.SetInputCapture(ret.HandleKey)
 	symbol_tree.SetSelectedFunc(ret.OnClickSymobolNode)

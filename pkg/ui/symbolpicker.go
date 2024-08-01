@@ -85,7 +85,7 @@ func (wk symbolpicker) handle() func(event *tcell.EventKey, setFocus func(p tvie
 	return wk.handle_key_override
 }
 func (wk symbolpicker) Updatequeryold(query string) {
-	wk.impl.gs = NewGenericSearch(view_sym_list, query)
+	wk.impl.gs = NewGenericSearch(view_outline_list, query)
 	ret := wk.impl.symview.OnSearch(query)
 	if len(ret) > 0 {
 		wk.impl.symview.movetonode(ret[0])

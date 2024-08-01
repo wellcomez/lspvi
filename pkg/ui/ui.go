@@ -16,6 +16,9 @@ import (
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
+type view_link struct {
+	left, right, up, down view_id
+}
 type rootlayout struct {
 	editor_area *tview.Flex
 	console     *tview.Pages
@@ -91,7 +94,7 @@ func (m mainui) get_view_from_id(viewid view_id) *tview.Box {
 		return m.log.Box
 	case view_fzf:
 		return m.fzf.view.Box
-	case view_sym_list:
+	case view_outline_list:
 		return m.symboltree.view.Box
 	default:
 		return nil
@@ -110,7 +113,7 @@ func get_viewid_name(viewid view_id) string {
 		return "log"
 	case view_fzf:
 		return "fzf"
-	case view_sym_list:
+	case view_outline_list:
 		return "outline"
 	default:
 		return "???"
@@ -128,7 +131,7 @@ func (m *mainui) GetFocusViewId() view_id {
 	} else if m.fzf.view.HasFocus() {
 		return view_fzf
 	} else if m.symboltree.view.HasFocus() {
-		return view_sym_list
+		return view_outline_list
 	} else {
 		return view_other
 	}
@@ -223,12 +226,14 @@ func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 type view_id int
 
 const (
-	view_log = iota
+	view_none = iota
+	view_log
 	view_fzf
 	view_callin
 	view_code
 	view_cmd
-	view_sym_list
+	view_file
+	view_outline_list
 	view_other
 )
 
@@ -299,7 +304,7 @@ func (m mainui) OnTabChanged(tab *TabButton) {
 	}
 	m.page.SwitchToPage(tab.Name)
 	m.page.SetTitle(tab.Name)
-  m.UpdateStatus()
+	m.UpdateStatus()
 }
 
 // OpenFile
@@ -539,7 +544,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 		main.page.SetTitle(gs.String())
 	} else if prev == view_fzf {
 		main.fzf.OnSearch(txt)
-	} else if prev == view_sym_list {
+	} else if prev == view_outline_list {
 		if changed {
 			gs.indexList = main.symboltree.OnSearch(txt)
 			main.symboltree.movetonode(gs.GetIndex())
@@ -590,7 +595,7 @@ func (main *mainui) switch_tab_view() {
 	switch viewid {
 	case view_fzf:
 		main.lost_focus(view).set_focus(main.symboltree.view.Box)
-	case view_sym_list:
+	case view_outline_list:
 		main.lost_focus(view).set_focus(main.codeview.view.Box)
 	case view_code:
 		main.lost_focus(view).set_focus(main.fzf.view.Box)
@@ -611,6 +616,26 @@ func (main *mainui) UpdateStatus() {
 	}
 	cursor := main.codeview.String()
 	main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s", cursor, main.cmdline.Vim.String(), viewname))
+}
+func (main *mainui) move_up_window() {
+	if main.GetFocusViewId() == view_fzf {
+		main.set_focus(main.codeview.view.Box)
+	}
+}
+func (main *mainui) move_down_window() {
+	if main.GetFocusViewId() == view_code {
+		main.set_focus(main.fzf.view.Box)
+	}
+}
+func (main *mainui) move_left_window() {
+	if main.GetFocusViewId() == view_code {
+		main.set_focus(main.fileexplorer.view.Box)
+	} else if main.GetFocusViewId() == view_outline_list {
+		main.set_focus(main.codeview.view.Box)
+	}
+}
+func (main *mainui) move_right_window() {
+
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",

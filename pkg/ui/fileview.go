@@ -10,6 +10,7 @@ import (
 )
 
 type file_tree_view struct {
+	*view_link
 	view     *tview.TreeView
 	Name     string
 	main     *mainui
@@ -21,6 +22,7 @@ type file_tree_view struct {
 func new_file_tree(main *mainui, name string, rootdir string, handle func(filename string) bool) *file_tree_view {
 	view := tview.NewTreeView()
 	ret := &file_tree_view{
+		view_link: nil,
 		view:    view,
 		Name:    name,
 		main:    main,

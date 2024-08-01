@@ -14,6 +14,7 @@ import (
 func new_fzfview(main *mainui) *fzfview {
 	view := tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal())
 	ret := &fzfview{
+		view_link: &view_link{up: view_code},
 		Name: "fzf",
 		view: view,
 		main: main,
@@ -32,6 +33,7 @@ const (
 
 // fzfview
 type fzfview struct {
+	*view_link
 	view         *tview.List
 	Name         string
 	Refs         search_reference_result

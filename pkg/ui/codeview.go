@@ -17,6 +17,7 @@ import (
 )
 
 type CodeView struct {
+	*view_link
 	filename          string
 	view              *femto.View
 	main              *mainui
@@ -79,7 +80,10 @@ func (code *CodeView) OnSearch(txt string) []int {
 func NewCodeView(main *mainui) *CodeView {
 	// view := tview.NewTextView()
 	// view.SetBorder(true)
-	ret := CodeView{}
+	ret := CodeView{view_link: &view_link{
+		right: view_outline_list,
+		down:  view_fzf,
+		left:  view_file}}
 	ret.main = main
 	ret.newMethod()
 	var colorscheme femto.Colorscheme

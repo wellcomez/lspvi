@@ -231,8 +231,36 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.state.init = false
 	}
 	ts := l.state.keyseq
-	ts = ts + string(event.Rune())
+	ch := string(event.Rune())
+	const ctrlw = "c-w"
+	const left = "left"
+	const right = "right"
+	const up = "up"
+	const down = "down"
+	var mm = map[tcell.Key]string{
+		tcell.KeyCtrlW: ctrlw,
+		tcell.KeyLeft:  left,
+		tcell.KeyRight: right,
+		tcell.KeyUp:    up,
+		tcell.KeyDown:  down,
+	}
+	if c, ok := mm[event.Key()]; ok {
+		ch = c
+	}
+	ts = ts + string(ch)
 	commandmap := map[string]func(){}
+	commandmap[ctrlw+up] = func() {
+		l.main.move_up_window()
+	}
+	commandmap[ctrlw+down] = func() {
+		l.main.move_down_window()
+	}
+	commandmap[ctrlw+left] = func() {
+		l.main.move_left_window()
+	}
+	commandmap[ctrlw+right] = func() {
+		l.main.move_right_window()
+	}
 	commandmap["gg"] = func() {
 		l.main.codeview.gotoline(0)
 		l.end()
@@ -309,7 +337,7 @@ type Vim struct {
 
 func (v Vim) String() string {
 	if v.vi_handle != nil {
-		return v.vi_handle.State()
+		return v.vi_handle.State() + " "
 	}
 	return v.vi.String()
 }
