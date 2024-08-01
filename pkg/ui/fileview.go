@@ -101,6 +101,16 @@ func (view *file_tree_view) node_selected(node *tview.TreeNode) {
 func (view *file_tree_view) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
+func (view *file_tree_view) ChangeDir(dir string) {
+	view.rootdir = dir
+	root := tview.NewTreeNode(view.rootdir)
+	parent := tview.NewTreeNode("..")
+	view.opendir(root, view.rootdir)
+	parent.SetReference(filepath.Dir(dir))
+	root.AddChild(parent)
+	view.view.SetRoot(root)
+
+}
 func (view *file_tree_view) Init() *file_tree_view {
 	root := tview.NewTreeNode(view.rootdir)
 	view.opendir(root, view.rootdir)

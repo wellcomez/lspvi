@@ -1,7 +1,6 @@
 package mainui
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/gdamore/tcell/v2"
@@ -50,6 +49,7 @@ func (pick *fzfmain) MouseHanlde(event *tcell.EventMouse, action tview.MouseActi
 func (v *fzfmain) hide() {
 	v.Visible = false
 }
+
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	sym := new_refer_picker(*file, v)
@@ -76,33 +76,12 @@ func (v *fzfmain) OpenDocumntFzf(file *lspcore.Symbol_file) {
 
 // OpenFileFzf
 func (v *fzfmain) OpenFileFzf(root string) {
-	list := new_customlist()
-	v.Frame = tview.NewFrame(new_fzf_list_view(v.input, list))
+	filewalk := NewDirWalk(root, v)
+	v.Frame = tview.NewFrame(filewalk.new_fzf_list_view(v.input))
 	v.Frame.SetTitle("Files")
 	v.input.SetText(">")
 	v.app.SetFocus(v.input)
 	v.Visible = true
-	filewalk := NewDirWalk(root, func(t querytask) {
-		v.app.QueueUpdate(func() {
-			v.Frame.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
-			if t.update_count {
-				return
-			}
-			list.Clear()
-			list.Key = t.query
-			for i := 0; i < min(len(t.ret), 1000); i++ {
-				a := t.ret[i]
-				list.AddItem(a.name, a.Positions, func() {
-					idx := list.GetCurrentItem()
-					f := t.ret[idx]
-					v.Visible = false
-					v.main.OpenFile(f.path, nil)
-				})
-			}
-			v.app.ForceDraw()
-		})
-	})
-	filewalk.list = list
 	v.currentpicker = filepicker{
 		impl: filewalk,
 	}
@@ -174,7 +153,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 		app:   app,
 		main:  main,
 	}
-	NewDirWalk(main.root, func(t querytask) {})
+	new_filewalk(main.root)
 	return ret
 }
 

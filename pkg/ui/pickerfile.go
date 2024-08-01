@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"bufio"
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -17,11 +18,12 @@ import (
 	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 )
-func new_fzf_list_view(input *tview.InputField, list *customlist) *tview.Grid {
+
+func (pk DirWalk) new_fzf_list_view(input *tview.InputField) *tview.Grid {
 	layout := tview.NewGrid().
 		SetColumns(-1, 24, 16, -1).
 		SetRows(-1, 3, 3, 2).
-		AddItem(list, 0, 0, 3, 4, 0, 0, false).
+		AddItem(pk.list, 0, 0, 3, 4, 0, 0, false).
 		AddItem(input, 3, 0, 1, 4, 0, 0, false)
 	return layout
 }
@@ -105,7 +107,6 @@ const (
 )
 
 type filewalk struct {
-	uicb       func(t querytask)
 	loadcb   func(t []string)
 	filelist []string
 	event    int32
@@ -142,16 +143,14 @@ func (f *filewalk) save() error {
 
 var global_walk *filewalk = nil
 
-func new_filewalk(root string, cb func(t querytask)) *filewalk {
+func new_filewalk(root string) *filewalk {
 	if global_walk != nil {
-		global_walk.uicb = cb
 		return global_walk
 	}
 	ret := &filewalk{
 		filelist: []string{},
 		root:     root,
 		ignores:  WalkerSkip,
-		uicb:       cb,
 	}
 	global_walk = ret
 	// filegit := filepath.Join(root, ".gitignore")
@@ -289,16 +288,37 @@ type file_picker_item struct {
 	Positions []int
 }
 
-func NewDirWalk(root string, cb func(t querytask)) *DirWalk {
-
-	var hayStack = walk(root, cb)
-	ret := &DirWalk{root: root, cb: cb, hayStack: hayStack}
+func NewDirWalk(root string, v *fzfmain) *DirWalk {
+	list := new_customlist()
+	cb := func(t querytask) {
+		v.app.QueueUpdate(func() {
+			v.Frame.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
+			if t.update_count {
+				return
+			}
+			list.Clear()
+			list.Key = t.query
+			for i := 0; i < min(len(t.ret), 1000); i++ {
+				a := t.ret[i]
+				list.AddItem(a.name, a.Positions, func() {
+					idx := list.GetCurrentItem()
+					f := t.ret[idx]
+					v.Visible = false
+					v.main.OpenFile(f.path, nil)
+				})
+			}
+			v.app.ForceDraw()
+		})
+	}
+	var hayStack = walk(root)
+	ret := &DirWalk{root: root, cb: cb, hayStack: hayStack, list: list}
 	var options = fzflib.DefaultOptions()
 	options.Fuzzy = false
 	options.Sort = []fzflib.Criterion{}
 	// update any options here
 	// var hayStack = walk(root)
 	ret.fzf = fzflib.New(ret.hayStack, options)
+	ret.cb = cb
 	return ret
 }
 func (wk *DirWalk) UpdateQueryOld(query string) {
@@ -364,8 +384,8 @@ func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 	t.ret = append(t.ret, task.ret...)
 	wk.cb(t)
 }
-func walk(root string, cb func(t querytask)) []string {
-	walk := new_filewalk(root, cb)
+func walk(root string) []string {
+	walk := new_filewalk(root)
 
 	return walk.filelist
 }

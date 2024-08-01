@@ -303,6 +303,11 @@ func (m mainui) OnTabChanged(tab *TabButton) {
 // OpenFile
 // OpenFile
 func (m *mainui) OpenFile(file string, loc *lsp.Location) {
+	if info, err := os.Stat(file); err == nil && info.IsDir() {
+		m.fileexplorer.ChangeDir(file)
+		return
+	}
+
 	m.bf.history.AddToHistory(file)
 	title := strings.Replace(file, m.root, "", -1)
 	m.layout.parent.SetTitle(title)
