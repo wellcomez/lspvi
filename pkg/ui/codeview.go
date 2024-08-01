@@ -125,13 +125,14 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	if action == tview.MouseLeftDown {
 		code.mouse_select_area = true
 		//log.Print(x1, y1, x2, y2, "down")
+		pos = tab_loc(root, pos)
 		code.view.Cursor.SetSelectionStart(pos)
 		code.view.Cursor.SetSelectionEnd(pos)
 		return tview.MouseConsumed, nil
 	}
 	if action == tview.MouseMove {
 		if code.mouse_select_area {
-			//log.Print(x1, y1, x2, y2, "move")
+			pos = tab_loc(root, pos)
 			code.view.Cursor.SetSelectionEnd(pos)
 		}
 		return tview.MouseConsumed, nil
@@ -163,7 +164,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			root.ScrollUp(gap)
 		}
 		posX = posX - int(xOffset)
-		root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))}
+		root.Cursor.Loc = tab_loc(root, femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))})
 		log.Println(root.Cursor.Loc)
 		root.SelectLine()
 		code.update_with_line_changed()
@@ -417,7 +418,7 @@ func text_loc_to_range(loc [2]femto.Loc) lsp.Range {
 }
 func (code CodeView) String() string {
 	cursor := code.view.Cursor
-	X:=max(cursor.X, cursor.GetVisualX())
+	X := max(cursor.X, cursor.GetVisualX())
 	return fmt.Sprintf("%d:%d", cursor.Y+1, X)
 }
 
