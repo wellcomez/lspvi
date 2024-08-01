@@ -164,7 +164,7 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 
 		if sym, ok := value.(lsp.SymbolInformation); ok {
 			Range := sym.Location.Range
-			if Range.Start.Line != Range.End.Line {
+			// if Range.Start.Line != Range.End.Line {
 				body := lspcore.NewBody(sym.Location)
 				var beginline = Range.Start.Line
 				for i, v := range body.Subline {
@@ -186,10 +186,10 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 						break
 					}
 				}
-			} else {
-				symview.main.codeview.goto_loation(Range)
-				symview.main.set_focus(symview.main.codeview.view.Box)
-			}
+			// } else {
+			// 	symview.main.codeview.goto_loation(Range)
+			// 	symview.main.set_focus(symview.main.codeview.view.Box)
+			// }
 
 		}
 	}

@@ -20,9 +20,9 @@
             "console": "externalTerminal",
             "args": [
                 "-root",
-                "/home/z/dev/ray/raychain_go/raychain-sdk-go",
+                // "/home/z/dev/ray/raychain_go/raychain-sdk-go",
                 // "/home/z/dev/lsp/goui/",
-                // "/chrome/buildcef/chromium/src",
+                "/chrome/buildcef/chromium/src",
                 "-file",
                 // "/home/z/dev/lsp/goui/main.go",
                 "/chrome/buildcef/chromium/src/content/public/browser/navigation_throttle.h"
