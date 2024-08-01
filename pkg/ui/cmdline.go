@@ -237,7 +237,7 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	const right = "right"
 	const up = "up"
 	const down = "down"
-l	var mm = map[tcell.Key]string{
+	var mm = map[tcell.Key]string{
 		tcell.KeyCtrlW: ctrlw,
 		tcell.KeyLeft:  left,
 		tcell.KeyRight: right,
