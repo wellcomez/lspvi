@@ -165,27 +165,26 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 		if sym, ok := value.(lsp.SymbolInformation); ok {
 			Range := sym.Location.Range
 			// if Range.Start.Line != Range.End.Line {
-				body := lspcore.NewBody(sym.Location)
-				var beginline = Range.Start.Line
-				for i, v := range body.Subline {
-					idx := strings.Index(v, sym.Name)
-					if idx>=0{
-						r:=lsp.Range{
-							Start: lsp.Position{
-								Line: beginline + i,
-								Character: idx,
-							},
-							End: lsp.Position{
-								Line: beginline + i,
-								Character: idx+len(sym.Name),
-
-							},
-						}
-						symview.main.codeview.goto_loation(r)
-						symview.main.set_focus(symview.main.codeview.view.Box)
-						break
+			body := lspcore.NewBody(sym.Location)
+			var beginline = Range.Start.Line
+			for i, v := range body.Subline {
+				idx := strings.Index(v, sym.Name)
+				if idx >= 0 {
+					r := lsp.Range{
+						Start: lsp.Position{
+							Line:      beginline + i,
+							Character: idx,
+						},
+						End: lsp.Position{
+							Line:      beginline + i,
+							Character: idx + len(sym.Name),
+						},
 					}
+					symview.main.codeview.goto_loation(r)
+					symview.main.set_focus(symview.main.codeview.view.Box)
+					break
 				}
+			}
 			// } else {
 			// 	symview.main.codeview.goto_loation(Range)
 			// 	symview.main.set_focus(symview.main.codeview.view.Box)
@@ -245,7 +244,7 @@ func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 		loc.Range.End.Line = loc.Range.Start.Line
 	}
 	// println(ss)
-	c.main.OnGetCallInTask(loc, c.main.codeview.filename)
+	c.main.get_callin_stack(loc, c.main.codeview.filename)
 	c.main.ActiveTab(view_callin)
 }
 func (c *SymbolTreeView) get_declare(sym lspcore.Symbol) {

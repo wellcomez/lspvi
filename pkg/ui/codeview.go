@@ -1,8 +1,10 @@
 package mainui
 
 import (
+	"errors"
 	"log"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -103,6 +105,7 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	x1, y1, x2, y2 := root.GetInnerRect()
 	leftX, _, _, _ := root.GetRect()
 	posX, posY := event.Position()
+
 	if posX < x1 || posY > y2 || posY < y1 || posX > x2 {
 		return action, event
 	}
@@ -166,9 +169,18 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 }
 
 func (code *CodeView) cur_offset() (int, int) {
+	x := code.lineNumWidth()
+	// log.Print(x)
 	offfsetx, offfsety, _, _ := code.view.GetInnerRect()
-	offfsetx = offfsetx + 4
+	offfsetx = offfsetx + int(x)
 	return offfsetx, offfsety
+}
+
+func (code *CodeView) lineNumWidth() int64 {
+	v := reflect.ValueOf(code.view).Elem()
+	field := v.FieldByName("lineNumOffset")
+	x := field.Int()
+	return x
 }
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
@@ -334,10 +346,43 @@ func (code *CodeView) lsp_cursor_loc() lsp.Range {
 }
 
 func (code *CodeView) key_call_in() {
-	root := code.view
-	loc := root.Cursor.CurSelection
-	line := root.Buf.Line(loc[0].Y)
+	code.view.Cursor.SelectWord()
+	loc := code.view.Cursor.CurSelection
+	r := text_loc_to_range(loc)
+	code.main.get_callin_stack_by_cursor(lsp.Location{
+		Range: r,
+		URI:   lsp.NewDocumentURI(code.filename),
+	}, code.filename)
+	code.main.ActiveTab(view_callin)
+}
 
+func text_loc_to_range(loc [2]femto.Loc) lsp.Range {
+	start := lsp.Position{
+		Line:      loc[0].Y,
+		Character: loc[0].X,
+	}
+	end := lsp.Position{
+		Line:      loc[1].Y,
+		Character: loc[1].X,
+	}
+
+	r := lsp.Range{
+		Start: start,
+		End:   end,
+	}
+	return r
+}
+
+func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
+	view := code.view
+	loc := view.Cursor.CurSelection
+	curr_loc := view.Cursor.Loc
+	yes := curr_loc.Y == loc[0].Y && curr_loc.Y == loc[1].Y && curr_loc.X >= loc[0].X && curr_loc.X <= loc[1].X
+	if !yes {
+		return lsp.Range{}, errors.New("not a selection")
+	}
+
+	line := view.Buf.Line(loc[0].Y)
 	var x = loc[0].X
 	Start := lsp.Position{
 		Line:      loc[0].Y,
@@ -357,7 +402,7 @@ func (code *CodeView) key_call_in() {
 		Line:      loc[1].Y,
 		Character: loc[1].X,
 	}
-	line = root.Buf.Line(loc[1].Y)
+	line = view.Buf.Line(loc[1].Y)
 	x = loc[1].X
 	for ; x < len(line); x++ {
 		if !femto.IsWordChar(string(line[x])) {
@@ -370,11 +415,7 @@ func (code *CodeView) key_call_in() {
 		Start: Start,
 		End:   End,
 	}
-	code.main.OnGetCallIn(lsp.Location{
-		Range: r,
-		URI:   lsp.NewDocumentURI(code.filename),
-	}, code.filename)
-	code.main.ActiveTab(view_callin)
+	return r, nil
 }
 func (code *CodeView) Load(filename string) error {
 	data, err := os.ReadFile(filename)

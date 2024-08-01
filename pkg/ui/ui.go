@@ -180,23 +180,23 @@ func (m *mainui) OnCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
 func (m *mainui) OnCallInViewChanged(stacks []lspcore.CallStack) {
 	// m.callinview.update(stacks)
 }
-func (m *mainui) OnGetCallInTask(loc lsp.Location, filepath string) {
+func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
 	if err != nil {
 		return
 	}
 	lsp.CallinTask(loc)
 }
-func (m *mainui) OnGetCallIn(loc lsp.Location, filepath string) {
-	m.OnGetCallInTask(loc, filepath)
+func (m *mainui) get_callin_stack_by_cursor(loc lsp.Location, filepath string) {
+	m.get_callin_stack(loc, filepath)
 }
-func (m *mainui) OnGetCallInStack(loc lsp.Location, filepath string) {
-	lsp, err := m.lspmgr.Open(filepath)
-	if err != nil {
-		return
-	}
-	lsp.Callin(loc)
-}
+// func (m *mainui) OnGetCallInStack(loc lsp.Location, filepath string) {
+// 	lsp, err := m.lspmgr.Open(filepath)
+// 	if err != nil {
+// 		return
+// 	}
+// 	lsp.Callin(loc)
+// }
 func (m *mainui) get_define(pos lsp.Range, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
 	if err != nil {
