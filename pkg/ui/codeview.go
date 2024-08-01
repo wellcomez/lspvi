@@ -375,7 +375,7 @@ func (code *CodeView) Load(filename string) error {
 	return nil
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
-	x:=2
+	x:=0
 	line := loc.Start.Line
 	log.Println("gotoline", line)
 	if line < code.view.Topline || code.view.Bottomline() < line {

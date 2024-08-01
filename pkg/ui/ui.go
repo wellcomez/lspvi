@@ -309,7 +309,7 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	m.symboltree.Clear()
 	m.codeview.Load(file)
 	if loc != nil {
-		m.codeview.gotoline(loc.Range.Start.Line)
+		m.codeview.goto_loation(loc.Range)
 	}
 	go m.async_open(file)
 }
