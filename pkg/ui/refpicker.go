@@ -140,9 +140,11 @@ func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p t
 
 func (pk refpicker) update_preview() {
 	cur := pk.impl.listview.GetCurrentItem()
-	item := pk.impl.current_list_data[cur]
-	pk.impl.codeprev.Load(item.loc.URI.AsPath().String())
-	pk.impl.codeprev.gotoline(item.loc.Range.Start.Line)
+	if cur < len(pk.impl.current_list_data) {
+		item := pk.impl.current_list_data[cur]
+		pk.impl.codeprev.Load(item.loc.URI.AsPath().String())
+		pk.impl.codeprev.gotoline(item.loc.Range.Start.Line)
+	}
 }
 
 // handle implements picker.
