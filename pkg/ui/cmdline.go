@@ -220,7 +220,7 @@ func (e EscapeHandle) end() {
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
-	if len(l.state.keyseq) == 0 || l.state.init {
+	if len(l.state.keyseq) == 0 {
 		if l.main.codeview.handle_key_impl(event) == nil {
 			l.end()
 			return true
@@ -261,6 +261,7 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 
 type leadstate struct {
 	kseq string
+	end  bool
 }
 type LeaderHandle struct {
 	main  *mainui
@@ -270,12 +271,7 @@ type LeaderHandle struct {
 
 // end implements vim_mode_handle.
 func (s LeaderHandle) end() {
-	s.reset()
-	s.vi.EnterEscape()
-}
-
-func (s *LeaderHandle) reset() {
-	s.state.kseq = ""
+	s.state.end = true
 }
 
 // State implements vim_mode_handle.
@@ -286,7 +282,11 @@ func (l LeaderHandle) State() string {
 // HanldeKey implements vim_mode_handle.
 func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	ch := event.Rune()
+	if l.state.end {
+		l.state.kseq = ""
+	}
 	key := l.state.kseq + string(ch)
+	l.state.kseq = key
 
 	if key == "r" {
 		l.main.OpenDocumntRef()
@@ -407,7 +407,7 @@ func (v *Vim) EnterLead() bool {
 		v.vi_handle = LeaderHandle{
 			main:  v.app,
 			vi:    v,
-			state: &leadstate{},
+			state: &leadstate{end: false},
 		}
 		return true
 	} else {
