@@ -102,9 +102,9 @@ func NewCodeView(main *mainui) *CodeView {
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-	a,b:=code.handle_mouse_impl(action,event)
+	a, b := code.handle_mouse_impl(action, event)
 	code.main.UpdateStatus()
-	return a,b
+	return a, b
 }
 func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	root := code.view
@@ -146,7 +146,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	}
 	if action == tview.MouseLeftClick {
 		code.mouse_select_area = false
-		root.Cursor.Loc = pos
+		root.Cursor.Loc = tab_loc(root, pos)
 		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		root.Cursor.SetSelectionEnd(femto.Loc{X: pos.X, Y: pos.Y})
 		code.update_with_line_changed()
@@ -162,7 +162,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			posY = posY - gap
 			root.ScrollUp(gap)
 		}
-		posX = posX -int(xOffset) 
+		posX = posX - int(xOffset)
 		root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))}
 		log.Println(root.Cursor.Loc)
 		root.SelectLine()
@@ -170,6 +170,28 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		return tview.MouseConsumed, nil
 	}
 	return action, event
+}
+
+// GetVisualX returns the x value of the cursor in visual spaces
+func GetVisualX(view *femto.View, Y int, X int) int {
+	runes := []rune(view.Buf.Line(Y))
+	tabSize := int(view.Buf.Settings["tabsize"].(float64))
+	if X > len(runes) {
+		X = len(runes) - 1
+	}
+
+	if X < 0 {
+		X = 0
+	}
+	return femto.StringWidth(string(runes[:X]), tabSize)
+}
+func tab_loc(root *femto.View, pos femto.Loc) femto.Loc {
+	LastVisualX := GetVisualX(root, pos.Y, pos.X)
+	tabw := LastVisualX - pos.X
+	if tabw > 0 {
+		pos.X = pos.X - tabw
+	}
+	return pos
 }
 
 func (code *CodeView) yOfffset() int {
@@ -184,6 +206,7 @@ func (code *CodeView) xOffset() int64 {
 	x += field.Int()
 	return x
 }
+
 // func (code *CodeView) lineNumWidth() int64 {
 // 	v := reflect.ValueOf(code.view).Elem()
 // 	field := v.FieldByName("lineNumOffset")
@@ -392,9 +415,10 @@ func text_loc_to_range(loc [2]femto.Loc) lsp.Range {
 	}
 	return r
 }
-func (code CodeView)String()string{
-	cursor:=code.view.Cursor
-	return fmt.Sprintf("%d:%d",cursor.Y+1,cursor.X)
+func (code CodeView) String() string {
+	cursor := code.view.Cursor
+	X:=max(cursor.X, cursor.GetVisualX())
+	return fmt.Sprintf("%d:%d", cursor.Y+1, X)
 }
 
 func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
