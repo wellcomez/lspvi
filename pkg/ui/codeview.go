@@ -184,6 +184,11 @@ func (code *CodeView) lineNumWidth() int64 {
 }
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
+	code.handle_key_impl(event)
+	return nil
+}
+
+func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 	if h, ok := code.arrow_map[event.Rune()]; ok {
 		h(code)
 		code.update_with_line_changed()
@@ -293,12 +298,18 @@ func (code *CodeView) action_key_up() {
 
 func (code *CodeView) move_up_down(up bool) {
 	Cur := code.view.Cursor
+	view := code.view
+	pagesize := view.Bottomline() - view.Topline
 	if up {
 		code.view.Cursor.Up()
-		code.view.ScrollUp(1)
+		if Cur.Loc.Y <= code.view.Topline {
+			code.view.ScrollUp(pagesize/2)
+		}
 	} else {
 		code.view.Cursor.Down()
-		code.view.ScrollDown(1)
+		if Cur.Loc.Y >= code.view.Bottomline() {
+			code.view.ScrollDown(pagesize / 2)
+		}
 	}
 	// Cur.DeleteSelection()
 	Cur.SetSelectionStart(Cur.Loc)

@@ -191,7 +191,7 @@ func (e *EscapeHandle) reset() {
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
-	if l.main.codeview.handle_key(event) == nil {
+	if l.main.codeview.handle_key_impl(event) == nil {
 		l.reset()
 		return true
 	}
