@@ -435,6 +435,7 @@ func MainUI(arg *Arguments) {
 	// fzfbtn := tview.NewButton("fzf")
 	// logbtn := tview.NewButton("log")
 	uml := NewUmlView(&main, &main.lspmgr.Wk)
+	main.uml = uml
 	var tabs []string = []string{main.fzf.Name, "log", main.callinview.Name}
 	if uml != nil {
 		tabs = append(tabs, uml.Name)
