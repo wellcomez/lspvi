@@ -143,7 +143,7 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	}
 	if action == 14 || action == 13 {
 		code.mouse_select_area = false
-		gap := 2
+		gap := 1
 		if action == 14 {
 			posY = posY + gap
 			root.ScrollDown(gap)
@@ -326,7 +326,7 @@ func (code *CodeView) key_call_in() {
 	line = root.Buf.Line(loc[1].Y)
 	x = loc[1].X
 	for ; x < len(line); x++ {
-		if femto.IsWordChar(string(line[x])) == false {
+		if !femto.IsWordChar(string(line[x]))  {
 			break
 		} else {
 			End.Character = x
