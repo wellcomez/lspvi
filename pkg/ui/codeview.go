@@ -109,7 +109,7 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	code.main.app.SetFocus(code.view)
 	pos := femto.Loc{
 		Y: posY + root.Topline - offfsety,
-		X: posX -offfsetx ,
+		X: posX - offfsetx,
 	}
 	if action == tview.MouseLeftDown {
 		code.mouse_select_area = true
@@ -136,7 +136,7 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	if action == tview.MouseLeftClick {
 		code.mouse_select_area = false
 		posY = posY + root.Topline - offfsety
-		posX = posX -offfsetx 
+		posX = posX - offfsetx
 		root.Cursor.Loc = femto.Loc{X: posX, Y: posY}
 		root.Cursor.SetSelectionStart(femto.Loc{X: posX, Y: posY})
 		root.Cursor.SetSelectionEnd(femto.Loc{X: posX, Y: posY})
@@ -176,18 +176,22 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	Cur := code.view.Cursor
 	view := code.view
 	pagesize := view.Bottomline() - view.Topline
+	yes := false
 	switch ch {
 	case '0':
 		{
 			Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
+			yes = true
 		}
 	case 'D':
 		{
 			code.action_goto_define()
+			yes = true
 		}
 	case 'd':
 		{
 			code.action_goto_declaration()
+			yes = true
 		}
 	case 'b':
 		{
@@ -195,6 +199,7 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			if Cur.Loc.Y <= view.Topline {
 				view.ScrollUp(pagesize / 2)
 			}
+			yes = true
 		}
 	case 'e':
 		{
@@ -202,14 +207,17 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			if Cur.Loc.Y >= view.Bottomline() {
 				view.ScrollDown(pagesize / 2)
 			}
+			yes = true
 		}
 	case 'k':
 		{
 			code.action_key_up()
+			yes = true
 		}
 	case 'j':
 		{
 			code.action_key_down()
+			yes = true
 		}
 	case 42: //'*':
 		code.OnGrep()
@@ -234,19 +242,26 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	case tcell.KeyRight:
 		// Cur.DeleteSelection()
 		Cur.Right()
+		yes = true
 	case tcell.KeyLeft:
 		// Cur.DeleteSelection()
 		Cur.Left()
+		yes = true
 	case tcell.KeyUp:
 		code.action_key_up()
+		yes = true
 	case tcell.KeyDown:
 		code.action_key_down()
+		yes = true
 	case tcell.KeyCtrlS:
 	case tcell.KeyCtrlQ:
 		return nil
 	}
 	code.update_with_line_changed()
-	return nil
+	if yes {
+		return nil
+	}
+	return event
 }
 
 func (code *CodeView) action_key_down() {
@@ -375,7 +390,7 @@ func (code *CodeView) Load(filename string) error {
 	return nil
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
-	x:=0
+	x := 0
 	line := loc.Start.Line
 	log.Println("gotoline", line)
 	if line < code.view.Topline || code.view.Bottomline() < line {
@@ -383,11 +398,11 @@ func (code *CodeView) goto_loation(loc lsp.Range) {
 	}
 	Cur := code.view.Cursor
 	Cur.SetSelectionStart(femto.Loc{
-		X: loc.Start.Character+x,
+		X: loc.Start.Character + x,
 		Y: loc.Start.Line,
 	})
 	end := femto.Loc{
-		X: loc.End.Character+x,
+		X: loc.End.Character + x,
 		Y: loc.End.Line,
 	}
 	Cur.SetSelectionEnd(end)
@@ -396,6 +411,7 @@ func (code *CodeView) goto_loation(loc lsp.Range) {
 }
 func (code *CodeView) gotoline(line int) {
 	if line == -1 {
+		code.view.EndOfLine()
 		return
 	}
 	key := ""

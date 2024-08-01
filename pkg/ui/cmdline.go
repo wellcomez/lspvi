@@ -27,7 +27,7 @@ func new_cmdline(main *mainui) *cmdline {
 	code.Vim = NewVim(main)
 	return code
 }
-func (cmd *cmdline) OnComand(command string) bool{
+func (cmd *cmdline) OnComand(command string) bool {
 	command = strings.TrimRight(command, "\r")
 	command = strings.TrimRight(command, "\n")
 	if command == "q" || command == "quit" || command == "q!" || command == "qa" {
@@ -36,7 +36,7 @@ func (cmd *cmdline) OnComand(command string) bool{
 	}
 	num, err := strconv.ParseInt(command, 10, 32)
 	if err == nil {
-		cmd.main.codeview.gotoline(int(num)-1)
+		cmd.main.codeview.gotoline(int(num) - 1)
 		return true
 	}
 	return false
@@ -120,7 +120,7 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 		if len(txt) > 1 {
 			vim.vi.FindEnter = txt[1:]
 		}
-		if cmd.OnComand(vim.vi.FindEnter){
+		if cmd.OnComand(vim.vi.FindEnter) {
 			cmd.Vim.EnterEscape()
 		}
 		return true
@@ -177,14 +177,41 @@ func handle_backspace(event *tcell.EventKey, cmd *cmdline) bool {
 	return false
 }
 
+type escapestate struct {
+	keyseq string
+}
 type EscapeHandle struct {
-	main *mainui
-	vi   *Vim
+	main  *mainui
+	vi    *Vim
+	state *escapestate
+}
+
+func (e *EscapeHandle) reset() {
+	e.state.keyseq = ""
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
-	l.main.codeview.handle_key(event)
-	return true 
+	if l.main.codeview.handle_key(event) == nil {
+		l.reset()
+		return true
+	}
+	ts := l.state.keyseq
+	ts = ts + string(event.Rune())
+	commandmap := map[string]func(){}
+	commandmap["gg"] = func() {
+		l.main.codeview.gotoline(0)
+	}
+	commandmap["G"] = func() {
+		l.main.codeview.gotoline(-1)
+	}
+	if fun, ok := commandmap[ts]; ok {
+		fun()
+		l.reset()
+	} else {
+		l.state.keyseq = ts
+	}
+
+	return true
 }
 
 type LeaderHandle struct {
@@ -344,8 +371,9 @@ func (v *Vim) EnterEscape() {
 		v.app.codeview.view.Focus(nil)
 	}
 	v.vi_handle = EscapeHandle{
-		main: v.app,
-		vi:   v,
+		main:  v.app,
+		vi:    v,
+		state: &escapestate{},
 	}
 	v.app.SavePrevFocus()
 }
