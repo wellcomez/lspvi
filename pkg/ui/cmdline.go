@@ -242,7 +242,7 @@ func (v *Vim) MoveFocus() {
 
 // EnterGrep
 func (v *Vim) EnterGrep(txt string) {
-	v.vi = vimstate{Find: true}
+	v._enter_find_mode()
 	v.vi.FindEnter = txt
 	v.app.cmdline.SetValue("/" + txt)
 }
@@ -286,17 +286,21 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 func (v *Vim) EnterFind() bool {
 	if v.vi.Escape {
 		v.MoveFocus()
-		v.vi = vimstate{Find: true}
-		a := vi_find_handle{
-			main: v.app,
-			vi:   v,
-		}
-		v.vi_handle = a
-		v.app.cmdline.SetValue("/")
+		v._enter_find_mode()
 		return true
 	} else {
 		return false
 	}
+}
+
+func (v *Vim) _enter_find_mode() {
+	v.vi = vimstate{Find: true}
+	a := vi_find_handle{
+		main: v.app,
+		vi:   v,
+	}
+	v.vi_handle = a
+	v.app.cmdline.SetValue("/")
 }
 func (v *Vim) EnterLead() bool {
 	if v.vi.Escape {

@@ -79,6 +79,24 @@ func (m *mainui) getfocusviewname() string {
 	viewid := m.GetFocusViewId()
 	return get_viewid_name(viewid)
 }
+func (m mainui) get_view_from_id(viewid view_id) *tview.Box {
+	switch viewid {
+	case view_code:
+		return m.codeview.view.Box
+	case view_callin:
+		return m.callinview.view.Box
+	case view_cmd:
+		return m.cmdline.input.Box
+	case view_log:
+		return m.log.Box
+	case view_fzf:
+		return m.fzf.view.Box
+	case view_sym_list:
+		return m.symboltree.view.Box
+	default:
+		return nil
+	}
+}
 
 func get_viewid_name(viewid view_id) string {
 	switch viewid {
@@ -379,8 +397,11 @@ func MainUI(arg *Arguments) {
 	// main.fzf = new_fzfview()
 	symbol_tree := NewSymbolTreeView(&main)
 	main.symboltree = symbol_tree
+	symbol_tree.view.SetBorder(true)
 
 	main.codeview = codeview
+	codeview.view.SetBorder(true)
+
 	main.lspmgr.Handle = &main
 	main.fzf = new_fzfview(&main)
 	main.callinview = new_callview(&main)
@@ -541,18 +562,36 @@ func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {
 
 var leadkey = ' '
 
+func (main *mainui) set_focus(v *tview.Box) {
+	if v != nil {
+		v.SetBorderColor(tcell.ColorGreenYellow)
+		main.app.SetFocus(v)
+	}
+}
+func (main *mainui) lost_focus(v *tview.Box) {
+	if v != nil {
+		v.SetBorderColor(tcell.ColorWhite)
+	}
+}
 func (main *mainui) switch_tab_view() {
-	switch main.GetFocusViewId() {
+	viewid := main.GetFocusViewId()
+	view := main.get_view_from_id(viewid)
+	switch viewid {
 	case view_fzf:
+		main.lost_focus(view)
 		main.app.SetFocus(main.symboltree.view)
 	case view_sym_list:
+		main.lost_focus(view)
 		main.app.SetFocus(main.codeview.view)
 	case view_code:
+		main.lost_focus(view)
 		main.app.SetFocus(main.fzf.view)
+	case view_cmd:
+		return
 	default:
 		main.app.SetFocus(main.codeview.view)
 	}
-	if main.GetFocusViewId()!=view_code{
+	if main.GetFocusViewId() != view_code {
 		main.cmdline.Vim.ExitEnterEscape()
 	}
 	main.UpdateStatus()
