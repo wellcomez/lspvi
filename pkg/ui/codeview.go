@@ -102,11 +102,10 @@ func NewCodeView(main *mainui) *CodeView {
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	root := code.view
-	x1, y1, x2, y2 := root.GetInnerRect()
-	leftX, _, _, _ := root.GetRect()
+	x1, y1, w, h := root.GetInnerRect()
+	// leftX, _, _, _ := root.GetRect()
 	posX, posY := event.Position()
-
-	if posX < x1 || posY > y2 || posY < y1 || posX > x2 {
+	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
 		return action, event
 	}
 	yOffset := code.yOfffset()
@@ -157,8 +156,8 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 			posY = posY - gap
 			root.ScrollUp(gap)
 		}
-		posX = posX - leftX
-		root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline, root.Buf.NumLines))}
+		posX = posX -int(xOffset) 
+		root.Cursor.Loc = femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))}
 		log.Println(root.Cursor.Loc)
 		root.SelectLine()
 		code.update_with_line_changed()
