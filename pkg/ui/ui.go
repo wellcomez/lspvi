@@ -22,7 +22,7 @@ type rootlayout struct {
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
 	parent      *tview.Flex
-	dialog      *Fuzzpicker
+	dialog      *fzfmain
 }
 
 // editor_area_fouched
@@ -634,6 +634,10 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 	return event
+}
+func (main mainui) OpenDocumntRef() {
+	loc := main.codeview.lsp_cursor_loc()
+	main.layout.dialog.OpenRefFzf(main.lspmgr.Current, loc)
 }
 func (main mainui) OpenDocumntFzf() {
 	main.layout.dialog.OpenDocumntFzf(main.lspmgr.Current)

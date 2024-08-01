@@ -198,6 +198,9 @@ func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	ch := event.Rune()
 	key := l.keySeq + string(ch)
 
+	if key == "r" {
+		l.main.OpenDocumntRef()
+	}
 	if key == "o" {
 		l.main.OpenDocumntFzf()
 		return true

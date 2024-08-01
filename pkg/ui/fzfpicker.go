@@ -6,10 +6,11 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
-type Fuzzpicker struct {
+type fzfmain struct {
 	Frame   *tview.Frame
 	input   *tview.InputField
 	Visible bool
@@ -32,7 +33,7 @@ func InRect(event *tcell.EventMouse, primitive tview.Primitive) bool {
 	x, y, w, h := primitive.GetRect()
 	return px >= x && px < x+w && py >= y && py < y+h
 }
-func (pick *Fuzzpicker) MouseHanlde(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
+func (pick *fzfmain) MouseHanlde(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 	if !InRect(event, pick.Frame) {
 		return nil, tview.MouseConsumed
 	}
@@ -46,10 +47,12 @@ func (pick *Fuzzpicker) MouseHanlde(event *tcell.EventMouse, action tview.MouseA
 	}
 }
 
+func (v *fzfmain) hide() {
+	v.Visible = false
+}
 // NewSymboWalk
-func (v *Fuzzpicker) OpenRefFzf(file *lspcore.Symbol_file) {
-	main := v.main
-	sym := new_refer_picker(*file, main)
+func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
+	sym := new_refer_picker(*file, v)
 	v.Frame = tview.NewFrame(sym.new_view(v.input))
 	v.Frame.SetBorder(true)
 	v.Frame.SetTitle("symbol")
@@ -57,11 +60,11 @@ func (v *Fuzzpicker) OpenRefFzf(file *lspcore.Symbol_file) {
 	v.app.SetFocus(v.input)
 	v.Visible = true
 	v.currentpicker = sym
-	sym.load()
+	sym.load(ranges)
 }
 
-func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
-	sym := new_outline_picker( v, file)
+func (v *fzfmain) OpenDocumntFzf(file *lspcore.Symbol_file) {
+	sym := new_outline_picker(v, file)
 	v.Frame = tview.NewFrame(sym.new_fzf_symbol_view(v.input))
 	v.Frame.SetBorder(true)
 	v.Frame.SetTitle("symbol")
@@ -71,10 +74,8 @@ func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
 	v.currentpicker = sym
 }
 
-
-
 // OpenFileFzf
-func (v *Fuzzpicker) OpenFileFzf(root string) {
+func (v *fzfmain) OpenFileFzf(root string) {
 	list := new_customlist()
 	v.Frame = tview.NewFrame(new_fzf_list_view(v.input, list))
 	v.Frame.SetTitle("Files")
@@ -106,7 +107,7 @@ func (v *Fuzzpicker) OpenFileFzf(root string) {
 		impl: filewalk,
 	}
 }
-func (v *Fuzzpicker) Open(t fuzzpicktype) {
+func (v *fzfmain) Open(t fuzzpicktype) {
 	// v.list.Clear()
 	switch t {
 	case fuzz_picker_file:
@@ -124,7 +125,7 @@ type picker interface {
 }
 
 // handle_key
-func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
+func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyEsc {
 		v.Visible = false
 		return nil
@@ -160,14 +161,14 @@ func (v *Fuzzpicker) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
-func Newfuzzpicker(main *mainui, app *tview.Application) *Fuzzpicker {
+func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 	input := tview.NewInputField()
 	input.SetFieldBackgroundColor(tcell.ColorBlack)
 	frame := tview.NewFrame(tview.NewBox())
 	frame.SetBorder(true)
 	frame.SetBorderPadding(0, 0, 0, 0)
 	frame.SetBorderColor(tcell.ColorGreenYellow)
-	ret := &Fuzzpicker{
+	ret := &fzfmain{
 		Frame: frame,
 		input: input,
 		app:   app,
@@ -177,7 +178,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *Fuzzpicker {
 	return ret
 }
 
-func (v *Fuzzpicker) Draw(screen tcell.Screen) {
+func (v *fzfmain) Draw(screen tcell.Screen) {
 	if v.Visible {
 		width, height := screen.Size()
 		w := width * 3 / 4
