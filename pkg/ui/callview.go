@@ -14,7 +14,7 @@ import (
 func new_fzfview(main *mainui) *fzfview {
 	view := tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal())
 	ret := &fzfview{
-		view_link: &view_link{up: view_code},
+    view_link: &view_link{up: view_code,right:view_callin},
 		Name: "fzf",
 		view: view,
 		main: main,

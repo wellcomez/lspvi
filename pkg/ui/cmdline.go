@@ -237,7 +237,7 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	const right = "right"
 	const up = "up"
 	const down = "down"
-	var mm = map[tcell.Key]string{
+l	var mm = map[tcell.Key]string{
 		tcell.KeyCtrlW: ctrlw,
 		tcell.KeyLeft:  left,
 		tcell.KeyRight: right,
@@ -262,12 +262,19 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	commandmap[ctrlw+down] = move_down
 	commandmap[ctrlw+"j"] = move_down
 
-	commandmap[ctrlw+left] = func() {
+	move_left := func() {
 		l.main.move_left_window()
 	}
-	commandmap[ctrlw+right] = func() {
+	commandmap[ctrlw+left] = move_left
+	commandmap[ctrlw+"h"] = move_left
+
+	move_right := func() {
 		l.main.move_right_window()
 	}
+	commandmap[ctrlw+right] = move_right
+	commandmap[ctrlw+"l"] = move_right
+
+
 	commandmap["gg"] = func() {
 		l.main.codeview.gotoline(0)
 		l.end()

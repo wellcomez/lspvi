@@ -12,6 +12,7 @@ import (
 )
 
 type callinview struct {
+	*view_link
 	view      *tview.TreeView
 	Name      string
 	main      *mainui
@@ -27,6 +28,11 @@ type dom_node struct {
 func new_callview(main *mainui) *callinview {
 	view := tview.NewTreeView()
 	ret := &callinview{
+		view_link: &view_link{
+			right: view_uml,
+			up:    view_code,
+			left:  view_fzf,
+		},
 		view: view,
 		Name: "callin",
 		main: main,
@@ -112,7 +118,7 @@ func (callin *callinview) callroot(task *lspcore.CallInTask) *tview.TreeNode {
 	if root != nil {
 		children = root.GetChildren()
 		for _, v := range children {
-			if v.GetReference() == task.TreeNodeid(){
+			if v.GetReference() == task.TreeNodeid() {
 				root_node = v
 				// v.ClearChildren()
 			}
