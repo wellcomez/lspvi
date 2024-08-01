@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -103,10 +104,21 @@ func (v vimstate) String() string {
 
 type vim_mode_handle interface {
 	HanldeKey(event *tcell.EventKey) bool
+	State() string
+	end()
 }
 type vi_command_mode_handle struct {
 	main *mainui
 	vi   *Vim
+}
+
+// end implements vim_mode_handle.
+func (v vi_command_mode_handle) end() {
+}
+
+// State implements vim_mode_handle.
+func (v vi_command_mode_handle) State() string {
+	return "command"
 }
 
 func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
@@ -133,6 +145,16 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 type vi_find_handle struct {
 	main *mainui
 	vi   *Vim
+}
+
+// end implements vim_mode_handle.
+func (v vi_find_handle) end() {
+
+}
+
+// State implements vim_mode_handle.
+func (v vi_find_handle) State() string {
+	return "find " + v.vi.vi.FindEnter
 }
 
 // HanldeKey implements vim_mode_handle.
@@ -186,6 +208,17 @@ type EscapeHandle struct {
 	state *escapestate
 }
 
+// end implements vim_mode_handle.
+func (e EscapeHandle) end() {
+	e.reset()
+	e.vi.EnterEscape()
+}
+
+// State implements vim_mode_handle.
+func (e EscapeHandle) State() string {
+	return fmt.Sprintf("escape %s", e.state.keyseq)
+}
+
 func (e *EscapeHandle) reset() {
 	e.state.keyseq = ""
 }
@@ -200,13 +233,23 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	commandmap := map[string]func(){}
 	commandmap["gg"] = func() {
 		l.main.codeview.gotoline(0)
+		l.end()
+	}
+	commandmap["gd"] = func() {
+		l.main.codeview.action_goto_define()
+		l.end()
+	}
+	commandmap["gr"] = func() {
+		l.main.codeview.action_get_refer()
+		l.end()
 	}
 	commandmap["G"] = func() {
 		l.main.codeview.gotoline(-1)
+		l.end()
 	}
 	if fun, ok := commandmap[ts]; ok {
 		fun()
-		l.reset()
+		l.end()
 	} else {
 		l.state.keyseq = ts
 	}
@@ -214,22 +257,42 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	return true
 }
 
+type leadstate struct {
+	kseq string
+}
 type LeaderHandle struct {
-	keySeq string
-	main   *mainui
-	vi     *Vim
+	main  *mainui
+	vi    *Vim
+	state *leadstate
+}
+
+// end implements vim_mode_handle.
+func (s LeaderHandle) end() {
+	s.reset()
+	s.vi.EnterEscape()
+}
+
+func (s *LeaderHandle) reset() {
+	s.state.kseq = ""
+}
+
+// State implements vim_mode_handle.
+func (l LeaderHandle) State() string {
+	return fmt.Sprintf("leader %s", l.state.kseq)
 }
 
 // HanldeKey implements vim_mode_handle.
 func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	ch := event.Rune()
-	key := l.keySeq + string(ch)
+	key := l.state.kseq + string(ch)
 
 	if key == "r" {
 		l.main.OpenDocumntRef()
+		l.end()
 	}
 	if key == "o" {
 		l.main.OpenDocumntFzf()
+		l.end()
 		return true
 	}
 	return false
@@ -243,6 +306,9 @@ type Vim struct {
 }
 
 func (v Vim) String() string {
+	if v.vi_handle != nil {
+		return v.vi_handle.State()
+	}
 	return v.vi.String()
 }
 
@@ -337,8 +403,9 @@ func (v *Vim) EnterLead() bool {
 		v.vi = vimstate{Leader: true}
 		v.vi_handle = nil
 		v.vi_handle = LeaderHandle{
-			main: v.app,
-			vi:   v,
+			main:  v.app,
+			vi:    v,
+			state: &leadstate{},
 		}
 		return true
 	} else {
