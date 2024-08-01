@@ -443,7 +443,9 @@ func MainUI(arg *Arguments) {
 		tab_area.AddItem(v.view, 10, 1, true)
 	}
 	main.statusbar = tview.NewTextView()
-	main.statusbar.SetText("------------------------------------------------------------------")
+	// main.statusbar.SetBorder(true)
+	main.statusbar.SetTextAlign(tview.AlignRight)
+	// main.statusbar.SetText("------------------------------------------------------------------")
 	tab_area.AddItem(tview.NewBox(), 1, 0, false)
 	tab_area.AddItem(main.statusbar, 0, 10, false)
 
@@ -564,28 +566,26 @@ var leadkey = ' '
 
 func (main *mainui) set_focus(v *tview.Box) {
 	if v != nil {
-		v.SetBorderColor(tcell.ColorGreenYellow)
+		v.SetBorderColor(tcell.ColorGreen)
 		main.app.SetFocus(v)
 	}
 }
-func (main *mainui) lost_focus(v *tview.Box) {
+func (main *mainui) lost_focus(v *tview.Box) *mainui {
 	if v != nil {
 		v.SetBorderColor(tcell.ColorWhite)
 	}
+	return main
 }
 func (main *mainui) switch_tab_view() {
 	viewid := main.GetFocusViewId()
 	view := main.get_view_from_id(viewid)
 	switch viewid {
 	case view_fzf:
-		main.lost_focus(view)
-		main.app.SetFocus(main.symboltree.view)
+		main.lost_focus(view).set_focus(main.symboltree.view.Box)
 	case view_sym_list:
-		main.lost_focus(view)
-		main.app.SetFocus(main.codeview.view)
+		main.lost_focus(view).set_focus(main.codeview.view.Box)
 	case view_code:
-		main.lost_focus(view)
-		main.app.SetFocus(main.fzf.view)
+		main.lost_focus(view).set_focus(main.fzf.view.Box)
 	case view_cmd:
 		return
 	default:
@@ -601,7 +601,7 @@ func (main *mainui) UpdateStatus() {
 	if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 		viewname = get_viewid_name(main.searchcontext.view)
 	}
-	main.statusbar.SetText(fmt.Sprintf("vi:%-10s %10s", main.cmdline.Vim.String(), viewname))
+	main.statusbar.SetText(fmt.Sprintf("vi:%-8s %8s ", main.cmdline.Vim.String(), viewname))
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",
