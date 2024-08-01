@@ -2,9 +2,10 @@ package mainui
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"log"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
@@ -53,7 +54,7 @@ func (v *Fuzzpicker) OpenDocumntFzf(file *lspcore.Symbol_file) {
 	symbol.parent = v
 	symbol.SymbolTreeView.view.SetSelectedFunc(symbol.OnClickSymobolNode)
 
-	sym := SymbolWalk{
+	sym := symbolpicker{
 		impl: &SymbolWalkImpl{
 			file:     file,
 			symview:  symbol,
