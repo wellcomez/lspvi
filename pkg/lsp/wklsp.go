@@ -67,16 +67,29 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 		URI:   calr.Item.URI,
 		Range: calr.Item.Range,
 	}
+	yes := strings.Contains(S.SymInfo.Name, calr.Name)
+	irange := inside_location(S.SymInfo.Location, loc)
+	if yes {
+
+		log.Printf("xxx", irange, S.SymInfo.Kind, calr.Item.Kind, calr.Name)
+	}
+	if S.SymInfo.Kind == lsp.SymbolKindMethod && calr.Item.Kind == lsp.SymbolKindFunction {
+		calr.Item.Kind = lsp.SymbolKindMethod
+	}
 	if S.SymInfo.Kind == calr.Item.Kind {
-		if inside_location(S.SymInfo.Location, loc) {
+		if irange {
 			return true
 		}
-		yes := strings.Contains(S.SymInfo.Name, calr.Name)
 		if yes {
 			log.Printf("Error Resovle failed %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
 				NewBody(S.SymInfo.Location).Info(),
 				NewBody(loc).Info())
 		}
+	}
+	if irange {
+		log.Printf("Error kind unmatch %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
+			NewBody(S.SymInfo.Location).Info(),
+			NewBody(loc).Info())
 	}
 	return false
 }
@@ -239,7 +252,7 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 		wk:   &wk,
 		core: &lspcore{lang: lsp_lang_py{}, handle: wk.Callback, LanguageID: string(PYTHON)},
 	}
-    
+
 	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{}, handle: wk.Callback, LanguageID: string(GO)}}
 	ret := &LspWorkspace{
 		clients: []lspclient{
@@ -254,7 +267,7 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)
-	OnRefenceChanged(ranges lsp.Range,file []lsp.Location)
+	OnRefenceChanged(ranges lsp.Range, file []lsp.Location)
 	OnFileChange(file []lsp.Location)
 	OnCallInViewChanged(stacks []CallStack)
 	OnCallTaskInViewChanged(stacks *CallInTask)
