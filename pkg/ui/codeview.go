@@ -109,12 +109,13 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	if posX < x1 || posY > y2 || posY < y1 || posX > x2 {
 		return action, event
 	}
-	offfsetx, offfsety := code.cur_offset()
+	yOffset := code.yOfffset()
+	xOffset := code.xOffset()
 	// offsetx:=3
 	code.main.app.SetFocus(code.view)
 	pos := femto.Loc{
-		Y: posY + root.Topline - offfsety,
-		X: posX - offfsetx,
+		Y: posY + root.Topline - yOffset,
+		X: posX - int(xOffset),
 	}
 	if action == tview.MouseLeftDown {
 		code.mouse_select_area = true
@@ -140,11 +141,9 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	}
 	if action == tview.MouseLeftClick {
 		code.mouse_select_area = false
-		posY = posY + root.Topline - offfsety
-		posX = posX - offfsetx
-		root.Cursor.Loc = femto.Loc{X: posX, Y: posY}
-		root.Cursor.SetSelectionStart(femto.Loc{X: posX, Y: posY})
-		root.Cursor.SetSelectionEnd(femto.Loc{X: posX, Y: posY})
+		root.Cursor.Loc = pos
+		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
+		root.Cursor.SetSelectionEnd(femto.Loc{X: pos.X, Y: pos.Y})
 		code.update_with_line_changed()
 		return tview.MouseConsumed, nil
 	}
@@ -168,14 +167,18 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	return action, event
 }
 
-func (code *CodeView) cur_offset() (int, int) {
-	x := code.lineNumWidth()
-	// log.Print(x)
-	offfsetx, offfsety, _, _ := code.view.GetInnerRect()
-	offfsetx = offfsetx + int(x)
-	return offfsetx, offfsety
+func (code *CodeView) yOfffset() int {
+	_, offfsety, _, _ := code.view.GetInnerRect()
+	return offfsety
 }
-
+func (code *CodeView) xOffset() int64 {
+	v := reflect.ValueOf(code.view).Elem()
+	field := v.FieldByName("lineNumOffset")
+	x := field.Int()
+	field = v.FieldByName("x")
+	x += field.Int()
+	return x
+}
 func (code *CodeView) lineNumWidth() int64 {
 	v := reflect.ValueOf(code.view).Elem()
 	field := v.FieldByName("lineNumOffset")
@@ -303,7 +306,7 @@ func (code *CodeView) move_up_down(up bool) {
 	if up {
 		code.view.Cursor.Up()
 		if Cur.Loc.Y <= code.view.Topline {
-			code.view.ScrollUp(pagesize/2)
+			code.view.ScrollUp(pagesize / 2)
 		}
 	} else {
 		code.view.Cursor.Down()
