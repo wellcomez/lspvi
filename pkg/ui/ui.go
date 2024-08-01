@@ -617,24 +617,57 @@ func (main *mainui) UpdateStatus() {
 	cursor := main.codeview.String()
 	main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s", cursor, main.cmdline.Vim.String(), viewname))
 }
-func (main *mainui) move_up_window() {
-	if main.GetFocusViewId() == view_fzf {
-		main.set_focus(main.codeview.view.Box)
+
+type direction int
+
+const (
+	move_left = iota
+	move_right
+	move_up
+	move_down
+)
+
+func (main *mainui) move_to_window(t direction) {
+	cur := main.GetFocusViewId()
+	var vl *view_link
+	switch cur {
+	case view_code:
+		vl = main.codeview.view_link
+	case view_outline_list:
+		vl = main.symboltree.main.codeview.view_link
+	case view_fzf:
+		vl = main.fzf.view_link
 	}
+	if vl == nil {
+		return
+	}
+	var next view_id
+	switch t {
+	case move_right:
+		next = vl.right
+	case move_left:
+		next = vl.left
+	case move_down:
+		next = vl.down
+	case move_up:
+		next = vl.up
+	}
+	if next == view_none {
+		return
+	}
+	main.set_focus(main.get_view_from_id(next))
+}
+func (main *mainui) move_up_window() {
+	main.move_to_window(move_up)
 }
 func (main *mainui) move_down_window() {
-	if main.GetFocusViewId() == view_code {
-		main.set_focus(main.fzf.view.Box)
-	}
+	main.move_to_window(move_down)
 }
 func (main *mainui) move_left_window() {
-	if main.GetFocusViewId() == view_code {
-		main.set_focus(main.fileexplorer.view.Box)
-	} else if main.GetFocusViewId() == view_outline_list {
-		main.set_focus(main.codeview.view.Box)
-	}
+	main.move_to_window(move_left)
 }
 func (main *mainui) move_right_window() {
+	main.move_to_window(move_right)
 
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
