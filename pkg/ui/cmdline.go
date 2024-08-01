@@ -271,9 +271,9 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 		v.EnterEscape()
 		return true, nil
 	}
-	if v.vi.Escape {
-		v.ExitEnterEscape()
-	}
+	// if v.vi.Escape {
+	// 	v.ExitEnterEscape()
+	// }
 	if v.vi_handle != nil {
 		if v.vi_handle.HanldeKey(event) {
 			return true, nil

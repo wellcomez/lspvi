@@ -220,10 +220,10 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	switch event.Key() {
 	case tcell.KeyRight:
-		Cur.DeleteSelection()
+		// Cur.DeleteSelection()
 		Cur.Right()
 	case tcell.KeyLeft:
-		Cur.DeleteSelection()
+		// Cur.DeleteSelection()
 		Cur.Left()
 	case tcell.KeyUp:
 		code.action_key_up()
@@ -254,7 +254,7 @@ func (code *CodeView) move_up_down(up bool) {
 		code.view.Cursor.Down()
 		code.view.ScrollDown(1)
 	}
-	Cur.DeleteSelection()
+	// Cur.DeleteSelection()
 	Cur.SetSelectionStart(Cur.Loc)
 	Cur.SetSelectionEnd(Cur.Loc)
 }
