@@ -169,6 +169,10 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	view := code.view
 	pagesize := view.Bottomline() - view.Topline
 	switch ch {
+	case '0':
+		{
+			Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
+		}
 	case 'D':
 		{
 			code.action_goto_define()
@@ -326,7 +330,7 @@ func (code *CodeView) key_call_in() {
 	line = root.Buf.Line(loc[1].Y)
 	x = loc[1].X
 	for ; x < len(line); x++ {
-		if !femto.IsWordChar(string(line[x]))  {
+		if !femto.IsWordChar(string(line[x])) {
 			break
 		} else {
 			End.Character = x
@@ -363,7 +367,7 @@ func (code *CodeView) Load(filename string) error {
 	return nil
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
-	line:=loc.Start.Line	
+	line := loc.Start.Line
 	log.Println("gotoline", line)
 	if line < code.view.Topline || code.view.Bottomline() < line {
 		code.view.Topline = max(line-5, 0)
@@ -378,7 +382,7 @@ func (code *CodeView) goto_loation(loc lsp.Range) {
 		Y: loc.End.Line,
 	}
 	Cur.SetSelectionEnd(end)
-	Cur.Loc= end
+	Cur.Loc = end
 	code.update_with_line_changed()
 }
 func (code *CodeView) gotoline(line int) {
