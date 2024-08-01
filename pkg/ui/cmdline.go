@@ -476,7 +476,7 @@ func (v *Vim) EnterEscape() {
 
 	f := v.app.app.GetFocus()
 	if f == v.app.cmdline.input {
-		v.app.codeview.view.Focus(nil)
+		v.app.set_viewid_focus(view_code)
 	}
 	v.vi_handle = EscapeHandle{
 		main:  v.app,

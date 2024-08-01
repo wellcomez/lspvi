@@ -72,7 +72,7 @@ func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 }
 func (m *mainui) MoveFocus() {
 	m.SavePrevFocus()
-	m.app.SetFocus(m.cmdline.input)
+	m.set_viewid_focus(view_cmd)
 }
 
 func (m *mainui) SavePrevFocus() {
@@ -241,10 +241,10 @@ const (
 func (m *mainui) ActiveTab(id int) {
 	var name = ""
 	if view_fzf == id {
-		m.fzf.view.Focus(nil)
+		m.set_viewid_focus(view_fzf)
 		name = m.fzf.Name
 	} else if view_callin == id {
-		m.callinview.view.Focus(nil)
+		m.set_viewid_focus(view_callin)
 		name = m.callinview.Name
 	}
 	if len(name) > 0 {
@@ -639,7 +639,7 @@ func (main *mainui) move_to_window(t direction) {
 	case view_code:
 		vl = main.codeview.view_link
 	case view_outline_list:
-		vl = main.symboltree.main.codeview.view_link
+		vl = main.symboltree.view_link
 	case view_fzf:
 		vl = main.fzf.view_link
 	case view_file:
@@ -721,7 +721,7 @@ func (main mainui) OpenDocumntFzf() {
 }
 func (m *mainui) OnGrep() {
 	if m.prefocused == view_code || m.codeview.view.HasFocus() {
-		m.app.SetFocus(m.fzf.view)
+		m.set_viewid_focus(view_fzf)
 		m.codeview.OnGrep()
 	}
 }

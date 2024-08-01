@@ -47,7 +47,7 @@ type SymbolTreeViewExt struct {
 func (v SymbolTreeViewExt) OnClickSymobolNode(node *tview.TreeNode) {
 	v.SymbolTreeView.OnClickSymobolNode(node)
 	v.parent.Visible = false
-	v.main.app.SetFocus(v.main.codeview.view)
+	v.main.set_viewid_focus(view_code)
 	v.main.cmdline.Vim.EnterEscape()
 }
 

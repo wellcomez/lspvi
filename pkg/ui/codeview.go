@@ -121,7 +121,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	yOffset := code.yOfffset()
 	xOffset := code.xOffset()
 	// offsetx:=3
-	code.main.app.SetFocus(code.view)
+	code.main.set_viewid_focus(view_code)
 	pos := femto.Loc{
 		Y: posY + root.Topline - yOffset,
 		X: posX - int(xOffset),
