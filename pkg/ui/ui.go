@@ -96,6 +96,8 @@ func (m mainui) get_view_from_id(viewid view_id) *tview.Box {
 		return m.fzf.view.Box
 	case view_outline_list:
 		return m.symboltree.view.Box
+	case view_file:
+		return m.fileexplorer.view.Box
 	default:
 		return nil
 	}
@@ -130,6 +132,8 @@ func (m *mainui) get_focus_view_id() view_id {
 		return view_log
 	} else if m.fzf.view.HasFocus() {
 		return view_fzf
+	} else if m.fileexplorer.view.HasFocus() {
+		return view_file
 	} else if m.symboltree.view.HasFocus() {
 		return view_outline_list
 	} else {
