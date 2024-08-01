@@ -373,10 +373,12 @@ func (code *CodeView) goto_loation(loc lsp.Range) {
 		X: loc.Start.Character,
 		Y: loc.Start.Line,
 	})
-	Cur.SetSelectionEnd(femto.Loc{
+	end := femto.Loc{
 		X: loc.End.Character,
 		Y: loc.End.Line,
-	})
+	}
+	Cur.SetSelectionEnd(end)
+	Cur.Loc= end
 	code.update_with_line_changed()
 }
 func (code *CodeView) gotoline(line int) {

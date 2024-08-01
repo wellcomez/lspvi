@@ -182,11 +182,13 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 							},
 						}
 						symview.main.codeview.goto_loation(r)
+						symview.main.set_focus(symview.main.codeview.view.Box)
 						break
 					}
 				}
 			} else {
 				symview.main.codeview.goto_loation(Range)
+				symview.main.set_focus(symview.main.codeview.view.Box)
 			}
 
 		}
