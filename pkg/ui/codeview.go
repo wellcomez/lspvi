@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"reflect"
@@ -101,6 +102,11 @@ func NewCodeView(main *mainui) *CodeView {
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	a,b:=code.handle_mouse_impl(action,event)
+	code.main.UpdateStatus()
+	return a,b
+}
+func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	root := code.view
 	x1, y1, w, h := root.GetInnerRect()
 	// leftX, _, _, _ := root.GetRect()
@@ -178,15 +184,16 @@ func (code *CodeView) xOffset() int64 {
 	x += field.Int()
 	return x
 }
-func (code *CodeView) lineNumWidth() int64 {
-	v := reflect.ValueOf(code.view).Elem()
-	field := v.FieldByName("lineNumOffset")
-	x := field.Int()
-	return x
-}
+// func (code *CodeView) lineNumWidth() int64 {
+// 	v := reflect.ValueOf(code.view).Elem()
+// 	field := v.FieldByName("lineNumOffset")
+// 	x := field.Int()
+// 	return x
+// }
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	code.handle_key_impl(event)
+	code.main.UpdateStatus()
 	return nil
 }
 
@@ -384,6 +391,10 @@ func text_loc_to_range(loc [2]femto.Loc) lsp.Range {
 		End:   end,
 	}
 	return r
+}
+func (code CodeView)String()string{
+	cursor:=code.view.Cursor
+	return fmt.Sprintf("%d:%d",cursor.Y+1,cursor.X)
 }
 
 func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {

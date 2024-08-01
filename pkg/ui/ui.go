@@ -190,13 +190,14 @@ func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
 func (m *mainui) get_callin_stack_by_cursor(loc lsp.Location, filepath string) {
 	m.get_callin_stack(loc, filepath)
 }
-// func (m *mainui) OnGetCallInStack(loc lsp.Location, filepath string) {
-// 	lsp, err := m.lspmgr.Open(filepath)
-// 	if err != nil {
-// 		return
-// 	}
-// 	lsp.Callin(loc)
-// }
+
+//	func (m *mainui) OnGetCallInStack(loc lsp.Location, filepath string) {
+//		lsp, err := m.lspmgr.Open(filepath)
+//		if err != nil {
+//			return
+//		}
+//		lsp.Callin(loc)
+//	}
 func (m *mainui) get_define(pos lsp.Range, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
 	if err != nil {
@@ -607,7 +608,8 @@ func (main *mainui) UpdateStatus() {
 	if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 		viewname = get_viewid_name(main.searchcontext.view)
 	}
-	main.statusbar.SetText(fmt.Sprintf("vi:%-8s %8s ", main.cmdline.Vim.String(), viewname))
+	cursor := main.codeview.String()
+	main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s", cursor, main.cmdline.Vim.String(), viewname))
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",
