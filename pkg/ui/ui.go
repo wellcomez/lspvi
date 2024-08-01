@@ -299,6 +299,7 @@ func (m mainui) OnTabChanged(tab *TabButton) {
 	}
 	m.page.SwitchToPage(tab.Name)
 	m.page.SetTitle(tab.Name)
+  m.UpdateStatus()
 }
 
 // OpenFile

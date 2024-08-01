@@ -201,6 +201,7 @@ func handle_backspace(event *tcell.EventKey, cmd *cmdline) bool {
 
 type escapestate struct {
 	keyseq string
+	init   bool
 }
 type EscapeHandle struct {
 	main  *mainui
@@ -208,25 +209,26 @@ type EscapeHandle struct {
 	state *escapestate
 }
 
-// end implements vim_mode_handle.
-func (e EscapeHandle) end() {
-	e.reset()
-	e.vi.EnterEscape()
-}
-
 // State implements vim_mode_handle.
 func (e EscapeHandle) State() string {
 	return fmt.Sprintf("escape %s", e.state.keyseq)
 }
 
-func (e *EscapeHandle) reset() {
-	e.state.keyseq = ""
+// end
+func (e EscapeHandle) end() {
+	e.state.init = true
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
-	if l.main.codeview.handle_key_impl(event) == nil {
-		l.reset()
-		return true
+	if len(l.state.keyseq) == 0 || l.state.init {
+		if l.main.codeview.handle_key_impl(event) == nil {
+			l.end()
+			return true
+		}
+	}
+	if l.state.init {
+		l.state.keyseq = ""
+		l.state.init = false
 	}
 	ts := l.state.keyseq
 	ts = ts + string(event.Rune())
@@ -237,7 +239,6 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	commandmap["gd"] = func() {
 		l.main.codeview.action_goto_define()
-		l.end()
 	}
 	commandmap["gr"] = func() {
 		l.main.codeview.action_get_refer()
@@ -248,6 +249,7 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.end()
 	}
 	if fun, ok := commandmap[ts]; ok {
+		l.state.keyseq = ts
 		fun()
 		l.end()
 	} else {
@@ -440,7 +442,7 @@ func (v *Vim) EnterEscape() {
 	v.vi_handle = EscapeHandle{
 		main:  v.app,
 		vi:    v,
-		state: &escapestate{},
+		state: &escapestate{init: true},
 	}
 	v.app.SavePrevFocus()
 }
