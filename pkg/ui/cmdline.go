@@ -200,7 +200,7 @@ func handle_backspace(event *tcell.EventKey, cmd *cmdline) bool {
 }
 
 type escapestate struct {
-	keyseq string
+	keyseq []string
 	init   bool
 }
 type EscapeHandle struct {
@@ -211,7 +211,7 @@ type EscapeHandle struct {
 
 // State implements vim_mode_handle.
 func (e EscapeHandle) State() string {
-	return fmt.Sprintf("escape %s", e.state.keyseq)
+	return fmt.Sprintf("escape %s", strings.Join(e.state.keyseq, ""))
 }
 
 // end
@@ -227,7 +227,7 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 		}
 	}
 	if l.state.init {
-		l.state.keyseq = ""
+		l.state.keyseq = []string{}
 		l.state.init = false
 	}
 	ts := l.state.keyseq
@@ -247,14 +247,21 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	if c, ok := mm[event.Key()]; ok {
 		ch = c
 	}
-	ts = ts + string(ch)
+	l.state.keyseq = append(ts, string(ch))
 	commandmap := map[string]func(){}
-	commandmap[ctrlw+up] = func() {
+
+	move_up := func() {
 		l.main.move_up_window()
 	}
-	commandmap[ctrlw+down] = func() {
+	commandmap[ctrlw+"k"] = move_up
+	commandmap[ctrlw+up] = move_up
+
+	move_down := func() {
 		l.main.move_down_window()
 	}
+	commandmap[ctrlw+down] = move_down
+	commandmap[ctrlw+"j"] = move_down
+
 	commandmap[ctrlw+left] = func() {
 		l.main.move_left_window()
 	}
@@ -276,12 +283,9 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.main.codeview.gotoline(-1)
 		l.end()
 	}
-	if fun, ok := commandmap[ts]; ok {
-		l.state.keyseq = ts
+	if fun, ok := commandmap[strings.Join(l.state.keyseq, "")]; ok {
 		fun()
 		l.end()
-	} else {
-		l.state.keyseq = ts
 	}
 
 	return true
