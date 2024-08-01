@@ -57,7 +57,7 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 }
 
 func (r *mainui) editor_area_fouched() {
-	// log.Println("change foucse", r.get_box_from_viewid())
+	// log.Println("change foucse", r.GetFocusViewId())
 	r.layout.parent.ResizeItem(r.layout.editor_area, 0, 3)
 	r.layout.parent.ResizeItem(r.layout.console, 0, 2)
 }
@@ -76,30 +76,26 @@ func (m *mainui) MoveFocus() {
 }
 
 func (m *mainui) SavePrevFocus() {
-	m.prefocused = m.get_box_from_viewid()
+	m.prefocused = m.get_focus_view_id()
 }
 func (m *mainui) getfocusviewname() string {
-	viewid := m.get_box_from_viewid()
+	viewid := m.get_focus_view_id()
 	return get_viewid_name(viewid)
 }
 func (m mainui) get_view_from_id(viewid view_id) *tview.Box {
 	switch viewid {
+	case view_code:
+		return m.codeview.view.Box
+	case view_callin:
+		return m.callinview.view.Box
+	case view_cmd:
+		return m.cmdline.input.Box
 	case view_log:
 		return m.log.Box
 	case view_fzf:
 		return m.fzf.view.Box
-	case view_callin:
-		return m.callinview.view.Box
-	case view_code:
-		return m.codeview.view.Box
-	case view_uml:
-		return m.uml.layout.Box
-	case view_cmd:
-		return m.cmdline.input.Box
 	case view_outline_list:
 		return m.symboltree.view.Box
-	case view_file:
-		return m.fileexplorer.view.Box
 	default:
 		return nil
 	}
@@ -123,7 +119,7 @@ func get_viewid_name(viewid view_id) string {
 		return "???"
 	}
 }
-func (m *mainui) get_box_from_viewid() view_id {
+func (m *mainui) get_focus_view_id() view_id {
 	if m.codeview.view.HasFocus() {
 		return view_code
 	} else if m.callinview.view.HasFocus() {
@@ -300,7 +296,7 @@ func (m *mainui) Init() {
 func (m mainui) OnCodeLineChange(line int) {
 	m.symboltree.OnCodeLineChange(line)
 }
-func (m *mainui) OnTabChanged(tab *TabButton) {
+func (m mainui) OnTabChanged(tab *TabButton) {
 	if tab.Name == "uml" {
 		if m.uml != nil {
 			m.uml.Init()
@@ -504,7 +500,7 @@ func MainUI(arg *Arguments) {
 			main.layout.dialog.Draw(screen)
 		}
 	})
-	main.set_focus(main.get_view_from_id(view_code))
+	main.set_viewid_focus(view_code)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
@@ -582,6 +578,10 @@ func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {
 
 var leadkey = ' '
 
+func (main *mainui) set_viewid_focus(v view_id) {
+	main.lost_focus(main.get_view_from_id(main.get_focus_view_id()))
+	main.set_focus(main.get_view_from_id(v))
+}
 func (main *mainui) set_focus(v *tview.Box) {
 	if v != nil {
 		v.SetBorderColor(tcell.ColorGreen)
@@ -591,25 +591,25 @@ func (main *mainui) set_focus(v *tview.Box) {
 func (main *mainui) lost_focus(v *tview.Box) *mainui {
 	if v != nil {
 		v.SetBorderColor(tcell.ColorWhite)
+		v.Blur()
 	}
 	return main
 }
 func (main *mainui) switch_tab_view() {
-	viewid := main.get_box_from_viewid()
-	view := main.get_view_from_id(viewid)
+	viewid := main.get_focus_view_id()
 	switch viewid {
 	case view_fzf:
-		main.lost_focus(view).set_focus(main.symboltree.view.Box)
+		main.set_viewid_focus(view_outline_list)
 	case view_outline_list:
-		main.lost_focus(view).set_focus(main.codeview.view.Box)
+		main.set_viewid_focus(view_code)
 	case view_code:
-		main.lost_focus(view).set_focus(main.fzf.view.Box)
+		main.set_viewid_focus(view_fzf)
 	case view_cmd:
 		return
 	default:
-		main.app.SetFocus(main.codeview.view)
+		main.set_viewid_focus(view_code)
 	}
-	if main.get_box_from_viewid() != view_code {
+	if main.get_focus_view_id() != view_code {
 		main.cmdline.Vim.ExitEnterEscape()
 	}
 	main.UpdateStatus()
@@ -633,7 +633,7 @@ const (
 )
 
 func (main *mainui) move_to_window(t direction) {
-	cur := main.get_box_from_viewid()
+	cur := main.get_focus_view_id()
 	var vl *view_link
 	switch cur {
 	case view_code:
@@ -682,7 +682,7 @@ func (main *mainui) move_right_window() {
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",
-		main.get_box_from_viewid(), event.Key(), event.Rune())
+		main.get_focus_view_id(), event.Key(), event.Rune())
 	if main.layout.dialog.Visible {
 		return main.layout.dialog.handle_key(event)
 	}

@@ -186,7 +186,7 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 						},
 					}
 					symview.main.codeview.goto_loation(r)
-					symview.main.set_focus(symview.main.codeview.view.Box)
+					symview.main.set_viewid_focus(view_code)
 					break
 				}
 			}
