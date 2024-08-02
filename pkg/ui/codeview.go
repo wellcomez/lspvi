@@ -27,7 +27,7 @@ type CodeView struct {
 	mouse_select_area bool
 }
 
-func (code *CodeView) OnGrep(fzf bool,noloop bool) string {
+func (code *CodeView) OnGrep(fzf bool, noloop bool) string {
 	codeview := code.view
 	word := codeview.Cursor.GetSelection()
 	if len(word) < 2 {
@@ -43,7 +43,7 @@ func (code *CodeView) OnGrep(fzf bool,noloop bool) string {
 		}
 	}
 	code.main.prefocused = view_code
-	code.main.OnSearch(word, fzf,noloop)
+	code.main.OnSearch(word, fzf, noloop)
 	return word
 }
 
@@ -307,10 +307,10 @@ func (*CodeView) key_map_command() map[rune]func(code *CodeView) {
 		code.action_goto_declaration()
 	}
 	commandmap[42] = func(code *CodeView) {
-		code.OnGrep(true,false)
+		code.OnGrep(true, false)
 	}
 	commandmap['f'] = func(code *CodeView) {
-		code.OnGrep(true,true)
+		code.OnGrep(true, true)
 	}
 	commandmap['c'] = func(code *CodeView) {
 		code.key_call_in()
