@@ -217,7 +217,6 @@ func (e EscapeHandle) State() string {
 // end
 func (e EscapeHandle) end() {
 	e.state.init = true
-	e.vi.ExitEnterEscape()
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
@@ -275,7 +274,6 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	commandmap[ctrlw+right] = fn_move_right
 	commandmap[ctrlw+"l"] = fn_move_right
 
-
 	commandmap["gg"] = func() {
 		l.main.codeview.gotoline(0)
 	}
@@ -291,6 +289,7 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	if fun, ok := commandmap[strings.Join(l.state.keyseq, "")]; ok {
 		fun()
 		l.end()
+		l.vi.ExitEnterEscape()
 	}
 
 	return true
