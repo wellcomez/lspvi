@@ -322,6 +322,17 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	// var hayStack = walk(root)
 	ret.fzf = fzflib.New(ret.hayStack, options)
 	ret.cb = cb
+	if global_walk != nil && len(global_walk.filelist) > 0 {
+		task := querytask{match_count: 0, count: len(global_walk.filelist)}
+		for i := 0; i < min(len(global_walk.filelist), 100); i++ {
+			v := global_walk.filelist[i]
+			task.ret = append(task.ret, file_picker_item{
+				name: strings.TrimLeft(strings.ReplaceAll(v, root, ""), "/"),
+				path: v,
+			})
+		}
+		cb(task)
+	}
 	return ret
 }
 func (wk *DirWalk) UpdateQueryOld(query string) {
