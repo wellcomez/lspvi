@@ -672,12 +672,12 @@ func (main mainui) OpenFilePicke() {
 func (main mainui) OpenDocumntSymbolFzf() {
 	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
 }
-func (m *mainui) OnGrep() {
-	if m.prefocused == view_code || m.codeview.view.HasFocus() {
-		m.set_viewid_focus(view_fzf)
-		m.codeview.OnGrep()
-	}
-}
+// func (m *mainui) OnGrep() {
+// 	if m.prefocused == view_code || m.codeview.view.HasFocus() {
+// 		m.set_viewid_focus(view_fzf)
+// 		m.codeview.OnGrep()
+// 	}
+// }
 
 type Search interface {
 	Findall(key string) []int

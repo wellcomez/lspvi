@@ -43,12 +43,12 @@ func (cmd *cmdline) OnComand(command string) bool {
 	return false
 }
 
-func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey {
-	if event.Rune() == 'f' {
-		cmd.main.OnGrep()
-	}
-	return nil
-}
+// func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey {
+// 	if event.Rune() == 'f' {
+// 		cmd.main.OnGrep()
+// 	}
+// 	return nil
+// }
 
 func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 	yes, event := cmd.Vim.VimKeyModelMethod(event)
@@ -160,6 +160,9 @@ func (v vi_find_handle) State() string {
 // HanldeKey implements vim_mode_handle.
 func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	cmd := v.vi.app.cmdline
+	if !cmd.input.HasFocus() {
+		return false
+	}
 	vim := v.vi
 	shouldReturn := handle_backspace(event, cmd)
 	if shouldReturn {
