@@ -654,7 +654,22 @@ func (main *mainui) move_to_window(t direction) {
 	if vl == nil {
 		return
 	}
-	var next view_id
+	var next view_id = vl.next_view(t)
+	if next == view_none {
+		return
+	}
+	main.set_viewid_focus(next)
+	switch next {
+	case view_fzf:
+	case view_callin:
+		main.ActiveTab(int(next))
+	default:
+		main.set_focus(main.get_view_from_id(next))
+	}
+}
+
+func (vl *view_link) next_view(t direction) view_id {
+	var next view_id = view_none
 	switch t {
 	case move_right:
 		next = vl.right
@@ -665,24 +680,7 @@ func (main *mainui) move_to_window(t direction) {
 	case move_up:
 		next = vl.up
 	}
-	if next == view_none {
-		return
-	}
-	main.lost_focus(main.get_view_from_id(cur))
-	main.set_focus(main.get_view_from_id(next))
-}
-func (main *mainui) move_up_window() {
-	main.move_to_window(move_up)
-}
-func (main *mainui) move_down_window() {
-	main.move_to_window(move_down)
-}
-func (main *mainui) move_left_window() {
-	main.move_to_window(move_left)
-}
-func (main *mainui) move_right_window() {
-	main.move_to_window(move_right)
-
+	return next
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	log.Println("main ui recieved ",

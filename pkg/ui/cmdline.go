@@ -217,6 +217,7 @@ func (e EscapeHandle) State() string {
 // end
 func (e EscapeHandle) end() {
 	e.state.init = true
+	e.vi.ExitEnterEscape()
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
@@ -250,45 +251,42 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	l.state.keyseq = append(ts, string(ch))
 	commandmap := map[string]func(){}
 
-	move_up := func() {
-		l.main.move_up_window()
+	fn_move_up := func() {
+		l.main.move_to_window(move_up)
 	}
-	commandmap[ctrlw+"k"] = move_up
-	commandmap[ctrlw+up] = move_up
+	commandmap[ctrlw+"k"] = fn_move_up
+	commandmap[ctrlw+up] = fn_move_up
 
-	move_down := func() {
-		l.main.move_down_window()
+	fn_move_down := func() {
+		l.main.move_to_window(move_down)
 	}
-	commandmap[ctrlw+down] = move_down
-	commandmap[ctrlw+"j"] = move_down
+	commandmap[ctrlw+down] = fn_move_down
+	commandmap[ctrlw+"j"] = fn_move_down
 
-	move_left := func() {
-		l.main.move_left_window()
+	fn_move_left := func() {
+		l.main.move_to_window(move_left)
 	}
-	commandmap[ctrlw+left] = move_left
-	commandmap[ctrlw+"h"] = move_left
+	commandmap[ctrlw+left] = fn_move_left
+	commandmap[ctrlw+"h"] = fn_move_left
 
-	move_right := func() {
-		l.main.move_right_window()
+	fn_move_right := func() {
+		l.main.move_to_window(move_right)
 	}
-	commandmap[ctrlw+right] = move_right
-	commandmap[ctrlw+"l"] = move_right
+	commandmap[ctrlw+right] = fn_move_right
+	commandmap[ctrlw+"l"] = fn_move_right
 
 
 	commandmap["gg"] = func() {
 		l.main.codeview.gotoline(0)
-		l.end()
 	}
 	commandmap["gd"] = func() {
 		l.main.codeview.action_goto_define()
 	}
 	commandmap["gr"] = func() {
 		l.main.codeview.action_get_refer()
-		l.end()
 	}
 	commandmap["G"] = func() {
 		l.main.codeview.gotoline(-1)
-		l.end()
 	}
 	if fun, ok := commandmap[strings.Join(l.state.keyseq, "")]; ok {
 		fun()
