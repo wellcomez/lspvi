@@ -220,7 +220,7 @@ func (e EscapeHandle) end() {
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
-	if len(l.state.keyseq) == 0 {
+	if len(l.state.keyseq) == 0 || l.state.init {
 		if l.main.codeview.handle_key_impl(event) == nil {
 			l.end()
 			return true
