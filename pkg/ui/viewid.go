@@ -100,19 +100,49 @@ func view_id_init(m *mainui) {
 	for _, v := range all_view_list {
 		box := v.to_box(m)
 		if box != nil {
-			if v == view_code {
-				box.SetFocusFunc(func() {
-					m.editor_area_fouched()
-					change_after_focused(box, m)
-				})
-			} else {
-				box.SetFocusFunc(func() {
-					change_after_focused(box, m)
-				})
+			switch v {
+			case view_code:
+				{
+					box.SetFocusFunc(func() {
+						m.editor_area_fouched()
+						change_after_focused(box, m)
+					})
+				}
+			case view_fzf:
+			case view_callin:
+			case view_uml:
+				{
+					box.SetFocusFunc(func() {
+						change_after_focused(box, m)
+						m.page.SetBorderColor(tcell.ColorGreenYellow)
+					})
+				}
+			default:
+				{
+					box.SetFocusFunc(func() {
+						change_after_focused(box, m)
+					})
+				}
 			}
-			box.SetBlurFunc(func() {
-				box.SetBorderColor(tcell.ColorWhite)
-			})
+
+			switch v {
+			case view_fzf:
+			case view_callin:
+			case view_uml:
+				{
+					box.SetBlurFunc(func() {
+						box.SetBorderColor(tcell.ColorWhite)
+						m.page.SetBorderColor(tcell.ColorGreen)
+					})
+				}
+			default:
+				{
+					box.SetBlurFunc(func() {
+						box.SetBorderColor(tcell.ColorWhite)
+					})
+				}
+			}
+
 		}
 	}
 }
