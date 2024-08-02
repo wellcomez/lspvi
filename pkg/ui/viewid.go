@@ -103,11 +103,11 @@ func view_id_init(m *mainui) {
 			if v == view_code {
 				box.SetFocusFunc(func() {
 					m.editor_area_fouched()
-					box.SetBorderColor(tcell.ColorDarkGreen)
+					box.SetBorderColor(tcell.ColorGreenYellow)
 				})
 			} else {
 				box.SetFocusFunc(func() {
-					box.SetBorderColor(tcell.ColorDarkGreen)
+					box.SetBorderColor(tcell.ColorGreenYellow)
 				})
 			}
 			box.SetBlurFunc(func() {
