@@ -1,6 +1,9 @@
 package mainui
 
-import "github.com/rivo/tview"
+import (
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+)
 
 type view_id int
 type view_link struct {
@@ -18,6 +21,7 @@ const (
 	view_file
 	view_outline_list
 )
+
 var all_view_list = []view_id{
 	view_log,
 	view_fzf,
@@ -28,7 +32,7 @@ var all_view_list = []view_id{
 	view_file,
 	view_outline_list,
 }
-var all_view_name =[]string{
+var all_view_name = []string{
 	"none",
 	"log",
 	"fzf",
@@ -39,12 +43,13 @@ var all_view_name =[]string{
 	"file",
 	"outline",
 }
+
 func (viewid view_id) to_view_link(m *mainui) *view_link {
 	switch viewid {
 	case view_log:
 		return nil
 	case view_fzf:
-		return m.fzf.view_link 
+		return m.fzf.view_link
 	case view_callin:
 		return m.callinview.view_link
 	case view_code:
@@ -63,7 +68,7 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 }
 func focus_viewid(m *mainui) view_id {
 	for _, v := range all_view_list {
-		if v.to_box(m).HasFocus(){
+		if v.to_box(m).HasFocus() {
 			return v
 		}
 	}
@@ -106,4 +111,17 @@ func config_main_tab_order(main *mainui) {
 			}
 		}
 	}
+}
+
+// inbox
+func inbox(root *tview.Box, event *tcell.EventMouse) bool {
+	posX, posY := event.Position()
+	return poition_inbox(root, posX, posY)
+}
+func poition_inbox(root *tview.Box, posX, posY int) bool {
+	x1, y1, w, h := root.GetInnerRect()
+	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
+		return false
+	}
+	return true
 }
