@@ -52,7 +52,7 @@ func (viewid view_id) setfocused(m *mainui) {
 func mouseclick_view_focused(m *mainui, event *tcell.EventMouse) {
 	focused := focus_viewid(m)
 	for _, v := range all_view_list {
-		if v==view_outline_list{
+		if v == view_outline_list {
 			log.Printf("")
 		}
 		box := v.to_box(m)
@@ -124,7 +124,7 @@ func (viewid view_id) getname() string {
 	return all_view_name[viewid]
 }
 func config_main_tab_order(main *mainui) {
-	var vieworder = []view_id{view_code, view_outline_list, view_uml, view_callin, view_fzf, view_file, view_code}
+	var vieworder = []view_id{view_code, view_outline_list, view_fzf, view_callin, view_uml, view_file, view_code}
 	for i, v := range vieworder {
 		if i+1 < len(vieworder) {
 			if link := v.to_view_link(main); link != nil {
@@ -132,6 +132,9 @@ func config_main_tab_order(main *mainui) {
 			}
 		}
 	}
+	main.fzf.view_link.down = view_code
+	main.uml.view_link.down = view_code
+	main.callinview.view_link.down = view_code
 }
 
 // inbox
