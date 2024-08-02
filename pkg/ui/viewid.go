@@ -100,9 +100,16 @@ func view_id_init(m *mainui) {
 	for _, v := range all_view_list {
 		box := v.to_box(m)
 		if box != nil {
-			box.SetFocusFunc(func() {
-				box.SetBorderColor(tcell.ColorDarkGreen)
-			})
+			if v == view_code {
+				box.SetFocusFunc(func() {
+					m.editor_area_fouched()
+					box.SetBorderColor(tcell.ColorDarkGreen)
+				})
+			} else {
+				box.SetFocusFunc(func() {
+					box.SetBorderColor(tcell.ColorDarkGreen)
+				})
+			}
 			box.SetBlurFunc(func() {
 				box.SetBorderColor(tcell.ColorWhite)
 			})

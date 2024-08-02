@@ -432,7 +432,7 @@ func MainUI(arg *Arguments) {
 		dialog:      Newfuzzpicker(&main, app),
 	}
 
-	codeview.view.SetFocusFunc(main.editor_area_fouched)
+	// codeview.view.SetFocusFunc(main.editor_area_fouched)
 	main.OpenFile(filearg, nil)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
