@@ -245,7 +245,6 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 	}
 	m.page.SwitchToPage(tab.Name)
 	m.page.SetTitle(tab.Name)
-	m.UpdateStatus()
 }
 
 // OpenFile
@@ -397,6 +396,15 @@ func MainUI(arg *Arguments) {
 		tab_area.AddItem(v.view, 10, 1, true)
 	}
 	main.statusbar = tview.NewTextView()
+	main.statusbar.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		viewname := main.getfocusviewname()
+		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
+			viewname = main.searchcontext.view.getname()
+		}
+		cursor := main.codeview.String()
+		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s ", cursor, main.cmdline.Vim.String(), viewname))
+		return main.statusbar.GetInnerRect()
+	})
 	// main.statusbar.SetBorder(true)
 	main.statusbar.SetTextAlign(tview.AlignRight)
 	// main.statusbar.SetText("------------------------------------------------------------------")
@@ -557,15 +565,6 @@ func (main *mainui) switch_tab_view() {
 	if main.get_focus_view_id() != view_code {
 		main.cmdline.Vim.ExitEnterEscape()
 	}
-	main.UpdateStatus()
-}
-func (main *mainui) UpdateStatus() {
-	viewname := main.getfocusviewname()
-	if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
-		viewname = main.searchcontext.view.getname()
-	}
-	cursor := main.codeview.String()
-	main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s", cursor, main.cmdline.Vim.String(), viewname))
 }
 
 type direction int
@@ -644,7 +643,6 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 
 	shouldReturn, returnValue := main.cmdline.Vim.VimKeyModelMethod(event)
-	main.UpdateStatus()
 	if shouldReturn {
 		return returnValue
 	} else if event.Key() == tcell.KeyCtrlC {

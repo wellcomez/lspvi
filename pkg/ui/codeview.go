@@ -107,7 +107,6 @@ func NewCodeView(main *mainui) *CodeView {
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	a, b := code.handle_mouse_impl(action, event)
-	code.main.UpdateStatus()
 	return a, b
 }
 func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -221,7 +220,6 @@ func (code *CodeView) xOffset() int64 {
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	code.handle_key_impl(event)
-	code.main.UpdateStatus()
 	return nil
 }
 
