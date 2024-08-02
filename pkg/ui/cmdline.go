@@ -335,17 +335,17 @@ func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	key := l.state.kseq + string(ch)
 	l.state.kseq = key
-
-	if key == "r" {
+	if key == "f" {
+		l.main.OpenFilePicke()
+	} else if key == "r" {
 		l.main.OpenDocumntRef()
-		l.end()
-	}
-	if key == "o" {
+	} else if key == "o" {
 		l.main.OpenDocumntSymbolFzf()
-		l.end()
-		return true
+	} else {
+		return false
 	}
-	return false
+	l.end()
+	return true
 }
 
 // Vim structure
