@@ -142,7 +142,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	}
 	if action == tview.MouseLeftUp {
 		if code.mouse_select_area {
-			code.view.Cursor.SetSelectionEnd(pos)
+			code.view.Cursor.SetSelectionEnd(tab_loc(root,pos))
 			code.mouse_select_area = false
 		}
 		//log.Print(x1, y1, x2, y2, "up")
@@ -371,6 +371,7 @@ func (code *CodeView) action_goto_declaration() {
 
 func (code *CodeView) action_get_refer() {
 	main := code.main
+	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	code.main.get_refer(loc, main.codeview.filename)
 	main.ActiveTab(view_fzf)
