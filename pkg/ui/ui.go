@@ -634,6 +634,9 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if main.layout.dialog.Visible {
 		return main.layout.dialog.handle_key(event)
 	}
+  if main.layout.spacemenu.visible{
+     return main.layout.spacemenu.handle_key(event)
+  }
 
 	if event.Key() == tcell.KeyTAB || event.Key() == tcell.KeyTab {
 		main.switch_tab_view()

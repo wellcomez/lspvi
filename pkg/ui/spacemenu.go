@@ -20,6 +20,15 @@ type space_menu_item struct {
 	handle func()
 }
 
+func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
+	if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
+		handle := v.table.InputHandler()
+		handle(event, nil)
+	} else if event.Key() == tcell.KeyEnter {
+		v.onenter()
+	}
+	return nil
+}
 func (menu *space_menu) onenter() {
 	menu.visible = false
 	idx := menu.table.GetCurrentItem()
