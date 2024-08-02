@@ -427,8 +427,9 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 	// if v.vi.Escape {
 	// 	v.ExitEnterEscape()
 	// }
-	current_view := v.app.get_focus_view_id()
-	if current_view == view_code || current_view == view_cmd {
+	//current_view := v.app.get_focus_view_id()
+	//if current_view == view_code || current_view == view_cmd 
+  {
 		if v.vi_handle != nil {
 			if v.vi_handle.HanldeKey(event) {
 				return true, nil

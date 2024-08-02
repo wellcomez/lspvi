@@ -545,7 +545,6 @@ func (main *mainui) set_viewid_focus(v view_id) {
 }
 func (main *mainui) set_focus(v *tview.Box) {
 	if v != nil {
-		// v.SetBorderColor(tcell.ColorGreen)
 		main.app.SetFocus(v)
 	}
 }

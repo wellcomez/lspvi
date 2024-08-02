@@ -103,17 +103,29 @@ func view_id_init(m *mainui) {
 			if v == view_code {
 				box.SetFocusFunc(func() {
 					m.editor_area_fouched()
-					box.SetBorderColor(tcell.ColorGreenYellow)
+					change_after_focused(box, m)
 				})
 			} else {
 				box.SetFocusFunc(func() {
-					box.SetBorderColor(tcell.ColorGreenYellow)
+					change_after_focused(box, m)
 				})
 			}
 			box.SetBlurFunc(func() {
 				box.SetBorderColor(tcell.ColorWhite)
 			})
 		}
+	}
+}
+
+func change_after_focused(box *tview.Box, m *mainui) {
+	box.SetBorderColor(tcell.ColorGreenYellow)
+	vid := m.get_focus_view_id()
+	switch vid {
+	case view_code:
+	case view_cmd:
+		return
+	default:
+		m.cmdline.Vim.ExitEnterEscape()
 	}
 }
 func (viewid view_id) to_box(m *mainui) *tview.Box {
