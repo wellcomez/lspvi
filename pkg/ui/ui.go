@@ -24,6 +24,7 @@ type rootlayout struct {
 	tab_area    *tview.Flex
 	parent      *tview.Flex
 	dialog      *fzfmain
+	spacemenu   *space_menu
 }
 
 // editor_area_fouched
@@ -429,6 +430,7 @@ func MainUI(arg *Arguments) {
 		cmdline:     main.cmdline.input,
 		parent:      main_layout,
 		dialog:      Newfuzzpicker(&main, app),
+		spacemenu:   new_spacemenu(&main),
 	}
 
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
@@ -446,6 +448,7 @@ func MainUI(arg *Arguments) {
 		return event, action
 	})
 	app.SetAfterDrawFunc(func(screen tcell.Screen) {
+    main.layout.spacemenu.Draw(screen)
 		if main.layout.dialog.Visible {
 			main.layout.dialog.Draw(screen)
 		}

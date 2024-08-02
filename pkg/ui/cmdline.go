@@ -328,6 +328,18 @@ func (l LeaderHandle) State() string {
 
 // HanldeKey implements vim_mode_handle.
 func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
+	if l.main.layout.spacemenu.visible {
+		if event.Key() == tcell.KeyDown ||event.Key() == tcell.KeyUp {
+			handle:=l.main.layout.spacemenu.table.InputHandler()
+			handle(event,nil)
+			return true
+		}
+		if event.Key() == tcell.KeyEnter{
+l.main.layout.spacemenu.onenter();
+			return true
+		}
+	}
+	l.main.layout.spacemenu.visible=false
 	ch := event.Rune()
 	if l.state.end {
 		l.state.kseq = ""
@@ -456,6 +468,7 @@ func (v *Vim) EnterLead() bool {
 			vi:    v,
 			state: &leadstate{end: false},
 		}
+		v.app.layout.spacemenu.visible = true
 		return true
 	} else {
 		return false
