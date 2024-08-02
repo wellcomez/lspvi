@@ -63,7 +63,7 @@ func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	sym.load(ranges)
 }
 
-func (v *fzfmain) OpenDocumntFzf(file *lspcore.Symbol_file) {
+func (v *fzfmain) OpenDocumntSymbolFzf(file *lspcore.Symbol_file) {
 	sym := new_outline_picker(v, file)
 	v.Frame = tview.NewFrame(sym.new_fzf_symbol_view(v.input))
 	v.Frame.SetBorder(true)

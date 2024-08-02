@@ -57,7 +57,7 @@ func new_spacemenu(m *mainui) *space_menu {
 	}
 	var item []space_menu_item = []space_menu_item{
 		{cell: []string{"o", "open sysmbol"}, handle: func() {
-			m.OpenDocumntFzf()
+			m.OpenDocumntSymbolFzf()
 		}},
 		{cell: []string{"r", "reference"}, handle: func() {
 			m.OpenDocumntRef()

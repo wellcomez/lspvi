@@ -448,7 +448,7 @@ func MainUI(arg *Arguments) {
 		return event, action
 	})
 	app.SetAfterDrawFunc(func(screen tcell.Screen) {
-    main.layout.spacemenu.Draw(screen)
+		main.layout.spacemenu.Draw(screen)
 		if main.layout.dialog.Visible {
 			main.layout.dialog.Draw(screen)
 		}
@@ -634,16 +634,16 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if main.layout.dialog.Visible {
 		return main.layout.dialog.handle_key(event)
 	}
-  if main.layout.spacemenu.visible{
-     return main.layout.spacemenu.handle_key(event)
-  }
+	if main.layout.spacemenu.visible {
+		return main.layout.spacemenu.handle_key(event)
+	}
 
 	if event.Key() == tcell.KeyTAB || event.Key() == tcell.KeyTab {
 		main.switch_tab_view()
 		return nil
 	}
 	if event.Key() == tcell.KeyCtrlS {
-		main.OpenDocumntFzf()
+		main.OpenDocumntSymbolFzf()
 		return nil
 	}
 	if event.Key() == tcell.KeyCtrlP {
@@ -666,8 +666,11 @@ func (main mainui) OpenDocumntRef() {
 	loc := main.codeview.lsp_cursor_loc()
 	main.layout.dialog.OpenRefFzf(main.lspmgr.Current, loc)
 }
-func (main mainui) OpenDocumntFzf() {
-	main.layout.dialog.OpenDocumntFzf(main.lspmgr.Current)
+func (main mainui) OpenFilePicke() {
+	main.layout.dialog.OpenFileFzf(main.root)
+}
+func (main mainui) OpenDocumntSymbolFzf() {
+	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
 }
 func (m *mainui) OnGrep() {
 	if m.prefocused == view_code || m.codeview.view.HasFocus() {

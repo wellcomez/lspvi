@@ -327,7 +327,7 @@ func (l LeaderHandle) State() string {
 }
 
 // HanldeKey implements vim_mode_handle.
-func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {	
+func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	l.main.layout.spacemenu.visible = false
 	ch := event.Rune()
 	if l.state.end {
@@ -341,7 +341,7 @@ func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.end()
 	}
 	if key == "o" {
-		l.main.OpenDocumntFzf()
+		l.main.OpenDocumntSymbolFzf()
 		l.end()
 		return true
 	}
