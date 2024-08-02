@@ -54,6 +54,7 @@ func find_key(s string, keys []string, offset int) []keypattern {
 	return []keypattern{}
 }
 func (l *customlist) Draw(screen tcell.Screen) {
+	l.Box.DrawForSubclass(screen, l.Box)
 	offset_x, y, _, height := l.GetInnerRect()
 
 	bottomLimit := y + height

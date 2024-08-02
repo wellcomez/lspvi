@@ -295,7 +295,7 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	list.SetBorder(true)
 	cb := func(t querytask) {
 		v.app.QueueUpdate(func() {
-			v.Frame.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
+			list.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
 			if t.update_count {
 				return
 			}
