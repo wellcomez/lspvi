@@ -300,7 +300,7 @@ func (m *mainui) Init() {
 func (m mainui) OnCodeLineChange(line int) {
 	m.symboltree.OnCodeLineChange(line)
 }
-func (m mainui) OnTabChanged(tab *TabButton) {
+func (m *mainui) OnTabChanged(tab *TabButton) {
 	if tab.Name == "uml" {
 		if m.uml != nil {
 			m.uml.Init()
