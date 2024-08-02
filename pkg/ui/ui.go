@@ -629,13 +629,23 @@ func (vl *view_link) next_view(t direction) view_id {
 	return next
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
+	eventname := event.Name()
 	log.Println("main ui recieved ",
-		main.get_focus_view_id(), event.Key(), event.Rune())
+		main.get_focus_view_id(), eventname)
+	//Ctrl+O
 	if main.layout.dialog.Visible {
 		return main.layout.dialog.handle_key(event)
 	}
 	if main.layout.spacemenu.visible {
 		return main.layout.spacemenu.handle_key(event)
+	}
+	if eventname == "Ctrl+O" {
+		main.OpenFile(main.bf.GoBack(), nil)
+		return nil
+	}
+	if event.Key() == tcell.KeyCtrlO {
+		main.OpenFile(main.bf.GoForward(), nil)
+		return nil
 	}
 
 	if event.Key() == tcell.KeyTAB || event.Key() == tcell.KeyTab {
@@ -656,10 +666,8 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return returnValue
 	} else if event.Key() == tcell.KeyCtrlC {
 		main.Close()
-	} else if event.Key() == tcell.KeyCtrlO {
-		main.OpenFile(main.bf.GoBack(), nil)
-		return nil
 	}
+
 	return event
 }
 func (main mainui) OpenDocumntRef() {
@@ -672,6 +680,7 @@ func (main mainui) OpenFilePicke() {
 func (main mainui) OpenDocumntSymbolFzf() {
 	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
 }
+
 // func (m *mainui) OnGrep() {
 // 	if m.prefocused == view_code || m.codeview.view.HasFocus() {
 // 		m.set_viewid_focus(view_fzf)
