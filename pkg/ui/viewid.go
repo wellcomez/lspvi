@@ -97,6 +97,17 @@ func focus_viewid(m *mainui) view_id {
 }
 func view_id_init(m *mainui) {
 	config_main_tab_order(m)
+	for _, v := range all_view_list {
+		box := v.to_box(m)
+		if box != nil {
+			box.SetFocusFunc(func() {
+				box.SetBorderColor(tcell.ColorDarkGreen)
+			})
+			box.SetBlurFunc(func() {
+				box.SetBorderColor(tcell.ColorWhite)
+			})
+		}
+	}
 }
 func (viewid view_id) to_box(m *mainui) *tview.Box {
 	switch viewid {
