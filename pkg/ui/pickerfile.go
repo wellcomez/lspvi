@@ -295,21 +295,7 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	list.SetBorder(true)
 	cb := func(t querytask) {
 		v.app.QueueUpdate(func() {
-			list.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
-			if t.update_count {
-				return
-			}
-			list.Clear()
-			list.Key = t.query
-			for i := 0; i < min(len(t.ret), 1000); i++ {
-				a := t.ret[i]
-				list.AddItem(a.name, a.Positions, func() {
-					idx := list.GetCurrentItem()
-					f := t.ret[idx]
-					v.Visible = false
-					v.main.OpenFile(f.path, nil)
-				})
-			}
+			update_list_view(list, t, v)
 			v.app.ForceDraw()
 		})
 	}
@@ -331,9 +317,27 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 				path: v,
 			})
 		}
-		cb(task)
+		update_list_view(list, task, v)
 	}
 	return ret
+}
+
+func update_list_view(list *customlist, t querytask, v *fzfmain) {
+	list.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
+	if t.update_count {
+		return
+	}
+	list.Clear()
+	list.Key = t.query
+	for i := 0; i < min(len(t.ret), 1000); i++ {
+		a := t.ret[i]
+		list.AddItem(a.name, a.Positions, func() {
+			idx := list.GetCurrentItem()
+			f := t.ret[idx]
+			v.Visible = false
+			v.main.OpenFile(f.path, nil)
+		})
+	}
 }
 func (wk *DirWalk) UpdateQueryOld(query string) {
 	cur := wk.cur
