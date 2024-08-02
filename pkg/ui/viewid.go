@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	"log"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -42,6 +44,25 @@ var all_view_name = []string{
 	"cmd",
 	"file",
 	"outline",
+}
+
+func (viewid view_id) setfocused(m *mainui) {
+	m.set_viewid_focus(viewid)
+}
+func mouseclick_view_focused(m *mainui, event *tcell.EventMouse) {
+	focused := focus_viewid(m)
+	for _, v := range all_view_list {
+		if v==view_outline_list{
+			log.Printf("")
+		}
+		box := v.to_box(m)
+		if inbox(box, event) {
+			if focused != v {
+				v.setfocused(m)
+			}
+			return
+		}
+	}
 }
 
 func (viewid view_id) to_view_link(m *mainui) *view_link {
@@ -119,7 +140,7 @@ func inbox(root *tview.Box, event *tcell.EventMouse) bool {
 	return poition_inbox(root, posX, posY)
 }
 func poition_inbox(root *tview.Box, posX, posY int) bool {
-	x1, y1, w, h := root.GetInnerRect()
+	x1, y1, w, h := root.GetRect()
 	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
 		return false
 	}

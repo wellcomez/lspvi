@@ -438,6 +438,9 @@ func MainUI(arg *Arguments) {
 		return main.handle_key(event)
 	})
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
+		// if action == tview.MouseLeftClick {
+		// 	mouseclick_view_focused(&main, event)
+		// }
 		if main.layout.dialog.Visible {
 			return main.layout.dialog.MouseHanlde(event, action)
 		}
@@ -539,7 +542,7 @@ func (main *mainui) set_viewid_focus(v view_id) {
 }
 func (main *mainui) set_focus(v *tview.Box) {
 	if v != nil {
-		v.SetBorderColor(tcell.ColorGreen)
+		// v.SetBorderColor(tcell.ColorGreen)
 		main.app.SetFocus(v)
 	}
 }
