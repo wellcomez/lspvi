@@ -200,8 +200,9 @@ func handle_backspace(event *tcell.EventKey, cmd *cmdline) bool {
 }
 
 type escapestate struct {
-	keyseq []string
-	init   bool
+	keyseq  []string
+	lastcmd string
+	init    bool
 }
 type EscapeHandle struct {
 	main  *mainui
@@ -211,17 +212,28 @@ type EscapeHandle struct {
 
 // State implements vim_mode_handle.
 func (e EscapeHandle) State() string {
-	return fmt.Sprintf("escape %s", strings.Join(e.state.keyseq, ""))
+	s := e.state.lastcmd
+	if len(e.state.keyseq) > 0 {
+		s = strings.Join(e.state.keyseq, "")
+	}
+
+	return fmt.Sprintf("escape %s", s)
 }
 
 // end
 func (e EscapeHandle) end() {
-	e.state.init = true
+	e.state.end()
+}
+func (state *escapestate) end() {
+	state.init = true
+	state.lastcmd = strings.Join(state.keyseq, "")
+	state.keyseq = []string{}
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	if len(l.state.keyseq) == 0 || l.state.init {
 		if l.main.codeview.handle_key_impl(event) == nil {
+			l.state.keyseq = []string{string(event.Rune())}
 			l.end()
 			return true
 		}
@@ -289,7 +301,6 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	if fun, ok := commandmap[strings.Join(l.state.keyseq, "")]; ok {
 		fun()
 		l.end()
-		l.vi.ExitEnterEscape()
 	}
 
 	return true

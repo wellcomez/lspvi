@@ -363,6 +363,7 @@ func (code *CodeView) action_goto_define() {
 }
 func (code *CodeView) action_goto_declaration() {
 	main := code.main
+  code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	code.main.get_declare(loc, main.codeview.filename)
 }
