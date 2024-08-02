@@ -336,7 +336,7 @@ func MainUI(arg *Arguments) {
 	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)
 	}
-	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: "/home/z/dev/lsp/goui", Callback: handle})
+	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: root, Callback: handle})
 	main.lspmgr = lspmgr
 	main.root = root
 
@@ -381,7 +381,10 @@ func MainUI(arg *Arguments) {
 			AddItem(symbol_tree.view, 0, 2, false)
 	// fzfbtn := tview.NewButton("fzf")
 	// logbtn := tview.NewButton("log")
-	uml := NewUmlView(&main, &main.lspmgr.Wk)
+	uml,err := NewUmlView(&main, &main.lspmgr.Wk)
+	if err != nil {
+		log.Fatal(err)
+	}
 	main.uml = uml
 	var tabs []string = []string{main.fzf.Name, "log", main.callinview.Name}
 	if uml != nil {

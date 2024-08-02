@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	lsp "github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
@@ -35,8 +36,8 @@ type refpicker_impl struct {
 	listdata          []ref_line
 	current_list_data []ref_line
 	codeline          []string
-
-	parent *fzfmain
+	fzf               *fzflib.Fzf
+	parent            *fzfmain
 }
 
 type refpicker struct {
@@ -74,11 +75,16 @@ type ref_line struct {
 	path string
 }
 
+func (ref ref_line) String() string {
+	return fmt.Sprintf("%s %s:%d", ref.line, ref.path, ref.loc.Range.Start.Line)
+}
+
 // OnRefenceChanged implements lspcore.lsp_data_changed.
 func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 	pk.impl.refs = file
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
+	datafzf := []string{}
 	for i := range file {
 		v := file[i]
 		source_file_path := v.URI.AsPath().String()
@@ -96,16 +102,19 @@ func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 		end := min(len(line), v.Range.Start.Character+gap)
 		path := strings.Replace(v.URI.AsPath().String(), pk.impl.codeprev.main.root, "", -1)
 		secondline := fmt.Sprintf("%s:%d", path, v.Range.Start.Line+1)
-		pk.impl.listdata = append(pk.impl.listdata, ref_line{
+		r := ref_line{
 			loc:  v,
 			line: line,
 			path: path,
-		})
+		}
+		pk.impl.listdata = append(pk.impl.listdata, r)
+		datafzf = append(datafzf, r.String())
 		listview.AddItem(secondline, line[begin:end], 0, func() {
 			pk.impl.codeprev.main.OpenFile(v.URI.AsPath().String(), &v)
 			pk.impl.parent.hide()
 		})
 	}
+	pk.impl.fzf = fzflib.New(datafzf, fzflib.DefaultOptions())
 	pk.impl.current_list_data = pk.impl.listdata
 	pk.update_preview()
 }
@@ -156,15 +165,32 @@ func (pk refpicker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
 	listview := pk.impl.listview
 	listview.Clear()
-	pk.impl.current_list_data = []ref_line{}
-	for i := range pk.impl.listdata {
-		v := pk.impl.listdata[i]
-		pk.impl.current_list_data = append(pk.impl.current_list_data, v)
-		if strings.Contains(strings.ToLower(v.line), query) {
-			listview.AddItem(v.path, v.line, 0, func() {
-				pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
-				pk.impl.parent.hide()
-			})
+	if fzf := pk.impl.fzf; fzf != nil {
+		fzf.Search(query)
+		var result fzflib.SearchResult
+		result = <-fzf.GetResultChannel()
+		pk.impl.current_list_data = []ref_line{}
+		for _, v := range result.Matches {
+			v := pk.impl.listdata[v.HayIndex]
+			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
+			listview.AddItem(
+				fmt.Sprintf("%s:%d", v.path, v.loc.Range.Start.Line),
+				v.line, 0, func() {
+					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
+					pk.impl.parent.hide()
+				})
+		}
+	} else {
+		pk.impl.current_list_data = []ref_line{}
+		for i := range pk.impl.listdata {
+			v := pk.impl.listdata[i]
+			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
+			if strings.Contains(strings.ToLower(v.line), query) {
+				listview.AddItem(v.path, v.line, 0, func() {
+					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
+					pk.impl.parent.hide()
+				})
+			}
 		}
 	}
 	pk.update_preview()

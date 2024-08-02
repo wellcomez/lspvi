@@ -59,10 +59,10 @@ func (v *umlview) openfile(name string) {
 func (v *umlview) Init() {
 	v.file.Init()
 }
-func NewUmlView(main *mainui, wk *lspcore.WorkSpace) *umlview {
+func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview,error) {
 	ex, err := lspcore.NewExportRoot(wk)
 	if err != nil {
-		return nil
+		return nil,err
 	}
 	file := new_uml_tree(main, "uml", ex.Dir)
 	layout := tview.NewFlex()
@@ -77,5 +77,5 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) *umlview {
 		Name:      file.Name,
 	}
 	file.openfile = ret.openfile
-	return ret
+	return ret,nil
 }
