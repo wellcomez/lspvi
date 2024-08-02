@@ -173,18 +173,18 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		if len(txt) > 1 {
 			vim.vi.FindEnter = txt[1:]
 		}
-		cmd.main.OnSearch(txt[1:], false)
+		cmd.main.OnSearch(txt[1:], false,false)
 		return true
 	}
 	if len(vim.vi.FindEnter) > 0 {
 		if event.Rune() == 'n' {
-			cmd.main.OnSearch(vim.vi.FindEnter, false)
+			cmd.main.OnSearch(vim.vi.FindEnter, false,false)
 			return true
 		}
 	}
 	txt = txt + string(event.Rune())
 	cmd.input.SetText(txt)
-	cmd.main.OnSearch(txt[1:], false)
+	cmd.main.OnSearch(txt[1:], false,false)
 	return true
 }
 

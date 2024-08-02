@@ -465,7 +465,7 @@ func (main *mainui) Close() {
 	main.lspmgr.Close()
 	main.app.Stop()
 }
-func (main *mainui) OnSearch(txt string, fzf bool) {
+func (main *mainui) OnSearch(txt string, tofzf bool,noloop bool) {
 	if len(txt) == 0 {
 		return
 	}
@@ -476,11 +476,11 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 	if main.searchcontext == nil {
 		main.searchcontext = NewGenericSearch(main.prefocused, txt)
 	} else {
-		changed = main.searchcontext.Changed(main.prefocused, txt) || fzf
+		changed = main.searchcontext.Changed(main.prefocused, txt) || noloop 
 		if changed {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
 		}
-		if fzf {
+		if tofzf {
 			main.cmdline.Vim.EnterGrep(txt)
 		}
 	}
@@ -490,7 +490,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 		if changed {
 			gs.indexList = main.codeview.OnSearch(txt)
 			main.codeview.gotoline(gs.GetIndex())
-			if fzf {
+			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
 				main.fzf.main.fzf.OnRefenceChanged(locs, data_search)
 			}
