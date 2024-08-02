@@ -377,7 +377,7 @@ func MainUI(arg *Arguments) {
 	editor_area :=
 		tview.NewFlex().SetDirection(tview.FlexColumn).
 			AddItem(main.fileexplorer.view, 0, 1, false).
-			AddItem(codeview.view, 0, 4, false).
+			AddItem(codeview.view, 0, 4, true).
 			AddItem(symbol_tree.view, 0, 2, false)
 	// fzfbtn := tview.NewButton("fzf")
 	// logbtn := tview.NewButton("log")
@@ -418,7 +418,7 @@ func MainUI(arg *Arguments) {
 	// AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin).SetStyle(style), 10, 1, true)
 	main_layout :=
 		tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(editor_area, 0, 3, false).
+			AddItem(editor_area, 0, 3, true).
 			AddItem(console, 0, 2, false).
 			AddItem(tab_area, 1, 0, false).
 			AddItem(main.cmdline.input, 3, 1, false)
