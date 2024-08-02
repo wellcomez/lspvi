@@ -19,14 +19,14 @@ import (
 	"github.com/rivo/tview"
 )
 
-// new_fzf_file 
+// new_fzf_file
 func (pk DirWalk) new_fzf_file(input *tview.InputField) *tview.Grid {
 	layout := tview.NewGrid().
 		SetColumns(-1, 24, 16, -1).
 		SetRows(-1, 3, 3, 2).
 		AddItem(pk.list, 0, 0, 3, 4, 0, 0, false).
 		AddItem(input, 3, 0, 1, 4, 0, 0, false)
-  layout.SetBorder(true)
+	layout.SetBorder(true)
 	return layout
 }
 
@@ -292,7 +292,7 @@ type file_picker_item struct {
 
 func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	list := new_customlist()
-  list.SetBorder(true)
+	list.SetBorder(true)
 	cb := func(t querytask) {
 		v.app.QueueUpdate(func() {
 			v.Frame.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
@@ -375,7 +375,7 @@ func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 	}
 	for _, v := range result.Matches {
 		task.ret = append(task.ret, file_picker_item{
-			name:      strings.ReplaceAll(v.Key, root, ""),
+			name:      strings.TrimLeft(strings.ReplaceAll(v.Key, root, ""), "/"),
 			path:      v.Key,
 			Positions: v.Positions,
 		})

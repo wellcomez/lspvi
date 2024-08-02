@@ -120,12 +120,12 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	yOffset := code.yOfffset()
 	xOffset := code.xOffset()
 	// offsetx:=3
-	code.main.set_viewid_focus(view_code)
 	pos := femto.Loc{
 		Y: posY + root.Topline - yOffset,
 		X: posX - int(xOffset),
 	}
 	if action == tview.MouseLeftDown {
+		code.main.set_viewid_focus(view_code)
 		code.mouse_select_area = true
 		//log.Print(x1, y1, x2, y2, "down")
 		pos = tab_loc(root, pos)
@@ -149,6 +149,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		return tview.MouseConsumed, nil
 	}
 	if action == tview.MouseLeftClick {
+		code.main.set_viewid_focus(view_code)
 		code.mouse_select_area = false
 		root.Cursor.Loc = tab_loc(root, pos)
 		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
@@ -477,7 +478,6 @@ func (code *CodeView) Load(filename string) error {
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
 	code.filename = filename
-	code.view.SetTitle(filename)
 	var colorscheme femto.Colorscheme
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
@@ -485,8 +485,9 @@ func (code *CodeView) Load(filename string) error {
 		}
 	}
 	code.view.SetColorscheme(colorscheme)
-
-	code.view.SetTitle(filename)
+	name :=strings.ReplaceAll(filename, code.main.root,"")
+	name=strings.TrimLeft(name,"/")
+	code.view.SetTitle(name)
 	return nil
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {

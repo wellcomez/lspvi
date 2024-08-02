@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -256,8 +255,8 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	}
 
 	m.bf.history.AddToHistory(file)
-	title := strings.Replace(file, m.root, "", -1)
-	m.layout.parent.SetTitle(title)
+	// title := strings.Replace(file, m.root, "", -1)
+	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
 	m.codeview.Load(file)
 	if loc != nil {
@@ -453,6 +452,7 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(&main)
 	// main.set_viewid_focus(view_code)
+	main_layout.SetTitle("lspvi")
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
