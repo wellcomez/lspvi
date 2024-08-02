@@ -11,7 +11,7 @@ import (
 )
 
 type umlview struct {
-
+	*view_link
 	//image  *tview.Image
 	preview *tview.Flex
 	file    *file_tree_view
@@ -21,7 +21,7 @@ type umlview struct {
 
 func (v *umlview) openfile(name string) {
 	ext := filepath.Ext(name)
-	
+
 	layout := v.file.main.layout
 	layout.parent.ResizeItem(layout.editor_area, 0, 1)
 	layout.parent.ResizeItem(layout.console, 0, 5)
@@ -70,10 +70,11 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) *umlview {
 	preview := tview.NewFlex()
 	layout.AddItem(preview, 0, 7, false)
 	ret := &umlview{
-		preview: preview,
-		file:    file,
-		layout:  layout,
-		Name:    file.Name,
+		view_link: &view_link{up: view_code, left: view_callin},
+		preview:   preview,
+		file:      file,
+		layout:    layout,
+		Name:      file.Name,
 	}
 	file.openfile = ret.openfile
 	return ret

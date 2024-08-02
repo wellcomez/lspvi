@@ -16,9 +16,8 @@ import (
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
-type view_link struct {
-	left, right, up, down view_id
-}
+var tabs []view_id = []view_id{view_fzf, view_callin, view_uml}
+
 type rootlayout struct {
 	editor_area *tview.Flex
 	console     *tview.Pages
@@ -79,66 +78,14 @@ func (m *mainui) SavePrevFocus() {
 	m.prefocused = m.get_focus_view_id()
 }
 func (m *mainui) getfocusviewname() string {
-	viewid := m.get_focus_view_id()
-	return get_viewid_name(viewid)
+	return m.get_focus_view_id().getname()
 }
-func (m mainui) get_view_from_id(viewid view_id) *tview.Box {
-	switch viewid {
-	case view_code:
-		return m.codeview.view.Box
-	case view_callin:
-		return m.callinview.view.Box
-	case view_cmd:
-		return m.cmdline.input.Box
-	case view_log:
-		return m.log.Box
-	case view_fzf:
-		return m.fzf.view.Box
-	case view_outline_list:
-		return m.symboltree.view.Box
-	case view_file:
-		return m.fileexplorer.view.Box
-	default:
-		return nil
-	}
+func (m *mainui) get_view_from_id(viewid view_id) *tview.Box {
+	return viewid.to_box(m)
 }
 
-func get_viewid_name(viewid view_id) string {
-	switch viewid {
-	case view_code:
-		return "code"
-	case view_callin:
-		return "callin"
-	case view_cmd:
-		return "cmd"
-	case view_log:
-		return "log"
-	case view_fzf:
-		return "fzf"
-	case view_outline_list:
-		return "outline"
-	default:
-		return "???"
-	}
-}
 func (m *mainui) get_focus_view_id() view_id {
-	if m.codeview.view.HasFocus() {
-		return view_code
-	} else if m.callinview.view.HasFocus() {
-		return view_callin
-	} else if m.cmdline.input.HasFocus() {
-		return view_cmd
-	} else if m.log.HasFocus() {
-		return view_log
-	} else if m.fzf.view.HasFocus() {
-		return view_fzf
-	} else if m.fileexplorer.view.HasFocus() {
-		return view_file
-	} else if m.symboltree.view.HasFocus() {
-		return view_outline_list
-	} else {
-		return view_other
-	}
+	return focus_viewid(m)
 }
 func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
 	m.lspmgr.Current.Async_resolve_stacksymbol(call_in_task, func() {
@@ -227,39 +174,28 @@ func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 	lsp.Reference(pos)
 }
 
-type view_id int
-
-const (
-	view_none = iota
-	view_log
-	view_fzf
-	view_callin
-	view_code
-	view_uml
-	view_cmd
-	view_file
-	view_outline_list
-	view_other
-)
-
 func (m *mainui) ActiveTab(id int) {
-	var name = ""
-	if view_fzf == id {
-		m.set_viewid_focus(view_fzf)
-		name = m.fzf.Name
-	} else if view_callin == id {
-		m.set_viewid_focus(view_callin)
-		name = m.callinview.Name
+	tabid := view_id(id)
+	yes := false
+	for _, v := range tabs {
+		if v == tabid {
+			yes = true
+			break
+		}
 	}
-	if len(name) > 0 {
-		m.page.SwitchToPage(name)
-		tab := m.tabs.Find(name)
-		for _, v := range m.tabs.tabs {
-			if v == tab {
-				v.view.Focus(nil)
-			} else {
-				v.view.Blur()
-			}
+	if !yes {
+		return
+	}
+	m.lost_focus(m.get_view_from_id(m.get_focus_view_id()))
+	m.set_focus(m.get_view_from_id(tabid))
+	var name = view_id(id).getname()
+	m.page.SwitchToPage(name)
+	tab := m.tabs.Find(name)
+	for _, v := range m.tabs.tabs {
+		if v == tab {
+			v.view.Focus(nil)
+		} else {
+			v.view.Blur()
 		}
 	}
 }
@@ -504,7 +440,8 @@ func MainUI(arg *Arguments) {
 			main.layout.dialog.Draw(screen)
 		}
 	})
-	main.set_viewid_focus(view_code)
+	view_id_init(&main)
+	// main.set_viewid_focus(view_code)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
@@ -518,7 +455,7 @@ func (main *mainui) OnSearch(txt string, fzf bool) {
 	if len(txt) == 0 {
 		return
 	}
-	if main.prefocused == view_other || main.prefocused == view_cmd {
+	if main.prefocused == view_none || main.prefocused == view_cmd {
 		main.prefocused = view_code
 	}
 	changed := true
@@ -583,6 +520,12 @@ func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {
 var leadkey = ' '
 
 func (main *mainui) set_viewid_focus(v view_id) {
+	for _, tab := range tabs {
+		if v == tab {
+			main.ActiveTab(int(tab))
+			return
+		}
+	}
 	main.lost_focus(main.get_view_from_id(main.get_focus_view_id()))
 	main.set_focus(main.get_view_from_id(v))
 }
@@ -601,16 +544,14 @@ func (main *mainui) lost_focus(v *tview.Box) *mainui {
 }
 func (main *mainui) switch_tab_view() {
 	viewid := main.get_focus_view_id()
-	switch viewid {
-	case view_fzf:
-		main.set_viewid_focus(view_outline_list)
-	case view_outline_list:
-		main.set_viewid_focus(view_code)
-	case view_code:
-		main.set_viewid_focus(view_fzf)
-	case view_cmd:
-		return
-	default:
+	yes := false
+	if link := viewid.to_view_link(main); link != nil {
+		if link.next != view_none {
+			main.set_viewid_focus(link.next)
+			yes = true
+		}
+	}
+	if !yes {
 		main.set_viewid_focus(view_code)
 	}
 	if main.get_focus_view_id() != view_code {
@@ -621,7 +562,7 @@ func (main *mainui) switch_tab_view() {
 func (main *mainui) UpdateStatus() {
 	viewname := main.getfocusviewname()
 	if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
-		viewname = get_viewid_name(main.searchcontext.view)
+		viewname = main.searchcontext.view.getname()
 	}
 	cursor := main.codeview.String()
 	main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s", cursor, main.cmdline.Vim.String(), viewname))
