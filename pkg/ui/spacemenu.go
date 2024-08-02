@@ -26,6 +26,8 @@ func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		handle(event, nil)
 	} else if event.Key() == tcell.KeyEnter {
 		v.onenter()
+	} else if v.main.cmdline.Vim.vi.Leader {
+		v.main.cmdline.Vim.vi_handle.HanldeKey(event)
 	}
 	return nil
 }
@@ -60,7 +62,9 @@ func new_spacemenu(m *mainui) *space_menu {
 		{cell: []string{"r", "reference"}, handle: func() {
 			m.OpenDocumntRef()
 		}},
-		{cell: []string{"f", "picker file"}},
+		{cell: []string{"f", "picker file"}, handle: func() {
+			m.layout.dialog.OpenFileFzf(m.root)
+		}},
 	}
 	impl := &space_menu_impl{
 		items: item,
