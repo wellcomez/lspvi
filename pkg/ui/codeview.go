@@ -142,7 +142,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	}
 	if action == tview.MouseLeftUp {
 		if code.mouse_select_area {
-			code.view.Cursor.SetSelectionEnd(tab_loc(root,pos))
+			code.view.Cursor.SetSelectionEnd(tab_loc(root, pos))
 			code.mouse_select_area = false
 		}
 		//log.Print(x1, y1, x2, y2, "up")
@@ -364,7 +364,7 @@ func (code *CodeView) action_goto_define() {
 }
 func (code *CodeView) action_goto_declaration() {
 	main := code.main
-  code.view.Cursor.SelectWord()
+	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	code.main.get_declare(loc, main.codeview.filename)
 }
@@ -424,7 +424,11 @@ func text_loc_to_range(loc [2]femto.Loc) lsp.Range {
 func (code CodeView) String() string {
 	cursor := code.view.Cursor
 	X := max(cursor.X, cursor.GetVisualX())
-	return fmt.Sprintf("%d:%d", cursor.Y+1, X)
+	sel := ""
+	if cursor.HasSelection() {
+		sel = fmt.Sprintf(" sel:%d", len(cursor.GetSelection()))
+	}
+	return fmt.Sprintf("%d:%d%s", cursor.Y+1, X, sel)
 }
 
 func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
@@ -486,8 +490,8 @@ func (code *CodeView) Load(filename string) error {
 		}
 	}
 	code.view.SetColorscheme(colorscheme)
-	name :=strings.ReplaceAll(filename, code.main.root,"")
-	name=strings.TrimLeft(name,"/")
+	name := strings.ReplaceAll(filename, code.main.root, "")
+	name = strings.TrimLeft(name, "/")
 	code.view.SetTitle(name)
 	return nil
 }
