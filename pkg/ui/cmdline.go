@@ -160,10 +160,14 @@ func (v vi_find_handle) State() string {
 // HanldeKey implements vim_mode_handle.
 func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	cmd := v.vi.app.cmdline
+	vim := v.vi
 	if !cmd.input.HasFocus() {
+		if event.Rune() == 'n' {
+			cmd.main.OnSearch(vim.vi.FindEnter, false, false)
+			return true
+		}
 		return false
 	}
-	vim := v.vi
 	shouldReturn := handle_backspace(event, cmd)
 	if shouldReturn {
 		return true
@@ -173,18 +177,18 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		if len(txt) > 1 {
 			vim.vi.FindEnter = txt[1:]
 		}
-		cmd.main.OnSearch(txt[1:], false,false)
+		cmd.main.OnSearch(txt[1:], false, false)
 		return true
 	}
 	if len(vim.vi.FindEnter) > 0 {
 		if event.Rune() == 'n' {
-			cmd.main.OnSearch(vim.vi.FindEnter, false,false)
+			cmd.main.OnSearch(vim.vi.FindEnter, false, false)
 			return true
 		}
 	}
 	txt = txt + string(event.Rune())
 	cmd.input.SetText(txt)
-	cmd.main.OnSearch(txt[1:], false,false)
+	cmd.main.OnSearch(txt[1:], false, false)
 	return true
 }
 
