@@ -62,6 +62,9 @@ func new_spacemenu(m *mainui) *space_menu {
 		{cell: []string{"r", "reference"}, handle: func() {
 			m.OpenDocumntRef()
 		}},
+		{cell: []string{"h", "history"}, handle: func() {
+			m.OpenHistoryFzf()
+		}},
 		{cell: []string{"f", "picker file"}, handle: func() {
 			m.layout.dialog.OpenFileFzf(m.root)
 		}},

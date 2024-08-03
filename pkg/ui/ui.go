@@ -679,6 +679,9 @@ func (main mainui) OpenDocumntRef() {
 func (main mainui) OpenFilePicke() {
 	main.layout.dialog.OpenFileFzf(main.root)
 }
+func (main mainui) OpenHistoryFzf() {
+	main.layout.dialog.OpenHistoryFzf()
+}
 func (main mainui) OpenDocumntSymbolFzf() {
 	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
 }

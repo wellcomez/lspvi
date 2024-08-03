@@ -53,24 +53,31 @@ func (v *fzfmain) hide() {
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	sym := new_refer_picker(*file, v)
-	v.Frame = tview.NewFrame(sym.new_view(v.input))
-	v.Frame.SetBorder(true)
+	x := sym.new_view(v.input)
+	v.create_dialog_content(x, sym)
 	v.Frame.SetTitle("symbol")
+	sym.load(ranges)
+}
+func (v *fzfmain) OpenHistoryFzf() {
+	sym := new_history_picker(v)
+	x := sym.new_history(v.input)
+	v.create_dialog_content(x, sym)
+	v.Frame.SetTitle("history")
+}
+
+func (v *fzfmain) create_dialog_content(grid *tview.Grid, sym picker) {
+	v.Frame = tview.NewFrame(grid)
+	v.Frame.SetBorder(true)
 	v.input.SetText(">")
 	v.app.SetFocus(v.input)
 	v.Visible = true
 	v.currentpicker = sym
-	sym.load(ranges)
 }
 
 func (v *fzfmain) OpenDocumntSymbolFzf(file *lspcore.Symbol_file) {
 	sym := new_outline_picker(v, file)
-	v.Frame = tview.NewFrame(sym.new_fzf_symbol_view(v.input))
-	v.Frame.SetBorder(true)
-	v.Frame.SetTitle("symbol")
-	v.input.SetText(">")
-	v.app.SetFocus(v.input)
-	v.Visible = true
+	layout := sym.new_fzf_symbol_view(v.input)
+	v.create_dialog_content(layout, sym)
 	v.currentpicker = sym
 }
 
