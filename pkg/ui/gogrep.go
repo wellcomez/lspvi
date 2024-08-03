@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"regexp"
@@ -65,27 +66,27 @@ var waitGreps sync.WaitGroup
 
 const separator = string(os.PathSeparator)
 
-func usage() {
-	fmt.Fprintf(os.Stderr, `gorep is find and grep tool.
+// func usage() {
+// 	fmt.Fprintf(os.Stderr, `gorep is find and grep tool.
 
-Version: %s
+// Version: %s
 
-Usage:
+// Usage:
 
-    gorep [options] pattern [path]
+//     gorep [options] pattern [path]
 
-The options are:
+// The options are:
 
-    -V              : print gorep version
-    -g              : enable grep
-    -grep-only      : enable grep and disable file search
-    -search-binary  : search binary files for matches on grep enable
-    -ignore pattern : pattern is ignored
-    -hidden         : search hidden files
-    -ignorecase     : ignore case distinctions in pattern
-`, version)
-	os.Exit(-1)
-}
+//     -V              : print gorep version
+//     -g              : enable grep
+//     -grep-only      : enable grep and disable file search
+//     -search-binary  : search binary files for matches on grep enable
+//     -ignore pattern : pattern is ignored
+//     -hidden         : search hidden files
+//     -ignorecase     : ignore case distinctions in pattern
+// `, version)
+// 	os.Exit(-1)
+// }
 
 func init() {
 	semFopenLimit = make(chan int, maxNumOfFileOpen)
@@ -117,7 +118,7 @@ func test_main() {
 	}
 
 	if flag.NArg() < 1 {
-		usage()
+		// usage()
 	}
 	pattern := flag.Arg(0)
 	fpath := "."
@@ -191,7 +192,8 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 				}
 			}
 		default:
-			fmt.Fprintf(os.Stderr, "reporter type error!\n")
+			log.Printf( "reporter type error!\n")
+			return
 		}
 	}
 
@@ -302,14 +304,14 @@ func verifyHidden(fpath string) bool {
 	return false
 }
 
-func (this *gorep) mapsend(fpath string, chans *channelSet) {
+func (grep *gorep) mapsend(fpath string, chans *channelSet) {
 	defer waitMaps.Done()
 
 	/* expand dir */
 	list, err := ioutil.ReadDir(fpath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "dive error: %v\n", err)
-		os.Exit(-1)
+		log.Printf("dive error: %v\n", err)
+		return
 	}
 
 	const ignoreFlag = os.ModeDir | os.ModeAppend | os.ModeExclusive | os.ModeTemporary |
@@ -319,30 +321,30 @@ func (this *gorep) mapsend(fpath string, chans *channelSet) {
 	for _, finfo := range list {
 		mode := finfo.Mode()
 		fname := finfo.Name()
-		if !this.scope.hidden && verifyHidden(fname) {
+		if !grep.scope.hidden && verifyHidden(fname) {
 			continue
 		}
-		if this.ignorePattern != nil && this.ignorePattern.MatchString(fname) {
+		if grep.ignorePattern != nil && grep.ignorePattern.MatchString(fname) {
 			continue
 		}
 		switch true {
 		case mode&os.ModeDir != 0:
 			fullpath := fpath + separator + fname
-			if this.scope.dir {
+			if grep.scope.dir {
 				chans.dir <- fullpath
 			}
 			waitMaps.Add(1)
-			go this.mapsend(fullpath, chans)
+			go grep.mapsend(fullpath, chans)
 		case mode&os.ModeSymlink != 0:
-			if this.scope.symlink {
+			if grep.scope.symlink {
 				chans.symlink <- fpath + separator + fname
 			}
 		case mode&ignoreFlag == 0:
 			fullpath := fpath + separator + fname
-			if this.scope.file {
+			if grep.scope.file {
 				chans.file <- fullpath
 			}
-			if this.scope.grep {
+			if grep.scope.grep {
 				chans.grep <- grepInfo{fullpath, 0, ""}
 			}
 		default:
@@ -404,14 +406,14 @@ func (grep *gorep) grep(fpath string, out chan<- grepInfo) {
 	semFopenLimit <- 1
 	file, err := os.Open(fpath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "grep open error: %v\n", err)
+		log.Printf("grep open error: %v\n", err)
 		return
 	}
 	defer file.Close()
 
 	fi, err := file.Stat()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "grep stat error: %v\n", err)
+		log.Printf("grep stat error: %v\n", err)
 		return
 	}
 
