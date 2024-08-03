@@ -1,29 +1,20 @@
-module zen108.com/lspui
+module zen108.com/lspvi
 
 go 1.21.3
 
 require (
+	github.com/charlievieth/fastwalk v1.0.8
+	github.com/reinhrst/fzf-lib v0.9.0
+	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
 	github.com/sourcegraph/jsonrpc2 v0.2.0
 	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
 )
 
 require (
 	github.com/atotto/clipboard v0.1.2 // indirect
-	github.com/charlievieth/fastwalk v1.0.8 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
-	github.com/go-playground/locales v0.14.1 // indirect
-	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.22.0 // indirect
-	github.com/junegunn/fzf v0.54.2 // indirect
-	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-shellwords v1.0.12 // indirect
-	github.com/reinhrst/fzf-lib v0.9.0 // indirect
-	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/zyedidia/micro v1.4.1 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
-	golang.org/x/net v0.21.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
