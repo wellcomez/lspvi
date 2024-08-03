@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-
 	// "code.google.com/p/go.crypto/ssh/terminal"
 )
 
@@ -126,10 +125,11 @@ func test_main() {
 		fpath = strings.TrimRight(flag.Arg(1), separator)
 	}
 
-	g := newGorep(pattern, &opt)
-	chans := g.kick(fpath)
-
-	g.report(chans, verifyColor())
+	g, err := newGorep(pattern, &opt)
+	if err == nil {
+		chans := g.kick(fpath)
+		g.report(chans, verifyColor())
+	}
 }
 
 const (
@@ -143,7 +143,7 @@ const (
 	NORM_DECO     = "\x1b[0m"
 )
 
-func (this *gorep) report(chans *channelSet, isColor bool) {
+func (grep *gorep) report(chans *channelSet, isColor bool) {
 	var markMatch string
 	var markDir string
 	var markFile string
@@ -178,13 +178,13 @@ func (this *gorep) report(chans *channelSet, isColor bool) {
 		switch ch := chanIf.(type) {
 		case chan string:
 			for msg := range ch {
-				decoStr := this.pattern.ReplaceAllString(msg, accent)
+				decoStr := grep.pattern.ReplaceAllString(msg, accent)
 				chPrint <- []byte(fmt.Sprintf("%s %s\n", mark, decoStr))
 			}
 		case chan grepInfo:
 			for msg := range ch {
 				if msg.lineNumber != 0 {
-					decoStr := this.pattern.ReplaceAllString(msg.line, accent)
+					decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
 					chPrint <- []byte(fmt.Sprintf("%s %s:%d: %s\n", mark, msg.fpath, msg.lineNumber, decoStr))
 				} else { // binary file
 					chPrint <- []byte(fmt.Sprintf("%s %s\n", mark, msg.line))
@@ -203,7 +203,7 @@ func (this *gorep) report(chans *channelSet, isColor bool) {
 	waitReports.Wait()
 }
 
-func newGorep(pattern string, opt *optionSet) *gorep {
+func newGorep(pattern string, opt *optionSet) (*gorep, error) {
 	base := &gorep{
 		pattern:       nil,
 		ignorePattern: nil,
@@ -225,8 +225,9 @@ func newGorep(pattern string, opt *optionSet) *gorep {
 	var err error
 	base.pattern, err = regexp.Compile(pattern)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(-1)
+		// fmt.Fprintf(os.Stderr, "%v\n", err)
+		// os.Exit(-1)
+		return nil, err
 	}
 
 	if len(opt.ignore) > 0 {
@@ -235,8 +236,7 @@ func newGorep(pattern string, opt *optionSet) *gorep {
 		}
 		base.ignorePattern, err = regexp.Compile(opt.ignore)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(-1)
+			return nil, err
 		}
 	}
 
@@ -257,22 +257,22 @@ func newGorep(pattern string, opt *optionSet) *gorep {
 		base.scope.hidden = true
 	}
 
-	return base
+	return base, nil
 }
 
-func (this *gorep) kick(fpath string) *channelSet {
+func (grep *gorep) kick(fpath string) *channelSet {
 	chsMap := makeChannelSet()
 	chsReduce := makeChannelSet()
 
 	go func() {
 		waitMaps.Add(1)
-		this.mapsend(fpath, chsMap)
+		grep.mapsend(fpath, chsMap)
 		waitMaps.Wait()
 		closeChannelSet(chsMap)
 	}()
 
 	go func() {
-		this.reduce(chsMap, chsReduce)
+		grep.reduce(chsMap, chsReduce)
 	}()
 	return chsReduce
 }
@@ -351,10 +351,10 @@ func (this *gorep) mapsend(fpath string, chans *channelSet) {
 	}
 }
 
-func (this *gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
+func (grep *gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
 	filter := func(in <-chan string, out chan<- string) {
 		for msg := range in {
-			if this.pattern.MatchString(path.Base(msg)) {
+			if grep.pattern.MatchString(path.Base(msg)) {
 				out <- msg
 			}
 		}
@@ -374,7 +374,7 @@ func (this *gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
 	go func(in <-chan grepInfo, out chan<- grepInfo) {
 		for msg := range in {
 			waitGreps.Add(1)
-			go this.grep(msg.fpath, out)
+			go grep.grep(msg.fpath, out)
 		}
 		waitGreps.Wait()
 		close(out)
@@ -395,7 +395,7 @@ func verifyBinary(buf []byte) bool {
 	return false
 }
 
-func (this *gorep) grep(fpath string, out chan<- grepInfo) {
+func (grep *gorep) grep(fpath string, out chan<- grepInfo) {
 	defer func() {
 		<-semFopenLimit
 		waitGreps.Done()
@@ -424,7 +424,7 @@ func (this *gorep) grep(fpath string, out chan<- grepInfo) {
 	defer syscall.Munmap(mem)
 
 	isBinary := verifyBinary(mem)
-	if isBinary && !this.scope.binary {
+	if isBinary && !grep.scope.binary {
 		return
 	}
 
@@ -437,12 +437,12 @@ func (this *gorep) grep(fpath string, out chan<- grepInfo) {
 	for scanner.Scan() {
 		lineNumber++
 		strline := scanner.Text()
-		if this.pattern.MatchString(strline) {
+		if grep.pattern.MatchString(strline) {
 			if isBinary {
 				out <- grepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath)}
 				return
 			} else {
-				if this.ignorePattern != nil && this.ignorePattern.MatchString(strline) {
+				if grep.ignorePattern != nil && grep.ignorePattern.MatchString(strline) {
 					continue
 				}
 				out <- grepInfo{fpath, lineNumber, strline}
