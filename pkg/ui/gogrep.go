@@ -24,6 +24,19 @@ type grepInfo struct {
 	lineNumber int
 	line       string
 }
+type contenttype int
+const (
+	DIR_TYPE contenttype = iota
+	FILE_TYPE
+	SYMLINK_TYPE
+	BINARY_TYPE
+	STRING_TYPE
+)
+type grep_output struct {
+	*grepInfo
+	destor string
+	content_type contenttype
+}
 
 type channelSet struct {
 	dir     chan string
@@ -144,6 +157,9 @@ const (
 	NORM_DECO     = "\x1b[0m"
 )
 
+func (grep *gorep) end(o grep_output) {
+
+}
 func (grep *gorep) report(chans *channelSet, isColor bool) {
 	var markMatch string
 	var markDir string
@@ -166,11 +182,13 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 
 	var waitReports sync.WaitGroup
 
-	chPrint := make(chan []byte)
+	chPrint := make(chan grep_output)
 	// printer
 	go func() {
 		for {
-			os.Stdout.Write(<-chPrint)
+			msg := <-chPrint
+			grep.end(msg)
+			// os.Stdout.Write(<-chPrint)
 		}
 	}()
 
@@ -180,19 +198,32 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 		case chan string:
 			for msg := range ch {
 				decoStr := grep.pattern.ReplaceAllString(msg, accent)
-				chPrint <- []byte(fmt.Sprintf("%s %s\n", mark, decoStr))
+				a := grep_output{
+					destor: decoStr,
+					content_type: STRING_TYPE,
+				}
+				chPrint <- a
 			}
 		case chan grepInfo:
 			for msg := range ch {
 				if msg.lineNumber != 0 {
 					decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
-					chPrint <- []byte(fmt.Sprintf("%s %s:%d: %s\n", mark, msg.fpath, msg.lineNumber, decoStr))
+					a := grep_output{
+						destor:   decoStr,
+						grepInfo: &msg,
+						content_type: FILE_TYPE,
+					}
+					chPrint <- a
 				} else { // binary file
-					chPrint <- []byte(fmt.Sprintf("%s %s\n", mark, msg.line))
+					a := grep_output{
+						grepInfo: &msg,
+						content_type: BINARY_TYPE,
+					}
+					chPrint <- a
 				}
 			}
 		default:
-			log.Printf( "reporter type error!\n")
+			log.Printf("reporter type error!\n")
 			return
 		}
 	}
