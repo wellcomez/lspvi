@@ -1,15 +1,10 @@
 package mainui
 
 import (
-	// "strings"
-
-	"strings"
-
 	"github.com/gdamore/tcell/v2"
-	"github.com/reinhrst/fzf-lib"
 	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
-	lsp "github.com/tectiv3/go-lsp"
+	"strings"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
 
@@ -27,8 +22,9 @@ type history_picker_impl struct {
 	codeprev    *CodeView
 	fzf         *fzflib.Fzf
 	parent      *fzfmain
-	history     *History
 	match_index []int
+	main        *mainui
+	listdata    []history_item
 }
 
 type history_picker struct {
@@ -36,17 +32,16 @@ type history_picker struct {
 	list *customlist
 }
 
-type history_line struct {
-	loc  lsp.Location
-	line string
-	path string
-}
-
 // OnRefenceChanged implements lspcore.lsp_data_changed.
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (ref history_picker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	panic("unimplemented")
+}
+
+type history_item struct {
+	filepath string
+	dispname string
 }
 
 func new_history_picker(v *fzfmain) history_picker {
@@ -57,14 +52,28 @@ func new_history_picker(v *fzfmain) history_picker {
 		impl: &history_picker_impl{
 			codeprev: NewCodeView(main),
 			parent:   v,
-			history:  NewHistory("history.log"),
+			main:     main,
 		},
 		list: list,
 	}
+	history := NewHistory("history.log")
 	sym.impl.codeprev.view.SetBorder(true)
 	var options = fzflib.DefaultOptions()
 	options.Fuzzy = false
-	fzf := fzf.New(sym.impl.history.datalist, options)
+	items := []history_item{}
+	fzf_item_strings := []string{}
+	for _, v := range history.datalist {
+
+		dispname := strings.TrimPrefix(v, main.root)
+		h := history_item{
+			filepath: v,
+			dispname: dispname,
+		}
+		fzf_item_strings = append(fzf_item_strings, dispname)
+		items = append(items, h)
+	}
+	sym.impl.listdata = items
+	fzf := fzflib.New(fzf_item_strings, options)
 	sym.impl.fzf = fzf
 	return sym
 }
@@ -86,17 +95,22 @@ func (pk history_picker) UpdateQuery(query string) {
 	listview := pk.list
 	listview.Clear()
 	fzf := pk.impl.fzf
-	h := pk.impl.history
 	var result fzflib.SearchResult
 	fzf.Search(query)
 	result = <-fzf.GetResultChannel()
 	match_index := []int{}
-	for _, v := range result.Matches {
-		match_index = append(match_index, int(v.HayIndex))
-		v := h.datalist[v.HayIndex]
-		listview.AddItem(v, []int{}, func() {
-			// pk.impl.codeprev.Open(v.loc.URI)
+	listview.Key = query
+	h := pk.impl.listdata
+	for _, m := range result.Matches {
+		index := m.HayIndex
+		match_index = append(match_index, int(index))
+		v := h[index]
+		listview.AddItem(v.dispname, []int{}, func() {
+			path := v.filepath
+			parent := pk.impl.parent
+			parent.openfile(path)
 		})
 	}
 	pk.impl.match_index = match_index
 }
+

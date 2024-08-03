@@ -8,6 +8,12 @@ import (
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspui/pkg/lsp"
 )
+func (parent *fzfmain) openfile(path string) {
+	parent.main.OpenFile(path, nil)
+	parent.hide()
+	parent.main.set_viewid_focus(view_code)
+	parent.main.cmdline.Vim.EnterEscape()
+}
 
 type fzfmain struct {
 	Frame   *tview.Frame
