@@ -26,9 +26,10 @@ func (m space_menu_item) getkey() string {
 
 func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := string(event.Rune())
-	for _, v := range v.impl.items {
-		if v.getkey() == ch {
-			v.handle()
+	for _, cmd := range v.impl.items {
+		if cmd.getkey() == ch {
+			cmd.handle()
+			v.visible= false
 			return nil
 		}
 	}

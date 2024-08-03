@@ -7,7 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	lspcore "zen108.com/lspui/pkg/lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type TreeViewLoadding struct {

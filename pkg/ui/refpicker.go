@@ -11,7 +11,7 @@ import (
 	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	lsp "github.com/tectiv3/go-lsp"
-	lspcore "zen108.com/lspui/pkg/lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 func (pk *refpicker) new_view(input *tview.InputField) *tview.Grid {

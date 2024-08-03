@@ -12,7 +12,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
-	lspcore "zen108.com/lspui/pkg/lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 var tabs []view_id = []view_id{view_fzf, view_callin, view_uml}
@@ -381,7 +381,7 @@ func MainUI(arg *Arguments) {
 			AddItem(symbol_tree.view, 0, 2, false)
 	// fzfbtn := tview.NewButton("fzf")
 	// logbtn := tview.NewButton("log")
-	uml,err := NewUmlView(&main, &main.lspmgr.Wk)
+	uml, err := NewUmlView(&main, &main.lspmgr.Wk)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -468,7 +468,7 @@ func (main *mainui) Close() {
 	main.lspmgr.Close()
 	main.app.Stop()
 }
-func (main *mainui) OnSearch(txt string, tofzf bool,noloop bool) {
+func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 	if len(txt) == 0 {
 		return
 	}
@@ -479,7 +479,7 @@ func (main *mainui) OnSearch(txt string, tofzf bool,noloop bool) {
 	if main.searchcontext == nil {
 		main.searchcontext = NewGenericSearch(main.prefocused, txt)
 	} else {
-		changed = main.searchcontext.Changed(main.prefocused, txt) || noloop 
+		changed = main.searchcontext.Changed(main.prefocused, txt) || noloop
 		if changed {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
 		}

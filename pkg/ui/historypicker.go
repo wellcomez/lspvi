@@ -1,11 +1,12 @@
 package mainui
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
-	"strings"
-	lspcore "zen108.com/lspui/pkg/lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 func (pk history_picker) new_history(input *tview.InputField) *tview.Grid {
@@ -75,6 +76,7 @@ func new_history_picker(v *fzfmain) history_picker {
 	sym.impl.listdata = items
 	fzf := fzflib.New(fzf_item_strings, options)
 	sym.impl.fzf = fzf
+	sym.UpdateQuery("")
 	return sym
 }
 func (pk history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -113,4 +115,3 @@ func (pk history_picker) UpdateQuery(query string) {
 	}
 	pk.impl.match_index = match_index
 }
-

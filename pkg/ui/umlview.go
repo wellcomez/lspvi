@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/rivo/tview"
-	lspcore "zen108.com/lspui/pkg/lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type umlview struct {
@@ -59,10 +59,10 @@ func (v *umlview) openfile(name string) {
 func (v *umlview) Init() {
 	v.file.Init()
 }
-func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview,error) {
+func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 	ex, err := lspcore.NewExportRoot(wk)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	file := new_uml_tree(main, "uml", ex.Dir)
 	layout := tview.NewFlex()
@@ -77,5 +77,5 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview,error) {
 		Name:      file.Name,
 	}
 	file.openfile = ret.openfile
-	return ret,nil
+	return ret, nil
 }
