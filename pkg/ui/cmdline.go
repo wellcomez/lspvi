@@ -346,6 +346,8 @@ func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.main.OpenFilePicke()
 	} else if key == "r" {
 		l.main.OpenDocumntRef()
+	} else if key == "h" {
+		l.main.OpenHistoryFzf()
 	} else if key == "o" {
 		l.main.OpenDocumntSymbolFzf()
 	} else {

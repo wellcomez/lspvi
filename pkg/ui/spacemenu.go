@@ -20,7 +20,18 @@ type space_menu_item struct {
 	handle func()
 }
 
+func (m space_menu_item) getkey() string {
+	return m.cell[0]
+}
+
 func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
+	ch := string(event.Rune())
+	for _, v := range v.impl.items {
+		if v.getkey() == ch {
+			v.handle()
+			return nil
+		}
+	}
 	if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
 		handle := v.table.InputHandler()
 		handle(event, nil)
