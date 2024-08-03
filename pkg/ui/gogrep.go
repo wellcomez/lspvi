@@ -99,7 +99,7 @@ func verifyColor() bool {
 	return false
 }
 
-func main() {
+func test_main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	var opt optionSet
