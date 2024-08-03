@@ -93,9 +93,10 @@ func init() {
 }
 
 func verifyColor() bool {
-	fd := os.Stdout.Fd()
-	isTerm := terminal.IsTerminal(int(fd))
-	return isTerm
+	// fd := os.Stdout.Fd()
+	// isTerm := terminal.IsTerminal(int(fd))
+	// return isTerm
+	return false
 }
 
 func main() {
