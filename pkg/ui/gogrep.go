@@ -25,6 +25,7 @@ type grepInfo struct {
 	line       string
 }
 type contenttype int
+
 const (
 	DIR_TYPE contenttype = iota
 	FILE_TYPE
@@ -32,9 +33,10 @@ const (
 	BINARY_TYPE
 	STRING_TYPE
 )
+
 type grep_output struct {
 	*grepInfo
-	destor string
+	destor       string
 	content_type contenttype
 }
 
@@ -68,6 +70,8 @@ type gorep struct {
 	pattern       *regexp.Regexp
 	ignorePattern *regexp.Regexp
 	scope         searchScope
+	cb            func(taskid int, out *grep_output)
+	id            int
 }
 
 var semFopenLimit chan int
@@ -139,7 +143,7 @@ func test_main() {
 		fpath = strings.TrimRight(flag.Arg(1), separator)
 	}
 
-	g, err := newGorep(pattern, &opt)
+	g, err := newGorep(1, pattern, &opt)
 	if err == nil {
 		chans := g.kick(fpath)
 		g.report(chans, verifyColor())
@@ -158,7 +162,9 @@ const (
 )
 
 func (grep *gorep) end(o grep_output) {
-
+	if grep.cb != nil {
+		grep.cb(grep.id, &o)
+	}
 }
 func (grep *gorep) report(chans *channelSet, isColor bool) {
 	var markMatch string
@@ -199,7 +205,7 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 			for msg := range ch {
 				decoStr := grep.pattern.ReplaceAllString(msg, accent)
 				a := grep_output{
-					destor: decoStr,
+					destor:       decoStr,
 					content_type: STRING_TYPE,
 				}
 				chPrint <- a
@@ -209,14 +215,14 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 				if msg.lineNumber != 0 {
 					decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
 					a := grep_output{
-						destor:   decoStr,
-						grepInfo: &msg,
+						destor:       decoStr,
+						grepInfo:     &msg,
 						content_type: FILE_TYPE,
 					}
 					chPrint <- a
 				} else { // binary file
 					a := grep_output{
-						grepInfo: &msg,
+						grepInfo:     &msg,
 						content_type: BINARY_TYPE,
 					}
 					chPrint <- a
@@ -236,7 +242,7 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 	waitReports.Wait()
 }
 
-func newGorep(pattern string, opt *optionSet) (*gorep, error) {
+func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 	base := &gorep{
 		pattern:       nil,
 		ignorePattern: nil,
@@ -248,6 +254,7 @@ func newGorep(pattern string, opt *optionSet) (*gorep, error) {
 			binary:  false,
 			hidden:  false,
 		},
+		id: id,
 	}
 
 	// config regexp

@@ -74,6 +74,9 @@ func new_spacemenu(m *mainui) *space_menu {
 		{cell: []string{"r", "reference"}, handle: func() {
 			m.OpenDocumntRef()
 		}},
+		{cell: []string{"g", "grep"}, handle: func() {
+			m.OpenGrepFzf()
+		}},
 		{cell: []string{"h", "history"}, handle: func() {
 			m.OpenHistoryFzf()
 		}},

@@ -19,6 +19,11 @@ func (pk *refpicker) new_view(input *tview.InputField) *tview.Grid {
 	list.SetBorder(true)
 	code := pk.impl.codeprev.view
 	pk.impl.codeprev.Load(pk.impl.file.Filename)
+	layout := layout_list_edit(list, code, input)
+	return layout
+}
+
+func layout_list_edit(list tview.Primitive,code tview.Primitive, input *tview.InputField) *tview.Grid {
 	layout := tview.NewGrid().
 		SetColumns(-1, 24, 16, -1).
 		SetRows(-1, 3, 3, 2).

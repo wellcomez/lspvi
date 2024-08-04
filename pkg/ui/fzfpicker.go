@@ -65,6 +65,12 @@ func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	v.Frame.SetTitle("symbol")
 	sym.load(ranges)
 }
+func (v *fzfmain) OpenGrepFzf() {
+	sym := new_greppicker(v)
+	x := sym.new_view(v.input)
+	v.create_dialog_content(x, sym)
+	v.Frame.SetTitle("grep")
+}
 func (v *fzfmain) OpenHistoryFzf() {
 	sym := new_history_picker(v)
 	x := sym.new_history(v.input)

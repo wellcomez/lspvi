@@ -8,7 +8,7 @@ func Test_grep(t *testing.T) {
 		g:true,
 
 	}
-	g ,err:= newGorep(pattern, &opt)
+	g ,err:= newGorep(1,pattern, &opt)
 	if err != nil {
 		t.Fatal(err)
 	}
