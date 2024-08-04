@@ -29,7 +29,7 @@ func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	for _, cmd := range v.impl.items {
 		if cmd.getkey() == ch {
 			cmd.handle()
-			v.visible= false
+			v.visible = false
 			return nil
 		}
 	}
@@ -75,7 +75,7 @@ func new_spacemenu(m *mainui) *space_menu {
 			m.OpenDocumntRef()
 		}},
 		{cell: []string{"g", "grep"}, handle: func() {
-			m.OpenGrepFzf()
+			m.OpenLivewGrepFzf()
 		}},
 		{cell: []string{"h", "history"}, handle: func() {
 			m.OpenHistoryFzf()

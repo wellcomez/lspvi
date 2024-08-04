@@ -65,11 +65,18 @@ func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	v.Frame.SetTitle("symbol")
 	sym.load(ranges)
 }
-func (v *fzfmain) OpenGrepFzf() {
-	sym := new_live_grep_picker(v)
+func (v *fzfmain) OpenGrepFzf(word string) {
+	sym := new_grep_picker(v)
 	x := sym.new_view(v.input)
 	v.create_dialog_content(x, sym)
 	v.Frame.SetTitle("grep")
+	sym.livewgreppicker.UpdateQuery(word)
+}
+func (v *fzfmain) OpenLiveGrepFzf() {
+	sym := new_live_grep_picker(v)
+	x := sym.new_view(v.input)
+	v.create_dialog_content(x, sym)
+	v.Frame.SetTitle("live grep")
 }
 func (v *fzfmain) OpenHistoryFzf() {
 	sym := new_history_picker(v)

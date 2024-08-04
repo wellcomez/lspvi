@@ -20,6 +20,9 @@ type livewgreppicker struct {
 	grep        *gorep
 	defer_input *key_defer_input
 }
+type greppicker struct{
+	*livewgreppicker
+}
 
 func (pk livewgreppicker) update_preview() {
 }
@@ -40,6 +43,12 @@ func (pk *livewgreppicker) new_view(input *tview.InputField) *tview.Grid {
 	code := pk.codeprev.view
 	layout := layout_list_edit(list, code, input)
 	return layout
+}
+func new_grep_picker(v *fzfmain) *greppicker{
+	grep := &greppicker{
+		livewgreppicker: new_live_grep_picker(v),
+	}
+	return grep
 }
 func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 	main := v.main
