@@ -72,14 +72,18 @@ type gorep struct {
 	scope         searchScope
 	cb            func(taskid int, out *grep_output)
 	id            int
+	bAbort        bool
+	waitMaps      sync.WaitGroup
+	waitGreps     sync.WaitGroup
+}
+
+func (grep *gorep) abort() {
+	grep.bAbort = true
 }
 
 var semFopenLimit chan int
 
 const maxNumOfFileOpen = 10
-
-var waitMaps sync.WaitGroup
-var waitGreps sync.WaitGroup
 
 const separator = string(os.PathSeparator)
 
@@ -116,39 +120,39 @@ func verifyColor() bool {
 	return false
 }
 
-func test_main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+// func test_main() {
+// 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	var opt optionSet
-	flag.BoolVar(&opt.v, "V", false, "show version.")
-	flag.BoolVar(&opt.g, "g", false, "enable grep.")
-	flag.BoolVar(&opt.search_binary, "search-binary", false, "search binary files for matches on grep enable.")
-	flag.BoolVar(&opt.grep_only, "grep-only", false, "enable grep and disable file search.")
-	flag.StringVar(&opt.ignore, "ignore", "", "pattern is ignored.")
-	flag.BoolVar(&opt.hidden, "hidden", false, "search hidden files.")
-	flag.BoolVar(&opt.ignorecase, "ignorecase", false, "ignore case distinctions in pattern.")
-	flag.Parse()
+// 	var opt optionSet
+// 	flag.BoolVar(&opt.v, "V", false, "show version.")
+// 	flag.BoolVar(&opt.g, "g", false, "enable grep.")
+// 	flag.BoolVar(&opt.search_binary, "search-binary", false, "search binary files for matches on grep enable.")
+// 	flag.BoolVar(&opt.grep_only, "grep-only", false, "enable grep and disable file search.")
+// 	flag.StringVar(&opt.ignore, "ignore", "", "pattern is ignored.")
+// 	flag.BoolVar(&opt.hidden, "hidden", false, "search hidden files.")
+// 	flag.BoolVar(&opt.ignorecase, "ignorecase", false, "ignore case distinctions in pattern.")
+// 	flag.Parse()
 
-	if opt.v {
-		fmt.Printf("version: %s\n", version)
-		os.Exit(0)
-	}
+// 	if opt.v {
+// 		fmt.Printf("version: %s\n", version)
+// 		os.Exit(0)
+// 	}
 
-	if flag.NArg() < 1 {
-		// usage()
-	}
-	pattern := flag.Arg(0)
-	fpath := "."
-	if flag.NArg() >= 2 {
-		fpath = strings.TrimRight(flag.Arg(1), separator)
-	}
+// 	if flag.NArg() < 1 {
+// 		// usage()
+// 	}
+// 	pattern := flag.Arg(0)
+// 	fpath := "."
+// 	if flag.NArg() >= 2 {
+// 		fpath = strings.TrimRight(flag.Arg(1), separator)
+// 	}
 
-	g, err := newGorep(1, pattern, &opt)
-	if err == nil {
-		chans := g.kick(fpath)
-		g.report(chans, verifyColor())
-	}
-}
+// 	g, err := newGorep(1, pattern, &opt)
+// 	if err == nil {
+// 		chans := g.kick(fpath)
+// 		g.report(chans, verifyColor())
+// 	}
+// }
 
 const (
 	DIR_COLOR     = "\x1b[36m"
@@ -305,9 +309,9 @@ func (grep *gorep) kick(fpath string) *channelSet {
 	chsReduce := makeChannelSet()
 
 	go func() {
-		waitMaps.Add(1)
+		grep.waitMaps.Add(1)
 		grep.mapsend(fpath, chsMap)
-		waitMaps.Wait()
+		grep.waitMaps.Wait()
 		closeChannelSet(chsMap)
 	}()
 
@@ -343,8 +347,10 @@ func verifyHidden(fpath string) bool {
 }
 
 func (grep *gorep) mapsend(fpath string, chans *channelSet) {
-	defer waitMaps.Done()
-
+	defer grep.waitMaps.Done()
+	if grep.bAbort{
+		return
+	}
 	/* expand dir */
 	list, err := ioutil.ReadDir(fpath)
 	if err != nil {
@@ -371,7 +377,7 @@ func (grep *gorep) mapsend(fpath string, chans *channelSet) {
 			if grep.scope.dir {
 				chans.dir <- fullpath
 			}
-			waitMaps.Add(1)
+			grep.waitMaps.Add(1)
 			go grep.mapsend(fullpath, chans)
 		case mode&os.ModeSymlink != 0:
 			if grep.scope.symlink {
@@ -413,10 +419,10 @@ func (grep *gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
 	// grep
 	go func(in <-chan grepInfo, out chan<- grepInfo) {
 		for msg := range in {
-			waitGreps.Add(1)
+			grep.waitGreps.Add(1)
 			go grep.grep(msg.fpath, out)
 		}
-		waitGreps.Wait()
+		grep.waitGreps.Wait()
 		close(out)
 	}(chsIn.grep, chsOut.grep)
 }
@@ -438,7 +444,7 @@ func verifyBinary(buf []byte) bool {
 func (grep *gorep) grep(fpath string, out chan<- grepInfo) {
 	defer func() {
 		<-semFopenLimit
-		waitGreps.Done()
+		grep.waitGreps.Done()
 	}()
 
 	semFopenLimit <- 1

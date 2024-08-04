@@ -15,6 +15,7 @@ type greppicker struct {
 	taskid   int
 	result   *grepresult
 	parent   *fzfmain
+	grep 	 *gorep
 }
 
 func (pk greppicker) update_preview() {
@@ -62,20 +63,22 @@ func (grep *greppicker) end(task int, o *grep_output) {
 	})
 
 }
-func (grep greppicker) UpdateQuery(query string) {
+func (pk greppicker) UpdateQuery(query string) {
 	opt := optionSet{
 		// grep_only:true,
 		g: true,
 	}
-	grep.taskid++
-	grep.list.Key = query
-	grep.list.Clear()
-	g, err := newGorep(grep.taskid, query, &opt)
+	pk.taskid++
+	pk.list.Key = query
+	pk.list.Clear()
+	g, err := newGorep(pk.taskid, query, &opt)
 	if err != nil {
 		return
 	}
-	g.cb = grep.end
-	chans := g.kick(grep.main.root)
+	pk.grep.abort()
+	pk.grep = g
+	g.cb = pk.end
+	chans := g.kick(pk.main.root)
 	g.report(chans, false)
 
 }
