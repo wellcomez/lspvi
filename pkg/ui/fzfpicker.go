@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/gdamore/tcell/v2"
@@ -65,11 +66,11 @@ func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	v.Frame.SetTitle("symbol")
 	sym.load(ranges)
 }
-func (v *fzfmain) OpenGrepFzf(word string) {
+func (v *fzfmain) OpenGrepWordFzf(word string) {
 	sym := new_grep_picker(v)
 	x := sym.new_view(v.input)
 	v.create_dialog_content(x, sym)
-	v.Frame.SetTitle("grep")
+	v.Frame.SetTitle(fmt.Sprint("grep %v",word))
 	sym.livewgreppicker.UpdateQuery(word)
 }
 func (v *fzfmain) OpenLiveGrepFzf() {

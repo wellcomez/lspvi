@@ -679,8 +679,8 @@ func (main mainui) OpenDocumntRef() {
 func (main mainui) OpenFilePicke() {
 	main.layout.dialog.OpenFileFzf(main.root)
 }
-func (main mainui) OpenGrep(word string) {
-	main.layout.dialog.OpenGrepFzf(word)
+func (main mainui) OpenGrepWord(word string) {
+	main.layout.dialog.OpenGrepWordFzf(word)
 }
 func (main mainui) OpenLivewGrepFzf() {
 	main.layout.dialog.OpenLiveGrepFzf()

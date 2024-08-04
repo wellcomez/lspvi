@@ -27,7 +27,7 @@ type CodeView struct {
 	mouse_select_area bool
 }
 
-func (code *CodeView) OnGrep(fzf bool, noloop bool) string {
+func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
 	codeview := code.view
 	word := codeview.Cursor.GetSelection()
 	if len(word) < 2 {
@@ -307,10 +307,10 @@ func (*CodeView) key_map_command() map[rune]func(code *CodeView) {
 		code.action_goto_declaration()
 	}
 	commandmap[42] = func(code *CodeView) {
-		code.OnGrep(true, false)
+		code.OnFindInfile(true, false)
 	}
 	commandmap['f'] = func(code *CodeView) {
-		code.OnGrep(true, true)
+		code.OnFindInfile(true, true)
 	}
 	commandmap['c'] = func(code *CodeView) {
 		code.key_call_in()
@@ -358,6 +358,11 @@ func (ret *CodeView) update_with_line_changed() {
 	root := ret.view
 	line := root.Cursor.Loc.Y
 	ret.main.OnCodeLineChange(line)
+}
+func (code *CodeView) action_grep_word() {
+	code.view.Cursor.SelectWord()
+	word := code.view.Cursor.GetSelection()
+	code.main.OpenGrepWord(word)
 }
 func (code *CodeView) action_goto_define() {
 	main := code.main

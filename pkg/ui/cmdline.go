@@ -299,6 +299,9 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	commandmap["gd"] = func() {
 		l.main.codeview.action_goto_define()
 	}
+	commandmap["gw"] = func() {
+		l.main.codeview.action_grep_word()
+	}
 	commandmap["gr"] = func() {
 		l.main.codeview.action_get_refer()
 	}
