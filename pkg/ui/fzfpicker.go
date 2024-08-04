@@ -66,7 +66,7 @@ func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	sym.load(ranges)
 }
 func (v *fzfmain) OpenGrepFzf() {
-	sym := new_greppicker(v)
+	sym := new_live_grep_picker(v)
 	x := sym.new_view(v.input)
 	v.create_dialog_content(x, sym)
 	v.Frame.SetTitle("grep")

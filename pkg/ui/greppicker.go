@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -8,47 +10,50 @@ import (
 type grepresult struct {
 	data []grep_output
 }
-type greppicker struct {
-	list     *customlist
-	codeprev *CodeView
-	main     *mainui
-	taskid   int
-	result   *grepresult
-	parent   *fzfmain
-	grep 	 *gorep
+type livewgreppicker struct {
+	list        *customlist
+	codeprev    *CodeView
+	main        *mainui
+	taskid      int
+	result      *grepresult
+	parent      *fzfmain
+	grep        *gorep
+	defer_input *key_defer_input
 }
 
-func (pk greppicker) update_preview() {
+func (pk livewgreppicker) update_preview() {
 }
-func (pk greppicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+func (pk livewgreppicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.list.InputHandler()
 	handle(event, setFocus)
 	pk.update_preview()
 }
 
 // handle implements picker.
-func (pk *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return pk.handle_key_override
 }
 
-func (pk *greppicker) new_view(input *tview.InputField) *tview.Grid {
+func (pk *livewgreppicker) new_view(input *tview.InputField) *tview.Grid {
 	list := pk.list
 	list.SetBorder(true)
 	code := pk.codeprev.view
 	layout := layout_list_edit(list, code, input)
 	return layout
 }
-func new_greppicker(v *fzfmain) *greppicker {
+func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 	main := v.main
-	grep := &greppicker{
-		list:     new_customlist(),
-		codeprev: NewCodeView(main),
-		parent:   v,
-		main:     main,
+	grep := &livewgreppicker{
+		list:        new_customlist(),
+		codeprev:    NewCodeView(main),
+		parent:      v,
+		main:        main,
+		defer_input: &key_defer_input{},
 	}
+	grep.defer_input.cb = grep.__updatequery
 	return grep
 }
-func (grep *greppicker) end(task int, o *grep_output) {
+func (grep *livewgreppicker) end(task int, o *grep_output) {
 	if task != grep.taskid {
 		return
 	}
@@ -57,16 +62,55 @@ func (grep *greppicker) end(task int, o *grep_output) {
 			data: []grep_output{},
 		}
 	}
+	// log.Printf("end %d %s", task, o.destor)
 	grep.result.data = append(grep.result.data, *o)
-	go grep.main.app.QueueUpdate(func() {
+	if !grep.parent.Visible {
+		grep.grep.abort()
+		return
+	}
+	grep.main.app.QueueUpdate(func() {
 		grep.list.AddItem(o.destor, []int{}, func() {})
+		grep.main.app.ForceDraw()
 	})
 
 }
-func (pk greppicker) UpdateQuery(query string) {
+
+type key_defer_input struct {
+	buf_three_char string
+	cb             func(string)
+}
+
+func (k *key_defer_input) __start() {
+	after := time.After(200 * time.Millisecond)
+	<-after
+	if k.cb != nil {
+		k.cb(k.empty_buffer())
+	}
+}
+func (k *key_defer_input) start(key string) (string, bool) {
+	k.buf_three_char = k.buf_three_char + key
+	if len(k.buf_three_char) >= 3 {
+		a := k.empty_buffer()
+		return a, true
+	}
+	go k.__start()
+	return "", false
+}
+
+func (k *key_defer_input) empty_buffer() string {
+	a := k.buf_three_char
+	k.buf_three_char = ""
+	return a
+}
+
+func (pk livewgreppicker) UpdateQuery(query string) {
+	// pk.defer_input.start(query)
+	pk.__updatequery(query)
+}
+func (pk livewgreppicker) __updatequery(query string) {
 	opt := optionSet{
-		// grep_only:true,
-		g: true,
+		grep_only: true,
+		g:         true,
 	}
 	pk.taskid++
 	pk.list.Key = query
@@ -81,6 +125,6 @@ func (pk greppicker) UpdateQuery(query string) {
 	pk.grep = g
 	g.cb = pk.end
 	chans := g.kick(pk.main.root)
-	g.report(chans, false)
+	go g.report(chans, false)
 
 }
