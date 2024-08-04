@@ -70,7 +70,7 @@ func (v *fzfmain) OpenGrepWordFzf(word string) {
 	sym := new_grep_picker(v)
 	x := sym.new_view(v.input)
 	v.create_dialog_content(x, sym)
-	v.Frame.SetTitle(fmt.Sprint("grep %v",word))
+	v.Frame.SetTitle(fmt.Sprintf("grep %s", word))
 	sym.livewgreppicker.UpdateQuery(word)
 }
 func (v *fzfmain) OpenLiveGrepFzf() {
