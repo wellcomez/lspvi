@@ -75,7 +75,9 @@ func (pk greppicker) UpdateQuery(query string) {
 	if err != nil {
 		return
 	}
-	pk.grep.abort()
+	if pk.grep != nil {
+		pk.grep.abort()
+	}
 	pk.grep = g
 	g.cb = pk.end
 	chans := g.kick(pk.main.root)
