@@ -16,6 +16,7 @@ type greppicker struct {
 	result   *grepresult
 	parent   *fzfmain
 }
+
 func (pk greppicker) update_preview() {
 }
 func (pk greppicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -23,6 +24,7 @@ func (pk greppicker) handle_key_override(event *tcell.EventKey, setFocus func(p 
 	handle(event, setFocus)
 	pk.update_preview()
 }
+
 // handle implements picker.
 func (pk *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return pk.handle_key_override
@@ -55,7 +57,7 @@ func (grep *greppicker) end(task int, o *grep_output) {
 		}
 	}
 	grep.result.data = append(grep.result.data, *o)
-	grep.main.app.QueueUpdate(func() {
+	go grep.main.app.QueueUpdate(func() {
 		grep.list.AddItem(o.destor, []int{}, func() {})
 	})
 
@@ -66,6 +68,8 @@ func (grep greppicker) UpdateQuery(query string) {
 		g: true,
 	}
 	grep.taskid++
+	grep.list.Key = query
+	grep.list.Clear()
 	g, err := newGorep(grep.taskid, query, &opt)
 	if err != nil {
 		return
