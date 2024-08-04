@@ -58,7 +58,9 @@ func (l lsp_base) Close() {
 	if l.core.cmd == nil {
 		return
 	}
-	l.core.cmd.Process.Kill()
+	if l.core.cmd.Process != nil {
+		l.core.cmd.Process.Kill()
+	}
 }
 func IsMe(filename string, file_extensions []string) bool {
 	ext := filepath.Ext(filename)
