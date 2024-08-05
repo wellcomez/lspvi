@@ -42,13 +42,19 @@ type fzfview struct {
 	Type         DateType
 }
 
-func (view *fzfview) go_prev() {
-	next := (view.view.GetCurrentItem() - 1 + view.view.GetItemCount()) % view.view.GetItemCount()
-	view.view.SetCurrentItem(next)
+func (fzf *fzfview) go_prev() {
+	next := (fzf.view.GetCurrentItem() - 1 + fzf.view.GetItemCount()) % fzf.view.GetItemCount()
+	fzf.view.SetCurrentItem(next)
+	if fzf.Type == data_refs {
+		fzf.Hanlde(next, "", "", 1)
+	}
 }
-func (view *fzfview) go_next() {
-	next := (view.view.GetCurrentItem() + 1) % view.view.GetItemCount()
-	view.view.SetCurrentItem(next)
+func (fzf *fzfview) go_next() {
+	next := (fzf.view.GetCurrentItem() + 1) % fzf.view.GetItemCount()
+	fzf.view.SetCurrentItem(next)
+	if fzf.Type == data_refs {
+		fzf.Hanlde(next, "", "", 1)
+	}
 }
 func (main *fzfview) OnSearch(txt string) {
 }
