@@ -3,6 +3,8 @@ package mainui
 import (
 	"encoding/json"
 	"os"
+
+	"github.com/tectiv3/go-lsp"
 )
 
 type backforwarditem struct {
@@ -57,9 +59,13 @@ func (h *History) history_files() []string {
 	}
 	return ret
 }
-func (h *History) AddToHistory(newdata string) {
+func (h *History) AddToHistory(newdata string, loc *lsp.Location) {
 	lll := h.datalist
-	h.datalist = h.insertAtFront(lll, backforwarditem{Path: newdata})
+	line := 0
+	if loc != nil {
+		line = loc.Range.Start.Line
+	}
+	h.datalist = h.insertAtFront(lll, backforwarditem{Path: newdata, Line: line})
 
 	if h.file != "" {
 		buf, err := json.Marshal(h.datalist)

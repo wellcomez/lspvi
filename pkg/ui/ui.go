@@ -256,7 +256,7 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	}
 	cur := m.codeview.view.Cursor
 	m.bf.history.UpdateLine(m.codeview.filename, cur.Loc.Y)
-	m.bf.history.AddToHistory(file)
+	m.bf.history.AddToHistory(file, loc)
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
