@@ -106,6 +106,9 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			"", nil,
 		}
 	}
+	return cmdactor{
+		"", nil,
+	}
 }
 
 const ctrlw = "c-w"

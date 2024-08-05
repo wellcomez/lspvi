@@ -72,9 +72,14 @@ type space_menu_item struct {
 
 func (v *space_menu) input_cb(word string) {
 	if v.input.keyseq == word {
-		v.input.run(word)
-		v.visible = false
+		v.run_command(word)
 	}
+}
+
+func (v *space_menu) run_command(word string) {
+	v.input.run(word)
+	v.input.keyseq = ""
+	v.visible = false
 }
 func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := string(event.Rune())
@@ -90,8 +95,7 @@ func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	cmd := v.input.keyseq
 	matched := v.input.command_matched(cmd)
 	if matched == 1 {
-		v.input.run(cmd)
-		v.visible = false
+		v.run_command(cmd)
 	} else if matched > 1 {
 		v.input.rundelay(cmd)
 	} else if v.main.cmdline.Vim.vi.Leader {
