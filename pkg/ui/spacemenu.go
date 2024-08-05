@@ -80,6 +80,7 @@ func (v *space_menu) run_command(word string) {
 	v.input.run(word)
 	v.input.keyseq = ""
 	v.visible = false
+	v.main.cmdline.Vim.EnterEscape()
 }
 func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := string(event.Rune())
@@ -87,9 +88,11 @@ func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		v.input.keyseq = ""
 		handle := v.table.InputHandler()
 		handle(event, nil)
+		return nil
 	} else if event.Key() == tcell.KeyEnter {
 		v.input.keyseq = ""
 		v.onenter()
+		return nil
 	}
 	v.input.keyseq += ch
 	cmd := v.input.keyseq
@@ -132,7 +135,7 @@ type space_menu_impl struct {
 func init_space_menu_item(m *mainui) []space_menu_item {
 	var ret = []space_menu_item{}
 	for _, v := range m.key_map_space_menu() {
-		ret = append(ret, space_menu_item{item: v})
+		ret = append(ret, space_menu_item{item: v,handle: v.cmd.handle})
 	}
 	return ret
 }

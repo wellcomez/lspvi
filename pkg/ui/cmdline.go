@@ -390,6 +390,7 @@ func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	process, end := input.check(key)
 	if end {
 		l.end()
+		l.vi.EnterEscape()
 	}
 	return process
 }
