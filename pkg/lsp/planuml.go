@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 )
 
 type PlanUmlBin struct {
@@ -71,7 +71,7 @@ func NewExportRoot(wk *WorkSpace) (*export_root, error) {
 	return ret, err
 }
 func (d *export_root) Init() error {
-	d.Dir = path.Join(d.wk.Export, "uml")
+	d.Dir = filepath.Join(d.wk.Export, "uml")
 	if checkDirExists(d.Dir) {
 		return nil
 	}
@@ -79,16 +79,16 @@ func (d *export_root) Init() error {
 	return err
 }
 func (d export_root) SaveMD(dir, name, content string) (string, error) {
-	newdir := path.Join(d.Dir, dir)
+	newdir := filepath.Join(d.Dir, dir)
 	os.Mkdir(newdir, 0755)
-	filename := path.Join(newdir, name+".md")
+	filename := filepath.Join(newdir, name+".md")
 	err := os.WriteFile(filename, []byte(content), 0644)
 	return filename, err
 }
 func (d export_root) SavePlanUml(dir, name, content string) (string, error) {
-	newdir := path.Join(d.Dir, dir)
+	newdir := filepath.Join(d.Dir, dir)
 	os.Mkdir(newdir, 0755)
-	filename := path.Join(newdir, name+".puml")
+	filename := filepath.Join(newdir, name+".puml")
 	err := os.WriteFile(filename, []byte(content), 0644)
 	return filename, err
 }

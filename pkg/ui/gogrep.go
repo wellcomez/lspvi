@@ -216,21 +216,21 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 				if msg.lineNumber != 0 {
 					decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
 					a := grep_output{
-						destor: decoStr,
-						grepInfo: &grepInfo{
+						destor:       decoStr,
+						grepInfo:     &grepInfo{
 							lineNumber: msg.lineNumber,
-							line:       msg.line,
-							fpath:      msg.fpath,
+							line: msg.line,
+							fpath: msg.fpath,
 						},
 						content_type: FILE_TYPE,
 					}
 					chPrint <- a
 				} else { // binary file
 					a := grep_output{
-						grepInfo: &grepInfo{
+grepInfo:     &grepInfo{
 							lineNumber: msg.lineNumber,
-							line:       msg.line,
-							fpath:      msg.fpath,
+							line: msg.line,
+							fpath: msg.fpath,
 						},
 						content_type: BINARY_TYPE,
 					}
@@ -353,7 +353,7 @@ func verifyHidden(fpath string) bool {
 
 func (grep *gorep) mapsend(fpath string, chans *channelSet) {
 	defer grep.waitMaps.Done()
-	if grep.bAbort {
+	if grep.bAbort{
 		return
 	}
 	/* expand dir */

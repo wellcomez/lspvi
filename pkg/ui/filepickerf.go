@@ -120,7 +120,7 @@ type filewalk struct {
 }
 
 func (f *filewalk) load() error {
-	fp, err := os.OpenFile(f.root+".files", os.O_RDONLY, 0666)
+	fp, err := os.OpenFile(lspviroot.filelist, os.O_RDONLY, 0666)
 	if err == nil {
 		defer fp.Close()
 		scanner := bufio.NewScanner(fp)
@@ -132,7 +132,7 @@ func (f *filewalk) load() error {
 	return err
 }
 func (f *filewalk) save() error {
-	fp, err := os.OpenFile(filepath.Join(f.root, ".files"), os.O_CREATE|os.O_RDWR, 0666)
+	fp, err := os.OpenFile(lspviroot.filelist, os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		return err
 	}

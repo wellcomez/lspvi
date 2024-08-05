@@ -313,6 +313,40 @@ func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 	}
 }
 
+type workdir struct {
+	root    string
+	logfile string
+	uml     string
+	history string
+	export string
+	filelist string
+}
+
+func new_workdir(root string) workdir {
+	root = filepath.Join(root, ".lspvi")
+	export := filepath.Join(root, "export")
+	wk := workdir{
+		root:    root,
+		logfile: filepath.Join(root, "lspvi.log"),
+		history: filepath.Join(root, "history.log"),
+		export:	export,
+		uml:     filepath.Join(export, "uml"),
+		filelist:     filepath.Join(root, ".file"),
+	}
+	ensure_dir(root)
+	ensure_dir(export)
+	ensure_dir(wk.uml)
+	return wk
+}
+
+func ensure_dir(root string) {
+	if _, err := os.Stat(root); err != nil {
+		if err := os.MkdirAll(root, 0755); err != nil {
+			panic(err)
+		}
+	}
+}
+var lspviroot workdir
 func (main *mainui) update_log_view(s string) {
 	t := main.log.GetText(true)
 	main.log.SetText(t + s)
@@ -328,20 +362,21 @@ func MainUI(arg *Arguments) {
 	if len(arg.Root) > 0 {
 		root = arg.Root
 	}
+	lspviroot=new_workdir(root)
 	handle := LspHandle{}
 	var main = mainui{
-		bf: NewBackForward(NewHistory("history.log")),
+		bf: NewBackForward(NewHistory(lspviroot.logfile)),
 	}
 	handle.main = &main
 	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)
 	}
-	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: root, Callback: handle})
+	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
 	main.lspmgr = lspmgr
 	main.root = root
 
 	main.cmdline = new_cmdline(&main)
-	var logfile, _ = os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	var logfile, _ = os.OpenFile(lspviroot.logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
 	main.app = app
