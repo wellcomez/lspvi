@@ -720,6 +720,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 //		main.layout.dialog.OpenFileFzf(main.root)
 //	}
 func (main mainui) open_picker_refs() {
+	main.codeview.view.Cursor.SelectWord()
 	loc := main.codeview.lsp_cursor_loc()
 	main.layout.dialog.OpenRefFzf(main.lspmgr.Current, loc)
 }
