@@ -86,12 +86,16 @@ type vimstate struct {
 	Escape    bool
 	Find      bool
 	Command   bool
+	Virtual   bool
 	Insert    bool
 	Leader    bool
 	FindEnter string
 }
 
 func (v vimstate) String() string {
+	if v.Virtual {
+		return "Virtual"
+	}
 	if v.Escape {
 		return "escape"
 	}

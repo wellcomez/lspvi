@@ -3,6 +3,7 @@ package mainui
 import (
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -128,7 +129,21 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 	if err != nil {
 		return
 	}
+	sort.Slice(files, func(i, j int) bool {
+		fi := files[i]
+		fj := files[j]
+		if fi.IsDir() {
+			if !fj.IsDir() {
+				return true 
+			} 
+		}
+		return fi.Name() > fj.Name()
+	})
 	for _, file := range files {
+		name := file.Name()
+		if len(name) > 0 && name[0] == '.' {
+			continue
+		}
 		fullpath := filepath.Join(dir, file.Name())
 		prefix := ""
 		if file.IsDir() {
