@@ -349,6 +349,7 @@ func (code *CodeView) action_goto_define() {
 	main := code.main
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
+	log.Printf("goto define %v %s", loc,code.view.Cursor.GetSelection())
 	code.main.get_define(loc, main.codeview.filename)
 }
 func (code *CodeView) action_goto_declaration() {
