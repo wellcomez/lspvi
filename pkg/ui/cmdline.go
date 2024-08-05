@@ -216,6 +216,7 @@ type EscapeHandle struct {
 	main  *mainui
 	vi    *Vim
 	state *escapestate
+	input *inputdelay
 }
 
 // State implements vim_mode_handle.
@@ -238,6 +239,26 @@ func (state *escapestate) end() {
 	state.keyseq = []string{}
 }
 
+const ctrlw = "c-w"
+const left = "left"
+const right = "right"
+const up = "up"
+const down = "down"
+
+var event_to_keyname = map[tcell.Key]string{
+	tcell.KeyCtrlW: ctrlw,
+	tcell.KeyLeft:  left,
+	tcell.KeyRight: right,
+	tcell.KeyUp:    up,
+	tcell.KeyDown:  down,
+}
+
+func (l EscapeHandle) input_cb(word string) {
+	if l.state.init {
+		return
+	}
+	l.input.run(word)
+}
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	if len(l.state.keyseq) == 0 || l.state.init {
 		if l.main.codeview.handle_key_impl(event) == nil {
@@ -252,69 +273,17 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	ts := l.state.keyseq
 	ch := string(event.Rune())
-	const ctrlw = "c-w"
-	const left = "left"
-	const right = "right"
-	const up = "up"
-	const down = "down"
-	var mm = map[tcell.Key]string{
-		tcell.KeyCtrlW: ctrlw,
-		tcell.KeyLeft:  left,
-		tcell.KeyRight: right,
-		tcell.KeyUp:    up,
-		tcell.KeyDown:  down,
-	}
-	if c, ok := mm[event.Key()]; ok {
+
+	if c, ok := event_to_keyname[event.Key()]; ok {
 		ch = c
 	}
 	l.state.keyseq = append(ts, string(ch))
-	commandmap := map[string]func(){}
-	main := l.main
-	fn_move_up := func() {
-		main.move_to_window(move_up)
-	}
-	commandmap[ctrlw+"k"] = fn_move_up
-	commandmap[ctrlw+up] = fn_move_up
-
-	fn_move_down := func() {
-		main.move_to_window(move_down)
-	}
-	commandmap[ctrlw+down] = fn_move_down
-	commandmap[ctrlw+"j"] = fn_move_down
-
-	fn_move_left := func() {
-		main.move_to_window(move_left)
-	}
-	commandmap[ctrlw+left] = fn_move_left
-	commandmap[ctrlw+"h"] = fn_move_left
-
-	fn_move_right := func() {
-		main.move_to_window(move_right)
-	}
-	commandmap[ctrlw+right] = fn_move_right
-	commandmap[ctrlw+"l"] = fn_move_right
-
-	commandmap["gg"] = func() {
-		main.codeview.gotoline(0)
-	}
-	commandmap["gd"] = func() {
-		main.codeview.action_goto_define()
-	}
-	commandmap["gw"] = func() {
-		main.codeview.action_grep_word()
-	}
-	commandmap["gr"] = func() {
-		main.codeview.action_get_refer()
-	}
-	commandmap["G"] = func() {
-		main.codeview.gotoline(-1)
-	}
-	if fun, ok := commandmap[strings.Join(l.state.keyseq, "")]; ok {
-		fun()
+	cmdname := strings.Join(l.state.keyseq, "")
+	processed, end := l.input.check(cmdname)
+	if end {
 		l.end()
 	}
-
-	return true
+	return processed
 }
 
 type leadstate struct {
@@ -323,25 +292,51 @@ type leadstate struct {
 	input *inputdelay
 }
 type inputdelay struct {
-	cb     func(word string)
-	keymap map[string]func()
-	keyseq string
+	cb      func(word string)
+	keymap  map[string]func()
+	keyseq  string
+	cmdlist []cmditem
 }
 
-func (input inputdelay) command_matched(key string) int {
+func (input *inputdelay) command_matched(key string) int {
 	matched := 0
-	for k := range input.keymap {
-		if strings.HasPrefix(k, key) {
-			matched++
+	if input.keymap != nil {
+		for k := range input.keymap {
+			if strings.HasPrefix(k, key) {
+				matched++
+			}
+		}
+	} else if input.cmdlist != nil {
+		for _, v := range input.cmdlist {
+			if strings.HasPrefix(v.key.key, key) {
+				matched++
+			}
 		}
 	}
 	return matched
 }
+func (input *inputdelay) check(cmd string) (bool, bool) {
+	matched := input.command_matched(cmd)
+	if matched == 1 {
+		input.run(cmd)
+	}
+	return matched > 0, matched == 1
+}
 func (input *inputdelay) run(cmd string) bool {
-	if cb, ok := input.keymap[cmd]; ok {
-		cb()
-		input.keyseq = ""
-		return ok
+	if input.keymap != nil {
+		if cb, ok := input.keymap[cmd]; ok {
+			cb()
+			input.keyseq = ""
+			return ok
+		}
+	}
+	if input.cmdlist != nil {
+		for _, v := range input.cmdlist {
+			if v.key.key == cmd {
+				v.cmd.handle()
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -386,14 +381,11 @@ func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	key := state.kseq + string(ch)
 	state.kseq = key
-	matched := input.command_matched(key)
-	if matched == 1 {
-		l.runcommand(key)
-		return true
-	} else if matched > 1 {
-		input.rundelay(key)
+	process, end := input.check(key)
+	if end {
+		l.end()
 	}
-	return false
+	return process
 }
 
 func (l *LeaderHandle) runcommand(key string) {
@@ -559,11 +551,32 @@ func (v *Vim) EnterEscape() {
 	if f == v.app.cmdline.input {
 		v.app.set_viewid_focus(view_code)
 	}
-	v.vi_handle = EscapeHandle{
+	esc := EscapeHandle{
 		main:  v.app,
 		vi:    v,
 		state: &escapestate{init: true},
 	}
+	main := v.app
+	sss := []cmditem{
+		get_cmd_actor(main, goto_define).esc_key("gd"),
+		get_cmd_actor(main, goto_refer).esc_key("gr"),
+		get_cmd_actor(main, goto_first_line).esc_key("gg"),
+		get_cmd_actor(main, goto_last_line).esc_key("G"),
+		get_cmd_actor(main, next_window_down).esc_key(ctrlw + down),
+		get_cmd_actor(main, next_window_down).esc_key(ctrlw + "j"),
+		get_cmd_actor(main, next_window_up).esc_key(ctrlw + up),
+		get_cmd_actor(main, next_window_up).esc_key(ctrlw + "j"),
+		get_cmd_actor(main, next_window_left).esc_key(ctrlw + left),
+		get_cmd_actor(main, next_window_left).esc_key(ctrlw + "h"),
+		get_cmd_actor(main, next_window_right).esc_key(ctrlw + right),
+		get_cmd_actor(main, next_window_right).esc_key(ctrlw + "l"),
+	}
+	inputdelay := inputdelay{
+		cmdlist: sss,
+	}
+	esc.input = &inputdelay
+	esc.input.cb = esc.input_cb
+	v.vi_handle = esc
 	v.app.SavePrevFocus()
 }
 

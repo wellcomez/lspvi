@@ -60,9 +60,6 @@ type space_menu_item struct {
 	handle func()
 }
 
-func (m space_menu_item) getkey() string {
-	return m.item.key.key
-}
 
 func (v *space_menu) input_cb(word string) {
 	if v.input.keyseq == word {
