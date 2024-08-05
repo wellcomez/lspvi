@@ -18,25 +18,39 @@ type space_menu struct {
 }
 type cmditem struct {
 	key cmdkey
-	cmd cmdbase
+	cmd cmdactor
 }
-type cmdbase struct {
+type cmdactor struct {
 	desc   string
 	handle func()
 }
+
+func (actor cmdactor) menu_key(key string) cmditem {
+	return cmditem{new_menu_key(key), actor}
+}
+
+type cmdkeytype int
+
+const (
+	cmd_key_menu = iota
+	cmd_key_escape
+	cmd_key_leader
+)
+
 type cmdkey struct {
-	key string
+	key  string
+	Type cmdkeytype
 }
 
 func new_menu_key(key string) cmdkey {
 	return cmdkey{
-		key: key,
+		key:  key,
+		Type: cmd_key_menu,
 	}
 }
 
-
 type space_menu_item struct {
-	item   *cmditem
+	item   cmditem
 	handle func()
 }
 
@@ -98,15 +112,44 @@ func (item space_menu_item) col(n int) *tview.TableCell {
 type space_menu_impl struct {
 	items []space_menu_item
 }
+type command_id int
 
+const (
+	open_document_symbol_picker = iota
+	open_picker_refs
+	open_picker_livegrep
+	open_picker_history
+	open_picker_grep_word
+	open_picker_ctrlp
+)
+
+func get_cmd_actor(m *mainui, id command_id) cmdactor {
+	switch id {
+	case open_document_symbol_picker:
+		return cmdactor{"open symbol", m.open_document_symbol_picker}
+	case open_picker_refs:
+		return cmdactor{"reference", m.open_picker_refs}
+	case open_picker_livegrep:
+		return cmdactor{"live grep", m.open_picker_livegrep}
+	case open_picker_history:
+		return cmdactor{"history", m.open_picker_history}
+	case open_picker_grep_word:
+		return cmdactor{"grep word", m.codeview.action_grep_word}
+	case open_picker_ctrlp:
+		return cmdactor{"picker file", m.open_picker_ctrlp}
+	}
+	return cmdactor{
+		"", nil,
+	}
+}
 func init_space_menu_item(m *mainui) []space_menu_item {
 	return []space_menu_item{
-		{item: &cmditem{new_menu_key("o"), cmdbase{"open sysmbol", m.OpenDocumntSymbolFzf}}},
-		{item: &cmditem{new_menu_key("r"), cmdbase{"reference", m.OpenDocumntRef}}},
-		{item: &cmditem{new_menu_key("g"), cmdbase{"grep", m.open_livegrep_picker}}},
-		{item: &cmditem{new_menu_key("h"), cmdbase{"history", m.open_history_picker}}},
-		{item: &cmditem{new_menu_key("fw"), cmdbase{"grep word", m.codeview.action_grep_word}}},
-		{item: &cmditem{new_menu_key("f"), cmdbase{"picker file", m.codeview.main.open_file_picker}}},
+		{item: get_cmd_actor(m, open_document_symbol_picker).menu_key("o")},
+		{item: get_cmd_actor(m, open_picker_refs).menu_key("r")},
+		{item: get_cmd_actor(m, open_picker_livegrep).menu_key("g")},
+		{item: get_cmd_actor(m, open_picker_history).menu_key("h")},
+		{item: get_cmd_actor(m, open_picker_grep_word).menu_key("fw")},
+		{item: get_cmd_actor(m, open_picker_ctrlp).menu_key("f")},
 	}
 }
 func new_spacemenu(m *mainui) *space_menu {

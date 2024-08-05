@@ -433,8 +433,9 @@ func MainUI(arg *Arguments) {
 		cmdline:     main.cmdline.input,
 		parent:      main_layout,
 		dialog:      Newfuzzpicker(&main, app),
-		spacemenu:   new_spacemenu(&main),
 	}
+	spacemenu := new_spacemenu(&main)
+	main.layout.spacemenu = spacemenu
 
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
 	main.OpenFile(filearg, nil)
@@ -655,7 +656,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 	if event.Key() == tcell.KeyCtrlS {
-		main.OpenDocumntSymbolFzf()
+		main.open_document_symbol_picker()
 		return nil
 	}
 	if event.Key() == tcell.KeyCtrlP {
@@ -672,26 +673,27 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 
 	return event
 }
-func (main *mainui) open_file_picker() {
-	main.layout.dialog.OpenFileFzf(main.root)
-}
-func (main mainui) OpenDocumntRef() {
+
+//	func (main *mainui) open_file_picker() {
+//		main.layout.dialog.OpenFileFzf(main.root)
+//	}
+func (main mainui) open_picker_refs() {
 	loc := main.codeview.lsp_cursor_loc()
 	main.layout.dialog.OpenRefFzf(main.lspmgr.Current, loc)
 }
-func (main mainui) OpenFilePicke() {
+func (main mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(main.root)
 }
-func (main mainui) OpenGrepWord(word string) {
+func (main mainui) open_picker_grep(word string) {
 	main.layout.dialog.OpenGrepWordFzf(word)
 }
-func (main mainui) open_livegrep_picker() {
+func (main mainui) open_picker_livegrep() {
 	main.layout.dialog.OpenLiveGrepFzf()
 }
-func (main mainui) open_history_picker() {
+func (main mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }
-func (main mainui) OpenDocumntSymbolFzf() {
+func (main mainui) open_document_symbol_picker() {
 	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
 }
 

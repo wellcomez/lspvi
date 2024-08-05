@@ -362,7 +362,7 @@ func (ret *CodeView) update_with_line_changed() {
 func (code *CodeView) action_grep_word() {
 	code.view.Cursor.SelectWord()
 	word := code.view.Cursor.GetSelection()
-	code.main.OpenGrepWord(word)
+	code.main.open_picker_grep(word)
 }
 func (code *CodeView) action_goto_define() {
 	main := code.main

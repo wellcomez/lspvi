@@ -269,45 +269,45 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	l.state.keyseq = append(ts, string(ch))
 	commandmap := map[string]func(){}
-
+	main := l.main
 	fn_move_up := func() {
-		l.main.move_to_window(move_up)
+		main.move_to_window(move_up)
 	}
 	commandmap[ctrlw+"k"] = fn_move_up
 	commandmap[ctrlw+up] = fn_move_up
 
 	fn_move_down := func() {
-		l.main.move_to_window(move_down)
+		main.move_to_window(move_down)
 	}
 	commandmap[ctrlw+down] = fn_move_down
 	commandmap[ctrlw+"j"] = fn_move_down
 
 	fn_move_left := func() {
-		l.main.move_to_window(move_left)
+		main.move_to_window(move_left)
 	}
 	commandmap[ctrlw+left] = fn_move_left
 	commandmap[ctrlw+"h"] = fn_move_left
 
 	fn_move_right := func() {
-		l.main.move_to_window(move_right)
+		main.move_to_window(move_right)
 	}
 	commandmap[ctrlw+right] = fn_move_right
 	commandmap[ctrlw+"l"] = fn_move_right
 
 	commandmap["gg"] = func() {
-		l.main.codeview.gotoline(0)
+		main.codeview.gotoline(0)
 	}
 	commandmap["gd"] = func() {
-		l.main.codeview.action_goto_define()
+		main.codeview.action_goto_define()
 	}
 	commandmap["gw"] = func() {
-		l.main.codeview.action_grep_word()
+		main.codeview.action_grep_word()
 	}
 	commandmap["gr"] = func() {
-		l.main.codeview.action_get_refer()
+		main.codeview.action_get_refer()
 	}
 	commandmap["G"] = func() {
-		l.main.codeview.gotoline(-1)
+		main.codeview.gotoline(-1)
 	}
 	if fun, ok := commandmap[strings.Join(l.state.keyseq, "")]; ok {
 		fun()
@@ -340,7 +340,7 @@ func (input inputdelay) command_matched(key string) int {
 func (input *inputdelay) run(cmd string) bool {
 	if cb, ok := input.keymap[cmd]; ok {
 		cb()
-		input.keyseq=""
+		input.keyseq = ""
 		return ok
 	}
 	return false
@@ -519,11 +519,11 @@ func (v *Vim) EnterLead() bool {
 			state: &leadstate{end: false},
 		}
 		keymap := map[string]func(){
-			"f":  main.OpenFilePicke,
+			"f":  main.open_picker_ctrlp,
 			"fw": main.codeview.action_grep_word,
-			"r":  main.OpenDocumntRef,
-			"h":  main.open_history_picker,
-			"o":  main.OpenDocumntSymbolFzf,
+			"r":  main.open_picker_refs,
+			"h":  main.open_picker_history,
+			"o":  main.open_document_symbol_picker,
 		}
 		input := &inputdelay{cb: lead.inputcb, keymap: keymap}
 		lead.state.input = input
