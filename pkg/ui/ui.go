@@ -687,14 +687,12 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if main.layout.spacemenu.visible {
 		return main.layout.spacemenu.handle_key(event)
 	}
-	if eventname == "Ctrl+O" {
-		main.Goback()
-		// main.codeview.gotoline(i.Line)
+	if eventname == "Rune[O]" {
+		main.GoForward()
 		return nil
 	}
 	if event.Key() == tcell.KeyCtrlO {
-		main.GoForward()
-		// main.codeview.gotoline(i.Line)
+		main.GoBack()
 		return nil
 	}
 
@@ -728,7 +726,7 @@ func (main *mainui) GoForward() {
 	main.OpenFileToHistory(i.Path, &lsp.Location{Range: lsp.Range{Start: start, End: start}}, false)
 }
 
-func (main *mainui) Goback() {
+func (main *mainui) GoBack() {
 	i := main.bf.GoBack()
 	start := lsp.Position{Line: i.Line}
 	log.Printf("go %v", i)
