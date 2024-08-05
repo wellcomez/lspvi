@@ -243,7 +243,7 @@ func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 		code.update_with_line_changed()
 		return nil
 	}
-	if code.run_command(code.vi_define_keymap(), ch) {
+	if code.run_command(code.basic_vi_command, ch) {
 		return nil
 	}
 	return event
@@ -349,7 +349,7 @@ func (code *CodeView) action_goto_define() {
 	main := code.main
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
-	log.Printf("goto define %v %s", loc,code.view.Cursor.GetSelection())
+	log.Printf("goto define %v %s", loc, code.view.Cursor.GetSelection())
 	code.main.get_define(loc, main.codeview.filename)
 }
 func (code *CodeView) action_goto_declaration() {
@@ -386,7 +386,7 @@ func (code *CodeView) lsp_cursor_loc() lsp.Range {
 }
 
 func (code *CodeView) key_call_in() {
-	code.view.Cursor.SelectWord()
+code.view.Cursor.SelectWord()
 	loc := code.view.Cursor.CurSelection
 	r := text_loc_to_range(loc)
 	code.main.get_callin_stack_by_cursor(lsp.Location{
