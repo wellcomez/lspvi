@@ -2,7 +2,6 @@ package mainui
 
 import "github.com/gdamore/tcell/v2"
 
-
 type command_id int
 
 const (
@@ -17,10 +16,21 @@ const (
 	goto_define
 	goto_refer
 	goto_decl
+	goto_callin
 	next_window_left
 	next_window_right
 	next_window_down
 	next_window_up
+	file_in_file
+	file_in_file_vi_loop
+	arrow_up
+	arrow_down
+	arrow_left
+	arrow_right
+	vi_left
+	vi_right
+	vi_left_word
+	vi_right_word
 )
 
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
@@ -49,6 +59,8 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{"goto define", m.codeview.action_goto_define}
 	case goto_refer:
 		return cmdactor{"goto refer", func() { m.codeview.action_get_refer() }}
+	case goto_callin:
+		return cmdactor{"goto callin", func() { m.codeview.key_call_in() }}
 	case goto_decl:
 		return cmdactor{"goto decl", m.codeview.action_goto_declaration}
 	case next_window_down:
@@ -67,12 +79,33 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{"next window up", func() {
 			m.move_to_window(move_up)
 		}}
+	case file_in_file:
+		return cmdactor{"file in file", func() {
+			m.codeview.OnFindInfile(true, true)
+		}}
+	case file_in_file_vi_loop:
+		return cmdactor{"file in file vi", func() {
+			m.codeview.OnFindInfile(true, false)
+		}}
+	case arrow_up:
+		return cmdactor{"up", func() { m.codeview.action_key_up() }}
+	case arrow_down:
+		return cmdactor{"up", func() { m.codeview.action_key_down() }}
+	case arrow_left:
+		return cmdactor{"left", func() { m.codeview.view.Cursor.Left() }}
+	case arrow_right:
+		return cmdactor{"right", func() { m.codeview.view.Cursor.Right() }}
+	case vi_left_word:
+		return cmdactor{"word left", func() { m.codeview.word_left() }}
+	case vi_right:
+		return cmdactor{"word right", func() { m.codeview.word_right() }}
 	default:
 		return cmdactor{
 			"", nil,
 		}
 	}
 }
+
 const ctrlw = "c-w"
 const left = "left"
 const right = "right"

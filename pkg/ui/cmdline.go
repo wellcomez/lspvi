@@ -239,7 +239,6 @@ func (state *escapestate) end() {
 	state.keyseq = []string{}
 }
 
-
 func (l EscapeHandle) input_cb(word string) {
 	if l.state.init {
 		return
@@ -294,11 +293,10 @@ func (input *inputdelay) command_matched(key string) int {
 			}
 		}
 	} */
-	if input.cmdlist != nil {
-		for _, v := range input.cmdlist {
-			if v.key.matched(key) {
-				matched++
-			}
+	cmdlist := input.cmdlist
+	for _, v := range cmdlist {
+		if v.key.matched(key) {
+			matched++
 		}
 	}
 	return matched
