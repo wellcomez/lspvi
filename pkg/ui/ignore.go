@@ -5,12 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/sabhiram/go-gitignore"
 )
 
 type gitignore struct {
-	check *ignore.GitIgnore
+	check *GitIgnore
 	root  string
 }
 
@@ -24,7 +22,7 @@ func (t *gitignore) init() error {
 	if err != nil {
 		return err
 	}
-	check, err := ignore.CompileIgnoreFileAndLines(f, ".git", "*.o")
+	check, err := CompileIgnoreFileAndLines(f, ".git", "*.o")
 	if err == nil {
 		t.check = check
 		return nil
@@ -39,12 +37,12 @@ func has_gitignore_file(root string) (string, error) {
 }
 func (t gitignore) Ignore(filename string) bool {
 	if t.check != nil {
-		f:=strings.ReplaceAll(filename, t.root, "")
-		if t.check.MatchesPath(f){
-			log.Println(f,filename)
+		f := strings.TrimPrefix(filename, t.root)
+		if t.check.MatchesPath(f,true) {
+			// log.Println(f, filename)
 			return true
 		}
-		return false 
+		return false
 	}
 	return false
 }
