@@ -672,6 +672,9 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 
 	return event
 }
+func (main *mainui) open_file_picker() {
+	main.layout.dialog.OpenFileFzf(main.root)
+}
 func (main mainui) OpenDocumntRef() {
 	loc := main.codeview.lsp_cursor_loc()
 	main.layout.dialog.OpenRefFzf(main.lspmgr.Current, loc)
@@ -682,10 +685,10 @@ func (main mainui) OpenFilePicke() {
 func (main mainui) OpenGrepWord(word string) {
 	main.layout.dialog.OpenGrepWordFzf(word)
 }
-func (main mainui) OpenLivewGrepFzf() {
+func (main mainui) open_livegrep_picker() {
 	main.layout.dialog.OpenLiveGrepFzf()
 }
-func (main mainui) OpenHistoryFzf() {
+func (main mainui) open_history_picker() {
 	main.layout.dialog.OpenHistoryFzf()
 }
 func (main mainui) OpenDocumntSymbolFzf() {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -317,13 +318,51 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 }
 
 type leadstate struct {
-	kseq string
-	end  bool
+	kseq  string
+	end   bool
+	input *inputdelay
 }
+type inputdelay struct {
+	cb     func(word string)
+	keymap map[string]func()
+	keyseq string
+}
+
+func (input inputdelay) command_matched(key string) int {
+	matched := 0
+	for k := range input.keymap {
+		if strings.HasPrefix(k, key) {
+			matched++
+		}
+	}
+	return matched
+}
+func (input *inputdelay) run(cmd string) bool {
+	if cb, ok := input.keymap[cmd]; ok {
+		cb()
+		input.keyseq=""
+		return ok
+	}
+	return false
+}
+func (input *inputdelay) rundelay(word string) {
+	go func() {
+		timer := time.NewTimer(time.Millisecond * 500) // 两秒后触发
+		<-timer.C
+		input.cb(word)
+	}()
+}
+
 type LeaderHandle struct {
 	main  *mainui
 	vi    *Vim
 	state *leadstate
+}
+
+func (s *LeaderHandle) inputcb(word string) {
+	if !s.state.end {
+		s.runcommand(word)
+	}
 }
 
 // end implements vim_mode_handle.
@@ -340,24 +379,29 @@ func (l LeaderHandle) State() string {
 func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	l.main.layout.spacemenu.visible = false
 	ch := event.Rune()
-	if l.state.end {
-		l.state.kseq = ""
+	state := l.state
+	input := state.input
+	if state.end {
+		state.kseq = ""
 	}
-	key := l.state.kseq + string(ch)
-	l.state.kseq = key
-	if key == "f" {
-		l.main.OpenFilePicke()
-	} else if key == "r" {
-		l.main.OpenDocumntRef()
-	} else if key == "h" {
-		l.main.OpenHistoryFzf()
-	} else if key == "o" {
-		l.main.OpenDocumntSymbolFzf()
-	} else {
-		return false
+	key := state.kseq + string(ch)
+	state.kseq = key
+	matched := input.command_matched(key)
+	if matched == 1 {
+		l.runcommand(key)
+		return true
+	} else if matched > 1 {
+		input.rundelay(key)
 	}
-	l.end()
-	return true
+	return false
+}
+
+func (l *LeaderHandle) runcommand(key string) {
+	l.main.app.QueueUpdate(func() {
+		state := l.state
+		state.input.run(key)
+		l.end()
+	})
 }
 
 // Vim structure
@@ -433,8 +477,8 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 	// 	v.ExitEnterEscape()
 	// }
 	//current_view := v.app.get_focus_view_id()
-	//if current_view == view_code || current_view == view_cmd 
-  {
+	//if current_view == view_code || current_view == view_cmd
+	{
 		if v.vi_handle != nil {
 			if v.vi_handle.HanldeKey(event) {
 				return true, nil
@@ -468,11 +512,22 @@ func (v *Vim) EnterLead() bool {
 	if v.vi.Escape {
 		v.vi = vimstate{Leader: true}
 		v.vi_handle = nil
-		v.vi_handle = LeaderHandle{
-			main:  v.app,
+		main := v.app
+		lead := LeaderHandle{
+			main:  main,
 			vi:    v,
 			state: &leadstate{end: false},
 		}
+		keymap := map[string]func(){
+			"f":  main.OpenFilePicke,
+			"fw": main.codeview.action_grep_word,
+			"r":  main.OpenDocumntRef,
+			"h":  main.open_history_picker,
+			"o":  main.OpenDocumntSymbolFzf,
+		}
+		input := &inputdelay{cb: lead.inputcb, keymap: keymap}
+		lead.state.input = input
+		v.vi_handle = lead
 		v.app.layout.spacemenu.visible = true
 		return true
 	} else {
