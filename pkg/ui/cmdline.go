@@ -292,21 +292,22 @@ type leadstate struct {
 	input *inputdelay
 }
 type inputdelay struct {
-	cb      func(word string)
-	keymap  map[string]func()
+	cb func(word string)
+	//keymap  map[string]func()
 	keyseq  string
 	cmdlist []cmditem
 }
 
 func (input *inputdelay) command_matched(key string) int {
 	matched := 0
-	if input.keymap != nil {
+	/*if input.keymap != nil {
 		for k := range input.keymap {
 			if strings.HasPrefix(k, key) {
 				matched++
 			}
 		}
-	} else if input.cmdlist != nil {
+	} */
+	if input.cmdlist != nil {
 		for _, v := range input.cmdlist {
 			if strings.HasPrefix(v.key.key, key) {
 				matched++
@@ -323,13 +324,13 @@ func (input *inputdelay) check(cmd string) (bool, bool) {
 	return matched > 0, matched == 1
 }
 func (input *inputdelay) run(cmd string) bool {
-	if input.keymap != nil {
+	/*if input.keymap != nil {
 		if cb, ok := input.keymap[cmd]; ok {
 			cb()
 			input.keyseq = ""
 			return ok
 		}
-	}
+	}*/
 	if input.cmdlist != nil {
 		for _, v := range input.cmdlist {
 			if v.key.key == cmd {
@@ -500,6 +501,8 @@ func (v *Vim) _enter_find_mode() {
 	v.vi_handle = a
 	v.app.cmdline.SetValue("/")
 }
+
+// EnterLead jj
 func (v *Vim) EnterLead() bool {
 	if v.vi.Escape {
 		v.vi = vimstate{Leader: true}
@@ -510,14 +513,21 @@ func (v *Vim) EnterLead() bool {
 			vi:    v,
 			state: &leadstate{end: false},
 		}
-		keymap := map[string]func(){
+		/*keymap := map[string]func(){
 			"f":  main.open_picker_ctrlp,
 			"fw": main.codeview.action_grep_word,
 			"r":  main.open_picker_refs,
 			"h":  main.open_picker_history,
 			"o":  main.open_document_symbol_picker,
+		}*/
+		sss := []cmditem{
+			get_cmd_actor(main, open_picker_ctrlp).leader("f"),
+			get_cmd_actor(main, open_picker_grep_word).leader("fw"),
+			get_cmd_actor(main, open_picker_refs).leader("r"),
+			get_cmd_actor(main, open_picker_history).leader("h"),
+			get_cmd_actor(main, open_picker_document_symbol).leader("o"),
 		}
-		input := &inputdelay{cb: lead.inputcb, keymap: keymap}
+		input := &inputdelay{cb: lead.inputcb, cmdlist: sss}
 		lead.state.input = input
 		v.vi_handle = lead
 		v.app.layout.spacemenu.visible = true

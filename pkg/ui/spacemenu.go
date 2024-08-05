@@ -25,6 +25,12 @@ type cmdactor struct {
 	handle func()
 }
 
+func (actor cmdactor) leader(key string) cmditem {
+	return cmditem{cmdkey{
+		key,
+		cmd_key_leader,
+	}, actor}
+}
 func (actor cmdactor) esc_key(key string) cmditem {
 	return cmditem{new_menu_key(key), actor}
 }
@@ -59,7 +65,6 @@ type space_menu_item struct {
 	item   cmditem
 	handle func()
 }
-
 
 func (v *space_menu) input_cb(word string) {
 	if v.input.keyseq == word {
@@ -118,7 +123,7 @@ type space_menu_impl struct {
 type command_id int
 
 const (
-	open_document_symbol_picker = iota
+	open_picker_document_symbol = iota
 	open_picker_refs
 	open_picker_livegrep
 	open_picker_history
@@ -137,7 +142,7 @@ const (
 
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	switch id {
-	case open_document_symbol_picker:
+	case open_picker_document_symbol:
 		return cmdactor{"open symbol", m.open_document_symbol_picker}
 	case open_picker_refs:
 		return cmdactor{"reference", m.open_picker_refs}
@@ -187,7 +192,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 }
 func init_space_menu_item(m *mainui) []space_menu_item {
 	return []space_menu_item{
-		{item: get_cmd_actor(m, open_document_symbol_picker).menu_key("o")},
+		{item: get_cmd_actor(m, open_picker_document_symbol).menu_key("o")},
 		{item: get_cmd_actor(m, open_picker_refs).menu_key("r")},
 		{item: get_cmd_actor(m, open_picker_livegrep).menu_key("g")},
 		{item: get_cmd_actor(m, open_picker_history).menu_key("h")},
@@ -205,13 +210,13 @@ func new_spacemenu(m *mainui) *space_menu {
 	impl := &space_menu_impl{
 		items: init_space_menu_item(m),
 	}
-	var keymap map[string]func() = make(map[string]func())
+	command_list := []cmditem{}
 	for _, v := range impl.items {
-		keymap[v.item.key.key] = v.item.cmd.handle
+		command_list = append(command_list, v.item)
 	}
 	t.input = &inputdelay{
-		cb:     t.input_cb,
-		keymap: keymap,
+		cb:      t.input_cb,
+		cmdlist: command_list,
 	}
 	for _, v := range impl.items {
 		s := fmt.Sprintf("%-5s %s", v.item.key.key, v.item.cmd.desc)
