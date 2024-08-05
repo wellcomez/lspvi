@@ -1,6 +1,9 @@
 package mainui
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -11,7 +14,7 @@ type grepresult struct {
 type grep_impl struct {
 	result *grepresult
 	grep   *gorep
-	taskid   int
+	taskid int
 }
 type livewgreppicker struct {
 	list     *customlist
@@ -29,7 +32,7 @@ func (pk livewgreppicker) update_preview() {
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
 		pk.codeprev.Load(item.fpath)
-		pk.codeprev.gotoline(item.lineNumber-1)
+		pk.codeprev.gotoline(item.lineNumber - 1)
 	}
 }
 
@@ -37,6 +40,7 @@ func (pk livewgreppicker) handle_key_override(event *tcell.EventKey, setFocus fu
 	handle := pk.list.InputHandler()
 	handle(event, setFocus)
 	pk.update_preview()
+	pk.update_title()
 }
 
 // handle implements picker.
@@ -69,6 +73,11 @@ func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 	v.Visible = true
 	return grep
 }
+func (grepx *livewgreppicker) update_title() {
+	s := fmt.Sprintf("Grep %s %d/%d", grepx.list.Key, grepx.list.GetCurrentItem(), len(grepx.impl.result.data))
+	grepx.parent.Frame.SetTitle(s)
+}
+
 func (grepx *livewgreppicker) end(task int, o *grep_output) {
 	if task != grepx.impl.taskid {
 		return
@@ -85,10 +94,18 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 		return
 	}
 	grepx.main.app.QueueUpdate(func() {
+		openpreview := len(grep.result.data) == 0
 		grep.result.data = append(grep.result.data, *o)
-		grepx.list.AddItem(o.line, []int{}, func() {
-
+		path := strings.TrimPrefix(o.fpath, grepx.main.root)
+		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
+		grepx.list.AddItem(data, []int{}, func() {
+			grepx.main.OpenFile(o.fpath, nil)
+			grepx.parent.hide()
 		})
+		if openpreview {
+			grepx.update_preview()
+		}
+		grepx.update_title()
 		grepx.main.app.ForceDraw()
 	})
 
@@ -115,8 +132,7 @@ func (pk livewgreppicker) __updatequery(query string) {
 		impl.grep.abort()
 	}
 	impl.grep = g
-	impl.result=&grepresult{
-	}
+	impl.result = &grepresult{}
 	g.cb = pk.end
 	chans := g.kick(pk.main.root)
 	go g.report(chans, false)
