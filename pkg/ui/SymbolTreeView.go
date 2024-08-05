@@ -105,6 +105,8 @@ func (m *TextFilter) compare(node, parent *tview.TreeNode) bool {
 	}
 	return true
 }
+
+// OnSearch
 func (m *SymbolTreeView) OnSearch(key string) []int {
 	m.searcheresult = &TextFilter{
 		key: key,
@@ -113,7 +115,7 @@ func (m *SymbolTreeView) OnSearch(key string) []int {
 		m.view.GetRoot().Walk(m.searcheresult.compare)
 	}
 	var ret []int
-	for i, _ := range m.searcheresult.nodes {
+	for i := range m.searcheresult.nodes {
 		ret = append(ret, i)
 	}
 	return ret
@@ -185,6 +187,8 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 							Character: idx + len(sym.Name),
 						},
 					}
+					code := symview.main.codeview
+					symview.main.bf.history.AddToHistory(code.filename, &r.Start.Line)
 					symview.main.codeview.goto_loation(r)
 					symview.main.set_viewid_focus(view_code)
 					break

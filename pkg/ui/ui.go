@@ -250,13 +250,20 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 // OpenFile
 // OpenFile
 func (m *mainui) OpenFile(file string, loc *lsp.Location) {
+	m.OpenFileToHistory(file, loc, true)
+}
+func (m *mainui) OpenFileToHistory(file string, loc *lsp.Location, addhistory bool) {
 	if info, err := os.Stat(file); err == nil && info.IsDir() {
 		m.fileexplorer.ChangeDir(file)
 		return
 	}
-	cur := m.codeview.view.Cursor
-	m.bf.history.UpdateLine(m.codeview.filename, cur.Loc.Y)
-	m.bf.history.AddToHistory(file, loc)
+	if addhistory {
+		if loc != nil {
+			m.bf.history.AddToHistory(file, &loc.Range.Start.Line)
+		} else {
+			m.bf.history.AddToHistory(file, nil)
+		}
+	}
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
@@ -681,15 +688,13 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return main.layout.spacemenu.handle_key(event)
 	}
 	if eventname == "Ctrl+O" {
-		i := main.bf.GoBack()
-		main.OpenFile(i.Path, nil)
-		main.codeview.gotoline(i.Line)
+		main.Goback()
+		// main.codeview.gotoline(i.Line)
 		return nil
 	}
 	if event.Key() == tcell.KeyCtrlO {
-		i := main.bf.GoForward()
-		main.OpenFile(i.Path, nil)
-		main.codeview.gotoline(i.Line)
+		main.GoForward()
+		// main.codeview.gotoline(i.Line)
 		return nil
 	}
 
@@ -714,6 +719,24 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 
 	return event
+}
+
+func (main *mainui) GoForward() {
+	i := main.bf.GoForward()
+	start := lsp.Position{Line: i.Line}
+	log.Printf("go forward %v", i)
+	main.OpenFileToHistory(i.Path, &lsp.Location{Range: lsp.Range{Start: start, End: start}}, false)
+}
+
+func (main *mainui) Goback() {
+	i := main.bf.GoBack()
+	start := lsp.Position{Line: i.Line}
+	log.Printf("go %v", i)
+	main.OpenFileToHistory(i.Path, &lsp.Location{Range: lsp.Range{
+		Start: start,
+		End:   start,
+	},
+	}, false)
 }
 
 //	func (main *mainui) open_file_picker() {

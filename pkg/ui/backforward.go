@@ -2,9 +2,8 @@ package mainui
 
 import (
 	"encoding/json"
+	"log"
 	"os"
-
-	"github.com/tectiv3/go-lsp"
 )
 
 type backforwarditem struct {
@@ -34,15 +33,15 @@ func NewHistory(file string) *History {
 	return history
 }
 
-func (h *History) UpdateLine(path string, linenum int) {
-	for i := range h.datalist {
-		line := &h.datalist[i]
-		if line.Path == path {
-			line.Line = linenum
-			return
-		}
-	}
-}
+//	func (h *History) UpdateLine(path string, linenum int) {
+//		for i := range h.datalist {
+//			line := &h.datalist[i]
+//			if line.Path == path {
+//				line.Line = linenum
+//				return
+//			}
+//		}
+//	}
 func (h *History) history_files() []string {
 	ret := []string{}
 	for _, r := range h.datalist {
@@ -59,14 +58,16 @@ func (h *History) history_files() []string {
 	}
 	return ret
 }
-func (h *History) AddToHistory(newdata string, loc *lsp.Location) {
+
+// AddToHistory
+func (h *History) AddToHistory(newdata string, loc *int) {
 	lll := h.datalist
 	line := 0
 	if loc != nil {
-		line = loc.Range.Start.Line
+		line = *loc
 	}
 	h.datalist = h.insertAtFront(lll, backforwarditem{Path: newdata, Line: line})
-
+	log.Printf("add history %v", h.datalist[0])
 	if h.file != "" {
 		buf, err := json.Marshal(h.datalist)
 		if err == nil {
@@ -89,12 +90,18 @@ func NewBackForward(h *History) *BackForward {
 }
 
 func (bf *BackForward) GoBack() backforwarditem {
-	bf.history.index++
-	bf.history.index = min(len(bf.history.datalist)-1, bf.history.index)
-	return bf.history.datalist[bf.history.index]
+	if len(bf.history.datalist) > 0 {
+		bf.history.index++
+		bf.history.index = min(len(bf.history.datalist)-1, bf.history.index)
+		return bf.history.datalist[bf.history.index]
+	}
+	return backforwarditem{}
 }
 
 func (bf *BackForward) GoForward() backforwarditem {
+	if len(bf.history.datalist) == 0 {
+		return backforwarditem{}
+	}
 	bf.history.index--
 	bf.history.index = max(0, bf.history.index)
 	return bf.history.datalist[bf.history.index]

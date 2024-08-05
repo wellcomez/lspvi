@@ -113,7 +113,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case arrow_up:
 		return cmdactor{"up", func() { m.codeview.action_key_up() }}
 	case arrow_down:
-		return cmdactor{"up", func() { m.codeview.action_key_down() }}
+		return cmdactor{"down", func() { m.codeview.action_key_down() }}
 	case vi_left:
 	case arrow_left:
 		return cmdactor{"left", func() { m.codeview.view.Cursor.Left() }}

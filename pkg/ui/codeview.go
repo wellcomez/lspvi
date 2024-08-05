@@ -512,6 +512,7 @@ func (code *CodeView) gotoline(line int) {
 		code.view.EndOfLine()
 		return
 	}
+	code.main.bf.history.AddToHistory(code.filename, &line)
 	key := ""
 	gs := code.main.searchcontext
 	if gs != nil && gs.view == view_code {
