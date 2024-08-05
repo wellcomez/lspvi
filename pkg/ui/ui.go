@@ -365,7 +365,7 @@ func MainUI(arg *Arguments) {
 	lspviroot=new_workdir(root)
 	handle := LspHandle{}
 	var main = mainui{
-		bf: NewBackForward(NewHistory(lspviroot.logfile)),
+		bf: NewBackForward(NewHistory(lspviroot.history)),
 	}
 	handle.main = &main
 	if !filepath.IsAbs(root) {
