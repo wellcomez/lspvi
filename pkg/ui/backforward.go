@@ -1,16 +1,16 @@
 package mainui
 
 import (
+	"encoding/json"
 	"os"
-	"strings"
 )
 
 type filehistory struct {
-	path string
-	line int
+	Path string
+	Line int
 }
 type History struct {
-	datalist []string
+	datalist []filehistory
 	file     string
 	index    int
 }
@@ -23,31 +23,43 @@ func NewHistory(file string) *History {
 	if file != "" {
 		content, err := os.ReadFile(file)
 		if err == nil {
-			lines := strings.Split(string(content), "\n")
-			for _, line := range lines {
-				history.AddToHistory(strings.TrimSpace(line))
+			var data []filehistory
+			if json.Unmarshal(content, &data) == nil {
+				history.datalist = data
 			}
 		}
 	}
 	return history
 }
 
-func (h *History) AddToHistory(newdata string) {
-	var lll []string
-	for _, line := range h.datalist {
-		if newdata != line {
-			lll = append(lll, line)
+func (h *History) UpdateLine(path string, linenum int) {
+	for i := range h.datalist {
+		line := &h.datalist[i]
+		if line.Path == path {
+			line.Line = linenum
+			return
 		}
 	}
-	h.datalist = h.insertAtFront(lll, newdata)
+}
+func (h *History) AddToHistory(newdata string) {
+	lll := []filehistory{}
+	for _, v := range h.datalist {
+		if newdata != v.Path {
+			lll = append(lll, v)
+		}
+	}
+	h.datalist = h.insertAtFront(lll, filehistory{Path: newdata})
 
 	if h.file != "" {
-		os.WriteFile(h.file, []byte(strings.Join(h.datalist, "\n")), 0644)
+		buf, err := json.Marshal(h.datalist)
+		if err == nil {
+			os.WriteFile(h.file, buf, 0644)
+		}
 	}
 }
 
-func (h *History) insertAtFront(slice []string, element string) []string {
-	slice = append([]string{element}, slice...)
+func (h *History) insertAtFront(slice []filehistory, element filehistory) []filehistory {
+	slice = append([]filehistory{element}, slice...)
 	return slice
 }
 
@@ -62,11 +74,11 @@ func NewBackForward(h *History) *BackForward {
 func (bf *BackForward) GoBack() string {
 	bf.history.index++
 	bf.history.index = min(len(bf.history.datalist)-1, bf.history.index)
-	return bf.history.datalist[bf.history.index]
+	return bf.history.datalist[bf.history.index].Path
 }
 
 func (bf *BackForward) GoForward() string {
 	bf.history.index--
 	bf.history.index = max(0, bf.history.index)
-	return bf.history.datalist[bf.history.index]
+	return bf.history.datalist[bf.history.index].Path
 }

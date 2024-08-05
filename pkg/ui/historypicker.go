@@ -65,9 +65,9 @@ func new_history_picker(v *fzfmain) history_picker {
 	fzf_item_strings := []string{}
 	for _, v := range history.datalist {
 
-		dispname := strings.TrimPrefix(v, main.root)
+		dispname := strings.TrimPrefix(v.Path, main.root)
 		h := history_item{
-			filepath: v,
+			filepath: v.Path,
 			dispname: dispname,
 		}
 		fzf_item_strings = append(fzf_item_strings, dispname)

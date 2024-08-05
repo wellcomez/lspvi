@@ -254,7 +254,8 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 		m.fileexplorer.ChangeDir(file)
 		return
 	}
-
+	cur := m.codeview.view.Cursor
+	m.bf.history.UpdateLine(m.codeview.filename, cur.Loc.Y)
 	m.bf.history.AddToHistory(file)
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
@@ -314,11 +315,11 @@ func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 }
 
 type workdir struct {
-	root    string
-	logfile string
-	uml     string
-	history string
-	export string
+	root     string
+	logfile  string
+	uml      string
+	history  string
+	export   string
 	filelist string
 }
 
@@ -326,12 +327,12 @@ func new_workdir(root string) workdir {
 	root = filepath.Join(root, ".lspvi")
 	export := filepath.Join(root, "export")
 	wk := workdir{
-		root:    root,
-		logfile: filepath.Join(root, "lspvi.log"),
-		history: filepath.Join(root, "history.log"),
-		export:	export,
-		uml:     filepath.Join(export, "uml"),
-		filelist:     filepath.Join(root, ".file"),
+		root:     root,
+		logfile:  filepath.Join(root, "lspvi.log"),
+		history:  filepath.Join(root, "history.log"),
+		export:   export,
+		uml:      filepath.Join(export, "uml"),
+		filelist: filepath.Join(root, ".file"),
 	}
 	ensure_dir(root)
 	ensure_dir(export)
@@ -346,7 +347,9 @@ func ensure_dir(root string) {
 		}
 	}
 }
+
 var lspviroot workdir
+
 func (main *mainui) update_log_view(s string) {
 	t := main.log.GetText(true)
 	main.log.SetText(t + s)
@@ -362,7 +365,7 @@ func MainUI(arg *Arguments) {
 	if len(arg.Root) > 0 {
 		root = arg.Root
 	}
-	lspviroot=new_workdir(root)
+	lspviroot = new_workdir(root)
 	handle := LspHandle{}
 	var main = mainui{
 		bf: NewBackForward(NewHistory(lspviroot.history)),
