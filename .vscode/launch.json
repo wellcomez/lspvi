@@ -20,9 +20,9 @@
             "console": "externalTerminal",
             "args": [
                 "-root",
-                "/Users/jialaizhu/dev/lspgo",
+                // "/Users/jialaizhu/dev/lspgo",
                 // "/home/z/dev/ray/raychain_go/raychain-sdk-go",
-                // "/home/z/dev/lsp/goui/",
+                "/home/z/dev/lsp/goui/",
                 // "/chrome/buildcef/chromium/src",
                 "-file",
                 // "/home/z/dev/lsp/goui/main.go",

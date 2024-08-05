@@ -8,7 +8,9 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"sync"
 	"syscall"
 	// "code.google.com/p/go.crypto/ssh/terminal"
@@ -445,13 +447,27 @@ func verifyBinary(buf []byte) bool {
 	}
 	return false
 }
+func isSubdir(parentPath, childPath string) (bool, error) {
+	cleanParent := filepath.Clean(parentPath)
+	cleanChild := filepath.Clean(childPath)
 
+	relPath, err := filepath.Rel(cleanParent, cleanChild)
+	if err != nil {
+		return false, err
+	}
+
+	// 如果相对路径以父路径开始，则表示 child 是 parent 的子目录
+	return !filepath.IsAbs(relPath) && !strings.HasPrefix(relPath, ".."), nil
+}
 func (grep *gorep) grep(fpath string, out chan<- grepInfo) {
 	defer func() {
 		<-semFopenLimit
 		grep.waitGreps.Done()
 	}()
 
+	if yes,err:=isSubdir(lspviroot.root,fpath);err != nil &&yes{
+		return
+	}
 	semFopenLimit <- 1
 	file, err := os.Open(fpath)
 	if err != nil {

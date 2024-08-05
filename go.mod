@@ -5,7 +5,6 @@ go 1.21.3
 require (
 	github.com/charlievieth/fastwalk v1.0.8
 	github.com/reinhrst/fzf-lib v0.9.0
-	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
 	github.com/sourcegraph/jsonrpc2 v0.2.0
 	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
 )

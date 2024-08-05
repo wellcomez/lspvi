@@ -1,7 +1,6 @@
 package mainui
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"strings"

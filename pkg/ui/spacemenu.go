@@ -155,7 +155,7 @@ func new_spacemenu(m *mainui) *space_menu {
 		cmdlist: command_list,
 	}
 	for _, v := range impl.items {
-		s := fmt.Sprintf("%-5s %s", v.item.key.key, v.item.cmd.desc)
+		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
 		t.table.AddItem(s, "", 0, func() {
 		})
 	}
