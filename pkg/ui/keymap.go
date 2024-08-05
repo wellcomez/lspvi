@@ -22,6 +22,8 @@ const (
 	goto_refer
 	goto_decl
 	goto_callin
+	goto_forward
+	goto_back
 	next_window_left
 	next_window_right
 	next_window_down
@@ -56,6 +58,18 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{"grep word", func() { m.codeview.action_grep_word() }}
 	case open_picker_ctrlp:
 		return cmdactor{"picker file", m.open_picker_ctrlp}
+	case goto_back:
+		{
+			return cmdactor{"back", func() {
+				m.bf.GoBack()
+			}}
+		}
+	case goto_forward:
+		{
+			return cmdactor{"forward", func() {
+				m.bf.GoForward()
+			}}
+		}
 	case goto_first_line:
 		return cmdactor{"goto first line", func() {
 			m.codeview.gotoline(0)

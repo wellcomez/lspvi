@@ -331,6 +331,7 @@ func (code *CodeView) move_up_down(up bool) {
 		}
 	}
 	// Cur.DeleteSelection()
+	log.Printf("updown: %v %v", Cur.Loc, Cur.CurSelection)
 	Cur.SetSelectionStart(Cur.Loc)
 	Cur.SetSelectionEnd(Cur.Loc)
 }
@@ -386,7 +387,7 @@ func (code *CodeView) lsp_cursor_loc() lsp.Range {
 }
 
 func (code *CodeView) key_call_in() {
-code.view.Cursor.SelectWord()
+	code.view.Cursor.SelectWord()
 	loc := code.view.Cursor.CurSelection
 	r := text_loc_to_range(loc)
 	code.main.get_callin_stack_by_cursor(lsp.Location{
