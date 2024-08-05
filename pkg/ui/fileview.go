@@ -133,9 +133,9 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 		fi := files[i]
 		fj := files[j]
 		if fi.IsDir() {
-			if !fj.IsDir() {
-				return true 
-			} 
+			if fj.IsDir() {
+				return fi.Name() > fj.Name()
+			}
 		}
 		return fi.Name() > fj.Name()
 	})
