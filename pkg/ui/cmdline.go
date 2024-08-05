@@ -32,6 +32,14 @@ func new_cmdline(main *mainui) *cmdline {
 func (cmd *cmdline) OnComand(command string) bool {
 	command = strings.TrimRight(command, "\r")
 	command = strings.TrimRight(command, "\n")
+	if command == "cn" {
+		get_cmd_actor(cmd.main, vi_quick_next).handle()
+		return true
+	}
+	if command == "cp" {
+		get_cmd_actor(cmd.main, vi_quick_prev).handle()
+		return true
+	}
 	if command == "q" || command == "quit" || command == "q!" || command == "qa" {
 		cmd.main.Close()
 		return true
@@ -156,6 +164,14 @@ func (v vi_find_handle) end() {
 // State implements vim_mode_handle.
 func (v vi_find_handle) State() string {
 	return "find " + v.vi.vi.FindEnter
+}
+func (cmd *cmdline) search_next() {
+	vim := cmd.Vim
+	cmd.main.OnSearch(vim.vi.FindEnter, false, false)
+}
+func (cmd *cmdline) search_prev() {
+	vim := cmd.Vim
+	cmd.main.OnSearch(vim.vi.FindEnter, false, false)
 }
 
 // HanldeKey implements vim_mode_handle.

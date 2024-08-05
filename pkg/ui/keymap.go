@@ -116,6 +116,18 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			Cur := code.view.Cursor
 			Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
 		}}
+	case vi_quick_prev:
+		{
+			return cmdactor{"prev", func() {
+				m.fzf.go_prev()
+			}}
+		}
+	case vi_quick_next:
+		{
+			return cmdactor{"quick_next", func() {
+				m.fzf.go_next()
+			}}
+		}
 	case vi_search_mode:
 		return cmdactor{"search mode", func() {
 			code := m.codeview
@@ -170,7 +182,7 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(main, next_window_down).esc_key([]string{ctrlw, down}),
 		get_cmd_actor(main, next_window_down).esc_key([]string{ctrlw, "j"}),
 		get_cmd_actor(main, next_window_up).esc_key([]string{ctrlw, up}),
-		get_cmd_actor(main, next_window_up).esc_key([]string{ctrlw, "j"}),
+		get_cmd_actor(main, next_window_up).esc_key([]string{ctrlw, "k"}),
 		get_cmd_actor(main, next_window_left).esc_key([]string{ctrlw, left}),
 		get_cmd_actor(main, next_window_left).esc_key([]string{ctrlw, "h"}),
 		get_cmd_actor(main, next_window_right).esc_key([]string{ctrlw, right}),

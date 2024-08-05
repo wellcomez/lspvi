@@ -14,10 +14,10 @@ import (
 func new_fzfview(main *mainui) *fzfview {
 	view := tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal())
 	ret := &fzfview{
-    view_link: &view_link{up: view_code,right:view_callin},
-		Name: "fzf",
-		view: view,
-		main: main,
+		view_link: &view_link{up: view_code, right: view_callin},
+		Name:      "fzf",
+		view:      view,
+		main:      main,
 	}
 	view.SetSelectedFunc(ret.Hanlde)
 	return ret
@@ -42,6 +42,14 @@ type fzfview struct {
 	Type         DateType
 }
 
+func (view *fzfview) go_prev() {
+	next := (view.view.GetCurrentItem() - 1 + view.view.GetItemCount()) % view.view.GetItemCount()
+	view.view.SetCurrentItem(next)
+}
+func (view *fzfview) go_next() {
+	next := (view.view.GetCurrentItem() + 1) % view.view.GetItemCount()
+	view.view.SetCurrentItem(next)
+}
 func (main *fzfview) OnSearch(txt string) {
 }
 
