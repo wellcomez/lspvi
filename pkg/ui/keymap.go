@@ -53,7 +53,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case open_picker_history:
 		return cmdactor{"history", m.open_picker_history}
 	case open_picker_grep_word:
-		return cmdactor{"grep word", m.codeview.action_grep_word}
+		return cmdactor{"grep word", func() { m.codeview.action_grep_word() }}
 	case open_picker_ctrlp:
 		return cmdactor{"picker file", m.open_picker_ctrlp}
 	case goto_first_line:
@@ -65,13 +65,13 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			m.codeview.gotoline(-1)
 		}}
 	case goto_define:
-		return cmdactor{"goto define", m.codeview.action_goto_define}
+		return cmdactor{"goto define", func() { m.codeview.action_goto_define() }}
 	case goto_refer:
 		return cmdactor{"goto refer", func() { m.codeview.action_get_refer() }}
 	case goto_callin:
 		return cmdactor{"goto callin", func() { m.codeview.key_call_in() }}
 	case goto_decl:
-		return cmdactor{"goto decl", m.codeview.action_goto_declaration}
+		return cmdactor{"goto decl", func() { m.codeview.action_goto_declaration() }}
 	case next_window_down:
 		return cmdactor{"next window down", func() {
 			m.move_to_window(move_down)
