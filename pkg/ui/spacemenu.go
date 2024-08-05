@@ -25,8 +25,14 @@ type cmdactor struct {
 	handle func()
 }
 
-func (actor cmdactor) menu_key(key string) cmditem {
+func (actor cmdactor) esc_key(key string) cmditem {
 	return cmditem{new_menu_key(key), actor}
+}
+func (actor cmdactor) menu_key(key string) cmditem {
+	return cmditem{cmdkey{
+		key:  key,
+		Type: cmd_key_escape,
+	}, actor}
 }
 
 type cmdkeytype int
@@ -121,6 +127,15 @@ const (
 	open_picker_history
 	open_picker_grep_word
 	open_picker_ctrlp
+	goto_first_line
+	goto_last_line
+	goto_define
+	goto_refer
+	goto_decl
+	next_window_left
+	next_window_right
+	next_window_down
+	next_window_up
 )
 
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
@@ -137,9 +152,40 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{"grep word", m.codeview.action_grep_word}
 	case open_picker_ctrlp:
 		return cmdactor{"picker file", m.open_picker_ctrlp}
-	}
-	return cmdactor{
-		"", nil,
+	case goto_first_line:
+		return cmdactor{"goto first line", func() {
+			m.codeview.gotoline(0)
+		}}
+	case goto_last_line:
+		return cmdactor{"goto first line", func() {
+			m.codeview.gotoline(-1)
+		}}
+	case goto_define:
+		return cmdactor{"goto define", m.codeview.action_goto_define}
+	case goto_refer:
+		return cmdactor{"goto refer", func() { m.codeview.action_get_refer() }}
+	case goto_decl:
+		return cmdactor{"goto decl", m.codeview.action_goto_declaration}
+	case next_window_down:
+		return cmdactor{"next window down", func() {
+			m.move_to_window(move_down)
+		}}
+	case next_window_left:
+		return cmdactor{"next window left", func() {
+			m.move_to_window(move_left)
+		}}
+	case next_window_right:
+		return cmdactor{"next window right", func() {
+			m.move_to_window(move_right)
+		}}
+	case next_window_up:
+		return cmdactor{"next window up", func() {
+			m.move_to_window(move_up)
+		}}
+	default:
+		return cmdactor{
+			"", nil,
+		}
 	}
 }
 func init_space_menu_item(m *mainui) []space_menu_item {
