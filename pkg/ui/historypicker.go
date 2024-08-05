@@ -57,7 +57,7 @@ func new_history_picker(v *fzfmain) history_picker {
 		},
 		list: list,
 	}
-	history := NewHistory("history.log")
+	history := NewHistory(lspviroot.history)
 	sym.impl.codeprev.view.SetBorder(true)
 	var options = fzflib.DefaultOptions()
 	options.Fuzzy = false

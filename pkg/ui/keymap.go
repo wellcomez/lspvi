@@ -1,6 +1,11 @@
 package mainui
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/pgavlin/femto"
+)
 
 type command_id int
 
@@ -31,6 +36,10 @@ const (
 	vi_right
 	vi_left_word
 	vi_right_word
+	vi_quick_next
+	vi_quick_prev
+	vi_search_mode
+	vi_line_head
 )
 
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
@@ -101,6 +110,20 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{"word left", func() { m.codeview.word_left() }}
 	case vi_right_word:
 		return cmdactor{"word right", func() { m.codeview.word_right() }}
+	case vi_line_head:
+		return cmdactor{"goto line head", func() {
+			code := m.codeview
+			Cur := code.view.Cursor
+			Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
+		}}
+	case vi_search_mode:
+		return cmdactor{"search mode", func() {
+			code := m.codeview
+			vim := code.main.cmdline.Vim
+			vim.EnterEscape()
+			vim.EnterFind()
+			m.codeview.word_right()
+		}}
 	default:
 		return cmdactor{
 			"", nil,
@@ -125,12 +148,25 @@ var event_to_keyname = map[tcell.Key]string{
 	tcell.KeyDown:  down,
 }
 
+func split(cmd string) []string {
+	ret := strings.Split(cmd, " ")
+	return ret
+}
+
+const key_goto_refer = "gr"
+const chr_goto_refer = "r"
+const chr_goto_callin = "c"
+const key_goto_define = "gd"
+const key_goto_decl = "D"
+const key_goto_first_line = "gg"
+const key_goto_last_line = "G"
+
 func (main *mainui) key_map_escape() []cmditem {
 	sss := []cmditem{
-		get_cmd_actor(main, goto_define).esc_key([]string{"g", "d"}),
-		get_cmd_actor(main, goto_refer).esc_key([]string{"g", "r"}),
-		get_cmd_actor(main, goto_first_line).esc_key([]string{"gg"}),
-		get_cmd_actor(main, goto_last_line).esc_key([]string{"G"}),
+		get_cmd_actor(main, goto_define).esc_key(split(key_goto_define)),
+		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),
+		get_cmd_actor(main, goto_first_line).esc_key(split(key_goto_first_line)),
+		get_cmd_actor(main, goto_last_line).esc_key(split(key_goto_last_line)),
 		get_cmd_actor(main, next_window_down).esc_key([]string{ctrlw, down}),
 		get_cmd_actor(main, next_window_down).esc_key([]string{ctrlw, "j"}),
 		get_cmd_actor(main, next_window_up).esc_key([]string{ctrlw, up}),
@@ -144,22 +180,34 @@ func (main *mainui) key_map_escape() []cmditem {
 }
 func (m *mainui) key_map_space_menu() []cmditem {
 	return []cmditem{
-		get_cmd_actor(m, open_picker_document_symbol).menu_key([]string{"o"}),
-		get_cmd_actor(m, open_picker_refs).menu_key([]string{"r"}),
-		get_cmd_actor(m, open_picker_livegrep).menu_key([]string{"g"}),
-		get_cmd_actor(m, open_picker_history).menu_key([]string{"h"}),
-		get_cmd_actor(m, open_picker_grep_word).menu_key([]string{"fw"}),
-		get_cmd_actor(m, open_picker_ctrlp).menu_key([]string{"f"}),
+		get_cmd_actor(m, open_picker_document_symbol).menu_key(split("o")),
+		get_cmd_actor(m, open_picker_refs).menu_key(split(chr_goto_refer)),
+		get_cmd_actor(m, open_picker_livegrep).menu_key(split("g")),
+		get_cmd_actor(m, open_picker_history).menu_key(split("h")),
+		get_cmd_actor(m, open_picker_grep_word).menu_key(split("fw")),
+		get_cmd_actor(m, open_picker_ctrlp).menu_key(split("f")),
 	}
 }
 
 func (main *mainui) key_map_leader() []cmditem {
 	sss := []cmditem{
-		get_cmd_actor(main, open_picker_ctrlp).leader([]string{"f"}),
-		get_cmd_actor(main, open_picker_grep_word).leader([]string{"fw"}),
-		get_cmd_actor(main, open_picker_refs).leader([]string{"r"}),
-		get_cmd_actor(main, open_picker_history).leader([]string{"h"}),
-		get_cmd_actor(main, open_picker_document_symbol).leader([]string{"o"}),
+		get_cmd_actor(main, open_picker_ctrlp).leader(split("f")),
+		get_cmd_actor(main, open_picker_grep_word).leader(split("fw")),
+		get_cmd_actor(main, open_picker_refs).leader(split(chr_goto_refer)),
+		get_cmd_actor(main, open_picker_history).leader(split("h")),
+		get_cmd_actor(main, open_picker_document_symbol).leader(split("o")),
 	}
 	return sss
+}
+func (m *mainui) vi_key_map() []cmditem {
+	return []cmditem{
+		get_cmd_actor(m, goto_decl).esc_key(split(key_goto_decl)),
+		get_cmd_actor(m, goto_define).esc_key(split(key_goto_define)),
+		get_cmd_actor(m, file_in_file).esc_key(split("f")),
+		get_cmd_actor(m, file_in_file_vi_loop).esc_key(split("*")),
+		get_cmd_actor(m, goto_callin).esc_key(split(chr_goto_callin)),
+		get_cmd_actor(m, goto_refer).esc_key(split(chr_goto_refer)),
+		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),
+		get_cmd_actor(m, vi_line_head).esc_key(split("0")),
+	}
 }

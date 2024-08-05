@@ -22,7 +22,7 @@ type CodeView struct {
 	view              *femto.View
 	main              *mainui
 	arrow_map         []cmditem
-	basic_vi_command        map[rune]func(code *CodeView)
+	basic_vi_command  []cmditem
 	key_map           map[tcell.Key]func(code *CodeView)
 	mouse_select_area bool
 }
@@ -243,8 +243,7 @@ func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 		code.update_with_line_changed()
 		return nil
 	}
-	if h, ok := code.basic_vi_command[event.Rune()]; ok {
-		h(code)
+	if code.run_command(code.vi_define_keymap(), ch) {
 		return nil
 	}
 	return event
@@ -303,36 +302,9 @@ func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
 	return key_map
 }
 
-func (*CodeView) key_map_command() map[rune]func(code *CodeView) {
-	commandmap := map[rune]func(code *CodeView){}
-	commandmap['0'] = func(code *CodeView) {
-		Cur := code.view.Cursor
-		Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
-	}
-	commandmap['D'] = func(code *CodeView) {
-		code.action_goto_define()
-	}
-	commandmap['d'] = func(code *CodeView) {
-		code.action_goto_declaration()
-	}
-	commandmap[42] = func(code *CodeView) {
-		code.OnFindInfile(true, false)
-	}
-	commandmap['f'] = func(code *CodeView) {
-		code.OnFindInfile(true, true)
-	}
-	commandmap['c'] = func(code *CodeView) {
-		code.key_call_in()
-	}
-	commandmap['r'] = func(code *CodeView) {
-		code.action_get_refer()
-	}
-	commandmap['/'] = func(code *CodeView) {
-		vim := code.main.cmdline.Vim
-		vim.EnterEscape()
-		vim.EnterFind()
-	}
-	return commandmap
+func (code *CodeView) key_map_command() []cmditem {
+
+	return code.main.vi_key_map()
 }
 
 func (code *CodeView) action_key_down() {
@@ -375,6 +347,7 @@ func (code *CodeView) action_grep_word() {
 }
 func (code *CodeView) action_goto_define() {
 	main := code.main
+	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	code.main.get_define(loc, main.codeview.filename)
 }

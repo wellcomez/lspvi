@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+type filehistory struct {
+	path string
+	line int
+}
 type History struct {
 	datalist []string
 	file     string
