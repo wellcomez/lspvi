@@ -520,13 +520,7 @@ func (v *Vim) EnterLead() bool {
 			"h":  main.open_picker_history,
 			"o":  main.open_document_symbol_picker,
 		}*/
-		sss := []cmditem{
-			get_cmd_actor(main, open_picker_ctrlp).leader("f"),
-			get_cmd_actor(main, open_picker_grep_word).leader("fw"),
-			get_cmd_actor(main, open_picker_refs).leader("r"),
-			get_cmd_actor(main, open_picker_history).leader("h"),
-			get_cmd_actor(main, open_picker_document_symbol).leader("o"),
-		}
+		sss := main.key_map_leader()
 		input := &inputdelay{cb: lead.inputcb, cmdlist: sss}
 		lead.state.input = input
 		v.vi_handle = lead
@@ -536,6 +530,7 @@ func (v *Vim) EnterLead() bool {
 		return false
 	}
 }
+
 
 // EnterInsert enters insert mode.
 func (v *Vim) EnterInsert() bool {
@@ -567,20 +562,7 @@ func (v *Vim) EnterEscape() {
 		state: &escapestate{init: true},
 	}
 	main := v.app
-	sss := []cmditem{
-		get_cmd_actor(main, goto_define).esc_key("gd"),
-		get_cmd_actor(main, goto_refer).esc_key("gr"),
-		get_cmd_actor(main, goto_first_line).esc_key("gg"),
-		get_cmd_actor(main, goto_last_line).esc_key("G"),
-		get_cmd_actor(main, next_window_down).esc_key(ctrlw + down),
-		get_cmd_actor(main, next_window_down).esc_key(ctrlw + "j"),
-		get_cmd_actor(main, next_window_up).esc_key(ctrlw + up),
-		get_cmd_actor(main, next_window_up).esc_key(ctrlw + "j"),
-		get_cmd_actor(main, next_window_left).esc_key(ctrlw + left),
-		get_cmd_actor(main, next_window_left).esc_key(ctrlw + "h"),
-		get_cmd_actor(main, next_window_right).esc_key(ctrlw + right),
-		get_cmd_actor(main, next_window_right).esc_key(ctrlw + "l"),
-	}
+	sss := main.key_map_escape()
 	inputdelay := inputdelay{
 		cmdlist: sss,
 	}

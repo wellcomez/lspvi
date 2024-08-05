@@ -191,14 +191,11 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	}
 }
 func init_space_menu_item(m *mainui) []space_menu_item {
-	return []space_menu_item{
-		{item: get_cmd_actor(m, open_picker_document_symbol).menu_key("o")},
-		{item: get_cmd_actor(m, open_picker_refs).menu_key("r")},
-		{item: get_cmd_actor(m, open_picker_livegrep).menu_key("g")},
-		{item: get_cmd_actor(m, open_picker_history).menu_key("h")},
-		{item: get_cmd_actor(m, open_picker_grep_word).menu_key("fw")},
-		{item: get_cmd_actor(m, open_picker_ctrlp).menu_key("f")},
+	var ret = []space_menu_item{}
+	for _, v := range m.key_map_space_menu() {
+		ret = append(ret, space_menu_item{item: v})
 	}
+	return ret
 }
 func new_spacemenu(m *mainui) *space_menu {
 	t := space_menu{
