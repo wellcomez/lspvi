@@ -679,7 +679,7 @@ func (vl *view_link) next_view(t direction) view_id {
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	eventname := event.Name()
 	log.Println("main ui recieved ",
-		main.get_focus_view_id(), eventname)
+		main.get_focus_view_id(), eventname,string(event.Rune()))
 	//Ctrl+O
 	if main.layout.dialog.Visible {
 		return main.layout.dialog.handle_key(event)
