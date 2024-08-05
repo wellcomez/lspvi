@@ -681,11 +681,15 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return main.layout.spacemenu.handle_key(event)
 	}
 	if eventname == "Ctrl+O" {
-		main.OpenFile(main.bf.GoBack(), nil)
+		i := main.bf.GoBack()
+		main.OpenFile(i.Path, nil)
+		main.codeview.gotoline(i.Line)
 		return nil
 	}
 	if event.Key() == tcell.KeyCtrlO {
-		main.OpenFile(main.bf.GoForward(), nil)
+		i := main.bf.GoForward()
+		main.OpenFile(i.Path, nil)
+		main.codeview.gotoline(i.Line)
 		return nil
 	}
 

@@ -71,14 +71,14 @@ func NewBackForward(h *History) *BackForward {
 	return &BackForward{history: h}
 }
 
-func (bf *BackForward) GoBack() string {
+func (bf *BackForward) GoBack() filehistory{
 	bf.history.index++
 	bf.history.index = min(len(bf.history.datalist)-1, bf.history.index)
-	return bf.history.datalist[bf.history.index].Path
+	return bf.history.datalist[bf.history.index]
 }
 
-func (bf *BackForward) GoForward() string {
+func (bf *BackForward) GoForward() filehistory{
 	bf.history.index--
 	bf.history.index = max(0, bf.history.index)
-	return bf.history.datalist[bf.history.index].Path
+	return bf.history.datalist[bf.history.index]
 }
