@@ -239,19 +239,6 @@ func (state *escapestate) end() {
 	state.keyseq = []string{}
 }
 
-const ctrlw = "c-w"
-const left = "left"
-const right = "right"
-const up = "up"
-const down = "down"
-
-var event_to_keyname = map[tcell.Key]string{
-	tcell.KeyCtrlW: ctrlw,
-	tcell.KeyLeft:  left,
-	tcell.KeyRight: right,
-	tcell.KeyUp:    up,
-	tcell.KeyDown:  down,
-}
 
 func (l EscapeHandle) input_cb(word string) {
 	if l.state.init {
@@ -309,7 +296,7 @@ func (input *inputdelay) command_matched(key string) int {
 	} */
 	if input.cmdlist != nil {
 		for _, v := range input.cmdlist {
-			if strings.HasPrefix(v.key.key, key) {
+			if v.key.matched(key) {
 				matched++
 			}
 		}
@@ -333,7 +320,7 @@ func (input *inputdelay) run(cmd string) bool {
 	}*/
 	if input.cmdlist != nil {
 		for _, v := range input.cmdlist {
-			if v.key.key == cmd {
+			if v.key.matched(cmd) {
 				v.cmd.handle()
 				return true
 			}
@@ -530,7 +517,6 @@ func (v *Vim) EnterLead() bool {
 		return false
 	}
 }
-
 
 // EnterInsert enters insert mode.
 func (v *Vim) EnterInsert() bool {

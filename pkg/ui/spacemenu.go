@@ -4,6 +4,7 @@ import (
 	// "fmt"
 
 	"fmt"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -25,19 +26,25 @@ type cmdactor struct {
 	handle func()
 }
 
-func (actor cmdactor) leader(key string) cmditem {
+func (key cmdkey) matched(s string) bool {
+	return strings.HasPrefix(key.string(), s)
+}
+func (actor cmdactor) leader(key []string) cmditem {
 	return cmditem{cmdkey{
 		key,
 		cmd_key_leader,
 	}, actor}
 }
-func (actor cmdactor) esc_key(key string) cmditem {
-	return cmditem{new_menu_key(key), actor}
-}
-func (actor cmdactor) menu_key(key string) cmditem {
+func (actor cmdactor) esc_key(key []string) cmditem {
 	return cmditem{cmdkey{
 		key:  key,
 		Type: cmd_key_escape,
+	}, actor}
+}
+func (actor cmdactor) menu_key(key []string) cmditem {
+	return cmditem{cmdkey{
+		key:  key,
+		Type: cmd_key_menu,
 	}, actor}
 }
 
@@ -50,15 +57,12 @@ const (
 )
 
 type cmdkey struct {
-	key  string
+	key  []string
 	Type cmdkeytype
 }
 
-func new_menu_key(key string) cmdkey {
-	return cmdkey{
-		key:  key,
-		Type: cmd_key_menu,
-	}
+func (cmd cmdkey) string() string {
+	return strings.Join(cmd.key, "")
 }
 
 type space_menu_item struct {
@@ -110,7 +114,7 @@ func (menu *space_menu) onenter() {
 func (item space_menu_item) col(n int) *tview.TableCell {
 	text := ""
 	if n == 0 {
-		text = item.item.key.key
+		text = item.item.key.string()
 	} else if n == 1 {
 		text = item.item.cmd.desc
 	}
