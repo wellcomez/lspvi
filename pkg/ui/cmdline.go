@@ -284,7 +284,7 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		if len(txt) > 1 {
 			vim.vi.FindEnter = txt[1:]
 		}
-		added := prev != nil && prev.cmdline() == txt
+		added := len(cmd.find_history.data) > 0 && cmd.find_history.data[len(cmd.find_history.data)-1].cmdline() == txt
 		if !added {
 			cmd.find_history.add(command_history_record{cmd: vim.vi.FindEnter, find: true})
 		}
