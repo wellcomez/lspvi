@@ -64,8 +64,8 @@ func (r *mainui) editor_area_fouched() {
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
 func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	// panic("unimplemented")
-	focus := m.app.GetFocus()
-	if focus == m.cmdline.input {
+	focus := m.get_focus_view_id()
+	if focus == view_cmd {
 		m.cmdline.Clear()
 	}
 }

@@ -292,10 +292,10 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.end()
 		return true
 	}
-	viewid:= l.main.get_focus_view_id()
+	viewid := l.main.get_focus_view_id()
 	switch viewid {
 	case view_code:
-		break	
+		break
 	default:
 		l.end()
 	}
@@ -512,8 +512,9 @@ func (v *Vim) ExitEnterEscape() {
 }
 
 type ctrlw_impl struct {
-	vim   *Vim
-	state string
+	vim         *Vim
+	state       string
+	prev_handle vim_mode_handle
 }
 type ctrlw_handle struct {
 	impl *ctrlw_impl
@@ -544,13 +545,15 @@ func (c ctrlw_handle) State() string {
 
 // end implements vim_mode_handle.
 func (c ctrlw_handle) end() {
-	c.impl.vim.EnterEscape()
+	// c.impl.vim.EnterEscape()
+	c.impl.vim.vi_handle = c.impl.prev_handle
 }
 
 func (v *Vim) EnterCtrlW() bool {
 	v.vi = vimstate{CtrlW: true}
 	vi_handle := ctrlw_handle{impl: &ctrlw_impl{
-		vim: v,
+		vim:         v,
+		prev_handle: v.vi_handle,
 	}}
 	v.vi_handle = vi_handle
 	return true
@@ -561,8 +564,8 @@ func (v *Vim) EnterEscape() {
 	v.app.cmdline.Clear()
 	v.vi = vimstate{Escape: true}
 
-	f := v.app.app.GetFocus()
-	if f == v.app.cmdline.input {
+	f := v.app.get_focus_view_id()
+	if f == view_cmd {
 		v.app.set_viewid_focus(view_code)
 	}
 	esc := EscapeHandle{
