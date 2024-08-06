@@ -26,13 +26,35 @@ type cmdactor struct {
 	handle func()
 }
 
+func (key cmdkey) matched_event(s tcell.EventKey) bool {
+	switch key.Type {
+	case cmd_key_event_name:
+		return key.eventname == s.Name()
+	case cmd_key_rune:
+		return key.rune == s.Rune()
+	}
+	return false
+}
 func (key cmdkey) matched(s string) bool {
 	return strings.HasPrefix(key.string(), s)
 }
+
+//	func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
+//		return cmditem{cmdkey{
+//			Type:      cmd_key_tcell_key,
+//			tcell_key: key,
+//		}, actor}
+//	}
+func (actor cmdactor) enven_name_key(eventname string) cmditem {
+	return cmditem{cmdkey{
+		Type:      cmd_key_event_name,
+		eventname: eventname,
+	}, actor}
+}
 func (actor cmdactor) leader(key []string) cmditem {
 	return cmditem{cmdkey{
-		key,
-		cmd_key_leader,
+		key:  key,
+		Type: cmd_key_leader,
 	}, actor}
 }
 func (actor cmdactor) esc_key(key []string) cmditem {
@@ -54,20 +76,24 @@ const (
 	cmd_key_menu = iota
 	cmd_key_escape
 	cmd_key_leader
+	cmd_key_event_name
+	cmd_key_rune
 )
 
 type cmdkey struct {
-	key  []string
-	Type cmdkeytype
+	key       []string
+	Type      cmdkeytype
+	eventname string
+	rune      rune
 }
 
 func (cmd cmdkey) displaystring() string {
-	t :=[]string{}
+	t := []string{}
 	switch cmd.Type {
 	case cmd_key_escape:
-		t =append(t,  "escape")
+		t = append(t, "escape")
 	case cmd_key_leader:
-		t =append(t,  "space")
+		t = append(t, "space")
 	}
 	t = append(t, cmd.key...)
 	return strings.Join(t, " + ")

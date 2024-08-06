@@ -470,6 +470,7 @@ func (code *CodeView) Load(filename string) error {
 	name := strings.ReplaceAll(filename, code.main.root, "")
 	name = strings.TrimLeft(name, "/")
 	code.view.SetTitle(name)
+	code.update_with_line_changed()
 	return nil
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {

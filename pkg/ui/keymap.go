@@ -63,13 +63,13 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case goto_back:
 		{
 			return cmdactor{"back", func() {
-				m.bf.GoBack()
+				m.GoBack()
 			}}
 		}
 	case goto_forward:
 		{
 			return cmdactor{"forward", func() {
-				m.bf.GoForward()
+				m.GoForward()
 			}}
 		}
 	case goto_first_line:
@@ -238,6 +238,12 @@ func (main *mainui) key_map_leader() []cmditem {
 		get_cmd_actor(main, open_picker_document_symbol).leader(split(key_picker_document_symbol)),
 	}
 	return sss
+}
+func (m *mainui) global_key_map() []cmditem {
+	return []cmditem{
+		get_cmd_actor(m, goto_back).enven_name_key("Ctrl+O"),
+		get_cmd_actor(m, goto_forward).enven_name_key("Rune[O]"),
+	}
 }
 func (m *mainui) vi_key_map() []cmditem {
 	return []cmditem{

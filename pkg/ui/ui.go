@@ -483,6 +483,9 @@ func MainUI(arg *Arguments) {
 	main.layout.spacemenu = spacemenu
 
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
+	if len(filearg) == 0 {
+		filearg = main.bf.GoBack().Path
+	}
 	main.OpenFile(filearg, nil)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
@@ -504,7 +507,7 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(&main)
 	// main.set_viewid_focus(view_code)
-	main_layout.SetTitle("lspvi")
+	main_layout.SetTitle("lspvi " + root)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
@@ -679,7 +682,7 @@ func (vl *view_link) next_view(t direction) view_id {
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	eventname := event.Name()
 	log.Println("main ui recieved ",
-		main.get_focus_view_id(), eventname,string(event.Rune()))
+		main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
 	//Ctrl+O
 	if main.layout.dialog.Visible {
 		return main.layout.dialog.handle_key(event)
@@ -687,15 +690,12 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if main.layout.spacemenu.visible {
 		return main.layout.spacemenu.handle_key(event)
 	}
-	if eventname == "Rune[O]" {
-		main.GoForward()
-		return nil
+	for _, v := range main.global_key_map() {
+		if v.key.matched_event(*event) {
+			v.cmd.handle()
+			return nil
+		}
 	}
-	if event.Key() == tcell.KeyCtrlO {
-		main.GoBack()
-		return nil
-	}
-
 	if event.Key() == tcell.KeyTAB || event.Key() == tcell.KeyTab {
 		main.switch_tab_view()
 		return nil
