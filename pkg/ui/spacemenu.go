@@ -193,6 +193,7 @@ func new_spacemenu(m *mainui) *space_menu {
 	t.input = &inputdelay{
 		cb:      t.input_cb,
 		cmdlist: command_list,
+		main: m,
 	}
 	for _, v := range impl.items {
 		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
