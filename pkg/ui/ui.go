@@ -377,6 +377,7 @@ func MainUI(arg *Arguments) {
 		root = arg.Root
 	}
 	lspviroot = new_workdir(root)
+	go servmain(lspviroot.uml,18080)
 	handle := LspHandle{}
 	var main = mainui{
 		bf: NewBackForward(NewHistory(lspviroot.history)),
