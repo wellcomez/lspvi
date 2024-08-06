@@ -13,10 +13,11 @@ import (
 
 type cmdline struct {
 	*view_link
-	main    *mainui
-	input   *tview.InputField
-	Vim     *Vim
-	history *command_history
+	main         *mainui
+	input        *tview.InputField
+	Vim          *Vim
+	history      *command_history
+	find_history *command_history
 }
 
 func new_cmdline(main *mainui) *cmdline {
@@ -24,9 +25,10 @@ func new_cmdline(main *mainui) *cmdline {
 		view_link: &view_link{
 			up: view_fzf,
 		},
-		main:    main,
-		input:   tview.NewInputField(),
-		history: &command_history{},
+		main:         main,
+		input:        tview.NewInputField(),
+		history:      &command_history{filepath: lspviroot.cmdhistory},
+		find_history: &command_history{filepath: lspviroot.search_cmd_history},
 	}
 	code.history.init()
 	code.input.SetBorder(true)
@@ -146,38 +148,51 @@ func (v vi_command_mode_handle) State() string {
 }
 
 type command_history struct {
-	data  []command_history_record
-	index int
+	data     []command_history_record
+	index    int
+	filepath string
 }
 type command_history_record struct {
-	cmd string
+	cmd  string
+	find bool
 }
 
+func (v command_history_record) cmdline() string {
+	if v.find {
+		return "/" + v.cmd
+	} else {
+		return v.cmd
+	}
+}
 func (v *command_history) add(item command_history_record) {
 	v.data = append(v.data, item)
+	buf, err := json.Marshal(v.data)
+	if err == nil {
+		os.WriteFile(lspviroot.logfile, buf, 0644)
+	}
 }
-func (v *command_history) prev() command_history_record {
+func (v *command_history) prev() *command_history_record {
 	if len(v.data) == 0 {
-		return command_history_record{}
+		return nil
 	}
 	v.index--
 	if v.index < 0 {
 		v.index = len(v.data) - 1
 	}
-	return v.data[v.index]
+	return &v.data[v.index]
 }
-func (v *command_history) next() command_history_record {
+func (v *command_history) next() *command_history_record {
 	if len(v.data) == 0 {
-		return command_history_record{}
+		return nil
 	}
 	v.index++
 	if v.index >= len(v.data) {
 		v.index = 0
 	}
-	return v.data[v.index]
+	return &v.data[v.index]
 }
 func (v *command_history) init() {
-	buf, err := os.ReadFile(lspviroot.logfile)
+	buf, err := os.ReadFile(v.filepath)
 	if err == nil {
 		json.Unmarshal(buf, &v.data)
 		return
@@ -192,12 +207,26 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	if handle_backspace(event, cmd) {
 		return true
 	}
+	var prev *command_history_record = nil
+	if event.Key() == tcell.KeyUp {
+		prev = cmd.history.prev()
+	} else if event.Key() == tcell.KeyDown {
+		prev = cmd.history.next()
+	}
+	if prev != nil {
+		cmd.input.SetText(prev.cmdline())
+		if prev.find {
+			v.vi.EnterFind()
+		}
+		return true
+	}
 	txt := cmd.input.GetText()
 	if event.Key() == tcell.KeyEnter {
 		if len(txt) > 1 {
 			vim.vi.FindEnter = txt[1:]
 		}
 		if cmd.OnComand(vim.vi.FindEnter) {
+			cmd.find_history.add(command_history_record{cmd: vim.vi.FindEnter})
 			cmd.Vim.EnterEscape()
 		}
 		return true
@@ -246,23 +275,40 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		return true
 	}
 	txt := cmd.input.GetText()
-	if event.Key() == tcell.KeyEnter {
+	var prev *command_history_record = nil
+	if event.Key() == tcell.KeyUp {
+		prev = cmd.find_history.prev()
+	} else if event.Key() == tcell.KeyDown {
+		prev = cmd.find_history.next()
+	} else if event.Key() == tcell.KeyEnter {
 		if len(txt) > 1 {
 			vim.vi.FindEnter = txt[1:]
+		}
+		added := prev != nil && prev.cmdline() == txt
+		if !added {
+			cmd.find_history.add(command_history_record{cmd: vim.vi.FindEnter, find: true})
 		}
 		cmd.main.OnSearch(txt[1:], false, false)
 		return true
 	}
-	if len(vim.vi.FindEnter) > 0 {
-		if event.Rune() == 'n' {
-			cmd.main.OnSearch(vim.vi.FindEnter, false, false)
-			return true
+	if prev != nil {
+		txt := prev.cmdline()
+		cmd.input.SetText(txt)
+		vim.vi.FindEnter = txt[1:]
+		cmd.main.OnSearch(txt[1:], false, false)
+		return true
+	} else {
+		if len(vim.vi.FindEnter) > 0 {
+			if event.Rune() == 'n' {
+				cmd.main.OnSearch(vim.vi.FindEnter, false, false)
+				return true
+			}
 		}
+		txt = txt + string(event.Rune())
+		cmd.input.SetText(txt)
+		cmd.main.OnSearch(txt[1:], false, false)
+		return true
 	}
-	txt = txt + string(event.Rune())
-	cmd.input.SetText(txt)
-	cmd.main.OnSearch(txt[1:], false, false)
-	return true
 }
 
 func handle_backspace(event *tcell.EventKey, cmd *cmdline) bool {
