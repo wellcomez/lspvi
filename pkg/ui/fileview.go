@@ -129,17 +129,27 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 	if err != nil {
 		return
 	}
-	sort.Slice(files, func(i, j int) bool {
-		fi := files[i]
-		fj := files[j]
-		if fi.IsDir() {
-			if fj.IsDir() {
-				return fi.Name() > fj.Name()
-			}
-		}
-		return fi.Name() > fj.Name()
-	})
+	list_dirs := []os.DirEntry{}
+	list_files := []os.DirEntry{}
 	for _, file := range files {
+		if file.IsDir() {
+			list_dirs = append(list_dirs, file)
+		} else {
+			list_files = append(list_files, file)
+		}
+	}
+	sortlist := func(list_dirs []os.DirEntry) []os.DirEntry {
+		sort.Slice(list_dirs, func(i, j int) bool {
+			fi := list_dirs[i]
+			fj := list_dirs[j]
+			return fi.Name() < fj.Name()
+		})
+		return list_dirs
+	}
+	list_dirs = sortlist(list_dirs)
+	list_files = sortlist(list_files)
+	list_dirs = append(list_dirs, list_files...)
+	for _, file := range list_dirs {
 		name := file.Name()
 		if len(name) > 0 && name[0] == '.' {
 			continue

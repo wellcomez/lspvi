@@ -253,14 +253,17 @@ func (m *mainui) keymap(keytype cmdkeytype) []string {
 	}
 	return ret
 }
-func (m *mainui) helpkey() {
+func (m *mainui) helpkey(print bool) []string {
 	types := []cmdkeytype{cmd_key_escape, cmd_key_leader, cmd_key_menu}
 	ret := []string{}
 	for _, k := range types {
 		s := m.keymap(k)
 		ret = append(ret, s...)
 	}
-	for _, l := range ret {
-		m.update_log_view(l + "\n")
+	if print {
+		for _, l := range ret {
+			m.update_log_view(l + "\n")
+		}
 	}
+	return ret
 }

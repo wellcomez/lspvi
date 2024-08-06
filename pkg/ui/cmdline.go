@@ -41,7 +41,7 @@ func (cmd *cmdline) OnComand(command string) bool {
 	} else if command == "q" || command == "quit" || command == "q!" || command == "qa" {
 		cmd.main.Close()
 	} else if command == "h" || command == "help" {
-		cmd.main.helpkey()
+		cmd.main.helpkey(true)
 	} else if num, err := strconv.ParseInt(command, 10, 32); err == nil {
 		cmd.main.codeview.gotoline(int(num) - 1)
 		return true
