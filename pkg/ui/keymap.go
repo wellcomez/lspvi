@@ -67,11 +67,12 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 				m.GoBack()
 			}}
 		}
-	case goto_tab:{
-		return cmdactor{"tab", func() {
-			m.switch_tab_view()
-		}}
-	}
+	case goto_tab:
+		{
+			return cmdactor{"tab", func() {
+				m.switch_tab_view()
+			}}
+		}
 	case goto_forward:
 		{
 			return cmdactor{"forward", func() {
@@ -206,20 +207,25 @@ const key_picker_live_grep = "g"
 const key_picker_grep_word = "fw"
 const key_picker_help = "h"
 
+func (main *mainui) ctrl_w_map_escape() []cmditem {
+	return []cmditem{
+		get_cmd_actor(main, next_window_down).tcell_key(tcell.KeyDown),
+		get_cmd_actor(main, next_window_up).tcell_key(tcell.KeyUp),
+		get_cmd_actor(main, next_window_left).tcell_key(tcell.KeyLeft),
+		get_cmd_actor(main, next_window_right).tcell_key(tcell.KeyRight),
+
+		get_cmd_actor(main, next_window_down).runne('j'),
+		get_cmd_actor(main, next_window_up).runne('k'),
+		get_cmd_actor(main, next_window_left).runne('h'),
+		get_cmd_actor(main, next_window_right).runne('l'),
+	}
+}
 func (main *mainui) key_map_escape() []cmditem {
 	sss := []cmditem{
 		get_cmd_actor(main, goto_define).esc_key(split(key_goto_define)),
 		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),
 		get_cmd_actor(main, goto_first_line).esc_key(split(key_goto_first_line)),
 		get_cmd_actor(main, goto_last_line).esc_key(split(key_goto_last_line)),
-		get_cmd_actor(main, next_window_down).esc_key([]string{ctrlw, down}),
-		get_cmd_actor(main, next_window_down).esc_key([]string{ctrlw, "j"}),
-		get_cmd_actor(main, next_window_up).esc_key([]string{ctrlw, up}),
-		get_cmd_actor(main, next_window_up).esc_key([]string{ctrlw, "k"}),
-		get_cmd_actor(main, next_window_left).esc_key([]string{ctrlw, left}),
-		get_cmd_actor(main, next_window_left).esc_key([]string{ctrlw, "h"}),
-		get_cmd_actor(main, next_window_right).esc_key([]string{ctrlw, right}),
-		get_cmd_actor(main, next_window_right).esc_key([]string{ctrlw, "l"}),
 	}
 	return sss
 }

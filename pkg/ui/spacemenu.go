@@ -47,6 +47,12 @@ func (key cmdkey) matched(s string) bool {
 //			tcell_key: key,
 //		}, actor}
 //	}
+func (actor cmdactor) runne(key rune) cmditem {
+	return cmditem{cmdkey{
+		Type:      cmd_key_rune,
+		rune : key,
+	}, actor}
+}
 func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
 	return cmditem{cmdkey{
 		Type:      cmd_key_tcell_key,

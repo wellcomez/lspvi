@@ -2,10 +2,11 @@ package mainui
 
 import (
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"strconv"
 	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 type cmdline struct {
@@ -90,10 +91,14 @@ type vimstate struct {
 	Virtual   bool
 	Insert    bool
 	Leader    bool
+	CtrlW     bool
 	FindEnter string
 }
 
 func (v vimstate) String() string {
+	if v.CtrlW {
+		return "switch window"
+	}
 	if v.Virtual {
 		return "Virtual"
 	}
@@ -395,6 +400,11 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 			return true, nil
 		}
 	}
+	if event.Key() == tcell.KeyCtrlW {
+		if v.EnterCtrlW() {
+			return true, nil
+		}
+	}
 	if event.Rune() == leadkey {
 		if v.EnterLead() {
 			return true, nil
@@ -492,6 +502,51 @@ func (v *Vim) EnterInsert() bool {
 func (v *Vim) ExitEnterEscape() {
 	v.vi = vimstate{}
 	v.vi_handle = nil
+}
+
+type ctrlw_impl struct {
+	vim   *Vim
+	state string
+}
+type ctrlw_handle struct {
+	impl *ctrlw_impl
+}
+
+// HanldeKey implements vim_mode_handle.
+func (c ctrlw_handle) HanldeKey(event *tcell.EventKey) bool {
+	main := c.impl.vim.app
+	for _, v := range main.ctrl_w_map_escape() {
+		if v.key.matched_event(*event) {
+			v.cmd.handle()
+			c.impl.state = v.cmd.desc
+			c.end()
+			return true
+		}
+	}
+	c.end()
+	return false
+}
+
+// State implements vim_mode_handle.
+func (c ctrlw_handle) State() string {
+	if len(c.impl.state) > 0 {
+		return c.impl.state
+	}
+	return "ctrl-w"
+}
+
+// end implements vim_mode_handle.
+func (c ctrlw_handle) end() {
+	c.impl.vim.EnterEscape()
+}
+
+func (v *Vim) EnterCtrlW() bool {
+	v.vi = vimstate{CtrlW: true}
+	vi_handle := ctrlw_handle{impl: &ctrlw_impl{
+		vim: v,
+	}}
+	v.vi_handle = vi_handle
+	return true
 }
 
 // EnterEscape enters escape mode.
