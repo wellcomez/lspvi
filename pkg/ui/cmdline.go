@@ -515,7 +515,7 @@ type ctrlw_handle struct {
 // HanldeKey implements vim_mode_handle.
 func (c ctrlw_handle) HanldeKey(event *tcell.EventKey) bool {
 	main := c.impl.vim.app
-	for _, v := range main.ctrl_w_map_escape() {
+	for _, v := range main.ctrl_w_map() {
 		if v.key.matched_event(*event) {
 			v.cmd.handle()
 			c.impl.state = v.cmd.desc

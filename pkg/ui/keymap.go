@@ -207,7 +207,7 @@ const key_picker_live_grep = "g"
 const key_picker_grep_word = "fw"
 const key_picker_help = "h"
 
-func (main *mainui) ctrl_w_map_escape() []cmditem {
+func (main *mainui) ctrl_w_map() []cmditem {
 	return []cmditem{
 		get_cmd_actor(main, next_window_down).tcell_key(tcell.KeyDown),
 		get_cmd_actor(main, next_window_up).tcell_key(tcell.KeyUp),
