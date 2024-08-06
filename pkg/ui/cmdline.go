@@ -1,7 +1,9 @@
 package mainui
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -11,9 +13,10 @@ import (
 
 type cmdline struct {
 	*view_link
-	main  *mainui
-	input *tview.InputField
-	Vim   *Vim
+	main    *mainui
+	input   *tview.InputField
+	Vim     *Vim
+	history *command_history
 }
 
 func new_cmdline(main *mainui) *cmdline {
@@ -21,9 +24,11 @@ func new_cmdline(main *mainui) *cmdline {
 		view_link: &view_link{
 			up: view_fzf,
 		},
-		main:  main,
-		input: tview.NewInputField(),
+		main:    main,
+		input:   tview.NewInputField(),
+		history: &command_history{},
 	}
+	code.history.init()
 	code.input.SetBorder(true)
 	input := code.input
 	input.SetMouseCapture(code.handle_mouse)
@@ -140,6 +145,47 @@ func (v vi_command_mode_handle) State() string {
 	return "command"
 }
 
+type command_history struct {
+	data  []command_history_record
+	index int
+}
+type command_history_record struct {
+	cmd string
+}
+
+func (v *command_history) add(item command_history_record) {
+	v.data = append(v.data, item)
+}
+func (v *command_history) prev() command_history_record {
+	if len(v.data) == 0 {
+		return command_history_record{}
+	}
+	v.index--
+	if v.index < 0 {
+		v.index = len(v.data) - 1
+	}
+	return v.data[v.index]
+}
+func (v *command_history) next() command_history_record {
+	if len(v.data) == 0 {
+		return command_history_record{}
+	}
+	v.index++
+	if v.index >= len(v.data) {
+		v.index = 0
+	}
+	return v.data[v.index]
+}
+func (v *command_history) init() {
+	buf, err := os.ReadFile(lspviroot.logfile)
+	if err == nil {
+		json.Unmarshal(buf, &v.data)
+		return
+	} else {
+		v.data = []command_history_record{}
+	}
+	v.index = 0
+}
 func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	cmd := v.vi.app.cmdline
 	vim := cmd.Vim

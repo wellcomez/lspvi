@@ -326,6 +326,7 @@ type workdir struct {
 	logfile  string
 	uml      string
 	history  string
+	cmdhistory  string
 	export   string
 	filelist string
 }
@@ -337,6 +338,7 @@ func new_workdir(root string) workdir {
 		root:     root,
 		logfile:  filepath.Join(root, "lspvi.log"),
 		history:  filepath.Join(root, "history.log"),
+		cmdhistory:  filepath.Join(root, "cmdhistory.log"),
 		export:   export,
 		uml:      filepath.Join(export, "uml"),
 		filelist: filepath.Join(root, ".file"),
