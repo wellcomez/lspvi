@@ -755,7 +755,7 @@ func (main mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }
 func (main mainui) open_document_symbol_picker() {
-	main.layout.dialog.open_wks_query(main.lspmgr.Current)
+	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
 }
 
 // func (m *mainui) OnGrep() {

@@ -259,7 +259,7 @@ func (m *mainui) global_key_map() []cmditem {
 	return []cmditem{
 		get_cmd_actor(m, goto_back).enven_name_key("Ctrl+O"),
 		get_cmd_actor(m, goto_forward).enven_name_key("Rune[O]"),
-		get_cmd_actor(m, fuzz_picker_file).tcell_key(tcell.KeyCtrlP),
+		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTab),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTAB),
 	}

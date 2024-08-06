@@ -384,13 +384,13 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.end()
 		return true
 	}
-	viewid := l.main.get_focus_view_id()
-	switch viewid {
-	case view_code:
-		break
-	default:
-		l.end()
-	}
+	// viewid := l.main.get_focus_view_id()
+	// switch viewid {
+	// case view_code:
+	// 	break
+	// default:
+	// 	l.end()
+	// }
 	return processed
 }
 
@@ -657,7 +657,7 @@ func (v *Vim) EnterEscape() {
 	v.vi = vimstate{Escape: true}
 
 	f := v.app.get_focus_view_id()
-	if f == view_cmd {
+	if f == view_cmd || f == view_none {
 		v.app.set_viewid_focus(view_code)
 	}
 	esc := EscapeHandle{
