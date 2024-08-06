@@ -14,7 +14,7 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (pk *refpicker) new_view(input *tview.InputField) *tview.Grid {
+func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
 	list := pk.impl.listview
 	list.SetBorder(true)
 	code := pk.impl.codeprev.view
@@ -23,7 +23,7 @@ func (pk *refpicker) new_view(input *tview.InputField) *tview.Grid {
 	return layout
 }
 
-func layout_list_edit(list tview.Primitive,code tview.Primitive, input *tview.InputField) *tview.Grid {
+func layout_list_edit(list tview.Primitive, code tview.Primitive, input *tview.InputField) *tview.Grid {
 	layout := tview.NewGrid().
 		SetColumns(-1, 24, 16, -1).
 		SetRows(-1, 3, 3, 2).

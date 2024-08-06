@@ -61,31 +61,36 @@ func (v *fzfmain) hide() {
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	sym := new_refer_picker(*file, v)
-	x := sym.new_view(v.input)
+	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 	v.Frame.SetTitle("symbol")
 	sym.load(ranges)
 }
 func (v *fzfmain) OpenGrepWordFzf(word string) {
 	sym := new_grep_picker(v)
-	x := sym.new_view(v.input)
+	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 	v.Frame.SetTitle(fmt.Sprintf("grep %s", word))
 	sym.livewgreppicker.UpdateQuery(word)
 }
 func (v *fzfmain) OpenLiveGrepFzf() {
 	sym := new_live_grep_picker(v)
-	x := sym.new_view(v.input)
+	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 	v.Frame.SetTitle("live grep")
 }
 func (v *fzfmain) OpenHistoryFzf() {
 	sym := new_history_picker(v)
-	x := sym.new_history(v.input)
+	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 	v.Frame.SetTitle("history")
 }
-
+func (v *fzfmain) OpenKeymapFzf() {
+	sym := new_keymap_picker(v)
+	x := sym.grid(v.input)
+	v.create_dialog_content(x, sym)
+	v.Frame.SetTitle("keymap")
+}
 func (v *fzfmain) create_dialog_content(grid *tview.Grid, sym picker) {
 	v.Frame = tview.NewFrame(grid)
 	v.Frame.SetBorder(true)

@@ -9,13 +9,19 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (pk history_picker) new_history(input *tview.InputField) *tview.Grid {
+func (pk history_picker) grid(input *tview.InputField) *tview.Grid {
+	list := pk.list
+	layout := grid_list_whole_screen(list, input)
+	layout.SetBorder(true)
+	return layout
+}
+
+func grid_list_whole_screen(list tview.Primitive, input *tview.InputField) *tview.Grid {
 	layout := tview.NewGrid().
 		SetColumns(-1, 24, 16, -1).
 		SetRows(-1, 3, 3, 2).
-		AddItem(pk.list, 0, 0, 3, 4, 0, 0, false).
+		AddItem(list, 0, 0, 3, 4, 0, 0, false).
 		AddItem(input, 3, 0, 1, 4, 0, 0, false)
-	layout.SetBorder(true)
 	return layout
 }
 

@@ -21,11 +21,7 @@ import (
 
 // new_fzf_file
 func (pk DirWalk) new_fzf_file(input *tview.InputField) *tview.Grid {
-	layout := tview.NewGrid().
-		SetColumns(-1, 24, 16, -1).
-		SetRows(-1, 3, 3, 2).
-		AddItem(pk.list, 0, 0, 3, 4, 0, 0, false).
-		AddItem(input, 3, 0, 1, 4, 0, 0, false)
+	layout := grid_list_whole_screen(pk.list,input)
 	layout.SetBorder(true)
 	return layout
 }

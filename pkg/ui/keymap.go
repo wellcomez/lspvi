@@ -43,6 +43,7 @@ const (
 	vi_quick_prev
 	vi_search_mode
 	vi_line_head
+	open_picker_help
 )
 
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
@@ -151,6 +152,10 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			vim.EnterFind()
 			m.codeview.word_right()
 		}}
+	case open_picker_help:
+		return cmdactor{"help", func() {
+			m.layout.dialog.OpenKeymapFzf()
+		}}
 	default:
 		return cmdactor{
 			"", nil,
@@ -193,6 +198,7 @@ const key_picker_ctrlp = "f"
 const key_picker_document_symbol = "o"
 const key_picker_live_grep = "g"
 const key_picker_grep_word = "fw"
+const key_picker_help = "h"
 
 func (main *mainui) key_map_escape() []cmditem {
 	sss := []cmditem{
@@ -219,6 +225,7 @@ func (m *mainui) key_map_space_menu() []cmditem {
 		get_cmd_actor(m, open_picker_history).menu_key(split(key_picker_history)),
 		get_cmd_actor(m, open_picker_grep_word).menu_key(split(key_picker_grep_word)),
 		get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
+		get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
 	}
 }
 

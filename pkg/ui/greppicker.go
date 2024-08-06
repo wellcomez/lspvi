@@ -48,7 +48,7 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 	return pk.handle_key_override
 }
 
-func (pk *livewgreppicker) new_view(input *tview.InputField) *tview.Grid {
+func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Grid {
 	list := pk.list
 	list.SetBorder(true)
 	code := pk.codeprev.view
