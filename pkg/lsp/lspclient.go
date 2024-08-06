@@ -8,6 +8,7 @@ import (
 )
 
 type lspclient interface {
+	WorkSpaceSymbol(query string) ([]lsp.SymbolInformation, error)
 	Semantictokens_full(file string) (*lsp.SemanticTokens, error)
 	InitializeLsp(wk WorkSpace) error
 	Launch_Lsp_Server() error
@@ -110,4 +111,8 @@ func (l lsp_base) GetReferences(file string, pos lsp.Position) ([]lsp.Location, 
 }
 func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
 	return l.core.GetDocumentSymbol(file)
+}
+
+func (l lsp_base) WorkSpaceSymbol(query string) ([]lsp.SymbolInformation, error) {
+	return l.core.WorkSpaceDocumentSymbol(query)
 }

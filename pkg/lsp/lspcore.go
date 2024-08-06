@@ -33,12 +33,12 @@ type lspcore struct {
 	capabilities          map[string]interface{}
 	initializationOptions map[string]interface{}
 	// arguments             []string
-	handle     jsonrpc2.Handler
-	rw         io.ReadWriteCloser
-	LanguageID string
-	started    bool
-	inited     bool
-	inited_called     bool
+	handle        jsonrpc2.Handler
+	rw            io.ReadWriteCloser
+	LanguageID    string
+	started       bool
+	inited        bool
+	inited_called bool
 
 	lang lsplang
 }
@@ -86,14 +86,14 @@ type WorkSpace struct {
 	Callback jsonrpc2.Handler
 }
 
-func (core *lspcore) Initialized() (error) {
-	if core.inited_called{
+func (core *lspcore) Initialized() error {
+	if core.inited_called {
 		return nil
 	}
-	core.inited_called=true
+	core.inited_called = true
 	var result interface{}
-	return core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{},&result)
-	// return nil 
+	return core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{}, &result)
+	// return nil
 }
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1
@@ -333,6 +333,14 @@ func (core *lspcore) TextDocumentDeclaration(file string, pos lsp.Position) (*sy
 		}
 	}
 	return &ret, nil
+}
+func (core *lspcore) WorkSpaceDocumentSymbol(query string) ([]lsp.SymbolInformation, error) {
+	var parameter = lsp.WorkspaceSymbolParams{
+		Query: query,
+	}
+	var res []lsp.SymbolInformation
+	err := core.conn.Call(context.Background(), "workspace/symbol", parameter, &res)
+	return res, err
 }
 func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 	uri := lsp.NewDocumentURI(file)

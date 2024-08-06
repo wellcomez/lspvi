@@ -90,6 +90,9 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 	}
 	return i
 }
+func (sym *Symbol_file) WorkspaceQuery(query string) ([]lsp.SymbolInformation, error) {
+	return sym.lsp.WorkSpaceSymbol(query)
+}
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if sym.lsp == nil {
 		return
@@ -98,7 +101,7 @@ func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if err != nil {
 		return
 	}
-	sym.Handle.OnRefenceChanged(ranges,loc)
+	sym.Handle.OnRefenceChanged(ranges, loc)
 }
 func (sym *Symbol_file) Declare(ranges lsp.Range) {
 	if sym.lsp == nil {
@@ -118,9 +121,9 @@ func (sym *Symbol_file) GotoDefine(ranges lsp.Range) {
 	if err != nil {
 		return
 	}
-	if len(loc)>0{
+	if len(loc) > 0 {
 		sym.Handle.OnFileChange(loc)
-	}	
+	}
 }
 func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 	var ret []CallStack
