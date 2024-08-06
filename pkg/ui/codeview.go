@@ -381,7 +381,7 @@ func (code *CodeView) key_call_in() {
 		Range: r,
 		URI:   lsp.NewDocumentURI(code.filename),
 	}, code.filename)
-	code.main.ActiveTab(view_callin)
+	// code.main.ActiveTab(view_callin)
 }
 
 func text_loc_to_range(loc [2]femto.Loc) lsp.Range {

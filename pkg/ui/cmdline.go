@@ -292,6 +292,13 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.end()
 		return true
 	}
+	viewid:= l.main.get_focus_view_id()
+	switch viewid {
+	case view_code:
+		break	
+	default:
+		l.end()
+	}
 	return processed
 }
 

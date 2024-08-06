@@ -254,7 +254,7 @@ func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 	}
 	// println(ss)
 	c.main.get_callin_stack(loc, c.main.codeview.filename)
-	c.main.ActiveTab(view_callin)
+	// c.main.ActiveTab(view_callin)
 }
 func (c *SymbolTreeView) get_declare(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
@@ -273,7 +273,7 @@ func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 	r := c.get_symbol_range(sym)
 	// println(ss)
 	c.main.get_refer(r, c.main.codeview.filename)
-	c.main.ActiveTab(view_fzf)
+	// c.main.ActiveTab(view_fzf)
 }
 
 func (c *SymbolTreeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
