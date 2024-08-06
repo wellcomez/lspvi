@@ -62,14 +62,15 @@ type cmdkey struct {
 }
 
 func (cmd cmdkey) displaystring() string {
-	t := ""
+	t :=[]string{}
 	switch cmd.Type {
 	case cmd_key_escape:
-		t = "escape+"
+		t =append(t,  "escape")
 	case cmd_key_leader:
-		t = "space+"
+		t =append(t,  "space")
 	}
-	return fmt.Sprintf("%s%s", t, cmd.string())
+	t = append(t, cmd.key...)
+	return strings.Join(t, " + ")
 }
 func (cmd cmdkey) string() string {
 	return strings.Join(cmd.key, "")
