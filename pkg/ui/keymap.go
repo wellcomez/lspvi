@@ -241,6 +241,12 @@ func (main *mainui) key_map_leader() []cmditem {
 }
 func (m *mainui) vi_key_map() []cmditem {
 	return []cmditem{
+		get_cmd_actor(m, arrow_up).esc_key([]string{"k"}),
+		get_cmd_actor(m, arrow_left).esc_key([]string{"h"}),
+		get_cmd_actor(m, arrow_right).esc_key([]string{"l"}),
+		get_cmd_actor(m, arrow_down).esc_key([]string{"j"}),
+		get_cmd_actor(m, vi_right_word).esc_key([]string{"e"}),
+		get_cmd_actor(m, vi_left_word).esc_key([]string{"b"}),
 		get_cmd_actor(m, goto_decl).esc_key(split(key_goto_decl)),
 		get_cmd_actor(m, goto_define).esc_key(split(key_goto_define)),
 		get_cmd_actor(m, file_in_file).esc_key(split("f")),

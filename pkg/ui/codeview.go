@@ -21,7 +21,6 @@ type CodeView struct {
 	filename          string
 	view              *femto.View
 	main              *mainui
-	arrow_map         []cmditem
 	basic_vi_command  []cmditem
 	key_map           map[tcell.Key]func(code *CodeView)
 	mouse_select_area bool
@@ -85,7 +84,7 @@ func NewCodeView(main *mainui) *CodeView {
 		down:  view_fzf,
 		left:  view_file}}
 	ret.main = main
-	ret.newMethod()
+	ret.map_key_handle()
 	var colorscheme femto.Colorscheme
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
@@ -234,13 +233,8 @@ func (code *CodeView) run_command(cmdlist []cmditem, key string) bool {
 }
 func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 	ch := string(event.Rune())
-	if code.run_command(code.arrow_map, ch) {
-		code.update_with_line_changed()
-		return nil
-	}
 	if h, ok := code.key_map[event.Key()]; ok {
 		h(code)
-		code.update_with_line_changed()
 		return nil
 	}
 	if code.run_command(code.basic_vi_command, ch) {
@@ -249,8 +243,7 @@ func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
-func (code *CodeView) newMethod() {
-	code.arrow_map = code.vi_define_keymap()
+func (code *CodeView) map_key_handle() {
 	code.basic_vi_command = code.key_map_command()
 	code.key_map = code.key_map_arrow()
 }
@@ -262,6 +255,7 @@ func (code *CodeView) word_left() {
 	if Cur.Loc.Y <= view.Topline {
 		view.ScrollUp(pagesize / 2)
 	}
+	code.update_with_line_changed()
 }
 func (code *CodeView) word_right() {
 	Cur := code.view.Cursor
@@ -271,19 +265,9 @@ func (code *CodeView) word_right() {
 	if Cur.Loc.Y >= view.Bottomline() {
 		view.ScrollDown(pagesize / 2)
 	}
+	code.update_with_line_changed()
 }
 
-func (code *CodeView) vi_define_keymap() []cmditem {
-	m := code.main
-	return []cmditem{
-		get_cmd_actor(m, arrow_up).esc_key([]string{"k"}),
-		get_cmd_actor(m, arrow_left).esc_key([]string{"h"}),
-		get_cmd_actor(m, arrow_right).esc_key([]string{"l"}),
-		get_cmd_actor(m, arrow_down).esc_key([]string{"j"}),
-		get_cmd_actor(m, vi_right_word).esc_key([]string{"e"}),
-		get_cmd_actor(m, vi_left_word).esc_key([]string{"b"}),
-	}
-}
 
 func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
 	key_map := map[tcell.Key]func(code *CodeView){}
@@ -334,6 +318,7 @@ func (code *CodeView) move_up_down(up bool) {
 	log.Printf("updown: %v %v", Cur.Loc, Cur.CurSelection)
 	Cur.SetSelectionStart(Cur.Loc)
 	Cur.SetSelectionEnd(Cur.Loc)
+	code.update_with_line_changed()
 }
 
 func (ret *CodeView) update_with_line_changed() {
