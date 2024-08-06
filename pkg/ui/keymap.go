@@ -13,6 +13,7 @@ type command_id int
 const (
 	open_picker_document_symbol = iota
 	open_picker_refs
+	open_picker_wkq
 	open_picker_livegrep
 	open_picker_history
 	open_picker_grep_word
@@ -49,6 +50,8 @@ const (
 
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	switch id {
+	case open_picker_wkq:
+		return cmdactor{"query workspace symbol", m.open_wks_query}
 	case open_picker_document_symbol:
 		return cmdactor{"open symbol", m.open_document_symbol_picker}
 	case open_picker_refs:
@@ -245,6 +248,7 @@ func (main *mainui) key_map_leader() []cmditem {
 	sss := []cmditem{
 		get_cmd_actor(main, open_picker_ctrlp).leader(split(key_picker_ctrlp)),
 		get_cmd_actor(main, open_picker_grep_word).leader(split(key_picker_grep_word)),
+		get_cmd_actor(main, open_picker_wkq).leader(split("wk")),
 		get_cmd_actor(main, open_picker_refs).leader(split(chr_goto_refer)),
 		get_cmd_actor(main, open_picker_history).leader(split(key_picker_history)),
 		get_cmd_actor(main, open_picker_document_symbol).leader(split(key_picker_document_symbol)),

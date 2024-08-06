@@ -29,7 +29,9 @@ func (input *inputdelay) command_matched(key string) int {
 func (input *inputdelay) check(cmd string) (bool, bool) {
 	matched := input.command_matched(cmd)
 	if matched == 1 {
-		input.run(cmd)
+		if input.run(cmd)==false{
+			return false, false 
+		}
 	}
 	return matched > 0, matched == 1
 }

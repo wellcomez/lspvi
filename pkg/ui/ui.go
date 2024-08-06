@@ -244,6 +244,9 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 	m.page.SwitchToPage(tab.Name)
 	m.page.SetTitle(tab.Name)
 }
+func (m *mainui) open_wks_query() {
+	m.layout.dialog.open_wks_query(m.lspmgr.Current)
+}
 
 // OpenFile
 // OpenFile
@@ -322,28 +325,28 @@ func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 }
 
 type workdir struct {
-	root     string
-	logfile  string
-	uml      string
-	history  string
-	cmdhistory  string
-	search_cmd_history  string
-	export   string
-	filelist string
+	root               string
+	logfile            string
+	uml                string
+	history            string
+	cmdhistory         string
+	search_cmd_history string
+	export             string
+	filelist           string
 }
 
 func new_workdir(root string) workdir {
 	root = filepath.Join(root, ".lspvi")
 	export := filepath.Join(root, "export")
 	wk := workdir{
-		root:     root,
-		logfile:  filepath.Join(root, "lspvi.log"),
-		history:  filepath.Join(root, "history.log"),
-		cmdhistory:  filepath.Join(root, "cmdhistory.log"),
-		search_cmd_history:  filepath.Join(root, "search_cmd_history.log"),
-		export:   export,
-		uml:      filepath.Join(export, "uml"),
-		filelist: filepath.Join(root, ".file"),
+		root:               root,
+		logfile:            filepath.Join(root, "lspvi.log"),
+		history:            filepath.Join(root, "history.log"),
+		cmdhistory:         filepath.Join(root, "cmdhistory.log"),
+		search_cmd_history: filepath.Join(root, "search_cmd_history.log"),
+		export:             export,
+		uml:                filepath.Join(export, "uml"),
+		filelist:           filepath.Join(root, ".file"),
 	}
 	ensure_dir(root)
 	ensure_dir(export)
@@ -377,7 +380,7 @@ func MainUI(arg *Arguments) {
 		root = arg.Root
 	}
 	lspviroot = new_workdir(root)
-	go servmain(lspviroot.uml,18080)
+	go servmain(lspviroot.uml, 18080)
 	handle := LspHandle{}
 	var main = mainui{
 		bf: NewBackForward(NewHistory(lspviroot.history)),
@@ -752,7 +755,7 @@ func (main mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }
 func (main mainui) open_document_symbol_picker() {
-	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
+	main.layout.dialog.open_wks_query(main.lspmgr.Current)
 }
 
 // func (m *mainui) OnGrep() {

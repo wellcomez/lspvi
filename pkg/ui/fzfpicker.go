@@ -58,6 +58,12 @@ func (v *fzfmain) hide() {
 	v.Visible = false
 }
 
+func (v *fzfmain) open_wks_query(file *lspcore.Symbol_file) {
+	sym := new_workspace_symbol_picker(v,file)
+	x := sym.grid()
+	v.create_dialog_content(x, sym)
+	v.Frame.SetTitle("workspace symbol")
+}
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	sym := new_refer_picker(*file, v)
