@@ -696,19 +696,6 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 	}
-	if event.Key() == tcell.KeyTAB || event.Key() == tcell.KeyTab {
-		main.switch_tab_view()
-		return nil
-	}
-	if event.Key() == tcell.KeyCtrlS {
-		main.open_document_symbol_picker()
-		return nil
-	}
-	if event.Key() == tcell.KeyCtrlP {
-		main.layout.dialog.OpenFileFzf(main.root)
-		return nil
-	}
-
 	shouldReturn, returnValue := main.cmdline.Vim.VimKeyModelMethod(event)
 	if shouldReturn {
 		return returnValue

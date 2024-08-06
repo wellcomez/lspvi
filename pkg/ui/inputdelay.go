@@ -53,7 +53,7 @@ func (input *inputdelay) run(cmd string) bool {
 }
 func (input *inputdelay) rundelay(word string) {
 	go func() {
-		timer := time.NewTimer(time.Millisecond * 100) // 两秒后触发
+		timer := time.NewTimer(time.Millisecond * 200) // 两秒后触发
 		<-timer.C
 		defer timer.Stop()
 		input.main.app.QueueUpdate(func() {

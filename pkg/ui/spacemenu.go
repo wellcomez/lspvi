@@ -28,6 +28,8 @@ type cmdactor struct {
 
 func (key cmdkey) matched_event(s tcell.EventKey) bool {
 	switch key.Type {
+	case cmd_key_tcell_key:
+		return key.tcell_key==s.Key()
 	case cmd_key_event_name:
 		return key.eventname == s.Name()
 	case cmd_key_rune:
@@ -45,6 +47,12 @@ func (key cmdkey) matched(s string) bool {
 //			tcell_key: key,
 //		}, actor}
 //	}
+func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
+	return cmditem{cmdkey{
+		Type:      cmd_key_tcell_key,
+		tcell_key: key,
+	}, actor}
+}
 func (actor cmdactor) enven_name_key(eventname string) cmditem {
 	return cmditem{cmdkey{
 		Type:      cmd_key_event_name,
@@ -77,6 +85,7 @@ const (
 	cmd_key_escape
 	cmd_key_leader
 	cmd_key_event_name
+	cmd_key_tcell_key
 	cmd_key_rune
 )
 
@@ -85,6 +94,7 @@ type cmdkey struct {
 	Type      cmdkeytype
 	eventname string
 	rune      rune
+	tcell_key      tcell.Key
 }
 
 func (cmd cmdkey) displaystring() string {

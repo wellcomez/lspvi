@@ -24,6 +24,7 @@ const (
 	goto_decl
 	goto_callin
 	goto_forward
+	goto_tab
 	goto_back
 	next_window_left
 	next_window_right
@@ -66,6 +67,11 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 				m.GoBack()
 			}}
 		}
+	case goto_tab:{
+		return cmdactor{"tab", func() {
+			m.switch_tab_view()
+		}}
+	}
 	case goto_forward:
 		{
 			return cmdactor{"forward", func() {
@@ -243,6 +249,9 @@ func (m *mainui) global_key_map() []cmditem {
 	return []cmditem{
 		get_cmd_actor(m, goto_back).enven_name_key("Ctrl+O"),
 		get_cmd_actor(m, goto_forward).enven_name_key("Rune[O]"),
+		get_cmd_actor(m, fuzz_picker_file).tcell_key(tcell.KeyCtrlP),
+		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTab),
+		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTAB),
 	}
 }
 func (m *mainui) vi_key_map() []cmditem {
