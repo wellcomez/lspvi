@@ -123,7 +123,11 @@ func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	m.UpdatePageTitle()
 }
 
+// OnCallTaskInViewChanged 
 func (m *mainui) OnCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
+  if len(call_in_stack.Allstack)>0{
+    m.ActiveTab(view_callin)
+  }
 	m.callinview.updatetask(call_in_stack)
 	m.async_resolve_callstack(call_in_stack)
 }
