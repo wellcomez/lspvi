@@ -78,7 +78,7 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 	case view_uml:
 		return m.uml.view_link
 	case view_cmd:
-		return nil
+		return m.cmdline.view_link
 	case view_file:
 		return m.fileexplorer.view_link
 	case view_outline_list:

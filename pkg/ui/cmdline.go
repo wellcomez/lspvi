@@ -9,6 +9,7 @@ import (
 )
 
 type cmdline struct {
+	*view_link
 	main  *mainui
 	input *tview.InputField
 	Vim   *Vim
@@ -16,6 +17,9 @@ type cmdline struct {
 
 func new_cmdline(main *mainui) *cmdline {
 	code := &cmdline{
+		view_link: &view_link{
+			up: view_fzf,
+		},
 		main:  main,
 		input: tview.NewInputField(),
 	}

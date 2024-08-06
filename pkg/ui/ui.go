@@ -637,6 +637,8 @@ func (main *mainui) move_to_window(t direction) {
 	cur := main.get_focus_view_id()
 	var vl *view_link
 	switch cur {
+	case view_cmd:
+		vl = main.cmdline.view_link
 	case view_code:
 		vl = main.codeview.view_link
 	case view_outline_list:
