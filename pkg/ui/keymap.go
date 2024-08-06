@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -235,5 +236,31 @@ func (m *mainui) vi_key_map() []cmditem {
 		get_cmd_actor(m, goto_refer).esc_key(split(chr_goto_refer)),
 		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),
 		get_cmd_actor(m, vi_line_head).esc_key(split("0")),
+	}
+}
+func (m *mainui) keymap(keytype cmdkeytype) []string {
+	ret := []string{}
+	items := m.vi_key_map()
+	switch keytype {
+	case cmd_key_menu:
+		items = m.key_map_space_menu()
+	case cmd_key_leader:
+		items = m.key_map_leader()
+	}
+	for _, k := range items {
+		s := fmt.Sprintf("%-10s %s", k.key.displaystring(), k.cmd.desc)
+		ret = append(ret, s)
+	}
+	return ret
+}
+func (m *mainui) helpkey() {
+	types := []cmdkeytype{cmd_key_escape, cmd_key_leader, cmd_key_menu}
+	ret := []string{}
+	for _, k := range types {
+		s := m.keymap(k)
+		ret = append(ret, s...)
+	}
+	for _, l := range ret {
+		m.update_log_view(l + "\n")
 	}
 }

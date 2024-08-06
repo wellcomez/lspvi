@@ -61,6 +61,16 @@ type cmdkey struct {
 	Type cmdkeytype
 }
 
+func (cmd cmdkey) displaystring() string {
+	t := ""
+	switch cmd.Type {
+	case cmd_key_escape:
+		t = "escape+"
+	case cmd_key_leader:
+		t = "space+"
+	}
+	return fmt.Sprintf("%s%s", t, cmd.string())
+}
 func (cmd cmdkey) string() string {
 	return strings.Join(cmd.key, "")
 }
@@ -135,7 +145,7 @@ type space_menu_impl struct {
 func init_space_menu_item(m *mainui) []space_menu_item {
 	var ret = []space_menu_item{}
 	for _, v := range m.key_map_space_menu() {
-		ret = append(ret, space_menu_item{item: v,handle: v.cmd.handle})
+		ret = append(ret, space_menu_item{item: v, handle: v.cmd.handle})
 	}
 	return ret
 }

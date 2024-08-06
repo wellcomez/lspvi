@@ -38,18 +38,17 @@ func (cmd *cmdline) OnComand(command string) bool {
 	}
 	if command == "cp" {
 		get_cmd_actor(cmd.main, vi_quick_prev).handle()
-		return true
-	}
-	if command == "q" || command == "quit" || command == "q!" || command == "qa" {
+	} else if command == "q" || command == "quit" || command == "q!" || command == "qa" {
 		cmd.main.Close()
-		return true
-	}
-	num, err := strconv.ParseInt(command, 10, 32)
-	if err == nil {
+	} else if command == "h" || command == "help" {
+		cmd.main.helpkey()
+	} else if num, err := strconv.ParseInt(command, 10, 32); err == nil {
 		cmd.main.codeview.gotoline(int(num) - 1)
 		return true
+	} else {
+		return false
 	}
-	return false
+	return true
 }
 
 // func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey {

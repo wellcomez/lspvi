@@ -93,6 +93,9 @@ func (pk history_picker) handle() func(event *tcell.EventKey, setFocus func(p tv
 	return pk.handle_key_override
 }
 func (pk history_picker) UpdateQuery(query string) {
+	if len(pk.impl.listdata) == 0 {
+		return
+	}
 	query = strings.ToLower(query)
 	listview := pk.list
 	listview.Clear()
