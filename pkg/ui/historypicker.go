@@ -39,8 +39,6 @@ type history_picker struct {
 	list *customlist
 }
 
-// OnRefenceChanged implements lspcore.lsp_data_changed.
-
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (ref history_picker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	panic("unimplemented")

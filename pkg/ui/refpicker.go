@@ -84,7 +84,6 @@ func (ref ref_line) String() string {
 	return fmt.Sprintf("%s %s:%d", ref.line, ref.path, ref.loc.Range.Start.Line)
 }
 
-// OnRefenceChanged implements lspcore.lsp_data_changed.
 func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 	pk.impl.refs = file
 	pk.impl.listview.Clear()

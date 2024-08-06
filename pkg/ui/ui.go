@@ -115,14 +115,12 @@ func (m *mainui) UpdatePageTitle() {
 
 }
 
-// OnRefenceChanged implements lspcore.lsp_data_changed.
-// OnRefenceChanged
-// OnRefenceChanged
 func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
-	// panic("unimplemented")
+	if len(refs) > 0 {
+		m.ActiveTab(view_fzf)
+	}
 	m.fzf.OnRefenceChanged(refs, data_refs)
 	m.UpdatePageTitle()
-
 }
 
 func (m *mainui) OnCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
@@ -253,6 +251,8 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	m.OpenFileToHistory(file, loc, true)
 }
 func (m *mainui) OpenFileToHistory(file string, loc *lsp.Location, addhistory bool) {
+	// dirname := filepath.Dir(file)
+	// m.fileexplorer.ChangeDir(dirname)
 	if info, err := os.Stat(file); err == nil && info.IsDir() {
 		m.fileexplorer.ChangeDir(file)
 		return

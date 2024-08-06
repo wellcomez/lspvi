@@ -353,7 +353,7 @@ func (code *CodeView) action_get_refer() {
 	main.fzf.view.Clear()
 	loc := code.lsp_cursor_loc()
 	code.main.get_refer(loc, main.codeview.filename)
-	main.ActiveTab(view_fzf)
+	// main.ActiveTab(view_fzf)
 
 }
 
