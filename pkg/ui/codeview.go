@@ -232,6 +232,9 @@ func (code *CodeView) run_command(cmdlist []cmditem, key string) bool {
 	return false
 }
 func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
+	if code.main.get_focus_view_id() != view_code {
+		return event
+	}
 	ch := string(event.Rune())
 	if h, ok := code.key_map[event.Key()]; ok {
 		h(code)
@@ -267,7 +270,6 @@ func (code *CodeView) word_right() {
 	}
 	code.update_with_line_changed()
 }
-
 
 func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
 	key_map := map[tcell.Key]func(code *CodeView){}

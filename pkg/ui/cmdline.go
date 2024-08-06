@@ -2,10 +2,10 @@ package mainui
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"strconv"
+	"strings"
 )
 
 type cmdline struct {
@@ -263,13 +263,6 @@ func (l EscapeHandle) input_cb(word string) {
 	l.input.run(word)
 }
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
-	if len(l.state.keyseq) == 0 || l.state.init {
-		if l.main.codeview.handle_key_impl(event) == nil {
-			l.state.keyseq = []string{string(event.Rune())}
-			l.end()
-			return true
-		}
-	}
 	if l.state.init {
 		l.state.keyseq = []string{}
 		l.state.init = false
@@ -285,6 +278,10 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	processed, end := l.input.check(cmdname)
 	if end {
 		l.end()
+	} else if l.main.codeview.handle_key_impl(event) == nil {
+		l.state.keyseq = []string{string(event.Rune())}
+		l.end()
+		return true
 	}
 	return processed
 }
@@ -294,7 +291,6 @@ type leadstate struct {
 	end   bool
 	input *inputdelay
 }
-
 
 type LeaderHandle struct {
 	main  *mainui
@@ -512,7 +508,7 @@ func (v *Vim) EnterEscape() {
 	sss := main.key_map_escape()
 	inputdelay := inputdelay{
 		cmdlist: sss,
-		main: main,
+		main:    main,
 	}
 	esc.input = &inputdelay
 	esc.input.cb = esc.input_cb
