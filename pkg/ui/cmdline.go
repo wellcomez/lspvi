@@ -337,7 +337,7 @@ func (input *inputdelay) run(cmd string) bool {
 	}*/
 	if input.cmdlist != nil {
 		for _, v := range input.cmdlist {
-			if v.key.matched(cmd) {
+			if v.key.string() == cmd {
 				v.cmd.handle()
 				return true
 			}
