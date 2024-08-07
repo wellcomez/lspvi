@@ -32,25 +32,25 @@ type rootlayout struct {
 // editor_area_fouched
 
 type mainui struct {
-	fileexplorer  *file_tree_view
-	codeview      *CodeView
-	lspmgr        *lspcore.LspWorkspace
-	symboltree    *SymbolTreeView
-	fzf           *fzfview
+	fileexplorer      *file_tree_view
+	codeview          *CodeView
+	lspmgr            *lspcore.LspWorkspace
+	symboltree        *SymbolTreeView
+	fzf               *fzfview
 	activate_tab_name string
-	page          *tview.Pages
-	callinview    *callinview
-	tabs          *ButtonGroup
-	root          string
-	app           *tview.Application
-	uml           *umlview
-	bf            *BackForward
-	log           *tview.TextView
-	cmdline       *cmdline
-	prefocused    view_id
-	searchcontext *GenericSearch
-	statusbar     *tview.TextView
-	layout        *rootlayout
+	page              *tview.Pages
+	callinview        *callinview
+	tabs              *ButtonGroup
+	root              string
+	app               *tview.Application
+	uml               *umlview
+	bf                *BackForward
+	log               *tview.TextView
+	cmdline           *cmdline
+	prefocused        view_id
+	searchcontext     *GenericSearch
+	statusbar         *tview.TextView
+	layout            *rootlayout
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
@@ -122,8 +122,15 @@ func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	if len(refs) > 0 {
 		m.ActiveTab(view_fzf)
 	}
-	m.fzf.OnRefenceChanged(refs, data_refs)
-	m.UpdatePageTitle()
+	go func() {
+		// ref_call_in := []ref_with_callin{}
+		// get_loc_callin(refs, m.lspmgr.Current, ref_call_in)
+		m.app.QueueUpdateDraw(func() {
+			m.fzf.OnRefenceChanged(refs, data_refs)
+			m.UpdatePageTitle()
+		})
+	}()
+
 }
 
 // OnCallTaskInViewChanged
@@ -425,11 +432,11 @@ func MainUI(arg *Arguments) {
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
 	console.SetChangedFunc(func() {
-		xx:=console.GetPageNames(true)
-		if len(xx)==1{
+		xx := console.GetPageNames(true)
+		if len(xx) == 1 {
 			main.activate_tab_name = xx[0]
 		}
-		log.Println(strings.Join(xx,","))
+		log.Println(strings.Join(xx, ","))
 	})
 	main.log = tview.NewTextView()
 	main.log.SetText("Started")

@@ -43,6 +43,7 @@ type refpicker_impl struct {
 	codeline          []string
 	fzf               *fzflib.Fzf
 	parent            *fzfmain
+	ref_call_in       []ref_with_callin
 }
 
 type refpicker struct {
@@ -84,11 +85,20 @@ func (ref ref_line) String() string {
 	return fmt.Sprintf("%s %s:%d", ref.line, ref.path, ref.loc.Range.Start.Line)
 }
 
+type ref_with_callin struct {
+	loc     lsp.Location
+	statcks []lspcore.CallStack
+}
+
 func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 	pk.impl.refs = file
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
 	datafzf := []string{}
+	lsp := pk.impl.parent.main.lspmgr.Current
+
+	ref_call_in := []ref_with_callin{}
+	get_loc_callin(file, lsp, ref_call_in)
 	for i := range file {
 		v := file[i]
 		source_file_path := v.URI.AsPath().String()
@@ -121,6 +131,18 @@ func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 	pk.impl.fzf = fzflib.New(datafzf, fzflib.DefaultOptions())
 	pk.impl.current_list_data = pk.impl.listdata
 	pk.update_preview()
+}
+
+func get_loc_callin(file []lsp.Location, lsp *lspcore.Symbol_file, ref_call_in []ref_with_callin) {
+	for _, v := range file {
+		stacks, err := lsp.Callin(v, false)
+		if err == nil {
+			ref_call_in = append(ref_call_in, ref_with_callin{
+				loc:     v,
+				statcks: stacks,
+			})
+		}
+	}
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.

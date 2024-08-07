@@ -125,7 +125,8 @@ func (sym *Symbol_file) GotoDefine(ranges lsp.Range) {
 		sym.Handle.OnFileChange(loc)
 	}
 }
-func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
+
+func (sym *Symbol_file) Callin(loc lsp.Location, cb bool) ([]CallStack, error) {
 	var ret []CallStack
 	if sym.lsp == nil {
 		return ret, fmt.Errorf("lsp is null")
@@ -143,7 +144,9 @@ func (sym *Symbol_file) Callin(loc lsp.Location) ([]CallStack, error) {
 		}
 	}
 	ret = append(ret, stack)
-	sym.Handle.OnCallInViewChanged(ret)
+	if cb {
+		sym.Handle.OnCallInViewChanged(ret)
+	}
 	return ret, nil
 }
 func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
