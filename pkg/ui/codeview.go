@@ -350,7 +350,7 @@ func (code *CodeView) action_goto_declaration() {
 func (code *CodeView) action_get_refer() {
 	main := code.main
 	code.view.Cursor.SelectWord()
-	main.fzf.view.Clear()
+	main.quickview.view.Clear()
 	loc := code.lsp_cursor_loc()
 	code.main.get_refer(loc, main.codeview.filename)
 	// main.ActiveTab(view_fzf)

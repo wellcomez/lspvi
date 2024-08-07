@@ -145,13 +145,13 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case vi_quick_prev:
 		{
 			return cmdactor{"prev", func() {
-				m.fzf.go_prev()
+				m.quickview.go_prev()
 			}}
 		}
 	case vi_quick_next:
 		{
 			return cmdactor{"quick_next", func() {
-				m.fzf.go_next()
+				m.quickview.go_next()
 			}}
 		}
 	case vi_search_mode:

@@ -36,7 +36,7 @@ type mainui struct {
 	codeview          *CodeView
 	lspmgr            *lspcore.LspWorkspace
 	symboltree        *SymbolTreeView
-	fzf               *quick_view
+	quickview         *quick_view
 	activate_tab_name string
 	page              *tview.Pages
 	callinview        *callinview
@@ -112,8 +112,8 @@ func (m *mainui) async_resolve_callstack(call_in_task *lspcore.CallInTask) {
 // UpdatePageTitle
 func (m *mainui) UpdatePageTitle() {
 
-	if m.fzf.view.HasFocus() {
-		m.page.SetTitle(m.fzf.String())
+	if m.quickview.view.HasFocus() {
+		m.page.SetTitle(m.quickview.String())
 	}
 
 }
@@ -126,7 +126,7 @@ func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	}
 	go func() {
 		m.app.QueueUpdateDraw(func() {
-			m.fzf.OnRefenceChanged(refs, data_refs)
+			m.quickview.OnRefenceChanged(refs, data_refs)
 			m.UpdatePageTitle()
 		})
 	}()
@@ -424,7 +424,7 @@ func MainUI(arg *Arguments) {
 	codeview.view.SetBorder(true)
 
 	main.lspmgr.Handle = &main
-	main.fzf = new_fzfview(&main)
+	main.quickview = new_fzfview(&main)
 	main.callinview = new_callview(&main)
 	// symbol_tree.update()
 
@@ -445,7 +445,7 @@ func MainUI(arg *Arguments) {
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
 	console.AddPage("log", main.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
-	console.AddPage(main.fzf.Name, main.fzf.view, true, true)
+	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
 
 	main.page = console
 
@@ -463,7 +463,7 @@ func MainUI(arg *Arguments) {
 		log.Fatal(err)
 	}
 	main.uml = uml
-	var tabs []string = []string{main.fzf.Name, "log", main.callinview.Name}
+	var tabs []string = []string{main.quickview.Name, "log", main.callinview.Name}
 	if uml != nil {
 		tabs = append(tabs, uml.Name)
 		console.AddPage(uml.Name, uml.layout, true, false)
@@ -582,14 +582,14 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			main.codeview.gotoline(gs.GetIndex())
 			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
-				main.fzf.main.fzf.OnRefenceChanged(locs, data_search)
+				main.quickview.main.quickview.OnRefenceChanged(locs, data_search)
 			}
 		} else {
 			main.codeview.gotoline(gs.GetNext())
 		}
 		main.page.SetTitle(gs.String())
 	} else if prev == view_fzf {
-		main.fzf.OnSearch(txt)
+		main.quickview.OnSearch(txt)
 	} else if prev == view_outline_list {
 		if changed {
 			gs.indexList = main.symboltree.OnSearch(txt)
@@ -682,7 +682,7 @@ func (main *mainui) move_to_window(t direction) {
 	case view_outline_list:
 		vl = main.symboltree.view_link
 	case view_fzf:
-		vl = main.fzf.view_link
+		vl = main.quickview.view_link
 	case view_file:
 		vl = main.fileexplorer.view_link
 	case view_callin:

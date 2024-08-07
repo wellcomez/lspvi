@@ -70,7 +70,7 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 	case view_log:
 		return nil
 	case view_fzf:
-		return m.fzf.view_link
+		return m.quickview.view_link
 	case view_callin:
 		return m.callinview.view_link
 	case view_code:
@@ -163,7 +163,7 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 	case view_log:
 		return m.log.Box
 	case view_fzf:
-		return m.fzf.view.Box
+		return m.quickview.view.Box
 	case view_callin:
 		return m.callinview.view.Box
 	case view_code:
@@ -192,7 +192,7 @@ func config_main_tab_order(main *mainui) {
 			}
 		}
 	}
-	main.fzf.view_link.down = view_code
+	main.quickview.view_link.down = view_code
 	main.uml.view_link.down = view_code
 	main.callinview.view_link.down = view_code
 }
