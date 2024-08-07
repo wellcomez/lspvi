@@ -108,9 +108,7 @@ func view_id_init(m *mainui) {
 						change_after_focused(box, m)
 					})
 				}
-			case view_fzf:
-			case view_callin:
-			case view_uml:
+			case view_fzf,view_callin,view_uml:
 				{
 					box.SetFocusFunc(func() {
 						change_after_focused(box, m)
@@ -126,9 +124,7 @@ func view_id_init(m *mainui) {
 			}
 
 			switch v {
-			case view_fzf:
-			case view_callin:
-			case view_uml:
+			case view_fzf,view_callin,view_uml:
 				{
 					box.SetBlurFunc(func() {
 						box.SetBorderColor(tcell.ColorWhite)
