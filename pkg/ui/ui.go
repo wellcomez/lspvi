@@ -123,8 +123,8 @@ func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 		m.ActiveTab(view_fzf)
 	}
 	go func() {
-		// ref_call_in := []ref_with_callin{}
-		// get_loc_callin(refs, m.lspmgr.Current, ref_call_in)
+		ref_call_in := []ref_with_callin{}
+		get_loc_callin(refs, m.lspmgr.Current, ref_call_in)
 		m.app.QueueUpdateDraw(func() {
 			m.fzf.OnRefenceChanged(refs, data_refs)
 			m.UpdatePageTitle()

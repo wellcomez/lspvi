@@ -37,6 +37,35 @@ func (c CallStackEntry) DisplayName() string {
 	}
 	return fmt.Sprintf("%s %s:%d", c.Name, c.Item.URI.AsPath().String(), c.Item.Range.Start.Line)
 }
+func RangeAfter(r1 lsp.Range, r2 lsp.Range) bool {
+	if r1.Start.Line > r2.Start.Line {
+		return true
+	}
+	if r1.Start.Line == r2.Start.Line {
+		return r1.Start.Character > r2.Start.Character
+	}
+	return false
+
+}
+func RangeBefore(r1 lsp.Range, r2 lsp.Range) bool {
+	if r1.Start.Line < r2.Start.Line {
+		return true
+	}
+	if r1.Start.Line == r2.Start.Line {
+		return r1.Start.Character < r2.Start.Character
+	}
+	return false
+
+}
+func (c CallStackEntry) InRange(loc lsp.Location) bool {
+	small := loc.Range
+	big := c.Item.Range
+	if loc.URI.String() == c.Item.URI.String() {
+		// return RangeBefore(big, small) && RangeAfter(big, small)
+		return RangeBefore(big, small)
+	}
+	return false
+}
 
 // NewCallStackEntry
 func NewCallStackEntry(item lsp.CallHierarchyItem) *CallStackEntry {
@@ -57,7 +86,8 @@ type CallInTask struct {
 	UID      int
 	// cb       *func(task CallInTask)
 }
-func(task CallInTask)TreeNodeid()string{
+
+func (task CallInTask) TreeNodeid() string {
 	return string(task.UID)
 }
 
@@ -69,6 +99,15 @@ type CallStack struct {
 	UID      int
 }
 
+func (c *CallStack) InRange(loc lsp.Location) []*CallStackEntry {
+	ret := []*CallStackEntry{}
+	for _, v := range c.Items {
+		if v.InRange(loc) {
+			ret = append(ret, v)
+		}
+	}
+	return ret
+}
 func (c *CallStack) Add(item *CallStackEntry) {
 	// c.Items = append([]*CallStackEntry{item}, c.Items...)
 	c.Items = append(c.Items, item)

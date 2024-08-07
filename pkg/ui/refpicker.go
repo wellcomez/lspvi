@@ -137,6 +137,16 @@ func get_loc_callin(file []lsp.Location, lsp *lspcore.Symbol_file, ref_call_in [
 	for _, v := range file {
 		stacks, err := lsp.Callin(v, false)
 		if err == nil {
+			find := []*lspcore.CallStackEntry{}
+			for _, s := range stacks {
+				find = s.InRange(v)
+				if len(find) > 0 {
+					break
+				}
+			}
+			if len(find) == 0 {
+				stacks = []lspcore.CallStack{}
+			}
 			ref_call_in = append(ref_call_in, ref_with_callin{
 				loc:     v,
 				statcks: stacks,
