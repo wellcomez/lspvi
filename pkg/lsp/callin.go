@@ -57,7 +57,7 @@ func RangeBefore(r1 lsp.Range, r2 lsp.Range) bool {
 	return false
 
 }
-func (c CallStackEntry) InRange(loc lsp.Location) bool {
+func (c CallStackEntry) IsCaller(loc lsp.Location) bool {
 	small := loc.Range
 	big := c.Item.Range
 	if loc.URI.String() == c.Item.URI.String() {
@@ -102,7 +102,7 @@ type CallStack struct {
 func (c *CallStack) InRange(loc lsp.Location) []*CallStackEntry {
 	ret := []*CallStackEntry{}
 	for _, v := range c.Items {
-		if v.InRange(loc) {
+		if v.IsCaller(loc) {
 			ret = append(ret, v)
 		}
 	}
