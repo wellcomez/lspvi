@@ -36,7 +36,7 @@ type mainui struct {
 	codeview          *CodeView
 	lspmgr            *lspcore.LspWorkspace
 	symboltree        *SymbolTreeView
-	fzf               *fzfview
+	fzf               *quick_view
 	activate_tab_name string
 	page              *tview.Pages
 	callinview        *callinview

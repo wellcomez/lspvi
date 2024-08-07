@@ -10,9 +10,9 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-func new_fzfview(main *mainui) *fzfview {
+func new_fzfview(main *mainui) *quick_view {
 	view := tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal())
-	ret := &fzfview{
+	ret := &quick_view{
 		view_link: &view_link{up: view_code, right: view_callin},
 		Name:      "fzf",
 		view:      view,

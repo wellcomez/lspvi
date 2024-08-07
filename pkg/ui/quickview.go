@@ -9,8 +9,8 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
-// fzfview
-type fzfview struct {
+// quick_view
+type quick_view struct {
 	*view_link
 	view         *tview.List
 	Name         string
@@ -22,25 +22,25 @@ type fzfview struct {
 
 
 
-func (fzf *fzfview) go_prev() {
+func (fzf *quick_view) go_prev() {
 	next := (fzf.view.GetCurrentItem() - 1 + fzf.view.GetItemCount()) % fzf.view.GetItemCount()
 	fzf.view.SetCurrentItem(next)
 	if fzf.Type == data_refs {
 		fzf.Hanlde(next, "", "", 1)
 	}
 }
-func (fzf *fzfview) go_next() {
+func (fzf *quick_view) go_next() {
 	next := (fzf.view.GetCurrentItem() + 1) % fzf.view.GetItemCount()
 	fzf.view.SetCurrentItem(next)
 	if fzf.Type == data_refs {
 		fzf.Hanlde(next, "", "", 1)
 	}
 }
-func (main *fzfview) OnSearch(txt string) {
+func (main *quick_view) OnSearch(txt string) {
 }
 
 // String
-func (fzf fzfview) String() string {
+func (fzf quick_view) String() string {
 	var s = "Refs"
 	if fzf.Type == data_search {
 		s = "Search"
@@ -49,7 +49,7 @@ func (fzf fzfview) String() string {
 }
 
 // Hanlde
-func (fzf *fzfview) Hanlde(index int, _ string, _ string, _ rune) {
+func (fzf *quick_view) Hanlde(index int, _ string, _ string, _ rune) {
 	vvv := fzf.Refs.refs[index]
 	fzf.currentIndex = index
 	fzf.main.UpdatePageTitle()
@@ -65,7 +65,7 @@ const (
 )
 
 
-func (fzf *fzfview) OnRefenceChanged(refs []lsp.Location, t DateType) {
+func (fzf *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
 	fzf.Type = t
 	// panic("unimplemented")
 	fzf.view.Clear()
