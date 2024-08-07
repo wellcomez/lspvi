@@ -10,6 +10,13 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
+type dir_open_mode int
+
+const (
+	dir_open_replace  = 1
+	dir_open_open_sub = 2
+)
+
 type file_tree_view struct {
 	*view_link
 	view     *tview.TreeView
@@ -18,6 +25,7 @@ type file_tree_view struct {
 	rootdir  string
 	handle   func(filename string) bool
 	openfile func(filename string)
+	dir_mode dir_open_mode
 }
 
 func new_file_tree(main *mainui, name string, rootdir string, handle func(filename string) bool) *file_tree_view {
@@ -37,6 +45,7 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	view.SetBorder(true)
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
+	ret.dir_mode = dir_open_replace
 	return ret
 
 }
@@ -60,6 +69,7 @@ func uml_filter(filename string) bool {
 }
 func new_uml_tree(main *mainui, name string, rootdir string) *file_tree_view {
 	ret := new_file_tree(main, name, rootdir, uml_filter)
+	ret.dir_mode = dir_open_open_sub
 	ret.Init()
 	return ret
 }
@@ -79,29 +89,51 @@ func (view *file_tree_view) node_selected(node *tview.TreeNode) {
 			return
 		}
 		if yes {
-			empty := len(node.GetChildren()) == 0
-			if node.IsExpanded() {
-				if empty {
-					view.opendir(node, filename)
-				}
-				node.Collapse()
+			// node.Expand()
+			if view.dir_mode == dir_open_replace {
+				view.dir_replace(node, filename)
 			} else {
-				dirname := filepath.Dir(filename)
-				// node.Expand()
-				view.view.SetTitle(dirname)
-				root2 := tview.NewTreeNode(node.GetText())
-				parent := tview.NewTreeNode("..")
-				parent.SetReference(filepath.Dir(filename))
-				root2.AddChild(parent)
-				for _, v := range node.GetChildren() {
-					root2.AddChild(v)
-				}
-				view.view.SetRoot(root2)
+				view.dir_expand_children(node, filename)
 			}
 
 		} else {
 			view.openfile(filename)
 		}
+	}
+}
+func (view *file_tree_view) dir_expand_children(node *tview.TreeNode, filename string) {
+	if node.IsExpanded() {
+		node.Collapse()
+		return
+	}
+	empty := len(node.GetChildren()) == 0
+	if !empty {
+		node.Expand()
+		return
+	}
+	view.opendir(node, filename)
+	node.Expand()
+}
+
+func (view *file_tree_view) dir_replace(node *tview.TreeNode, filename string) {
+	empty := len(node.GetChildren()) == 0
+	if node.IsExpanded() {
+		if empty {
+			view.opendir(node, filename)
+		}
+		node.Collapse()
+	} else {
+		dirname := filepath.Dir(filename)
+
+		view.view.SetTitle(dirname)
+		root2 := tview.NewTreeNode(node.GetText())
+		parent := tview.NewTreeNode("..")
+		parent.SetReference(filepath.Dir(filename))
+		root2.AddChild(parent)
+		for _, v := range node.GetChildren() {
+			root2.AddChild(v)
+		}
+		view.view.SetRoot(root2)
 	}
 }
 
