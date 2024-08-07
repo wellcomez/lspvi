@@ -104,14 +104,14 @@ func (fzf *fzfview) OnRefenceChanged(refs []lsp.Location, t DateType) {
 		path := strings.Replace(v.URI.AsPath().String(), fzf.main.root, "", -1)
 		callerstr := ""
 		if caller.caller != nil {
-			callerstr = newFunction(caller.caller, fzf.main.root)
+			callerstr = caller_to_listitem(caller.caller, fzf.main.root)
 		}
 		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1, callerstr)
 		fzf.view.AddItem(secondline, line[begin:end], 0, nil)
 	}
 }
 
-func newFunction(items *lspcore.CallStackEntry, root string) string {
+func caller_to_listitem(items *lspcore.CallStackEntry, root string) string {
 	callerstr := fmt.Sprintf(" [%s %s:%d]", items.Name,
 		strings.TrimPrefix(
 			items.Item.URI.AsPath().String(), root),

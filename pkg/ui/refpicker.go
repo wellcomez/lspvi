@@ -37,13 +37,13 @@ type refpicker_impl struct {
 	file              *lspcore.Symbol_file
 	listview          *tview.List
 	codeprev          *CodeView
-	refs              []lsp.Location
+	refs              []ref_with_caller
 	listdata          []ref_line
 	current_list_data []ref_line
 	codeline          []string
 	fzf               *fzflib.Fzf
 	parent            *fzfmain
-	ref_call_in       []ref_with_callin
+	// ref_call_in       []ref_with_callin
 }
 
 type refpicker struct {
@@ -85,21 +85,20 @@ func (ref ref_line) String() string {
 	return fmt.Sprintf("%s %s:%d", ref.line, ref.path, ref.loc.Range.Start.Line)
 }
 
-type ref_with_callin struct {
+type ref_with_caller struct {
 	loc    lsp.Location
 	caller *lspcore.CallStackEntry
 }
 
 func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
-	pk.impl.refs = file
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
 	datafzf := []string{}
-	// lsp := pk.impl.parent.main.lspmgr.Current
-	// ref_call_in := []ref_with_callin{}
-	// get_loc_callin(file, lsp, ref_call_in)
-	for i := range file {
-		v := file[i]
+	lsp := pk.impl.parent.main.lspmgr.Current
+	pk.impl.refs = get_loc_caller(file, lsp)
+	for i := range pk.impl.refs {
+		caller := pk.impl.refs[i]
+		v := caller.loc
 		source_file_path := v.URI.AsPath().String()
 		data, err := os.ReadFile(source_file_path)
 		if err != nil {
@@ -114,7 +113,11 @@ func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 		begin := max(0, v.Range.Start.Character-gap)
 		end := min(len(line), v.Range.Start.Character+gap)
 		path := strings.Replace(v.URI.AsPath().String(), pk.impl.codeprev.main.root, "", -1)
-		secondline := fmt.Sprintf("%s:%d", path, v.Range.Start.Line+1)
+		callinfo:=""
+		if caller.caller!=nil{
+			callinfo=caller_to_listitem(caller.caller,pk.impl.parent.main.root)
+		}
+		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1,callinfo)
 		r := ref_line{
 			loc:  v,
 			line: line,
@@ -132,8 +135,8 @@ func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 	pk.update_preview()
 }
 
-func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_callin {
-	ref_call_in := []ref_with_callin{}
+func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
+	ref_call_in := []ref_with_caller{}
 	for _, v := range file {
 		stacks, err := lsp.Callin(v, false)
 		if err == nil {
@@ -144,7 +147,7 @@ func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_ca
 					break
 				}
 			}
-			ref_call_in = append(ref_call_in, ref_with_callin{
+			ref_call_in = append(ref_call_in, ref_with_caller{
 				loc:    v,
 				caller: find,
 			})
