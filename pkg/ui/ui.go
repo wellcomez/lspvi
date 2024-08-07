@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -36,6 +37,7 @@ type mainui struct {
 	lspmgr        *lspcore.LspWorkspace
 	symboltree    *SymbolTreeView
 	fzf           *fzfview
+	activate_tab_name string
 	page          *tview.Pages
 	callinview    *callinview
 	tabs          *ButtonGroup
@@ -422,6 +424,13 @@ func MainUI(arg *Arguments) {
 	main.fileexplorer.openfile = main.open_file
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
 	console := tview.NewPages()
+	console.SetChangedFunc(func() {
+		xx:=console.GetPageNames(true)
+		if len(xx)==1{
+			main.activate_tab_name = xx[0]
+		}
+		log.Println(strings.Join(xx,","))
+	})
 	main.log = tview.NewTextView()
 	main.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
@@ -430,6 +439,7 @@ func MainUI(arg *Arguments) {
 	console.AddPage(main.fzf.Name, main.fzf.view, true, true)
 
 	main.page = console
+
 	//   console.SetBorder(true)
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
 	editor_area :=
@@ -675,7 +685,7 @@ func (main *mainui) move_to_window(t direction) {
 	if next == view_none {
 		return
 	}
-	main.set_viewid_focus(next)
+	// main.set_viewid_focus(next)
 	switch next {
 	case view_fzf:
 	case view_callin:
