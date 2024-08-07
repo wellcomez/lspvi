@@ -456,8 +456,6 @@ func MainUI(arg *Arguments) {
 			AddItem(main.fileexplorer.view, 0, 1, false).
 			AddItem(codeview.view, 0, 4, true).
 			AddItem(symbol_tree.view, 0, 2, false)
-	// fzfbtn := tview.NewButton("fzf")
-	// logbtn := tview.NewButton("log")
 	uml, err := NewUmlView(&main, &main.lspmgr.Wk)
 	if err != nil {
 		log.Fatal(err)
@@ -499,11 +497,9 @@ func MainUI(arg *Arguments) {
 	tab_area.AddItem(tview.NewBox(), 1, 0, false)
 	tab_area.AddItem(main.statusbar, 0, 10, false)
 
-	fzttab := group.Find("fzf")
+	var tabid view_id = view_fzf
+	fzttab := group.Find(tabid.getname())
 	fzttab.view.Focus(nil)
-	// tab_area.(tview.NewButton("fzf").SetSelectedFunc(main.onfzf).SetStyle(style), 10, 1, true).
-	// AddItem(tview.NewButton("log").SetSelectedFunc(main.onlog).SetStyle(style), 10, 1, true).
-	// AddItem(tview.NewButton("callin").SetSelectedFunc(main.oncallin).SetStyle(style), 10, 1, true)
 	main_layout :=
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(editor_area, 0, 3, true).
@@ -697,7 +693,18 @@ func (main *mainui) move_to_window(t direction) {
 	}
 	switch next {
 	case view_uml, view_log, view_fzf, view_callin:
-		main.ActiveTab(int(next), true)
+		names := main.page.GetPageNames(true)
+		if len(names) == 1 {
+			ids := []view_id{view_uml, view_log, view_fzf, view_callin}
+			for _, v := range ids {
+				if v.getname() == names[0] {
+					main.ActiveTab(int(next), true)
+					break
+				}
+			}
+		} else {
+			main.ActiveTab(int(next), true)
+		}
 	default:
 		main.set_viewid_focus(next)
 		// main.set_focus(main.get_view_from_id(next))

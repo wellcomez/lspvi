@@ -12,9 +12,10 @@ import (
 
 func new_fzfview(main *mainui) *quick_view {
 	view := tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal())
+	var vid view_id = view_fzf
 	ret := &quick_view{
 		view_link: &view_link{up: view_code, right: view_callin},
-		Name:      "fzf",
+		Name:      vid.getname(),
 		view:      view,
 		main:      main,
 	}

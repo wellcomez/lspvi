@@ -37,7 +37,7 @@ var all_view_list = []view_id{
 var all_view_name = []string{
 	"none",
 	"log",
-	"fzf",
+	"quickview",
 	"callin",
 	"code",
 	"uml",
@@ -147,8 +147,7 @@ func change_after_focused(box *tview.Box, m *mainui) {
 	box.SetBorderColor(tcell.ColorGreenYellow)
 	vid := m.get_focus_view_id()
 	switch vid {
-	case view_code:
-	case view_cmd:
+	case view_code,view_cmd:
 		return
 	default:
 		m.cmdline.Vim.ExitEnterEscape()
