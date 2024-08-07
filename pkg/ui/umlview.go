@@ -23,8 +23,8 @@ func (v *umlview) openfile(name string) {
 	ext := filepath.Ext(name)
 
 	layout := v.file.main.layout
-	layout.parent.ResizeItem(layout.editor_area, 0, 1)
-	layout.parent.ResizeItem(layout.console, 0, 5)
+	layout.mainlayout.ResizeItem(layout.editor_area, 0, 1)
+	layout.mainlayout.ResizeItem(layout.console, 0, 5)
 
 	v.preview.Clear()
 	if ext == ".png" {
