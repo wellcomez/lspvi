@@ -3,6 +3,7 @@ package mainui
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -153,22 +154,25 @@ type command_history struct {
 	filepath string
 }
 type command_history_record struct {
-	cmd  string
-	find bool
+	Cmd  string
+	Find bool
 }
 
 func (v command_history_record) cmdline() string {
-	if v.find {
-		return "/" + v.cmd
+	if v.Find {
+		return "/" + v.Cmd
 	} else {
-		return v.cmd
+		return v.Cmd
 	}
 }
 func (v *command_history) add(item command_history_record) {
 	v.data = append(v.data, item)
 	buf, err := json.Marshal(v.data)
 	if err == nil {
-		os.WriteFile(lspviroot.logfile, buf, 0644)
+		err=os.WriteFile(v.filepath, buf, 0644)
+		if err!=nil{
+			log.Println(err)
+		}
 	}
 }
 func (v *command_history) prev() *command_history_record {
@@ -215,7 +219,7 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	if prev != nil {
 		cmd.input.SetText(prev.cmdline())
-		if prev.find {
+		if prev.Find {
 			v.vi.EnterFind()
 		}
 		return true
@@ -226,7 +230,7 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 			vim.vi.FindEnter = txt[1:]
 		}
 		if cmd.OnComand(vim.vi.FindEnter) {
-			cmd.find_history.add(command_history_record{cmd: vim.vi.FindEnter})
+			cmd.find_history.add(command_history_record{Cmd: vim.vi.FindEnter})
 			cmd.Vim.EnterEscape()
 		}
 		return true
@@ -286,7 +290,7 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		}
 		added := len(cmd.find_history.data) > 0 && cmd.find_history.data[len(cmd.find_history.data)-1].cmdline() == txt
 		if !added {
-			cmd.find_history.add(command_history_record{cmd: vim.vi.FindEnter, find: true})
+			cmd.find_history.add(command_history_record{Cmd: vim.vi.FindEnter, Find: true})
 		}
 		cmd.main.OnSearch(txt[1:], false, false)
 		return true
