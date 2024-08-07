@@ -7,6 +7,7 @@ import (
 
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -73,7 +74,7 @@ func (fzf *fzfview) Hanlde(index int, _ string, _ string, _ rune) {
 	vvv := fzf.Refs.refs[index]
 	fzf.currentIndex = index
 	fzf.main.UpdatePageTitle()
-	fzf.main.gotoline(vvv)
+	fzf.main.gotoline(vvv.loc)
 
 }
 
@@ -81,8 +82,12 @@ func (fzf *fzfview) OnRefenceChanged(refs []lsp.Location, t DateType) {
 	fzf.Type = t
 	// panic("unimplemented")
 	fzf.view.Clear()
-	fzf.Refs.refs = refs
-	for _, v := range refs {
+
+	m := fzf.main
+	fzf.Refs.refs = get_loc_caller(refs, m.lspmgr.Current)
+
+	for _, caller := range fzf.Refs.refs {
+		v := caller.loc
 		source_file_path := v.URI.AsPath().String()
 		data, err := os.ReadFile(source_file_path)
 		if err != nil {
@@ -97,7 +102,19 @@ func (fzf *fzfview) OnRefenceChanged(refs []lsp.Location, t DateType) {
 		begin := max(0, v.Range.Start.Character-gap)
 		end := min(len(line), v.Range.Start.Character+gap)
 		path := strings.Replace(v.URI.AsPath().String(), fzf.main.root, "", -1)
-		secondline := fmt.Sprintf("%s:%d", path, v.Range.Start.Line+1)
+		callerstr := ""
+		if caller.caller != nil {
+			callerstr = newFunction(caller.caller, fzf.main.root)
+		}
+		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1, callerstr)
 		fzf.view.AddItem(secondline, line[begin:end], 0, nil)
 	}
+}
+
+func newFunction(items *lspcore.CallStackEntry, root string) string {
+	callerstr := fmt.Sprintf(" [%s %s:%d]", items.Name,
+		strings.TrimPrefix(
+			items.Item.URI.AsPath().String(), root),
+		items.Item.Range.Start.Line)
+	return callerstr
 }

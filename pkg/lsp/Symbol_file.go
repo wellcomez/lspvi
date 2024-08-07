@@ -135,15 +135,23 @@ func (sym *Symbol_file) Callin(loc lsp.Location, cb bool) ([]CallStack, error) {
 	if err != nil {
 		return ret, err
 	}
-	var stack CallStack
+	for _, v := range c1 {
+		log.Println("prepare",v.Name, v.URI.AsPath().String(), v.Range.Start.Line,v.Kind.String())
+	}
+	// for _, prepare := range c1 {
 	if len(c1) > 0 {
-		stack.Add(NewCallStackEntry(c1[0]))
-		c2, err := sym.lsp.CallHierarchyIncomingCalls(c1[0])
-		if err == nil && len(c2) > 0 {
-			stack.Add(NewCallStackEntry(c2[0].From))
+		prepare := c1[0]
+		c2, err := sym.lsp.CallHierarchyIncomingCalls(prepare)
+		if err == nil {
+			for _, f := range c2 {
+				var stack CallStack
+				v:=f.From
+				log.Println("caller ",v.Name, v.URI.AsPath().String(), v.Range.Start.Line,v.Kind.String())
+				stack.Add(NewCallStackEntry(f.From))
+				ret = append(ret, stack)
+			}
 		}
 	}
-	ret = append(ret, stack)
 	if cb {
 		sym.Handle.OnCallInViewChanged(ret)
 	}

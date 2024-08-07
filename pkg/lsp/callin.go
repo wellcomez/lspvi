@@ -58,11 +58,12 @@ func RangeBefore(r1 lsp.Range, r2 lsp.Range) bool {
 
 }
 func (c CallStackEntry) IsCaller(loc lsp.Location) bool {
-	small := loc.Range
-	big := c.Item.Range
+	// small := loc.Range
+	// big := c.Item.Range
 	if loc.URI.String() == c.Item.URI.String() {
 		// return RangeBefore(big, small) && RangeAfter(big, small)
-		return RangeBefore(big, small)
+		// return RangeBefore(big, small)
+		return true
 	}
 	return false
 }
@@ -99,11 +100,18 @@ type CallStack struct {
 	UID      int
 }
 
-func (c *CallStack) InRange(loc lsp.Location) []*CallStackEntry {
-	ret := []*CallStackEntry{}
+func (c *CallStack) InRange(loc lsp.Location) *CallStackEntry {
+	var ret *CallStackEntry = nil
+	line := loc.Range.Start.Line
 	for _, v := range c.Items {
 		if v.IsCaller(loc) {
-			ret = append(ret, v)
+			if ret == nil {
+				ret = v
+			} else {
+				if line-ret.Item.Range.Start.Line > line-v.Item.Range.Start.Line {
+					ret = v
+				}
+			}
 		}
 	}
 	return ret

@@ -86,8 +86,8 @@ func (ref ref_line) String() string {
 }
 
 type ref_with_callin struct {
-	loc     lsp.Location
-	statcks []lspcore.CallStack
+	loc    lsp.Location
+	caller *lspcore.CallStackEntry
 }
 
 func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
@@ -95,10 +95,9 @@ func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
 	datafzf := []string{}
-	lsp := pk.impl.parent.main.lspmgr.Current
-
-	ref_call_in := []ref_with_callin{}
-	get_loc_callin(file, lsp, ref_call_in)
+	// lsp := pk.impl.parent.main.lspmgr.Current
+	// ref_call_in := []ref_with_callin{}
+	// get_loc_callin(file, lsp, ref_call_in)
 	for i := range file {
 		v := file[i]
 		source_file_path := v.URI.AsPath().String()
@@ -133,26 +132,25 @@ func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 	pk.update_preview()
 }
 
-func get_loc_callin(file []lsp.Location, lsp *lspcore.Symbol_file, ref_call_in []ref_with_callin) {
+func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_callin {
+	ref_call_in := []ref_with_callin{}
 	for _, v := range file {
 		stacks, err := lsp.Callin(v, false)
 		if err == nil {
-			find := []*lspcore.CallStackEntry{}
+			var find *lspcore.CallStackEntry
 			for _, s := range stacks {
 				find = s.InRange(v)
-				if len(find) > 0 {
+				if find != nil {
 					break
 				}
 			}
-			if len(find) == 0 {
-				stacks = []lspcore.CallStack{}
-			}
 			ref_call_in = append(ref_call_in, ref_with_callin{
-				loc:     v,
-				statcks: stacks,
+				loc:    v,
+				caller: find,
 			})
 		}
 	}
+	return ref_call_in
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
