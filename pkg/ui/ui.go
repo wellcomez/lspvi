@@ -22,7 +22,7 @@ type rootlayout struct {
 	console     *tview.Pages
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
-	parent      *tview.Flex
+	mainlayout  *tview.Flex
 	dialog      *fzfmain
 	spacemenu   *space_menu
 }
@@ -57,8 +57,8 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 
 func (r *mainui) editor_area_fouched() {
 	// log.Println("change foucse", r.GetFocusViewId())
-	r.layout.parent.ResizeItem(r.layout.editor_area, 0, 3)
-	r.layout.parent.ResizeItem(r.layout.console, 0, 2)
+	r.layout.mainlayout.ResizeItem(r.layout.editor_area, 0, 3)
+	r.layout.mainlayout.ResizeItem(r.layout.console, 0, 2)
 }
 
 // OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
@@ -123,11 +123,11 @@ func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	m.UpdatePageTitle()
 }
 
-// OnCallTaskInViewChanged 
+// OnCallTaskInViewChanged
 func (m *mainui) OnCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
-  if len(call_in_stack.Allstack)>0{
-    m.ActiveTab(view_callin)
-  }
+	if len(call_in_stack.Allstack) > 0 {
+		m.ActiveTab(view_callin)
+	}
 	m.callinview.updatetask(call_in_stack)
 	m.async_resolve_callstack(call_in_stack)
 }
@@ -488,7 +488,7 @@ func MainUI(arg *Arguments) {
 		console:     console,
 		tab_area:    tab_area,
 		cmdline:     main.cmdline.input,
-		parent:      main_layout,
+		mainlayout:  main_layout,
 		dialog:      Newfuzzpicker(&main, app),
 	}
 	spacemenu := new_spacemenu(&main)
