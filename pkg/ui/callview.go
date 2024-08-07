@@ -122,10 +122,13 @@ func (fzf *fzfview) OnRefenceChanged(refs []lsp.Location, t DateType) {
 	}
 }
 
-func caller_to_listitem(items *lspcore.CallStackEntry, root string) string {
-	callerstr := fmt.Sprintf(" [%s %s:%d]", items.Name,
+func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
+	if caller == nil {
+		return ""
+	}
+	callerstr := fmt.Sprintf(" [%s %s:%d]", caller.Name,
 		strings.TrimPrefix(
-			items.Item.URI.AsPath().String(), root),
-		items.Item.Range.Start.Line)
+			caller.Item.URI.AsPath().String(), root),
+		caller.Item.Range.Start.Line)
 	return callerstr
 }

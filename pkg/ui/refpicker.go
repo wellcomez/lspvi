@@ -76,11 +76,15 @@ func (pk refpicker) OnFileChange(file []lsp.Location) {
 }
 
 type ref_line struct {
-	loc  lsp.Location
-	line string
-	path string
+	caller string
+	loc    lsp.Location
+	line   string
+	path   string
 }
 
+func (ref ref_line) fzf_tring() string {
+	return ref.String() + ref.caller
+}
 func (ref ref_line) String() string {
 	return fmt.Sprintf("%s %s:%d", ref.line, ref.path, ref.loc.Range.Start.Line)
 }
@@ -113,18 +117,19 @@ func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 		begin := max(0, v.Range.Start.Character-gap)
 		end := min(len(line), v.Range.Start.Character+gap)
 		path := strings.Replace(v.URI.AsPath().String(), pk.impl.codeprev.main.root, "", -1)
-		callinfo:=""
-		if caller.caller!=nil{
-			callinfo=caller_to_listitem(caller.caller,pk.impl.parent.main.root)
+		callinfo := ""
+		if caller.caller != nil {
+			callinfo = caller_to_listitem(caller.caller, pk.impl.parent.main.root)
 		}
-		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1,callinfo)
+		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1, callinfo)
 		r := ref_line{
-			loc:  v,
-			line: line,
-			path: path,
+			caller: caller_to_listitem(caller.caller, pk.impl.parent.main.root),
+			loc:    v,
+			line:   line,
+			path:   path,
 		}
 		pk.impl.listdata = append(pk.impl.listdata, r)
-		datafzf = append(datafzf, r.String())
+		datafzf = append(datafzf, r.fzf_tring())
 		listview.AddItem(secondline, line[begin:end], 0, func() {
 			pk.impl.codeprev.main.OpenFile(v.URI.AsPath().String(), &v)
 			pk.impl.parent.hide()
@@ -210,8 +215,9 @@ func (pk refpicker) UpdateQuery(query string) {
 		for _, v := range result.Matches {
 			v := pk.impl.listdata[v.HayIndex]
 			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
+			callinfo := v.caller
 			listview.AddItem(
-				fmt.Sprintf("%s:%d", v.path, v.loc.Range.Start.Line),
+				fmt.Sprintf("%s:%d%s", v.path, v.loc.Range.Start.Line, callinfo),
 				v.line, 0, func() {
 					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
 					pk.impl.parent.hide()

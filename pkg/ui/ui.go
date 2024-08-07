@@ -120,7 +120,7 @@ func (m *mainui) UpdatePageTitle() {
 
 func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	if len(refs) > 0 {
-		m.ActiveTab(view_fzf)
+		//m.ActiveTab(view_fzf)
 	}
 	go func() {
 		m.app.QueueUpdateDraw(func() {
@@ -478,7 +478,7 @@ func MainUI(arg *Arguments) {
 			viewname = main.searchcontext.view.getname()
 		}
 		titlename := fmt.Sprintf("%s %s", appname, viewname)
-		if main.layout.mainlayout.GetTitle() != titlename{
+		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {
 					main.layout.mainlayout.SetTitle(viewname)
