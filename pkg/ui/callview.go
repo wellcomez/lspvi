@@ -20,6 +20,17 @@ func new_fzfview(main *mainui) *fzfview {
 		view:      view,
 		main:      main,
 	}
+	view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		ch := event.Rune()
+		if ch == 'j' {
+			ret.go_next()
+		} else if ch == 'k' {
+			ret.go_prev()
+		} else {
+			return event
+		}
+		return nil
+	})
 	view.SetSelectedFunc(ret.Hanlde)
 	return ret
 
