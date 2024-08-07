@@ -698,7 +698,7 @@ func (main *mainui) move_to_window(t direction) {
 			ids := []view_id{view_uml, view_log, view_fzf, view_callin}
 			for _, v := range ids {
 				if v.getname() == names[0] {
-					main.ActiveTab(int(next), true)
+					main.ActiveTab(int(v), true)
 					break
 				}
 			}
