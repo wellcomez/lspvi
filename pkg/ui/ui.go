@@ -120,7 +120,9 @@ func (m *mainui) UpdatePageTitle() {
 
 func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	if len(refs) > 0 {
-		//m.ActiveTab(view_fzf)
+		m.ActiveTab(view_fzf, false)
+	} else {
+		return
 	}
 	go func() {
 		m.app.QueueUpdateDraw(func() {
@@ -134,7 +136,7 @@ func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 // OnCallTaskInViewChanged
 func (m *mainui) OnCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
 	if len(call_in_stack.Allstack) > 0 {
-		m.ActiveTab(view_callin)
+		m.ActiveTab(view_callin, false)
 	}
 	m.callinview.updatetask(call_in_stack)
 	m.async_resolve_callstack(call_in_stack)
@@ -184,7 +186,7 @@ func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 	lsp.Reference(pos)
 }
 
-func (m *mainui) ActiveTab(id int) {
+func (m *mainui) ActiveTab(id int, focused bool) {
 	tabid := view_id(id)
 	yes := false
 	for _, v := range tabs {
@@ -196,8 +198,10 @@ func (m *mainui) ActiveTab(id int) {
 	if !yes {
 		return
 	}
-	m.lost_focus(m.get_view_from_id(m.get_focus_view_id()))
-	m.set_focus(m.get_view_from_id(tabid))
+	if focused {
+		m.lost_focus(m.get_view_from_id(m.get_focus_view_id()))
+		m.set_focus(m.get_view_from_id(tabid))
+	}
 	var name = view_id(id).getname()
 	m.page.SwitchToPage(name)
 	tab := m.tabs.Find(name)
@@ -622,7 +626,7 @@ var leadkey = ' '
 func (main *mainui) set_viewid_focus(v view_id) {
 	for _, tab := range tabs {
 		if v == tab {
-			main.ActiveTab(int(tab))
+			main.ActiveTab(int(tab), true)
 			return
 		}
 	}
@@ -695,7 +699,7 @@ func (main *mainui) move_to_window(t direction) {
 	switch next {
 	case view_fzf:
 	case view_callin:
-		main.ActiveTab(int(next))
+		main.ActiveTab(int(next), true)
 	default:
 		main.set_focus(main.get_view_from_id(next))
 	}
@@ -721,10 +725,12 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
 	//Ctrl+O
 	if main.layout.dialog.Visible {
-		return main.layout.dialog.handle_key(event)
+		main.layout.dialog.handle_key(event)
+		return nil
 	}
 	if main.layout.spacemenu.visible {
-		return main.layout.spacemenu.handle_key(event)
+		main.layout.spacemenu.handle_key(event)
+		return nil
 	}
 	for _, v := range main.global_key_map() {
 		if v.key.matched_event(*event) {
