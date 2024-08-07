@@ -695,13 +695,12 @@ func (main *mainui) move_to_window(t direction) {
 	if next == view_none {
 		return
 	}
-	// main.set_viewid_focus(next)
 	switch next {
-	case view_fzf:
-	case view_callin:
+	case view_uml, view_log, view_fzf, view_callin:
 		main.ActiveTab(int(next), true)
 	default:
-		main.set_focus(main.get_view_from_id(next))
+		main.set_viewid_focus(next)
+		// main.set_focus(main.get_view_from_id(next))
 	}
 }
 
