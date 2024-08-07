@@ -477,11 +477,14 @@ func MainUI(arg *Arguments) {
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
 		}
-		go func(viewname string) {
-			main.app.QueueUpdateDraw(func() {
-				main.layout.mainlayout.SetTitle(fmt.Sprintf("%s %s", appname, viewname))
-			})
-		}(viewname)
+		titlename := fmt.Sprintf("%s %s", appname, viewname)
+		if main.layout.mainlayout.GetTitle() != titlename{
+			go func(viewname string) {
+				main.app.QueueUpdateDraw(func() {
+					main.layout.mainlayout.SetTitle(viewname)
+				})
+			}(titlename)
+		}
 		cursor := main.codeview.String()
 		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s ", cursor, main.cmdline.Vim.String(), viewname))
 		return main.statusbar.GetInnerRect()
