@@ -527,11 +527,9 @@ func MainUI(arg *Arguments) {
 		return main.handle_key(event)
 	})
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
-		// if action == tview.MouseLeftClick {
-		// 	mouseclick_view_focused(&main, event)
-		// }
 		if main.layout.dialog.Visible {
-			return main.layout.dialog.MouseHanlde(event, action)
+			main.layout.dialog.MouseHanlde(event, action)
+			return nil, tview.MouseConsumed
 		}
 		return event, action
 	})
