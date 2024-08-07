@@ -259,6 +259,9 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 	}
 	m.page.SwitchToPage(tab.Name)
 	m.page.SetTitle(tab.Name)
+	if vid := find_tab_by_name(tab.Name); vid != view_none {
+		m.set_viewid_focus(vid)
+	}
 }
 func (m *mainui) open_wks_query() {
 	m.layout.dialog.open_wks_query(m.lspmgr.Current)
@@ -695,16 +698,13 @@ func (main *mainui) move_to_window(t direction) {
 	case view_uml, view_log, view_fzf, view_callin:
 		names := main.page.GetPageNames(true)
 		if len(names) == 1 {
-			ids := []view_id{view_uml, view_log, view_fzf, view_callin}
-			for _, v := range ids {
-				if v.getname() == names[0] {
-					main.ActiveTab(int(v), true)
-					break
-				}
+			vid := find_tab_by_name(names[0])
+			if view_none != view_none {
+				main.ActiveTab(int(vid), true)
+				return
 			}
-		} else {
-			main.ActiveTab(int(next), true)
 		}
+		main.ActiveTab(int(next), true)
 	default:
 		main.set_viewid_focus(next)
 		// main.set_focus(main.get_view_from_id(next))

@@ -24,6 +24,18 @@ const (
 	view_outline_list
 )
 
+var tab_view_id = []view_id{view_fzf, view_log, view_uml, view_callin}
+
+func find_tab_by_name(name string) view_id {
+	for _, v := range tab_view_id {
+		if v.getname() == name {
+			return v
+		}
+	}
+	return view_none
+
+}
+
 var all_view_list = []view_id{
 	view_log,
 	view_fzf,
@@ -108,7 +120,7 @@ func view_id_init(m *mainui) {
 						change_after_focused(box, m)
 					})
 				}
-			case view_fzf,view_callin,view_uml:
+			case view_fzf, view_callin, view_uml:
 				{
 					box.SetFocusFunc(func() {
 						change_after_focused(box, m)
@@ -124,7 +136,7 @@ func view_id_init(m *mainui) {
 			}
 
 			switch v {
-			case view_fzf,view_callin,view_uml:
+			case view_fzf, view_callin, view_uml:
 				{
 					box.SetBlurFunc(func() {
 						box.SetBorderColor(tcell.ColorWhite)
@@ -147,7 +159,7 @@ func change_after_focused(box *tview.Box, m *mainui) {
 	box.SetBorderColor(tcell.ColorGreenYellow)
 	vid := m.get_focus_view_id()
 	switch vid {
-	case view_code,view_cmd:
+	case view_code, view_cmd:
 		return
 	default:
 		m.cmdline.Vim.ExitEnterEscape()
