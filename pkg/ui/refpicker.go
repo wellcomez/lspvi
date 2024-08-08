@@ -50,6 +50,11 @@ type refpicker struct {
 	impl *refpicker_impl
 }
 
+// name implements picker.
+func (pk refpicker) name() string {
+	return "refs"
+}
+
 // OnCallInViewChanged implements lspcore.lsp_data_changed.
 func (pk refpicker) OnCallInViewChanged(stacks []lspcore.CallStack) {
 	panic("unimplemented")

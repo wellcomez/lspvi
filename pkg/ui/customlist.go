@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"reflect"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -66,6 +67,46 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	stylehl := tcell.StyleDefault.Foreground(tcell.ColorGreen).Background(tview.Styles.PrimitiveBackgroundColor)
 
 	itemoffset, _ := l.GetOffset()
+	keys := l.get_hl_keys()
+	for index := itemoffset; index < len(l.hlitems); index++ {
+		MainText, SecondText := l.List.GetItemText(index)
+		Positions := find_key(MainText, keys, 0)
+		selected := index == l.List.GetCurrentItem()
+		if y >= bottomLimit {
+			break
+		}
+		if len(MainText) > 0 {
+			if selected {
+				draw_item_color(Positions, MainText, screen, offset_x, y, selected_style, selected_stylehl)
+			} else {
+				draw_item_color(Positions, MainText, screen, offset_x, y, style, stylehl)
+			}
+			y += 1
+		}
+		if y >= bottomLimit {
+			break
+		}
+		if l.showSecondaryText() && len(SecondText) > 0 {
+			if selected {
+				draw_item_color(Positions, SecondText, screen, offset_x, y, selected_style, selected_stylehl)
+			} else {
+				draw_item_color(Positions, SecondText, screen, offset_x, y, style, stylehl)
+			}
+			y += 1
+			if y >= bottomLimit {
+				break
+			}
+		}
+	}
+
+}
+func (list *customlist) showSecondaryText() bool {
+	v := reflect.ValueOf(list.List).Elem()
+	field := v.FieldByName("showSecondaryText")
+	x := field.Bool()
+	return x
+}
+func (l *customlist) get_hl_keys() []string {
 	keys := strings.Split(l.Key, " ")
 	if len(l.Key) == 0 {
 		keys = []string{}
@@ -74,25 +115,7 @@ func (l *customlist) Draw(screen tcell.Screen) {
 			keys[i] = strings.ToLower(s)
 		}
 	}
-	for index := itemoffset; index < len(l.hlitems); index++ {
-		MainText, _ := l.List.GetItemText(index)
-		if len(MainText) == 0 {
-			y++
-			continue
-		}
-		Positions := find_key(MainText, keys, 0)
-		if y >= bottomLimit {
-			break
-		}
-		selected := index == l.List.GetCurrentItem()
-		if selected {
-			draw_item_color(Positions, MainText, screen, offset_x, y, selected_style, selected_stylehl)
-		} else {
-			draw_item_color(Positions, MainText, screen, offset_x, y, style, stylehl)
-		}
-		y += 1
-	}
-
+	return keys
 }
 
 func draw_item_color(Positions []keypattern, MainText string, screen tcell.Screen, offset_x int, y int, selected_style tcell.Style, selected_stylehl tcell.Style) {

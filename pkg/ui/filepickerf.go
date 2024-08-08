@@ -21,7 +21,7 @@ import (
 
 // new_fzf_file
 func (pk DirWalk) new_fzf_file(input *tview.InputField) *tview.Grid {
-	layout := grid_list_whole_screen(pk.list,input)
+	layout := grid_list_whole_screen(pk.list, input)
 	layout.SetBorder(true)
 	return layout
 }
@@ -30,6 +30,11 @@ var WalkerSkip = []string{".git", "node_modules"}
 
 type filepicker struct {
 	impl *DirWalk
+}
+
+// name implements picker.
+func (f filepicker) name() string {
+	return "files"
 }
 
 // UpdateQuery implements picker.

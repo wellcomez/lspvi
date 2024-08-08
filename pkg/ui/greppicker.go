@@ -23,8 +23,32 @@ type livewgreppicker struct {
 	parent   *fzfmain
 	impl     *grep_impl
 }
+
+// name implements picker.
+func (pk *livewgreppicker) name() string {
+	return "live grep"
+}
+
+// greppicker
 type greppicker struct {
 	*livewgreppicker
+}
+
+// UpdateQuery implements picker.
+// Subtle: this method shadows the method (*livewgreppicker).UpdateQuery of greppicker.livewgreppicker.
+func (g *greppicker) UpdateQuery(query string) {
+	panic("unimplemented")
+}
+
+// handle implements picker.
+// Subtle: this method shadows the method (*livewgreppicker).handle of greppicker.livewgreppicker.
+func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	panic("unimplemented")
+}
+
+// name implements picker.
+func (g *greppicker) name() string {
+	return "grep word"
 }
 
 func (pk livewgreppicker) update_preview() {

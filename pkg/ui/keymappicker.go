@@ -19,6 +19,11 @@ type keymap_picker struct {
 	parent *fzfmain
 }
 
+// name implements picker.
+func (pk keymap_picker) name() string {
+  return "key map"
+}
+
 // UpdateQuery implements picker.
 func (pk keymap_picker) UpdateQuery(query string) {
 	impl := pk.impl

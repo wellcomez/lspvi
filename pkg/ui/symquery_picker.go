@@ -21,6 +21,11 @@ type workspace_query_picker struct {
 	impl *workspace_query_picker_impl
 }
 
+// name implements picker.
+func (pk *workspace_query_picker) name() string {
+  return "workspace symbole"
+}
+
 func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInformation, err error) {
 	pk.impl.sym = sym
 	pk.impl.parent.app.QueueUpdateDraw(func() {

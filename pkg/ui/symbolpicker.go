@@ -14,7 +14,7 @@ func (sym *symbolpicker) new_fzf_symbol_view(input *tview.InputField) *tview.Gri
 	list.SetBorder(true)
 	code := sym.impl.codeprev.view
 	sym.impl.codeprev.Load(sym.impl.file.Filename)
-	layout := layout_list_edit(list,code, input)	
+	layout := layout_list_edit(list, code, input)
 	return layout
 }
 func new_outline_picker(v *fzfmain, file *lspcore.Symbol_file) symbolpicker {
@@ -55,6 +55,11 @@ type SymbolWalkImpl struct {
 
 type symbolpicker struct {
 	impl *SymbolWalkImpl
+}
+
+// name implements picker.
+func (sym symbolpicker) name() string {
+  return "document symbol"
 }
 
 func (wk symbolpicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
