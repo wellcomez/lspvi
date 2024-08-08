@@ -18,6 +18,9 @@ type quick_preview struct {
 
 // update_preview
 func (pk *quick_preview) update_preview(loc lsp.Location) {
+	pk.visisble = true
+	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line)
+	pk.frame.SetTitle(title)
 	pk.codeprev.Load(loc.URI.AsPath().String())
 	pk.codeprev.gotoline(loc.Range.Start.Line)
 }
@@ -56,16 +59,16 @@ func new_quikview(main *mainui) *quick_view {
 	}
 	view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		ch := event.Rune()
-		if ch == 'j' || event.Key()==tcell.KeyDown{
+		if ch == 'j' || event.Key() == tcell.KeyDown {
 			ret.go_next()
-		} else if ch == 'k' ||event.Key()==tcell.KeyUp{
+		} else if ch == 'k' || event.Key() == tcell.KeyUp {
 			ret.go_prev()
 		} else {
 			return event
 		}
 		return nil
 	})
-	view.SetSelectedFunc(ret.Hanlde)
+	view.SetSelectedFunc(ret.selection_handle)
 	return ret
 
 }
@@ -75,6 +78,9 @@ func (fzf *quick_view) DrawPreview(screen tcell.Screen, top, left, width, height
 }
 
 func (fzf *quick_preview) draw(width int, height int, screen tcell.Screen) {
+	if !fzf.visisble {
+		return
+	}
 	width, height = screen.Size()
 	w := width
 	h := height * 1 / 4
@@ -85,11 +91,15 @@ func (fzf *quick_preview) draw(width int, height int, screen tcell.Screen) {
 func (fzf *quick_view) go_prev() {
 	next := (fzf.view.GetCurrentItem() - 1 + fzf.view.GetItemCount()) % fzf.view.GetItemCount()
 	fzf.view.SetCurrentItem(next)
+	fzf.open_index(next)
+	if fzf.Type == data_refs {
+		fzf.selection_handle_impl(next,false)
+	}
+}
+
+func (fzf *quick_view) open_index(next int) {
 	loc := fzf.Refs.refs[next].loc
 	fzf.quickview.update_preview(loc)
-	if fzf.Type == data_refs {
-		fzf.Hanlde(next, "", "", 1)
-	}
 }
 func (fzf *quick_view) go_next() {
 	next := (fzf.view.GetCurrentItem() + 1) % fzf.view.GetItemCount()
@@ -97,7 +107,7 @@ func (fzf *quick_view) go_next() {
 	fzf.quickview.update_preview(loc)
 	fzf.view.SetCurrentItem(next)
 	if fzf.Type == data_refs {
-		fzf.Hanlde(next, "", "", 1)
+		fzf.selection_handle_impl(next,false)
 	}
 }
 func (main *quick_view) OnSearch(txt string) {
@@ -112,13 +122,22 @@ func (fzf quick_view) String() string {
 	return fmt.Sprintf("%s %d/%d", s, fzf.currentIndex, len(fzf.Refs.refs))
 }
 
-// Hanlde
-func (fzf *quick_view) Hanlde(index int, _ string, _ string, _ rune) {
+// selection_handle
+func (fzf *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
+	fzf.selection_handle_impl(index, true)
+	fzf.quickview.visisble = false
+}
+
+func (fzf *quick_view) selection_handle_impl(index int, open bool) {
 	vvv := fzf.Refs.refs[index]
 	fzf.currentIndex = index
-	fzf.main.UpdatePageTitle()
-	fzf.main.gotoline(vvv.loc)
+	same := vvv.loc.URI.AsPath().String() == fzf.main.codeview.filename
+	if open || same {
+		fzf.main.UpdatePageTitle()
+		fzf.main.gotoline(vvv.loc)
+	} else {
 
+	}
 }
 
 type DateType int
@@ -160,4 +179,5 @@ func (fzf *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
 		secondline := fmt.Sprintf("%s:%-4d%s		%s", path, v.Range.Start.Line+1, callerstr, code)
 		fzf.view.AddItem(secondline, "", nil)
 	}
+	fzf.open_index(fzf.view.GetCurrentItem())
 }
