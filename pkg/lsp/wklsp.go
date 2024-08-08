@@ -271,5 +271,5 @@ type lsp_data_changed interface {
 	OnFileChange(file []lsp.Location)
 	OnLspCaller(search string, stacks []CallStack)
 	OnLspCallTaskInViewChanged(stacks *CallInTask)
-	OnCallTaskInViewResovled(stacks *CallInTask)
+	OnLspCallTaskInViewResovled(stacks *CallInTask)
 }

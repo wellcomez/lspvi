@@ -64,8 +64,8 @@ func (r *mainui) editor_area_fouched() {
 	r.layout.mainlayout.ResizeItem(r.layout.console, 0, 2)
 }
 
-// OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
-func (m *mainui) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
+// OnLspCallTaskInViewResovled implements lspcore.lsp_data_changed.
+func (m *mainui) OnLspCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	// panic("unimplemented")
 	focus := m.get_focus_view_id()
 	if focus == view_cmd {
@@ -103,7 +103,7 @@ func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
 	})
 }
 
-// OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
+// OnLspCallTaskInViewResovled implements lspcore.lsp_data_changed.
 func (m *mainui) async_resolve_callstack(call_in_task *lspcore.CallInTask) {
 	// panic("unimplemented")
 	go m.__resolve_task(call_in_task)

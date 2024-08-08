@@ -65,8 +65,8 @@ func (pk refpicker) OnLspCallTaskInViewChanged(stacks *lspcore.CallInTask) {
 	panic("unimplemented")
 }
 
-// OnCallTaskInViewResovled implements lspcore.lsp_data_changed.
-func (pk refpicker) OnCallTaskInViewResovled(stacks *lspcore.CallInTask) {
+// OnLspCallTaskInViewResovled implements lspcore.lsp_data_changed.
+func (pk refpicker) OnLspCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	panic("unimplemented")
 }
 
