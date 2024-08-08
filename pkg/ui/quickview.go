@@ -37,8 +37,9 @@ func new_quick_preview() *quick_preview {
 // quick_view
 type quick_view struct {
 	*view_link
-	quickview    *quick_preview
-	view         *customlist
+	quickview *quick_preview
+	//view         *customlist
+	view         *tview.List
 	Name         string
 	Refs         search_reference_result
 	main         *mainui
@@ -46,9 +47,12 @@ type quick_view struct {
 	Type         DateType
 }
 
+// new_quikview
 func new_quikview(main *mainui) *quick_view {
-	view := new_customlist()
-	view.List.SetMainTextStyle(tcell.StyleDefault.Normal())
+	//view := new_customlist()
+	//view.List.SetMainTextStyle(tcell.StyleDefault.Normal())
+	view := tview.NewList()
+	view.SetMainTextStyle(tcell.StyleDefault.Normal()).ShowSecondaryText(false)
 	var vid view_id = view_quickview
 	ret := &quick_view{
 		view_link: &view_link{up: view_code, right: view_callin},
@@ -93,7 +97,7 @@ func (fzf *quick_view) go_prev() {
 	fzf.view.SetCurrentItem(next)
 	fzf.open_index(next)
 	if fzf.Type == data_refs {
-		fzf.selection_handle_impl(next,false)
+		fzf.selection_handle_impl(next, false)
 	}
 }
 
@@ -107,7 +111,7 @@ func (fzf *quick_view) go_next() {
 	fzf.quickview.update_preview(loc)
 	fzf.view.SetCurrentItem(next)
 	if fzf.Type == data_refs {
-		fzf.selection_handle_impl(next,false)
+		fzf.selection_handle_impl(next, false)
 	}
 }
 func (main *quick_view) OnSearch(txt string) {
@@ -177,7 +181,8 @@ func (fzf *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
 		}
 		code := line[begin:end]
 		secondline := fmt.Sprintf("%s:%-4d%s		%s", path, v.Range.Start.Line+1, callerstr, code)
-		fzf.view.AddItem(secondline, "", nil)
+		//fzf.view.AddItem(secondline, "", nil)
+		fzf.view.AddItem(secondline, "", 0, nil)
 	}
 	fzf.open_index(fzf.view.GetCurrentItem())
 }
