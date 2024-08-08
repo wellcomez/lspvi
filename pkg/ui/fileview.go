@@ -33,7 +33,7 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	ret := &file_tree_view{
 		view_link: &view_link{
 			right: view_code,
-			down:  view_fzf,
+			down:  view_quickview,
 			left:  view_outline_list,
 		},
 		view:    view,

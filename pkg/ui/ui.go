@@ -16,7 +16,7 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-var tabs []view_id = []view_id{view_fzf, view_callin, view_uml}
+var tabs []view_id = []view_id{view_quickview, view_callin, view_uml}
 var appname = "lspvi"
 
 type rootlayout struct {
@@ -120,7 +120,7 @@ func (m *mainui) UpdatePageTitle() {
 
 func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	if len(refs) > 0 {
-		m.ActiveTab(view_fzf, false)
+		m.ActiveTab(view_quickview, false)
 	} else {
 		return
 	}
@@ -500,7 +500,7 @@ func MainUI(arg *Arguments) {
 	tab_area.AddItem(tview.NewBox(), 1, 0, false)
 	tab_area.AddItem(main.statusbar, 0, 10, false)
 
-	var tabid view_id = view_fzf
+	var tabid view_id = view_quickview
 	fzttab := group.Find(tabid.getname())
 	fzttab.view.Focus(nil)
 	main_layout :=
@@ -540,6 +540,10 @@ func MainUI(arg *Arguments) {
 		main.layout.spacemenu.Draw(screen)
 		if main.layout.dialog.Visible {
 			main.layout.dialog.Draw(screen)
+		} else {
+			if main.get_focus_view_id() == view_quickview {
+				main.quickview.DrawPreview(screen)
+			}
 		}
 	})
 	view_id_init(&main)
@@ -587,7 +591,7 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			main.codeview.gotoline(gs.GetNext())
 		}
 		main.page.SetTitle(gs.String())
-	} else if prev == view_fzf {
+	} else if prev == view_quickview {
 		main.quickview.OnSearch(txt)
 	} else if prev == view_outline_list {
 		if changed {
@@ -680,7 +684,7 @@ func (main *mainui) move_to_window(t direction) {
 		vl = main.codeview.view_link
 	case view_outline_list:
 		vl = main.symboltree.view_link
-	case view_fzf:
+	case view_quickview:
 		vl = main.quickview.view_link
 	case view_file:
 		vl = main.fileexplorer.view_link
@@ -695,7 +699,7 @@ func (main *mainui) move_to_window(t direction) {
 		return
 	}
 	switch next {
-	case view_uml, view_log, view_fzf, view_callin:
+	case view_uml, view_log, view_quickview, view_callin:
 		names := main.page.GetPageNames(true)
 		if len(names) == 1 {
 			vid := find_tab_by_name(names[0])

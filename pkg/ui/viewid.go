@@ -15,7 +15,7 @@ type view_link struct {
 const (
 	view_none = iota
 	view_log
-	view_fzf
+	view_quickview
 	view_callin
 	view_code
 	view_uml
@@ -24,7 +24,7 @@ const (
 	view_outline_list
 )
 
-var tab_view_id = []view_id{view_fzf, view_log, view_uml, view_callin}
+var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin}
 
 func find_tab_by_name(name string) view_id {
 	for _, v := range tab_view_id {
@@ -38,7 +38,7 @@ func find_tab_by_name(name string) view_id {
 
 var all_view_list = []view_id{
 	view_log,
-	view_fzf,
+	view_quickview,
 	view_callin,
 	view_code,
 	view_uml,
@@ -81,7 +81,7 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 	switch viewid {
 	case view_log:
 		return nil
-	case view_fzf:
+	case view_quickview:
 		return m.quickview.view_link
 	case view_callin:
 		return m.callinview.view_link
@@ -120,7 +120,7 @@ func view_id_init(m *mainui) {
 						change_after_focused(box, m)
 					})
 				}
-			case view_fzf, view_callin, view_uml:
+			case view_quickview, view_callin, view_uml:
 				{
 					box.SetFocusFunc(func() {
 						change_after_focused(box, m)
@@ -136,7 +136,7 @@ func view_id_init(m *mainui) {
 			}
 
 			switch v {
-			case view_fzf, view_callin, view_uml:
+			case view_quickview, view_callin, view_uml:
 				{
 					box.SetBlurFunc(func() {
 						box.SetBorderColor(tcell.ColorWhite)
@@ -169,7 +169,7 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 	switch viewid {
 	case view_log:
 		return m.log.Box
-	case view_fzf:
+	case view_quickview:
 		return m.quickview.view.Box
 	case view_callin:
 		return m.callinview.view.Box
@@ -191,7 +191,7 @@ func (viewid view_id) getname() string {
 	return all_view_name[viewid]
 }
 func config_main_tab_order(main *mainui) {
-	var vieworder = []view_id{view_code, view_outline_list, view_fzf, view_callin, view_uml, view_file, view_code}
+	var vieworder = []view_id{view_code, view_outline_list, view_quickview, view_callin, view_uml, view_file, view_code}
 	for i, v := range vieworder {
 		if i+1 < len(vieworder) {
 			if link := v.to_view_link(main); link != nil {

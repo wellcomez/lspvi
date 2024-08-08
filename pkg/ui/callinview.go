@@ -31,7 +31,7 @@ func new_callview(main *mainui) *callinview {
 		view_link: &view_link{
 			right: view_uml,
 			up:    view_code,
-			left:  view_fzf,
+			left:  view_quickview,
 		},
 		view: view,
 		Name: "callin",

@@ -24,7 +24,7 @@ type cmdline struct {
 func new_cmdline(main *mainui) *cmdline {
 	code := &cmdline{
 		view_link: &view_link{
-			up: view_fzf,
+			up: view_quickview,
 		},
 		main:         main,
 		input:        tview.NewInputField(),
@@ -169,8 +169,8 @@ func (v *command_history) add(item command_history_record) {
 	v.data = append(v.data, item)
 	buf, err := json.Marshal(v.data)
 	if err == nil {
-		err=os.WriteFile(v.filepath, buf, 0644)
-		if err!=nil{
+		err = os.WriteFile(v.filepath, buf, 0644)
+		if err != nil {
 			log.Println(err)
 		}
 	}

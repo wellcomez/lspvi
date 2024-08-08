@@ -138,7 +138,7 @@ type SymbolListItem struct {
 func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
 	ret := &SymbolTreeView{
-		view_link: &view_link{left: view_code, down: view_fzf},
+		view_link: &view_link{left: view_code, down: view_quickview},
 		main:      main,
 		view:      symbol_tree,
 	}

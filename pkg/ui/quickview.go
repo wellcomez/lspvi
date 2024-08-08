@@ -9,9 +9,23 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
+type quick_preview struct {
+	codeprev *CodeView
+}
+
+func (preview quick_preview) open_file(file string) {
+	preview.codeprev.Load(file)
+}
+func new_quick_preview(main *mainui) *quick_preview {
+	return &quick_preview{
+		codeprev: NewCodeView(main),
+	}
+}
+
 // quick_view
 type quick_view struct {
 	*view_link
+	quickview    *quick_preview
 	view         *customlist
 	Name         string
 	Refs         search_reference_result
@@ -23,12 +37,13 @@ type quick_view struct {
 func new_quikview(main *mainui) *quick_view {
 	view := new_customlist()
 	view.List.SetMainTextStyle(tcell.StyleDefault.Normal())
-	var vid view_id = view_fzf
+	var vid view_id = view_quickview
 	ret := &quick_view{
 		view_link: &view_link{up: view_code, right: view_callin},
 		Name:      vid.getname(),
 		view:      view,
 		main:      main,
+		quickview: new_quick_preview(main),
 	}
 	view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		ch := event.Rune()
@@ -45,7 +60,9 @@ func new_quikview(main *mainui) *quick_view {
 	return ret
 
 }
-
+func (fzf *quick_view) DrawPreview(screen tcell.Screen) bool {
+	return false
+}
 func (fzf *quick_view) go_prev() {
 	next := (fzf.view.GetCurrentItem() - 1 + fzf.view.GetItemCount()) % fzf.view.GetItemCount()
 	fzf.view.SetCurrentItem(next)
