@@ -56,7 +56,7 @@ func (pk refpicker) name() string {
 }
 
 // OnLspCaller implements lspcore.lsp_data_changed.
-func (pk refpicker) OnLspCaller(txt string, stacks []lspcore.CallStack) {
+func (pk refpicker) OnLspCaller(txt string,c lsp.CallHierarchyItem ,stacks []lspcore.CallStack) {
 	panic("unimplemented")
 }
 

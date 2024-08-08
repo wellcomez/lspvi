@@ -20,6 +20,7 @@ type CodeView struct {
 	*view_link
 	filename          string
 	view              *femto.View
+	theme             string
 	main              *mainui
 	basic_vi_command  []cmditem
 	key_map           map[tcell.Key]func(code *CodeView)
@@ -85,11 +86,14 @@ func NewCodeView(main *mainui) *CodeView {
 	ret := CodeView{view_link: &view_link{
 		right: view_outline_list,
 		down:  view_quickview,
-		left:  view_file}}
+		left:  view_file},
+		theme: "darcula",
+	}
 	ret.main = main
 	ret.map_key_handle()
 	var colorscheme femto.Colorscheme
-	if monokai := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); monokai != nil {
+	//"monokai"
+	if monokai := runtime.Files.FindFile(femto.RTColorscheme, ret.theme); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
 			colorscheme = femto.ParseColorscheme(string(data))
 		}
@@ -491,7 +495,9 @@ func (code *CodeView) Load(filename string) error {
 	code.view.OpenBuffer(buffer)
 	code.filename = filename
 	var colorscheme femto.Colorscheme
-	if monokai := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); monokai != nil {
+	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
+	// "monokai"
+	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
 			colorscheme = femto.ParseColorscheme(string(data))
 		}

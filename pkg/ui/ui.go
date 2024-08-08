@@ -144,7 +144,7 @@ func (m *mainui) OnLspCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
 }
 
 // OnLspCaller implements lspcore.lsp_data_changed.
-func (m *mainui) OnLspCaller(s string, stacks []lspcore.CallStack) {
+func (m *mainui) OnLspCaller(s string, c lsp.CallHierarchyItem ,stacks []lspcore.CallStack) {
 	// m.callinview.update(stacks)
 }
 func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {

@@ -142,7 +142,7 @@ func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 	search_txt := NewBody(loc).String()
 	if len(c1) > 0 {
 		prepare := c1[0]
-		search_txt = NewBody(lsp.Location{URI: loc.URI, Range: prepare.Range}).String()
+		search_txt = NewBody(lsp.Location{URI: prepare.URI, Range: prepare.Range}).String()
 		c2, err := sym.lsp.CallHierarchyIncomingCalls(prepare)
 		if err == nil {
 			for _, f := range c2 {
@@ -153,9 +153,9 @@ func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 				ret = append(ret, stack)
 			}
 		}
-	}
-	if cb {
-		sym.Handle.OnLspCaller(search_txt, ret)
+		if cb {
+			sym.Handle.OnLspCaller(search_txt, c1[0], ret)
+		}
 	}
 	return ret, nil
 }

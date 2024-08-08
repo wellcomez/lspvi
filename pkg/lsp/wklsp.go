@@ -269,7 +269,7 @@ type lsp_data_changed interface {
 	OnCodeViewChanged(file *Symbol_file)
 	OnLspRefenceChanged(ranges lsp.Range, file []lsp.Location)
 	OnFileChange(file []lsp.Location)
-	OnLspCaller(search string, stacks []CallStack)
+	OnLspCaller(search string,c lsp.CallHierarchyItem , stacks []CallStack)
 	OnLspCallTaskInViewChanged(stacks *CallInTask)
 	OnLspCallTaskInViewResovled(stacks *CallInTask)
 }
