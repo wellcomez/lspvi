@@ -43,7 +43,7 @@ func (g *greppicker) UpdateQuery(query string) {
 // handle implements picker.
 // Subtle: this method shadows the method (*livewgreppicker).handle of greppicker.livewgreppicker.
 func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	panic("unimplemented")
+	return g.livewgreppicker.handle()
 }
 
 // name implements picker.

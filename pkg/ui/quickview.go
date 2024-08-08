@@ -72,69 +72,75 @@ func new_quikview(main *mainui) *quick_view {
 	return ret
 
 }
-func (fzf *quick_view) DrawPreview(screen tcell.Screen, top, left, width, height int) bool {
-	fzf.quickview.draw(width, height, screen)
+func (qk *quick_view) DrawPreview(screen tcell.Screen, top, left, width, height int) bool {
+	qk.quickview.draw(width, height, screen)
 	return false
 }
 
-func (fzf *quick_preview) draw(width int, height int, screen tcell.Screen) {
-	if !fzf.visisble {
+func (qk *quick_preview) draw(width int, height int, screen tcell.Screen) {
+	if !qk.visisble {
 		return
 	}
 	width, height = screen.Size()
 	w := width
 	h := height * 1 / 4
-	frame := fzf.frame
+	frame := qk.frame
 	frame.SetRect(0, height/3, w, h)
 	frame.Draw(screen)
 }
-func (fzf *quick_view) go_prev() {
-	next := (fzf.view.GetCurrentItem() - 1 + fzf.view.GetItemCount()) % fzf.view.GetItemCount()
-	fzf.view.SetCurrentItem(next)
-	fzf.open_index(next)
-	if fzf.Type == data_refs {
-		fzf.selection_handle_impl(next,false)
+func (qk *quick_view) go_prev() {
+	if qk.view.GetItemCount() == 0 {
+		return
+	}
+	next := (qk.view.GetCurrentItem() - 1 + qk.view.GetItemCount()) % qk.view.GetItemCount()
+	qk.view.SetCurrentItem(next)
+	qk.open_index(next)
+	if qk.Type == data_refs {
+		qk.selection_handle_impl(next, false)
 	}
 }
 
-func (fzf *quick_view) open_index(next int) {
-	loc := fzf.Refs.refs[next].loc
-	fzf.quickview.update_preview(loc)
+func (qk *quick_view) open_index(next int) {
+	loc := qk.Refs.refs[next].loc
+	qk.quickview.update_preview(loc)
 }
-func (fzf *quick_view) go_next() {
-	next := (fzf.view.GetCurrentItem() + 1) % fzf.view.GetItemCount()
-	loc := fzf.Refs.refs[next].loc
-	fzf.quickview.update_preview(loc)
-	fzf.view.SetCurrentItem(next)
-	if fzf.Type == data_refs {
-		fzf.selection_handle_impl(next,false)
+func (qk *quick_view) go_next() {
+	if qk.view.GetItemCount() == 0 {
+		return
+	}
+	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
+	loc := qk.Refs.refs[next].loc
+	qk.quickview.update_preview(loc)
+	qk.view.SetCurrentItem(next)
+	if qk.Type == data_refs {
+		qk.selection_handle_impl(next, false)
 	}
 }
 func (main *quick_view) OnSearch(txt string) {
 }
 
 // String
-func (fzf quick_view) String() string {
+func (qk quick_view) String() string {
 	var s = "Refs"
-	if fzf.Type == data_search {
+	if qk.Type == data_search {
 		s = "Search"
 	}
-	return fmt.Sprintf("%s %d/%d", s, fzf.currentIndex+1, len(fzf.Refs.refs))
+	return fmt.Sprintf("%s %d/%d", s, qk.currentIndex+1, len(qk.Refs.refs))
 }
 
 // selection_handle
-func (fzf *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
-	fzf.selection_handle_impl(index, true)
-	fzf.quickview.visisble = false
+func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
+	qk.selection_handle_impl(index, true)
+	qk.quickview.visisble = false
 }
 
-func (fzf *quick_view) selection_handle_impl(index int, open bool) {
-	vvv := fzf.Refs.refs[index]
-	fzf.currentIndex = index
-	same := vvv.loc.URI.AsPath().String() == fzf.main.codeview.filename
+func (qk *quick_view) selection_handle_impl(index int, open bool) {
+	vvv := qk.Refs.refs[index]
+	qk.currentIndex = index
+	same := vvv.loc.URI.AsPath().String() == qk.main.codeview.filename
 	if open || same {
-		fzf.main.UpdatePageTitle()
-		fzf.main.gotoline(vvv.loc)
+		qk.main.UpdatePageTitle()
+		qk.main.gotoline(vvv.loc)
 	} else {
 
 	}
@@ -147,15 +153,15 @@ const (
 	data_refs
 )
 
-func (fzf *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
-	fzf.Type = t
+func (qk *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
+	qk.Type = t
 	// panic("unimplemented")
-	fzf.view.Clear()
+	qk.view.Clear()
 
-	m := fzf.main
-	fzf.Refs.refs = get_loc_caller(refs, m.lspmgr.Current)
+	m := qk.main
+	qk.Refs.refs = get_loc_caller(refs, m.lspmgr.Current)
 
-	for _, caller := range fzf.Refs.refs {
+	for _, caller := range qk.Refs.refs {
 		v := caller.loc
 		source_file_path := v.URI.AsPath().String()
 		data, err := os.ReadFile(source_file_path)
@@ -170,14 +176,14 @@ func (fzf *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
 		gap := 40
 		begin := max(0, v.Range.Start.Character-gap)
 		end := min(len(line), v.Range.Start.Character+gap)
-		path := strings.Replace(v.URI.AsPath().String(), fzf.main.root, "", -1)
+		path := strings.Replace(v.URI.AsPath().String(), qk.main.root, "", -1)
 		callerstr := ""
 		if caller.caller != nil {
-			callerstr = caller_to_listitem(caller.caller, fzf.main.root)
+			callerstr = caller_to_listitem(caller.caller, qk.main.root)
 		}
 		code := line[begin:end]
 		secondline := fmt.Sprintf("%s:%-4d%s		%s", path, v.Range.Start.Line+1, callerstr, code)
-		fzf.view.AddItem(secondline, "", nil)
+		qk.view.AddItem(secondline, "", nil)
 	}
-	fzf.open_index(fzf.view.GetCurrentItem())
+	qk.open_index(qk.view.GetCurrentItem())
 }
