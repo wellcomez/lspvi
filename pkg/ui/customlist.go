@@ -9,7 +9,6 @@ import (
 )
 
 type hlItem struct {
-	Positions []int
 }
 type customlist struct {
 	*tview.List
@@ -28,9 +27,9 @@ func new_customlist() *customlist {
 	ret.hlitems = []*hlItem{}
 	return ret
 }
-func (l *customlist) AddItem(mainText string, Positions []int, selected func()) *customlist {
-	l.hlitems = append(l.hlitems, &hlItem{Positions: Positions})
-	l.List.AddItem(mainText, "", 0, selected)
+func (l *customlist) AddItem(mainText ,secondText string, selected func()) *customlist {
+	l.hlitems = append(l.hlitems, &hlItem{})
+	l.List.AddItem(mainText, secondText, 0, selected)
 	return l
 }
 

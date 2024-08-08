@@ -332,7 +332,7 @@ func update_list_view(list *customlist, t querytask, v *fzfmain) {
 	list.Key = t.query
 	for i := 0; i < min(len(t.ret), 1000); i++ {
 		a := t.ret[i]
-		list.AddItem(a.name, a.Positions, func() {
+		list.AddItem(a.name, "", func() {
 			idx := list.GetCurrentItem()
 			f := t.ret[idx]
 			v.Visible = false

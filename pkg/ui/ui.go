@@ -427,7 +427,7 @@ func MainUI(arg *Arguments) {
 	codeview.view.SetBorder(true)
 
 	main.lspmgr.Handle = &main
-	main.quickview = new_fzfview(&main)
+	main.quickview = new_quikview(&main)
 	main.callinview = new_callview(&main)
 	// symbol_tree.update()
 

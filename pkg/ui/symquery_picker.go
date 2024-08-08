@@ -36,7 +36,7 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 			}
 			index := i
 			s := fmt.Sprintf("%-40s %s", a.SymbolListStrint(), v.Kind.String())
-			pk.impl.list.AddItem(s, []int{}, func() {
+			pk.impl.list.AddItem(s, "", func() {
 				sym := pk.impl.sym[index]
 				main := pk.impl.parent.main
 				main.OpenFile(sym.Location.URI.AsPath().String(), &sym.Location)

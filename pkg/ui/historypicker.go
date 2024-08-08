@@ -119,7 +119,7 @@ func (pk history_picker) UpdateQuery(query string) {
 		index := m.HayIndex
 		match_index = append(match_index, int(index))
 		v := h[index]
-		listview.AddItem(v.dispname, []int{}, func() {
+		listview.AddItem(v.dispname, "", func() {
 			path := v.filepath
 			parent := pk.impl.parent
 			parent.openfile(path)

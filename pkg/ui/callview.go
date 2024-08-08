@@ -4,36 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
-
-	"github.com/gdamore/tcell/v2"
 )
 
-func new_fzfview(main *mainui) *quick_view {
-	view := tview.NewList().SetMainTextStyle(tcell.StyleDefault.Normal())
-	var vid view_id = view_fzf
-	ret := &quick_view{
-		view_link: &view_link{up: view_code, right: view_callin},
-		Name:      vid.getname(),
-		view:      view,
-		main:      main,
-	}
-	view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		ch := event.Rune()
-		if ch == 'j' {
-			ret.go_next()
-		} else if ch == 'k' {
-			ret.go_prev()
-		} else {
-			return event
-		}
-		return nil
-	})
-	view.SetSelectedFunc(ret.Hanlde)
-	return ret
 
-}
 
 func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
 	if caller == nil {

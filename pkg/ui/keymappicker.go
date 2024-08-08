@@ -35,7 +35,7 @@ func (pk keymap_picker) UpdateQuery(query string) {
 	result = <-fzf.GetResultChannel()
 	for _, m := range result.Matches {
 		index := m.HayIndex
-		pk.list.AddItem(impl.keymaplist[index], []int{}, func() {
+		pk.list.AddItem(impl.keymaplist[index], "", func() {
 			pk.parent.hide()
 			pk.impl.keys[index].cmd.handle()
 		})
@@ -75,7 +75,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	}
 	for i, v := range keymaplist {
 		index := i
-		list.AddItem(v, []int{}, func() {
+		list.AddItem(v, "", func() {
 			ret.parent.hide()
 			ret.impl.keys[index].cmd.handle()
 		})

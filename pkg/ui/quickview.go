@@ -5,14 +5,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rivo/tview"
+	"github.com/gdamore/tcell/v2"
 	"github.com/tectiv3/go-lsp"
 )
 
 // quick_view
 type quick_view struct {
 	*view_link
-	view         *tview.List
+	view         *customlist
 	Name         string
 	Refs         search_reference_result
 	main         *mainui
@@ -20,7 +20,31 @@ type quick_view struct {
 	Type         DateType
 }
 
+func new_quikview(main *mainui) *quick_view {
+	view := new_customlist()
+	view.List.SetMainTextStyle(tcell.StyleDefault.Normal())
+	var vid view_id = view_fzf
+	ret := &quick_view{
+		view_link: &view_link{up: view_code, right: view_callin},
+		Name:      vid.getname(),
+		view:      view,
+		main:      main,
+	}
+	view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		ch := event.Rune()
+		if ch == 'j' {
+			ret.go_next()
+		} else if ch == 'k' {
+			ret.go_prev()
+		} else {
+			return event
+		}
+		return nil
+	})
+	view.SetSelectedFunc(ret.Hanlde)
+	return ret
 
+}
 
 func (fzf *quick_view) go_prev() {
 	next := (fzf.view.GetCurrentItem() - 1 + fzf.view.GetItemCount()) % fzf.view.GetItemCount()
@@ -64,7 +88,6 @@ const (
 	data_refs
 )
 
-
 func (fzf *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
 	fzf.Type = t
 	// panic("unimplemented")
@@ -93,8 +116,8 @@ func (fzf *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
 		if caller.caller != nil {
 			callerstr = caller_to_listitem(caller.caller, fzf.main.root)
 		}
-		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1, callerstr)
-		fzf.view.AddItem(secondline, line[begin:end], 0, nil)
+		code := line[begin:end]
+		secondline := fmt.Sprintf("%s:%-4d%s		%s", path, v.Range.Start.Line+1, callerstr, code)
+		fzf.view.AddItem(secondline, "", nil)
 	}
 }
-

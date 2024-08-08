@@ -122,7 +122,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 		grep.result.data = append(grep.result.data, *o)
 		path := strings.TrimPrefix(o.fpath, grepx.main.root)
 		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
-		grepx.list.AddItem(data, []int{}, func() {
+		grepx.list.AddItem(data, "", func() {
 			grepx.main.OpenFile(o.fpath, nil)
 			grepx.parent.hide()
 		})
