@@ -79,6 +79,16 @@ func (pk refpicker) OnCodeViewChanged(file *lspcore.Symbol_file) {
 func (pk refpicker) OnFileChange(file []lsp.Location) {
 	panic("unimplemented")
 }
+func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
+	if caller == nil {
+		return ""
+	}
+	callerstr := fmt.Sprintf(" [%s %s:%d]", caller.Name,
+		strings.TrimPrefix(
+			caller.Item.URI.AsPath().String(), root),
+		caller.Item.Range.Start.Line)
+	return callerstr
+}
 
 type ref_line struct {
 	caller string
