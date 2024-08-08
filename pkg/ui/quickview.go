@@ -130,6 +130,7 @@ func (fzf quick_view) String() string {
 func (fzf *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 	fzf.selection_handle_impl(index, true)
 	fzf.quickview.visisble = false
+	fzf.main.set_viewid_focus(view_code)
 }
 
 func (fzf *quick_view) selection_handle_impl(index int, open bool) {
