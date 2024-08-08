@@ -48,7 +48,7 @@ type quick_view struct {
 
 func new_quikview(main *mainui) *quick_view {
 	view := new_customlist()
-	view.List.SetMainTextStyle(tcell.StyleDefault.Normal())
+	view.List.SetMainTextStyle(tcell.StyleDefault.Normal()).ShowSecondaryText(false)
 	var vid view_id = view_quickview
 	ret := &quick_view{
 		view_link: &view_link{up: view_code, right: view_callin},
@@ -119,7 +119,7 @@ func (fzf quick_view) String() string {
 	if fzf.Type == data_search {
 		s = "Search"
 	}
-	return fmt.Sprintf("%s %d/%d", s, fzf.currentIndex, len(fzf.Refs.refs))
+	return fmt.Sprintf("%s %d/%d", s, fzf.currentIndex+1, len(fzf.Refs.refs))
 }
 
 // selection_handle
