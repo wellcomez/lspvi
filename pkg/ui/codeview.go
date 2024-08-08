@@ -27,6 +27,9 @@ type CodeView struct {
 }
 
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
+	if code.main == nil {
+		return ""
+	}
 	codeview := code.view
 	word := codeview.Cursor.GetSelection()
 	if len(word) < 2 {
@@ -109,6 +112,9 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	return a, b
 }
 func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	if code.main == nil {
+		return action, event
+	}
 	root := code.view
 	x1, y1, w, h := root.GetInnerRect()
 	// leftX, _, _, _ := root.GetRect()
@@ -232,6 +238,9 @@ func (code *CodeView) run_command(cmdlist []cmditem, key string) bool {
 	return false
 }
 func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
+	if code.main == nil {
+		return event
+	}
 	if code.main.get_focus_view_id() != view_code {
 		return event
 	}
@@ -289,7 +298,9 @@ func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
 }
 
 func (code *CodeView) key_map_command() []cmditem {
-
+	if code.main == nil {
+		return []cmditem{}
+	}
 	return code.main.vi_key_map()
 }
 
@@ -323,36 +334,53 @@ func (code *CodeView) move_up_down(up bool) {
 	code.update_with_line_changed()
 }
 
-func (ret *CodeView) update_with_line_changed() {
-	root := ret.view
+func (code *CodeView) update_with_line_changed() {
+	root := code.view
+	main := code.main
+	if main == nil {
+		return
+	}
 	line := root.Cursor.Loc.Y
-	ret.main.OnCodeLineChange(line)
+	main.OnCodeLineChange(line)
 }
 func (code *CodeView) action_grep_word() {
+	main := code.main
+	if main == nil {
+		return
+	}
 	code.view.Cursor.SelectWord()
 	word := code.view.Cursor.GetSelection()
-	code.main.open_picker_grep(word)
+	main.open_picker_grep(word)
 }
 func (code *CodeView) action_goto_define() {
 	main := code.main
+	if main == nil {
+		return
+	}
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	log.Printf("goto define %v %s", loc, code.view.Cursor.GetSelection())
-	code.main.get_define(loc, main.codeview.filename)
+	main.get_define(loc, main.codeview.filename)
 }
 func (code *CodeView) action_goto_declaration() {
 	main := code.main
+	if main == nil {
+		return
+	}
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
-	code.main.get_declare(loc, main.codeview.filename)
+	main.get_declare(loc, main.codeview.filename)
 }
 
 func (code *CodeView) action_get_refer() {
 	main := code.main
+	if main == nil {
+		return
+	}
 	code.view.Cursor.SelectWord()
 	main.quickview.view.Clear()
 	loc := code.lsp_cursor_loc()
-	code.main.get_refer(loc, main.codeview.filename)
+	main.get_refer(loc, main.codeview.filename)
 	// main.ActiveTab(view_fzf)
 
 }
@@ -469,7 +497,11 @@ func (code *CodeView) Load(filename string) error {
 		}
 	}
 	code.view.SetColorscheme(colorscheme)
-	name := strings.ReplaceAll(filename, code.main.root, "")
+
+	name := filename
+	if code.main != nil {
+		name = strings.ReplaceAll(filename, code.main.root, "")
+	}
 	name = strings.TrimLeft(name, "/")
 	code.view.SetTitle(name)
 	code.update_with_line_changed()
@@ -500,9 +532,15 @@ func (code *CodeView) gotoline(line int) {
 		code.view.EndOfLine()
 		return
 	}
-	code.main.bf.history.AddToHistory(code.filename, &line)
+	if code.main != nil {
+		code.main.bf.history.AddToHistory(code.filename, &line)
+	}
 	key := ""
-	gs := code.main.searchcontext
+
+	var gs *GenericSearch
+	if code.main != nil {
+		gs = code.main.searchcontext
+	}
 	if gs != nil && gs.view == view_code {
 		key = strings.ToLower(gs.key)
 	}

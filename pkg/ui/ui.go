@@ -542,7 +542,9 @@ func MainUI(arg *Arguments) {
 			main.layout.dialog.Draw(screen)
 		} else {
 			if main.get_focus_view_id() == view_quickview {
-				main.quickview.DrawPreview(screen)
+				l, t, w, _ := main.layout.console.GetRect()
+				_, _, _, h := main.quickview.view.GetRect()
+				main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
 			}
 		}
 	})
@@ -703,7 +705,7 @@ func (main *mainui) move_to_window(t direction) {
 		names := main.page.GetPageNames(true)
 		if len(names) == 1 {
 			vid := find_tab_by_name(names[0])
-			if view_none != view_none {
+			if vid != view_none {
 				main.ActiveTab(int(vid), true)
 				return
 			}

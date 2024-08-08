@@ -6,19 +6,28 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 )
 
 type quick_preview struct {
 	codeprev *CodeView
+	frame    *tview.Frame
+	visisble bool
 }
 
-func (preview quick_preview) open_file(file string) {
-	preview.codeprev.Load(file)
+// update_preview
+func (pk *quick_preview) update_preview(loc lsp.Location) {
+	pk.codeprev.Load(loc.URI.AsPath().String())
+	pk.codeprev.gotoline(loc.Range.Start.Line)
 }
-func new_quick_preview(main *mainui) *quick_preview {
+func new_quick_preview() *quick_preview {
+	codeprev := NewCodeView(nil)
+	frame := tview.NewFrame(codeprev.view)
+	frame.SetBorder(true)
 	return &quick_preview{
-		codeprev: NewCodeView(main),
+		codeprev: codeprev,
+		frame:    frame,
 	}
 }
 
@@ -43,13 +52,13 @@ func new_quikview(main *mainui) *quick_view {
 		Name:      vid.getname(),
 		view:      view,
 		main:      main,
-		quickview: new_quick_preview(main),
+		quickview: new_quick_preview(),
 	}
 	view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		ch := event.Rune()
-		if ch == 'j' {
+		if ch == 'j' || event.Key()==tcell.KeyDown{
 			ret.go_next()
-		} else if ch == 'k' {
+		} else if ch == 'k' ||event.Key()==tcell.KeyUp{
 			ret.go_prev()
 		} else {
 			return event
@@ -60,18 +69,32 @@ func new_quikview(main *mainui) *quick_view {
 	return ret
 
 }
-func (fzf *quick_view) DrawPreview(screen tcell.Screen) bool {
+func (fzf *quick_view) DrawPreview(screen tcell.Screen, top, left, width, height int) bool {
+	fzf.quickview.draw(width, height, screen)
 	return false
+}
+
+func (fzf *quick_preview) draw(width int, height int, screen tcell.Screen) {
+	width, height = screen.Size()
+	w := width
+	h := height * 1 / 4
+	frame := fzf.frame
+	frame.SetRect(0, height/3, w, h)
+	frame.Draw(screen)
 }
 func (fzf *quick_view) go_prev() {
 	next := (fzf.view.GetCurrentItem() - 1 + fzf.view.GetItemCount()) % fzf.view.GetItemCount()
 	fzf.view.SetCurrentItem(next)
+	loc := fzf.Refs.refs[next].loc
+	fzf.quickview.update_preview(loc)
 	if fzf.Type == data_refs {
 		fzf.Hanlde(next, "", "", 1)
 	}
 }
 func (fzf *quick_view) go_next() {
 	next := (fzf.view.GetCurrentItem() + 1) % fzf.view.GetItemCount()
+	loc := fzf.Refs.refs[next].loc
+	fzf.quickview.update_preview(loc)
 	fzf.view.SetCurrentItem(next)
 	if fzf.Type == data_refs {
 		fzf.Hanlde(next, "", "", 1)
