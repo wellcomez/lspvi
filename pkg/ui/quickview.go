@@ -37,7 +37,7 @@ func new_quick_preview() *quick_preview {
 // quick_view
 type quick_view struct {
 	*view_link
-	quickview *quick_preview
+	quickview    *quick_preview
 	view         *customlist
 	Name         string
 	Refs         search_reference_result
@@ -154,7 +154,7 @@ const (
 	data_refs
 )
 
-func (qk *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
+func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType) {
 	qk.Type = t
 	// panic("unimplemented")
 	qk.view.Clear()
@@ -184,7 +184,7 @@ func (qk *quick_view) OnRefenceChanged(refs []lsp.Location, t DateType) {
 		}
 		code := line[begin:end]
 		secondline := fmt.Sprintf("%s:%-4d%s		%s", path, v.Range.Start.Line+1, callerstr, code)
-		qk.view.AddItem(secondline, "",nil)
+		qk.view.AddItem(secondline, "", nil)
 	}
 	qk.open_index(qk.view.GetCurrentItem())
 }

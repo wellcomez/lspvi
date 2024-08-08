@@ -101,7 +101,7 @@ func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if err != nil {
 		return
 	}
-	sym.Handle.OnRefenceChanged(ranges, loc)
+	sym.Handle.OnLspRefenceChanged(ranges, loc)
 }
 func (sym *Symbol_file) Declare(ranges lsp.Range) {
 	if sym.lsp == nil {
@@ -126,7 +126,7 @@ func (sym *Symbol_file) GotoDefine(ranges lsp.Range) {
 	}
 }
 
-func (sym *Symbol_file) Callin(loc lsp.Location, cb bool) ([]CallStack, error) {
+func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 	var ret []CallStack
 	if sym.lsp == nil {
 		return ret, fmt.Errorf("lsp is null")
@@ -136,31 +136,33 @@ func (sym *Symbol_file) Callin(loc lsp.Location, cb bool) ([]CallStack, error) {
 		return ret, err
 	}
 	for _, v := range c1 {
-		log.Println("prepare",v.Name, v.URI.AsPath().String(), v.Range.Start.Line,v.Kind.String())
+		log.Println("prepare", v.Name, v.URI.AsPath().String(), v.Range.Start.Line, v.Kind.String())
 	}
 	// for _, prepare := range c1 {
+	search_txt := NewBody(loc).String()
 	if len(c1) > 0 {
 		prepare := c1[0]
+		search_txt = NewBody(lsp.Location{URI: loc.URI, Range: prepare.Range}).String()
 		c2, err := sym.lsp.CallHierarchyIncomingCalls(prepare)
 		if err == nil {
 			for _, f := range c2 {
 				var stack CallStack
-				v:=f.From
-				log.Println("caller ",v.Name, v.URI.AsPath().String(), v.Range.Start.Line,v.Kind.String())
+				v := f.From
+				log.Println("caller ", v.Name, v.URI.AsPath().String(), v.Range.Start.Line, v.Kind.String())
 				stack.Add(NewCallStackEntry(f.From))
 				ret = append(ret, stack)
 			}
 		}
 	}
 	if cb {
-		sym.Handle.OnCallInViewChanged(ret)
+		sym.Handle.OnLspCaller(search_txt, ret)
 	}
 	return ret, nil
 }
 func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
 	task := NewCallInTask(loc, sym.lsp)
 	task.run()
-	sym.Handle.OnCallTaskInViewChanged(task)
+	sym.Handle.OnLspCallTaskInViewChanged(task)
 	return task, nil
 }
 

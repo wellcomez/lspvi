@@ -118,24 +118,24 @@ func (m *mainui) UpdatePageTitle() {
 
 }
 
-func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
+func (m *mainui) OnLspRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	if len(refs) > 0 {
 		m.ActiveTab(view_quickview, false)
 	} else {
 		return
 	}
-//	m.quickview.view.Key = m.codeview.view.Cursor.GetSelection()
+	//	m.quickview.view.Key = m.codeview.view.Cursor.GetSelection()
 	go func() {
 		m.app.QueueUpdateDraw(func() {
-			m.quickview.OnRefenceChanged(refs, data_refs)
+			m.quickview.OnLspRefenceChanged(refs, data_refs)
 			m.UpdatePageTitle()
 		})
 	}()
 
 }
 
-// OnCallTaskInViewChanged
-func (m *mainui) OnCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
+// OnLspCallTaskInViewChanged
+func (m *mainui) OnLspCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
 	if len(call_in_stack.Allstack) > 0 {
 		m.ActiveTab(view_callin, false)
 	}
@@ -143,8 +143,8 @@ func (m *mainui) OnCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
 	m.async_resolve_callstack(call_in_stack)
 }
 
-// OnCallInViewChanged implements lspcore.lsp_data_changed.
-func (m *mainui) OnCallInViewChanged(stacks []lspcore.CallStack) {
+// OnLspCaller implements lspcore.lsp_data_changed.
+func (m *mainui) OnLspCaller(s string, stacks []lspcore.CallStack) {
 	// m.callinview.update(stacks)
 }
 func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
@@ -588,7 +588,7 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			main.codeview.gotoline(gs.GetIndex())
 			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
-				main.quickview.main.quickview.OnRefenceChanged(locs, data_search)
+				main.quickview.main.quickview.OnLspRefenceChanged(locs, data_search)
 			}
 		} else {
 			main.codeview.gotoline(gs.GetNext())

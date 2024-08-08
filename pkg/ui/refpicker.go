@@ -55,13 +55,13 @@ func (pk refpicker) name() string {
 	return "refs"
 }
 
-// OnCallInViewChanged implements lspcore.lsp_data_changed.
-func (pk refpicker) OnCallInViewChanged(stacks []lspcore.CallStack) {
+// OnLspCaller implements lspcore.lsp_data_changed.
+func (pk refpicker) OnLspCaller(txt string, stacks []lspcore.CallStack) {
 	panic("unimplemented")
 }
 
-// OnCallTaskInViewChanged implements lspcore.lsp_data_changed.
-func (pk refpicker) OnCallTaskInViewChanged(stacks *lspcore.CallInTask) {
+// OnLspCallTaskInViewChanged implements lspcore.lsp_data_changed.
+func (pk refpicker) OnLspCallTaskInViewChanged(stacks *lspcore.CallInTask) {
 	panic("unimplemented")
 }
 
@@ -109,7 +109,7 @@ type ref_with_caller struct {
 	caller *lspcore.CallStackEntry
 }
 
-func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
+func (pk refpicker) OnLspRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
 	datafzf := []string{}
@@ -158,7 +158,7 @@ func (pk refpicker) OnRefenceChanged(ranges lsp.Range, file []lsp.Location) {
 func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
 	ref_call_in := []ref_with_caller{}
 	for _, v := range file {
-		stacks, err := lsp.Callin(v, false)
+		stacks, err := lsp.Caller(v, false)
 		if err == nil {
 			var find *lspcore.CallStackEntry
 			for _, s := range stacks {
