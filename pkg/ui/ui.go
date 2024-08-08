@@ -124,6 +124,7 @@ func (m *mainui) OnRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
 	} else {
 		return
 	}
+	m.quickview.view.Key = m.codeview.view.Cursor.GetSelection()
 	go func() {
 		m.app.QueueUpdateDraw(func() {
 			m.quickview.OnRefenceChanged(refs, data_refs)
