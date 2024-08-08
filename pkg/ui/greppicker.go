@@ -37,7 +37,7 @@ type greppicker struct {
 // UpdateQuery implements picker.
 // Subtle: this method shadows the method (*livewgreppicker).UpdateQuery of greppicker.livewgreppicker.
 func (g *greppicker) UpdateQuery(query string) {
-	panic("unimplemented")
+	g.livewgreppicker.UpdateQuery(query)
 }
 
 // handle implements picker.
