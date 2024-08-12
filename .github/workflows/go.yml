@@ -24,7 +24,10 @@ jobs:
       uses: actions/setup-node@v4.0.3
       with:
         node-version: 18.17.1
-        
+    - name: Run Build
+      run: |
+        echo "Manually triggered build"
+        # Add your build commands here
     - name: Build
       run: bash build.sh
 
