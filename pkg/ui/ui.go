@@ -18,6 +18,7 @@ import (
 
 var tabs []view_id = []view_id{view_quickview, view_callin, view_uml}
 var appname = "lspvi"
+var httport = 0
 
 type rootlayout struct {
 	editor_area *tview.Flex
@@ -144,7 +145,7 @@ func (m *mainui) OnLspCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
 }
 
 // OnLspCaller implements lspcore.lsp_data_changed.
-func (m *mainui) OnLspCaller(s string, c lsp.CallHierarchyItem ,stacks []lspcore.CallStack) {
+func (m *mainui) OnLspCaller(s string, c lsp.CallHierarchyItem, stacks []lspcore.CallStack) {
 	// m.callinview.update(stacks)
 }
 func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
@@ -400,7 +401,9 @@ func MainUI(arg *Arguments) {
 		root = arg.Root
 	}
 	lspviroot = new_workdir(root)
-	// go servmain(lspviroot.uml, 18080)
+	go servmain(lspviroot.uml, 18080, func(port int) {
+		httport = port
+	})
 	handle := LspHandle{}
 	var main = mainui{
 		bf: NewBackForward(NewHistory(lspviroot.history)),
