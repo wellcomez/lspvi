@@ -6,6 +6,8 @@ Compared with vscode,neovim ..., lspvi provides  more powser feature in call hie
 ![terminal](screen1.png)
 
 ![uml](main.png)
+## Mouse Support
+Although it runs under terminal, but it supports mouse click, wheel scroll.
 ## Keymap 
 It supports most of common keymap of nvim. "Space" will invoke menu and  choose "help" /" space + h" will invoke help.
 
