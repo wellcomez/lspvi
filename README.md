@@ -11,6 +11,8 @@ Although it runs under terminal, but it supports mouse click, wheel scroll.
 ## Keymap 
 It supports most of common keymap of nvim. "Space" will invoke menu and  choose "help" /" space + h" will invoke help.
 
+![keymap](keymap.png)
+
 ## Code/Uml  view in browser
 Because of the limitation of terminal, it can just disp text call sequence instead of png. With help of browser, you can view the call sequence in browser.
 
