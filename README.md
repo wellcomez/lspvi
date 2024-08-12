@@ -29,3 +29,6 @@ go build
 ./lspvi --root "prj root"
 ~~~
 
+## platform /os 
+Macos/linux I have tested
+
