@@ -495,7 +495,7 @@ func MainUI(arg *Arguments) {
 			}(titlename)
 		}
 		cursor := main.codeview.String()
-		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s| %5d ", cursor, main.cmdline.Vim.String(), viewname, httport))
+		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s| ::%5d ", cursor, main.cmdline.Vim.String(), viewname, httport))
 		return main.statusbar.GetInnerRect()
 	})
 	// main.statusbar.SetBorder(true)
