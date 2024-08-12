@@ -45,8 +45,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./lspvi-macos
-        asset_name: lspvi-macos
+        asset_path: ./lspvi-darwin
+        asset_name: lspvi-darwin
         asset_content_type: application/octet-stream
 
     - name: Upload Linux Artifact

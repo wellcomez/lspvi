@@ -4,6 +4,7 @@ build_os() {
   bash build.sh -w
   popd
   go build -o lspvi-$GOOS
+  ls .
 }
 # export GOARCH=amd64
 export CGO_ENABLED=0 
