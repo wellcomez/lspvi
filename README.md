@@ -1,20 +1,25 @@
 ## About lspvi
-lspvi is tui code viewer powser by lsp.
-It provides godefine ,goto declaration, call hierarchy,reference  etc.
-Compared with vscode,neovim ..., lspvi provides  more powser feature in call hierarchy,reference etc. It can prvoides UML call sequence which can help you to understand the code.
+
+lspvi is tui code viewer powsered by lsp. **Just code reader not editor**
+It provides goto define ,goto declaration, call hierarchy,reference  etc.
+Compared with vscode,neovim ..., lspvi provide  more powerful function for call hierarchy,reference etc. It can prvoides UML call sequence which can help you to understand the code.
+It also support fzf search for files and its content, symbol lookup. 
+
+All above features are built in sigle binary not need to install plugin. 
 
 ![terminal](screen1.png)
 
 ![uml](main.png)
 ## Mouse Support
-Although it runs under terminal, but it supports mouse click, wheel scroll.
+Although it run in terminal, it supports mouse click, wheel scrolling as well as gui. So if you are not vimer, it is also easy to use.
+
 ## Keymap 
 It supports most of common keymap of nvim. "Space" will invoke menu and  choose "help" /" space + h" will invoke help.
 
 ![keymap](keymap.png)
 
 ## Code/Uml  view in browser
-Because of the limitation of terminal, it can just disp text call sequence instead of png. With help of browser, you can view the call sequence in browser.
+Because of the limitation of terminal, under which  you can still view text call sequence. If you want to view png clearly, , you can open browser and see the call sequence in browser.
 
 ![web](web.png)
 
@@ -34,5 +39,6 @@ go build
 ~~~
 
 ## platform /os 
-Macos/linux I have tested
+- MACOS 
+- linux 
 
