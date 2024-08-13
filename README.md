@@ -1,14 +1,16 @@
 ## About lspvi
 
-lspvi is tui code viewer powsered by lsp. **Just code reader not editor**
+lspvi is tui code reader powsered by lsp. **Just code reader not editor**
 
-It provides goto define ,goto declaration, call hierarchy,reference  etc.
+It provides goto define ,goto declaration, call hierarchy,reference  etc which also provided by common ide.
 
-Compared with vscode,neovim ..., lspvi provide  more powerful function for call hierarchy,reference etc. It can prvoides UML call sequence which can help you to understand the code.
+But compared with vscode,neovim ..., lspvi provide  more powerful function for call hierarchy,reference etc.
 
-It also support fzf search for files and its content, symbol lookup. 
+It can prvoides **UML call sequence** which can help you to understand the code. 
 
-All above features are built in single binary not need to install plugin. 
+It also support fzf search for files and text, symbol ,call reference,live grep, word grep. 
+
+All above features are built in single binary not need to install plugin. Binary also includes built-in web server by which you can view uml in browser.
 
 ![terminal](screen1.png)
 
@@ -17,7 +19,7 @@ All above features are built in single binary not need to install plugin.
 Although it run in terminal, it supports mouse click, wheel scrolling as well as gui. So if you are not vimer, it is also easy to use.
 
 ## Keymap 
-It supports most of common keymap of nvim. "Space" will invoke menu and  choose "help" /" space + h" will invoke help.
+It supports most of common keymap of [neo]vim. **Space** will invoke menu and  choose **help** or   **space + h** will invoke keymap help.
 
 ![keymap](keymap.png)
 
