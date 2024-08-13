@@ -24,8 +24,9 @@ It supports most of common keymap of [neo]vim. **Space** will invoke menu and  c
 ![keymap](keymap.png)
 
 ## Code/Uml  view in browser
-Because of the limitation of terminal, under which  you can still view text call sequence. If you want to view png clearly, , you can open browser and see the call sequence in browser.
+Because of the limitation of terminal, you can still view text call sequence in lspvi console. But if you want to view png clearly, , you can use browser to view  call sequence.
 
+[http:://localhost:108080](http:://localhost:108080)
 ![web](web.png)
 
 ## lsp supported
