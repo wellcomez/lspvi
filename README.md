@@ -1,11 +1,14 @@
 ## About lspvi
 
 lspvi is tui code viewer powsered by lsp. **Just code reader not editor**
+
 It provides goto define ,goto declaration, call hierarchy,reference  etc.
+
 Compared with vscode,neovim ..., lspvi provide  more powerful function for call hierarchy,reference etc. It can prvoides UML call sequence which can help you to understand the code.
+
 It also support fzf search for files and its content, symbol lookup. 
 
-All above features are built in sigle binary not need to install plugin. 
+All above features are built in single binary not need to install plugin. 
 
 ![terminal](screen1.png)
 
