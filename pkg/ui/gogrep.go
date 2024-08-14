@@ -1,9 +1,7 @@
 package mainui
 
 import (
-	"bufio"
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,7 +10,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"syscall"
 	// "code.google.com/p/go.crypto/ssh/terminal"
 )
 
@@ -460,60 +457,9 @@ func isSubdir(parentPath, childPath string) (bool, error) {
 	return !filepath.IsAbs(relPath) && !strings.HasPrefix(relPath, ".."), nil
 }
 func (grep *gorep) grep(fpath string, out chan<- grepInfo) {
-	defer func() {
-		<-semFopenLimit
-		grep.waitGreps.Done()
-	}()
-
-	if yes,err:=isSubdir(lspviroot.root,fpath);err != nil &&yes{
+	//fmt.Fprintf(os.Stderr, "grep mmap error: %v\n", err)
+	shouldReturn := RunGrep(grep, fpath, out)
+	if shouldReturn {
 		return
-	}
-	semFopenLimit <- 1
-	file, err := os.Open(fpath)
-	if err != nil {
-		log.Printf("grep open error: %v\n", err)
-		return
-	}
-	defer file.Close()
-
-	fi, err := file.Stat()
-	if err != nil {
-		log.Printf("grep stat error: %v\n", err)
-		return
-	}
-
-	mem, err := syscall.Mmap(int(file.Fd()), 0, int(fi.Size()),
-		syscall.PROT_READ, syscall.MAP_SHARED)
-	if err != nil {
-		//fmt.Fprintf(os.Stderr, "grep mmap error: %v\n", err)
-		return
-	}
-	defer syscall.Munmap(mem)
-
-	isBinary := verifyBinary(mem)
-	if isBinary && !grep.scope.binary {
-		return
-	}
-
-	buffer := bytes.NewBuffer(mem)
-	scanner := bufio.NewScanner(buffer)
-
-	scanner.Split(bufio.ScanLines)
-	lineNumber := 0
-
-	for scanner.Scan() {
-		lineNumber++
-		strline := scanner.Text()
-		if grep.pattern.MatchString(strline) {
-			if isBinary {
-				out <- grepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath)}
-				return
-			} else {
-				if grep.ignorePattern != nil && grep.ignorePattern.MatchString(strline) {
-					continue
-				}
-				out <- grepInfo{fpath, lineNumber, strline}
-			}
-		}
 	}
 }
