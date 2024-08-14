@@ -22,43 +22,44 @@ Although it run in terminal, it supports mouse click, wheel scrolling as well as
 It supports most of common keymap of [neo]vim. **Space** will invoke menu and  choose **help** or   **space + h** will invoke keymap help.
 
 ![keymap](keymap.png)
-| key         | function               |
-| ----------- | ---------------------- |
-| escape + gd | goto define            |
-| escape + gr | goto refer             |
-| escape + gg | goto first line        |
-| escape + G  | goto first line        |
-| escape + gd | goto define            |
-| escape + gr | goto refer             |
-| escape + gg | goto first line        |
-| escape + G  | goto first line        |
-| space + f   | picker file            |
-| space + fw  | grep word              |
-| space + wk  | query workspace symbol |
-| space + r   | reference              |
-| space + hh  | history                |
-| space + o   | open symbol            |
-| o           | open symbol            |
-| r           | reference              |
-| g           | live grep              |
-| hh          | history                |
-| fw          | grep word              |
-| f           | picker file            |
-| h           | help                   |
-| escape + k  | up                     |
-| escape + h  | left                   |
-| escape + l  | right                  |
-| escape + j  | down                   |
-| escape + e  | word right             |
-| escape + b  | word left              |
-| escape + D  | goto decl              |
-| escape + gd | goto define            |
-| escape + f  | file in file           |
-| escape + *  | file in file vi        |
-| escape + c  | goto callin            |
-| escape + r  | goto refer             |
-| escape + /  | search mode            |
-| escape + 0  | goto line head         |
+| key            | function               |
+| -------------- | ---------------------- |
+| escape + gd    | goto define            |
+| escape + gr    | goto refer             |
+| escape + gg    | goto first line        |
+| escape + G     | goto first line        |
+| escape + gd    | goto define            |
+| escape + gr    | goto refer             |
+| escape + gg    | goto first line        |
+| escape + G     | goto first line        |
+| space + f      | picker file            |
+| space + fw     | grep word              |
+| space + wk     | query workspace symbol |
+| space + r      | reference              |
+| space + hh     | history                |
+| space + o      | open symbol            |
+| o              | open symbol            |
+| r              | reference              |
+| g              | live grep              |
+| hh             | history                |
+| fw             | grep word              |
+| f              | picker file            |
+| h              | help                   |
+| escape + k     | up                     |
+| escape + h     | left                   |
+| escape + l     | right                  |
+| escape + j     | down                   |
+| escape + e     | word right             |
+| escape + b     | word left              |
+| escape + D     | goto decl              |
+| escape + gd    | goto define            |
+| escape + f     | file in file           |
+| escape + *     | file in file vi        |
+| escape + c     | goto callin            |
+| escape + r     | goto refer             |
+| escape + /     | search mode            |
+| escape + 0     | goto line head         |
+| ctrlw+ l/r/u/d | switch window          |
 
 ## Code/Uml  view in browser
 Because of the limitation of terminal, you can still view text call sequence in lspvi console. But if you want to view png clearly, , you can use browser to view  call sequence.
