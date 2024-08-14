@@ -19,7 +19,11 @@ if [[ -z $all ]]; then
 fi
 build_os() {
   pushd pkg/lspr || exit
-  bash build.sh -w
+  if [[ -n $web ]]; then
+    bash build.sh -w
+  else
+    bash build.sh
+  fi
   popd || exit
   go build -o lspvi-$GOOS
   ls .
@@ -32,13 +36,14 @@ export CGO_ENABLED=0
 if [[ -n $mac ]]; then
   export GOOS=darwin
   build_os
-fi
-if [[ -n $win ]]; then
+elif [[ -n $win ]]; then
   build_win_x64
-fi
-if [[ -n $linux ]]; then
+elif [[ -n $linux ]]; then
   export GOOS=linux
   build_os
+else
+  GOOS=linux build_os
+  GOOS=darwin build_os
+  build_win_x64
 fi
 
-build_win_x64
