@@ -1,8 +1,8 @@
 git submodule init && git submodule update --recursive
 build_os() {
-  pushd pkg/lspr
+  pushd pkg/lspr || exit
   bash build.sh -w
-  popd
+  popd || exit
   go build -o lspvi-$GOOS
   ls .
 }
