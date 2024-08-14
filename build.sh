@@ -36,12 +36,15 @@ export CGO_ENABLED=0
 if [[ -n $mac ]]; then
   export GOOS=darwin
   build_os
-elif [[ -n $win ]]; then
+fi
+if [[ -n $win ]]; then
   build_win_x64
-elif [[ -n $linux ]]; then
+fi
+if [[ -n $linux ]]; then
   export GOOS=linux
   build_os
-else
+fi
+if [[ -n $all ]]; then
   GOOS=linux build_os
   GOOS=darwin build_os
   build_win_x64
