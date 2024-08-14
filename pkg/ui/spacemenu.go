@@ -1,0 +1,237 @@
+package mainui
+
+import (
+	// "fmt"
+
+	"fmt"
+	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+)
+
+type space_menu struct {
+	table   *tview.List
+	main    *mainui
+	visible bool
+	impl    *space_menu_impl
+	input   *inputdelay
+}
+type cmditem struct {
+	key cmdkey
+	cmd cmdactor
+}
+type cmdactor struct {
+	desc   string
+	handle func()
+}
+
+func (key cmdkey) matched_event(s tcell.EventKey) bool {
+	switch key.Type {
+	case cmd_key_tcell_key:
+		return key.tcell_key==s.Key()
+	case cmd_key_event_name:
+		return key.eventname == s.Name()
+	case cmd_key_rune:
+		return key.rune == s.Rune()
+	}
+	return false
+}
+func (key cmdkey) matched(s string) bool {
+	return strings.HasPrefix(key.string(), s)
+}
+
+//	func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
+//		return cmditem{cmdkey{
+//			Type:      cmd_key_tcell_key,
+//			tcell_key: key,
+//		}, actor}
+//	}
+func (actor cmdactor) runne(key rune) cmditem {
+	return cmditem{cmdkey{
+		Type:      cmd_key_rune,
+		rune : key,
+	}, actor}
+}
+func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
+	return cmditem{cmdkey{
+		Type:      cmd_key_tcell_key,
+		tcell_key: key,
+	}, actor}
+}
+func (actor cmdactor) enven_name_key(eventname string) cmditem {
+	return cmditem{cmdkey{
+		Type:      cmd_key_event_name,
+		eventname: eventname,
+	}, actor}
+}
+func (actor cmdactor) leader(key []string) cmditem {
+	return cmditem{cmdkey{
+		key:  key,
+		Type: cmd_key_leader,
+	}, actor}
+}
+func (actor cmdactor) esc_key(key []string) cmditem {
+	return cmditem{cmdkey{
+		key:  key,
+		Type: cmd_key_escape,
+	}, actor}
+}
+func (actor cmdactor) menu_key(key []string) cmditem {
+	return cmditem{cmdkey{
+		key:  key,
+		Type: cmd_key_menu,
+	}, actor}
+}
+
+type cmdkeytype int
+
+const (
+	cmd_key_menu = iota
+	cmd_key_escape
+	cmd_key_leader
+	cmd_key_event_name
+	cmd_key_tcell_key
+	cmd_key_rune
+)
+
+type cmdkey struct {
+	key       []string
+	Type      cmdkeytype
+	eventname string
+	rune      rune
+	tcell_key      tcell.Key
+}
+
+func (cmd cmdkey) displaystring() string {
+	t := []string{}
+	switch cmd.Type {
+	case cmd_key_escape:
+		t = append(t, "escape")
+	case cmd_key_leader:
+		t = append(t, "space")
+	}
+	t = append(t, cmd.key...)
+	return strings.Join(t, " + ")
+}
+func (cmd cmdkey) string() string {
+	return strings.Join(cmd.key, "")
+}
+
+type space_menu_item struct {
+	item   cmditem
+	handle func()
+}
+
+func (v *space_menu) input_cb(word string) {
+	if v.input.keyseq == word {
+		v.run_command(word)
+	}
+}
+
+func (v *space_menu) run_command(word string) {
+	v.input.run(word)
+	v.input.keyseq = ""
+	v.visible = false
+	v.main.cmdline.Vim.EnterEscape()
+}
+func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
+	ch := string(event.Rune())
+	if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
+		v.input.keyseq = ""
+		handle := v.table.InputHandler()
+		handle(event, nil)
+		return nil
+	} else if event.Key() == tcell.KeyEnter {
+		v.input.keyseq = ""
+		v.onenter()
+		return nil
+	}
+	v.input.keyseq += ch
+	cmd := v.input.keyseq
+	matched := v.input.command_matched(cmd)
+	if matched == 1 {
+		v.run_command(cmd)
+	} else if matched > 1 {
+		v.input.rundelay(cmd)
+	} else if v.main.cmdline.Vim.vi.Leader {
+		if v.main.cmdline.Vim.vi_handle.HanldeKey(event) {
+			v.input.keyseq = ""
+		}
+	}
+	return nil
+}
+func (menu *space_menu) onenter() {
+	menu.visible = false
+	idx := menu.table.GetCurrentItem()
+	if idx < len(menu.impl.items) {
+		if h := menu.impl.items[idx]; h.handle != nil {
+			h.handle()
+		}
+	}
+
+}
+func (item space_menu_item) col(n int) *tview.TableCell {
+	text := ""
+	if n == 0 {
+		text = item.item.key.string()
+	} else if n == 1 {
+		text = item.item.cmd.desc
+	}
+	return &tview.TableCell{Text: text}
+}
+
+type space_menu_impl struct {
+	items []space_menu_item
+}
+
+func init_space_menu_item(m *mainui) []space_menu_item {
+	var ret = []space_menu_item{}
+	for _, v := range m.key_map_space_menu() {
+		ret = append(ret, space_menu_item{item: v, handle: v.cmd.handle})
+	}
+	return ret
+}
+func new_spacemenu(m *mainui) *space_menu {
+	t := space_menu{
+		table:   tview.NewList(),
+		main:    m,
+		visible: false,
+	}
+
+	impl := &space_menu_impl{
+		items: init_space_menu_item(m),
+	}
+	command_list := []cmditem{}
+	for _, v := range impl.items {
+		command_list = append(command_list, v.item)
+	}
+	t.input = &inputdelay{
+		cb:      t.input_cb,
+		cmdlist: command_list,
+		main: m,
+	}
+	for _, v := range impl.items {
+		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
+		t.table.AddItem(s, "", 0, func() {
+		})
+	}
+	t.impl = impl
+	t.table.ShowSecondaryText(false)
+	t.table.SetBorder(true)
+	t.table.SetTitle("menu")
+	return &t
+}
+func (v *space_menu) Draw(screen tcell.Screen) {
+	if !v.visible {
+		return
+	}
+
+	width, height := screen.Size()
+	w := 40
+	h := height / 2
+	_, _, _, cmdlcmdline_height := v.main.cmdline.input.GetRect()
+	v.table.SetRect(width-w-5, height-h-cmdlcmdline_height-3, w, h)
+	v.table.Draw(screen)
+	v.table.Draw(screen)
+}

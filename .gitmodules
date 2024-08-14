@@ -1,0 +1,5 @@
+[submodule "pkg/lspr"]
+	path = pkg/lspr
+	url = https://github.com/wellcomez/lspr.git
+	# url = git@github.com:wellcomez/lspr.git
+	# git@gitlab.com:wellcomez/lspr.git

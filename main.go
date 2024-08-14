@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	mainui "zen108.com/lspui/pkg/ui"
+	mainui "zen108.com/lspvi/pkg/ui"
 )
 
 func main() {

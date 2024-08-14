@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch file",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${file}"
+        },
+        {
             "name": "Attach to Process",
             "type": "go",
             "request": "attach",
@@ -16,12 +23,16 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "/home/z/dev/lsp/goui/main.go",
+            "program": "${workspaceFolder}/main.go",
             "console": "externalTerminal",
             "args": [
                 "-root",
-                "/chrome/buildcef/chromium/src",
+                // "/Users/jialaizhu/dev/lspgo",
+                // "/home/z/dev/ray/raychain_go/raychain-sdk-go",
+                "/home/z/dev/lsp/goui/",
+                // "/chrome/buildcef/chromium/src",
                 "-file",
+                // "/home/z/dev/lsp/goui/main.go",
                 "/chrome/buildcef/chromium/src/content/public/browser/navigation_throttle.h"
             ]
         }

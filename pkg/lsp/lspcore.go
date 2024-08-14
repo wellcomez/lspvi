@@ -7,12 +7,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
+	"github.com/tectiv3/go-lsp/jsonrpc"
 
 	// "github.com/tectiv3/go-lsp/jsonrpc"
 	"go.bug.st/json"
@@ -33,94 +33,16 @@ type lspcore struct {
 	capabilities          map[string]interface{}
 	initializationOptions map[string]interface{}
 	// arguments             []string
-	handle     rpchandle
-	rw         io.ReadWriteCloser
-	LanguageID string
-	started    bool
-	inited     bool
+	handle        jsonrpc2.Handler
+	rw            io.ReadWriteCloser
+	LanguageID    string
+	started       bool
+	inited        bool
+	inited_called bool
 
-	file_extensions []string
-	root_files      []string
-}
-type lspclient interface {
-	InitializeLsp(wk WorkSpace) error
-	Launch_Lsp_Server() error
-	DidOpen(file string) error
-	GetDocumentSymbol(file string) (*document_symbol, error)
-	GetReferences(file string, pos lsp.Position) ([]lsp.Location, error)
-	GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
-	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
-	PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
-	CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error)
-	IsMe(filename string) bool
-	IsSource(filename string) bool
-	Resolve(sym lsp.SymbolInformation, symbolfile *Symbol_file) bool
-	Close()
-}
-type lsp_base struct {
-	core *lspcore
-	wk   *WorkSpace
+	lang lsplang
 }
 
-// DidOpen implements lspclient.
-// Subtle: this method shadows the method (lsp_base).DidOpen of lsp_py.lsp_base.
-
-// IsSource
-func (l lsp_base) Resolve(sym lsp.SymbolInformation) (*lsp.SymbolInformation, bool) {
-	return nil, false
-}
-func (l lsp_base) IsSource(filename string) bool {
-	return false
-}
-func (l lsp_base) IsMe(filename string) bool {
-	ext := filepath.Ext(filename)
-	ext = strings.TrimPrefix(ext, ".")
-	for _, v := range l.core.file_extensions {
-		if v == ext {
-			return true
-		}
-	}
-	return false
-}
-func new_lsp_base(wk WorkSpace, core *lspcore) lsp_base {
-	return lsp_base{
-		core: core,
-		wk:   &wk,
-	}
-}
-
-// Initialize implements lspclient.
-func (l lsp_base) DidOpen(file string) error {
-	return l.core.DidOpen(file)
-}
-
-func (l lsp_base) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
-	return l.core.TextDocumentPrepareCallHierarchy(loc)
-}
-func (l lsp_base) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
-	return l.core.CallHierarchyIncomingCalls(lsp.CallHierarchyIncomingCallsParams{
-		Item: param,
-	})
-}
-func (l lsp_base) GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error) {
-	path := LocationContent{
-		location: loc,
-	}.Path()
-	return l.core.GetDeclare(path, lsp.Position{
-		Line:      loc.Range.Start.Line,
-		Character: loc.Range.Start.Character,
-	})
-}
-func (l lsp_base) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
-
-	return l.core.GetDeclare(file, pos)
-}
-func (l lsp_base) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
-	return l.core.GetReferences(file, pos)
-}
-func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
-	return l.core.GetDocumentSymbol(file)
-}
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 
 	// cmd := exec.Command("clangd", "--log=verbose")
@@ -159,10 +81,20 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 }
 
 type WorkSpace struct {
-	Path   string
-	Export string
+	Path     string
+	Export   string
+	Callback jsonrpc2.Handler
 }
 
+func (core *lspcore) Initialized() error {
+	if core.inited_called {
+		return nil
+	}
+	core.inited_called = true
+	var result interface{}
+	return core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{}, &result)
+	// return nil
+}
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1
 	// 发送initialize请求
@@ -178,29 +110,71 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	}
 	return result, nil
 }
+func (core *lspcore) Progress_notify() error {
+	params := &lsp.ProgressParams{}
+	return core.conn.Notify(context.Background(), "$/progress", params)
+}
 func (core *lspcore) DidOpen(file string) error {
-	content, err := os.ReadFile(file)
+	x, err := core.newTextDocument(file)
 	if err != nil {
 		return err
 	}
 	err = core.conn.Notify(context.Background(), "textDocument/didOpen", lsp.DidOpenTextDocumentParams{
-		TextDocument: lsp.TextDocumentItem{
-			URI:        lsp.NewDocumentURI(file),
-			LanguageID: core.LanguageID,
-			Text:       string(content),
-			Version:    0,
-		},
+		TextDocument: x,
 	})
 	return err
 }
+
+func (core *lspcore) newTextDocument(file string) (lsp.TextDocumentItem, error) {
+	content, err := os.ReadFile(file)
+	if err != nil {
+		return lsp.TextDocumentItem{}, err
+	}
+	x := lsp.TextDocumentItem{
+		URI:        lsp.NewDocumentURI(file),
+		LanguageID: core.LanguageID,
+		Text:       string(content),
+		Version:    2,
+	}
+	return x, err
+}
+func (core *lspcore) document_semantictokens_full(file string) (*lsp.SemanticTokens, error) {
+	params := lsp.SemanticTokensParams{
+		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+			WorkDoneToken: jsonrpc.ProgressToken(file),
+		},
+		PartialResultParams: &lsp.PartialResultParams{
+			PartialResultToken: jsonrpc.ProgressToken(file),
+		},
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: lsp.NewDocumentURI(file),
+		},
+	}
+	var result lsp.SemanticTokens
+	err := core.conn.Call(context.Background(), "textDocument/semanticTokens/full", params, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (core *lspcore) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
-	var referenced = lsp.DeclarationParams{}
-	referenced.TextDocument.URI = lsp.NewDocumentURI(file)
+	var referenced = lsp.DeclarationParams{
+		PartialResultParams: &lsp.PartialResultParams{
+			PartialResultToken: jsonrpc.ProgressToken(file),
+		},
+		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+			WorkDoneToken: jsonrpc.ProgressToken(file),
+		},
+	}
+	referenced.TextDocument = lsp.TextDocumentIdentifier{
+		URI: lsp.NewDocumentURI(file),
+	}
 	referenced.Position = pos
 	var result []interface{}
-	var ret []lsp.Location
 	err := core.conn.Call(context.Background(), "textDocument/declaration", referenced, &result)
 	if err != nil {
+		var ret []lsp.Location
 		return ret, err
 	}
 	return convert_result_to_lsp_location(result)
@@ -232,8 +206,28 @@ func (core *lspcore) CallHierarchyIncomingCalls(param lsp.CallHierarchyIncomingC
 	// json.Unmarshal(buf, &ret)
 	return result, nil
 }
+func (core *lspcore) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error) {
+	var ret []lsp.Location
+	param := lsp.DefinitionParams{}
+	param.TextDocument = lsp.TextDocumentIdentifier{
+		URI: lsp.NewDocumentURI(file),
+	}
+	param.Position = pos
+	var result []interface{}
+	if err := core.conn.Call(context.Background(), "textDocument/definition", param, &result); err != nil {
+		return ret, err
+	}
+	return convert_result_to_lsp_location(result)
+}
 func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
-	var referenced = lsp.ReferenceParams{}
+	var referenced = lsp.ReferenceParams{
+		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+			WorkDoneToken: jsonrpc.ProgressToken(file + "refer"),
+		},
+		PartialResultParams: &lsp.PartialResultParams{
+			PartialResultToken: jsonrpc.ProgressToken(file + "refer"),
+		},
+	}
 	referenced.TextDocument.URI = lsp.NewDocumentURI(file)
 	referenced.Position = pos
 	referenced.Context = &lsp.ReferenceContext{
@@ -256,18 +250,19 @@ func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Locatio
 
 func convert_result_to_lsp_location(result []interface{}) ([]lsp.Location, error) {
 	var ret []lsp.Location
-	var result_location lsp.Location
-	location_decode_config, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result: &result_location,
-	})
+	data, err := json.Marshal(result)
 	if err != nil {
 		return ret, err
 	}
-	for _, v := range result {
-		err := location_decode_config.Decode(v)
-		if err == nil {
-			ret = append(ret, result_location)
+	err = json.Unmarshal(data, &ret)
+
+	if err != nil {
+		var loc lsp.Location
+		err = json.Unmarshal(data, &loc)
+		if err != nil {
+			return ret, err
 		}
+		return []lsp.Location{loc}, nil
 	}
 	return ret, nil
 }
@@ -339,11 +334,25 @@ func (core *lspcore) TextDocumentDeclaration(file string, pos lsp.Position) (*sy
 	}
 	return &ret, nil
 }
+func (core *lspcore) WorkSpaceDocumentSymbol(query string) ([]lsp.SymbolInformation, error) {
+	var parameter = lsp.WorkspaceSymbolParams{
+		Query: query,
+	}
+	var res []lsp.SymbolInformation
+	err := core.conn.Call(context.Background(), "workspace/symbol", parameter, &res)
+	return res, err
+}
 func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 	uri := lsp.NewDocumentURI(file)
 	var parameter = lsp.DocumentSymbolParams{
 		TextDocument: lsp.TextDocumentIdentifier{
 			URI: uri,
+		},
+		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+			WorkDoneToken: jsonrpc.ProgressToken(file + "symbol"),
+		},
+		PartialResultParams: &lsp.PartialResultParams{
+			PartialResultToken: jsonrpc.ProgressToken(file + "symol"),
 		},
 	}
 	var result []interface{}
@@ -457,19 +466,4 @@ func mainxx2() {
 
 	fmt.Printf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
 
-}
-
-type readwriter struct {
-	w io.WriteCloser
-	r io.ReadCloser
-}
-
-// Read implements io.Reader.
-func (r readwriter) Read(p []byte) (n int, err error) {
-	return r.r.Read(p)
-}
-
-// Write implements io.Writer.
-func (r readwriter) Write(p []byte) (n int, err error) {
-	return r.w.Write(p)
 }
