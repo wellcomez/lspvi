@@ -190,7 +190,7 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 					code := symview.main.codeview
 					symview.main.bf.history.AddToHistory(code.filename, &r.Start.Line)
 					symview.main.codeview.goto_loation(r)
-					symview.main.set_viewid_focus(view_code)
+					// symview.main.set_viewid_focus(view_code)
 					break
 				}
 			}
