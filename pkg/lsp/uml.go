@@ -64,17 +64,20 @@ func (call CallStack) Uml(markdown bool) string {
 		if len(ret) == 0 {
 			title = fmt.Sprintf("==%s==", right)
 		}
-		if !s.isFunction() {
-			left := s.uml_class_name()
-			if caller != nil {
-				left = caller.symboldefine_name()
-				if len(caller.uml_class_name()) > 0 && !caller.isFunction() {
-					left = caller.uml_class_name()
+		if caller != nil {
+			if !s.isFunction() {
+				left := s.uml_class_name()
+				if caller.isFunction() || len(left) == 0 {
+					left = caller.symboldefine_name()
+				} else {
+					if len(caller.uml_class_name()) > 0 && caller.uml_class_name() != s.uml_class_name() {
+						left = caller.uml_class_name()
+					}else{
+						left = caller.symboldefine_name()
+					}
 				}
-			}
-			ret = append(ret, fmt.Sprintf("%s -> %s", left, right))
-		} else {
-			if caller != nil {
+				ret = append(ret, fmt.Sprintf("%s -> %s", left, right))
+			} else {
 				left := caller.uml_class_name()
 				if caller.isFunction() || len(left) == 0 {
 					left = caller.symboldefine_name()
