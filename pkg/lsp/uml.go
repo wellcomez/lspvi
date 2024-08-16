@@ -52,7 +52,10 @@ func (call CallStack) Uml(markdown bool) string {
 	for _, s := range call.Items {
 		rightPrefix := ""
 		if !s.isFunction() {
-			rightPrefix = s.uml_class_name() + "::"
+			//go use function as method because treate package as object
+			if len(s.uml_class_name()) > 0 {
+				rightPrefix = s.uml_class_name() + "::"
+			}
 		}
 		right := rightPrefix + s.symboldefine_name()
 		if strings.Index(right, "ProcessInternal") > 0 {
@@ -64,17 +67,9 @@ func (call CallStack) Uml(markdown bool) string {
 		if !s.isFunction() {
 			left := s.uml_class_name()
 			if caller != nil {
-				if caller.isFunction() {
-					left = caller.symboldefine_name()
-				} else {
-					if caller.uml_class_name() != s.uml_class_name() {
-						left = caller.uml_class_name()
-					}
-				}
-			}
-			if len(left) == 0 {
-				if caller != nil {
-					left = caller.symboldefine_name()
+				left = caller.symboldefine_name()
+				if len(caller.uml_class_name()) > 0 && !caller.isFunction() {
+					left = caller.uml_class_name()
 				}
 			}
 			ret = append(ret, fmt.Sprintf("%s -> %s", left, right))
