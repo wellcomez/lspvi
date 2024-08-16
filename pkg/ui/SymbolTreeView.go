@@ -1,7 +1,7 @@
 package mainui
 
 import (
-	"log"
+	// "log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
