@@ -72,6 +72,11 @@ func (call CallStack) Uml(markdown bool) string {
 					}
 				}
 			}
+			if len(left)==0{
+				if caller!=nil{
+					left= caller.symboldefine_name()
+				}
+			}
 			ret = append(ret, fmt.Sprintf("%s -> %s", left, right))
 		} else {
 			if caller != nil {

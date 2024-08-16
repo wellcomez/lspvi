@@ -57,6 +57,7 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 		// log.Fatal(err)
 	}
 	if err := cmd.Start(); err != nil {
+    	log.Println("failed to start",err)
 		return err
 		// log.Fatal(err)
 	}
