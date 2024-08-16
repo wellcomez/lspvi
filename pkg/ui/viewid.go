@@ -64,9 +64,9 @@ func (viewid view_id) setfocused(m *mainui) {
 func mouseclick_view_focused(m *mainui, event *tcell.EventMouse) {
 	focused := focus_viewid(m)
 	for _, v := range all_view_list {
-		if v == view_outline_list {
-			log.Printf("")
-		}
+		// if v == view_outline_list {
+		// log.Printf("")
+		// }
 		box := v.to_box(m)
 		if inbox(box, event) {
 			if focused != v {
