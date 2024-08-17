@@ -71,6 +71,7 @@ Because of the limitation of terminal, you can still view text call sequence in 
 - gopls
 - clangd
 - python
+- typescript /javascript
 
 ## Install
 ~~~sh
@@ -85,4 +86,5 @@ go build
 ## platform /os 
 - MACOS 
 - linux 
+- windows
 
