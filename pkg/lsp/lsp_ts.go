@@ -69,5 +69,5 @@ func (l lsp_ts) IsMe(filename string) bool {
 	if l.LanguageID == string(JAVASCRIPT) {
 		return IsMe(filename, []string{"js"})
 	}
-	return IsMe(filename, []string{"js"})
+	return IsMe(filename, []string{"ts","tsx","js"})
 }

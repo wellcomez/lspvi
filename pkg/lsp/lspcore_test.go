@@ -23,7 +23,7 @@ type LspHandle struct {
 }
 
 func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
-
+	println("handle", req.Method)
 }
 
 var cpp_wk = WorkSpace{Path: cpp_root, Callback: LspHandle{}}
@@ -69,7 +69,12 @@ func Test_lsp_js_init(t *testing.T) {
 		t.Error(err)
 	}
 	index_js := filepath.Join(js_wk.Path, "index.js")
+	index_ts := filepath.Join(js_wk.Path, "index.ts")
 	err = client.DidOpen(index_js)
+	if err != nil {
+		t.Error(err)
+	}
+	err = client.DidOpen(index_ts)
 	if err != nil {
 		t.Error(err)
 	}
@@ -80,10 +85,29 @@ func Test_lsp_js_init(t *testing.T) {
 	if symbol == nil {
 		t.Error(fmt.Errorf("nil symbol"))
 	} else {
-		for _, v := range symbol.DocumentSymbols {
+		if len(symbol.SymbolInformation) != 1 {
+			t.Error(fmt.Errorf("len(symbol.DocumentSymbols)!=1"))
+		}
+		for _, v := range symbol.SymbolInformation {
 			t.Log(v.Name)
 		}
 	}
+
+	symbol, err = client.GetDocumentSymbol(index_ts)
+	if err != nil {
+		t.Error(err)
+	}
+	if symbol == nil {
+		t.Error(fmt.Errorf("nil symbol"))
+	} else {
+		if len(symbol.SymbolInformation) != 1 {
+			t.Error(fmt.Errorf("len(symbol.DocumentSymbols)!=1"))
+		}
+		for _, v := range symbol.SymbolInformation {
+			t.Log(v.Name)
+		}
+	}
+
 }
 func Test_lspcpp_open(t *testing.T) {
 
