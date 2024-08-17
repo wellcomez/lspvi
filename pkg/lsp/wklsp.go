@@ -71,7 +71,7 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 	irange := inside_location(S.SymInfo.Location, loc)
 	if yes {
 
-		log.Printf("xxx", irange, S.SymInfo.Kind, calr.Item.Kind, calr.Name)
+		log.Println("xxx", irange, S.SymInfo.Kind, calr.Item.Kind, calr.Name)
 	}
 	if S.SymInfo.Kind == lsp.SymbolKindMethod && calr.Item.Kind == lsp.SymbolKindFunction {
 		calr.Item.Kind = lsp.SymbolKindMethod
@@ -254,9 +254,12 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 	}
 
 	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{}, handle: wk.Callback, LanguageID: string(GO)}}
+
+	ts := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(TYPE_SCRIPT)}, handle: wk.Callback, LanguageID: string(TYPE_SCRIPT)}}
+	js := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT)}, handle: wk.Callback, LanguageID: string(JAVASCRIPT)}}
 	ret := &LspWorkspace{
 		clients: []lspclient{
-			cpp, py, golang,
+			cpp, py, golang, ts, js,
 		},
 		Wk: wk,
 	}
@@ -269,7 +272,7 @@ type lsp_data_changed interface {
 	OnCodeViewChanged(file *Symbol_file)
 	OnLspRefenceChanged(ranges lsp.Range, file []lsp.Location)
 	OnFileChange(file []lsp.Location)
-	OnLspCaller(search string,c lsp.CallHierarchyItem , stacks []CallStack)
+	OnLspCaller(search string, c lsp.CallHierarchyItem, stacks []CallStack)
 	OnLspCallTaskInViewChanged(stacks *CallInTask)
 	OnLspCallTaskInViewResovled(stacks *CallInTask)
 }

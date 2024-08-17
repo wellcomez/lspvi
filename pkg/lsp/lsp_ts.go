@@ -1,7 +1,7 @@
 package lspcore
 
 import (
-	"fmt"
+	// "fmt"
 	"github.com/tectiv3/go-lsp"
 	"os/exec"
 )
@@ -48,16 +48,16 @@ func (l lsp_ts) InitializeLsp(core *lspcore, wk WorkSpace) error {
 		},
 	}
 	core.capabilities = capabilities
-	result, err := core.Initialize(wk)
+	_, err := core.Initialize(wk)
 	if err != nil {
 		return err
 	}
 
-	if result.ServerInfo.Name == "pylsp" {
-		core.inited = true
-		return nil
-	}
-	return fmt.Errorf("%s", result.ServerInfo.Name)
+	// if result.ServerInfo.Name == "pylsp" {
+	core.inited = true
+	return nil
+	// }
+	// return fmt.Errorf("%s", result.ServerInfo.Name)
 }
 
 // IsSource implements lsplang.

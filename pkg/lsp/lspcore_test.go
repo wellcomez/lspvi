@@ -3,19 +3,30 @@ package lspcore
 import (
 	// "context"
 	// "fmt"
+	"context"
 	"log"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 	// "github.com/tectiv3/go-lsp"
 )
 
-var path = "/home/z/dev/lsp/pylspclient/tests/cpp/"
+var test_root = "/home/z/dev/lsp/goui/pkg/lsp/tests/"
+var cpp_root = filepath.Join(test_root, "cpp")
+var d_cpp = filepath.Join(cpp_root, "test_main.cpp")
 
-// var d_cpp = "/home/z/dev/lsp/pylspclient/tests/cpp/d.cpp"
-var d_cpp = "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
-var wk = WorkSpace{Path: path}
+type LspHandle struct {
+}
+
+func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	
+}
+
+var cpp_wk = WorkSpace{Path: cpp_root, Callback: LspHandle{}}
+var js_wk = WorkSpace{Path: filepath.Join(test_root, "testjs"), Callback: LspHandle{}}
 
 func Test_lspcore_init(t *testing.T) {
 	lspcore := &lspcore{}
@@ -24,36 +35,56 @@ func Test_lspcore_init(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	resutl, err := lspcore.Initialize(wk)
+	resutl, err := lspcore.Initialize(cpp_wk)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Print(resutl)
 }
 func Test_lspcpp_init(t *testing.T) {
-	cpp := lsp_cpp{new_lsp_base(wk)}
-	var client lspclient = cpp
+	client := lsp_base{
+		core: &lspcore{lang: lsp_lang_cpp{}, handle: cpp_wk.Callback, LanguageID: string(CPP)},
+		wk:   &cpp_wk}
 	err := client.Launch_Lsp_Server()
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
-	err = client.InitializeLsp(wk)
+	err = client.InitializeLsp(cpp_wk)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
+	}
+}
+func Test_lsp_js_init(t *testing.T) {
+	// testjs
+	client := lsp_base{
+		core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT)}, handle: js_wk.Callback, LanguageID: string(JAVASCRIPT)},
+		wk:   &js_wk}
+	err := client.Launch_Lsp_Server()
+	if err != nil {
+		t.Error(err)
+	}
+	err = client.InitializeLsp(js_wk)
+	if err != nil {
+		t.Error(err)
 	}
 }
 func Test_lspcpp_open(t *testing.T) {
-	cpp := lsp_cpp{new_lsp_base(wk)}
-	var client lspclient = cpp
+
+	client := lsp_base{
+		core: &lspcore{lang: lsp_lang_cpp{}, handle: cpp_wk.Callback, LanguageID: string(CPP)},
+		wk:   &cpp_wk,
+	}
 	err := client.Launch_Lsp_Server()
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
-	err = client.InitializeLsp(wk)
+	err = client.InitializeLsp(cpp_wk)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
-
+	if err != nil {
+		t.Error(err)
+	}
 	err = client.DidOpen(d_cpp)
 	if err != nil {
 		log.Fatal(err)
@@ -81,14 +112,14 @@ func Test_lspcpp_open(t *testing.T) {
 		Character: 7,
 	}
 	call_in_range.End = call_in_range.Start
-	call_preare_item, err := client.TextDocumentPrepareCallHierarchy(lsp.Location{
+	call_preare_item, err := client.core.TextDocumentPrepareCallHierarchy(lsp.Location{
 		URI:   lsp.NewDocumentURI(d_cpp),
 		Range: call_in_range,
 	})
 	if len(call_preare_item) == 0 || err != nil {
 		t.Fatalf("fail to call_prepare")
 	}
-	callin, err := client.CallHierarchyIncomingCalls(call_preare_item[0])
+	callin, err := client.core.CallHierarchyIncomingCalls(lsp.CallHierarchyIncomingCallsParams{Item: call_preare_item[0]})
 	if len(callin) == 0 || err != nil {
 		t.Fatalf("fail to call in")
 	}
