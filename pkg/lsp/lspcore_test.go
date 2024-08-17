@@ -4,6 +4,7 @@ import (
 	// "context"
 	// "fmt"
 	"context"
+	"fmt"
 	"log"
 	"os/exec"
 	"path/filepath"
@@ -22,7 +23,7 @@ type LspHandle struct {
 }
 
 func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
-	
+
 }
 
 var cpp_wk = WorkSpace{Path: cpp_root, Callback: LspHandle{}}
@@ -67,6 +68,22 @@ func Test_lsp_js_init(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	index_js := filepath.Join(js_wk.Path, "index.js")
+	err = client.DidOpen(index_js)
+	if err != nil {
+		t.Error(err)
+	}
+	symbol, err := client.GetDocumentSymbol(index_js)
+	if err != nil {
+		t.Error(err)
+	}
+	if symbol == nil {
+		t.Error(fmt.Errorf("nil symbol"))
+	} else {
+		for _, v := range symbol.DocumentSymbols {
+			t.Log(v.Name)
+		}
+	}
 }
 func Test_lspcpp_open(t *testing.T) {
 
@@ -79,9 +96,6 @@ func Test_lspcpp_open(t *testing.T) {
 		t.Error(err)
 	}
 	err = client.InitializeLsp(cpp_wk)
-	if err != nil {
-		t.Error(err)
-	}
 	if err != nil {
 		t.Error(err)
 	}
