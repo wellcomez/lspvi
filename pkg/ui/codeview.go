@@ -178,7 +178,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		}
 		posX = posX - int(xOffset)
 		root.Cursor.Loc = tab_loc(root, femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))})
-		log.Println(root.Cursor.Loc)
+		// log.Println(root.Cursor.Loc)
 		root.SelectLine()
 		code.update_with_line_changed()
 		return tview.MouseConsumed, nil
@@ -332,7 +332,7 @@ func (code *CodeView) move_up_down(up bool) {
 		}
 	}
 	// Cur.DeleteSelection()
-	log.Printf("updown: %v %v", Cur.Loc, Cur.CurSelection)
+	// log.Printf("updown: %v %v", Cur.Loc, Cur.CurSelection)
 	Cur.SetSelectionStart(Cur.Loc)
 	Cur.SetSelectionEnd(Cur.Loc)
 	code.update_with_line_changed()

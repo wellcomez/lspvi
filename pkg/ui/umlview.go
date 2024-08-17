@@ -30,7 +30,7 @@ func (v *umlview) openfile(name string) {
 	if ext == ".png" {
 		image := tview.NewImage()
 		v.preview.AddItem(image, 0, 1, false)
-		log.Printf("")
+		// log.Printf("")
 		// 打开文件
 		file, err := os.Open(name)
 		if err != nil {
@@ -54,7 +54,7 @@ func (v *umlview) openfile(name string) {
 		v.preview.AddItem(t, 0, 1, false)
 		t.SetText(string(b))
 	}
-	log.Printf("")
+	// log.Printf("")
 }
 func (v *umlview) Init() {
 	v.file.Init()

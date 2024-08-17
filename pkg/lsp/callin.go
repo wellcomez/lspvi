@@ -89,7 +89,8 @@ type CallInTask struct {
 }
 
 func (task CallInTask) TreeNodeid() string {
-	return string(task.UID)
+	return fmt.Sprintf("%d",task.UID)
+	// return string(task.UID)
 }
 
 var callstack_id = 0

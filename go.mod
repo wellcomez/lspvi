@@ -8,7 +8,7 @@ require (
 	github.com/charlievieth/fastwalk v1.0.8
 	github.com/reinhrst/fzf-lib v0.9.0
 	github.com/sourcegraph/jsonrpc2 v0.2.0
-	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
+	// github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
 	zen108.com/lspsrv v0.0.0-00010101000000-000000000000
 )
 
@@ -17,6 +17,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e // indirect
 	github.com/zyedidia/micro v1.4.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

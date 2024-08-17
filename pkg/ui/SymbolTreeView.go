@@ -1,7 +1,7 @@
 package mainui
 
 import (
-	"log"
+	// "log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -147,7 +147,7 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	ret.waiter = tview.NewTextView().SetText("loading").SetTextColor(tcell.ColorDarkGray)
 	ret.view.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		if ret.show_wait {
-			log.Println("click", x, y, width, height)
+			// log.Println("click", x, y, width, height)
 			bw := width / 2
 			bh := height / 2
 			ret.waiter.SetRect((width-bw)/2+x, y+(height-bh)/2, bw, bh)
@@ -190,7 +190,7 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 					code := symview.main.codeview
 					symview.main.bf.history.AddToHistory(code.filename, &r.Start.Line)
 					symview.main.codeview.goto_loation(r)
-					symview.main.set_viewid_focus(view_code)
+					// symview.main.set_viewid_focus(view_code)
 					break
 				}
 			}
