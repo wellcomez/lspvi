@@ -220,6 +220,7 @@ USER root
 COPY lspvi  /usr/local/bin/
 RUN apt-get install -y tmux
 RUN apt-get install -y openjdk-17-jdk
+COPY plantuml-1.2024.6.jar /usr/local/bin/
 RUN ln -s /home/node/go/bin/gopls /usr/local/bin/gopls
 USER node
 ENTRYPOINT ["/bin/zsh"]

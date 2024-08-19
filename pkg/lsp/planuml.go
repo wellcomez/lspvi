@@ -2,6 +2,7 @@ package lspcore
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,8 +15,15 @@ type PlanUmlBin struct {
 
 func NewPlanUmlBin() (*PlanUmlBin, error) {
 	jarPath := "plantuml-1.2024.6.jar"
+	exec, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	jarPath = filepath.Join(
+		filepath.Dir(exec), jarPath)
 	javaCmd := findJavaBinary()
 	if _, err := os.Stat(jarPath); os.IsNotExist(err) {
+		log.Println(err)
 		return nil, err
 	}
 	return &PlanUmlBin{jarPath: jarPath, javaCmd: javaCmd}, nil
