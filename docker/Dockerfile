@@ -219,6 +219,7 @@ RUN echo 'export PROMPT="lspvi %(?:%{%}%1{➜%} :%{%}%1{➜%} ) %{%}%c%{%} $(git
 USER root
 COPY lspvi  /usr/local/bin/
 RUN apt-get install -y tmux
+RUN apt-get install -y openjdk-17-jdk
 RUN ln -s /home/node/go/bin/gopls /usr/local/bin/gopls
 USER node
 ENTRYPOINT ["/bin/zsh"]

@@ -1,6 +1,7 @@
 package lspcore
 
 import (
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -86,8 +87,13 @@ func (l lsp_base) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyIte
 	return l.core.TextDocumentPrepareCallHierarchy(loc)
 }
 func (l lsp_base) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error) {
-	return l.core.GetDefine(file, pos)
+	ret, err := l.core.GetDefine(file, pos)
+	if err != nil {
+		log.Println("error", file, err)
+	}
+	return ret, err
 }
+
 func (l lsp_base) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
 	return l.core.CallHierarchyIncomingCalls(lsp.CallHierarchyIncomingCallsParams{
 		Item: param,
@@ -104,13 +110,25 @@ func (l lsp_base) GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
 }
 func (l lsp_base) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
 
-	return l.core.GetDeclare(file, pos)
+	ret, err := l.core.GetDeclare(file, pos)
+	if err != nil {
+		log.Println("error", file, err)
+	}
+	return ret, err
 }
 func (l lsp_base) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
-	return l.core.GetReferences(file, pos)
+	ret, err := l.core.GetReferences(file, pos)
+	if err != nil {
+		log.Println("error", file, err)
+	}
+	return ret, err
 }
 func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
-	return l.core.GetDocumentSymbol(file)
+	ret, err := l.core.GetDocumentSymbol(file)
+	if err != nil {
+		log.Println("error", file, err)
+	}
+	return ret, err
 }
 
 func (l lsp_base) WorkSpaceSymbol(query string) ([]lsp.SymbolInformation, error) {
