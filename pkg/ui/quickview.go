@@ -60,7 +60,8 @@ type searchdata struct {
 }
 
 func (qk quick_view) save() error {
-	dir, err := qk.InitDir()
+	h := quickfix_history{Wk: qk.main.lspmgr.Wk}
+	dir, err := h.InitDir()
 	if err != nil {
 		log.Println("save ", err)
 		return err
@@ -80,6 +81,39 @@ func (qk quick_view) save() error {
 		return error
 	}
 	return os.WriteFile(filename, buf, 0666)
+}
+
+type quickfix_history struct {
+	Wk lspcore.WorkSpace
+}
+
+func (h *quickfix_history) Load() ([]search_result, error) {
+	var ret = []search_result{}
+	dir, err := h.InitDir()
+	if err != nil {
+		return ret, err
+	}
+	dirs, err := os.ReadDir(dir)
+	if err != nil {
+		return ret, err
+	}
+	for _, v := range dirs {
+		if v.IsDir() {
+			continue
+		}
+		filename := filepath.Join(dir, v.Name())
+		buf, err := os.ReadFile(filename)
+		if err != nil {
+			continue
+		}
+		var result search_result
+		err = json.Unmarshal(buf, &result)
+		if err != nil {
+			continue
+		}
+		ret = append(ret, result)
+	}
+	return ret, nil
 }
 
 // new_quikview
@@ -130,9 +164,8 @@ func new_quikview(main *mainui) *quick_view {
 	view.SetSelectedFunc(ret.selection_handle)
 	return ret
 }
-func (qf *quick_view) InitDir() (string, error) {
-	wk := qf.main.lspmgr.Wk
-	Dir := filepath.Join(wk.Export, "qf")
+func (qf *quickfix_history) InitDir() (string, error) {
+	Dir := filepath.Join(qf.Wk.Export, "qf")
 	if checkDirExists(Dir) {
 		return Dir, nil
 	}
