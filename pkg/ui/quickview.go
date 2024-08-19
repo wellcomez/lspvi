@@ -218,8 +218,10 @@ func (qk *quick_view) go_prev() {
 }
 
 func (qk *quick_view) open_index(next int) {
-	loc := qk.Refs.Refs[next].Loc
-	qk.quickview.update_preview(loc)
+	if len(qk.Refs.Refs) > 0 {
+		loc := qk.Refs.Refs[next].Loc
+		qk.quickview.update_preview(loc)
+	}
 }
 func (qk *quick_view) go_next() {
 	if qk.view.GetItemCount() == 0 {

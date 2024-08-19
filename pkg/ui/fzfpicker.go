@@ -97,7 +97,7 @@ func (v *fzfmain) OpenKeymapFzf() {
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
-func (v *fzfmain) create_dialog_content(grid *tview.Grid, sym picker) {
+func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
 	v.Frame.SetBorder(true)
 	v.input.SetText(">")

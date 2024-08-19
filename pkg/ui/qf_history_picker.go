@@ -24,7 +24,7 @@ type qk_history_picker struct {
 
 // name implements picker.
 func (pk qk_history_picker) name() string {
-	return "key map"
+	return "quickfix history"
 }
 
 // UpdateQuery implements picker.
@@ -47,8 +47,8 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 		})
 	}
 }
-func (pk qk_history_picker) grid() *tview.Grid {
-	return layout_list_edit(pk.list, pk.codeprev.view, pk.parent.input)
+func (pk qk_history_picker) grid() tview.Primitive{
+	return layout_list_row_edit(pk.list, pk.codeprev.view, pk.parent.input)
 }
 func (pk qk_history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.list.InputHandler()
@@ -75,7 +75,11 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	keys, _ := hh.Load()
 	keymaplist := []string{}
 	for _, v := range keys {
-		keymaplist = append(keymaplist, fmt.Sprintf("%-4s %s", v.Type.String(), v.Key.Key))
+		file_info:=""
+		if len(v.Key.File)>0{
+			file_info =fmt.Sprintf("%s %d:%d",v.Key.File,v.Key.Ranges.Start.Line,v.Key.Ranges.Start.Character)
+		}
+		keymaplist = append(keymaplist, fmt.Sprintf("%-4s %s %s", v.Type.String(), v.Key.Key,file_info))
 	}
 
 	var options = fzf.DefaultOptions()

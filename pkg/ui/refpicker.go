@@ -22,6 +22,12 @@ func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
 	layout := layout_list_edit(list, code, input)
 	return layout
 }
+func layout_list_row_edit(list tview.Primitive, code tview.Primitive, input *tview.InputField) *tview.Flex {
+	layout := tview.NewFlex()
+	layout.SetDirection(tview.FlexRow)
+	layout.AddItem(list, 0, 6, false).AddItem(code, 0, 9, false).AddItem(input, 1, 1, true)
+	return layout
+}
 
 func layout_list_edit(list tview.Primitive, code tview.Primitive, input *tview.InputField) *tview.Grid {
 	layout := tview.NewGrid().
