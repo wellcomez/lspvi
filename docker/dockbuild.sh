@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
+dockname=lspvi
 if [[ $1 == "create" ]]; then
-    sudo docker build -t  lspvi.
+    sudo docker build -t $dockname   .
+    exit
+fi
+if [[ $1 == "push" ]]; then
+    docker tag $dockname lailainux/$dockname:lastest
+    sudo docker push lailainux/$dockname:lastest
     exit
 fi
 
@@ -16,4 +22,4 @@ gid=$(id -g)
 sudo docker run --user "$uid:$gid" \
     -v "$(pwd)"/home:/home/z/\
     -v /home/z/dev:/home/z/dev \
-    --workdir "$(realpath ..)" -it lspvi 
+    --workdir "$(realpath ..)" -it $dockname

@@ -216,4 +216,9 @@ WORKDIR $GOPATH
 RUN go install golang.org/x/tools/gopls@latest
 RUN echo '' >>~/.zshrc
 RUN echo 'export PROMPT="lspvi %(?:%{%}%1{➜%} :%{%}%1{➜%} ) %{%}%c%{%} $(git_prompt_info)"' >>~/.zshrc
+USER root
+COPY lspvi  /usr/local/bin/
+RUN apt-get install -y tmux
+RUN ln -s /home/node/go/bin/gopls /usr/local/bin/gopls
+USER node
 ENTRYPOINT ["/bin/zsh"]
