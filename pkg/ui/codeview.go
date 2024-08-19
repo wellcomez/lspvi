@@ -115,10 +115,13 @@ func NewCodeView(main *mainui) *CodeView {
 	ret.view = root
 	if main != nil {
 		goto_define := get_cmd_actor(main, goto_define).menu_key(split(""))
-		refs := get_cmd_actor(main, goto_refer).menu_key(split(""))
 		callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
 		items := []context_menu_item{
-			{item: refs, handle: func() {
+			{item: cmditem{cmd: cmdactor{desc: "Search"}}, handle: func() {
+				sss := main.codeview.view.Cursor.GetSelection()
+				main.codeview.OnSearch(sss)
+			}},
+			{item: cmditem{cmd: cmdactor{desc: "Refer"}}, handle: func() {
 				main.get_refer(ret.rightmenu.select_range, main.codeview.filename)
 			}},
 			{item: goto_define, handle: func() {

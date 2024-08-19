@@ -99,9 +99,11 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	w := menu.width
 	// log.Printf("x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
 	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
-		if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
-			menu.visible = false
-			return tview.MouseConsumed, nil
+		if menu.visible {
+			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
+				menu.visible = false
+				return tview.MouseConsumed, nil
+			}
 		}
 		return action, event
 	}
