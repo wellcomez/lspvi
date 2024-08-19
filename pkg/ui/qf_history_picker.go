@@ -1,14 +1,17 @@
 package mainui
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type qf_history_picker_impl struct {
@@ -133,14 +136,41 @@ func (qk *qk_history_picker) updateprev(index int) {
 		qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
 	} else if item.Type == data_callin {
 		callin := keys[index].Key.File
-		dirs, err := os.ReadDir(callin)
-		content := []string{}
-		for _, item := range dirs {
-			content = append(content, item.Name())
-		}
-		data := strings.Join(content, "\n")
+		fielname := filepath.Join(callin, "callstack.json")
+		_, err := os.Stat(fielname)
 		if err == nil {
+			buf, err := os.ReadFile(fielname)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			var task lspcore.CallInTask
+			err = json.Unmarshal(buf, &task)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			content := []string{}
+			for _, s := range task.Allstack {
+				tab:=""
+				for _, v := range s.Items {
+					ss := tab+"->"+v.Name
+					content = append(content, ss)
+					tab+=" "
+				}
+			}
+			data := strings.Join(content, "\n")
 			qk.codeprev.LoadBuffer([]byte(data), "")
+		} else {
+			dirs, err := os.ReadDir(callin)
+			content := []string{}
+			for _, item := range dirs {
+				content = append(content, item.Name())
+			}
+			data := strings.Join(content, "\n")
+			if err == nil {
+				qk.codeprev.LoadBuffer([]byte(data), "")
+			}
 		}
 	}
 }

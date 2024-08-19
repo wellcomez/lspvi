@@ -99,7 +99,7 @@ func (task CallInTask) TreeNodeid() string {
 }
 func (task *CallInTask) Save(root string) error {
 	fielname := filepath.Join(root, task.Name, "callstack.json")
-	buf, err := json.Marshal(task.Allstack)
+	buf, err := json.Marshal(task)
 	if err != nil {
 		log.Println(err)
 		return err
