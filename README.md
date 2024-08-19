@@ -88,3 +88,15 @@ go build
 - linux 
 - windows
 
+## docker
+~~~sh
+cd docker
+~~~
+1. build docker
+   ~~~sh
+   ./dockbuild.sh create
+   ~~~
+2. run docker 
+   ~~~sh
+   ./dockbuild.sh 
+   ~~~
