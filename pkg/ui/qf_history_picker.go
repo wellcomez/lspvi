@@ -15,9 +15,10 @@ import (
 )
 
 type qf_history_picker_impl struct {
-	keymaplist []string
-	fzf        *fzf.Fzf
-	keys       []qf_history_data
+	keymaplist  []string
+	fzf         *fzf.Fzf
+	keys        []qf_history_data
+	selectIndex []int32
 }
 type qk_history_picker struct {
 	impl     *qf_history_picker_impl
@@ -40,9 +41,11 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 	pk.list.Clear()
 	pk.list.Key = query
 	result = <-fzf.GetResultChannel()
+	impl.selectIndex = []int32{}
 	for _, m := range result.Matches {
 		log.Println(m)
 		index := m.HayIndex
+		impl.selectIndex = append(impl.selectIndex, index)
 		pk.list.AddItem(impl.keymaplist[index], "", func() {
 			pk.parent.hide()
 			// item := pk.impl.keys[index]
@@ -57,7 +60,7 @@ func (pk qk_history_picker) grid() tview.Primitive {
 func (pk qk_history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.list.InputHandler()
 	handle(event, setFocus)
-	pk.updateprev(pk.list.GetCurrentItem())
+	pk.updateprev()
 }
 func (pk qk_history_picker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return pk.handle_key_override
@@ -103,28 +106,49 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		list:     list,
 		codeprev: NewCodeView(v.main),
 	}
+	ret.impl.selectIndex = []int32{}
 	for i, value := range keymaplist {
 		index := i
+		ret.impl.selectIndex = append(ret.impl.selectIndex, int32(i))
 		list.AddItem(value, "", func() {
 			ret.open_in_qf()
 			ret.parent.hide()
 			log.Println(index)
 		})
 	}
-	ret.updateprev(0)
+	ret.updateprev()
 	return ret
 }
 
 func (qk *qk_history_picker) open_in_qf() {
-	i := qk.list.GetCurrentItem()
+	i := qk.impl.selectIndex[qk.list.GetCurrentItem()]
 	item := qk.impl.keys[i]
 	if item.Type == data_refs {
 		qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
 	} else if item.Type == data_callin {
+		callin := item.Key.File
+		fielname := filepath.Join(callin, "callstack.json")
+		_, err := os.Stat(fielname)
+		if err == nil {
+			buf, err := os.ReadFile(fielname)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			var task lspcore.CallInTask
+			err = json.Unmarshal(buf, &task)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			qk.parent.main.callinview.updatetask(&task)
+			qk.parent.main.ActiveTab(view_callin, false)
+		}
 	}
 }
 
-func (qk *qk_history_picker) updateprev(index int) {
+func (qk *qk_history_picker) updateprev() {
+	index := qk.impl.selectIndex[qk.list.GetCurrentItem()]
 	keys := qk.impl.keys
 	item := qk.impl.keys[index]
 	if item.Type == data_refs {
@@ -152,11 +176,11 @@ func (qk *qk_history_picker) updateprev(index int) {
 			}
 			content := []string{}
 			for _, s := range task.Allstack {
-				tab:=""
+				tab := ""
 				for _, v := range s.Items {
-					ss := tab+"->"+v.Name
+					ss := tab + "->" + v.Name
 					content = append(content, ss)
-					tab+=" "
+					tab += " "
 				}
 			}
 			data := strings.Join(content, "\n")
