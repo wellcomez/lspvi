@@ -267,10 +267,15 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 	return ret
 }
 
+type SymolSearchKey struct {
+	File   string
+	Ranges lsp.Range
+	Key    string
+}
 type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)
-	OnLspRefenceChanged(ranges lsp.Range, file []lsp.Location)
+	OnLspRefenceChanged(ranges SymolSearchKey, file []lsp.Location)
 	OnFileChange(file []lsp.Location)
 	OnLspCaller(search string, c lsp.CallHierarchyItem, stacks []CallStack)
 	OnLspCallTaskInViewChanged(stacks *CallInTask)

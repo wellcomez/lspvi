@@ -119,7 +119,7 @@ func (m *mainui) UpdatePageTitle() {
 
 }
 
-func (m *mainui) OnLspRefenceChanged(ranges lsp.Range, refs []lsp.Location) {
+func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
 	if len(refs) > 0 {
 		m.ActiveTab(view_quickview, false)
 	} else {

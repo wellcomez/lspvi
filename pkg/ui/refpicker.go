@@ -56,7 +56,7 @@ func (pk refpicker) name() string {
 }
 
 // OnLspCaller implements lspcore.lsp_data_changed.
-func (pk refpicker) OnLspCaller(txt string,c lsp.CallHierarchyItem ,stacks []lspcore.CallStack) {
+func (pk refpicker) OnLspCaller(txt string, c lsp.CallHierarchyItem, stacks []lspcore.CallStack) {
 	panic("unimplemented")
 }
 
@@ -109,7 +109,7 @@ type ref_with_caller struct {
 	caller *lspcore.CallStackEntry
 }
 
-func (pk refpicker) OnLspRefenceChanged(ranges lsp.Range, file []lsp.Location) {
+func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
 	datafzf := []string{}
