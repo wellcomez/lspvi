@@ -9,6 +9,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type quick_preview struct {
@@ -46,6 +47,11 @@ type quick_view struct {
 	currentIndex int
 	Type         DateType
 	menu         *contextmenu
+	searchkey    lspcore.SymolSearchKey
+}
+
+func (qk quick_view) save() {
+
 }
 
 // new_quikview
@@ -58,7 +64,9 @@ func new_quikview(main *mainui) *quick_view {
 			qk := main.quickview
 			qk.selection_handle_impl(view.GetCurrentItem(), true)
 		}},
-		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
+		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {
+			main.quickview.save()
+		}},
 	}
 	ret := &quick_view{
 		view_link: &view_link{up: view_code, right: view_callin},
@@ -74,7 +82,7 @@ func new_quikview(main *mainui) *quick_view {
 		action, event = menu.handle_mouse(action, event)
 		if ret.menu.visible && is_rightclick {
 			_, y, _, _ := view.GetRect()
-			index := (menu.MenuPos.y-y)
+			index := (menu.MenuPos.y - y)
 			log.Println("index in list:", index)
 			view.SetCurrentItem(index)
 		}
@@ -124,7 +132,7 @@ func (qk *quick_view) go_prev() {
 }
 
 func (qk *quick_view) open_index(next int) {
-	loc := qk.Refs.refs[next].loc
+	loc := qk.Refs.refs[next].Loc
 	qk.quickview.update_preview(loc)
 }
 func (qk *quick_view) go_next() {
@@ -132,7 +140,7 @@ func (qk *quick_view) go_next() {
 		return
 	}
 	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
-	loc := qk.Refs.refs[next].loc
+	loc := qk.Refs.refs[next].Loc
 	qk.quickview.update_preview(loc)
 	qk.view.SetCurrentItem(next)
 	if qk.Type == data_refs {
@@ -160,10 +168,10 @@ func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 func (qk *quick_view) selection_handle_impl(index int, open bool) {
 	vvv := qk.Refs.refs[index]
 	qk.currentIndex = index
-	same := vvv.loc.URI.AsPath().String() == qk.main.codeview.filename
+	same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.filename
 	if open || same {
 		qk.main.UpdatePageTitle()
-		qk.main.gotoline(vvv.loc)
+		qk.main.gotoline(vvv.Loc)
 	} else {
 
 	}
@@ -176,16 +184,22 @@ const (
 	data_refs
 )
 
-func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType) {
+func search_key_uid(key lspcore.SymolSearchKey) string {
+	if len(key.File) > 0 {
+		return fmt.Sprintf("%s %s:%d:%d", key.Key, key.File, key.Ranges.Start.Line, key.Ranges.Start.Character)
+	}
+	return key.Key
+}
+func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key lspcore.SymolSearchKey) {
 	qk.Type = t
 	// panic("unimplemented")
 	qk.view.Clear()
 
 	m := qk.main
 	qk.Refs.refs = get_loc_caller(refs, m.lspmgr.Current)
-
+	qk.searchkey = key
 	for _, caller := range qk.Refs.refs {
-		v := caller.loc
+		v := caller.Loc
 		source_file_path := v.URI.AsPath().String()
 		data, err := os.ReadFile(source_file_path)
 		if err != nil {
@@ -201,8 +215,8 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType) {
 		end := min(len(line), v.Range.Start.Character+gap)
 		path := strings.Replace(v.URI.AsPath().String(), qk.main.root, "", -1)
 		callerstr := ""
-		if caller.caller != nil {
-			callerstr = caller_to_listitem(caller.caller, qk.main.root)
+		if caller.Caller != nil {
+			callerstr = caller_to_listitem(caller.Caller, qk.main.root)
 		}
 		code := line[begin:end]
 		secondline := fmt.Sprintf("%s:%-4d%s		%s", path, v.Range.Start.Line+1, callerstr, code)

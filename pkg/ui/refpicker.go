@@ -105,8 +105,8 @@ func (ref ref_line) String() string {
 }
 
 type ref_with_caller struct {
-	loc    lsp.Location
-	caller *lspcore.CallStackEntry
+	Loc    lsp.Location
+	Caller *lspcore.CallStackEntry
 }
 
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
@@ -117,7 +117,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 	pk.impl.refs = get_loc_caller(file, lsp)
 	for i := range pk.impl.refs {
 		caller := pk.impl.refs[i]
-		v := caller.loc
+		v := caller.Loc
 		source_file_path := v.URI.AsPath().String()
 		data, err := os.ReadFile(source_file_path)
 		if err != nil {
@@ -133,12 +133,12 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 		end := min(len(line), v.Range.Start.Character+gap)
 		path := strings.Replace(v.URI.AsPath().String(), pk.impl.codeprev.main.root, "", -1)
 		callinfo := ""
-		if caller.caller != nil {
-			callinfo = caller_to_listitem(caller.caller, pk.impl.parent.main.root)
+		if caller.Caller != nil {
+			callinfo = caller_to_listitem(caller.Caller, pk.impl.parent.main.root)
 		}
 		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1, callinfo)
 		r := ref_line{
-			caller: caller_to_listitem(caller.caller, pk.impl.parent.main.root),
+			caller: caller_to_listitem(caller.Caller, pk.impl.parent.main.root),
 			loc:    v,
 			line:   line,
 			path:   path,
@@ -168,8 +168,8 @@ func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_ca
 				}
 			}
 			ref_call_in = append(ref_call_in, ref_with_caller{
-				loc:    v,
-				caller: find,
+				Loc:    v,
+				Caller: find,
 			})
 		}
 	}
