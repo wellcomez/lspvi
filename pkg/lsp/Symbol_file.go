@@ -195,6 +195,7 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 					log.Println(err)
 				}
 			}
+			task.Save(export_root.Dir)
 			hanlde()
 		}
 	}

@@ -123,7 +123,7 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 func (qk *qk_history_picker) open_in_qf() {
 	i := qk.impl.selectIndex[qk.list.GetCurrentItem()]
 	item := qk.impl.keys[i]
-	if item.Type == data_refs {
+	if item.Type == data_refs || item.Type == data_search {
 		qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
 	} else if item.Type == data_callin {
 		callin := item.Key.File
