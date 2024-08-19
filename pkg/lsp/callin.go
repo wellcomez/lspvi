@@ -1,7 +1,12 @@
 package lspcore
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+
 	// "log"
 	// "strings"
 
@@ -81,7 +86,7 @@ var callstack_task_id = 0
 type CallInTask struct {
 	Name     string
 	Allstack []*CallStack
-	loc      lsp.Location
+	Loc      lsp.Location
 	lsp      lspclient
 	set      map[string]bool
 	UID      int
@@ -89,8 +94,22 @@ type CallInTask struct {
 }
 
 func (task CallInTask) TreeNodeid() string {
-	return fmt.Sprintf("%d",task.UID)
+	return fmt.Sprintf("%d", task.UID)
 	// return string(task.UID)
+}
+func (task *CallInTask) Save(root string) error {
+	fielname := filepath.Join(root, task.Name, "callstack.json")
+	buf, err := json.Marshal(task.Allstack)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	err = os.WriteFile(fielname, buf, os.ModePerm)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return err
 }
 
 var callstack_id = 0
@@ -131,7 +150,7 @@ func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
 	callstack_task_id++
 	task := &CallInTask{
 		Name: name,
-		loc:  loc,
+		Loc:  loc,
 		lsp:  lsp,
 		UID:  callstack_task_id,
 	}
@@ -184,7 +203,7 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 }
 
 func (task *CallInTask) run() error {
-	c1, err := task.lsp.PrepareCallHierarchy(task.loc)
+	c1, err := task.lsp.PrepareCallHierarchy(task.Loc)
 	if err != nil {
 		return err
 	}

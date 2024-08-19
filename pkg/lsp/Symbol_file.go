@@ -198,6 +198,7 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 			hanlde()
 		}
 	}
+	task.Save(export_root.Dir)
 }
 func (sym *Symbol_file) __load_symbol_impl() error {
 	if sym.lsp == nil {
