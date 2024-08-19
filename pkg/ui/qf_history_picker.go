@@ -38,11 +38,13 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 	result = <-fzf.GetResultChannel()
 	for _, m := range result.Matches {
 		log.Println(m)
-		// index := m.HayIndex
-		// pk.list.AddItem(impl.keymaplist[index], "", func() {
-		// 	pk.parent.hide()
-		// 	pk.impl.keys[index].cmd.handle()
-		// })
+		index := m.HayIndex
+		pk.list.AddItem(impl.keymaplist[index], "", func() {
+			pk.parent.hide()
+			// item := pk.impl.keys[index]
+			// pk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
+			pk.open_in_qf()
+		})
 	}
 }
 func (pk qk_history_picker) grid() *tview.Grid {
@@ -93,14 +95,19 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	for i, value := range keymaplist {
 		index := i
 		list.AddItem(value, "", func() {
-			item := keys[i]
-			v.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
+			ret.open_in_qf()
 			ret.parent.hide()
 			log.Println(index)
 		})
 	}
 	ret.updateprev(0)
 	return ret
+}
+
+func (qk *qk_history_picker) open_in_qf() {
+	i := qk.list.GetCurrentItem()
+	item := qk.impl.keys[i]
+	qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
 }
 
 func (qk *qk_history_picker) updateprev(index int) {
