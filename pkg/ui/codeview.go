@@ -30,6 +30,7 @@ type CodeView struct {
 type text_right_menu struct {
 	*contextmenu
 	select_range lsp.Range
+	text string
 }
 
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
@@ -119,7 +120,7 @@ func NewCodeView(main *mainui) *CodeView {
 		items := []context_menu_item{
 			{item: cmditem{cmd: cmdactor{desc: "Search"}}, handle: func() {
 				sss := main.codeview.view.Cursor.GetSelection()
-				main.codeview.OnSearch(sss)
+				main.OnSearch(sss,true,true)
 			}},
 			{item: cmditem{cmd: cmdactor{desc: "Refer"}}, handle: func() {
 				main.get_refer(ret.rightmenu.select_range, main.codeview.filename)
@@ -178,6 +179,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		reta, retevent := code.rightmenu.handle_mouse(action, event)
 		if reta == tview.MouseConsumed {
 			if code.rightmenu.visible && action == tview.MouseRightClick {
+				code.rightmenu.text= root.Cursor.GetSelection()
 				root.Cursor.Loc = tab_loc(root, pos)
 				root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 				log.Println("before", code.view.Cursor.CurSelection)

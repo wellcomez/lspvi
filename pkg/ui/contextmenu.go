@@ -165,9 +165,9 @@ func (v *contextmenu) Draw(screen tcell.Screen) {
 	if !v.visible {
 		return
 	}
-	viewid := v.main.get_focus_view_id()
-	_, Y, height, _ := v.main.get_view_from_id(viewid).GetRect()
-	v.table.SetRect(v.MenuPos.x, v.MenuPos.y, v.width, Y+height-v.MenuPos.y)
+	// viewid := v.main.get_focus_view_id()
+	// _, Y, height, _ := v.main.get_view_from_id(viewid).GetRect()
+	v.table.SetRect(v.MenuPos.x, v.MenuPos.y, v.width, len(v.impl.items)+2)
 	v.table.Draw(screen)
 	v.table.Draw(screen)
 }
