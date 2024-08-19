@@ -6,12 +6,16 @@ import (
 	"github.com/rivo/tview"
 )
 
+type MousePosition struct {
+	x, y int
+}
 type contextmenu struct {
 	table   *tview.List
 	main    *mainui
 	visible bool
 	impl    *contextmenu_impl
 	input   *inputdelay
+	pos     MousePosition
 }
 
 func (v *contextmenu) input_cb(word string) {
@@ -52,10 +56,12 @@ func (v *contextmenu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	return nil
 }
+
 type context_menu_item struct {
 	item   cmditem
 	handle func()
 }
+
 func (menu *contextmenu) onenter() {
 	menu.visible = false
 	idx := menu.table.GetCurrentItem()
@@ -66,7 +72,7 @@ func (menu *contextmenu) onenter() {
 	}
 
 }
-func init_contextmenu_item(m *mainui) []context_menu_item{
+func init_contextmenu_item(m *mainui) []context_menu_item {
 	return []context_menu_item{}
 }
 
@@ -74,6 +80,15 @@ type contextmenu_impl struct {
 	items []context_menu_item
 }
 
+func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	if action == tview.MouseRightClick {
+		menu.visible = !menu.visible
+		x, y := event.Position()
+		menu.pos = MousePosition{x, y}
+		return tview.MouseConsumed, nil
+	}
+	return action, event
+}
 func new_contextmenu(m *mainui) *contextmenu {
 	t := contextmenu{
 		table:   tview.NewList(),
@@ -108,12 +123,10 @@ func (v *contextmenu) Draw(screen tcell.Screen) {
 	if !v.visible {
 		return
 	}
-
-	width, height := screen.Size()
+	_, height := screen.Size()
 	w := 40
 	h := height / 2
-	_, _, _, cmdlcmdline_height := v.main.cmdline.input.GetRect()
-	v.table.SetRect(width-w-5, height-h-cmdlcmdline_height-3, w, h)
+	v.table.SetRect(v.pos.x, v.pos.y, w, h)
 	v.table.Draw(screen)
 	v.table.Draw(screen)
 }

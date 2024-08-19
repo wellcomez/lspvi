@@ -551,6 +551,9 @@ func MainUI(arg *Arguments) {
 				main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
 			}
 		}
+		if main.codeview.rightmenu.visible {
+			main.codeview.rightmenu.Draw(screen)
+		}
 	})
 	view_id_init(&main)
 	// main.set_viewid_focus(view_code)

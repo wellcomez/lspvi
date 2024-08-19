@@ -25,6 +25,7 @@ type CodeView struct {
 	basic_vi_command  []cmditem
 	key_map           map[tcell.Key]func(code *CodeView)
 	mouse_select_area bool
+	rightmenu  *contextmenu
 }
 
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
@@ -108,6 +109,7 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetMouseCapture(ret.handle_mouse)
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
+	ret.rightmenu = new_contextmenu(main)
 	return &ret
 }
 
@@ -132,6 +134,10 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	pos := femto.Loc{
 		Y: posY + root.Topline - yOffset,
 		X: posX - int(xOffset),
+	}
+	reta,retevent:=code.rightmenu.handle_mouse(action, event)
+	if reta==tview.MouseConsumed{
+		return reta,retevent
 	}
 	if action == tview.MouseLeftDown {
 		code.main.set_viewid_focus(view_code)
