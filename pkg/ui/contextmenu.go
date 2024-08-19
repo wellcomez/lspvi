@@ -2,6 +2,8 @@ package mainui
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -10,12 +12,14 @@ type MousePosition struct {
 	x, y int
 }
 type contextmenu struct {
-	table   *tview.List
-	main    *mainui
-	visible bool
-	impl    *contextmenu_impl
-	input   *inputdelay
-	pos     MousePosition
+	table    *tview.List
+	main     *mainui
+	visible  bool
+	impl     *contextmenu_impl
+	input    *inputdelay
+	MenuPos  MousePosition
+	mousePos MousePosition
+	width        int
 }
 
 func (v *contextmenu) input_cb(word string) {
@@ -84,20 +88,54 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	if action == tview.MouseRightClick {
 		menu.visible = !menu.visible
 		x, y := event.Position()
-		menu.pos = MousePosition{x, y}
+		menu.MenuPos = MousePosition{x, y}
+		menu.mousePos = MousePosition{x, y}
 		return tview.MouseConsumed, nil
 	}
-	return action, event
+	posX, posY := event.Position()
+	x1 := menu.MenuPos.x
+	y1 := menu.MenuPos.y
+	h := 100
+	w := menu.width
+	log.Printf("x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
+	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
+		if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
+			menu.visible = false
+			return tview.MouseConsumed, nil
+		}
+		return action, event
+	}
+	log.Printf("In x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
+	if !menu.visible {
+		return action, event
+	}
+	if action == tview.MouseMove {
+		x, y := event.Position()
+		if y > menu.mousePos.y {
+			cur := menu.table.GetCurrentItem() + 1
+			cur = min(len(menu.impl.items)-1, cur)
+			menu.table.SetCurrentItem(cur)
+		} else if y < menu.mousePos.y {
+			cur := menu.table.GetCurrentItem() - 1
+			cur = max(0, cur)
+			menu.table.SetCurrentItem(cur)
+		}
+		menu.mousePos = MousePosition{x, y}
+	}else if action==tview.MouseLeftClick{
+		
+	}
+	return tview.MouseConsumed, nil
 }
-func new_contextmenu(m *mainui) *contextmenu {
+func new_contextmenu(m *mainui, items []context_menu_item) *contextmenu {
 	t := contextmenu{
 		table:   tview.NewList(),
 		main:    m,
 		visible: false,
+		width:       40,
 	}
 
 	impl := &contextmenu_impl{
-		items: init_contextmenu_item(m),
+		items: items,
 	}
 	command_list := []cmditem{}
 	for _, v := range impl.items {
@@ -124,9 +162,8 @@ func (v *contextmenu) Draw(screen tcell.Screen) {
 		return
 	}
 	_, height := screen.Size()
-	w := 40
 	h := height / 2
-	v.table.SetRect(v.pos.x, v.pos.y, w, h)
+	v.table.SetRect(v.MenuPos.x, v.MenuPos.y, v.width, h)
 	v.table.Draw(screen)
 	v.table.Draw(screen)
 }

@@ -25,7 +25,10 @@ type CodeView struct {
 	basic_vi_command  []cmditem
 	key_map           map[tcell.Key]func(code *CodeView)
 	mouse_select_area bool
-	rightmenu  *contextmenu
+	rightmenu         *text_right_menu
+}
+type text_right_menu struct {
+	*contextmenu
 }
 
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
@@ -109,7 +112,26 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetMouseCapture(ret.handle_mouse)
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
-	ret.rightmenu = new_contextmenu(main)
+	if main != nil {
+		ref := get_cmd_actor(main, goto_define).menu_key(split(""))
+		callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
+		items := []context_menu_item{
+			{item: ref, handle: ref.cmd.handle},
+			{item: callin, handle: callin.cmd.handle},
+		}
+		// m := main
+		// mm := cmditem{
+		// 	get_cmd_actor(m, open_picker_document_symbol).menu_key(split(key_picker_document_symbol)),
+		// 	get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),
+		// 	get_cmd_actor(m, open_picker_history).menu_key(split(key_picker_history)),
+		// 	get_cmd_actor(m, open_picker_grep_word).menu_key(split(key_picker_grep_word)),
+		// 	get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
+		// 	get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
+		// }
+		ret.rightmenu = &text_right_menu{
+			contextmenu: new_contextmenu(main, items),
+		}
+	}
 	return &ret
 }
 
@@ -135,9 +157,11 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		Y: posY + root.Topline - yOffset,
 		X: posX - int(xOffset),
 	}
-	reta,retevent:=code.rightmenu.handle_mouse(action, event)
-	if reta==tview.MouseConsumed{
-		return reta,retevent
+	if code.rightmenu != nil {
+		reta, retevent := code.rightmenu.handle_mouse(action, event)
+		if reta == tview.MouseConsumed {
+			return reta, retevent
+		}
 	}
 	if action == tview.MouseLeftDown {
 		code.main.set_viewid_focus(view_code)
