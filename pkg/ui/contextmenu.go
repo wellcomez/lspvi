@@ -2,7 +2,7 @@ package mainui
 
 import (
 	"fmt"
-	"log"
+	// "log"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -19,7 +19,7 @@ type contextmenu struct {
 	input    *inputdelay
 	MenuPos  MousePosition
 	mousePos MousePosition
-	width        int
+	width    int
 }
 
 func (v *contextmenu) input_cb(word string) {
@@ -121,8 +121,9 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 			menu.table.SetCurrentItem(cur)
 		}
 		menu.mousePos = MousePosition{x, y}
-	}else if action==tview.MouseLeftClick{
-		
+	} else if action == tview.MouseLeftClick {
+		menu.impl.items[menu.table.GetCurrentItem()].handle()
+		menu.visible = false
 	}
 	return tview.MouseConsumed, nil
 }
@@ -131,7 +132,7 @@ func new_contextmenu(m *mainui, items []context_menu_item) *contextmenu {
 		table:   tview.NewList(),
 		main:    m,
 		visible: false,
-		width:       40,
+		width:   40,
 	}
 
 	impl := &contextmenu_impl{

@@ -114,15 +114,22 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
 	if main != nil {
-		ref := get_cmd_actor(main, goto_define).menu_key(split(""))
+		goto_define := get_cmd_actor(main, goto_define).menu_key(split(""))
+		refs := get_cmd_actor(main, goto_refer).menu_key(split(""))
 		callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
 		items := []context_menu_item{
-			{item: ref, handle: func() {
-				// loc:=ret.convert_curloc_range(ret.rightmenu.loc)
+			{item: refs, handle: func() {
 				main.get_refer(ret.rightmenu.select_range, main.codeview.filename)
 			}},
+			{item: goto_define, handle: func() {
+				main.get_define(ret.rightmenu.select_range, main.codeview.filename)
+			}},
 			{item: callin, handle: func() {
-
+				loc := lsp.Location{
+					URI:   lsp.NewDocumentURI(ret.filename),
+					Range: ret.rightmenu.select_range,
+				}
+				main.get_callin_stack_by_cursor(loc, ret.filename)
 			}},
 		}
 		// m := main
@@ -170,10 +177,10 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			if code.rightmenu.visible && action == tview.MouseRightClick {
 				root.Cursor.Loc = tab_loc(root, pos)
 				root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
-				log.Println("before",code.view.Cursor.CurSelection)
+				log.Println("before", code.view.Cursor.CurSelection)
 				root.Cursor.SelectWord()
 				code.rightmenu.select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
-				log.Println("after ",code.view.Cursor.CurSelection)
+				log.Println("after ", code.view.Cursor.CurSelection)
 			}
 			return reta, retevent
 		}
