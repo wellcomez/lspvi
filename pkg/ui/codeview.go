@@ -188,6 +188,13 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			return reta, retevent
 		}
 	}
+	if action == tview.MouseLeftDoubleClick {
+		root.Cursor.Loc = tab_loc(root, pos)
+		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
+		root.Cursor.SelectWord()
+		code.main.codeview.action_goto_define()
+		return tview.MouseConsumed, nil
+	}
 	if action == tview.MouseLeftDown {
 		code.main.set_viewid_focus(view_code)
 		code.mouse_select_area = true

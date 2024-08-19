@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -44,6 +45,7 @@ type quick_view struct {
 	main         *mainui
 	currentIndex int
 	Type         DateType
+	menu         *contextmenu
 }
 
 // new_quikview
@@ -51,13 +53,33 @@ func new_quikview(main *mainui) *quick_view {
 	view := new_customlist()
 	view.List.SetMainTextStyle(tcell.StyleDefault.Normal()).ShowSecondaryText(false)
 	var vid view_id = view_quickview
+	var items = []context_menu_item{
+		{item: cmditem{cmd: cmdactor{desc: "Open"}}, handle: func() {
+			qk := main.quickview
+			qk.selection_handle_impl(view.GetCurrentItem(), true)
+		}},
+		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
+	}
 	ret := &quick_view{
 		view_link: &view_link{up: view_code, right: view_callin},
 		Name:      vid.getname(),
 		view:      view,
 		main:      main,
 		quickview: new_quick_preview(),
+		menu:      new_contextmenu(main, items),
 	}
+	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		is_rightclick := (action == tview.MouseRightClick)
+		menu := ret.menu
+		action, event = menu.handle_mouse(action, event)
+		if ret.menu.visible && is_rightclick {
+			_, y, _, _ := view.GetRect()
+			index := (menu.MenuPos.y-y)
+			log.Println("index in list:", index)
+			view.SetCurrentItem(index)
+		}
+		return action, event
+	})
 	view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		ch := event.Rune()
 		if ch == 'j' || event.Key() == tcell.KeyDown {

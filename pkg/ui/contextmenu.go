@@ -90,6 +90,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		x, y := event.Position()
 		menu.MenuPos = MousePosition{x, y}
 		menu.mousePos = MousePosition{x, y}
+		menu.table.SetCurrentItem(0)
 		return tview.MouseConsumed, nil
 	}
 	posX, posY := event.Position()
@@ -164,9 +165,9 @@ func (v *contextmenu) Draw(screen tcell.Screen) {
 	if !v.visible {
 		return
 	}
-	_, height := screen.Size()
-	h := height / 2
-	v.table.SetRect(v.MenuPos.x, v.MenuPos.y, v.width, h)
+	viewid := v.main.get_focus_view_id()
+	_, Y, height, _ := v.main.get_view_from_id(viewid).GetRect()
+	v.table.SetRect(v.MenuPos.x, v.MenuPos.y, v.width, Y+height-v.MenuPos.y)
 	v.table.Draw(screen)
 	v.table.Draw(screen)
 }
