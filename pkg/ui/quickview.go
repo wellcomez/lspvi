@@ -1,9 +1,13 @@
 package mainui
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -49,9 +53,33 @@ type quick_view struct {
 	menu         *contextmenu
 	searchkey    lspcore.SymolSearchKey
 }
+type searchdata struct {
+	Type   DateType
+	Key    lspcore.SymolSearchKey
+	Result search_reference_result
+}
 
-func (qk quick_view) save() {
+func (qk quick_view) save() error {
+	dir, err := qk.InitDir()
+	if err != nil {
+		log.Println("save ", err)
+		return err
+	}
+	uid := search_key_uid(qk.searchkey)
+	uid = strings.ReplaceAll(uid, qk.main.root, "")
+	hexbuf := md5.Sum([]byte(uid))
+	uid = hex.EncodeToString(hexbuf[:])
+	filename := filepath.Join(dir, uid+".json")
 
+	buf, error := json.Marshal(searchdata{
+		Key:    qk.searchkey,
+		Type:   qk.Type,
+		Result: qk.Refs,
+	})
+	if error != nil {
+		return error
+	}
+	return os.WriteFile(filename, buf, 0666)
 }
 
 // new_quikview
@@ -101,7 +129,27 @@ func new_quikview(main *mainui) *quick_view {
 	})
 	view.SetSelectedFunc(ret.selection_handle)
 	return ret
+}
+func (qf *quick_view) InitDir() (string, error) {
+	wk := qf.main.lspmgr.Wk
+	Dir := filepath.Join(wk.Export, "qf")
+	if checkDirExists(Dir) {
+		return Dir, nil
+	}
+	err := os.Mkdir(Dir, 0755)
+	return Dir, err
+}
 
+func checkDirExists(dirPath string) bool {
+	_, err := os.Stat(dirPath)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	// 其他类型的错误
+	return false
 }
 func (qk *quick_view) DrawPreview(screen tcell.Screen, top, left, width, height int) bool {
 	qk.quickview.draw(width, height, screen)
@@ -132,7 +180,7 @@ func (qk *quick_view) go_prev() {
 }
 
 func (qk *quick_view) open_index(next int) {
-	loc := qk.Refs.refs[next].Loc
+	loc := qk.Refs.Refs[next].Loc
 	qk.quickview.update_preview(loc)
 }
 func (qk *quick_view) go_next() {
@@ -140,7 +188,7 @@ func (qk *quick_view) go_next() {
 		return
 	}
 	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
-	loc := qk.Refs.refs[next].Loc
+	loc := qk.Refs.Refs[next].Loc
 	qk.quickview.update_preview(loc)
 	qk.view.SetCurrentItem(next)
 	if qk.Type == data_refs {
@@ -156,7 +204,7 @@ func (qk quick_view) String() string {
 	if qk.Type == data_search {
 		s = "Search"
 	}
-	return fmt.Sprintf("%s %d/%d", s, qk.currentIndex+1, len(qk.Refs.refs))
+	return fmt.Sprintf("%s %d/%d", s, qk.currentIndex+1, len(qk.Refs.Refs))
 }
 
 // selection_handle
@@ -166,7 +214,7 @@ func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 }
 
 func (qk *quick_view) selection_handle_impl(index int, open bool) {
-	vvv := qk.Refs.refs[index]
+	vvv := qk.Refs.Refs[index]
 	qk.currentIndex = index
 	same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.filename
 	if open || same {
@@ -196,9 +244,9 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	qk.view.Clear()
 
 	m := qk.main
-	qk.Refs.refs = get_loc_caller(refs, m.lspmgr.Current)
+	qk.Refs.Refs = get_loc_caller(refs, m.lspmgr.Current)
 	qk.searchkey = key
-	for _, caller := range qk.Refs.refs {
+	for _, caller := range qk.Refs.Refs {
 		v := caller.Loc
 		source_file_path := v.URI.AsPath().String()
 		data, err := os.ReadFile(source_file_path)
