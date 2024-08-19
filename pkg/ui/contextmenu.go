@@ -97,7 +97,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	y1 := menu.MenuPos.y
 	h := 100
 	w := menu.width
-	log.Printf("x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
+	// log.Printf("x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
 	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
 		if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 			menu.visible = false
@@ -105,7 +105,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		}
 		return action, event
 	}
-	log.Printf("In x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
+	// log.Printf("In x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
 	if !menu.visible {
 		return action, event
 	}

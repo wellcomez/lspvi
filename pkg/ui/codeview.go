@@ -29,6 +29,7 @@ type CodeView struct {
 }
 type text_right_menu struct {
 	*contextmenu
+	select_range lsp.Range
 }
 
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
@@ -116,8 +117,13 @@ func NewCodeView(main *mainui) *CodeView {
 		ref := get_cmd_actor(main, goto_define).menu_key(split(""))
 		callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
 		items := []context_menu_item{
-			{item: ref, handle: ref.cmd.handle},
-			{item: callin, handle: callin.cmd.handle},
+			{item: ref, handle: func() {
+				// loc:=ret.convert_curloc_range(ret.rightmenu.loc)
+				main.get_refer(ret.rightmenu.select_range, main.codeview.filename)
+			}},
+			{item: callin, handle: func() {
+
+			}},
 		}
 		// m := main
 		// mm := cmditem{
@@ -158,8 +164,17 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		X: posX - int(xOffset),
 	}
 	if code.rightmenu != nil {
+
 		reta, retevent := code.rightmenu.handle_mouse(action, event)
 		if reta == tview.MouseConsumed {
+			if code.rightmenu.visible && action == tview.MouseRightClick {
+				root.Cursor.Loc = tab_loc(root, pos)
+				root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
+				log.Println("before",code.view.Cursor.CurSelection)
+				root.Cursor.SelectWord()
+				code.rightmenu.select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
+				log.Println("after ",code.view.Cursor.CurSelection)
+			}
 			return reta, retevent
 		}
 	}
@@ -422,6 +437,11 @@ func (code *CodeView) action_get_refer() {
 func (code *CodeView) lsp_cursor_loc() lsp.Range {
 	root := code.view
 	loc := root.Cursor.CurSelection
+	x := code.convert_curloc_range(loc)
+	return x
+}
+
+func (*CodeView) convert_curloc_range(loc [2]femto.Loc) lsp.Range {
 	x := lsp.Range{
 		Start: lsp.Position{
 			Line:      loc[0].Y,
