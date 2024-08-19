@@ -118,6 +118,22 @@ func (h *quickfix_history) Load() ([]qf_history_data, error) {
 		}
 		ret = append(ret, result)
 	}
+	umlDir := filepath.Join(h.Wk.Export, "uml")
+	dirs, err = os.ReadDir(umlDir)
+	if err != nil {
+		return ret, err
+	}
+	for _, dir := range dirs {
+		var result = qf_history_data{
+			Type: data_callin,
+			Key: lspcore.SymolSearchKey{
+				Key: dir.Name(),
+				File: filepath.Join(umlDir, dir.Name()),
+			},
+		}
+		ret = append(ret, result)
+
+	}
 	return ret, nil
 }
 
@@ -240,10 +256,7 @@ func (main *quick_view) OnSearch(txt string) {
 
 // String
 func (qk quick_view) String() string {
-	var s = "Refs"
-	if qk.Type == data_search {
-		s = "Search"
-	}
+	var s = qk.Type.String()
 	return fmt.Sprintf("%s %d/%d", s, qk.currentIndex+1, len(qk.Refs.Refs))
 }
 
@@ -270,6 +283,8 @@ type DateType int
 const (
 	data_search = iota
 	data_refs
+	data_callin
+	data_bookmark
 )
 
 func search_key_uid(key lspcore.SymolSearchKey) string {

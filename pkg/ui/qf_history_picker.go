@@ -3,6 +3,7 @@ package mainui
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -47,7 +48,7 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 		})
 	}
 }
-func (pk qk_history_picker) grid() tview.Primitive{
+func (pk qk_history_picker) grid() tview.Primitive {
 	return layout_list_row_edit(pk.list, pk.codeprev.view, pk.parent.input)
 }
 func (pk qk_history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -64,7 +65,10 @@ func (t DateType) String() string {
 		return "Search"
 	case data_refs:
 		return "Refs"
-
+	case data_bookmark:
+		return "Bookmark"
+	case data_callin:
+		return "Callin"
 	}
 	return ""
 }
@@ -75,11 +79,11 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	keys, _ := hh.Load()
 	keymaplist := []string{}
 	for _, v := range keys {
-		file_info:=""
-		if len(v.Key.File)>0{
-			file_info =fmt.Sprintf("%s %d:%d",v.Key.File,v.Key.Ranges.Start.Line,v.Key.Ranges.Start.Character)
+		file_info := ""
+		if len(v.Key.File) > 0 {
+			file_info = fmt.Sprintf("%s %d:%d", v.Key.File, v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
 		}
-		keymaplist = append(keymaplist, fmt.Sprintf("%-4s %s %s", v.Type.String(), v.Key.Key,file_info))
+		keymaplist = append(keymaplist, fmt.Sprintf("%-4s %s %s", v.Type.String(), v.Key.Key, file_info))
 	}
 
 	var options = fzf.DefaultOptions()
@@ -111,17 +115,34 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 func (qk *qk_history_picker) open_in_qf() {
 	i := qk.list.GetCurrentItem()
 	item := qk.impl.keys[i]
-	qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
+	if item.Type == data_refs {
+		qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
+	} else if item.Type == data_callin {
+	}
 }
 
 func (qk *qk_history_picker) updateprev(index int) {
 	keys := qk.impl.keys
-	caller := keys[index].Result.Refs
-	dataprev := []string{}
-	for _, call := range caller {
-		dataprev = append(dataprev, call.ListItem(qk.parent.main.root))
+	item := qk.impl.keys[index]
+	if item.Type == data_refs {
+		caller := keys[index].Result.Refs
+		dataprev := []string{}
+		for _, call := range caller {
+			dataprev = append(dataprev, call.ListItem(qk.parent.main.root))
+		}
+		qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
+	} else if item.Type == data_callin {
+		callin := keys[index].Key.File
+		dirs, err := os.ReadDir(callin)
+		content := []string{}
+		for _, item := range dirs {
+			content = append(content, item.Name())
+		}
+		data := strings.Join(content, "\n")
+		if err == nil {
+			qk.codeprev.LoadBuffer([]byte(data), "")
+		}
 	}
-	qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
 }
 
 // func (pk qk_history_picker) grid(input *tview.InputField) *tview.Grid {
