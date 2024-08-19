@@ -13,6 +13,7 @@ type command_id int
 const (
 	open_picker_document_symbol = iota
 	open_picker_refs
+	open_picker_qfh
 	open_picker_wkq
 	open_picker_livegrep
 	open_picker_history
@@ -50,6 +51,8 @@ const (
 
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	switch id {
+	case open_picker_qfh:
+		return cmdactor{"quickfix history", m.open_qfh_query}
 	case open_picker_wkq:
 		return cmdactor{"query workspace symbol", m.open_wks_query}
 	case open_picker_document_symbol:
@@ -201,6 +204,7 @@ const key_goto_last_line = "G"
 const key_picker_history = "hh"
 const key_picker_ctrlp = "f"
 const key_picker_document_symbol = "o"
+const key_picker_qfh= "qh"
 const key_picker_live_grep = "g"
 const key_picker_grep_word = "fw"
 const key_picker_help = "h"
@@ -230,6 +234,7 @@ func (main *mainui) key_map_escape() []cmditem {
 func (m *mainui) key_map_space_menu() []cmditem {
 	return []cmditem{
 		get_cmd_actor(m, open_picker_document_symbol).menu_key(split(key_picker_document_symbol)),
+		get_cmd_actor(m, open_picker_qfh).menu_key(split(key_picker_qfh)),
 		get_cmd_actor(m, open_picker_refs).menu_key(split(chr_goto_refer)),
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),
 		get_cmd_actor(m, open_picker_history).menu_key(split(key_picker_history)),
@@ -244,6 +249,7 @@ func (main *mainui) key_map_leader() []cmditem {
 		get_cmd_actor(main, open_picker_ctrlp).leader(split(key_picker_ctrlp)),
 		get_cmd_actor(main, open_picker_grep_word).leader(split(key_picker_grep_word)),
 		get_cmd_actor(main, open_picker_wkq).leader(split("wk")),
+		get_cmd_actor(main, open_picker_qfh).leader(split(key_picker_qfh)),
 		get_cmd_actor(main, open_picker_refs).leader(split(chr_goto_refer)),
 		get_cmd_actor(main, open_picker_history).leader(split(key_picker_history)),
 		get_cmd_actor(main, open_picker_document_symbol).leader(split(key_picker_document_symbol)),

@@ -57,7 +57,11 @@ func (pick *fzfmain) MouseHanlde(event *tcell.EventMouse, action tview.MouseActi
 func (v *fzfmain) hide() {
 	v.Visible = false
 }
-
+func (v *fzfmain) open_qfh_picker(file *lspcore.Symbol_file) {
+	sym := new_qk_history_picker(v)
+	x := sym.grid()
+	v.create_dialog_content(x, sym)
+}
 func (v *fzfmain) open_wks_query(file *lspcore.Symbol_file) {
 	sym := new_workspace_symbol_picker(v, file)
 	x := sym.grid()

@@ -265,6 +265,9 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 		m.set_viewid_focus(vid)
 	}
 }
+func (m *mainui) open_qfh_query() {
+	m.layout.dialog.open_qfh_picker(m.lspmgr.Current)
+}
 func (m *mainui) open_wks_query() {
 	m.layout.dialog.open_wks_query(m.lspmgr.Current)
 }
@@ -597,7 +600,7 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			main.codeview.gotoline(gs.GetIndex())
 			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
-				main.quickview.main.quickview.OnLspRefenceChanged(locs, data_search,lspcore.SymolSearchKey{Key: txt})
+				main.quickview.main.quickview.OnLspRefenceChanged(locs, data_search, lspcore.SymolSearchKey{Key: txt})
 			}
 		} else {
 			main.codeview.gotoline(gs.GetNext())

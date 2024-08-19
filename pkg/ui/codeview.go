@@ -560,18 +560,10 @@ func (code *CodeView) Load(filename string) error {
 	if err != nil {
 		return err
 	}
-	buffer := femto.NewBufferFromString(string(data), filename)
-	code.view.OpenBuffer(buffer)
-	code.filename = filename
-	var colorscheme femto.Colorscheme
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
 	// "monokai"
-	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
-		if data, err := monokai.Data(); err == nil {
-			colorscheme = femto.ParseColorscheme(string(data))
-		}
-	}
-	code.view.SetColorscheme(colorscheme)
+	code.LoadBuffer(data, filename)
+	code.filename = filename
 
 	name := filename
 	if code.main != nil {
@@ -581,6 +573,19 @@ func (code *CodeView) Load(filename string) error {
 	code.view.SetTitle(name)
 	code.update_with_line_changed()
 	return nil
+}
+
+func (code *CodeView) LoadBuffer(data []byte, filename string) {
+	buffer := femto.NewBufferFromString(string(data), filename)
+	code.view.OpenBuffer(buffer)
+	var colorscheme femto.Colorscheme
+
+	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
+		if data, err := monokai.Data(); err == nil {
+			colorscheme = femto.ParseColorscheme(string(data))
+		}
+	}
+	code.view.SetColorscheme(colorscheme)
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
 	x := 0

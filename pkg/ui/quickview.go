@@ -53,10 +53,15 @@ type quick_view struct {
 	menu         *contextmenu
 	searchkey    lspcore.SymolSearchKey
 }
-type searchdata struct {
+type qf_history_data struct {
 	Type   DateType
 	Key    lspcore.SymolSearchKey
 	Result search_reference_result
+}
+
+func (h *qf_history_data) ListItem() string {
+
+	return ""
 }
 
 func (qk quick_view) save() error {
@@ -72,7 +77,7 @@ func (qk quick_view) save() error {
 	uid = hex.EncodeToString(hexbuf[:])
 	filename := filepath.Join(dir, uid+".json")
 
-	buf, error := json.Marshal(searchdata{
+	buf, error := json.Marshal(qf_history_data{
 		Key:    qk.searchkey,
 		Type:   qk.Type,
 		Result: qk.Refs,
@@ -87,8 +92,8 @@ type quickfix_history struct {
 	Wk lspcore.WorkSpace
 }
 
-func (h *quickfix_history) Load() ([]search_result, error) {
-	var ret = []search_result{}
+func (h *quickfix_history) Load() ([]qf_history_data, error) {
+	var ret = []qf_history_data{}
 	dir, err := h.InitDir()
 	if err != nil {
 		return ret, err
@@ -106,7 +111,7 @@ func (h *quickfix_history) Load() ([]search_result, error) {
 		if err != nil {
 			continue
 		}
-		var result search_result
+		var result qf_history_data
 		err = json.Unmarshal(buf, &result)
 		if err != nil {
 			continue
@@ -272,36 +277,50 @@ func search_key_uid(key lspcore.SymolSearchKey) string {
 	return key.Key
 }
 func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key lspcore.SymolSearchKey) {
-	qk.Type = t
 	// panic("unimplemented")
 	qk.view.Clear()
 
 	m := qk.main
-	qk.Refs.Refs = get_loc_caller(refs, m.lspmgr.Current)
+	Refs := get_loc_caller(refs, m.lspmgr.Current)
+
+	qk.UpdateListView(t, Refs, key)
+}
+
+func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
+	qk.Type = t
+	qk.Refs.Refs = Refs
 	qk.searchkey = key
 	for _, caller := range qk.Refs.Refs {
-		v := caller.Loc
-		source_file_path := v.URI.AsPath().String()
-		data, err := os.ReadFile(source_file_path)
-		if err != nil {
+		secondline := caller.ListItem(qk.main.root)
+		if len(secondline) == 0 {
 			continue
 		}
-		lines := strings.Split(string(data), "\n")
-		line := lines[v.Range.Start.Line]
-		if len(line) == 0 {
-			continue
-		}
-		gap := 40
-		begin := max(0, v.Range.Start.Character-gap)
-		end := min(len(line), v.Range.Start.Character+gap)
-		path := strings.Replace(v.URI.AsPath().String(), qk.main.root, "", -1)
-		callerstr := ""
-		if caller.Caller != nil {
-			callerstr = caller_to_listitem(caller.Caller, qk.main.root)
-		}
-		code := line[begin:end]
-		secondline := fmt.Sprintf("%s:%-4d%s		%s", path, v.Range.Start.Line+1, callerstr, code)
 		qk.view.AddItem(secondline, "", nil)
 	}
 	qk.open_index(qk.view.GetCurrentItem())
+}
+
+func (caller ref_with_caller) ListItem(root string) string {
+	v := caller.Loc
+	source_file_path := v.URI.AsPath().String()
+	data, err := os.ReadFile(source_file_path)
+	if err != nil {
+		return ""
+	}
+	lines := strings.Split(string(data), "\n")
+	line := lines[v.Range.Start.Line]
+	if len(line) == 0 {
+		return ""
+	}
+	gap := 40
+	begin := max(0, v.Range.Start.Character-gap)
+	end := min(len(line), v.Range.Start.Character+gap)
+	path := strings.Replace(v.URI.AsPath().String(), root, "", -1)
+	callerstr := ""
+	if caller.Caller != nil {
+		callerstr = caller_to_listitem(caller.Caller, root)
+	}
+	code := line[begin:end]
+	secondline := fmt.Sprintf("%s:%-4d%s		%s", path, v.Range.Start.Line+1, callerstr, code)
+	return secondline
 }
