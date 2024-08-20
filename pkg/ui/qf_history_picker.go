@@ -23,15 +23,17 @@ type qf_history_picker_impl struct {
 }
 type ListClickCheck struct {
 	*clickdetector
-	list *tview.List
+	list    *tview.List
+	linenum int
 }
 
-func NewListClickCheck(list *tview.List, click func(), doublehandle func()) *ListClickCheck {
+func NewListClickCheck(list *tview.List, linenum int, click func(), doublehandle func()) *ListClickCheck {
 	var l = &ListClickCheck{
 		clickdetector: &clickdetector{
 			lastMouseClick: time.Time{},
 		},
-		list: list,
+		linenum: linenum,
+		list:    list,
 	}
 
 	list.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -46,7 +48,7 @@ func NewListClickCheck(list *tview.List, click func(), doublehandle func()) *Lis
 			_, y, _, _ := list.GetInnerRect()
 			_, mY := event.Position()
 			if a1 == tview.MouseLeftClick {
-				index := mY - y
+				index := (mY - y) / l.linenum
 				list.SetCurrentItem(index)
 				if click != nil {
 					click()
@@ -166,7 +168,7 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		})
 	}
 	ret.updateprev()
-	ret.listclickcheck = NewListClickCheck(list.List, func() {
+	ret.listclickcheck = NewListClickCheck(list.List, 1, func() {
 		ret.updateprev()
 	}, func() {
 		ret.open_in_qf()

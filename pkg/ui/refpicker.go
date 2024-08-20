@@ -49,6 +49,7 @@ type refpicker_impl struct {
 	codeline          []string
 	fzf               *fzflib.Fzf
 	parent            *fzfmain
+	list_click_check  *ListClickCheck
 	// ref_call_in       []ref_with_callin
 }
 
@@ -198,6 +199,11 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 			parent:   v,
 		},
 	}
+	sym.impl.list_click_check = NewListClickCheck(sym.impl.listview, 2, func() {
+		sym.update_preview()
+	}, func() {
+		sym.impl.parent.hide()
+	})
 	sym.impl.codeprev.view.SetBorder(true)
 	return sym
 }
