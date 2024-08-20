@@ -3,6 +3,7 @@ package mainui
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -17,6 +18,37 @@ func (parent *fzfmain) openfile(path string) {
 	parent.main.cmdline.Vim.EnterEscape()
 }
 
+type clickdetector struct {
+	lastMouseX, lastMouseY int       // The last position of the mouse.
+	mouseDownX, mouseDownY int       // The position of the mouse when its button was last pressed.
+	lastMouseClick         time.Time // The time when a mouse button was last clicked.
+}
+
+var DoubleClickInterval = 500 * time.Millisecond
+
+func (a *clickdetector) handle(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	x, y := event.Position()
+	a.lastMouseX = x
+	a.lastMouseY = y
+	if action == tview.MouseLeftDown {
+		a.mouseDownX = x
+		a.mouseDownY = y
+	}
+	if action == tview.MouseLeftUp {
+		clickMoved := x != a.mouseDownX || y != a.mouseDownY
+		if !clickMoved {
+			if a.lastMouseClick.Add(DoubleClickInterval).Before(time.Now()) {
+				a.lastMouseClick = time.Now()
+				return tview.MouseLeftClick, event
+			} else {
+				a.lastMouseClick = time.Time{} // reset
+				return tview.MouseLeftDoubleClick, event
+			}
+		}
+	}
+	return action, event
+}
+
 type fzfmain struct {
 	Frame   *tview.Frame
 	input   *tview.InputField
@@ -27,6 +59,7 @@ type fzfmain struct {
 	// filewalk      *DirWalkk
 	// symbolwalk    *SymbolWalk
 	currentpicker picker
+	clickcheck    clickdetector
 }
 type fuzzpicktype int
 
@@ -185,6 +218,9 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 		input: input,
 		app:   app,
 		main:  main,
+		clickcheck: clickdetector{
+			lastMouseClick: time.Time{},
+		},
 	}
 	new_filewalk(main.root)
 	return ret

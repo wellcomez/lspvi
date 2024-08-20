@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/reinhrst/fzf-lib"
@@ -20,11 +21,53 @@ type qf_history_picker_impl struct {
 	keys        []qf_history_data
 	selectIndex []int32
 }
+type ListClickCheck struct {
+	*clickdetector
+	list *tview.List
+}
+
+func NewListClickCheck(list *tview.List, click func(), doublehandle func()) *ListClickCheck {
+	var l = &ListClickCheck{
+		clickdetector: &clickdetector{
+			lastMouseClick: time.Time{},
+		},
+		list: list,
+	}
+
+	list.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if !InRect(event, list) {
+			return action, event
+		}
+		a1, _ := l.handle(action, event)
+		if action != tview.MouseMove {
+			log.Println("list click ",
+				"action", action, a1,
+				"pos:", l.lastMouseX, l.lastMouseY)
+			_, y, _, _ := list.GetInnerRect()
+			_, mY := event.Position()
+			if a1 == tview.MouseLeftClick {
+				index := mY - y
+				list.SetCurrentItem(index)
+				if click != nil {
+					click()
+				}
+			} else if a1 == tview.MouseLeftDoubleClick {
+				if doublehandle != nil {
+					doublehandle()
+				}
+			}
+		}
+		return action, event
+	})
+	return l
+}
+
 type qk_history_picker struct {
-	impl     *qf_history_picker_impl
-	list     *customlist
-	codeprev *CodeView
-	parent   *fzfmain
+	impl           *qf_history_picker_impl
+	list           *customlist
+	codeprev       *CodeView
+	parent         *fzfmain
+	listclickcheck *ListClickCheck
 }
 
 // name implements picker.
@@ -106,6 +149,11 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		parent:   v,
 		list:     list,
 		codeprev: NewCodeView(v.main),
+		listclickcheck: &ListClickCheck{
+			clickdetector: &clickdetector{
+				lastMouseClick: time.Time{},
+			},
+		},
 	}
 	ret.impl.selectIndex = []int32{}
 	for i, value := range keymaplist {
@@ -118,6 +166,12 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		})
 	}
 	ret.updateprev()
+	ret.listclickcheck = NewListClickCheck(list.List, func() {
+		ret.updateprev()
+	}, func() {
+		ret.open_in_qf()
+		ret.parent.hide()
+	})
 	return ret
 }
 
