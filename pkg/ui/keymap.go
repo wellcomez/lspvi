@@ -204,7 +204,7 @@ const key_goto_last_line = "G"
 const key_picker_history = "hh"
 const key_picker_ctrlp = "f"
 const key_picker_document_symbol = "o"
-const key_picker_qfh= "qh"
+const key_picker_qfh= "hq"
 const key_picker_live_grep = "g"
 const key_picker_grep_word = "fw"
 const key_picker_help = "h"
@@ -234,7 +234,7 @@ func (main *mainui) key_map_escape() []cmditem {
 func (m *mainui) key_map_space_menu() []cmditem {
 	return []cmditem{
 		get_cmd_actor(m, open_picker_document_symbol).menu_key(split(key_picker_document_symbol)),
-		get_cmd_actor(m, open_picker_qfh).menu_key(split(key_picker_qfh)),
+		get_cmd_actor(m, open_picker_qfh).menu_key(split("q")),
 		get_cmd_actor(m, open_picker_refs).menu_key(split(chr_goto_refer)),
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),
 		get_cmd_actor(m, open_picker_history).menu_key(split(key_picker_history)),

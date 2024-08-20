@@ -84,12 +84,13 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	hh := quickfix_history{Wk: v.main.lspmgr.Wk}
 	keys, _ := hh.Load()
 	keymaplist := []string{}
+	root := v.main.root
 	for _, v := range keys {
 		file_info := ""
 		if len(v.Key.File) > 0 {
-			file_info = fmt.Sprintf("%s %d:%d", v.Key.File, v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
+			file_info = fmt.Sprintf("%s %d:%d", strings.ReplaceAll(v.Key.File, root, ""), v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
 		}
-		keymaplist = append(keymaplist, fmt.Sprintf("%-4s %s %s", v.Type.String(), v.Key.Key, file_info))
+		keymaplist = append(keymaplist, fmt.Sprintf("%s:%s 		%s", v.Type.String(), v.Key.Key, file_info))
 	}
 
 	var options = fzf.DefaultOptions()
