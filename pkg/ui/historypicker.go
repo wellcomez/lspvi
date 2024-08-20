@@ -35,13 +35,14 @@ type history_picker_impl struct {
 }
 
 type history_picker struct {
-	impl *history_picker_impl
-	list *customlist
+	impl      *history_picker_impl
+	list      *customlist
+	listcheck *ListClickCheck
 }
 
 // name implements picker.
 func (pk history_picker) name() string {
-  return "history"
+	return "history"
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
@@ -66,6 +67,15 @@ func new_history_picker(v *fzfmain) history_picker {
 		},
 		list: list,
 	}
+	sym.listcheck = NewListClickCheck(list.List, 1, func() {
+
+	}, func() {
+		h := sym.impl.listdata
+		v := h[list.GetCurrentItem()]
+		path := v.filepath
+		parent := sym.impl.parent
+		parent.openfile(path)
+	})
 	history := NewHistory(lspviroot.history)
 	sym.impl.codeprev.view.SetBorder(true)
 	var options = fzflib.DefaultOptions()
