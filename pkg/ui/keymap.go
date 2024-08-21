@@ -47,10 +47,13 @@ const (
 	vi_search_mode
 	vi_line_head
 	open_picker_help
+	cmd_quit
 )
 
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	switch id {
+	case cmd_quit:
+		return cmdactor{"Quit", m.quit}
 	case open_picker_qfh:
 		return cmdactor{"quickfix history", m.open_qfh_query}
 	case open_picker_wkq:
@@ -129,9 +132,9 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{"up", func() { m.codeview.action_key_up() }}
 	case arrow_down:
 		return cmdactor{"down", func() { m.codeview.action_key_down() }}
-	case vi_left,arrow_left:
+	case vi_left, arrow_left:
 		return cmdactor{"left", func() { m.codeview.view.Cursor.Left() }}
-	case vi_right,arrow_right:
+	case vi_right, arrow_right:
 		return cmdactor{"right", func() { m.codeview.view.Cursor.Right() }}
 	case vi_left_word:
 		return cmdactor{"word left", func() { m.codeview.word_left() }}
@@ -204,7 +207,7 @@ const key_goto_last_line = "G"
 const key_picker_history = "hh"
 const key_picker_ctrlp = "f"
 const key_picker_document_symbol = "o"
-const key_picker_qfh= "hq"
+const key_picker_qfh = "hq"
 const key_picker_live_grep = "g"
 const key_picker_grep_word = "fw"
 const key_picker_help = "h"
@@ -241,6 +244,7 @@ func (m *mainui) key_map_space_menu() []cmditem {
 		get_cmd_actor(m, open_picker_grep_word).menu_key(split(key_picker_grep_word)),
 		get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
 		get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
+		get_cmd_actor(m, cmd_quit).menu_key(split("e")),
 	}
 }
 

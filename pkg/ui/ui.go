@@ -265,6 +265,9 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 		m.set_viewid_focus(vid)
 	}
 }
+func (m *mainui) quit() {
+	m.Close()
+}
 func (m *mainui) open_qfh_query() {
 	m.layout.dialog.open_qfh_picker(m.lspmgr.Current)
 }
