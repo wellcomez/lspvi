@@ -12,14 +12,14 @@ type MousePosition struct {
 	x, y int
 }
 type contextmenu struct {
-	table    *tview.List
-	main     *mainui
-	visible  bool
-	impl     *contextmenu_impl
-	input    *inputdelay
-	MenuPos  MousePosition
-	mousePos MousePosition
-	width    int
+	table   *tview.List
+	main    *mainui
+	visible bool
+	impl    *contextmenu_impl
+	input   *inputdelay
+	MenuPos MousePosition
+	//mousePos MousePosition
+	width int
 }
 
 func (v *contextmenu) input_cb(word string) {
@@ -89,7 +89,6 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		menu.visible = !menu.visible
 		x, y := event.Position()
 		menu.MenuPos = MousePosition{x, y}
-		menu.mousePos = MousePosition{x, y}
 		menu.table.SetCurrentItem(0)
 		return tview.MouseConsumed, nil
 	}
@@ -112,18 +111,13 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	if !menu.visible {
 		return action, event
 	}
+	_, top, _, _ := menu.table.GetRect()
 	if action == tview.MouseMove {
-		x, y := event.Position()
-		if y > menu.mousePos.y {
-			cur := menu.table.GetCurrentItem() + 1
-			cur = min(len(menu.impl.items)-1, cur)
-			menu.table.SetCurrentItem(cur)
-		} else if y < menu.mousePos.y {
-			cur := menu.table.GetCurrentItem() - 1
-			cur = max(0, cur)
-			menu.table.SetCurrentItem(cur)
-		}
-		menu.mousePos = MousePosition{x, y}
+		_, y := event.Position()
+		cur := y - top
+		cur = min(cur, len(menu.impl.items)-1)
+		cur = max(0, cur)
+		menu.table.SetCurrentItem(cur)
 	} else if action == tview.MouseLeftClick {
 		menu.impl.items[menu.table.GetCurrentItem()].handle()
 		menu.visible = false

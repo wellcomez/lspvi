@@ -29,7 +29,7 @@ type cmdactor struct {
 func (key cmdkey) matched_event(s tcell.EventKey) bool {
 	switch key.Type {
 	case cmd_key_tcell_key:
-		return key.tcell_key==s.Key()
+		return key.tcell_key == s.Key()
 	case cmd_key_event_name:
 		return key.eventname == s.Name()
 	case cmd_key_rune:
@@ -49,8 +49,8 @@ func (key cmdkey) matched(s string) bool {
 //	}
 func (actor cmdactor) runne(key rune) cmditem {
 	return cmditem{cmdkey{
-		Type:      cmd_key_rune,
-		rune : key,
+		Type: cmd_key_rune,
+		rune: key,
 	}, actor}
 }
 func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
@@ -100,7 +100,7 @@ type cmdkey struct {
 	Type      cmdkeytype
 	eventname string
 	rune      rune
-	tcell_key      tcell.Key
+	tcell_key tcell.Key
 }
 
 func (cmd cmdkey) displaystring() string {
@@ -209,7 +209,7 @@ func new_spacemenu(m *mainui) *space_menu {
 	t.input = &inputdelay{
 		cb:      t.input_cb,
 		cmdlist: command_list,
-		main: m,
+		main:    m,
 	}
 	for _, v := range impl.items {
 		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
@@ -223,19 +223,21 @@ func new_spacemenu(m *mainui) *space_menu {
 	return &t
 }
 func (menu *space_menu) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-	if !InRect(event,menu.table){
+	if !InRect(event, menu.table) {
 		return action, event
 	}
 	// log.Printf("In x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
 	if !menu.visible {
 		return action, event
 	}
-	_,top,_,_:=menu.table.GetInnerRect()
+	_, top, _, _ := menu.table.GetInnerRect()
 	if action == tview.MouseMove {
 		_, y := event.Position()
-		index:=y-top
+		index := y - top
+		index = min(index, len(menu.impl.items)-1)
+		index = max(0, index)
 		menu.table.SetCurrentItem(index)
-	} else if action == tview.MouseLeftDown{
+	} else if action == tview.MouseLeftDown {
 		menu.impl.items[menu.table.GetCurrentItem()].handle()
 		menu.visible = false
 	}
