@@ -182,6 +182,7 @@ func (qk *qk_history_picker) open_in_qf() {
 	item := qk.impl.keys[i]
 	if item.Type == data_refs || item.Type == data_search {
 		qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
+    qk.parent.main.ActiveTab(view_quickview,false)
 	} else if item.Type == data_callin {
 		callin := item.Key.File
 		fielname := filepath.Join(callin, "callstack.json")

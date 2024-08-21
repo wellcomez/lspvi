@@ -518,6 +518,11 @@ func MainUI(arg *Arguments) {
 	// main.statusbar.SetText("------------------------------------------------------------------")
 	tab_area.AddItem(tview.NewBox(), 1, 0, false)
 	tab_area.AddItem(main.statusbar, 0, 10, false)
+	mainmenu := tview.NewButton("Menu")
+	mainmenu.SetSelectedFunc(func() {
+		main.layout.spacemenu.visible = !main.layout.spacemenu.visible
+	})
+	tab_area.AddItem(mainmenu, 10, 0, false)
 
 	var tabid view_id = view_quickview
 	fzttab := group.Find(tabid.getname())
@@ -549,6 +554,18 @@ func MainUI(arg *Arguments) {
 		return main.handle_key(event)
 	})
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
+		if main.layout.spacemenu.visible {
+			spacemenu := main.layout.spacemenu
+			if InRect(event, spacemenu.table) {
+				return event, action
+			}
+			if !InRect(event, mainmenu) {
+				if action != tview.MouseMove {
+					spacemenu.visible = !spacemenu.visible
+				}
+				return nil, tview.MouseConsumed
+			}
+		}
 		if main.layout.dialog.Visible {
 			main.layout.dialog.MouseHanlde(event, action)
 			return nil, tview.MouseConsumed
