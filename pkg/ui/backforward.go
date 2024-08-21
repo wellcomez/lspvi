@@ -8,7 +8,7 @@ import (
 
 type backforwarditem struct {
 	Path string
-	Line int
+	Pos  EditorPosition
 }
 type History struct {
 	datalist []backforwarditem
@@ -59,14 +59,21 @@ func (h *History) history_files() []string {
 	return ret
 }
 
+type EditorPosition struct {
+	Line   int
+	Offset int
+}
+
 // AddToHistory
-func (h *History) AddToHistory(newdata string, loc *int) {
+func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
 	lll := h.datalist
-	line := 0
-	if loc != nil {
-		line = *loc
+	pos := EditorPosition{
+		Line: 0,
 	}
-	h.datalist = h.insertAtFront(lll, backforwarditem{Path: newdata, Line: line})
+	if loc != nil {
+		pos = *loc
+	}
+	h.datalist = h.insertAtFront(lll, backforwarditem{Path: newdata, Pos: pos})
 	log.Printf("add history %v", h.datalist[0])
 	if h.file != "" {
 		buf, err := json.Marshal(h.datalist)

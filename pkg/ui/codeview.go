@@ -613,7 +613,7 @@ func (code *CodeView) gotoline(line int) {
 		return
 	}
 	if code.main != nil {
-		code.main.bf.history.AddToHistory(code.filename, &line)
+		code.main.bf.history.AddToHistory(code.filename, &EditorPosition{Line: line, Offset: 0})
 	}
 	key := ""
 

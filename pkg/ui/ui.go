@@ -286,7 +286,7 @@ func (m *mainui) OpenFileToHistory(file string, loc *lsp.Location, addhistory bo
 	}
 	if addhistory {
 		if loc != nil {
-			m.bf.history.AddToHistory(file, &loc.Range.Start.Line)
+			m.bf.history.AddToHistory(file,&EditorPosition{Line: loc.Range.Start.Line})
 		} else {
 			m.bf.history.AddToHistory(file, nil)
 		}
@@ -775,14 +775,14 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 
 func (main *mainui) GoForward() {
 	i := main.bf.GoForward()
-	start := lsp.Position{Line: i.Line}
+	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go forward %v", i)
 	main.OpenFileToHistory(i.Path, &lsp.Location{Range: lsp.Range{Start: start, End: start}}, false)
 }
 
 func (main *mainui) GoBack() {
 	i := main.bf.GoBack()
-	start := lsp.Position{Line: i.Line}
+	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go %v", i)
 	main.OpenFileToHistory(i.Path, &lsp.Location{Range: lsp.Range{
 		Start: start,
