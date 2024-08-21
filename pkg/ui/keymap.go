@@ -55,21 +55,21 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case cmd_quit:
 		return cmdactor{"Quit", m.quit}
 	case open_picker_qfh:
-		return cmdactor{"quickfix history", m.open_qfh_query}
+		return cmdactor{"Quickfix history", m.open_qfh_query}
 	case open_picker_wkq:
-		return cmdactor{"query workspace symbol", m.open_wks_query}
+		return cmdactor{"Query workspace symbol", m.open_wks_query}
 	case open_picker_document_symbol:
-		return cmdactor{"open symbol", m.open_document_symbol_picker}
+		return cmdactor{"Open symbol", m.open_document_symbol_picker}
 	case open_picker_refs:
-		return cmdactor{"reference", m.open_picker_refs}
+		return cmdactor{"Reference", m.open_picker_refs}
 	case open_picker_livegrep:
-		return cmdactor{"live grep", m.open_picker_livegrep}
+		return cmdactor{"Live grep", m.open_picker_livegrep}
 	case open_picker_history:
-		return cmdactor{"history", m.open_picker_history}
+		return cmdactor{"History", m.open_picker_history}
 	case open_picker_grep_word:
-		return cmdactor{"grep word", func() { m.codeview.action_grep_word() }}
+		return cmdactor{"Grep word", func() { m.codeview.action_grep_word() }}
 	case open_picker_ctrlp:
-		return cmdactor{"picker file", m.open_picker_ctrlp}
+		return cmdactor{"Picker file", m.open_picker_ctrlp}
 	case goto_back:
 		{
 			return cmdactor{"back", func() {
