@@ -594,6 +594,9 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
 	x := 0
+	loc.Start.Line = min(code.view.Buf.LinesNum(), loc.Start.Line)
+	loc.End.Line = min(code.view.Buf.LinesNum(), loc.End.Line)
+	
 	line := loc.Start.Line
 	log.Println("gotoline", line)
 	if line < code.view.Topline || code.view.Bottomline() < line {
@@ -618,6 +621,7 @@ func (code *CodeView) gotoline(line int) {
 		return
 	}
 	if code.main != nil {
+		code.main.bf.history.SaveToHistory(code)
 		code.main.bf.history.AddToHistory(code.filename, NewEditorPosition(line, code))
 	}
 	key := ""

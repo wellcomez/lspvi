@@ -275,19 +275,31 @@ func (m *mainui) open_wks_query() {
 // OpenFile
 // OpenFile
 func (m *mainui) OpenFile(file string, loc *lsp.Location) {
-	m.OpenFileToHistory(file, loc, true)
+	m.OpenFileToHistory(file, &navigation_loc{loc: loc}, true)
 }
-func (m *mainui) OpenFileToHistory(file string, loc *lsp.Location, addhistory bool) {
+
+type navigation_loc struct {
+	loc    *lsp.Location
+	offset int
+}
+
+func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory bool) {
 	// dirname := filepath.Dir(file)
 	// m.fileexplorer.ChangeDir(dirname)
+	var loc *lsp.Location
+	if navi != nil {
+		loc = navi.loc
+	}
 	if info, err := os.Stat(file); err == nil && info.IsDir() {
 		m.fileexplorer.ChangeDir(file)
 		return
 	}
 	if addhistory {
 		if loc != nil {
+			m.bf.history.SaveToHistory(m.codeview)
 			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line, m.codeview))
 		} else {
+			m.bf.history.SaveToHistory(m.codeview)
 			m.bf.history.AddToHistory(file, nil)
 		}
 	}
@@ -777,18 +789,22 @@ func (main *mainui) GoForward() {
 	i := main.bf.GoForward()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go forward %v", i)
-	main.OpenFileToHistory(i.Path, &lsp.Location{Range: lsp.Range{Start: start, End: start}}, false)
+	main.OpenFileToHistory(i.Path, &navigation_loc{
+		loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
+		offset: i.Pos.Offset,
+	}, false)
 }
 
 func (main *mainui) GoBack() {
 	i := main.bf.GoBack()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go %v", i)
-	main.OpenFileToHistory(i.Path, &lsp.Location{Range: lsp.Range{
-		Start: start,
-		End:   start,
-	},
-	}, false)
+	main.OpenFileToHistory(i.Path,
+		&navigation_loc{
+			loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
+			offset: i.Pos.Offset,
+		},
+		false)
 }
 
 //	func (main *mainui) open_file_picker() {

@@ -70,7 +70,24 @@ func NewEditorPosition(Line int, text *CodeView) *EditorPosition {
 		Offset: 0,
 	}
 }
+func (h *History) SaveToHistory(code * CodeView) {
+	line:=code.view.Cursor.Loc.Y+code.view.Topline
+	pos := EditorPosition{
+		Line: line,
+		Offset: code.view.Topline,
+	}
+	h.datalist[h.index].Pos = pos
+	h.save_to_file()
+}
 
+func (h *History) save_to_file() {
+	if h.file != "" {
+		buf, err := json.Marshal(h.datalist)
+		if err == nil {
+			os.WriteFile(h.file, buf, 0644)
+		}
+	}
+}
 // AddToHistory
 func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
 	lll := h.datalist
@@ -82,12 +99,7 @@ func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
 	}
 	h.datalist = h.insertAtFront(lll, backforwarditem{Path: newdata, Pos: pos})
 	log.Printf("add history %v", h.datalist[0])
-	if h.file != "" {
-		buf, err := json.Marshal(h.datalist)
-		if err == nil {
-			os.WriteFile(h.file, buf, 0644)
-		}
-	}
+	h.save_to_file()
 }
 
 func (h *History) insertAtFront(slice []backforwarditem, element backforwarditem) []backforwarditem {
