@@ -556,7 +556,8 @@ func MainUI(arg *Arguments) {
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		if main.layout.spacemenu.visible {
 			spacemenu := main.layout.spacemenu
-			if InRect(event, spacemenu.table) {
+			action, event = spacemenu.handle_mouse(action, event)
+			if action == tview.MouseConsumed {
 				return event, action
 			}
 			if !InRect(event, mainmenu) {

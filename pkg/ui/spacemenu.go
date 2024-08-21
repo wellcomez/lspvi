@@ -222,6 +222,26 @@ func new_spacemenu(m *mainui) *space_menu {
 	t.table.SetTitle("menu")
 	return &t
 }
+func (menu *space_menu) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	if !InRect(event,menu.table){
+		return action, event
+	}
+	// log.Printf("In x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
+	if !menu.visible {
+		return action, event
+	}
+	_,top,_,_:=menu.table.GetInnerRect()
+	if action == tview.MouseMove {
+		_, y := event.Position()
+		index:=y-top
+		menu.table.SetCurrentItem(index)
+	} else if action == tview.MouseLeftDown{
+		menu.impl.items[menu.table.GetCurrentItem()].handle()
+		menu.visible = false
+	}
+	return tview.MouseConsumed, nil
+}
+
 func (v *space_menu) Draw(screen tcell.Screen) {
 	if !v.visible {
 		return
