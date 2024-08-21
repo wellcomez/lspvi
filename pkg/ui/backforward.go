@@ -70,14 +70,16 @@ func NewEditorPosition(Line int, text *CodeView) *EditorPosition {
 		Offset: 0,
 	}
 }
-func (h *History) SaveToHistory(code * CodeView) {
-	line:=code.view.Cursor.Loc.Y+code.view.Topline
+func (h *History) SaveToHistory(code *CodeView) {
+	line := code.view.Cursor.Loc.Y + code.view.Topline
 	pos := EditorPosition{
-		Line: line,
+		Line:   line,
 		Offset: code.view.Topline,
 	}
-	h.datalist[h.index].Pos = pos
-	h.save_to_file()
+	if len(h.datalist) > 0 {
+		h.datalist[h.index].Pos = pos
+		h.save_to_file()
+	}
 }
 
 func (h *History) save_to_file() {
@@ -88,6 +90,7 @@ func (h *History) save_to_file() {
 		}
 	}
 }
+
 // AddToHistory
 func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
 	lll := h.datalist
