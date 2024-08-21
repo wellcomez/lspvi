@@ -64,6 +64,13 @@ type EditorPosition struct {
 	Offset int
 }
 
+func NewEditorPosition(Line int, text *CodeView) *EditorPosition {
+	return &EditorPosition{
+		Line:   Line,
+		Offset: 0,
+	}
+}
+
 // AddToHistory
 func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
 	lll := h.datalist

@@ -30,7 +30,7 @@ type CodeView struct {
 type text_right_menu struct {
 	*contextmenu
 	select_range lsp.Range
-	text string
+	text         string
 }
 
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
@@ -120,7 +120,7 @@ func NewCodeView(main *mainui) *CodeView {
 		items := []context_menu_item{
 			{item: cmditem{cmd: cmdactor{desc: "Search"}}, handle: func() {
 				sss := main.codeview.view.Cursor.GetSelection()
-				main.OnSearch(sss,true,true)
+				main.OnSearch(sss, true, true)
 			}},
 			{item: cmditem{cmd: cmdactor{desc: "Refer"}}, handle: func() {
 				main.get_refer(ret.rightmenu.select_range, main.codeview.filename)
@@ -174,12 +174,13 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		Y: posY + root.Topline - yOffset,
 		X: posX - int(xOffset),
 	}
+	pos = avoid_position_overflow(root, pos)
 	if code.rightmenu != nil {
 
 		reta, retevent := code.rightmenu.handle_mouse(action, event)
 		if reta == tview.MouseConsumed {
 			if code.rightmenu.visible && action == tview.MouseRightClick {
-				code.rightmenu.text= root.Cursor.GetSelection()
+				code.rightmenu.text = root.Cursor.GetSelection()
 				root.Cursor.Loc = tab_loc(root, pos)
 				root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 				log.Println("before", code.view.Cursor.CurSelection)
@@ -262,6 +263,10 @@ func GetVisualX(view *femto.View, Y int, X int) int {
 		X = 0
 	}
 	return femto.StringWidth(string(runes[:X]), tabSize)
+}
+func avoid_position_overflow(root *femto.View, pos femto.Loc) femto.Loc {
+	pos.Y = min(root.Buf.LinesNum()-1, pos.Y)
+	return pos
 }
 func tab_loc(root *femto.View, pos femto.Loc) femto.Loc {
 	LastVisualX := GetVisualX(root, pos.Y, pos.X)
@@ -613,7 +618,7 @@ func (code *CodeView) gotoline(line int) {
 		return
 	}
 	if code.main != nil {
-		code.main.bf.history.AddToHistory(code.filename, &EditorPosition{Line: line, Offset: 0})
+		code.main.bf.history.AddToHistory(code.filename, NewEditorPosition(line, code))
 	}
 	key := ""
 

@@ -286,7 +286,7 @@ func (m *mainui) OpenFileToHistory(file string, loc *lsp.Location, addhistory bo
 	}
 	if addhistory {
 		if loc != nil {
-			m.bf.history.AddToHistory(file,&EditorPosition{Line: loc.Range.Start.Line})
+			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line, m.codeview))
 		} else {
 			m.bf.history.AddToHistory(file, nil)
 		}
