@@ -9,10 +9,19 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (pk history_picker) grid(input *tview.InputField) *tview.Grid {
+func (pk *history_picker) grid(input *tview.InputField) *tview.Grid {
 	list := pk.list
 	layout := grid_list_whole_screen(list, input)
 	layout.SetBorder(true)
+	pk.listcheck = NewGridListClickCheck(layout, list.List, 1)
+	// }, func() {
+	// 	h := sym.impl.listdata
+	// 	v := h[list.GetCurrentItem()]
+	// 	path := v.filepath
+	// 	parent := sym.impl.parent
+	// 	parent.openfile(path)
+	// })
+
 	return layout
 }
 
@@ -22,6 +31,7 @@ func grid_list_whole_screen(list tview.Primitive, input *tview.InputField) *tvie
 		SetRows(-1, 3, 3, 2).
 		AddItem(list, 0, 0, 3, 4, 0, 0, false).
 		AddItem(input, 3, 0, 1, 4, 0, 0, false)
+
 	return layout
 }
 
@@ -37,7 +47,7 @@ type history_picker_impl struct {
 type history_picker struct {
 	impl      *history_picker_impl
 	list      *customlist
-	listcheck *ListClickCheck
+	listcheck *GridListClickCheck
 }
 
 // name implements picker.
@@ -67,15 +77,6 @@ func new_history_picker(v *fzfmain) history_picker {
 		},
 		list: list,
 	}
-	sym.listcheck = NewListClickCheck(list.List, 1, func() {
-
-	}, func() {
-		h := sym.impl.listdata
-		v := h[list.GetCurrentItem()]
-		path := v.filepath
-		parent := sym.impl.parent
-		parent.openfile(path)
-	})
 	history := NewHistory(lspviroot.history)
 	sym.impl.codeprev.view.SetBorder(true)
 	var options = fzflib.DefaultOptions()

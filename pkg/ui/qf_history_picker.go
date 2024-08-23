@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
+	// "time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/reinhrst/fzf-lib"
@@ -21,55 +21,55 @@ type qf_history_picker_impl struct {
 	keys        []qf_history_data
 	selectIndex []int32
 }
-type ListClickCheck struct {
-	*clickdetector
-	list    *tview.List
-	linenum int
-}
+// type ListClickCheck struct {
+// 	*clickdetector
+// 	list    *tview.List
+// 	linenum int
+// }
 
-func NewListClickCheck(list *tview.List, linenum int, click func(), doublehandle func()) *ListClickCheck {
-	var l = &ListClickCheck{
-		clickdetector: &clickdetector{
-			lastMouseClick: time.Time{},
-		},
-		linenum: linenum,
-		list:    list,
-	}
+// func NewListClickCheck(list *tview.List, linenum int, click func(), doublehandle func()) *ListClickCheck {
+// 	var l = &ListClickCheck{
+// 		clickdetector: &clickdetector{
+// 			lastMouseClick: time.Time{},
+// 		},
+// 		linenum: linenum,
+// 		list:    list,
+// 	}
 
-	list.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		if !InRect(event, list) {
-			return action, event
-		}
-		a1, _ := l.handle(action, event)
-		if action != tview.MouseMove {
-			log.Println("list click ",
-				"action", action, a1,
-				"pos:", l.lastMouseX, l.lastMouseY)
-			_, y, _, _ := list.GetInnerRect()
-			_, mY := event.Position()
-			if a1 == tview.MouseLeftClick {
-				index := (mY - y) / l.linenum
-				list.SetCurrentItem(index)
-				if click != nil {
-					click()
-				}
-			} else if a1 == tview.MouseLeftDoubleClick {
-				if doublehandle != nil {
-					doublehandle()
-				}
-			}
-		}
-		return action, event
-	})
-	return l
-}
+// 	list.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+// 		if !InRect(event, list) {
+// 			return action, event
+// 		}
+// 		a1, _ := l.handle(action, event)
+// 		if action != tview.MouseMove {
+// 			log.Println("list click ",
+// 				"action", action, a1,
+// 				"pos:", l.lastMouseX, l.lastMouseY)
+// 			_, y, _, _ := list.GetInnerRect()
+// 			_, mY := event.Position()
+// 			if a1 == tview.MouseLeftClick {
+// 				index := (mY - y) / l.linenum
+// 				list.SetCurrentItem(index)
+// 				if click != nil {
+// 					click()
+// 				}
+// 			} else if a1 == tview.MouseLeftDoubleClick {
+// 				if doublehandle != nil {
+// 					doublehandle()
+// 				}
+// 			}
+// 		}
+// 		return action, event
+// 	})
+// 	return l
+// }
 
 type qk_history_picker struct {
 	impl           *qf_history_picker_impl
 	list           *customlist
 	codeprev       *CodeView
 	parent         *fzfmain
-	listclickcheck *ListClickCheck
+	listclickcheck *GridListClickCheck
 }
 
 // name implements picker.
@@ -99,8 +99,13 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 		})
 	}
 }
-func (pk qk_history_picker) grid() tview.Primitive {
-	return layout_list_row_edit(pk.list, pk.codeprev.view, pk.parent.input)
+func (pk *qk_history_picker) grid() tview.Primitive {
+	ret:=layout_list_row_edit(pk.list, pk.codeprev.view, pk.parent.input)
+	pk.listclickcheck = NewFlexListClickCheck(ret,pk.list.List, 1)
+	pk.listclickcheck.on_list_selected= func() {
+		pk.updateprev()
+	}
+	return ret
 }
 func (pk qk_history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.list.InputHandler()
@@ -151,11 +156,6 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		parent:   v,
 		list:     list,
 		codeprev: NewCodeView(v.main),
-		listclickcheck: &ListClickCheck{
-			clickdetector: &clickdetector{
-				lastMouseClick: time.Time{},
-			},
-		},
 	}
 	ret.impl.selectIndex = []int32{}
 	for i, value := range keymaplist {
@@ -168,12 +168,7 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		})
 	}
 	ret.updateprev()
-	ret.listclickcheck = NewListClickCheck(list.List, 1, func() {
-		ret.updateprev()
-	}, func() {
-		ret.open_in_qf()
-		ret.parent.hide()
-	})
+
 	return ret
 }
 

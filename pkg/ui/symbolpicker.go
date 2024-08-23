@@ -28,7 +28,13 @@ type GridListClickCheck struct {
 	on_list_selected func()
 }
 
+func NewFlexListClickCheck(grid *tview.Flex, list *tview.List, line int) *GridListClickCheck {
+	return NewBoxListClickCheck(grid.Box, list, line)
+}
 func NewGridListClickCheck(grid *tview.Grid, list *tview.List, line int) *GridListClickCheck {
+	return NewBoxListClickCheck(grid.Box, list, line)
+}
+func NewBoxListClickCheck(grid *tview.Box, list *tview.List, line int) *GridListClickCheck {
 	ret := &GridListClickCheck{
 		GridClickCheck: NewGridClickCheck(grid, list.Box),
 		tree:           list,
@@ -72,7 +78,7 @@ func get_grid_list_index(list *tview.List, em *tcell.EventMouse, line int) (int,
 }
 func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
 	ret := &GridTreeClickCheck{
-		GridClickCheck: NewGridClickCheck(grid, tree.Box),
+		GridClickCheck: NewGridClickCheck(grid.Box, tree.Box),
 		tree:           tree,
 	}
 	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
@@ -84,7 +90,7 @@ func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClic
 	}
 	return ret
 }
-func NewGridClickCheck(grid *tview.Grid, target tview.Primitive) *GridClickCheck {
+func NewGridClickCheck(grid *tview.Box, target tview.Primitive) *GridClickCheck {
 	ret := &GridClickCheck{
 		clickdetector: &clickdetector{lastMouseClick: time.Time{}},
 		target:        target,
