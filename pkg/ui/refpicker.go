@@ -20,6 +20,13 @@ func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
 	code := pk.impl.codeprev.view
 	pk.impl.codeprev.Load(pk.impl.file.Filename)
 	layout := layout_list_edit(list, code, input)
+	pk.impl.list_click_check = NewGridListClickCheck(layout ,list, 2)
+	pk.impl.list_click_check.on_list_selected= func() {
+		pk.update_preview()
+	}
+	// , func() {
+	// 	sym.impl.parent.hide()
+	// })
 	return layout
 }
 func layout_list_row_edit(list tview.Primitive, code tview.Primitive, input *tview.InputField) *tview.Flex {
@@ -49,7 +56,7 @@ type refpicker_impl struct {
 	codeline          []string
 	fzf               *fzflib.Fzf
 	parent            *fzfmain
-	list_click_check  *ListClickCheck
+	list_click_check  *GridListClickCheck
 	// ref_call_in       []ref_with_callin
 }
 
@@ -199,11 +206,6 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 			parent:   v,
 		},
 	}
-	sym.impl.list_click_check = NewListClickCheck(sym.impl.listview, 2, func() {
-		sym.update_preview()
-	}, func() {
-		sym.impl.parent.hide()
-	})
 	sym.impl.codeprev.view.SetBorder(true)
 	return sym
 }

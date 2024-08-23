@@ -24,7 +24,7 @@ type GridTreeClickCheck struct {
 }
 type GridListClickCheck struct {
 	*GridClickCheck
-	tree *tview.List
+	tree             *tview.List
 	on_list_selected func()
 }
 
@@ -46,7 +46,7 @@ func NewGridListClickCheck(grid *tview.Grid, list *tview.List, line int) *GridLi
 			return
 		}
 		list.SetCurrentItem(index)
-		if ret.on_list_selected!=nil{
+		if ret.on_list_selected != nil {
 			ret.on_list_selected()
 		}
 	}
@@ -60,12 +60,13 @@ func NewGridListClickCheck(grid *tview.Grid, list *tview.List, line int) *GridLi
 
 func get_grid_list_index(list *tview.List, em *tcell.EventMouse, line int) (int, bool) {
 	_, y, _, _ := list.GetInnerRect()
-	if y >= list.GetItemCount()-1 {
-		return 0, true
-	}
+
 	_, moustY := em.Position()
 	offsetY, _ := list.GetOffset()
-	index := (moustY - y + offsetY) / line
+	index := (moustY-y)/line + offsetY
+	if index >= list.GetItemCount()-1 || index < 0 || list.GetItemCount() == 0 {
+		return 0, true
+	}
 	log.Println("mouseY", moustY, "listY=", y, "list offset", offsetY, "idnex", index)
 	return index, false
 }
