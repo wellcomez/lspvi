@@ -1,7 +1,9 @@
 package mainui
 
 import (
+	"log"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -9,14 +11,66 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (sym *symbolpicker) new_fzf_symbol_view(input *tview.InputField) *tview.Grid {
+type GridClickCheck struct {
+	*clickdetector
+	target       tview.Primitive
+	click        func(*tcell.EventMouse)
+	dobule_click func(*tcell.EventMouse)
+}
+type GridTreeClickCheck struct {
+	*GridClickCheck
+	tree *tview.TreeView
+}
+
+func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
+	ret := &GridTreeClickCheck{
+		GridClickCheck: NewGridClickCheck(grid, tree.Box),
+		tree:           tree,
+	}
+	return ret
+}
+func NewGridClickCheck(grid *tview.Grid, target tview.Primitive) *GridClickCheck {
+	ret := &GridClickCheck{
+		clickdetector: &clickdetector{lastMouseClick: time.Time{}},
+		target:        target,
+	}
+	grid.SetMouseCapture(ret.handle_mouse)
+	return ret
+}
+func (pk *GridClickCheck) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	if InRect(event, pk.target) {
+		a1, _ := pk.clickdetector.handle(action, event)
+		if a1 == tview.MouseLeftClick {
+			if pk.click != nil {
+				pk.click(event)
+			}
+		} else if a1 == tview.MouseLeftDoubleClick {
+			if pk.dobule_click != nil {
+				pk.dobule_click(event)
+			}
+		}
+	}
+	return action, event
+}
+func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	list := sym.impl.symview.view
 	list.SetBorder(true)
 	code := sym.impl.codeprev.view
 	sym.impl.codeprev.Load(sym.impl.file.Filename)
 	layout := layout_list_edit(list, code, input)
+	sym.impl.click = NewGridTreeClickCheck(layout, sym.impl.symview.view)
+	sym.impl.click.click = func(event *tcell.EventMouse) {
+		sym.impl.click.tree.MouseHandler()(tview.MouseLeftClick, event, nil)
+		log.Println("signle")
+	}
+	sym.impl.click.dobule_click = func(event *tcell.EventMouse) {
+		sym.impl.click.tree.MouseHandler()(tview.MouseLeftDoubleClick, event, nil)
+		log.Println("dobule")
+
+	}
 	return layout
 }
+
 func new_outline_picker(v *fzfmain, file *lspcore.Symbol_file) symbolpicker {
 	symbol := &SymbolTreeViewExt{}
 	symbol.SymbolTreeView = NewSymbolTreeView(v.main)
@@ -51,6 +105,7 @@ type SymbolWalkImpl struct {
 	symview  *SymbolTreeViewExt
 	gs       *GenericSearch
 	codeprev *CodeView
+	click    *GridTreeClickCheck
 }
 
 type symbolpicker struct {
@@ -59,7 +114,7 @@ type symbolpicker struct {
 
 // name implements picker.
 func (sym symbolpicker) name() string {
-  return "document symbol"
+	return "document symbol"
 }
 
 func (wk symbolpicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
