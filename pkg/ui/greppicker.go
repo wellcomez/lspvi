@@ -22,7 +22,7 @@ type livewgreppicker struct {
 	main     *mainui
 	parent   *fzfmain
 	impl     *grep_impl
-	click    *ListClickCheck
+	click    *GridListClickCheck
 }
 
 // name implements picker.
@@ -78,6 +78,11 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Grid {
 	list.SetBorder(true)
 	code := pk.codeprev.view
 	layout := layout_list_edit(list, code, input)
+	pk.click = NewGridListClickCheck(layout, list.List, 1)
+	pk.click.on_list_selected= func() {
+		pk.update_preview()
+		pk.update_title()
+	}
 	return layout
 }
 func new_grep_picker(v *fzfmain) *greppicker {
@@ -95,12 +100,7 @@ func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 		main:     main,
 		impl:     &grep_impl{},
 	}
-	grep.click = NewListClickCheck(grep.list.List, 1, func() {
-		grep.update_preview()
-		grep.update_title()
-	}, func() {
-		
-	})
+
 	v.Visible = true
 	return grep
 }

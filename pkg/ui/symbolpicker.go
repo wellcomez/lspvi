@@ -25,6 +25,7 @@ type GridTreeClickCheck struct {
 type GridListClickCheck struct {
 	*GridClickCheck
 	tree *tview.List
+	on_list_selected func()
 }
 
 func NewGridListClickCheck(grid *tview.Grid, list *tview.List, line int) *GridListClickCheck {
@@ -45,6 +46,9 @@ func NewGridListClickCheck(grid *tview.Grid, list *tview.List, line int) *GridLi
 			return
 		}
 		list.SetCurrentItem(index)
+		if ret.on_list_selected!=nil{
+			ret.on_list_selected()
+		}
 	}
 	ret.dobule_click = func(event *tcell.EventMouse) {
 		list.GetCurrentItem()
