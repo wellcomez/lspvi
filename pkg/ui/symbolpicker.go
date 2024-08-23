@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -26,6 +27,7 @@ type GridListClickCheck struct {
 	*GridClickCheck
 	tree             *tview.List
 	on_list_selected func()
+	moveX            int
 }
 
 func NewFlexListClickCheck(grid *tview.Flex, list *tview.List, line int) *GridListClickCheck {
@@ -40,15 +42,28 @@ func NewBoxListClickCheck(grid *tview.Box, list *tview.List, line int) *GridList
 		tree:           list,
 	}
 	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
-		if action == tview.MouseScrollUp {
+		if action == tview.MouseMove {
+			idx, err := get_grid_list_index(list, event, line)
+			if err == nil {
+				begin, _ := list.GetOffset()
+				_, _, _, N := list.GetInnerRect()
+				mouseX, _ := event.Position()
+				if mouseX == ret.moveX {
+					if begin <= idx && idx < begin+N {
+						list.SetCurrentItem(idx)
+					}
+				}
+				ret.moveX = mouseX
+			}
+		} else if action == tview.MouseScrollUp {
 			list.MouseHandler()(action, event, nil)
 		} else if action == tview.MouseScrollDown {
 			list.MouseHandler()(action, event, nil)
 		}
 	}
 	ret.click = func(em *tcell.EventMouse) {
-		index, shouldReturn := get_grid_list_index(list, em, line)
-		if shouldReturn {
+		index, err := get_grid_list_index(list, em, line)
+		if err != nil {
 			return
 		}
 		list.SetCurrentItem(index)
@@ -57,24 +72,22 @@ func NewBoxListClickCheck(grid *tview.Box, list *tview.List, line int) *GridList
 		}
 	}
 	ret.dobule_click = func(event *tcell.EventMouse) {
-		list.GetCurrentItem()
 		list.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, 0), nil)
-		// list.MouseHandler()(tview.MouseLeftClick, event, nil)
 	}
 	return ret
 }
 
-func get_grid_list_index(list *tview.List, em *tcell.EventMouse, line int) (int, bool) {
+func get_grid_list_index(list *tview.List, em *tcell.EventMouse, line int) (int, error) {
 	_, y, _, _ := list.GetInnerRect()
 
 	_, moustY := em.Position()
 	offsetY, _ := list.GetOffset()
 	index := (moustY-y)/line + offsetY
 	if index >= list.GetItemCount()-1 || index < 0 || list.GetItemCount() == 0 {
-		return 0, true
+		return 0, fmt.Errorf("%d is out of range", index)
 	}
 	log.Println("mouseY", moustY, "listY=", y, "list offset", offsetY, "idnex", index)
-	return index, false
+	return index, nil
 }
 func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
 	ret := &GridTreeClickCheck{
