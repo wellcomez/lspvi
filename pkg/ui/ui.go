@@ -571,7 +571,13 @@ func MainUI(arg *Arguments) {
 			}
 		}
 		if main.layout.dialog.Visible {
-			main.layout.dialog.MouseHanlde(event, action)
+			if !InRect(event, main.layout.dialog.Frame) {
+				if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
+					main.layout.dialog.Visible = false
+				}
+			} else {
+				main.layout.dialog.MouseHanlde(event, action)
+			}
 			return nil, tview.MouseConsumed
 		}
 		return event, action
