@@ -22,7 +22,45 @@ type GridTreeClickCheck struct {
 	*GridClickCheck
 	tree *tview.TreeView
 }
+type GridListClickCheck struct {
+	*GridClickCheck
+	tree *tview.List
+}
 
+func NewGridListClickCheck(grid *tview.Grid, list *tview.List) *GridListClickCheck {
+	ret := &GridListClickCheck{
+		GridClickCheck: NewGridClickCheck(grid, list.Box),
+		tree:           list,
+	}
+	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
+		if action == tview.MouseScrollUp {
+			list.MouseHandler()(action, event, nil)
+		} else if action == tview.MouseScrollDown {
+			list.MouseHandler()(action, event, nil)
+		}
+	}
+	ret.click=func(em *tcell.EventMouse) {
+		index, shouldReturn := get_grid_list_index(list, em)
+		if shouldReturn {
+			return
+		}
+		list.SetCurrentItem(index)
+	}
+	ret.dobule_click=func(event *tcell.EventMouse) {
+		list.MouseHandler()(tview.MouseLeftClick, event, nil)
+	}
+	return ret
+}
+
+func get_grid_list_index(list *tview.List, em *tcell.EventMouse) (int, bool) {
+	_, y, _, _ := list.GetInnerRect()
+	if y >= list.GetItemCount()-1 {
+		return 0, true
+	}
+	_, moustY := em.Position()
+	index := moustY - y
+	return index, false
+}
 func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
 	ret := &GridTreeClickCheck{
 		GridClickCheck: NewGridClickCheck(grid, tree.Box),
