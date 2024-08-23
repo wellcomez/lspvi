@@ -13,9 +13,10 @@ import (
 
 type GridClickCheck struct {
 	*clickdetector
-	target       tview.Primitive
-	click        func(*tcell.EventMouse)
-	dobule_click func(*tcell.EventMouse)
+	target             tview.Primitive
+	click              func(*tcell.EventMouse)
+	dobule_click       func(*tcell.EventMouse)
+	handle_mouse_event func(action tview.MouseAction, event *tcell.EventMouse)
 }
 type GridTreeClickCheck struct {
 	*GridClickCheck
@@ -26,6 +27,13 @@ func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClic
 	ret := &GridTreeClickCheck{
 		GridClickCheck: NewGridClickCheck(grid, tree.Box),
 		tree:           tree,
+	}
+	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
+		if action == tview.MouseScrollUp {
+			tree.MouseHandler()(action, event, nil)
+		} else if action == tview.MouseScrollDown {
+			tree.MouseHandler()(action, event, nil)
+		}
 	}
 	return ret
 }
@@ -48,7 +56,12 @@ func (pk *GridClickCheck) handle_mouse(action tview.MouseAction, event *tcell.Ev
 			if pk.dobule_click != nil {
 				pk.dobule_click(event)
 			}
+		} else {
+			if pk.handle_mouse_event != nil {
+				pk.handle_mouse_event(action, event)
+			}
 		}
+		return tview.MouseConsumed, event
 	}
 	return action, event
 }
@@ -60,14 +73,27 @@ func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	layout := layout_list_edit(list, code, input)
 	sym.impl.click = NewGridTreeClickCheck(layout, sym.impl.symview.view)
 	sym.impl.click.click = func(event *tcell.EventMouse) {
-		sym.impl.click.tree.MouseHandler()(tview.MouseLeftClick, event, nil)
-		log.Println("signle")
+		_, y := event.Position()
+		t := sym.impl.symview.view
+		_, rectY, _, _ := t.GetInnerRect()
+		y += t.GetScrollOffset() - rectY
+		nodes := sym.impl.symview.nodes()
+		node := nodes[y]
+		if y >= len(nodes) || len(nodes) == 0 {
+			return
+		}
+		if y < 0 {
+			return
+		}
+		t.SetCurrentNode(node)
+		sym.update_preview()
 	}
 	sym.impl.click.dobule_click = func(event *tcell.EventMouse) {
-		sym.impl.click.tree.MouseHandler()(tview.MouseLeftDoubleClick, event, nil)
+		sym.impl.click.tree.MouseHandler()(tview.MouseLeftClick, event, nil)
 		log.Println("dobule")
 
 	}
+
 	return layout
 }
 

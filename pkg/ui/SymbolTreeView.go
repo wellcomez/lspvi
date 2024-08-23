@@ -81,6 +81,20 @@ type TextFilter struct {
 	nodes []*tview.TreeNode
 }
 
+func append_child(node *tview.TreeNode) []*tview.TreeNode {
+	var aaa = []*tview.TreeNode{node}
+	for _, v := range node.GetChildren() {
+		if len(v.GetChildren()) > 0 {
+			aaa = append(aaa, append_child(v)...)
+		} else {
+			aaa = append(aaa, v)
+		}
+	}
+	return aaa
+}
+func (m *SymbolTreeView) nodes() []*tview.TreeNode {
+	return append_child(m.view.GetRoot())
+}
 func (m *SymbolTreeView) movetonode(index int) {
 	if m.searcheresult == nil {
 		return
