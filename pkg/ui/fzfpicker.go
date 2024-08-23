@@ -150,7 +150,7 @@ func (v *fzfmain) OpenDocumntSymbolFzf(file *lspcore.Symbol_file) {
 // OpenFileFzf
 func (v *fzfmain) OpenFileFzf(root string) {
 	filewalk := NewDirWalk(root, v)
-	v.Frame = tview.NewFrame(filewalk.new_fzf_file(v.input))
+	v.Frame = tview.NewFrame(filewalk.grid(v.input))
 	v.input.SetText(">")
 	v.app.SetFocus(v.input)
 	v.Visible = true

@@ -25,12 +25,14 @@ type GridTreeClickCheck struct {
 type GridListClickCheck struct {
 	*GridClickCheck
 	tree *tview.List
+	line int
 }
 
-func NewGridListClickCheck(grid *tview.Grid, list *tview.List) *GridListClickCheck {
+func NewGridListClickCheck(grid *tview.Grid, list *tview.List, line int) *GridListClickCheck {
 	ret := &GridListClickCheck{
 		GridClickCheck: NewGridClickCheck(grid, list.Box),
 		tree:           list,
+		line:           line,
 	}
 	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
 		if action == tview.MouseScrollUp {
@@ -39,26 +41,30 @@ func NewGridListClickCheck(grid *tview.Grid, list *tview.List) *GridListClickChe
 			list.MouseHandler()(action, event, nil)
 		}
 	}
-	ret.click=func(em *tcell.EventMouse) {
-		index, shouldReturn := get_grid_list_index(list, em)
+	ret.click = func(em *tcell.EventMouse) {
+		index, shouldReturn := get_grid_list_index(list, em, line)
 		if shouldReturn {
 			return
 		}
 		list.SetCurrentItem(index)
 	}
-	ret.dobule_click=func(event *tcell.EventMouse) {
-		list.MouseHandler()(tview.MouseLeftClick, event, nil)
+	ret.dobule_click = func(event *tcell.EventMouse) {
+		list.GetCurrentItem()
+		list.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, 0), nil)
+		// list.MouseHandler()(tview.MouseLeftClick, event, nil)
 	}
 	return ret
 }
 
-func get_grid_list_index(list *tview.List, em *tcell.EventMouse) (int, bool) {
+func get_grid_list_index(list *tview.List, em *tcell.EventMouse, line int) (int, bool) {
 	_, y, _, _ := list.GetInnerRect()
 	if y >= list.GetItemCount()-1 {
 		return 0, true
 	}
 	_, moustY := em.Position()
-	index := moustY - y
+	offsetY, _ := list.GetOffset()
+	index := (moustY - y + offsetY) / line
+	log.Println("mouseY", moustY, "listY=", y, "list offset", offsetY, "idnex", index)
 	return index, false
 }
 func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {

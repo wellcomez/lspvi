@@ -20,9 +20,10 @@ import (
 )
 
 // new_fzf_file
-func (pk DirWalk) new_fzf_file(input *tview.InputField) *tview.Grid {
+func (pk *DirWalk) grid(input *tview.InputField) *tview.Grid {
 	layout := grid_list_whole_screen(pk.list, input)
 	layout.SetBorder(true)
+	pk.click = NewGridListClickCheck(layout, pk.list.List,1)
 	return layout
 }
 
@@ -55,6 +56,7 @@ type DirWalk struct {
 	hayStack []string
 	fzf      *fzflib.Fzf
 	list     *customlist
+	click 	 *GridListClickCheck
 }
 
 type walkerOpts struct {
