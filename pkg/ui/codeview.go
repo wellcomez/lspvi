@@ -592,15 +592,19 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	}
 	code.view.SetColorscheme(colorscheme)
 }
+func (code CodeView) focus_line() int {
+	_, _, _, h := code.view.GetRect()
+	return h / 2
+}
 func (code *CodeView) goto_loation(loc lsp.Range) {
 	x := 0
 	loc.Start.Line = min(code.view.Buf.LinesNum(), loc.Start.Line)
 	loc.End.Line = min(code.view.Buf.LinesNum(), loc.End.Line)
-	
+
 	line := loc.Start.Line
 	log.Println("gotoline", line)
 	if line < code.view.Topline || code.view.Bottomline() < line {
-		code.view.Topline = max(line-5, 0)
+		code.view.Topline = max(line-code.focus_line(), 0)
 	}
 	Cur := code.view.Cursor
 	Cur.SetSelectionStart(femto.Loc{
@@ -635,7 +639,7 @@ func (code *CodeView) gotoline(line int) {
 	}
 	log.Println("gotoline", line)
 	if line < code.view.Topline || code.view.Bottomline() < line {
-		code.view.Topline = max(line-5, 0)
+		code.view.Topline = max(line-code.focus_line(), 0)
 	}
 	text := strings.ToLower(code.view.Buf.Line(line))
 	RightX := len(text)
