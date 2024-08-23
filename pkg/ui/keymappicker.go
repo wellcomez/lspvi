@@ -17,11 +17,12 @@ type keymap_picker struct {
 	impl   *keymap_picker_impl
 	list   *customlist
 	parent *fzfmain
+	click  *GridListClickCheck
 }
 
 // name implements picker.
 func (pk keymap_picker) name() string {
-  return "key map"
+	return "key map"
 }
 
 // UpdateQuery implements picker.
@@ -82,9 +83,10 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	}
 	return ret
 }
-func (pk keymap_picker) grid(input *tview.InputField) *tview.Grid {
+func (pk *keymap_picker) grid(input *tview.InputField) *tview.Grid {
 	list := pk.list
 	layout := grid_list_whole_screen(list, input)
 	layout.SetBorder(true)
+	pk.click = NewGridListClickCheck(layout, list.List, 1)
 	return layout
 }

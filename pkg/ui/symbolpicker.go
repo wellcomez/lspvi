@@ -25,14 +25,12 @@ type GridTreeClickCheck struct {
 type GridListClickCheck struct {
 	*GridClickCheck
 	tree *tview.List
-	line int
 }
 
 func NewGridListClickCheck(grid *tview.Grid, list *tview.List, line int) *GridListClickCheck {
 	ret := &GridListClickCheck{
 		GridClickCheck: NewGridClickCheck(grid, list.Box),
 		tree:           list,
-		line:           line,
 	}
 	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
 		if action == tview.MouseScrollUp {
