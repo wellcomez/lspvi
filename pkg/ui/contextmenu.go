@@ -25,6 +25,7 @@ type contextmenu struct {
 	//mousePos MousePosition
 	width    int
 	menuRect Rect
+	parent   *tview.Box
 }
 
 func (v *contextmenu) input_cb(word string) {
@@ -104,13 +105,22 @@ type contextmenu_impl struct {
 func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if action == tview.MouseRightClick {
 		menu.visible = !menu.visible
-		x, y := event.Position()
-		menu.MenuPos = MousePosition{x, y}
 		menu.table.SetCurrentItem(0)
 		v := menu
 		if v.visible {
-			v.table.SetRect(v.MenuPos.x, v.MenuPos.y, v.width, len(v.impl.items)+2)
-			v.menuRect = Rect{v.MenuPos.x, v.MenuPos.y, v.width, len(v.impl.items) + 2}
+			x, y, w, h := v.parent.GetRect()
+			mouseX, mouseY := event.Position()
+			height := len(v.impl.items) + 2
+
+			right := min(mouseX+v.width, x+w)
+			bottom := min(mouseY+height, y+h)
+
+			mouseX = right - v.width
+			mouseY = bottom - height
+
+			v.table.SetRect(mouseX, mouseY, v.width, height)
+			menu.MenuPos = MousePosition{mouseX, mouseY}
+			v.menuRect = Rect{mouseX, mouseY, v.width, height}
 			log.Println("right click ", v.menuRect)
 		}
 		return tview.MouseConsumed, nil
@@ -152,12 +162,13 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	}
 	return tview.MouseConsumed, nil
 }
-func new_contextmenu(m *mainui, items []context_menu_item) *contextmenu {
+func new_contextmenu(m *mainui, items []context_menu_item, parent *tview.Box) *contextmenu {
 	t := contextmenu{
 		table:   tview.NewList(),
 		main:    m,
 		visible: false,
 		width:   40,
+		parent:  parent,
 	}
 
 	impl := &contextmenu_impl{
@@ -187,8 +198,5 @@ func (v *contextmenu) Draw(screen tcell.Screen) {
 	if !v.visible {
 		return
 	}
-	// viewid := v.main.get_focus_view_id()
-	// _, Y, height, _ := v.main.get_view_from_id(viewid).GetRect()
 	v.table.Draw(screen)
-	// v.table.Draw(screen)
 }

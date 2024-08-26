@@ -145,7 +145,7 @@ func NewCodeView(main *mainui) *CodeView {
 		// 	get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
 		// }
 		ret.rightmenu = &text_right_menu{
-			contextmenu: new_contextmenu(main, items),
+			contextmenu: new_contextmenu(main, items,ret.view.Box),
 		}
 	}
 	return &ret
