@@ -178,18 +178,16 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 }
 
 const ctrlw = "c-w"
-const key_left = "left"
-const key_right = "right"
-const key_up = "up"
-const key_down = "down"
+const key_left = "Left"
+const key_right = "Right"
+const key_up = "Up"
+const key_down = "Down"
 var event_to_keyname = map[tcell.Key]string{
 	tcell.KeyCtrlW: ctrlw,
-}
-var key_to_command= map[tcell.Key]command_id{
-	tcell.KeyLeft:  arrow_left,
-	tcell.KeyRight: arrow_right,
-	tcell.KeyUp:    arrow_up,
-	tcell.KeyDown:  arrow_down,
+	tcell.KeyLeft:  key_left,
+	tcell.KeyRight: key_right,
+	tcell.KeyUp:    key_up,
+	tcell.KeyDown:  key_down,
 }
 
 func split(cmd string) []string {

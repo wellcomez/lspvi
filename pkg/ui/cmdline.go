@@ -391,6 +391,8 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 		// l.state.keyseq = []string{string(event.Rune())}
 		// l.end()
 		return true
+	}else{
+		l.end()
 	}
 	// viewid := l.main.get_focus_view_id()
 	// switch viewid {
