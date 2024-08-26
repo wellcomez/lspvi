@@ -88,6 +88,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	} else if action == tview.MouseLeftClick {
 		menu.impl.items[menu.table.GetCurrentItem()].handle()
 		menu.visible = false
+		menu.main.ActiveTab(view_quickview,false)
 	}
 	return tview.MouseConsumed, nil
 }
