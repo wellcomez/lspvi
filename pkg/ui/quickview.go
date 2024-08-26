@@ -164,8 +164,10 @@ func new_quikview(main *mainui) *quick_view {
 	var vid view_id = view_quickview
 	var items = []context_menu_item{
 		{item: cmditem{cmd: cmdactor{desc: "Open"}}, handle: func() {
-			qk := main.quickview
-			qk.selection_handle_impl(view.GetCurrentItem(), true)
+			if view.GetItemCount() > 0 {
+				qk := main.quickview
+				qk.selection_handle_impl(view.GetCurrentItem(), true)
+			}
 		}},
 		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {
 			main.quickview.save()
