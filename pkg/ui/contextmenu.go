@@ -2,7 +2,6 @@ package mainui
 
 import (
 	"fmt"
-	"log"
 	// "log"
 
 	"github.com/gdamore/tcell/v2"
@@ -64,7 +63,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	posX, posY := event.Position()
 	if !menu.table.InRect(posX, posY) {
 		if menu.MenuPos.x == 0 {
-			log.Printf("xxxxxxxxx")
+			// log.Printf("xxxxxxxxx")
 		}
 		if menu.visible {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {

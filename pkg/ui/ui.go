@@ -16,7 +16,7 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-var tabs []view_id = []view_id{view_quickview, view_callin, view_uml}
+var tabs []view_id = []view_id{view_quickview, view_callin, view_uml,view_log}
 var appname = "lspvi"
 var httport = 0
 
