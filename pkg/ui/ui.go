@@ -533,7 +533,8 @@ func MainUI(arg *Arguments) {
 	tab_area.AddItem(mainmenu, 10, 0, false)
 
 	main.right_context_menu = new_contextmenu(&main)
-	main.right_context_menu.menu_handle = append(main.right_context_menu.menu_handle, main.codeview.rightmenu)
+	main.right_context_menu.menu_handle = []context_menu_handle{main.codeview.rightmenu, main.quickview.right_context,}
+
 	var tabid view_id = view_quickview
 	fzttab := group.Find(tabid.getname())
 	fzttab.view.Focus(nil)

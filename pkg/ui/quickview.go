@@ -51,8 +51,9 @@ type quick_view struct {
 	currentIndex int
 	Type         DateType
 	// menu         *contextmenu
-	menuitem  []context_menu_item
-	searchkey lspcore.SymolSearchKey
+	menuitem      []context_menu_item
+	searchkey     lspcore.SymolSearchKey
+	right_context quick_view_context
 }
 type qf_history_data struct {
 	Type   DateType
@@ -138,6 +139,24 @@ func (h *quickfix_history) Load() ([]qf_history_data, error) {
 	return ret, nil
 }
 
+type quick_view_context struct {
+	qk *quick_view
+}
+
+func (menu quick_view_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	return action, event
+}
+
+// getbox implements context_menu_handle.
+func (menu quick_view_context) getbox() *tview.Box {
+	return menu.qk.view.Box
+}
+
+// menuitem implements context_menu_handle.
+func (menu quick_view_context) menuitem() []context_menu_item {
+	return menu.qk.menuitem
+}
+
 // new_quikview
 func new_quikview(main *mainui) *quick_view {
 	view := new_customlist()
@@ -161,6 +180,7 @@ func new_quikview(main *mainui) *quick_view {
 		menuitem:  items,
 		// menu:      new_contextmenu(main, items,view.Box),
 	}
+	ret.right_context.qk = ret
 	// view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	// 	is_rightclick := (action == tview.MouseRightClick)
 	// 	menu := ret.menu
