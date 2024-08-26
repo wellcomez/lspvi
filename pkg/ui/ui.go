@@ -507,7 +507,7 @@ func MainUI(arg *Arguments) {
 	main.tabs = group
 	tab_area := tview.NewFlex()
 	for _, v := range group.tabs {
-		tab_area.AddItem(v.view, 10, 1, true)
+		tab_area.AddItem(v.view, len(v.view.GetLabel())+2, 1, true)
 	}
 	main.statusbar = tview.NewTextView()
 	main.statusbar.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
