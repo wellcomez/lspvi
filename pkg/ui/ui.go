@@ -122,14 +122,14 @@ func (m *mainui) UpdatePageTitle() {
 }
 
 func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
-	if len(refs) > 0 {
-		m.ActiveTab(view_quickview, false)
-	} else {
-		return
-	}
-	//	m.quickview.view.Key = m.codeview.view.Cursor.GetSelection()
 	go func() {
 		m.app.QueueUpdateDraw(func() {
+			m.quickview.view.Key = m.codeview.view.Cursor.GetSelection()
+			if len(refs) > 0 {
+				m.ActiveTab(view_quickview, false)
+			} else {
+				return
+			}
 			m.quickview.OnLspRefenceChanged(refs, data_refs, ranges)
 			m.page.SetTitle(m.quickview.String())
 		})
@@ -140,7 +140,11 @@ func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.L
 // OnLspCallTaskInViewChanged
 func (m *mainui) OnLspCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
 	if len(call_in_stack.Allstack) > 0 {
-		m.ActiveTab(view_callin, false)
+		go func() {
+			m.app.QueueUpdateDraw(func() {
+				m.ActiveTab(view_callin, false)
+			})
+		}()
 	}
 	m.callinview.updatetask(call_in_stack)
 	m.async_resolve_callstack(call_in_stack)
@@ -672,6 +676,7 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			main.codeview.gotoline(gs.GetIndex())
 			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
+				main.ActiveTab(view_quickview,false)
 				main.quickview.main.quickview.OnLspRefenceChanged(locs, data_search, lspcore.SymolSearchKey{Key: txt})
 			}
 		} else {
