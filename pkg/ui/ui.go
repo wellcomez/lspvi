@@ -130,7 +130,7 @@ func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.L
 	go func() {
 		m.app.QueueUpdateDraw(func() {
 			m.quickview.OnLspRefenceChanged(refs, data_refs, ranges)
-			m.UpdatePageTitle()
+			m.page.SetTitle(m.quickview.String())
 		})
 	}()
 

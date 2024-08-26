@@ -132,12 +132,12 @@ type space_menu_item struct {
 // 	}
 // }
 
-// func (v *space_menu) run_command(word string) {
-// 	v.input.run(word)
-// 	v.input.keyseq = ""
-// 	v.visible = false
-// 	v.main.cmdline.Vim.EnterEscape()
-// }
+//	func (v *space_menu) run_command(word string) {
+//		v.input.run(word)
+//		v.input.keyseq = ""
+//		v.visible = false
+//		v.main.cmdline.Vim.EnterEscape()
+//	}
 func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := string(event.Rune())
 	if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
@@ -174,8 +174,9 @@ func (v *space_menu) closemenu() {
 	v.input.keyseq = ""
 }
 func (v *space_menu) openmenu() {
-	v.visible = true 
+	v.visible = true
 	v.input.keyseq = ""
+	v.table.SetCurrentItem(0)
 }
 func (v *space_menu) on_cmd_excuted() {
 	v.closemenu()

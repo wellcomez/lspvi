@@ -22,7 +22,7 @@ type contextmenu struct {
 	width       int
 	menu_handle []context_menu_handle
 	mouseclick  clickdetector
-	parent      *tview.Box
+	// parent      *tview.Box
 }
 
 type context_menu_item struct {
@@ -39,7 +39,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		visible := false
 		for _, v := range menu.menu_handle {
 			if v.getbox().InRect(event.Position()) {
-				menu.set_items(v.menuitem(), v.getbox())
+				menu.set_items(v.menuitem())
 				if !menu.visible {
 					v.on_mouse(action, event)
 				}
@@ -99,12 +99,28 @@ type context_menu_handle interface {
 	on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse)
 }
 
-func (t *contextmenu) set_items(items []context_menu_item, parent *tview.Box) {
+func (t *contextmenu) menu_text() []string {
+	ret := []string{}
+	for _, v := range t.impl.items {
+
+		s1 := fmt.Sprintf("%-5s", v.item.key.string())
+		var s string
+		if len(s1) > 0 {
+			s = fmt.Sprintf("%s %s", v.item.key.string(), v.item.cmd.desc)
+		} else {
+			s = v.item.cmd.desc
+		}
+		ret = append(ret, s)
+	}
+	return ret
+}
+func (t *contextmenu) set_items(items []context_menu_item) int {
 	// t.parent = parent
 
 	impl := &contextmenu_impl{
 		items: items,
 	}
+	t.impl =impl
 	command_list := []cmditem{}
 	for _, v := range impl.items {
 		command_list = append(command_list, v.item)
@@ -115,12 +131,15 @@ func (t *contextmenu) set_items(items []context_menu_item, parent *tview.Box) {
 		main:    t.main,
 	}
 	t.table.Clear()
-	for _, v := range impl.items {
-		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
-		t.table.AddItem(s, "", 0, func() {
-		})
+	ret := 0
+	menu_items := t.menu_text()
+	for _, s := range menu_items {
+		t.table.AddItem(s, "", 0, nil)
+		ret = max(ret, len(s))
 	}
 	t.impl = impl
+	t.width = ret + 4
+	return ret
 }
 func new_contextmenu(m *mainui) *contextmenu {
 	t := contextmenu{
