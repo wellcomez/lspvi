@@ -16,69 +16,15 @@ type MousePosition struct {
 	x, y int
 }
 type contextmenu struct {
-	table   *tview.List
-	main    *mainui
-	visible bool
-	impl    *contextmenu_impl
-	input   *inputdelay
-	MenuPos MousePosition
-	//mousePos MousePosition
+	table       *tview.List
+	main        *mainui
+	visible     bool
+	impl        *contextmenu_impl
+	input       *inputdelay
+	MenuPos     MousePosition
 	width       int
-	// menuRect    Rect
-	// parent      *tview.Box
 	menu_handle []context_menu_handle
 	mouseclick  clickdetector
-}
-
-func (v *contextmenu) input_cb(word string) {
-	if v.input.keyseq == word {
-		v.run_command(word)
-	}
-}
-
-func (v *contextmenu) run_command(word string) {
-	v.input.run(word)
-	v.input.keyseq = ""
-	v.visible = false
-	v.main.cmdline.Vim.EnterEscape()
-}
-func (v *contextmenu) handle_key(event *tcell.EventKey) *tcell.EventKey {
-	ch := string(event.Rune())
-	if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
-		v.input.keyseq = ""
-		handle := v.table.InputHandler()
-		handle(event, nil)
-		return nil
-	} else if event.Key() == tcell.KeyEnter {
-		v.input.keyseq = ""
-		v.onenter()
-		return nil
-	}
-	v.input.keyseq += ch
-	cmd := v.input.keyseq
-	matched := v.input.check(cmd)
-	switch matched {
-	case cmd_action_run:
-		v.visible = false
-		return nil
-	case cmd_action_delay:
-		v.input.delay_cmd_cb = func() {
-			v.visible = false
-		}
-		return nil
-	default:
-		v.input.keyseq = ""
-	}
-	// if matched == 1 {
-	// 	v.run_command(cmd)
-	// } else if matched > 1 {
-	// 	v.input.rundelay(cmd)
-	// } else if v.main.cmdline.Vim.vi.Leader {
-	// 	if v.main.cmdline.Vim.vi_handle.HanldeKey(event) {
-	// 		v.input.keyseq = ""
-	// 	}
-	// }
-	return nil
 }
 
 type context_menu_item struct {
@@ -119,32 +65,14 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		menu.table.SetCurrentItem(0)
 		v := menu
 		if v.visible {
-			// x, y, w, h := v.parent.GetRect()
 			mouseX, mouseY := event.Position()
 			height := len(v.impl.items) + 2
-
-			// right := min(mouseX+v.width, x+w)
-			// bottom := min(mouseY+height, y+h)
-
-			// mouseX = right - v.width
-			// mouseY = bottom - height
-
 			v.table.SetRect(mouseX, mouseY, v.width, height)
 			menu.MenuPos = MousePosition{mouseX, mouseY}
-			// v.menuRect = Rect{mouseX, mouseY, v.width, height}
-
-			// log.Println("right click ", v.menuRect)
 		}
 		return tview.MouseConsumed, nil
 	}
 	posX, posY := event.Position()
-	// x1 := menu.MenuPos.x
-	// y1 := menu.MenuPos.y
-	// h := 100
-	// w := menu.width
-	// x, y, w, h := menu.table.GetInnerRect()
-	// log.Println("pos", menu.MenuPos, "Rect", x, y, w, h, "DrawRect", menu.menuRect)
-
 	if !menu.table.InRect(posX, posY) {
 		if menu.MenuPos.x == 0 {
 			log.Printf("xxxxxxxxx")
