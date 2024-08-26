@@ -47,7 +47,7 @@ type mainui struct {
 	app                *tview.Application
 	uml                *umlview
 	bf                 *BackForward
-	log                *tview.TextView
+	log                *logview
 	cmdline            *cmdline
 	prefocused         view_id
 	searchcontext      *GenericSearch
@@ -406,8 +406,7 @@ func ensure_dir(root string) {
 var lspviroot workdir
 
 func (main *mainui) update_log_view(s string) {
-	t := main.log.GetText(true)
-	main.log.SetText(t + s)
+	main.log.update_log_view(s)
 }
 func MainUI(arg *Arguments) {
 	var filearg = ""
@@ -467,10 +466,10 @@ func MainUI(arg *Arguments) {
 		}
 		log.Println(strings.Join(xx, ","))
 	})
-	main.log = tview.NewTextView()
-	main.log.SetText("Started")
+	main.log = new_log_view(&main)
+	main.log.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
-	console.AddPage("log", main.log, true, false)
+	console.AddPage("log", main.log.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
 	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
 

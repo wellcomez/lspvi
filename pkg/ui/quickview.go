@@ -40,6 +40,11 @@ func new_quick_preview() *quick_preview {
 	}
 }
 
+type logview struct {
+	*view_link
+	log *tview.TextView
+}
+
 // quick_view
 type quick_view struct {
 	*view_link
@@ -155,6 +160,18 @@ func (menu quick_view_context) getbox() *tview.Box {
 // menuitem implements context_menu_handle.
 func (menu quick_view_context) menuitem() []context_menu_item {
 	return menu.qk.menuitem
+}
+
+func new_log_view(main *mainui) *logview {
+	ret := &logview{
+		view_link: &view_link{up: view_code, right: view_callin},
+		log:       tview.NewTextView(),
+	}
+	return ret
+}
+func (log *logview) update_log_view(s string) {
+	t := log.log.GetText(true)
+	log.log.SetText(t + s)
 }
 
 // new_quikview
