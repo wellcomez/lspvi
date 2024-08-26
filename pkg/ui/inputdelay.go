@@ -19,6 +19,7 @@ const (
 	cmd_action_none cmd_action = iota
 	cmd_action_run
 	cmd_action_delay
+	cmd_action_buffer
 )
 
 func (input *inputdelay) get_cmd(key string) (cmd_action, []*cmditem) {
@@ -43,6 +44,9 @@ func (input *inputdelay) get_cmd(key string) (cmd_action, []*cmditem) {
 		} else {
 			return cmd_action_run, cmds
 		}
+	}
+	if matched>1{
+		return cmd_action_buffer, cmds
 	}
 	return cmd_action_none, cmds
 }

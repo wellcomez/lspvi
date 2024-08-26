@@ -388,10 +388,10 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.end()
 		return true
 	} else if end == cmd_action_delay {
-		// l.state.keyseq = []string{string(event.Rune())}
-		// l.end()
 		return true
-	}else{
+	} else if end == cmd_action_buffer {
+		return true
+	} else {
 		l.end()
 	}
 	// viewid := l.main.get_focus_view_id()
@@ -453,6 +453,8 @@ func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 		l.vi.EnterEscape()
 		return true
 	case cmd_action_delay:
+		return true
+	case cmd_action_buffer:
 		return true
 	default:
 		l.end()

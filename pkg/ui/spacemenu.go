@@ -154,6 +154,8 @@ func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		v.input.delay_cmd_cb =
 			v.on_cmd_excuted
 		return nil
+	case cmd_action_buffer:
+		return nil
 	case cmd_action_none:
 		v.input.keyseq = ""
 	}
