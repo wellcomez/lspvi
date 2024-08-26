@@ -380,6 +380,9 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	l.state.keyseq = append(ts, string(ch))
 	cmdname := strings.Join(l.state.keyseq, "")
+	l.input.delay_cmd_cb = func() {
+		l.end()
+	}
 	end := l.input.check(cmdname)
 	if end == cmd_action_run {
 		l.end()
@@ -439,15 +442,15 @@ func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	key := state.kseq + string(ch)
 	state.kseq = key
 	end := input.check(key)
+	input.delay_cmd_cb = func() {
+		l.end()
+	}
 	switch end {
 	case cmd_action_run:
 		l.end()
 		l.vi.EnterEscape()
 		return true
 	case cmd_action_delay:
-		input.delay_cmd_cb = func() {
-			l.end()
-		}
 		return true
 	default:
 		l.end()
@@ -593,7 +596,7 @@ func (v *Vim) EnterLead() bool {
 			"o":  main.open_document_symbol_picker,
 		}*/
 		sss := main.key_map_leader()
-		input := &inputdelay{ cmdlist: sss}
+		input := &inputdelay{cmdlist: sss}
 		lead.state.input = input
 		v.vi_handle = lead
 		v.app.layout.spacemenu.visible = true
