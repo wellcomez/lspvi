@@ -114,6 +114,7 @@ func (t *contextmenu) set_items(items []context_menu_item, parent *tview.Box) {
 		cmdlist: command_list,
 		main:    t.main,
 	}
+	t.table.Clear()
 	for _, v := range impl.items {
 		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
 		t.table.AddItem(s, "", 0, func() {
