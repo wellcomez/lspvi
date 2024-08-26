@@ -28,6 +28,7 @@ type rootlayout struct {
 	mainlayout  *tview.Flex
 	dialog      *fzfmain
 	spacemenu   *space_menu
+	hide_cb     func()
 }
 
 // editor_area_fouched
@@ -530,10 +531,11 @@ func MainUI(arg *Arguments) {
 			main.layout.spacemenu.openmenu()
 		}
 	})
+
 	tab_area.AddItem(mainmenu, 10, 0, false)
 
 	main.right_context_menu = new_contextmenu(&main)
-	main.right_context_menu.menu_handle = []context_menu_handle{main.codeview.rightmenu, main.quickview.right_context,}
+	main.right_context_menu.menu_handle = []context_menu_handle{main.codeview.rightmenu, main.quickview.right_context}
 
 	var tabid view_id = view_quickview
 	fzttab := group.Find(tabid.getname())
@@ -554,6 +556,13 @@ func MainUI(arg *Arguments) {
 		dialog:      Newfuzzpicker(&main, app),
 	}
 	spacemenu := new_spacemenu(&main)
+	spacemenu.menustate = func(s *space_menu) {
+		if s.visible {
+			mainmenu.Focus(nil)
+		} else {
+			mainmenu.Blur()
+		}
+	}
 	main.layout.spacemenu = spacemenu
 
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)

@@ -11,11 +11,12 @@ import (
 )
 
 type space_menu struct {
-	table   *tview.List
-	main    *mainui
-	visible bool
-	impl    *space_menu_impl
-	input   *inputdelay
+	table     *tview.List
+	main      *mainui
+	visible   bool
+	impl      *space_menu_impl
+	input     *inputdelay
+	menustate func(*space_menu)
 }
 type cmditem struct {
 	key cmdkey
@@ -126,18 +127,6 @@ type space_menu_item struct {
 	handle func()
 }
 
-// func (v *space_menu) input_cb(word string) {
-// 	if v.input.keyseq == word {
-// 		v.run_command(word)
-// 	}
-// }
-
-//	func (v *space_menu) run_command(word string) {
-//		v.input.run(word)
-//		v.input.keyseq = ""
-//		v.visible = false
-//		v.main.cmdline.Vim.EnterEscape()
-//	}
 func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := string(event.Rune())
 	if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
@@ -172,11 +161,18 @@ func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 func (v *space_menu) closemenu() {
 	v.visible = false
 	v.input.keyseq = ""
+	v.table.SetCurrentItem(0)
+	if v.menustate != nil {
+		v.menustate(v)
+	}
 }
 func (v *space_menu) openmenu() {
 	v.visible = true
 	v.input.keyseq = ""
 	v.table.SetCurrentItem(0)
+	if v.menustate != nil {
+		v.menustate(v)
+	}
 }
 func (v *space_menu) on_cmd_excuted() {
 	v.closemenu()
