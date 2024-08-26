@@ -23,6 +23,7 @@ type cmditem struct {
 	cmd cmdactor
 }
 type cmdactor struct {
+	id     command_id
 	desc   string
 	handle func()
 }
