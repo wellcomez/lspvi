@@ -27,6 +27,7 @@ type CodeView struct {
 	rightmenu_items        []context_menu_item
 	rightmenu_select_range lsp.Range
 	rightmenu              CodeContextMenu
+	LineNumberUnderMouse   int
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -208,6 +209,13 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	root := code.view
 	posX, posY := event.Position()
 
+	switch action {
+	case tview.MouseLeftClick, tview.MouseLeftDown, tview.MouseLeftDoubleClick:
+		_, inY, _, _ := code.view.GetInnerRect()
+		code.LineNumberUnderMouse = (posY - inY)
+		// log.Println("handle_mouse_impl", inY, posY, posY-inY)
+	}
+
 	yOffset := code.yOfffset()
 	xOffset := code.xOffset()
 	// offsetx:=3
@@ -220,6 +228,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	if !InRect(event, root) {
 		return action, event
 	}
+
 	if action == tview.MouseLeftDoubleClick {
 		root.Cursor.Loc = tab_loc(root, pos)
 		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
@@ -275,6 +284,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		// log.Println(root.Cursor.Loc)
 		root.SelectLine()
 		code.update_with_line_changed()
+		code.LineNumberUnderMouse = root.Cursor.Loc.Y - root.Topline
 		return tview.MouseConsumed, nil
 	}
 	return action, event
@@ -624,10 +634,10 @@ func (code *CodeView) goto_loation(loc lsp.Range) {
 	loc.End.Line = min(code.view.Buf.LinesNum(), loc.End.Line)
 
 	line := loc.Start.Line
-	log.Println("gotoline", line)
-	if line < code.view.Topline || code.view.Bottomline() < line {
-		code.view.Topline = max(line-code.focus_line(), 0)
-	}
+	code.change_topline_with_previousline(line)
+	// if line < code.view.Topline || code.view.Bottomline() < line {
+	// 	code.view.Topline = max(line-code.focus_line(), 0)
+	// }
 	Cur := code.view.Cursor
 	Cur.SetSelectionStart(femto.Loc{
 		X: loc.Start.Character + x,
@@ -659,10 +669,10 @@ func (code *CodeView) gotoline(line int) {
 	if gs != nil && gs.view == view_code {
 		key = strings.ToLower(gs.key)
 	}
-	log.Println("gotoline", line)
-	if line < code.view.Topline || code.view.Bottomline() < line {
-		code.view.Topline = max(line-code.focus_line(), 0)
-	}
+	// if line < code.view.Topline || code.view.Bottomline() < line {
+	// 	code.view.Topline = max(line-code.focus_line(), 0)
+	// }
+	code.change_topline_with_previousline(line)
 	text := strings.ToLower(code.view.Buf.Line(line))
 	RightX := len(text)
 	leftX := 0
@@ -697,4 +707,13 @@ func (code *CodeView) gotoline(line int) {
 	// root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: line})
 	// text := root.Buf.Line(line)
 	// root.Cursor.SetSelectionEnd(femto.Loc{X: len(text), Y: line})
+}
+
+func (code *CodeView) change_topline_with_previousline(line int) {
+	// log.Println("gotoline", line)
+	topline := line - code.LineNumberUnderMouse
+	_, _, _, linecount := code.view.GetInnerRect()
+	linecount = min(linecount, code.view.Bottomline()-code.view.Topline+1)
+	code.view.Topline = max(topline, 0)
+	// log.Println("gotoline", line, "linecount", linecount, "topline", code.view.Topline, "LineNumberUnderMouse", code.LineNumberUnderMouse)
 }
