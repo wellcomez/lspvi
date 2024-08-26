@@ -160,12 +160,8 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		return action, event
 	}
 	root := code.view
-	x1, y1, w, h := root.GetInnerRect()
-	// leftX, _, _, _ := root.GetRect()
 	posX, posY := event.Position()
-	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
-		return action, event
-	}
+
 	yOffset := code.yOfffset()
 	xOffset := code.xOffset()
 	// offsetx:=3
@@ -175,7 +171,6 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	}
 	pos = avoid_position_overflow(root, pos)
 	if code.rightmenu != nil {
-
 		reta, retevent := code.rightmenu.handle_mouse(action, event)
 		if reta == tview.MouseConsumed {
 			if code.rightmenu.visible && action == tview.MouseRightClick {
@@ -189,6 +184,9 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			}
 			return reta, retevent
 		}
+	}
+	if !InRect(event, root) {
+		return action, event
 	}
 	if action == tview.MouseLeftDoubleClick {
 		root.Cursor.Loc = tab_loc(root, pos)
@@ -368,7 +366,6 @@ func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
 	}
 	return key_map
 }
-
 
 func (code *CodeView) action_key_down() {
 	code.move_up_down(false)

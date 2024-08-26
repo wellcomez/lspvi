@@ -2,12 +2,16 @@ package mainui
 
 import (
 	"fmt"
+	"log"
 	// "log"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
+type Rect struct {
+	x, y, w, h int
+}
 type MousePosition struct {
 	x, y int
 }
@@ -19,7 +23,8 @@ type contextmenu struct {
 	input   *inputdelay
 	MenuPos MousePosition
 	//mousePos MousePosition
-	width int
+	width    int
+	menuRect Rect
 }
 
 func (v *contextmenu) input_cb(word string) {
@@ -102,15 +107,26 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		x, y := event.Position()
 		menu.MenuPos = MousePosition{x, y}
 		menu.table.SetCurrentItem(0)
+		v := menu
+		if v.visible {
+			v.table.SetRect(v.MenuPos.x, v.MenuPos.y, v.width, len(v.impl.items)+2)
+			v.menuRect = Rect{v.MenuPos.x, v.MenuPos.y, v.width, len(v.impl.items) + 2}
+			log.Println("right click ", v.menuRect)
+		}
 		return tview.MouseConsumed, nil
 	}
 	posX, posY := event.Position()
-	x1 := menu.MenuPos.x
-	y1 := menu.MenuPos.y
-	h := 100
-	w := menu.width
-	// log.Printf("x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
-	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
+	// x1 := menu.MenuPos.x
+	// y1 := menu.MenuPos.y
+	// h := 100
+	// w := menu.width
+	x, y, w, h := menu.table.GetInnerRect()
+	log.Println("pos", menu.MenuPos, "Rect", x, y, w, h, "DrawRect", menu.menuRect)
+
+	if !menu.table.InRect(posX, posY) {
+		if menu.MenuPos.x == 0 {
+			log.Printf("xxxxxxxxx")
+		}
 		if menu.visible {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 				menu.visible = false
@@ -173,7 +189,6 @@ func (v *contextmenu) Draw(screen tcell.Screen) {
 	}
 	// viewid := v.main.get_focus_view_id()
 	// _, Y, height, _ := v.main.get_view_from_id(viewid).GetRect()
-	v.table.SetRect(v.MenuPos.x, v.MenuPos.y, v.width, len(v.impl.items)+2)
 	v.table.Draw(screen)
-	v.table.Draw(screen)
+	// v.table.Draw(screen)
 }
