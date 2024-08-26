@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	// "log"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -55,6 +57,18 @@ func NewTab(name string, group *ButtonGroup) *TabButton {
 		view:  tview.NewButton(name).SetStyle(style),
 		group: group,
 	}
-	ret.view.SetSelectedFunc(ret.selected)
+	ret.view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if action == tview.MouseMove {
+			return action, event
+		}
+		x, y := event.Position()
+		if action == tview.MouseLeftDown {
+			if ret.view.InRect(x, y) {
+				ret.selected()
+			}
+		}
+		return action, event
+	})
+	// ret.view.SetSelectedFunc(ret.selected)
 	return ret
 }
