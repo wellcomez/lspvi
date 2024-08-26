@@ -380,19 +380,22 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	l.state.keyseq = append(ts, string(ch))
 	cmdname := strings.Join(l.state.keyseq, "")
-	l.input.delay_cmd_cb = func() {
-		l.end()
-	}
-	end := l.input.check(cmdname)
-	if end == cmd_action_run {
-		l.end()
-		return true
-	} else if end == cmd_action_delay {
-		return true
-	} else if end == cmd_action_buffer {
-		return true
-	} else {
-		l.end()
+	viewid := l.main.get_focus_view_id()
+	if viewid == view_code {
+		l.input.delay_cmd_cb = func() {
+			l.end()
+		}
+		end := l.input.check(cmdname)
+		if end == cmd_action_run {
+			l.end()
+			return true
+		} else if end == cmd_action_delay {
+			return true
+		} else if end == cmd_action_buffer {
+			return true
+		} else {
+			l.end()
+		}
 	}
 	// viewid := l.main.get_focus_view_id()
 	// switch viewid {
