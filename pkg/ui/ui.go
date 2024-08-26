@@ -16,7 +16,7 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-var tabs []view_id = []view_id{view_quickview, view_callin, view_uml,view_log}
+var tabs []view_id = []view_id{view_quickview, view_callin, view_uml, view_log}
 var appname = "lspvi"
 var httport = 0
 
@@ -215,6 +215,16 @@ func (m *mainui) ActiveTab(id int, focused bool) {
 		} else {
 			v.view.Blur()
 		}
+	}
+	switch id {
+	case view_log:
+		m.page.SetTitle("log")
+	case view_uml:
+		m.page.SetTitle(m.uml.Name)
+	case view_callin:
+		m.page.SetTitle(m.callinview.Name)
+	case view_quickview:
+		m.page.SetTitle(m.quickview.String())
 	}
 }
 
