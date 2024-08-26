@@ -118,6 +118,9 @@ func view_id_init(m *mainui) {
 					box.SetFocusFunc(func() {
 						m.editor_area_fouched()
 						change_after_focused(box, m)
+						if m.cmdline.Vim.vi.String() == "none" {
+							m.cmdline.Vim.EnterEscape()
+						}
 					})
 				}
 			case view_quickview, view_callin, view_uml:
