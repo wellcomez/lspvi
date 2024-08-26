@@ -286,17 +286,20 @@ func (m *mainui) global_key_map() []cmditem {
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTAB),
 	}
 }
-func (m *mainui) vi_key_map() []cmditem {
-	return []cmditem{
 
-		//get_cmd_actor(m, goto_decl).esc_key(split(key_goto_decl)),
-		//get_cmd_actor(m, goto_define).esc_key(split(key_goto_define)),
+/*
+	func (m *mainui) vi_key_map() []cmditem {
+		return []cmditem{
 
+			//get_cmd_actor(m, goto_decl).esc_key(split(key_goto_decl)),
+			//get_cmd_actor(m, goto_define).esc_key(split(key_goto_define)),
+
+		}
 	}
-}
+*/
 func (m *mainui) keymap(keytype cmdkeytype) []string {
 	ret := []string{}
-	items := m.vi_key_map()
+	var items = []cmditem{}
 	switch keytype {
 	case cmd_key_menu:
 		items = m.key_map_space_menu()

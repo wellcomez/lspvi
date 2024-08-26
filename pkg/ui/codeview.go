@@ -22,7 +22,6 @@ type CodeView struct {
 	view              *femto.View
 	theme             string
 	main              *mainui
-	basic_vi_command  []cmditem
 	key_map           map[tcell.Key]func(code *CodeView)
 	mouse_select_area bool
 	rightmenu         *text_right_menu
@@ -317,19 +316,19 @@ func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 	if code.main.get_focus_view_id() != view_code {
 		return event
 	}
-	ch := string(event.Rune())
+	// ch := string(event.Rune())
 	if h, ok := code.key_map[event.Key()]; ok {
 		h(code)
 		return nil
 	}
-	if code.run_command(code.basic_vi_command, ch) {
-		return nil
-	}
+	// if code.run_command(code.basic_vi_command, ch) {
+	// 	return nil
+	// }
 	return event
 }
 
 func (code *CodeView) map_key_handle() {
-	code.basic_vi_command = code.key_map_command()
+	// code.basic_vi_command = code.key_map_command()
 	code.key_map = code.key_map_arrow()
 }
 func (code *CodeView) word_left() {
@@ -370,12 +369,6 @@ func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
 	return key_map
 }
 
-func (code *CodeView) key_map_command() []cmditem {
-	if code.main == nil {
-		return []cmditem{}
-	}
-	return code.main.vi_key_map()
-}
 
 func (code *CodeView) action_key_down() {
 	code.move_up_down(false)
