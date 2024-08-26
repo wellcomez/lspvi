@@ -83,7 +83,7 @@ func get_grid_list_index(list *tview.List, em *tcell.EventMouse, line int) (int,
 	_, moustY := em.Position()
 	offsetY, _ := list.GetOffset()
 	index := (moustY-y)/line + offsetY
-	if index >= list.GetItemCount()-1 || index < 0 || list.GetItemCount() == 0 {
+	if index > list.GetItemCount()-1 || index < 0 || list.GetItemCount() == 0 {
 		return 0, fmt.Errorf("%d is out of range", index)
 	}
 	log.Println("mouseY", moustY, "listY=", y, "list offset", offsetY, "idnex", index)
