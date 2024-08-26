@@ -711,9 +711,10 @@ func (code *CodeView) gotoline(line int) {
 
 func (code *CodeView) change_topline_with_previousline(line int) {
 	// log.Println("gotoline", line)
-	topline := line - code.LineNumberUnderMouse
 	_, _, _, linecount := code.view.GetInnerRect()
 	linecount = min(linecount, code.view.Bottomline()-code.view.Topline+1)
+	topline := line - min(code.LineNumberUnderMouse, linecount)
+	//linenumberusermouse should less than linecout
 	code.view.Topline = max(topline, 0)
 	// log.Println("gotoline", line, "linecount", linecount, "topline", code.view.Topline, "LineNumberUnderMouse", code.LineNumberUnderMouse)
 }
