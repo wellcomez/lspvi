@@ -230,6 +230,8 @@ func (main *mainui) key_map_escape() []cmditem {
 	sss := []cmditem{
 		get_cmd_actor(m, file_in_file).esc_key(split("f")),
 		get_cmd_actor(m, file_in_file_vi_loop).esc_key(split("*")),
+		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),
+		get_cmd_actor(m, vi_line_head).esc_key(split("0")),
 		get_cmd_actor(m, goto_callin).esc_key(split(chr_goto_callin)),
 		get_cmd_actor(m, goto_refer).esc_key(split(chr_goto_refer)),
 		get_cmd_actor(m, arrow_up).esc_key([]string{"k"}),
@@ -290,8 +292,6 @@ func (m *mainui) vi_key_map() []cmditem {
 		//get_cmd_actor(m, goto_decl).esc_key(split(key_goto_decl)),
 		//get_cmd_actor(m, goto_define).esc_key(split(key_goto_define)),
 
-		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),
-		get_cmd_actor(m, vi_line_head).esc_key(split("0")),
 	}
 }
 func (m *mainui) keymap(keytype cmdkeytype) []string {
