@@ -25,6 +25,7 @@ type CodeView struct {
 	key_map                map[tcell.Key]func(code *CodeView)
 	mouse_select_area      bool
 	rightmenu_items        []context_menu_item
+	rightmenu_select_text  string
 	rightmenu_select_range lsp.Range
 	rightmenu              CodeContextMenu
 	LineNumberUnderMouse   int
@@ -38,6 +39,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	code := menu.code
 	root := code.view
 
+	code.get_click_line_inview(event)
 	posX, posY := event.Position()
 
 	yOffset := code.yOfffset()
@@ -55,6 +57,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		log.Println("before", code.view.Cursor.CurSelection)
 		root.Cursor.SelectWord()
+		code.rightmenu_select_text = root.Cursor.GetSelection()
 		code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
 		log.Println("after ", code.view.Cursor.CurSelection)
 	}
@@ -211,8 +214,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 
 	switch action {
 	case tview.MouseLeftClick, tview.MouseLeftDown, tview.MouseLeftDoubleClick:
-		_, inY, _, _ := code.view.GetInnerRect()
-		code.LineNumberUnderMouse = (posY - inY)
+		code.get_click_line_inview(event)
 		// log.Println("handle_mouse_impl", inY, posY, posY-inY)
 	}
 
@@ -288,6 +290,12 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		return tview.MouseConsumed, nil
 	}
 	return action, event
+}
+
+func (code *CodeView) get_click_line_inview(event *tcell.EventMouse) {
+	_, posY := event.Position()
+	_, inY, _, _ := code.view.GetInnerRect()
+	code.LineNumberUnderMouse = (posY - inY)
 }
 
 // GetVisualX returns the x value of the cursor in visual spaces

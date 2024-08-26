@@ -125,6 +125,9 @@ func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.L
 	go func() {
 		m.app.QueueUpdateDraw(func() {
 			m.quickview.view.Key = m.codeview.view.Cursor.GetSelection()
+			if len(ranges.Key) > 0 {
+				m.quickview.view.Key = ranges.Key
+			}
 			if len(refs) > 0 {
 				m.ActiveTab(view_quickview, false)
 			} else {
@@ -676,7 +679,7 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			main.codeview.gotoline(gs.GetIndex())
 			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
-				main.ActiveTab(view_quickview,false)
+				main.ActiveTab(view_quickview, false)
 				main.quickview.main.quickview.OnLspRefenceChanged(locs, data_search, lspcore.SymolSearchKey{Key: txt})
 			}
 		} else {
