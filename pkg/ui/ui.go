@@ -33,25 +33,26 @@ type rootlayout struct {
 // editor_area_fouched
 
 type mainui struct {
-	fileexplorer      *file_tree_view
-	codeview          *CodeView
-	lspmgr            *lspcore.LspWorkspace
-	symboltree        *SymbolTreeView
-	quickview         *quick_view
-	activate_tab_name string
-	page              *tview.Pages
-	callinview        *callinview
-	tabs              *ButtonGroup
-	root              string
-	app               *tview.Application
-	uml               *umlview
-	bf                *BackForward
-	log               *tview.TextView
-	cmdline           *cmdline
-	prefocused        view_id
-	searchcontext     *GenericSearch
-	statusbar         *tview.TextView
-	layout            *rootlayout
+	fileexplorer       *file_tree_view
+	codeview           *CodeView
+	lspmgr             *lspcore.LspWorkspace
+	symboltree         *SymbolTreeView
+	quickview          *quick_view
+	activate_tab_name  string
+	page               *tview.Pages
+	callinview         *callinview
+	tabs               *ButtonGroup
+	root               string
+	app                *tview.Application
+	uml                *umlview
+	bf                 *BackForward
+	log                *tview.TextView
+	cmdline            *cmdline
+	prefocused         view_id
+	searchcontext      *GenericSearch
+	statusbar          *tview.TextView
+	layout             *rootlayout
+	right_context_menu *contextmenu
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
@@ -523,14 +524,16 @@ func MainUI(arg *Arguments) {
 	tab_area.AddItem(main.statusbar, 0, 10, false)
 	mainmenu := tview.NewButton("Menu")
 	mainmenu.SetSelectedFunc(func() {
-		if main.layout.spacemenu.visible{
+		if main.layout.spacemenu.visible {
 			main.layout.spacemenu.closemenu()
-		}else{
+		} else {
 			main.layout.spacemenu.openmenu()
 		}
 	})
 	tab_area.AddItem(mainmenu, 10, 0, false)
 
+	main.right_context_menu = new_contextmenu(&main)
+	main.right_context_menu.menu_handle = append(main.right_context_menu.menu_handle, main.codeview.rightmenu)
 	var tabid view_id = view_quickview
 	fzttab := group.Find(tabid.getname())
 	fzttab.view.Focus(nil)
@@ -561,6 +564,10 @@ func MainUI(arg *Arguments) {
 		return main.handle_key(event)
 	})
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
+		main.right_context_menu.handle_mouse(action, event)
+		if main.right_context_menu.visible {
+			return nil, tview.MouseConsumed
+		}
 		if main.layout.spacemenu.visible {
 			spacemenu := main.layout.spacemenu
 			action, event = spacemenu.handle_mouse(action, event)
@@ -587,6 +594,9 @@ func MainUI(arg *Arguments) {
 		return event, action
 	})
 	app.SetAfterDrawFunc(func(screen tcell.Screen) {
+		if main.right_context_menu.visible {
+			main.right_context_menu.Draw(screen)
+		}
 		main.layout.spacemenu.Draw(screen)
 		if main.layout.dialog.Visible {
 			main.layout.dialog.Draw(screen)
@@ -597,12 +607,12 @@ func MainUI(arg *Arguments) {
 				main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
 			}
 		}
-		if main.codeview.rightmenu.visible {
-			main.codeview.rightmenu.Draw(screen)
-		}
-		if main.quickview.menu.visible {
-			main.quickview.menu.Draw(screen)
-		}
+		// if main.codeview.rightmenu.visible {
+		// 	main.codeview.rightmenu.Draw(screen)
+		// }
+		// if main.quickview.menu.visible {
+		// 	main.quickview.menu.Draw(screen)
+		// }
 	})
 	view_id_init(&main)
 	// main.set_viewid_focus(view_code)

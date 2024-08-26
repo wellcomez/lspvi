@@ -23,9 +23,11 @@ type contextmenu struct {
 	input   *inputdelay
 	MenuPos MousePosition
 	//mousePos MousePosition
-	width    int
-	menuRect Rect
-	parent   *tview.Box
+	width       int
+	// menuRect    Rect
+	// parent      *tview.Box
+	menu_handle []context_menu_handle
+	mouseclick  clickdetector
 }
 
 func (v *contextmenu) input_cb(word string) {
@@ -94,9 +96,6 @@ func (menu *contextmenu) onenter() {
 	}
 
 }
-func init_contextmenu_item(m *mainui) []context_menu_item {
-	return []context_menu_item{}
-}
 
 type contextmenu_impl struct {
 	items []context_menu_item
@@ -104,24 +103,37 @@ type contextmenu_impl struct {
 
 func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if action == tview.MouseRightClick {
-		menu.visible = !menu.visible
+		visible := false
+		for _, v := range menu.menu_handle {
+			if v.getbox().InRect(event.Position()) {
+				menu.set_items(v.menuitem(), v.getbox())
+				v.on_mouse(action, event)
+				visible = true
+			}
+		}
+		if !visible {
+			menu.visible = false
+			return tview.MouseConsumed, nil
+		}
+		menu.visible = true
 		menu.table.SetCurrentItem(0)
 		v := menu
 		if v.visible {
-			x, y, w, h := v.parent.GetRect()
+			// x, y, w, h := v.parent.GetRect()
 			mouseX, mouseY := event.Position()
 			height := len(v.impl.items) + 2
 
-			right := min(mouseX+v.width, x+w)
-			bottom := min(mouseY+height, y+h)
+			// right := min(mouseX+v.width, x+w)
+			// bottom := min(mouseY+height, y+h)
 
-			mouseX = right - v.width
-			mouseY = bottom - height
+			// mouseX = right - v.width
+			// mouseY = bottom - height
 
 			v.table.SetRect(mouseX, mouseY, v.width, height)
 			menu.MenuPos = MousePosition{mouseX, mouseY}
-			v.menuRect = Rect{mouseX, mouseY, v.width, height}
-			log.Println("right click ", v.menuRect)
+			// v.menuRect = Rect{mouseX, mouseY, v.width, height}
+
+			// log.Println("right click ", v.menuRect)
 		}
 		return tview.MouseConsumed, nil
 	}
@@ -130,8 +142,8 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	// y1 := menu.MenuPos.y
 	// h := 100
 	// w := menu.width
-	x, y, w, h := menu.table.GetInnerRect()
-	log.Println("pos", menu.MenuPos, "Rect", x, y, w, h, "DrawRect", menu.menuRect)
+	// x, y, w, h := menu.table.GetInnerRect()
+	// log.Println("pos", menu.MenuPos, "Rect", x, y, w, h, "DrawRect", menu.menuRect)
 
 	if !menu.table.InRect(posX, posY) {
 		if menu.MenuPos.x == 0 {
@@ -149,7 +161,8 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	if !menu.visible {
 		return action, event
 	}
-	_, top, _, _ := menu.table.GetRect()
+	action, _ = menu.mouseclick.handle(action, event)
+	_, top, _, _ := menu.table.GetInnerRect()
 	if action == tview.MouseMove {
 		_, y := event.Position()
 		cur := y - top
@@ -162,14 +175,15 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	}
 	return tview.MouseConsumed, nil
 }
-func new_contextmenu(m *mainui, items []context_menu_item, parent *tview.Box) *contextmenu {
-	t := contextmenu{
-		table:   tview.NewList(),
-		main:    m,
-		visible: false,
-		width:   40,
-		parent:  parent,
-	}
+
+type context_menu_handle interface {
+	getbox() *tview.Box
+	menuitem() []context_menu_item
+	on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse)
+}
+
+func (t *contextmenu) set_items(items []context_menu_item, parent *tview.Box) {
+	// t.parent = parent
 
 	impl := &contextmenu_impl{
 		items: items,
@@ -181,7 +195,7 @@ func new_contextmenu(m *mainui, items []context_menu_item, parent *tview.Box) *c
 	t.input = &inputdelay{
 		// cb:      t.input_cb,
 		cmdlist: command_list,
-		main:    m,
+		main:    t.main,
 	}
 	for _, v := range impl.items {
 		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
@@ -189,6 +203,22 @@ func new_contextmenu(m *mainui, items []context_menu_item, parent *tview.Box) *c
 		})
 	}
 	t.impl = impl
+}
+func new_contextmenu(m *mainui) *contextmenu {
+	t := contextmenu{
+		table:       tview.NewList(),
+		main:        m,
+		visible:     false,
+		width:       40,
+		menu_handle: []context_menu_handle{},
+	}
+
+	command_list := []cmditem{}
+	t.input = &inputdelay{
+		// cb:      t.input_cb,
+		cmdlist: command_list,
+		main:    m,
+	}
 	t.table.ShowSecondaryText(false)
 	t.table.SetBorder(true)
 	t.table.SetTitle("menu")

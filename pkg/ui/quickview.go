@@ -50,8 +50,9 @@ type quick_view struct {
 	main         *mainui
 	currentIndex int
 	Type         DateType
-	menu         *contextmenu
-	searchkey    lspcore.SymolSearchKey
+	// menu         *contextmenu
+	menuitem  []context_menu_item
+	searchkey lspcore.SymolSearchKey
 }
 type qf_history_data struct {
 	Type   DateType
@@ -127,7 +128,7 @@ func (h *quickfix_history) Load() ([]qf_history_data, error) {
 		var result = qf_history_data{
 			Type: data_callin,
 			Key: lspcore.SymolSearchKey{
-				Key: dir.Name(),
+				Key:  dir.Name(),
 				File: filepath.Join(umlDir, dir.Name()),
 			},
 		}
@@ -157,20 +158,21 @@ func new_quikview(main *mainui) *quick_view {
 		view:      view,
 		main:      main,
 		quickview: new_quick_preview(),
-		menu:      new_contextmenu(main, items,view.Box),
+		menuitem:  items,
+		// menu:      new_contextmenu(main, items,view.Box),
 	}
-	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		is_rightclick := (action == tview.MouseRightClick)
-		menu := ret.menu
-		action, event = menu.handle_mouse(action, event)
-		if ret.menu.visible && is_rightclick {
-			_, y, _, _ := view.GetRect()
-			index := (menu.MenuPos.y - y)
-			log.Println("index in list:", index)
-			view.SetCurrentItem(index)
-		}
-		return action, event
-	})
+	// view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	// 	is_rightclick := (action == tview.MouseRightClick)
+	// 	menu := ret.menu
+	// 	action, event = menu.handle_mouse(action, event)
+	// 	if ret.menu.visible && is_rightclick {
+	// 		_, y, _, _ := view.GetRect()
+	// 		index := (menu.MenuPos.y - y)
+	// 		log.Println("index in list:", index)
+	// 		view.SetCurrentItem(index)
+	// 	}
+	// 	return action, event
+	// })
 	view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		ch := event.Rune()
 		if ch == 'j' || event.Key() == tcell.KeyDown {

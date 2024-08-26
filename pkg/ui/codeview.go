@@ -18,19 +18,63 @@ import (
 
 type CodeView struct {
 	*view_link
-	filename          string
-	view              *femto.View
-	theme             string
-	main              *mainui
-	key_map           map[tcell.Key]func(code *CodeView)
-	mouse_select_area bool
-	rightmenu         *text_right_menu
+	filename               string
+	view                   *femto.View
+	theme                  string
+	main                   *mainui
+	key_map                map[tcell.Key]func(code *CodeView)
+	mouse_select_area      bool
+	rightmenu_items        []context_menu_item
+	rightmenu_select_range lsp.Range
+	rightmenu              CodeContextMenu
 }
-type text_right_menu struct {
-	*contextmenu
-	select_range lsp.Range
-	text         string
+type CodeContextMenu struct {
+	code *CodeView
 }
+
+// on_mouse implements context_menu_handle.
+func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	code := menu.code
+	root := code.view
+
+	posX, posY := event.Position()
+
+	yOffset := code.yOfffset()
+	xOffset := code.xOffset()
+	// offsetx:=3
+	pos := femto.Loc{
+		Y: posY + root.Topline - yOffset,
+		X: posX - int(xOffset),
+	}
+	pos = avoid_position_overflow(root, pos)
+
+	if action == tview.MouseRightClick {
+		// code.rightmenu.text = root.Cursor.GetSelection()
+		root.Cursor.Loc = tab_loc(root, pos)
+		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
+		log.Println("before", code.view.Cursor.CurSelection)
+		root.Cursor.SelectWord()
+		code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
+		log.Println("after ", code.view.Cursor.CurSelection)
+	}
+	return action, event
+}
+
+// getbox implements context_menu_handle.
+func (code CodeContextMenu) getbox() *tview.Box {
+	return code.code.view.Box
+}
+
+// menuitem implements context_menu_handle.
+func (code CodeContextMenu) menuitem() []context_menu_item {
+	return code.code.rightmenu_items
+}
+
+// type text_right_menu struct {
+// 	*contextmenu
+// 	select_range lsp.Range
+// 	text         string
+// }
 
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
 	if code.main == nil {
@@ -94,6 +138,7 @@ func NewCodeView(main *mainui) *CodeView {
 		left:  view_file},
 		theme: "darcula",
 	}
+	ret.rightmenu = CodeContextMenu{code: &ret}
 	ret.main = main
 	ret.map_key_handle()
 	var colorscheme femto.Colorscheme
@@ -122,15 +167,15 @@ func NewCodeView(main *mainui) *CodeView {
 				main.OnSearch(sss, true, true)
 			}},
 			{item: cmditem{cmd: cmdactor{desc: "Refer"}}, handle: func() {
-				main.get_refer(ret.rightmenu.select_range, main.codeview.filename)
+				main.get_refer(ret.rightmenu_select_range, main.codeview.filename)
 			}},
 			{item: goto_define, handle: func() {
-				main.get_define(ret.rightmenu.select_range, main.codeview.filename)
+				main.get_define(ret.rightmenu_select_range, main.codeview.filename)
 			}},
 			{item: callin, handle: func() {
 				loc := lsp.Location{
 					URI:   lsp.NewDocumentURI(ret.filename),
-					Range: ret.rightmenu.select_range,
+					Range: ret.rightmenu_select_range,
 				}
 				main.get_callin_stack_by_cursor(loc, ret.filename)
 			}},
@@ -144,9 +189,10 @@ func NewCodeView(main *mainui) *CodeView {
 		// 	get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
 		// 	get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
 		// }
-		ret.rightmenu = &text_right_menu{
-			contextmenu: new_contextmenu(main, items,ret.view.Box),
-		}
+		// ret.rightmenu = &text_right_menu{
+		// 	contextmenu: new_contextmenu(main, items, ret.view.Box),
+		// }
+		ret.rightmenu_items = items
 	}
 	return &ret
 }
@@ -170,21 +216,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		X: posX - int(xOffset),
 	}
 	pos = avoid_position_overflow(root, pos)
-	if code.rightmenu != nil {
-		reta, retevent := code.rightmenu.handle_mouse(action, event)
-		if reta == tview.MouseConsumed {
-			if code.rightmenu.visible && action == tview.MouseRightClick {
-				code.rightmenu.text = root.Cursor.GetSelection()
-				root.Cursor.Loc = tab_loc(root, pos)
-				root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
-				log.Println("before", code.view.Cursor.CurSelection)
-				root.Cursor.SelectWord()
-				code.rightmenu.select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
-				log.Println("after ", code.view.Cursor.CurSelection)
-			}
-			return reta, retevent
-		}
-	}
+
 	if !InRect(event, root) {
 		return action, event
 	}
