@@ -9,9 +9,6 @@ import (
 	"github.com/rivo/tview"
 )
 
-type Rect struct {
-	x, y, w, h int
-}
 type MousePosition struct {
 	x, y int
 }
@@ -25,22 +22,12 @@ type contextmenu struct {
 	width       int
 	menu_handle []context_menu_handle
 	mouseclick  clickdetector
+	parent      *tview.Box
 }
 
 type context_menu_item struct {
 	item   cmditem
 	handle func()
-}
-
-func (menu *contextmenu) onenter() {
-	menu.visible = false
-	idx := menu.table.GetCurrentItem()
-	if idx < len(menu.impl.items) {
-		if h := menu.impl.items[idx]; h.handle != nil {
-			h.handle()
-		}
-	}
-
 }
 
 type contextmenu_impl struct {
@@ -53,7 +40,9 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		for _, v := range menu.menu_handle {
 			if v.getbox().InRect(event.Position()) {
 				menu.set_items(v.menuitem(), v.getbox())
-				v.on_mouse(action, event)
+				if !menu.visible {
+					v.on_mouse(action, event)
+				}
 				visible = true
 			}
 		}
