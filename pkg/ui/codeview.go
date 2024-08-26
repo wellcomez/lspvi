@@ -22,7 +22,6 @@ type CodeView struct {
 	view              *femto.View
 	theme             string
 	main              *mainui
-	basic_vi_command  []cmditem
 	key_map           map[tcell.Key]func(code *CodeView)
 	mouse_select_area bool
 	rightmenu         *text_right_menu
@@ -146,7 +145,7 @@ func NewCodeView(main *mainui) *CodeView {
 		// 	get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
 		// }
 		ret.rightmenu = &text_right_menu{
-			contextmenu: new_contextmenu(main, items),
+			contextmenu: new_contextmenu(main, items,ret.view.Box),
 		}
 	}
 	return &ret
@@ -161,12 +160,8 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		return action, event
 	}
 	root := code.view
-	x1, y1, w, h := root.GetInnerRect()
-	// leftX, _, _, _ := root.GetRect()
 	posX, posY := event.Position()
-	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
-		return action, event
-	}
+
 	yOffset := code.yOfffset()
 	xOffset := code.xOffset()
 	// offsetx:=3
@@ -176,7 +171,6 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	}
 	pos = avoid_position_overflow(root, pos)
 	if code.rightmenu != nil {
-
 		reta, retevent := code.rightmenu.handle_mouse(action, event)
 		if reta == tview.MouseConsumed {
 			if code.rightmenu.visible && action == tview.MouseRightClick {
@@ -190,6 +184,9 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			}
 			return reta, retevent
 		}
+	}
+	if !InRect(event, root) {
+		return action, event
 	}
 	if action == tview.MouseLeftDoubleClick {
 		root.Cursor.Loc = tab_loc(root, pos)
@@ -317,19 +314,19 @@ func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 	if code.main.get_focus_view_id() != view_code {
 		return event
 	}
-	ch := string(event.Rune())
+	// ch := string(event.Rune())
 	if h, ok := code.key_map[event.Key()]; ok {
 		h(code)
 		return nil
 	}
-	if code.run_command(code.basic_vi_command, ch) {
-		return nil
-	}
+	// if code.run_command(code.basic_vi_command, ch) {
+	// 	return nil
+	// }
 	return event
 }
 
 func (code *CodeView) map_key_handle() {
-	code.basic_vi_command = code.key_map_command()
+	// code.basic_vi_command = code.key_map_command()
 	code.key_map = code.key_map_arrow()
 }
 func (code *CodeView) word_left() {
@@ -368,13 +365,6 @@ func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
 		code.action_key_down()
 	}
 	return key_map
-}
-
-func (code *CodeView) key_map_command() []cmditem {
-	if code.main == nil {
-		return []cmditem{}
-	}
-	return code.main.vi_key_map()
 }
 
 func (code *CodeView) action_key_down() {

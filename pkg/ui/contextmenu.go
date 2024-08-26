@@ -2,12 +2,16 @@ package mainui
 
 import (
 	"fmt"
+	"log"
 	// "log"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
+type Rect struct {
+	x, y, w, h int
+}
 type MousePosition struct {
 	x, y int
 }
@@ -19,7 +23,9 @@ type contextmenu struct {
 	input   *inputdelay
 	MenuPos MousePosition
 	//mousePos MousePosition
-	width int
+	width    int
+	menuRect Rect
+	parent   *tview.Box
 }
 
 func (v *contextmenu) input_cb(word string) {
@@ -48,16 +54,28 @@ func (v *contextmenu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	v.input.keyseq += ch
 	cmd := v.input.keyseq
-	matched := v.input.command_matched(cmd)
-	if matched == 1 {
-		v.run_command(cmd)
-	} else if matched > 1 {
-		v.input.rundelay(cmd)
-	} else if v.main.cmdline.Vim.vi.Leader {
-		if v.main.cmdline.Vim.vi_handle.HanldeKey(event) {
-			v.input.keyseq = ""
+	matched := v.input.check(cmd)
+	switch matched {
+	case cmd_action_run:
+		v.visible = false
+		return nil
+	case cmd_action_delay:
+		v.input.delay_cmd_cb = func() {
+			v.visible = false
 		}
+		return nil
+	default:
+		v.input.keyseq = ""
 	}
+	// if matched == 1 {
+	// 	v.run_command(cmd)
+	// } else if matched > 1 {
+	// 	v.input.rundelay(cmd)
+	// } else if v.main.cmdline.Vim.vi.Leader {
+	// 	if v.main.cmdline.Vim.vi_handle.HanldeKey(event) {
+	// 		v.input.keyseq = ""
+	// 	}
+	// }
 	return nil
 }
 
@@ -87,18 +105,38 @@ type contextmenu_impl struct {
 func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if action == tview.MouseRightClick {
 		menu.visible = !menu.visible
-		x, y := event.Position()
-		menu.MenuPos = MousePosition{x, y}
 		menu.table.SetCurrentItem(0)
+		v := menu
+		if v.visible {
+			x, y, w, h := v.parent.GetRect()
+			mouseX, mouseY := event.Position()
+			height := len(v.impl.items) + 2
+
+			right := min(mouseX+v.width, x+w)
+			bottom := min(mouseY+height, y+h)
+
+			mouseX = right - v.width
+			mouseY = bottom - height
+
+			v.table.SetRect(mouseX, mouseY, v.width, height)
+			menu.MenuPos = MousePosition{mouseX, mouseY}
+			v.menuRect = Rect{mouseX, mouseY, v.width, height}
+			log.Println("right click ", v.menuRect)
+		}
 		return tview.MouseConsumed, nil
 	}
 	posX, posY := event.Position()
-	x1 := menu.MenuPos.x
-	y1 := menu.MenuPos.y
-	h := 100
-	w := menu.width
-	// log.Printf("x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
-	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
+	// x1 := menu.MenuPos.x
+	// y1 := menu.MenuPos.y
+	// h := 100
+	// w := menu.width
+	x, y, w, h := menu.table.GetInnerRect()
+	log.Println("pos", menu.MenuPos, "Rect", x, y, w, h, "DrawRect", menu.menuRect)
+
+	if !menu.table.InRect(posX, posY) {
+		if menu.MenuPos.x == 0 {
+			log.Printf("xxxxxxxxx")
+		}
 		if menu.visible {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 				menu.visible = false
@@ -124,12 +162,13 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	}
 	return tview.MouseConsumed, nil
 }
-func new_contextmenu(m *mainui, items []context_menu_item) *contextmenu {
+func new_contextmenu(m *mainui, items []context_menu_item, parent *tview.Box) *contextmenu {
 	t := contextmenu{
 		table:   tview.NewList(),
 		main:    m,
 		visible: false,
 		width:   40,
+		parent:  parent,
 	}
 
 	impl := &contextmenu_impl{
@@ -140,7 +179,7 @@ func new_contextmenu(m *mainui, items []context_menu_item) *contextmenu {
 		command_list = append(command_list, v.item)
 	}
 	t.input = &inputdelay{
-		cb:      t.input_cb,
+		// cb:      t.input_cb,
 		cmdlist: command_list,
 		main:    m,
 	}
@@ -159,9 +198,5 @@ func (v *contextmenu) Draw(screen tcell.Screen) {
 	if !v.visible {
 		return
 	}
-	// viewid := v.main.get_focus_view_id()
-	// _, Y, height, _ := v.main.get_view_from_id(viewid).GetRect()
-	v.table.SetRect(v.MenuPos.x, v.MenuPos.y, v.width, len(v.impl.items)+2)
-	v.table.Draw(screen)
 	v.table.Draw(screen)
 }

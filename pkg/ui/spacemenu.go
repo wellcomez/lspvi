@@ -37,6 +37,9 @@ func (key cmdkey) matched_event(s tcell.EventKey) bool {
 	}
 	return false
 }
+func (key cmdkey) prefixmatched(s string) bool {
+	return strings.HasPrefix(key.string(), s)
+}
 func (key cmdkey) matched(s string) bool {
 	return strings.HasPrefix(key.string(), s)
 }
@@ -123,18 +126,18 @@ type space_menu_item struct {
 	handle func()
 }
 
-func (v *space_menu) input_cb(word string) {
-	if v.input.keyseq == word {
-		v.run_command(word)
-	}
-}
+// func (v *space_menu) input_cb(word string) {
+// 	if v.input.keyseq == word {
+// 		v.run_command(word)
+// 	}
+// }
 
-func (v *space_menu) run_command(word string) {
-	v.input.run(word)
-	v.input.keyseq = ""
-	v.visible = false
-	v.main.cmdline.Vim.EnterEscape()
-}
+// func (v *space_menu) run_command(word string) {
+// 	v.input.run(word)
+// 	v.input.keyseq = ""
+// 	v.visible = false
+// 	v.main.cmdline.Vim.EnterEscape()
+// }
 func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	ch := string(event.Rune())
 	if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
@@ -146,23 +149,39 @@ func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		v.input.keyseq = ""
 		v.onenter()
 		return nil
+	} else if event.Key() == tcell.KeyEscape || event.Key() == tcell.KeyEsc {
+		v.closemenu()
+		return nil
 	}
 	v.input.keyseq += ch
 	cmd := v.input.keyseq
-	matched := v.input.command_matched(cmd)
-	if matched == 1 {
-		v.run_command(cmd)
-	} else if matched > 1 {
-		v.input.rundelay(cmd)
-	} else if v.main.cmdline.Vim.vi.Leader {
-		if v.main.cmdline.Vim.vi_handle.HanldeKey(event) {
-			v.input.keyseq = ""
-		}
+	matched := v.input.check(cmd)
+	switch matched {
+	case cmd_action_run:
+		v.on_cmd_excuted()
+		return nil
+	case cmd_action_delay:
+		v.input.delay_cmd_cb =
+			v.on_cmd_excuted
+		return nil
+	case cmd_action_none:
+		v.input.keyseq = ""
 	}
 	return nil
 }
+func (v *space_menu) closemenu() {
+	v.visible = false
+	v.input.keyseq = ""
+}
+func (v *space_menu) openmenu() {
+	v.visible = true 
+	v.input.keyseq = ""
+}
+func (v *space_menu) on_cmd_excuted() {
+	v.closemenu()
+}
 func (menu *space_menu) onenter() {
-	menu.visible = false
+	menu.closemenu()
 	idx := menu.table.GetCurrentItem()
 	if idx < len(menu.impl.items) {
 		if h := menu.impl.items[idx]; h.handle != nil {
@@ -207,7 +226,7 @@ func new_spacemenu(m *mainui) *space_menu {
 		command_list = append(command_list, v.item)
 	}
 	t.input = &inputdelay{
-		cb:      t.input_cb,
+		// cb:      t.input_cb,
 		cmdlist: command_list,
 		main:    m,
 	}
@@ -239,7 +258,7 @@ func (menu *space_menu) handle_mouse(action tview.MouseAction, event *tcell.Even
 		menu.table.SetCurrentItem(index)
 	} else if action == tview.MouseLeftDown {
 		menu.impl.items[menu.table.GetCurrentItem()].handle()
-		menu.visible = false
+		menu.closemenu()
 	}
 	return tview.MouseConsumed, nil
 }
@@ -254,6 +273,5 @@ func (v *space_menu) Draw(screen tcell.Screen) {
 	h := len(v.impl.items) + 2
 	_, _, _, cmdlcmdline_height := v.main.cmdline.input.GetRect()
 	v.table.SetRect(width-w-5, height-h-cmdlcmdline_height-3, w, h)
-	v.table.Draw(screen)
 	v.table.Draw(screen)
 }

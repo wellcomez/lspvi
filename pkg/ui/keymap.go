@@ -178,17 +178,17 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 }
 
 const ctrlw = "c-w"
-const left = "left"
-const right = "right"
-const up = "up"
-const down = "down"
+const key_left = "left"
+const key_right = "right"
+const key_up = "up"
+const key_down = "down"
 
 var event_to_keyname = map[tcell.Key]string{
 	tcell.KeyCtrlW: ctrlw,
-	tcell.KeyLeft:  left,
-	tcell.KeyRight: right,
-	tcell.KeyUp:    up,
-	tcell.KeyDown:  down,
+	tcell.KeyLeft:  key_left,
+	tcell.KeyRight: key_right,
+	tcell.KeyUp:    key_up,
+	tcell.KeyDown:  key_down,
 }
 
 func split(cmd string) []string {
@@ -226,7 +226,24 @@ func (main *mainui) ctrl_w_map() []cmditem {
 	}
 }
 func (main *mainui) key_map_escape() []cmditem {
+	m := main
 	sss := []cmditem{
+		get_cmd_actor(m, file_in_file).esc_key(split("f")),
+		get_cmd_actor(m, file_in_file_vi_loop).esc_key(split("*")),
+		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),
+		get_cmd_actor(m, vi_line_head).esc_key(split("0")),
+		get_cmd_actor(m, goto_callin).esc_key(split(chr_goto_callin)),
+		get_cmd_actor(m, goto_refer).esc_key(split(chr_goto_refer)),
+		get_cmd_actor(m, arrow_up).esc_key([]string{"k"}),
+		get_cmd_actor(m, arrow_up).esc_key([]string{key_up}),
+		get_cmd_actor(m, arrow_left).esc_key([]string{"h"}),
+		get_cmd_actor(m, arrow_left).esc_key([]string{key_left}),
+		get_cmd_actor(m, arrow_right).esc_key([]string{"l"}),
+		get_cmd_actor(m, arrow_right).esc_key([]string{key_right}),
+		get_cmd_actor(m, arrow_down).esc_key([]string{"j"}),
+		get_cmd_actor(m, arrow_down).esc_key([]string{key_down}),
+		get_cmd_actor(m, vi_right_word).esc_key([]string{"e"}),
+		get_cmd_actor(m, vi_left_word).esc_key([]string{"b"}),
 		get_cmd_actor(main, goto_define).esc_key(split(key_goto_define)),
 		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),
 		get_cmd_actor(main, goto_first_line).esc_key(split(key_goto_first_line)),
@@ -269,27 +286,20 @@ func (m *mainui) global_key_map() []cmditem {
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTAB),
 	}
 }
-func (m *mainui) vi_key_map() []cmditem {
-	return []cmditem{
-		get_cmd_actor(m, arrow_up).esc_key([]string{"k"}),
-		get_cmd_actor(m, arrow_left).esc_key([]string{"h"}),
-		get_cmd_actor(m, arrow_right).esc_key([]string{"l"}),
-		get_cmd_actor(m, arrow_down).esc_key([]string{"j"}),
-		get_cmd_actor(m, vi_right_word).esc_key([]string{"e"}),
-		get_cmd_actor(m, vi_left_word).esc_key([]string{"b"}),
-		get_cmd_actor(m, goto_decl).esc_key(split(key_goto_decl)),
-		get_cmd_actor(m, goto_define).esc_key(split(key_goto_define)),
-		get_cmd_actor(m, file_in_file).esc_key(split("f")),
-		get_cmd_actor(m, file_in_file_vi_loop).esc_key(split("*")),
-		get_cmd_actor(m, goto_callin).esc_key(split(chr_goto_callin)),
-		get_cmd_actor(m, goto_refer).esc_key(split(chr_goto_refer)),
-		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),
-		get_cmd_actor(m, vi_line_head).esc_key(split("0")),
+
+/*
+	func (m *mainui) vi_key_map() []cmditem {
+		return []cmditem{
+
+			//get_cmd_actor(m, goto_decl).esc_key(split(key_goto_decl)),
+			//get_cmd_actor(m, goto_define).esc_key(split(key_goto_define)),
+
+		}
 	}
-}
+*/
 func (m *mainui) keymap(keytype cmdkeytype) []string {
 	ret := []string{}
-	items := m.vi_key_map()
+	var items = []cmditem{}
 	switch keytype {
 	case cmd_key_menu:
 		items = m.key_map_space_menu()

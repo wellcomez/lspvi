@@ -157,7 +157,7 @@ func new_quikview(main *mainui) *quick_view {
 		view:      view,
 		main:      main,
 		quickview: new_quick_preview(),
-		menu:      new_contextmenu(main, items),
+		menu:      new_contextmenu(main, items,view.Box),
 	}
 	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		is_rightclick := (action == tview.MouseRightClick)

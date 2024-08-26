@@ -55,7 +55,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	keys = append(keys, v.main.key_map_escape()...)
 	keys = append(keys, v.main.key_map_leader()...)
 	keys = append(keys, v.main.key_map_space_menu()...)
-	keys = append(keys, v.main.vi_key_map()...)
+	// keys = append(keys, v.main.vi_key_map()...)
 	keymaplist := []string{}
 	for _, v := range keys {
 		keymaplist = append(keymaplist, fmt.Sprintf("%-20s %s", v.key.displaystring(), v.cmd.desc))
