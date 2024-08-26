@@ -380,12 +380,13 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	l.state.keyseq = append(ts, string(ch))
 	cmdname := strings.Join(l.state.keyseq, "")
-	processed, end := l.input.check(cmdname)
-	if end {
+	end := l.input.check(cmdname)
+	if end == cmd_action_run {
 		l.end()
-	} else if l.main.codeview.handle_key_impl(event) == nil {
-		l.state.keyseq = []string{string(event.Rune())}
-		l.end()
+		return true
+	} else if end == cmd_action_delay {
+		// l.state.keyseq = []string{string(event.Rune())}
+		// l.end()
 		return true
 	}
 	// viewid := l.main.get_focus_view_id()
@@ -395,7 +396,7 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	// default:
 	// 	l.end()
 	// }
-	return processed
+	return false
 }
 
 type leadstate struct {
@@ -437,12 +438,22 @@ func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	key := state.kseq + string(ch)
 	state.kseq = key
-	process, end := input.check(key)
-	if end {
+	end := input.check(key)
+	switch end {
+	case cmd_action_run:
 		l.end()
 		l.vi.EnterEscape()
+		return true
+	case cmd_action_delay:
+		input.delay_cmd_cb = func() {
+			l.end()
+		}
+		return true
+	default:
+		l.end()
 	}
-	return process
+
+	return false
 }
 
 func (l *LeaderHandle) runcommand(key string) {
@@ -582,7 +593,7 @@ func (v *Vim) EnterLead() bool {
 			"o":  main.open_document_symbol_picker,
 		}*/
 		sss := main.key_map_leader()
-		input := &inputdelay{cb: lead.inputcb, cmdlist: sss}
+		input := &inputdelay{ cmdlist: sss}
 		lead.state.input = input
 		v.vi_handle = lead
 		v.app.layout.spacemenu.visible = true
@@ -676,7 +687,7 @@ func (v *Vim) EnterEscape() {
 		main:    main,
 	}
 	esc.input = &inputdelay
-	esc.input.cb = esc.input_cb
+	// esc.input.cb = esc.input_cb
 	v.vi_handle = esc
 	v.app.SavePrevFocus()
 }

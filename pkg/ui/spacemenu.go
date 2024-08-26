@@ -37,6 +37,9 @@ func (key cmdkey) matched_event(s tcell.EventKey) bool {
 	}
 	return false
 }
+func (key cmdkey) prefixmatched(s string) bool {
+	return strings.HasPrefix(key.string(), s)
+}
 func (key cmdkey) matched(s string) bool {
 	return strings.HasPrefix(key.string(), s)
 }
@@ -149,17 +152,24 @@ func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	v.input.keyseq += ch
 	cmd := v.input.keyseq
-	matched := v.input.command_matched(cmd)
-	if matched == 1 {
-		v.run_command(cmd)
-	} else if matched > 1 {
-		v.input.rundelay(cmd)
-	} else if v.main.cmdline.Vim.vi.Leader {
-		if v.main.cmdline.Vim.vi_handle.HanldeKey(event) {
-			v.input.keyseq = ""
-		}
+	matched := v.input.check(cmd)
+	switch matched{
+	case cmd_action_run:
+		v.on_cmd_excuted()
+		return nil
+	case cmd_action_delay:
+		v.input.delay_cmd_cb=
+			v.on_cmd_excuted
+		return nil
+	case cmd_action_none:
+		v.input.keyseq = ""
 	}
 	return nil
+}
+
+func (v *space_menu) on_cmd_excuted() {
+	v.visible = false
+	v.input.keyseq = ""
 }
 func (menu *space_menu) onenter() {
 	menu.visible = false
@@ -207,7 +217,7 @@ func new_spacemenu(m *mainui) *space_menu {
 		command_list = append(command_list, v.item)
 	}
 	t.input = &inputdelay{
-		cb:      t.input_cb,
+		// cb:      t.input_cb,
 		cmdlist: command_list,
 		main:    m,
 	}

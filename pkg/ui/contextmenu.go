@@ -48,16 +48,28 @@ func (v *contextmenu) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	v.input.keyseq += ch
 	cmd := v.input.keyseq
-	matched := v.input.command_matched(cmd)
-	if matched == 1 {
-		v.run_command(cmd)
-	} else if matched > 1 {
-		v.input.rundelay(cmd)
-	} else if v.main.cmdline.Vim.vi.Leader {
-		if v.main.cmdline.Vim.vi_handle.HanldeKey(event) {
-			v.input.keyseq = ""
+	matched := v.input.check(cmd)
+	switch matched {
+	case cmd_action_run:
+		v.visible = false
+		return nil
+	case cmd_action_delay:
+		v.input.delay_cmd_cb = func() {
+			v.visible = false
 		}
+		return nil
+	default:
+		v.input.keyseq = ""
 	}
+	// if matched == 1 {
+	// 	v.run_command(cmd)
+	// } else if matched > 1 {
+	// 	v.input.rundelay(cmd)
+	// } else if v.main.cmdline.Vim.vi.Leader {
+	// 	if v.main.cmdline.Vim.vi_handle.HanldeKey(event) {
+	// 		v.input.keyseq = ""
+	// 	}
+	// }
 	return nil
 }
 
@@ -140,7 +152,7 @@ func new_contextmenu(m *mainui, items []context_menu_item) *contextmenu {
 		command_list = append(command_list, v.item)
 	}
 	t.input = &inputdelay{
-		cb:      t.input_cb,
+		// cb:      t.input_cb,
 		cmdlist: command_list,
 		main:    m,
 	}
