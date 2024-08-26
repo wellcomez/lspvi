@@ -28,7 +28,7 @@ type rootlayout struct {
 	mainlayout  *tview.Flex
 	dialog      *fzfmain
 	spacemenu   *space_menu
-	hide_cb     func()
+	// hide_cb     func()
 }
 
 // editor_area_fouched
