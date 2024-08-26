@@ -523,7 +523,11 @@ func MainUI(arg *Arguments) {
 	tab_area.AddItem(main.statusbar, 0, 10, false)
 	mainmenu := tview.NewButton("Menu")
 	mainmenu.SetSelectedFunc(func() {
-		main.layout.spacemenu.visible = !main.layout.spacemenu.visible
+		if main.layout.spacemenu.visible{
+			main.layout.spacemenu.closemenu()
+		}else{
+			main.layout.spacemenu.openmenu()
+		}
 	})
 	tab_area.AddItem(mainmenu, 10, 0, false)
 
@@ -565,7 +569,7 @@ func MainUI(arg *Arguments) {
 			}
 			if !InRect(event, mainmenu) {
 				if action != tview.MouseMove {
-					spacemenu.visible = !spacemenu.visible
+					spacemenu.closemenu()
 				}
 				return nil, tview.MouseConsumed
 			}
