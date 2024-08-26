@@ -53,113 +53,113 @@ const (
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	switch id {
 	case cmd_quit:
-		return cmdactor{"Quit", m.quit}
+		return cmdactor{id, "Quit", m.quit}
 	case open_picker_qfh:
-		return cmdactor{"quickfix history", m.open_qfh_query}
+		return cmdactor{id, "quickfix history", m.open_qfh_query}
 	case open_picker_wkq:
-		return cmdactor{"query workspace symbol", m.open_wks_query}
+		return cmdactor{id, "query workspace symbol", m.open_wks_query}
 	case open_picker_document_symbol:
-		return cmdactor{"open symbol", m.open_document_symbol_picker}
+		return cmdactor{id, "open symbol", m.open_document_symbol_picker}
 	case open_picker_refs:
-		return cmdactor{"reference", m.open_picker_refs}
+		return cmdactor{id, "reference", m.open_picker_refs}
 	case open_picker_livegrep:
-		return cmdactor{"live grep", m.open_picker_livegrep}
+		return cmdactor{id, "live grep", m.open_picker_livegrep}
 	case open_picker_history:
-		return cmdactor{"history", m.open_picker_history}
+		return cmdactor{id, "history", m.open_picker_history}
 	case open_picker_grep_word:
-		return cmdactor{"grep word", func() { m.codeview.action_grep_word() }}
+		return cmdactor{id, "grep word", func() { m.codeview.action_grep_word() }}
 	case open_picker_ctrlp:
-		return cmdactor{"picker file", m.open_picker_ctrlp}
+		return cmdactor{id, "picker file", m.open_picker_ctrlp}
 	case goto_back:
 		{
-			return cmdactor{"back", func() {
+			return cmdactor{id, "back", func() {
 				m.GoBack()
 			}}
 		}
 	case goto_tab:
 		{
-			return cmdactor{"tab", func() {
+			return cmdactor{id, "tab", func() {
 				m.switch_tab_view()
 			}}
 		}
 	case goto_forward:
 		{
-			return cmdactor{"forward", func() {
+			return cmdactor{id, "forward", func() {
 				m.GoForward()
 			}}
 		}
 	case goto_first_line:
-		return cmdactor{"goto first line", func() {
+		return cmdactor{id, "goto first line", func() {
 			m.codeview.gotoline(0)
 		}}
 	case goto_last_line:
-		return cmdactor{"goto first line", func() {
+		return cmdactor{id, "goto first line", func() {
 			m.codeview.gotoline(-1)
 		}}
 	case goto_define:
-		return cmdactor{"goto define", func() { m.codeview.action_goto_define() }}
+		return cmdactor{id, "goto define", func() { m.codeview.action_goto_define() }}
 	case goto_refer:
-		return cmdactor{"goto refer", func() { m.codeview.action_get_refer() }}
+		return cmdactor{id, "goto refer", func() { m.codeview.action_get_refer() }}
 	case goto_callin:
-		return cmdactor{"goto callin", func() { m.codeview.key_call_in() }}
+		return cmdactor{id, "goto callin", func() { m.codeview.key_call_in() }}
 	case goto_decl:
-		return cmdactor{"goto decl", func() { m.codeview.action_goto_declaration() }}
+		return cmdactor{id, "goto decl", func() { m.codeview.action_goto_declaration() }}
 	case next_window_down:
-		return cmdactor{"next window down", func() {
+		return cmdactor{id, "next window down", func() {
 			m.move_to_window(move_down)
 		}}
 	case next_window_left:
-		return cmdactor{"next window left", func() {
+		return cmdactor{id, "next window left", func() {
 			m.move_to_window(move_left)
 		}}
 	case next_window_right:
-		return cmdactor{"next window right", func() {
+		return cmdactor{id, "next window right", func() {
 			m.move_to_window(move_right)
 		}}
 	case next_window_up:
-		return cmdactor{"next window up", func() {
+		return cmdactor{id, "next window up", func() {
 			m.move_to_window(move_up)
 		}}
 	case file_in_file:
-		return cmdactor{"file in file", func() {
+		return cmdactor{id, "file in file", func() {
 			m.codeview.OnFindInfile(true, true)
 		}}
 	case file_in_file_vi_loop:
-		return cmdactor{"file in file vi", func() {
+		return cmdactor{id, "file in file vi", func() {
 			m.codeview.OnFindInfile(true, false)
 		}}
 	case arrow_up:
-		return cmdactor{"up", func() { m.codeview.action_key_up() }}
+		return cmdactor{id, "up", func() { m.codeview.action_key_up() }}
 	case arrow_down:
-		return cmdactor{"down", func() { m.codeview.action_key_down() }}
+		return cmdactor{id, "down", func() { m.codeview.action_key_down() }}
 	case vi_left, arrow_left:
-		return cmdactor{"left", func() { m.codeview.view.Cursor.Left() }}
+		return cmdactor{id, "left", func() { m.codeview.view.Cursor.Left() }}
 	case vi_right, arrow_right:
-		return cmdactor{"right", func() { m.codeview.view.Cursor.Right() }}
+		return cmdactor{id, "right", func() { m.codeview.view.Cursor.Right() }}
 	case vi_left_word:
-		return cmdactor{"word left", func() { m.codeview.word_left() }}
+		return cmdactor{id, "word left", func() { m.codeview.word_left() }}
 	case vi_right_word:
-		return cmdactor{"word right", func() { m.codeview.word_right() }}
+		return cmdactor{id, "word right", func() { m.codeview.word_right() }}
 	case vi_line_head:
-		return cmdactor{"goto line head", func() {
+		return cmdactor{id, "goto line head", func() {
 			code := m.codeview
 			Cur := code.view.Cursor
 			Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
 		}}
 	case vi_quick_prev:
 		{
-			return cmdactor{"prev", func() {
+			return cmdactor{id, "prev", func() {
 				m.quickview.go_prev()
 			}}
 		}
 	case vi_quick_next:
 		{
-			return cmdactor{"quick_next", func() {
+			return cmdactor{id, "quick_next", func() {
 				m.quickview.go_next()
 			}}
 		}
 	case vi_search_mode:
-		return cmdactor{"search mode", func() {
+		return cmdactor{id, "search mode", func() {
 			code := m.codeview
 			vim := code.main.cmdline.Vim
 			vim.EnterEscape()
@@ -167,11 +167,11 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			m.codeview.word_right()
 		}}
 	case open_picker_help:
-		return cmdactor{"help", func() {
+		return cmdactor{id, "help", func() {
 			m.layout.dialog.OpenKeymapFzf()
 		}}
 	default:
-		return cmdactor{
+		return cmdactor{id,
 			"", nil,
 		}
 	}
@@ -182,13 +182,14 @@ const key_left = "left"
 const key_right = "right"
 const key_up = "up"
 const key_down = "down"
-
 var event_to_keyname = map[tcell.Key]string{
 	tcell.KeyCtrlW: ctrlw,
-	tcell.KeyLeft:  key_left,
-	tcell.KeyRight: key_right,
-	tcell.KeyUp:    key_up,
-	tcell.KeyDown:  key_down,
+}
+var key_to_command= map[tcell.Key]command_id{
+	tcell.KeyLeft:  arrow_left,
+	tcell.KeyRight: arrow_right,
+	tcell.KeyUp:    arrow_up,
+	tcell.KeyDown:  arrow_down,
 }
 
 func split(cmd string) []string {
