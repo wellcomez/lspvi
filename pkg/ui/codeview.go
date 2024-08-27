@@ -16,10 +16,14 @@ import (
 	// "github.com/gdamore/tcell"
 )
 
+type codetextview struct {
+	*femto.View
+	bookmark []int
+}
 type CodeView struct {
 	*view_link
 	filename               string
-	view                   *femto.View
+	view                   *codetextview
 	theme                  string
 	main                   *mainui
 	key_map                map[tcell.Key]func(code *CodeView)
@@ -155,7 +159,7 @@ func NewCodeView(main *mainui) *CodeView {
 	path := ""
 	content := ""
 	buffer := femto.NewBufferFromString(string(content), path)
-	root := femto.NewView(buffer)
+	root := new_codetext_view(buffer)
 	root.SetRuntimeFiles(runtime.Files)
 	root.SetColorscheme(colorscheme)
 
@@ -199,6 +203,46 @@ func NewCodeView(main *mainui) *CodeView {
 		ret.rightmenu_items = items
 	}
 	return &ret
+}
+
+func new_codetext_view(buffer *femto.Buffer) *codetextview {
+
+	var bookmark = []int{}
+	root := &codetextview{
+		femto.NewView(buffer),
+		bookmark,
+	}
+	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		style := tcell.StyleDefault
+		b := []int{}
+		_,topY,_,_:= root.GetInnerRect()
+		bottom := root.Bottomline()
+		for _, v := range root.bookmark {
+			if v > root.Topline && v < bottom {
+				b = append(b, v-root.Topline)
+			}
+		}
+		for _, by := range b {
+			screen.SetContent(x, by+topY-1, 'B', nil, style.Foreground(tcell.ColorDarkGrey))
+		}
+		return root.GetInnerRect()
+	})
+	root.addbookmark(1, true)
+	root.addbookmark(20, true)
+	return root
+}
+func (view *codetextview) addbookmark(line int, add bool) {
+	if add {
+		view.bookmark = append(view.bookmark, line)
+	} else {
+		aaa := []int{}
+		for i := 0; i < len(view.bookmark); i++ {
+			if view.bookmark[i] != line {
+				aaa = append(aaa, view.bookmark[i])
+			}
+		}
+		view.bookmark = aaa
+	}
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -299,7 +343,7 @@ func (code *CodeView) get_click_line_inview(event *tcell.EventMouse) {
 }
 
 // GetVisualX returns the x value of the cursor in visual spaces
-func GetVisualX(view *femto.View, Y int, X int) int {
+func GetVisualX(view *codetextview, Y int, X int) int {
 	runes := []rune(view.Buf.Line(Y))
 	tabSize := int(view.Buf.Settings["tabsize"].(float64))
 	if X > len(runes) {
@@ -311,11 +355,11 @@ func GetVisualX(view *femto.View, Y int, X int) int {
 	}
 	return femto.StringWidth(string(runes[:X]), tabSize)
 }
-func avoid_position_overflow(root *femto.View, pos femto.Loc) femto.Loc {
+func avoid_position_overflow(root *codetextview, pos femto.Loc) femto.Loc {
 	pos.Y = min(root.Buf.LinesNum()-1, pos.Y)
 	return pos
 }
-func tab_loc(root *femto.View, pos femto.Loc) femto.Loc {
+func tab_loc(root *codetextview, pos femto.Loc) femto.Loc {
 	LastVisualX := GetVisualX(root, pos.Y, pos.X)
 	tabw := LastVisualX - pos.X
 	if tabw > 0 {
