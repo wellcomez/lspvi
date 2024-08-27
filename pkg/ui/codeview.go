@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
 	"github.com/pgavlin/femto/runtime"
@@ -24,17 +25,18 @@ type codetextview struct {
 }
 type CodeView struct {
 	*view_link
-	filename               string
-	view                   *codetextview
-	theme                  string
-	main                   *mainui
-	key_map                map[tcell.Key]func(code *CodeView)
-	mouse_select_area      bool
-	rightmenu_items        []context_menu_item
-	rightmenu_select_text  string
-	rightmenu_select_range lsp.Range
-	rightmenu              CodeContextMenu
-	LineNumberUnderMouse   int
+	filename                     string
+	view                         *codetextview
+	theme                        string
+	main                         *mainui
+	key_map                      map[tcell.Key]func(code *CodeView)
+	mouse_select_area            bool
+	rightmenu_items              []context_menu_item
+	rightmenu_previous_selection string
+	rightmenu_select_text        string
+	rightmenu_select_range       lsp.Range
+	rightmenu                    CodeContextMenu
+	LineNumberUnderMouse         int
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -58,6 +60,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	pos = avoid_position_overflow(root, pos)
 
 	if action == tview.MouseRightClick {
+		code.rightmenu_previous_selection = root.Cursor.GetSelection()
 		// code.rightmenu.text = root.Cursor.GetSelection()
 		root.Cursor.Loc = tab_loc(root, pos)
 		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
@@ -189,7 +192,7 @@ func NewCodeView(main *mainui) *CodeView {
 				main.codeview.bookmark()
 			}},
 			{item: create_menu_item("Search"), handle: func() {
-				sss := main.codeview.view.Cursor.GetSelection()
+				sss := main.codeview.rightmenu_select_text
 				main.OnSearch(sss, true, true)
 			}},
 			{item: create_menu_item("Grep word"), handle: func() {
@@ -207,6 +210,15 @@ func NewCodeView(main *mainui) *CodeView {
 					}
 					return ret
 				})
+			}},
+			{item: create_menu_item("Copy Selection"), handle: func() {
+				data := ret.rightmenu_previous_selection
+				if len(data) == 0 {
+					data = ret.rightmenu_select_text
+				}
+				clipboard.WriteAll(data)
+				// sss := main.codeview.view.Cursor.GetSelection()
+				// main.OnSearch(sss, true, true)
 			}},
 			{item: create_menu_item("-------------"), handle: func() {
 			}},

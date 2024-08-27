@@ -2,6 +2,7 @@ package mainui
 
 import (
 	// "log"
+	"fmt"
 	"log"
 	"strings"
 
@@ -204,6 +205,9 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy"), func() {
 		ret.handle_commnad(copy_data)
 	}})
+	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Path"), func() {
+		ret.handle_commnad(copy_path)
+	}})
 	ret.right_context = symboltree_view_context{
 		qk:        ret,
 		menu_item: menu_item,
@@ -283,6 +287,10 @@ func (c *SymbolTreeView) handle_commnad(cmd command_id) {
 	if value != nil {
 		if sym, ok := value.(lsp.SymbolInformation); ok {
 			switch cmd {
+			case copy_path:
+				{
+					clipboard.WriteAll(fmt.Sprintf("%s:%d", sym.Location.URI.AsPath().String(), sym.Location.Range.Start.Line))
+				}
 			case copy_data:
 				{
 					clipboard.WriteAll(sym.Name)

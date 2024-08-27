@@ -31,6 +31,7 @@ const (
 	goto_back
 	bookmark_it
 	copy_data
+	copy_path
 	next_window_left
 	next_window_right
 	next_window_down
