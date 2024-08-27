@@ -36,11 +36,8 @@ func grid_list_whole_screen(list tview.Primitive, input *tview.InputField) *tvie
 }
 
 type history_picker_impl struct {
-	codeprev    *CodeView
-	fzf         *fzflib.Fzf
-	parent      *fzfmain
+	*fzflist_impl
 	match_index []int
-	main        *mainui
 	listdata    []history_item
 }
 
@@ -68,26 +65,22 @@ type history_item struct {
 func new_history_picker(v *fzfmain) history_picker {
 	list := new_customlist()
 	list.SetBorder(true)
-	main := v.main
 	sym := history_picker{
 		impl: &history_picker_impl{
-			codeprev: NewCodeView(main),
-			parent:   v,
-			main:     main,
+			fzflist_impl: new_fzflist_impl(nil, v),
 		},
 		list: list,
 	}
 	history := NewHistory(lspviroot.history)
-	sym.impl.codeprev.view.SetBorder(true)
 	var options = fzflib.DefaultOptions()
 	options.Fuzzy = false
 	items := []history_item{}
 	fzf_item_strings := []string{}
-	for _, v := range history.history_files() {
+	for _, h := range history.history_files() {
 
-		dispname := strings.TrimPrefix(v, main.root)
+		dispname := strings.TrimPrefix(h, v.main.root)
 		h := history_item{
-			filepath: v,
+			filepath: h,
 			dispname: dispname,
 		}
 		fzf_item_strings = append(fzf_item_strings, dispname)

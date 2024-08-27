@@ -27,7 +27,7 @@ func (impl *prev_picker_impl) grid(input *tview.InputField) *tview.Grid {
 	return layout
 }
 func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
-	ret:=pk.impl.grid(input)
+	ret := pk.impl.grid(input)
 	pk.impl.codeprev.Load(pk.impl.file.Filename)
 	return ret
 }
@@ -56,6 +56,7 @@ type prev_picker_impl struct {
 	list_click_check  *GridListClickCheck
 	listdata          []ref_line
 	current_list_data []ref_line
+	fzf               *fzflib.Fzf
 }
 
 func (impl *prev_picker_impl) update_preview() {
@@ -71,7 +72,6 @@ type refpicker_impl struct {
 	*prev_picker_impl
 	file *lspcore.Symbol_file
 	refs []ref_with_caller
-	fzf  *fzflib.Fzf
 }
 type prev_picker struct {
 	impl *refpicker_impl
