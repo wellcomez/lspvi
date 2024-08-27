@@ -46,15 +46,26 @@ type SymbolTreeView struct {
 	waiter        *tview.TextView
 }
 type Filter struct {
-	line int
-	ret  *tview.TreeNode
-	gap  int
+	line     int
+	ret      *tview.TreeNode
+	gap      int
+	finished bool
 }
 
 func (m *Filter) compare(node, parent *tview.TreeNode) bool {
 	value := node.GetReference()
+	if m.finished {
+		return true
+	}
 	if value != nil {
 		if sym, ok := value.(lsp.SymbolInformation); ok {
+			if sym.Kind == lsp.SymbolKindFunction || sym.Kind == lsp.SymbolKindMethod {
+				if m.line >= sym.Location.Range.Start.Line && m.line <= sym.Location.Range.End.Line {
+					m.ret = node
+					m.finished = true
+					return true
+				}
+			}
 			if m.ret == nil {
 				m.ret = node
 				m.gap = m.line - sym.Location.Range.Start.Line
@@ -136,7 +147,7 @@ func (m *SymbolTreeView) OnSearch(key string) []int {
 	return ret
 }
 func (m *SymbolTreeView) OnCodeLineChange(line int) {
-	ss := Filter{line: line}
+	ss := Filter{line: line, finished: false}
 	if m.view.GetRoot() != nil {
 		m.view.GetRoot().Walk(ss.compare)
 	}
@@ -184,11 +195,11 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 		if sym, ok := value.(lsp.SymbolInformation); ok {
 			Range := sym.Location.Range
 			// if Range.Start.Line != Range.End.Line {
-			body,err:= lspcore.NewBody(sym.Location)
-			if err!=nil{
+			body, err := lspcore.NewBody(sym.Location)
+			if err != nil {
 				log.Println(err)
 				return
-			}	
+			}
 			var beginline = Range.Start.Line
 			for i, v := range body.Subline {
 				idx := strings.Index(v, sym.Name)
