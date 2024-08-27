@@ -168,7 +168,7 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
 	if main != nil {
-		bookmark:= get_cmd_actor(main, bookmark_it).menu_key(split(""))
+		bookmark := get_cmd_actor(main, bookmark_it).menu_key(split(""))
 		goto_define := get_cmd_actor(main, goto_define).menu_key(split(""))
 		callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
 		items := []context_menu_item{
@@ -238,9 +238,9 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 	// root.addbookmark(20, true)
 	return root
 }
-func (view *codetextview) has_bookmark() bool{
-	var line = view.Cursor.Loc.Y+1
-	for _, v := range view.bookmark.LineMark{
+func (view *codetextview) has_bookmark() bool {
+	var line = view.Cursor.Loc.Y + 1
+	for _, v := range view.bookmark.LineMark {
 		if v.Line == line {
 			return true
 		}
@@ -251,7 +251,7 @@ func (view *codetextview) addbookmark(add bool) {
 	if view.bookmark == nil {
 		return
 	}
-	var line = view.Cursor.Loc.Y+1
+	var line = view.Cursor.Loc.Y + 1
 	view.bookmark.Add(line, view.Buf.Line(line), add)
 }
 
@@ -687,9 +687,9 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	code.view.SetColorscheme(colorscheme)
 }
 func (code *CodeView) bookmark() {
-	if  !code.view.has_bookmark(){
+	if !code.view.has_bookmark() {
 		code.Addbookmark()
-	}else{
+	} else {
 		code.Remvoebookmark()
 	}
 }
@@ -787,6 +787,9 @@ func (code *CodeView) change_topline_with_previousline(line int) {
 	_, _, _, linecount := code.view.GetInnerRect()
 	linecount = min(linecount, code.view.Bottomline()-code.view.Topline+1)
 	topline := line - min(code.LineNumberUnderMouse, linecount)
+	if code.LineNumberUnderMouse == 0 && line != 0 {
+		topline = line - linecount/2
+	}
 	//linenumberusermouse should less than linecout
 	code.view.Topline = max(topline, 0)
 	// log.Println("gotoline", line, "linecount", linecount, "topline", code.view.Topline, "LineNumberUnderMouse", code.LineNumberUnderMouse)

@@ -134,7 +134,7 @@ type bookmark_picker_impl struct {
 }
 
 func get_list_item(v ref_line) (string, string) {
-	return v.caller, v.path + ":" + v.line
+	return  v.line+":"+v.path, v.caller
 }
 
 // new_bookmark_picker
@@ -172,5 +172,5 @@ func (pk bookmark_picker) update_preview() {
 	pk.impl.update_preview()
 }
 func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Grid {
-	return pk.impl.grid(input,2)
+	return pk.impl.grid(input, 2)
 }
