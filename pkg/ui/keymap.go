@@ -259,6 +259,7 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),
 		get_cmd_actor(main, goto_first_line).esc_key(split(key_goto_first_line)),
 		get_cmd_actor(main, goto_last_line).esc_key(split(key_goto_last_line)),
+		get_cmd_actor(main, bookmark_it).esc_key(split("B")),
 	}
 	return sss
 }
