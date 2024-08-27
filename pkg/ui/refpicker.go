@@ -89,7 +89,7 @@ type prev_picker_impl struct {
 	listdata          []ref_line
 	current_list_data []ref_line
 	fzf               *fzflib.Fzf
-	qf                func(search_reference_result)
+	qf                func(ref_with_caller)
 }
 
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {

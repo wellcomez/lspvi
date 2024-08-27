@@ -194,9 +194,10 @@ func NewCodeView(main *mainui) *CodeView {
 				main.get_callin_stack_by_cursor(loc, ret.filename)
 			}},
 			{item: cmditem{cmd: cmdactor{desc: "Grep word"}}, handle: func() {
-				main.open_picker_grep(ret.rightmenu_select_text, func(s search_reference_result) {
+				main.quickview.view.Clear()
+				main.open_picker_grep(ret.rightmenu_select_text, func(s ref_with_caller) {
 					main.app.QueueUpdateDraw(func() {
-						main.quickview.UpdateListView(data_grep_word, s.Refs, lspcore.SymolSearchKey{
+						main.quickview.AddResult(data_grep_word, s, lspcore.SymolSearchKey{
 							Key: ret.rightmenu_select_text,
 						})
 					})

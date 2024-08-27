@@ -344,7 +344,21 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 
 	qk.UpdateListView(t, Refs, key)
 }
+func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.SymolSearchKey) {
+	if key.Key != qk.searchkey.Key {
+		qk.view.Clear()
+	}
 
+	qk.Type = t
+	qk.Refs.Refs = append(qk.Refs.Refs, caller)
+	qk.searchkey = key
+	secondline := caller.ListItem(qk.main.root)
+	if len(secondline) == 0 {
+		return
+	}
+	qk.view.AddItem(secondline, "", nil)
+	// qk.open_index(qk.view.GetCurrentItem())
+}
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
 	qk.view.Clear()
 	qk.Type = t

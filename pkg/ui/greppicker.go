@@ -136,24 +136,18 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			grepx.main.app.ForceDraw()
 		})
 	} else {
-		Refs := []ref_with_caller{}
-		grep.result.data = append(grep.result.data, *o)
-		for _, v := range grep.result.data {
-			start := lsp.Position{Line: v.lineNumber-1, Character: 0}
-			end := start
-			ref := ref_with_caller{
-				Loc: lsp.Location{
-					URI: lsp.NewDocumentURI(v.fpath),
-					Range: lsp.Range{
-						Start: start,
-						End:   end,
-					},
+		start := lsp.Position{Line: o.lineNumber - 1, Character: 0}
+		end := start
+		ref := ref_with_caller{
+			Loc: lsp.Location{
+				URI: lsp.NewDocumentURI(o.fpath),
+				Range: lsp.Range{
+					Start: start,
+					End:   end,
 				},
-			}
-			Refs = append(Refs, ref)
+			},
 		}
-		r := search_reference_result{Refs: Refs}
-		grepx.qf(r)
+		grepx.qf(ref)
 	}
 
 }

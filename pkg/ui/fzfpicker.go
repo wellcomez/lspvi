@@ -114,7 +114,7 @@ func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	v.create_dialog_content(x, sym)
 	sym.load(ranges)
 }
-func (v *fzfmain) OpenGrepWordFzf(word string, qf func(search_reference_result)) {
+func (v *fzfmain) OpenGrepWordFzf(word string, qf func(ref_with_caller)) {
 	sym := new_grep_picker(v)
 	sym.parent.Visible = qf == nil
 	sym.qf = qf
