@@ -10,6 +10,8 @@ import (
 type view_id int
 type view_link struct {
 	next, left, right, up, down view_id
+	width                       int
+	heigth                      int
 }
 
 const (

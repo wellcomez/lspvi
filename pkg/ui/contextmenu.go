@@ -28,7 +28,10 @@ type context_menu_item struct {
 	item   cmditem
 	handle func()
 }
-
+func create_menu_item(name string) cmditem {
+	x := cmditem{cmd: cmdactor{desc: name}}
+	return x
+}
 type contextmenu_impl struct {
 	items []context_menu_item
 }

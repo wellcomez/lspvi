@@ -209,6 +209,12 @@ func NewCodeView(main *mainui) *CodeView {
 					return ret
 				})
 			}},
+			{item: create_menu_item("Toggle file view"), handle: func() {
+				main.toggle_view(view_file)
+			}},
+			{item: create_menu_item("Toggle outline view"), handle: func() {
+				main.toggle_view(view_outline_list)
+			}},
 		}
 		// m := main
 		// mm := cmditem{

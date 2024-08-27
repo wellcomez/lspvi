@@ -62,6 +62,28 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 	m.OpenFile(file[0].URI.AsPath().String(), &file[0])
 }
 
+func (m mainui) toggle_view(id view_id) {
+	switch id {
+	case view_file:
+		{
+			_, _, w, _ := m.fileexplorer.view.GetRect()
+			if w < 1 {
+				m.layout.editor_area.ResizeItem(m.fileexplorer.view, 0, m.fileexplorer.width)
+			} else {
+				m.layout.editor_area.ResizeItem(m.fileexplorer.view, 0, 0)
+			}
+		}
+	case view_outline_list:
+		{
+			_, _, w, _ := m.symboltree.view.GetRect()
+			if w < 1 {
+				m.layout.editor_area.ResizeItem(m.symboltree.view, 0, m.symboltree.width)
+			} else {
+				m.layout.editor_area.ResizeItem(m.symboltree.view, 0, 0)
+			}
+		}
+	}
+}
 func (r *mainui) editor_area_fouched() {
 	// log.Println("change foucse", r.GetFocusViewId())
 	r.layout.mainlayout.ResizeItem(r.layout.editor_area, 0, 3)
@@ -477,6 +499,7 @@ func MainUI(arg *Arguments) {
 	codeview := NewCodeView(&main)
 	// main.fzf = new_fzfview()
 	symbol_tree := NewSymbolTreeView(&main)
+	symbol_tree.width = 2
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetBorder(true)
 
@@ -489,6 +512,7 @@ func MainUI(arg *Arguments) {
 	// symbol_tree.update()
 
 	main.fileexplorer = new_file_tree(&main, "FileExplore", main.root, func(filename string) bool { return true })
+	main.fileexplorer.width = 1
 	main.fileexplorer.Init()
 	main.fileexplorer.openfile = main.open_file
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
@@ -513,9 +537,9 @@ func MainUI(arg *Arguments) {
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
 	editor_area :=
 		tview.NewFlex().SetDirection(tview.FlexColumn).
-			AddItem(main.fileexplorer.view, 0, 1, false).
+			AddItem(main.fileexplorer.view, 0, main.fileexplorer.width, false).
 			AddItem(codeview.view, 0, 4, true).
-			AddItem(symbol_tree.view, 0, 2, false)
+			AddItem(symbol_tree.view, 0, symbol_tree.width, false)
 	uml, err := NewUmlView(&main, &main.lspmgr.Wk)
 	if err != nil {
 		log.Fatal(err)
@@ -569,7 +593,7 @@ func MainUI(arg *Arguments) {
 
 	main.right_context_menu = new_contextmenu(&main)
 	main.right_context_menu.menu_handle = []context_menu_handle{
-		main.codeview.rightmenu, 
+		main.codeview.rightmenu,
 		main.quickview.right_context,
 		main.callinview.right_context,
 	}
