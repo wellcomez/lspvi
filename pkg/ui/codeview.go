@@ -195,12 +195,18 @@ func NewCodeView(main *mainui) *CodeView {
 			}},
 			{item: cmditem{cmd: cmdactor{desc: "Grep word"}}, handle: func() {
 				main.quickview.view.Clear()
-				main.open_picker_grep(ret.rightmenu_select_text, func(s ref_with_caller) {
-					main.app.QueueUpdateDraw(func() {
-						main.quickview.AddResult(data_grep_word, s, lspcore.SymolSearchKey{
-							Key: ret.rightmenu_select_text,
+				key := lspcore.SymolSearchKey{
+					Key: ret.rightmenu_select_text,
+				}
+				main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)
+				main.open_picker_grep(key.Key, func(s ref_with_caller) bool {
+					var ret = ret.rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
+					if ret {
+						main.app.QueueUpdateDraw(func() {
+							main.quickview.AddResult(data_grep_word, s, key)
 						})
-					})
+					}
+					return ret
 				})
 			}},
 		}

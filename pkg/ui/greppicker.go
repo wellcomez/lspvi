@@ -147,7 +147,9 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 				},
 			},
 		}
-		grepx.qf(ref)
+		if !grepx.qf(ref){
+			grep.grep.abort()
+		}
 	}
 
 }
