@@ -1,11 +1,11 @@
 package lspcore
 
 import (
+	"errors"
 	"fmt"
+	"github.com/tectiv3/go-lsp"
 	"log"
 	"strings"
-
-	"github.com/tectiv3/go-lsp"
 )
 
 type Symbol_file struct {
@@ -91,6 +91,9 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 	return i
 }
 func (sym *Symbol_file) WorkspaceQuery(query string) ([]lsp.SymbolInformation, error) {
+	if sym.lsp == nil {
+		return nil, errors.New("lsp is nil")
+	}
 	return sym.lsp.WorkSpaceSymbol(query)
 }
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
@@ -101,8 +104,13 @@ func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if err != nil {
 		return
 	}
-	key:=NewBody(lsp.Location{URI: lsp.NewDocumentURI(sym.Filename), Range: ranges}).String()
-	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename,Key: key}, loc)
+	body, err := NewBody(lsp.Location{URI: lsp.NewDocumentURI(sym.Filename), Range: ranges})
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	key := body.String()
+	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key}, loc)
 }
 func (sym *Symbol_file) Declare(ranges lsp.Range) {
 	if sym.lsp == nil {
@@ -140,10 +148,19 @@ func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 		log.Println("prepare", v.Name, v.URI.AsPath().String(), v.Range.Start.Line, v.Kind.String())
 	}
 	// for _, prepare := range c1 {
-	search_txt := NewBody(loc).String()
+	// body, err := NewBody(loc)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return ret, err
+	// }
 	if len(c1) > 0 {
 		prepare := c1[0]
-		search_txt = NewBody(lsp.Location{URI: prepare.URI, Range: prepare.Range}).String()
+		body, err := NewBody(lsp.Location{URI: prepare.URI, Range: prepare.Range})
+		if err != nil {
+			return ret, err
+		}
+		search_txt :=
+			body.String()
 		c2, err := sym.lsp.CallHierarchyIncomingCalls(prepare)
 		if err == nil {
 			for _, f := range c2 {

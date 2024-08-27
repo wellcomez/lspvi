@@ -60,7 +60,7 @@ func from_file(path string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(path, "file://", ""), "file:", "")
 }
 
-func NewBody(location lsp.Location) *Body {
+func NewBody(location lsp.Location) (*Body, error) {
 	_range := location.Range
 	begin := _range.Start
 	end := _range.End
@@ -68,7 +68,7 @@ func NewBody(location lsp.Location) *Body {
 	// 读取文件内容
 	content, err := ioutil.ReadFile(from_file(location.URI.String()))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// 将内容分割成行
@@ -80,7 +80,7 @@ func NewBody(location lsp.Location) *Body {
 	return &Body{
 		Subline:  subline,
 		Location: location,
-	}
+	}, nil
 }
 
 // String 方法返回 Body 的字符串表示

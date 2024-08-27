@@ -146,7 +146,12 @@ func NewCallStack() *CallStack {
 	return &ret
 }
 func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
-	name := NewBody(loc).String()
+	name := ""
+	if body, err := NewBody(loc); err == nil {
+		name = body.String()
+	} else {
+		log.Println(err)
+	}
 	callstack_task_id++
 	task := &CallInTask{
 		Name: name,

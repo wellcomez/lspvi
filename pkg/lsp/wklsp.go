@@ -81,15 +81,29 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 			return true
 		}
 		if yes {
+			info := ""
+			if b1, err := NewBody(S.SymInfo.Location); err == nil {
+				info = b1.Info()
+			}
+			info2 := ""
+			if b1, err := NewBody(loc); err == nil {
+				info2 = b1.Info()
+			}
+
 			log.Printf("Error Resovle failed %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
-				NewBody(S.SymInfo.Location).Info(),
-				NewBody(loc).Info())
+				info, info2)
 		}
 	}
 	if irange {
-		log.Printf("Error kind unmatch %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
-			NewBody(S.SymInfo.Location).Info(),
-			NewBody(loc).Info())
+		info := ""
+		if b, err := NewBody(S.SymInfo.Location); err == nil {
+			info = b.Info()
+		}
+		info2 := ""
+		if b, err := NewBody(loc); err == nil {
+			info2 = b.Info()
+		}
+		log.Printf("Error kind unmatch %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(), info, info2)
 	}
 	return false
 }

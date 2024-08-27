@@ -2,6 +2,7 @@ package mainui
 
 import (
 	// "log"
+	"log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -183,7 +184,11 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 		if sym, ok := value.(lsp.SymbolInformation); ok {
 			Range := sym.Location.Range
 			// if Range.Start.Line != Range.End.Line {
-			body := lspcore.NewBody(sym.Location)
+			body,err:= lspcore.NewBody(sym.Location)
+			if err!=nil{
+				log.Println(err)
+				return
+			}	
 			var beginline = Range.Start.Line
 			for i, v := range body.Subline {
 				idx := strings.Index(v, sym.Name)
