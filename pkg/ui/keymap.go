@@ -28,6 +28,7 @@ const (
 	goto_forward
 	goto_tab
 	goto_back
+	bookmark_it
 	next_window_left
 	next_window_right
 	next_window_down
@@ -70,6 +71,12 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{id, "grep word", func() { m.codeview.action_grep_word() }}
 	case open_picker_ctrlp:
 		return cmdactor{id, "picker file", m.open_picker_ctrlp}
+	case bookmark_it:
+		return cmdactor{id, "Bookmark", func() {
+			if m.codeview!=nil{
+				m.codeview.bookmark()
+			}
+		}}
 	case goto_back:
 		{
 			return cmdactor{id, "back", func() {

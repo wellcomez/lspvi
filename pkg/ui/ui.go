@@ -47,6 +47,7 @@ type mainui struct {
 	app                *tview.Application
 	uml                *umlview
 	bf                 *BackForward
+	bookmark           *proj_bookmark
 	log                *logview
 	cmdline            *cmdline
 	prefocused         view_id
@@ -391,6 +392,7 @@ type workdir struct {
 	search_cmd_history string
 	export             string
 	filelist           string
+	bookmark           string
 }
 
 func new_workdir(root string) workdir {
@@ -400,6 +402,7 @@ func new_workdir(root string) workdir {
 		root:               root,
 		logfile:            filepath.Join(root, "lspvi.log"),
 		history:            filepath.Join(root, "history.log"),
+		bookmark:           filepath.Join(root, "bookmark.json"),
 		cmdhistory:         filepath.Join(root, "cmdhistory.log"),
 		search_cmd_history: filepath.Join(root, "search_cmd_history.log"),
 		export:             export,
@@ -442,7 +445,8 @@ func MainUI(arg *Arguments) {
 	})
 	handle := LspHandle{}
 	var main = mainui{
-		bf: NewBackForward(NewHistory(lspviroot.history)),
+		bf:       NewBackForward(NewHistory(lspviroot.history)),
+		bookmark: &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}},
 	}
 	handle.main = &main
 	if !filepath.IsAbs(root) {

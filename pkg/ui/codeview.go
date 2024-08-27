@@ -18,7 +18,8 @@ import (
 
 type codetextview struct {
 	*femto.View
-	bookmark []int
+	bookmark *bookmarkfile
+	filename string
 }
 type CodeView struct {
 	*view_link
@@ -167,6 +168,7 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
 	if main != nil {
+		bookmark:= get_cmd_actor(main, bookmark_it).menu_key(split(""))
 		goto_define := get_cmd_actor(main, goto_define).menu_key(split(""))
 		callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
 		items := []context_menu_item{
@@ -179,6 +181,9 @@ func NewCodeView(main *mainui) *CodeView {
 			}},
 			{item: goto_define, handle: func() {
 				main.get_define(ret.rightmenu_select_range, main.codeview.filename)
+			}},
+			{item: bookmark, handle: func() {
+				main.codeview.bookmark()
 			}},
 			{item: callin, handle: func() {
 				loc := lsp.Location{
@@ -207,42 +212,47 @@ func NewCodeView(main *mainui) *CodeView {
 
 func new_codetext_view(buffer *femto.Buffer) *codetextview {
 
-	var bookmark = []int{}
 	root := &codetextview{
 		femto.NewView(buffer),
-		bookmark,
+		nil,
+		"",
 	}
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		style := tcell.StyleDefault
 		b := []int{}
-		_,topY,_,_:= root.GetInnerRect()
+		_, topY, _, _ := root.GetInnerRect()
 		bottom := root.Bottomline()
-		for _, v := range root.bookmark {
-			if v > root.Topline && v < bottom {
-				b = append(b, v-root.Topline)
+		if root.bookmark != nil {
+			for _, v := range root.bookmark.LineMark {
+				if v.Line > root.Topline && v.Line < bottom {
+					b = append(b, v.Line-root.Topline)
+				}
 			}
-		}
-		for _, by := range b {
-			screen.SetContent(x, by+topY-1, 'B', nil, style.Foreground(tcell.ColorDarkGrey))
+			for _, by := range b {
+				screen.SetContent(x, by+topY-1, 'B', nil, style.Foreground(tcell.ColorDarkGrey))
+			}
 		}
 		return root.GetInnerRect()
 	})
-	root.addbookmark(1, true)
-	root.addbookmark(20, true)
+	// root.addbookmark(1, true)
+	// root.addbookmark(20, true)
 	return root
 }
-func (view *codetextview) addbookmark(line int, add bool) {
-	if add {
-		view.bookmark = append(view.bookmark, line)
-	} else {
-		aaa := []int{}
-		for i := 0; i < len(view.bookmark); i++ {
-			if view.bookmark[i] != line {
-				aaa = append(aaa, view.bookmark[i])
-			}
+func (view *codetextview) has_bookmark() bool{
+	var line = view.Cursor.Loc.Y+1
+	for _, v := range view.bookmark.LineMark{
+		if v.Line == line {
+			return true
 		}
-		view.bookmark = aaa
 	}
+	return false
+}
+func (view *codetextview) addbookmark(add bool) {
+	if view.bookmark == nil {
+		return
+	}
+	var line = view.Cursor.Loc.Y+1
+	view.bookmark.Add(line, view.Buf.Line(line), add)
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -653,7 +663,7 @@ func (code *CodeView) Load(filename string) error {
 	// "monokai"
 	code.LoadBuffer(data, filename)
 	code.filename = filename
-
+	code.view.bookmark = code.main.bookmark.GetFileBookmark(filename)
 	name := filename
 	if code.main != nil {
 		name = strings.ReplaceAll(filename, code.main.root, "")
@@ -676,9 +686,20 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	}
 	code.view.SetColorscheme(colorscheme)
 }
-func (code CodeView) focus_line() int {
-	_, _, _, h := code.view.GetRect()
-	return h / 2
+func (code *CodeView) bookmark() {
+	if  !code.view.has_bookmark(){
+		code.Addbookmark()
+	}else{
+		code.Remvoebookmark()
+	}
+}
+func (code *CodeView) Addbookmark() {
+	code.view.addbookmark(true)
+	code.main.bookmark.save()
+}
+func (code *CodeView) Remvoebookmark() {
+	code.view.addbookmark(false)
+	code.main.bookmark.save()
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
 	x := 0
