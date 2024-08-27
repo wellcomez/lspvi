@@ -115,18 +115,23 @@ func (m *mainui) async_resolve_callstack(call_in_task *lspcore.CallInTask) {
 
 // UpdatePageTitle
 func (m *mainui) UpdatePageTitle() {
+	yes := m.is_tab("quickview")
+	if yes {
+		m.page.SetTitle(m.quickview.String())
+	}
+
+}
+func (m *mainui) is_tab(tabname string) bool {
 	pages := m.page.GetPageNames(true)
 	find := false
 	for _, v := range pages {
-		if v == "quickview" {
+		if v == tabname {
 			find = true
 			break
 		}
 	}
-	if m.quickview.view.HasFocus() || find {
-		m.page.SetTitle(m.quickview.String())
-	}
-
+	yes := m.quickview.view.HasFocus() || find
+	return yes
 }
 
 func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
@@ -563,7 +568,11 @@ func MainUI(arg *Arguments) {
 	tab_area.AddItem(mainmenu, 10, 0, false)
 
 	main.right_context_menu = new_contextmenu(&main)
-	main.right_context_menu.menu_handle = []context_menu_handle{main.codeview.rightmenu, main.quickview.right_context}
+	main.right_context_menu.menu_handle = []context_menu_handle{
+		main.codeview.rightmenu, 
+		main.quickview.right_context,
+		main.callinview.right_context,
+	}
 
 	var tabid view_id = view_quickview
 	fzttab := group.Find(tabid.getname())

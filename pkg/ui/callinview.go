@@ -11,12 +11,36 @@ import (
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
+type callin_view_context struct {
+	qk *callinview
+}
+
+func (menu callin_view_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	return action, event
+}
+
+// getbox implements context_menu_handle.
+func (menu callin_view_context) getbox() *tview.Box {
+	yes := menu.qk.main.is_tab("callin")
+	if yes {
+		return menu.qk.view.Box
+	}
+	return nil
+}
+
+// menuitem implements context_menu_handle.
+func (menu callin_view_context) menuitem() []context_menu_item {
+	return menu.qk.menuitem
+}
+
 type callinview struct {
 	*view_link
-	view      *tview.TreeView
-	Name      string
-	main      *mainui
-	task_list []lspcore.CallInTask
+	view          *tview.TreeView
+	Name          string
+	main          *mainui
+	task_list     []lspcore.CallInTask
+	menuitem      []context_menu_item
+	right_context callin_view_context
 }
 type dom_node struct {
 	call  lsp.CallHierarchyItem
@@ -37,6 +61,33 @@ func new_callview(main *mainui) *callinview {
 		Name: "callin",
 		main: main,
 	}
+	right_context := callin_view_context{qk: ret}
+	ret.right_context = right_context
+	menuitem := []context_menu_item{
+		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
+			nodecurrent := ret.view.GetCurrentNode()
+			root := ret.view.GetRoot()
+			children := root.GetChildren()
+			for _, child := range children {
+				var find = false
+				child.Walk(func(node, parent *tview.TreeNode) bool {
+					if node == nodecurrent {
+						find = true
+						return false
+					} else {
+						return true
+					}
+				})
+				if find {
+					root.RemoveChild(child)
+					break
+				}
+			}
+		}},
+		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
+	}
+	ret.menuitem = menuitem
+
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
 	return ret

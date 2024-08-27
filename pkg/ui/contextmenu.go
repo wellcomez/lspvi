@@ -37,7 +37,8 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	if action == tview.MouseRightClick {
 		visible := false
 		for _, v := range menu.menu_handle {
-			if v.getbox().InRect(event.Position()) {
+			box := v.getbox()
+			if box != nil && box.InRect(event.Position()) {
 				menu.set_items(v.menuitem())
 				if !menu.visible {
 					v.on_mouse(action, event)
@@ -88,7 +89,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	} else if action == tview.MouseLeftClick {
 		menu.impl.items[menu.table.GetCurrentItem()].handle()
 		menu.visible = false
-		menu.main.ActiveTab(view_quickview,false)
+		menu.main.ActiveTab(view_quickview, false)
 	}
 	return tview.MouseConsumed, nil
 }
@@ -120,7 +121,7 @@ func (t *contextmenu) set_items(items []context_menu_item) int {
 	impl := &contextmenu_impl{
 		items: items,
 	}
-	t.impl =impl
+	t.impl = impl
 	command_list := []cmditem{}
 	for _, v := range impl.items {
 		command_list = append(command_list, v.item)
