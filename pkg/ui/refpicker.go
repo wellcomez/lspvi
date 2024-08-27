@@ -245,17 +245,25 @@ func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_ca
 	for _, v := range file {
 		stacks, err := lsp.Caller(v, false)
 		if err == nil {
-			var find *lspcore.CallStackEntry
-			for _, s := range stacks {
-				find = s.InRange(v)
-				if find != nil {
-					break
+			ref_call_in = newFunction(stacks, v, ref_call_in)
+
+		}
+	}
+	return ref_call_in
+}
+
+func newFunction(stacks []lspcore.CallStack, v lsp.Location, ref_call_in []ref_with_caller) []ref_with_caller {
+	for _, s := range stacks {
+		for _, item := range s.Items {
+			for _, r := range item.FromRanges {
+				if r.Start.Line == v.Range.Start.Line {
+					ref_call_in = append(ref_call_in, ref_with_caller{
+						Loc:    v,
+						Caller: item,
+					})
+					return ref_call_in
 				}
 			}
-			ref_call_in = append(ref_call_in, ref_with_caller{
-				Loc:    v,
-				Caller: find,
-			})
 		}
 	}
 	return ref_call_in
