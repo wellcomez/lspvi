@@ -252,7 +252,7 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 		return
 	}
 	var line = view.Cursor.Loc.Y + 1
-	view.bookmark.Add(line,comment, view.Buf.Line(line), add)
+	view.bookmark.Add(line, comment, view.Buf.Line(line), add)
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -663,7 +663,9 @@ func (code *CodeView) Load(filename string) error {
 	// "monokai"
 	code.LoadBuffer(data, filename)
 	code.filename = filename
-	code.view.bookmark = code.main.bookmark.GetFileBookmark(filename)
+	if code.main != nil {
+		code.view.bookmark = code.main.bookmark.GetFileBookmark(filename)
+	}
 	name := filename
 	if code.main != nil {
 		name = strings.ReplaceAll(filename, code.main.root, "")
