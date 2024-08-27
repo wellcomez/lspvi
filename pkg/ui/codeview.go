@@ -169,31 +169,30 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
 	if main != nil {
-		menu_bookmark := get_cmd_actor(main, bookmark_it).menu_key(split(""))
-		menu_goto_define := get_cmd_actor(main, goto_define).menu_key(split(""))
-		menu_callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
 		items := []context_menu_item{
-			{item: cmditem{cmd: cmdactor{desc: "Search"}}, handle: func() {
-				sss := main.codeview.view.Cursor.GetSelection()
-				main.OnSearch(sss, true, true)
-			}},
-			{item: cmditem{cmd: cmdactor{desc: "Refer"}}, handle: func() {
+			{item: create_menu_item("Reference"), handle: func() {
 				main.get_refer(ret.rightmenu_select_range, main.codeview.filename)
 			}},
-			{item: menu_goto_define, handle: func() {
+			{item: create_menu_item("Goto define"), handle: func() {
 				main.get_define(ret.rightmenu_select_range, main.codeview.filename)
 			}},
-			{item: menu_bookmark, handle: func() {
-				main.codeview.bookmark()
-			}},
-			{item: menu_callin, handle: func() {
+			{item: create_menu_item("Call incoming"), handle: func() {
 				loc := lsp.Location{
 					URI:   lsp.NewDocumentURI(ret.filename),
 					Range: ret.rightmenu_select_range,
 				}
 				main.get_callin_stack_by_cursor(loc, ret.filename)
 			}},
-			{item: cmditem{cmd: cmdactor{desc: "Grep word"}}, handle: func() {
+			{item: create_menu_item("-------------"), handle: func() {
+			}},
+			{item: create_menu_item("Bookmark"), handle: func() {
+				main.codeview.bookmark()
+			}},
+			{item: create_menu_item("Search"), handle: func() {
+				sss := main.codeview.view.Cursor.GetSelection()
+				main.OnSearch(sss, true, true)
+			}},
+			{item: create_menu_item("Grep word"), handle: func() {
 				main.quickview.view.Clear()
 				key := lspcore.SymolSearchKey{
 					Key: ret.rightmenu_select_text,
@@ -209,6 +208,8 @@ func NewCodeView(main *mainui) *CodeView {
 					return ret
 				})
 			}},
+			{item: create_menu_item("-------------"), handle: func() {
+			}},
 			{item: create_menu_item("Toggle file view"), handle: func() {
 				main.toggle_view(view_file)
 			}},
@@ -216,6 +217,18 @@ func NewCodeView(main *mainui) *CodeView {
 				main.toggle_view(view_outline_list)
 			}},
 		}
+		maxlen := 0
+		for _, v := range items {
+			maxlen = max(maxlen, len(v.item.cmd.desc))
+		}
+		sss := strings.Repeat("-", maxlen)
+		for i := range items {
+			v := &items[i]
+			if strings.Index(v.item.cmd.desc, "-") == 0 {
+				v.item.cmd.desc = sss
+			}
+		}
+
 		// m := main
 		// mm := cmditem{
 		// 	get_cmd_actor(m, open_picker_document_symbol).menu_key(split(key_picker_document_symbol)),
