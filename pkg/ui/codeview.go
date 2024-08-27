@@ -204,7 +204,6 @@ func NewCodeView(main *mainui) *CodeView {
 					if ret {
 						main.app.QueueUpdateDraw(func() {
 							main.quickview.AddResult(data_grep_word, s, key)
-							main.UpdatePageTitle()
 						})
 					}
 					return ret

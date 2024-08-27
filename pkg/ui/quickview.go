@@ -357,6 +357,7 @@ func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.
 		return
 	}
 	qk.view.AddItem(secondline, "", nil)
+	qk.main.UpdatePageTitle()
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
@@ -373,6 +374,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 		}
 		qk.view.AddItem(secondline, "", nil)
 	}
+	qk.main.UpdatePageTitle()
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 
