@@ -115,8 +115,15 @@ func (m *mainui) async_resolve_callstack(call_in_task *lspcore.CallInTask) {
 
 // UpdatePageTitle
 func (m *mainui) UpdatePageTitle() {
-
-	if m.quickview.view.HasFocus() {
+	pages := m.page.GetPageNames(true)
+	find := false
+	for _, v := range pages {
+		if v == "quickview" {
+			find = true
+			break
+		}
+	}
+	if m.quickview.view.HasFocus() || find {
 		m.page.SetTitle(m.quickview.String())
 	}
 
@@ -894,7 +901,7 @@ func (main mainui) open_picker_refs() {
 func (main mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(main.root)
 }
-func (main mainui) open_picker_grep(word string, qf func(ref_with_caller)bool) {
+func (main mainui) open_picker_grep(word string, qf func(ref_with_caller) bool) {
 	main.layout.dialog.OpenGrepWordFzf(word, qf)
 }
 func (main mainui) open_picker_livegrep() {

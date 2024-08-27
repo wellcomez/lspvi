@@ -360,10 +360,12 @@ func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
-	qk.view.Clear()
 	qk.Type = t
 	qk.Refs.Refs = Refs
 	qk.searchkey = key
+	qk.view.Key = key.Key
+	qk.view.Clear()
+	qk.view.SetCurrentItem(-1)
 	for _, caller := range qk.Refs.Refs {
 		secondline := caller.ListItem(qk.main.root)
 		if len(secondline) == 0 {
@@ -371,7 +373,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 		}
 		qk.view.AddItem(secondline, "", nil)
 	}
-	qk.open_index(qk.view.GetCurrentItem())
+	// qk.open_index(qk.view.GetCurrentItem())
 }
 
 func (caller ref_with_caller) ListItem(root string) string {
