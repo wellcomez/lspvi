@@ -208,7 +208,7 @@ func split(cmd string) []string {
 
 const key_goto_refer = "gr"
 const chr_goto_refer = "r"
-const chr_bookmark = "b"
+const chr_bookmark = "B"
 const chr_goto_callin = "c"
 const key_goto_define = "gd"
 const key_goto_decl = "D"
@@ -259,7 +259,7 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),
 		get_cmd_actor(main, goto_first_line).esc_key(split(key_goto_first_line)),
 		get_cmd_actor(main, goto_last_line).esc_key(split(key_goto_last_line)),
-		get_cmd_actor(main, bookmark_it).esc_key(split("B")),
+		get_cmd_actor(main, bookmark_it).esc_key(split(chr_bookmark)),
 	}
 	return sss
 }
