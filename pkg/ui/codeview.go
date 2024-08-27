@@ -16,10 +16,15 @@ import (
 	// "github.com/gdamore/tcell"
 )
 
+type codetextview struct {
+	*femto.View
+	bookmark *bookmarkfile
+	filename string
+}
 type CodeView struct {
 	*view_link
 	filename               string
-	view                   *femto.View
+	view                   *codetextview
 	theme                  string
 	main                   *mainui
 	key_map                map[tcell.Key]func(code *CodeView)
@@ -155,7 +160,7 @@ func NewCodeView(main *mainui) *CodeView {
 	path := ""
 	content := ""
 	buffer := femto.NewBufferFromString(string(content), path)
-	root := femto.NewView(buffer)
+	root := new_codetext_view(buffer)
 	root.SetRuntimeFiles(runtime.Files)
 	root.SetColorscheme(colorscheme)
 
@@ -163,6 +168,7 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
 	if main != nil {
+		bookmark:= get_cmd_actor(main, bookmark_it).menu_key(split(""))
 		goto_define := get_cmd_actor(main, goto_define).menu_key(split(""))
 		callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
 		items := []context_menu_item{
@@ -175,6 +181,9 @@ func NewCodeView(main *mainui) *CodeView {
 			}},
 			{item: goto_define, handle: func() {
 				main.get_define(ret.rightmenu_select_range, main.codeview.filename)
+			}},
+			{item: bookmark, handle: func() {
+				main.codeview.bookmark()
 			}},
 			{item: callin, handle: func() {
 				loc := lsp.Location{
@@ -199,6 +208,51 @@ func NewCodeView(main *mainui) *CodeView {
 		ret.rightmenu_items = items
 	}
 	return &ret
+}
+
+func new_codetext_view(buffer *femto.Buffer) *codetextview {
+
+	root := &codetextview{
+		femto.NewView(buffer),
+		nil,
+		"",
+	}
+	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		style := tcell.StyleDefault
+		b := []int{}
+		_, topY, _, _ := root.GetInnerRect()
+		bottom := root.Bottomline()
+		if root.bookmark != nil {
+			for _, v := range root.bookmark.LineMark {
+				if v.Line > root.Topline && v.Line < bottom {
+					b = append(b, v.Line-root.Topline)
+				}
+			}
+			for _, by := range b {
+				screen.SetContent(x, by+topY-1, 'B', nil, style.Foreground(tcell.ColorDarkGrey))
+			}
+		}
+		return root.GetInnerRect()
+	})
+	// root.addbookmark(1, true)
+	// root.addbookmark(20, true)
+	return root
+}
+func (view *codetextview) has_bookmark() bool{
+	var line = view.Cursor.Loc.Y+1
+	for _, v := range view.bookmark.LineMark{
+		if v.Line == line {
+			return true
+		}
+	}
+	return false
+}
+func (view *codetextview) addbookmark(add bool) {
+	if view.bookmark == nil {
+		return
+	}
+	var line = view.Cursor.Loc.Y+1
+	view.bookmark.Add(line, view.Buf.Line(line), add)
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -299,7 +353,7 @@ func (code *CodeView) get_click_line_inview(event *tcell.EventMouse) {
 }
 
 // GetVisualX returns the x value of the cursor in visual spaces
-func GetVisualX(view *femto.View, Y int, X int) int {
+func GetVisualX(view *codetextview, Y int, X int) int {
 	runes := []rune(view.Buf.Line(Y))
 	tabSize := int(view.Buf.Settings["tabsize"].(float64))
 	if X > len(runes) {
@@ -311,11 +365,11 @@ func GetVisualX(view *femto.View, Y int, X int) int {
 	}
 	return femto.StringWidth(string(runes[:X]), tabSize)
 }
-func avoid_position_overflow(root *femto.View, pos femto.Loc) femto.Loc {
+func avoid_position_overflow(root *codetextview, pos femto.Loc) femto.Loc {
 	pos.Y = min(root.Buf.LinesNum()-1, pos.Y)
 	return pos
 }
-func tab_loc(root *femto.View, pos femto.Loc) femto.Loc {
+func tab_loc(root *codetextview, pos femto.Loc) femto.Loc {
 	LastVisualX := GetVisualX(root, pos.Y, pos.X)
 	tabw := LastVisualX - pos.X
 	if tabw > 0 {
@@ -609,7 +663,7 @@ func (code *CodeView) Load(filename string) error {
 	// "monokai"
 	code.LoadBuffer(data, filename)
 	code.filename = filename
-
+	code.view.bookmark = code.main.bookmark.GetFileBookmark(filename)
 	name := filename
 	if code.main != nil {
 		name = strings.ReplaceAll(filename, code.main.root, "")
@@ -632,9 +686,20 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	}
 	code.view.SetColorscheme(colorscheme)
 }
-func (code CodeView) focus_line() int {
-	_, _, _, h := code.view.GetRect()
-	return h / 2
+func (code *CodeView) bookmark() {
+	if  !code.view.has_bookmark(){
+		code.Addbookmark()
+	}else{
+		code.Remvoebookmark()
+	}
+}
+func (code *CodeView) Addbookmark() {
+	code.view.addbookmark(true)
+	code.main.bookmark.save()
+}
+func (code *CodeView) Remvoebookmark() {
+	code.view.addbookmark(false)
+	code.main.bookmark.save()
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
 	x := 0

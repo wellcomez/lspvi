@@ -10,19 +10,7 @@ import (
 )
 
 func (pk *history_picker) grid(input *tview.InputField) *tview.Grid {
-	list := pk.list
-	layout := grid_list_whole_screen(list, input)
-	layout.SetBorder(true)
-	pk.listcheck = NewGridListClickCheck(layout, list.List, 1)
-	// }, func() {
-	// 	h := sym.impl.listdata
-	// 	v := h[list.GetCurrentItem()]
-	// 	path := v.filepath
-	// 	parent := sym.impl.parent
-	// 	parent.openfile(path)
-	// })
-
-	return layout
+	return pk.impl.grid(input)
 }
 
 func grid_list_whole_screen(list tview.Primitive, input *tview.InputField) *tview.Grid {
@@ -36,18 +24,15 @@ func grid_list_whole_screen(list tview.Primitive, input *tview.InputField) *tvie
 }
 
 type history_picker_impl struct {
-	codeprev    *CodeView
-	fzf         *fzflib.Fzf
-	parent      *fzfmain
+	*fzflist_impl
 	match_index []int
-	main        *mainui
 	listdata    []history_item
 }
 
 type history_picker struct {
 	impl      *history_picker_impl
-	list      *customlist
-	listcheck *GridListClickCheck
+	// list      *customlist
+	// listcheck *GridListClickCheck
 }
 
 // name implements picker.
@@ -66,28 +51,24 @@ type history_item struct {
 }
 
 func new_history_picker(v *fzfmain) history_picker {
-	list := new_customlist()
-	list.SetBorder(true)
-	main := v.main
+	// list := new_customlist()
+	// list.SetBorder(true)
 	sym := history_picker{
 		impl: &history_picker_impl{
-			codeprev: NewCodeView(main),
-			parent:   v,
-			main:     main,
+			fzflist_impl: new_fzflist_impl(nil, v),
 		},
-		list: list,
+		// list: list,
 	}
 	history := NewHistory(lspviroot.history)
-	sym.impl.codeprev.view.SetBorder(true)
 	var options = fzflib.DefaultOptions()
 	options.Fuzzy = false
 	items := []history_item{}
 	fzf_item_strings := []string{}
-	for _, v := range history.history_files() {
+	for _, h := range history.history_files() {
 
-		dispname := strings.TrimPrefix(v, main.root)
+		dispname := strings.TrimPrefix(h, v.main.root)
 		h := history_item{
-			filepath: v,
+			filepath: h,
 			dispname: dispname,
 		}
 		fzf_item_strings = append(fzf_item_strings, dispname)
@@ -100,7 +81,7 @@ func new_history_picker(v *fzfmain) history_picker {
 	return sym
 }
 func (pk history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	handle := pk.list.InputHandler()
+	handle := pk.impl.list.InputHandler()
 	handle(event, setFocus)
 	pk.update_preview()
 }
@@ -117,7 +98,7 @@ func (pk history_picker) UpdateQuery(query string) {
 		return
 	}
 	query = strings.ToLower(query)
-	listview := pk.list
+	listview := pk.impl.list
 	listview.Clear()
 	fzf := pk.impl.fzf
 	var result fzflib.SearchResult

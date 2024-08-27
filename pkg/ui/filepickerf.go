@@ -21,10 +21,7 @@ import (
 
 // new_fzf_file
 func (pk *DirWalk) grid(input *tview.InputField) *tview.Grid {
-	layout := grid_list_whole_screen(pk.list, input)
-	layout.SetBorder(true)
-	pk.click = NewGridListClickCheck(layout, pk.list.List,1)
-	return layout
+	return pk.fzflist_impl.grid(input)
 }
 
 var WalkerSkip = []string{".git", "node_modules"}
@@ -49,14 +46,12 @@ func (f filepicker) handle() func(event *tcell.EventKey, setFocus func(p tview.P
 }
 
 type DirWalk struct {
+	*fzflist_impl
 	query    string
 	cur      *querytask
 	root     string
 	cb       func(t querytask)
 	hayStack []string
-	fzf      *fzflib.Fzf
-	list     *customlist
-	click 	 *GridListClickCheck
 }
 
 type walkerOpts struct {
@@ -294,23 +289,25 @@ type file_picker_item struct {
 }
 
 func NewDirWalk(root string, v *fzfmain) *DirWalk {
-	list := new_customlist()
-	list.SetBorder(true)
-	cb := func(t querytask) {
-		v.app.QueueUpdate(func() {
-			update_list_view(list, t, v)
-			v.app.ForceDraw()
-		})
-	}
+	impl := new_fzflist_impl(nil, v)
 	var hayStack = walk(root)
-	ret := &DirWalk{root: root, cb: cb, hayStack: hayStack, list: list}
+	ret := &DirWalk{
+		fzflist_impl: impl,
+		root:         root,
+		cb: func(t querytask) {
+			v.app.QueueUpdate(func() {
+				list := impl.list
+				update_list_view(list, t, v)
+				v.app.ForceDraw()
+			})
+		}, hayStack: hayStack,
+	}
 	var options = fzflib.DefaultOptions()
 	options.Fuzzy = false
 	options.Sort = []fzflib.Criterion{}
 	// update any options here
 	// var hayStack = walk(root)
 	ret.fzf = fzflib.New(ret.hayStack, options)
-	ret.cb = cb
 	if global_walk != nil && len(global_walk.filelist) > 0 {
 		task := querytask{match_count: 0, count: len(global_walk.filelist)}
 		for i := 0; i < min(len(global_walk.filelist), 100); i++ {
@@ -320,7 +317,7 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 				path: v,
 			})
 		}
-		update_list_view(list, task, v)
+		update_list_view(ret.list, task, v)
 	}
 	return ret
 }

@@ -8,16 +8,19 @@ import (
 	"github.com/rivo/tview"
 )
 
-type keymap_picker_impl struct {
-	keymaplist []string
-	fzf        *fzf.Fzf
-	keys       []cmditem
-}
-type keymap_picker struct {
-	impl   *keymap_picker_impl
+type fzflist_impl struct {
 	list   *customlist
 	parent *fzfmain
 	click  *GridListClickCheck
+	fzf    *fzf.Fzf
+}
+type keymap_picker_impl struct {
+	*fzflist_impl
+	keymaplist []string
+	keys       []cmditem
+}
+type keymap_picker struct {
+	impl *keymap_picker_impl
 }
 
 // name implements picker.
@@ -31,13 +34,13 @@ func (pk keymap_picker) UpdateQuery(query string) {
 	var result fzf.SearchResult
 	fzf := impl.fzf
 	fzf.Search(query)
-	pk.list.Clear()
-	pk.list.Key = query
+	impl.list.Clear()
+	impl.list.Key = query
 	result = <-fzf.GetResultChannel()
 	for _, m := range result.Matches {
 		index := m.HayIndex
-		pk.list.AddItem(impl.keymaplist[index], "", func() {
-			pk.parent.hide()
+		impl.list.AddItem(impl.keymaplist[index], "", func() {
+			impl.parent.hide()
 			pk.impl.keys[index].cmd.handle()
 		})
 	}
@@ -45,12 +48,10 @@ func (pk keymap_picker) UpdateQuery(query string) {
 
 // handle implements picker.
 func (pk keymap_picker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	handle := pk.list.InputHandler()
+	handle := pk.impl.list.InputHandler()
 	return handle
 }
 func new_keymap_picker(v *fzfmain) keymap_picker {
-	list := new_customlist()
-	list.SetBorder(true)
 	keys := v.main.key_map_escape()
 	keys = append(keys, v.main.key_map_escape()...)
 	keys = append(keys, v.main.key_map_leader()...)
@@ -65,28 +66,42 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	options.Fuzzy = false
 	fzf := fzf.New(keymaplist, options)
 
+	x := new_fzflist_impl(fzf, v)
+
 	ret := keymap_picker{
 		impl: &keymap_picker_impl{
-			keymaplist: keymaplist,
-			fzf:        fzf,
-			keys:       keys,
+			fzflist_impl: x,
+			keymaplist:   keymaplist,
+			keys:         keys,
 		},
-		parent: v,
-		list:   list,
 	}
+	list:=ret.impl.list
 	for i, v := range keymaplist {
 		index := i
 		list.AddItem(v, "", func() {
-			ret.parent.hide()
+			ret.impl.parent.hide()
 			ret.impl.keys[index].cmd.handle()
 		})
 	}
 	return ret
 }
+
+func new_fzflist_impl(fzf *fzf.Fzf, v *fzfmain) *fzflist_impl {
+	x := &fzflist_impl{
+		fzf:    fzf,
+		parent: v,
+		list:   new_customlist(),
+	}
+	x.list.SetBorder(true)
+	return x
+}
 func (pk *keymap_picker) grid(input *tview.InputField) *tview.Grid {
-	list := pk.list
+	return pk.impl.grid(input)
+}
+func (impl *fzflist_impl) grid(input *tview.InputField) *tview.Grid {
+	list := impl.list
 	layout := grid_list_whole_screen(list, input)
 	layout.SetBorder(true)
-	pk.click = NewGridListClickCheck(layout, list.List, 1)
+	impl.click = NewGridListClickCheck(layout, list.List, 1)
 	return layout
 }

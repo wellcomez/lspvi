@@ -101,6 +101,11 @@ func (v *fzfmain) open_wks_query(file *lspcore.Symbol_file) {
 	v.create_dialog_content(x, sym)
 }
 
+func (v *fzfmain) OpenBookMarkFzf() {
+	sym := new_bookmark_picker(v)
+	x := sym.grid(v.input)
+	v.create_dialog_content(x, sym)
+}
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	sym := new_refer_picker(*file, v)

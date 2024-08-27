@@ -14,20 +14,25 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
-	list := pk.impl.listview
+func (grepx *prev_picker_impl) update_title(s string) {
+	grepx.parent.Frame.SetTitle(s)
+}
+func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.Grid {
+	list := impl.listview
 	list.SetBorder(true)
-	code := pk.impl.codeprev.view
-	pk.impl.codeprev.Load(pk.impl.file.Filename)
+	code := impl.codeprev.view
+	// impl.codeprev.Load(impl.file.Filename)
 	layout := layout_list_edit(list, code, input)
-	pk.impl.list_click_check = NewGridListClickCheck(layout ,list, 2)
-	pk.impl.list_click_check.on_list_selected= func() {
-		pk.update_preview()
+	impl.list_click_check = NewGridListClickCheck(layout, list, linenum)
+	impl.list_click_check.on_list_selected = func() {
+		impl.update_preview()
 	}
-	// , func() {
-	// 	sym.impl.parent.hide()
-	// })
 	return layout
+}
+func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
+	ret := pk.impl.grid(input, 2)
+	pk.impl.codeprev.Load(pk.impl.file.Filename)
+	return ret
 }
 func layout_list_row_edit(list tview.Primitive, code tview.Primitive, input *tview.InputField) *tview.Flex {
 	layout := tview.NewFlex()
@@ -46,20 +51,34 @@ func layout_list_edit(list tview.Primitive, code tview.Primitive, input *tview.I
 	return layout
 }
 
-type refpicker_impl struct {
-	file              *lspcore.Symbol_file
+type prev_picker_impl struct {
 	listview          *tview.List
 	codeprev          *CodeView
-	refs              []ref_with_caller
-	listdata          []ref_line
-	current_list_data []ref_line
 	codeline          []string
-	fzf               *fzflib.Fzf
 	parent            *fzfmain
 	list_click_check  *GridListClickCheck
-	// ref_call_in       []ref_with_callin
+	listdata          []ref_line
+	current_list_data []ref_line
+	fzf               *fzflib.Fzf
 }
 
+func (impl *prev_picker_impl) update_preview() {
+	cur := impl.listview.GetCurrentItem()
+	if cur < len(impl.current_list_data) {
+		item := impl.current_list_data[cur]
+		impl.codeprev.Load(item.loc.URI.AsPath().String())
+		impl.codeprev.gotoline(item.loc.Range.Start.Line)
+	}
+}
+
+type refpicker_impl struct {
+	*prev_picker_impl
+	file *lspcore.Symbol_file
+	refs []ref_with_caller
+}
+type prev_picker struct {
+	impl *refpicker_impl
+}
 type refpicker struct {
 	impl *refpicker_impl
 }
@@ -196,18 +215,25 @@ func (ref refpicker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 }
 
 func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
-	main := v.main
+	x := new_prev_picker(v)
 	sym := refpicker{
 		impl: &refpicker_impl{
-			file:     &clone,
-			listview: tview.NewList(),
-			codeprev: NewCodeView(main),
-			codeline: []string{},
-			parent:   v,
+			prev_picker_impl: x,
+			file:             &clone,
 		},
 	}
 	sym.impl.codeprev.view.SetBorder(true)
 	return sym
+}
+
+func new_prev_picker(v *fzfmain) *prev_picker_impl {
+	x := &prev_picker_impl{
+		listview: tview.NewList(),
+		codeprev: NewCodeView(v.main),
+		codeline: []string{},
+		parent:   v,
+	}
+	return x
 }
 func (pk *refpicker) load(ranges lsp.Range) {
 	pk.impl.file.Handle = *pk
@@ -219,13 +245,8 @@ func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p t
 	pk.update_preview()
 }
 
-func (pk refpicker) update_preview() {
-	cur := pk.impl.listview.GetCurrentItem()
-	if cur < len(pk.impl.current_list_data) {
-		item := pk.impl.current_list_data[cur]
-		pk.impl.codeprev.Load(item.loc.URI.AsPath().String())
-		pk.impl.codeprev.gotoline(item.loc.Range.Start.Line)
-	}
+func (pk *refpicker) update_preview() {
+	pk.impl.update_preview()
 }
 
 // handle implements picker.
