@@ -12,6 +12,7 @@ type view_link struct {
 	next, left, right, up, down view_id
 	width                       int
 	heigth                      int
+	hide 						bool
 }
 
 const (

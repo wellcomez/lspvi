@@ -66,23 +66,24 @@ func (m mainui) toggle_view(id view_id) {
 	switch id {
 	case view_file:
 		{
-			_, _, w, _ := m.fileexplorer.view.GetRect()
-			if w < 1 {
-				m.layout.editor_area.ResizeItem(m.fileexplorer.view, 0, m.fileexplorer.width)
-			} else {
-				m.layout.editor_area.ResizeItem(m.fileexplorer.view, 0, 0)
-			}
+			m.fileexplorer.hide = !m.fileexplorer.hide
 		}
 	case view_outline_list:
 		{
-			_, _, w, _ := m.symboltree.view.GetRect()
-			if w < 1 {
-				m.layout.editor_area.ResizeItem(m.symboltree.view, 0, m.symboltree.width)
-			} else {
-				m.layout.editor_area.ResizeItem(m.symboltree.view, 0, 0)
-			}
+			m.symboltree.hide = !m.symboltree.hide
 		}
+	default:
+		return
 	}
+	m.layout.editor_area.Clear()
+	if !m.fileexplorer.hide {
+		m.layout.editor_area.AddItem(m.fileexplorer.view, 0, m.fileexplorer.width, false)
+	}
+	m.layout.editor_area.AddItem(m.codeview.view, 0, 4, false)
+	if !m.symboltree.hide {
+		m.layout.editor_area.AddItem(m.symboltree.view, 0, m.symboltree.width, false)
+	}
+
 }
 func (r *mainui) editor_area_fouched() {
 	// log.Println("change foucse", r.GetFocusViewId())
@@ -304,6 +305,9 @@ func (m *mainui) Init() {
 }
 
 func (m mainui) OnCodeLineChange(line int) {
+	if m.symboltree.hide {
+		return
+	}
 	m.symboltree.OnCodeLineChange(line)
 }
 func (m *mainui) OnTabChanged(tab *TabButton) {
