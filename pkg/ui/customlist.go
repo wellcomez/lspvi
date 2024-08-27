@@ -53,21 +53,21 @@ func find_key_fuzzy2(s string, keys []string, offset int) []keypattern {
 	}
 	return []keypattern{}
 }
-func find_key_fuzzy(s string, keys []string, offset int) []keypattern {
-	for i, v := range keys {
-		if len(v) == 0 {
-			continue
-		}
-		idx := strings.Index(strings.ToLower(s), v)
-		if idx >= 0 {
-			pth := keypattern{begin: idx + offset, width: len(v)}
-			a := []keypattern{pth}
-			subret := find_key_fuzzy(s[idx+len(v):], keys[i+1:], pth.width+idx+offset)
-			return append(a, subret...)
-		}
-	}
-	return []keypattern{}
-}
+// func find_key_fuzzy(s string, keys []string, offset int) []keypattern {
+// 	for i, v := range keys {
+// 		if len(v) == 0 {
+// 			continue
+// 		}
+// 		idx := strings.Index(strings.ToLower(s), v)
+// 		if idx >= 0 {
+// 			pth := keypattern{begin: idx + offset, width: len(v)}
+// 			a := []keypattern{pth}
+// 			subret := find_key_fuzzy(s[idx+len(v):], keys[i+1:], pth.width+idx+offset)
+// 			return append(a, subret...)
+// 		}
+// 	}
+// 	return []keypattern{}
+// }
 func find_key(s string, keys []string, offset int) []keypattern {
 	for _, v := range keys {
 		if len(v) == 0 {
