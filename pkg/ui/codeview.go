@@ -229,7 +229,7 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 				}
 			}
 			for _, by := range b {
-				screen.SetContent(x, by+topY-1, 'B', nil, style.Foreground(tcell.ColorDarkGrey))
+				screen.SetContent(x, by+topY-1, 'B', nil, style.Foreground(tcell.ColorGreenYellow).Background(root.GetBackgroundColor()))
 			}
 		}
 		return root.GetInnerRect()
