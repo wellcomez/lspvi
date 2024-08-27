@@ -367,6 +367,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.Key = key.Key
 	qk.view.Clear()
 	qk.view.SetCurrentItem(-1)
+	qk.currentIndex = 0
 	for _, caller := range qk.Refs.Refs {
 		secondline := caller.ListItem(qk.main.root)
 		if len(secondline) == 0 {
