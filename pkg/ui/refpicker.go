@@ -14,6 +14,9 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
+func (grepx *prev_picker_impl) update_title(s string) {
+	grepx.parent.Frame.SetTitle(s)
+}
 func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.Grid {
 	list := impl.listview
 	list.SetBorder(true)
