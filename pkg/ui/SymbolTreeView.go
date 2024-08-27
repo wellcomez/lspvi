@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
@@ -200,6 +201,9 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 		})
 		menu_item = append(menu_item, s)
 	}
+	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy"), func() {
+		ret.handle_commnad(copy_data)
+	}})
 	ret.right_context = symboltree_view_context{
 		qk:        ret,
 		menu_item: menu_item,
@@ -279,7 +283,10 @@ func (c *SymbolTreeView) handle_commnad(cmd command_id) {
 	if value != nil {
 		if sym, ok := value.(lsp.SymbolInformation); ok {
 			switch cmd {
-
+			case copy_data:
+				{
+					clipboard.WriteAll(sym.Name)
+				}
 			case goto_decl:
 				{
 					c.get_declare(lspcore.Symbol{SymInfo: sym})

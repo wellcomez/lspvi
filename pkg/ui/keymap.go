@@ -30,6 +30,7 @@ const (
 	goto_tab
 	goto_back
 	bookmark_it
+	copy_data
 	next_window_left
 	next_window_right
 	next_window_down
