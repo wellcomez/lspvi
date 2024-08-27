@@ -12,6 +12,7 @@ type command_id int
 
 const (
 	open_picker_document_symbol = iota
+	open_picker_bookmark
 	open_picker_refs
 	open_picker_qfh
 	open_picker_wkq
@@ -63,6 +64,8 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{id, "open symbol", m.open_document_symbol_picker}
 	case open_picker_refs:
 		return cmdactor{id, "reference", m.open_picker_refs}
+	case open_picker_bookmark:
+		return cmdactor{id, "bookmark", m.open_picker_bookmark}
 	case open_picker_livegrep:
 		return cmdactor{id, "live grep", m.open_picker_livegrep}
 	case open_picker_history:
@@ -73,7 +76,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{id, "picker file", m.open_picker_ctrlp}
 	case bookmark_it:
 		return cmdactor{id, "Bookmark", func() {
-			if m.codeview!=nil{
+			if m.codeview != nil {
 				m.codeview.bookmark()
 			}
 		}}
@@ -189,6 +192,7 @@ const key_left = "Left"
 const key_right = "Right"
 const key_up = "Up"
 const key_down = "Down"
+
 var event_to_keyname = map[tcell.Key]string{
 	tcell.KeyCtrlW: ctrlw,
 	tcell.KeyLeft:  key_left,
@@ -204,6 +208,7 @@ func split(cmd string) []string {
 
 const key_goto_refer = "gr"
 const chr_goto_refer = "r"
+const chr_bookmark = "b"
 const chr_goto_callin = "c"
 const key_goto_define = "gd"
 const key_goto_decl = "D"
@@ -262,6 +267,7 @@ func (m *mainui) key_map_space_menu() []cmditem {
 		get_cmd_actor(m, open_picker_document_symbol).menu_key(split(key_picker_document_symbol)),
 		get_cmd_actor(m, open_picker_qfh).menu_key(split("q")),
 		get_cmd_actor(m, open_picker_refs).menu_key(split(chr_goto_refer)),
+		get_cmd_actor(m, open_picker_bookmark).menu_key(split(chr_bookmark)),
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),
 		get_cmd_actor(m, open_picker_history).menu_key(split(key_picker_history)),
 		get_cmd_actor(m, open_picker_grep_word).menu_key(split(key_picker_grep_word)),

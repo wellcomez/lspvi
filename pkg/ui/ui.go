@@ -448,6 +448,7 @@ func MainUI(arg *Arguments) {
 		bf:       NewBackForward(NewHistory(lspviroot.history)),
 		bookmark: &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}},
 	}
+	main.bookmark.load()
 	handle.main = &main
 	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)
@@ -882,6 +883,9 @@ func (main *mainui) GoBack() {
 //	func (main *mainui) open_file_picker() {
 //		main.layout.dialog.OpenFileFzf(main.root)
 //	}
+func (main *mainui) open_picker_bookmark() {
+	main.layout.dialog.OpenBookMarkFzf()
+}
 func (main mainui) open_picker_refs() {
 	main.codeview.view.Cursor.SelectWord()
 	loc := main.codeview.lsp_cursor_loc()

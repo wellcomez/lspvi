@@ -2,9 +2,14 @@ package mainui
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 
+	"github.com/gdamore/tcell/v2"
+	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
+	"github.com/tectiv3/go-lsp"
 )
 
 type LineMark struct {
@@ -68,40 +73,104 @@ func (b *bookmarkfile) Add(line int, text string, add bool) {
 type bookmark_picker struct {
 	impl *bookmark_picker_impl
 }
+
+// UpdateQuery implements picker.
+func (pk bookmark_picker) UpdateQuery(query string) {
+	query = strings.ToLower(query)
+	listview := pk.impl.listview
+	listview.Clear()
+	var result fzflib.SearchResult
+	if fzf := pk.impl.fzf; fzf != nil {
+		fzf.Search(query)
+		result = <-fzf.GetResultChannel()
+		pk.impl.current_list_data = []ref_line{}
+		for _, v := range result.Matches {
+			v := pk.impl.listdata[v.HayIndex]
+			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
+			callinfo := v.caller
+			listview.AddItem(
+				fmt.Sprintf("%s:%d%s", v.path, v.loc.Range.Start.Line, callinfo),
+				v.line, 0, func() {
+					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
+					pk.impl.parent.hide()
+				})
+		}
+	} else {
+		pk.impl.current_list_data = []ref_line{}
+		for i := range pk.impl.listdata {
+			v := pk.impl.listdata[i]
+			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
+			if strings.Contains(strings.ToLower(v.line), query) {
+				a, b := get_list_item(v)
+				listview.AddItem(a, b, 0, func() {
+					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
+					pk.impl.parent.hide()
+				})
+			}
+		}
+	}
+	pk.update_preview()
+}
+func (pk bookmark_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	handle := pk.impl.listview.InputHandler()
+	handle(event, setFocus)
+	pk.update_preview()
+}
+
+// handle implements picker.
+func (pk bookmark_picker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return pk.handle_key_override
+}
+
+// name implements picker.
+func (pk bookmark_picker) name() string {
+	// panic("unimplemented")
+	return "bookmark"
+}
+
 type bookmark_picker_impl struct {
 	*prev_picker_impl
+	fzf *fzflib.Fzf
+}
+
+func get_list_item(v ref_line) (string, string) {
+	return v.caller, v.path + ":" + v.line
 }
 
 // new_bookmark_picker
 func new_bookmark_picker(v *fzfmain) bookmark_picker {
-	main := v.main
 	sym := bookmark_picker{
 		impl: &bookmark_picker_impl{
-			new_prev_picker(main,v),
+			prev_picker_impl: new_prev_picker(v.main, v),
+			fzf:              nil,
 		},
 	}
 	sym.impl.codeprev.view.SetBorder(true)
+	marks := v.main.bookmark.Bookmark
+	impl := sym.impl
+	for _, file := range marks {
+		for _, v := range file.LineMark {
+			ref := ref_line{line: fmt.Sprintf("%d", v.Line), path: file.Name, caller: v.Text, loc: lsp.Location{
+				URI:   lsp.NewDocumentURI(file.Name),
+				Range: lsp.Range{Start: lsp.Position{Line: v.Line - 1}},
+			},
+			}
+			impl.listdata = append(impl.listdata, ref)
+		}
+	}
+	impl.current_list_data = impl.listdata
+	datafzf := []string{}
+	for _, v := range impl.listdata {
+		datafzf = append(datafzf, v.path+":"+v.line)
+		a, b := get_list_item(v)
+		impl.listview.AddItem(a, b, 0, nil)
+	}
+	sym.impl.fzf = fzflib.New(datafzf, fzflib.DefaultOptions())
 	return sym
 }
 func (pk bookmark_picker) update_preview() {
-	cur := pk.impl.listview.GetCurrentItem()
-	if cur < len(pk.impl.current_list_data) {
-		item := pk.impl.current_list_data[cur]
-		pk.impl.codeprev.Load(item.loc.URI.AsPath().String())
-		pk.impl.codeprev.gotoline(item.loc.Range.Start.Line)
-	}
+	pk.impl.update_preview()
 }
 func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Grid {
-	list := pk.impl.listview
-	list.SetBorder(true)
-	code := pk.impl.codeprev.view
-	layout := layout_list_edit(list, code, input)
-	pk.impl.list_click_check = NewGridListClickCheck(layout, list, 2)
-	pk.impl.list_click_check.on_list_selected = func() {
-		pk.update_preview()
-	}
-	// , func() {
-	// 	sym.impl.parent.hide()
-	// })
-	return layout
+	return pk.impl.grid(input)
 }
