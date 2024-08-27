@@ -30,7 +30,7 @@ type history_picker_impl struct {
 }
 
 type history_picker struct {
-	impl      *history_picker_impl
+	impl *history_picker_impl
 	// list      *customlist
 	// listcheck *GridListClickCheck
 }
@@ -57,11 +57,11 @@ func new_history_picker(v *fzfmain) history_picker {
 		impl: &history_picker_impl{
 			fzflist_impl: new_fzflist_impl(nil, v),
 		},
-		// list: list,
 	}
+	sym.impl.set_fuzz(true)
 	history := NewHistory(lspviroot.history)
 	var options = fzflib.DefaultOptions()
-	options.Fuzzy = false
+	options.Fuzzy = sym.impl.list.fuzz
 	options.CaseMode = fzflib.CaseIgnore
 	items := []history_item{}
 	fzf_item_strings := []string{}

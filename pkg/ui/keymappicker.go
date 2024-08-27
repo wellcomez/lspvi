@@ -99,6 +99,9 @@ func new_fzflist_impl(fzf *fzf.Fzf, v *fzfmain) *fzflist_impl {
 func (pk *keymap_picker) grid(input *tview.InputField) *tview.Grid {
 	return pk.impl.grid(input)
 }
+func (impl *fzflist_impl) set_fuzz(fuzz bool) {
+	impl.list.fuzz = fuzz 
+}
 func (impl *fzflist_impl) grid(input *tview.InputField) *tview.Grid {
 	list := impl.list
 	layout := grid_list_whole_screen(list, input)

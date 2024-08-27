@@ -94,7 +94,7 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 			listview.AddItem(
 				a, b,
 				0, func() {
-					close_bookmark_picker(pk.impl, loc)
+					close_bookmark_picker(pk.impl.prev_picker_impl, loc)
 				})
 		}
 	} else {
@@ -215,7 +215,7 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 		a, b := get_list_item(v)
 		loc := v.loc
 		impl.listview.AddItem(a, b, 0, func() {
-			close_bookmark_picker(impl, loc)
+			close_bookmark_picker(impl.prev_picker_impl, loc)
 		})
 	}
 	option := fzflib.DefaultOptions()
@@ -224,7 +224,7 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 	return sym
 }
 
-func close_bookmark_picker(impl *bookmark_picker_impl, loc lsp.Location) {
+func close_bookmark_picker(impl *prev_picker_impl, loc lsp.Location) {
 	impl.open_location(loc)
 	impl.parent.hide()
 }

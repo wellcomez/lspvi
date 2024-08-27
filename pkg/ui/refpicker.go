@@ -331,8 +331,9 @@ func (pk refpicker) UpdateQuery(query string) {
 			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
 			if strings.Contains(strings.ToLower(v.line), query) {
 				listview.AddItem(v.path, v.line, 0, func() {
-					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
-					pk.impl.parent.hide()
+					close_bookmark_picker(pk.impl.prev_picker_impl,v.loc)
+					// pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
+					// pk.impl.parent.hide()
 				})
 			}
 		}
