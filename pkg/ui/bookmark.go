@@ -141,7 +141,7 @@ func get_list_item(v ref_line) (string, string) {
 func new_bookmark_picker(v *fzfmain) bookmark_picker {
 	sym := bookmark_picker{
 		impl: &bookmark_picker_impl{
-			prev_picker_impl: new_prev_picker(v.main, v),
+			prev_picker_impl: new_prev_picker(v),
 			fzf:              nil,
 		},
 	}
@@ -172,5 +172,5 @@ func (pk bookmark_picker) update_preview() {
 	pk.impl.update_preview()
 }
 func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Grid {
-	return pk.impl.grid(input)
+	return pk.impl.grid(input,2)
 }

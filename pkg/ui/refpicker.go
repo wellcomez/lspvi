@@ -14,20 +14,20 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (impl *prev_picker_impl) grid(input *tview.InputField) *tview.Grid {
+func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.Grid {
 	list := impl.listview
 	list.SetBorder(true)
 	code := impl.codeprev.view
 	// impl.codeprev.Load(impl.file.Filename)
 	layout := layout_list_edit(list, code, input)
-	impl.list_click_check = NewGridListClickCheck(layout, list, 2)
+	impl.list_click_check = NewGridListClickCheck(layout, list, linenum)
 	impl.list_click_check.on_list_selected = func() {
 		impl.update_preview()
 	}
 	return layout
 }
 func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
-	ret := pk.impl.grid(input)
+	ret := pk.impl.grid(input, 2)
 	pk.impl.codeprev.Load(pk.impl.file.Filename)
 	return ret
 }
@@ -212,8 +212,7 @@ func (ref refpicker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 }
 
 func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
-	main := v.main
-	x := new_prev_picker(main, v)
+	x := new_prev_picker(v)
 	sym := refpicker{
 		impl: &refpicker_impl{
 			prev_picker_impl: x,
@@ -224,10 +223,10 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 	return sym
 }
 
-func new_prev_picker(main *mainui, v *fzfmain) *prev_picker_impl {
+func new_prev_picker(v *fzfmain) *prev_picker_impl {
 	x := &prev_picker_impl{
 		listview: tview.NewList(),
-		codeprev: NewCodeView(main),
+		codeprev: NewCodeView(v.main),
 		codeline: []string{},
 		parent:   v,
 	}
