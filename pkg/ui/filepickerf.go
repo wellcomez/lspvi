@@ -304,6 +304,7 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	}
 	var options = fzflib.DefaultOptions()
 	options.Fuzzy = false
+	options.CaseMode = fzflib.CaseIgnore
 	options.Sort = []fzflib.Criterion{}
 	// update any options here
 	// var hayStack = walk(root)

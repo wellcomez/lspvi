@@ -17,6 +17,18 @@ import (
 func (grepx *prev_picker_impl) update_title(s string) {
 	grepx.parent.Frame.SetTitle(s)
 }
+func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.Flex {
+	list := impl.listview
+	list.SetBorder(true)
+	code := impl.codeprev.view
+	// impl.codeprev.Load(impl.file.Filename)
+	layout := layout_list_row_edit(list, code, input)
+	impl.list_click_check = NewFlexListClickCheck(layout, list, linenum)
+	impl.list_click_check.on_list_selected = func() {
+		impl.update_preview()
+	}
+	return layout
+}
 func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.Grid {
 	list := impl.listview
 	list.SetBorder(true)
@@ -183,7 +195,9 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 			pk.impl.parent.hide()
 		})
 	}
-	pk.impl.fzf = fzflib.New(datafzf, fzflib.DefaultOptions())
+	option := fzflib.DefaultOptions()
+	option.CaseMode = fzflib.CaseIgnore
+	pk.impl.fzf = fzflib.New(datafzf, option)
 	pk.impl.current_list_data = pk.impl.listdata
 	pk.update_preview()
 }
@@ -215,7 +229,7 @@ func (ref refpicker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 }
 
 func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
-	x := new_prev_picker(v)
+	x := new_preview_picker(v)
 	sym := refpicker{
 		impl: &refpicker_impl{
 			prev_picker_impl: x,
@@ -226,7 +240,7 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 	return sym
 }
 
-func new_prev_picker(v *fzfmain) *prev_picker_impl {
+func new_preview_picker(v *fzfmain) *prev_picker_impl {
 	x := &prev_picker_impl{
 		listview: tview.NewList(),
 		codeprev: NewCodeView(v.main),

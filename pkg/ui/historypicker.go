@@ -62,6 +62,7 @@ func new_history_picker(v *fzfmain) history_picker {
 	history := NewHistory(lspviroot.history)
 	var options = fzflib.DefaultOptions()
 	options.Fuzzy = false
+	options.CaseMode = fzflib.CaseIgnore
 	items := []history_item{}
 	fzf_item_strings := []string{}
 	for _, h := range history.history_files() {

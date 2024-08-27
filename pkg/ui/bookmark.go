@@ -189,7 +189,7 @@ func new_bookmark_editor(v *fzfmain, cb func(string)) bookmark_edit {
 func new_bookmark_picker(v *fzfmain) bookmark_picker {
 	sym := bookmark_picker{
 		impl: &bookmark_picker_impl{
-			prev_picker_impl: new_prev_picker(v),
+			prev_picker_impl: new_preview_picker(v),
 			fzf:              nil,
 		},
 	}
@@ -213,7 +213,9 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 		a, b := get_list_item(v)
 		impl.listview.AddItem(a, b, 0, nil)
 	}
-	sym.impl.fzf = fzflib.New(datafzf, fzflib.DefaultOptions())
+	option := fzflib.DefaultOptions()
+	option.CaseMode = fzflib.CaseIgnore
+	sym.impl.fzf = fzflib.New(datafzf, option)
 	return sym
 }
 func (pk bookmark_picker) update_preview() {

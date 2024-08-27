@@ -65,11 +65,9 @@ type qf_history_picker_impl struct {
 // }
 
 type qk_history_picker struct {
+	*prev_picker_impl
 	impl           *qf_history_picker_impl
 	list           *customlist
-	codeprev       *CodeView
-	parent         *fzfmain
-	listclickcheck *GridListClickCheck
 }
 
 // name implements picker.
@@ -101,8 +99,8 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 }
 func (pk *qk_history_picker) grid() tview.Primitive {
 	ret:=layout_list_row_edit(pk.list, pk.codeprev.view, pk.parent.input)
-	pk.listclickcheck = NewFlexListClickCheck(ret,pk.list.List, 1)
-	pk.listclickcheck.on_list_selected= func() {
+	pk.list_click_check= NewFlexListClickCheck(ret,pk.list.List, 1)
+	pk.list_click_check.on_list_selected= func() {
 		pk.updateprev()
 	}
 	return ret
@@ -145,18 +143,21 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 
 	var options = fzf.DefaultOptions()
 	options.Fuzzy = false
+	options.CaseMode = fzf.CaseIgnore
 	fzf := fzf.New(keymaplist, options)
 
 	ret := qk_history_picker{
+		prev_picker_impl: new_preview_picker(v),
 		impl: &qf_history_picker_impl{
 			keymaplist: keymaplist,
 			fzf:        fzf,
 			keys:       keys,
 		},
-		parent:   v,
+		// parent:   v,
 		list:     list,
-		codeprev: NewCodeView(v.main),
+		// codeprev: NewCodeView(v.main),
 	}
+	ret.listview = list.List
 	ret.impl.selectIndex = []int32{}
 	for i, value := range keymaplist {
 		index := i

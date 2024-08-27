@@ -64,6 +64,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 
 	var options = fzf.DefaultOptions()
 	options.Fuzzy = false
+	options.CaseMode =fzf.CaseIgnore
 	fzf := fzf.New(keymaplist, options)
 
 	x := new_fzflist_impl(fzf, v)
