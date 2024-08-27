@@ -52,6 +52,11 @@ const (
 	cmd_quit
 )
 
+func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_item {
+	return context_menu_item{
+		item: cmditem{cmd: get_cmd_actor(m, id)}, handle: handle,
+	}
+}
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	switch id {
 	case cmd_quit:

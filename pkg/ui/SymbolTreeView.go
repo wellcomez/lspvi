@@ -38,13 +38,42 @@ func (t *TreeViewLoadding) Draw(screen tcell.Screen) {
 
 type SymbolTreeView struct {
 	*view_link
-	view          *tview.TreeView
-	symbols       []SymbolListItem
+	view *tview.TreeView
+	// symbols       []SymbolListItem
 	main          *mainui
 	searcheresult *TextFilter
 	show_wait     bool
 	waiter        *tview.TextView
+	right_context symboltree_view_context
 }
+type symboltree_view_context struct {
+	qk        *SymbolTreeView
+	menu_item []context_menu_item
+}
+
+func (menu symboltree_view_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	if action == tview.MouseRightClick {
+		yes, focuse := menu.qk.view.MouseHandler()(tview.MouseLeftClick, event, nil)
+		log.Println(yes, focuse)
+		return tview.MouseConsumed, nil
+	}
+	return tview.MouseConsumed, nil
+}
+
+// getbox implements context_menu_handle.
+func (menu symboltree_view_context) getbox() *tview.Box {
+	yes := menu.qk.main.get_focus_view_id() == view_outline_list
+	if yes {
+		return menu.qk.view.Box
+	}
+	return nil
+}
+
+// menuitem implements context_menu_handle.
+func (menu symboltree_view_context) menuitem() []context_menu_item {
+	return menu.menu_item
+}
+
 type Filter struct {
 	line     int
 	ret      *tview.TreeNode
@@ -154,11 +183,6 @@ func (m *SymbolTreeView) OnCodeLineChange(line int) {
 	}
 }
 
-type SymbolListItem struct {
-	name string
-	// sym  lsp.SymbolInformation
-}
-
 func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
 	ret := &SymbolTreeView{
@@ -166,6 +190,20 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 		main:      main,
 		view:      symbol_tree,
 	}
+
+	menu_item := []context_menu_item{}
+	funs := []command_id{goto_callin, goto_decl, goto_define, goto_refer}
+	for _, v := range funs {
+		s := main.create_menu_item(v, func() {
+			ret.handle_commnad(v)
+		})
+		menu_item = append(menu_item, s)
+	}
+	ret.right_context = symboltree_view_context{
+		qk:        ret,
+		menu_item: menu_item,
+	}
+
 	symbol_tree.SetInputCapture(ret.HandleKey)
 	symbol_tree.SetSelectedFunc(ret.OnClickSymobolNode)
 	ret.waiter = tview.NewTextView().SetText("loading").SetTextColor(tcell.ColorDarkGray)
@@ -227,6 +265,43 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 			// 	symview.main.codeview.goto_loation(Range)
 			// 	symview.main.set_focus(symview.main.codeview.view.Box)
 			// }
+
+		}
+	}
+}
+func (c *SymbolTreeView) handle_commnad(cmd command_id) {
+	cur := c.view.GetCurrentNode()
+	if cur == nil {
+		return
+	}
+	value := cur.GetReference()
+	if value != nil {
+		if sym, ok := value.(lsp.SymbolInformation); ok {
+			switch cmd {
+
+			case goto_decl:
+				{
+					c.get_declare(lspcore.Symbol{SymInfo: sym})
+				}
+			case goto_define:
+				{
+					c.get_define(lspcore.Symbol{SymInfo: sym})
+				}
+			case goto_refer:
+				{
+					c.get_refer(lspcore.Symbol{
+						SymInfo: sym,
+					})
+				}
+			case goto_callin:
+				{
+					c.get_callin(lspcore.Symbol{
+						SymInfo: sym,
+					})
+				}
+			default:
+				return
+			}
 
 		}
 	}
@@ -316,10 +391,6 @@ func (c *SymbolTreeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
 		r.End.Line = r.Start.Line
 	}
 	return r
-}
-
-func (s SymbolListItem) displayname() string {
-	return s.name
 }
 
 // func (v SymbolTreeView) Findall(key string) []int {
