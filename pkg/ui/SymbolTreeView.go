@@ -193,7 +193,8 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 
 	menu_item := []context_menu_item{}
 	funs := []command_id{goto_callin, goto_decl, goto_define, goto_refer}
-	for _, v := range funs {
+	for i := range funs {
+		v := funs[i]
 		s := main.create_menu_item(v, func() {
 			ret.handle_commnad(v)
 		})
@@ -292,12 +293,14 @@ func (c *SymbolTreeView) handle_commnad(cmd command_id) {
 					c.get_refer(lspcore.Symbol{
 						SymInfo: sym,
 					})
+					c.main.ActiveTab(view_quickview, false)
 				}
 			case goto_callin:
 				{
 					c.get_callin(lspcore.Symbol{
 						SymInfo: sym,
 					})
+					c.main.ActiveTab(view_callin, false)
 				}
 			default:
 				return
