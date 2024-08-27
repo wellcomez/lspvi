@@ -124,6 +124,7 @@ func (t DateType) String() string {
 }
 func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	list := new_customlist()
+	list.fuzz = true
 	list.SetBorder(true)
 	hh := quickfix_history{Wk: v.main.lspmgr.Wk}
 	keys, _ := hh.Load()
@@ -138,7 +139,7 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	}
 
 	var options = fzf.DefaultOptions()
-	options.Fuzzy = false
+	options.Fuzzy = list.fuzz
 	options.CaseMode = fzf.CaseIgnore
 	fzf := fzf.New(keymaplist, options)
 

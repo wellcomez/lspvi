@@ -14,6 +14,7 @@ type customlist struct {
 	*tview.List
 	hlitems []*hlItem
 	Key     string
+	fuzz    bool
 }
 
 func (l *customlist) Clear() *customlist {
@@ -25,9 +26,10 @@ func new_customlist() *customlist {
 	ret := &customlist{}
 	ret.List = tview.NewList()
 	ret.hlitems = []*hlItem{}
+	ret.fuzz = false
 	return ret
 }
-func (l *customlist) AddItem(mainText ,secondText string, selected func()) *customlist {
+func (l *customlist) AddItem(mainText, secondText string, selected func()) *customlist {
 	l.hlitems = append(l.hlitems, &hlItem{})
 	l.List.AddItem(mainText, secondText, 0, selected)
 	return l
@@ -38,6 +40,21 @@ type keypattern struct {
 	width int
 }
 
+func find_key_fuzzy(s string, keys []string, offset int) []keypattern {
+	for i, v := range keys {
+		if len(v) == 0 {
+			continue
+		}
+		idx := strings.Index(strings.ToLower(s), v)
+		if idx >= 0 {
+			pth := keypattern{begin: idx + offset, width: len(v)}
+			a := []keypattern{pth}
+			subret := find_key_fuzzy(s[idx+len(v):], keys[i+1:], pth.width+idx+offset)
+			return append(a, subret...)
+		}
+	}
+	return []keypattern{}
+}
 func find_key(s string, keys []string, offset int) []keypattern {
 	for _, v := range keys {
 		if len(v) == 0 {
@@ -67,9 +84,16 @@ func (l *customlist) Draw(screen tcell.Screen) {
 
 	itemoffset, _ := l.GetOffset()
 	keys := l.get_hl_keys()
+	keys2 := []string{}
+	for _, v := range l.Key {
+		keys2 = append(keys2, string(v))
+	}
 	for index := itemoffset; index < len(l.hlitems); index++ {
 		MainText, SecondText := l.List.GetItemText(index)
 		Positions := find_key(MainText, keys, 0)
+		if l.fuzz && len(Positions) == 0 && len(keys2) > 0 {
+			Positions = find_key_fuzzy(MainText, keys2, 0)
+		}
 		selected := index == l.List.GetCurrentItem()
 		if y >= bottomLimit {
 			break
