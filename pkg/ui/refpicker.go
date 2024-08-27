@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -108,9 +109,6 @@ type refpicker_impl struct {
 	file *lspcore.Symbol_file
 	refs []ref_with_caller
 }
-type prev_picker struct {
-	impl *refpicker_impl
-}
 type refpicker struct {
 	impl *refpicker_impl
 }
@@ -165,6 +163,20 @@ type ref_line struct {
 func (ref ref_line) fzf_tring() string {
 	return ref.String() + ref.caller
 }
+func (v ref_line) get_loc() (lsp.Location, error) {
+	line, err := strconv.Atoi(v.line)
+	if err != nil {
+		return lsp.Location{}, err
+	}
+	loc := lsp.Location{
+		URI: lsp.NewDocumentURI(v.path),
+		Range: lsp.Range{Start: lsp.Position{Line: line},
+			End: lsp.Position{Line: line},
+		},
+	}
+	return loc, nil
+}
+
 func (ref ref_line) String() string {
 	return fmt.Sprintf("%s %s:%d", ref.line, ref.path, ref.loc.Range.Start.Line)
 }
@@ -210,9 +222,9 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 		}
 		pk.impl.listdata = append(pk.impl.listdata, r)
 		datafzf = append(datafzf, r.fzf_tring())
+		impl := pk.impl
 		listview.AddItem(secondline, line[begin:end], 0, func() {
-			pk.impl.codeprev.main.OpenFile(v.URI.AsPath().String(), &v)
-			pk.impl.parent.hide()
+			impl.open_location(v)
 		})
 	}
 	option := fzflib.DefaultOptions()
@@ -220,6 +232,11 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 	pk.impl.fzf = fzflib.New(datafzf, option)
 	pk.impl.current_list_data = pk.impl.listdata
 	pk.update_preview()
+}
+
+func (impl *prev_picker_impl) open_location(v lsp.Location) {
+	impl.codeprev.main.OpenFile(v.URI.AsPath().String(), &v)
+	impl.parent.hide()
 }
 
 func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
@@ -291,9 +308,9 @@ func (pk refpicker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
 	listview := pk.impl.listview
 	listview.Clear()
+	var result fzflib.SearchResult
 	if fzf := pk.impl.fzf; fzf != nil {
 		fzf.Search(query)
-		var result fzflib.SearchResult
 		result = <-fzf.GetResultChannel()
 		pk.impl.current_list_data = []ref_line{}
 		for _, v := range result.Matches {

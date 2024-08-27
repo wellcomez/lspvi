@@ -3,7 +3,6 @@ package mainui
 import (
 	"encoding/json"
 	"fmt"
-
 	// "log"
 	"os"
 	"strings"
@@ -91,11 +90,11 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 			v := pk.impl.listdata[v.HayIndex]
 			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
 			a, b := get_list_item(v)
+			loc := v.loc
 			listview.AddItem(
 				a, b,
 				0, func() {
-					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
-					pk.impl.parent.hide()
+					close_bookmark_picker(pk.impl, loc)
 				})
 		}
 	} else {
@@ -199,8 +198,11 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 	for _, file := range marks {
 		for _, v := range file.LineMark {
 			ref := ref_line{line: fmt.Sprintf("%d", v.Line), path: file.Name, caller: v.Comment + v.Text, loc: lsp.Location{
-				URI:   lsp.NewDocumentURI(file.Name),
-				Range: lsp.Range{Start: lsp.Position{Line: v.Line - 1}},
+				URI: lsp.NewDocumentURI(file.Name),
+				Range: lsp.Range{
+					Start: lsp.Position{Line: v.Line - 1},
+					End:   lsp.Position{Line: v.Line - 1},
+				},
 			},
 			}
 			impl.listdata = append(impl.listdata, ref)
@@ -211,12 +213,20 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 	for _, v := range impl.listdata {
 		datafzf = append(datafzf, v.path+":"+v.line+v.caller)
 		a, b := get_list_item(v)
-		impl.listview.AddItem(a, b, 0, nil)
+		loc := v.loc
+		impl.listview.AddItem(a, b, 0, func() {
+			close_bookmark_picker(impl, loc)
+		})
 	}
 	option := fzflib.DefaultOptions()
 	option.CaseMode = fzflib.CaseIgnore
 	sym.impl.fzf = fzflib.New(datafzf, option)
 	return sym
+}
+
+func close_bookmark_picker(impl *bookmark_picker_impl, loc lsp.Location) {
+	impl.open_location(loc)
+	impl.parent.hide()
 }
 func (pk bookmark_picker) update_preview() {
 	pk.impl.update_preview()
