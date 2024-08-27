@@ -18,23 +18,38 @@ func (grepx *prev_picker_impl) update_title(s string) {
 	grepx.parent.Frame.SetTitle(s)
 }
 func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.Flex {
-	list := impl.listview
-	list.SetBorder(true)
 	code := impl.codeprev.view
-	// impl.codeprev.Load(impl.file.Filename)
-	layout := layout_list_row_edit(list, code, input)
-	impl.list_click_check = NewFlexListClickCheck(layout, list, linenum)
-	impl.list_click_check.on_list_selected = func() {
-		impl.update_preview()
+	if impl.listcustom != nil {
+		list := impl.listcustom
+		list.SetBorder(true)
+		layout := layout_list_row_edit(list, code, input)
+		impl.list_click_check = NewFlexListClickCheck(layout, list.List, linenum)
+		impl.list_click_check.on_list_selected = func() {
+			impl.update_preview()
+		}
+		return layout
+	} else {
+		list := impl.listview
+		list.SetBorder(true)
+		layout := layout_list_row_edit(list, code, input)
+		impl.list_click_check = NewFlexListClickCheck(layout, list, linenum)
+		impl.list_click_check.on_list_selected = func() {
+			impl.update_preview()
+		}
+		return layout
 	}
-	return layout
 }
 func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.Grid {
 	list := impl.listview
 	list.SetBorder(true)
 	code := impl.codeprev.view
-	// impl.codeprev.Load(impl.file.Filename)
-	layout := layout_list_edit(list, code, input)
+	var layout *tview.Grid
+	if impl.listcustom != nil {
+		layout = layout_list_edit(impl.listcustom, code, input)
+		list = impl.listcustom.List
+	} else {
+		layout = layout_list_edit(list, code, input)
+	}
 	impl.list_click_check = NewGridListClickCheck(layout, list, linenum)
 	impl.list_click_check.on_list_selected = func() {
 		impl.update_preview()
@@ -65,6 +80,7 @@ func layout_list_edit(list tview.Primitive, code tview.Primitive, input *tview.I
 
 type prev_picker_impl struct {
 	listview          *tview.List
+	listcustom        *customlist
 	codeprev          *CodeView
 	codeline          []string
 	parent            *fzfmain
@@ -74,6 +90,10 @@ type prev_picker_impl struct {
 	fzf               *fzflib.Fzf
 }
 
+func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
+	impl.listview = l.List
+	impl.listcustom = l
+}
 func (impl *prev_picker_impl) update_preview() {
 	cur := impl.listview.GetCurrentItem()
 	if cur < len(impl.current_list_data) {

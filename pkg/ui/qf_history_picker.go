@@ -21,6 +21,7 @@ type qf_history_picker_impl struct {
 	keys        []qf_history_data
 	selectIndex []int32
 }
+
 // type ListClickCheck struct {
 // 	*clickdetector
 // 	list    *tview.List
@@ -66,8 +67,8 @@ type qf_history_picker_impl struct {
 
 type qk_history_picker struct {
 	*prev_picker_impl
-	impl           *qf_history_picker_impl
-	list           *customlist
+	impl *qf_history_picker_impl
+	list *customlist
 }
 
 // name implements picker.
@@ -98,12 +99,7 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 	}
 }
 func (pk *qk_history_picker) grid() tview.Primitive {
-	ret:=layout_list_row_edit(pk.list, pk.codeprev.view, pk.parent.input)
-	pk.list_click_check= NewFlexListClickCheck(ret,pk.list.List, 1)
-	pk.list_click_check.on_list_selected= func() {
-		pk.updateprev()
-	}
-	return ret
+	return pk.flex(pk.parent.input, 1)
 }
 func (pk qk_history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.list.InputHandler()
@@ -146,18 +142,18 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	options.CaseMode = fzf.CaseIgnore
 	fzf := fzf.New(keymaplist, options)
 
+	x := new_preview_picker(v)
+	x.use_cusutom_list(list)
+
 	ret := qk_history_picker{
-		prev_picker_impl: new_preview_picker(v),
+		prev_picker_impl: x,
 		impl: &qf_history_picker_impl{
 			keymaplist: keymaplist,
 			fzf:        fzf,
 			keys:       keys,
 		},
-		// parent:   v,
-		list:     list,
-		// codeprev: NewCodeView(v.main),
+		list: list,
 	}
-	ret.listview = list.List
 	ret.impl.selectIndex = []int32{}
 	for i, value := range keymaplist {
 		index := i
@@ -178,7 +174,7 @@ func (qk *qk_history_picker) open_in_qf() {
 	item := qk.impl.keys[i]
 	if item.Type == data_refs || item.Type == data_search {
 		qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
-    qk.parent.main.ActiveTab(view_quickview,false)
+		qk.parent.main.ActiveTab(view_quickview, false)
 	} else if item.Type == data_callin {
 		callin := item.Key.File
 		fielname := filepath.Join(callin, "callstack.json")

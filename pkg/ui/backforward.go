@@ -2,7 +2,7 @@ package mainui
 
 import (
 	"encoding/json"
-	"log"
+	// "log"
 	"os"
 )
 
@@ -101,7 +101,7 @@ func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
 		pos = *loc
 	}
 	h.datalist = h.insertAtFront(lll, backforwarditem{Path: newdata, Pos: pos})
-	log.Printf("add history %v", h.datalist[0])
+	// log.Printf("add history %v", h.datalist[0])
 	h.save_to_file()
 }
 

@@ -17,12 +17,10 @@ type grep_impl struct {
 	taskid int
 }
 type livewgreppicker struct {
-	list     *customlist
-	codeprev *CodeView
-	main     *mainui
-	parent   *fzfmain
-	impl     *grep_impl
-	click    *GridListClickCheck
+	*prev_picker_impl
+	list *customlist
+	main *mainui
+	impl  *grep_impl
 }
 
 // name implements picker.
@@ -74,12 +72,8 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 }
 
 func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Grid {
-	list := pk.list
-	list.SetBorder(true)
-	code := pk.codeprev.view
-	layout := layout_list_edit(list, code, input)
-	pk.click = NewGridListClickCheck(layout, list.List, 1)
-	pk.click.on_list_selected= func() {
+	layout := pk.prev_picker_impl.grid(input, 1)
+	pk.list_click_check.on_list_selected = func() {
 		pk.update_preview()
 		pk.update_title()
 	}
@@ -93,14 +87,14 @@ func new_grep_picker(v *fzfmain) *greppicker {
 }
 func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 	main := v.main
+	x := new_preview_picker(v)
 	grep := &livewgreppicker{
-		list:     new_customlist(),
-		codeprev: NewCodeView(main),
-		parent:   v,
-		main:     main,
-		impl:     &grep_impl{},
+		prev_picker_impl: x,
+		list:             new_customlist(),
+		main:             main,
+		impl:             &grep_impl{},
 	}
-
+	x.use_cusutom_list(grep.list)
 	v.Visible = true
 	return grep
 }
