@@ -3,6 +3,8 @@ package mainui
 import (
 	"encoding/json"
 	"fmt"
+
+	// "log"
 	"os"
 	"strings"
 
@@ -13,8 +15,9 @@ import (
 )
 
 type LineMark struct {
-	Line int
-	Text string
+	Line    int
+	Text    string
+	Comment string
 }
 type bookmarkfile struct {
 	Name     string
@@ -55,9 +58,9 @@ func (prj *proj_bookmark) GetFileBookmark(file string) *bookmarkfile {
 	prj.Bookmark = append(prj.Bookmark, bookmark)
 	return prj.GetFileBookmark(file)
 }
-func (b *bookmarkfile) Add(line int, text string, add bool) {
+func (b *bookmarkfile) Add(line int, comment string, text string, add bool) {
 	if add {
-		b.LineMark = append(b.LineMark, LineMark{Line: line, Text: text})
+		b.LineMark = append(b.LineMark, LineMark{Line: line, Text: text, Comment: comment})
 
 	} else {
 		bb := []LineMark{}
@@ -134,7 +137,52 @@ type bookmark_picker_impl struct {
 }
 
 func get_list_item(v ref_line) (string, string) {
-	return  v.line+":"+v.path, v.caller
+	return v.line + ":" + v.path, v.caller
+}
+
+type bookmark_edit struct {
+	*fzflist_impl
+	cb func(s string)
+}
+
+// UpdateQuery implements picker.
+func (b bookmark_edit) UpdateQuery(query string) {
+
+}
+
+func (pk bookmark_edit) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	if event.Key() == tcell.KeyEnter {
+		pk.cb(pk.parent.input.GetText())
+		pk.parent.hide()
+	}
+}
+
+// handle implements picker.
+func (b bookmark_edit) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	// panic("unimplemented")
+	return b.handle_key_override
+}
+
+// name implements picker.
+func (b bookmark_edit) name() string {
+	return "add bookmark comment"
+}
+func (pk *bookmark_edit) grid(input *tview.InputField) *tview.Grid {
+	return pk.fzflist_impl.grid(input)
+}
+
+func new_bookmark_editor(v *fzfmain, cb func(string)) bookmark_edit {
+	main := v.main
+	code := main.codeview
+	var line = code.view.Cursor.Loc.Y + 1
+	line1 := code.view.Buf.Line(line)
+	ret := bookmark_edit{
+		fzflist_impl: new_fzflist_impl(nil, v),
+		cb:           cb,
+	}
+	ret.fzflist_impl.list.AddItem(line1, code.filename, nil)
+	v.create_dialog_content(ret.grid(v.input), ret)
+	return ret
 }
 
 // new_bookmark_picker

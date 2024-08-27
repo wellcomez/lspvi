@@ -247,12 +247,12 @@ func (view *codetextview) has_bookmark() bool {
 	}
 	return false
 }
-func (view *codetextview) addbookmark(add bool) {
+func (view *codetextview) addbookmark(add bool, comment string) {
 	if view.bookmark == nil {
 		return
 	}
 	var line = view.Cursor.Loc.Y + 1
-	view.bookmark.Add(line, view.Buf.Line(line), add)
+	view.bookmark.Add(line,comment, view.Buf.Line(line), add)
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -694,11 +694,13 @@ func (code *CodeView) bookmark() {
 	}
 }
 func (code *CodeView) Addbookmark() {
-	code.view.addbookmark(true)
-	code.main.bookmark.save()
+	new_bookmark_editor(code.main.layout.dialog, func(s string) {
+		code.view.addbookmark(true, s)
+		code.main.bookmark.save()
+	})
 }
 func (code *CodeView) Remvoebookmark() {
-	code.view.addbookmark(false)
+	code.view.addbookmark(false, "")
 	code.main.bookmark.save()
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
