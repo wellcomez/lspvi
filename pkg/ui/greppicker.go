@@ -72,8 +72,8 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 	return pk.handle_key_override
 }
 
-func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Grid {
-	layout := pk.prev_picker_impl.grid(input, 1)
+func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex{
+	layout := pk.prev_picker_impl.flex(input, 1)
 	pk.list_click_check.on_list_selected = func() {
 		pk.update_preview()
 		pk.update_title()

@@ -12,7 +12,6 @@ type inputdelay struct {
 	delay_cmd_cb func()
 }
 
-
 type cmd_action int
 
 const (
@@ -45,7 +44,7 @@ func (input *inputdelay) get_cmd(key string) (cmd_action, []*cmditem) {
 			return cmd_action_run, cmds
 		}
 	}
-	if matched>1{
+	if matched > 1 {
 		return cmd_action_buffer, cmds
 	}
 	return cmd_action_none, cmds
@@ -56,15 +55,17 @@ func (input *inputdelay) run_delay_cmd(cmd *cmditem) {
 		timer := time.NewTimer(time.Millisecond * 200) // 两秒后触发
 		<-timer.C
 		defer timer.Stop()
-		input.main.app.QueueUpdate(func() {
-			if input.delay_cmd != nil {
-				input.delay_cmd.cmd.handle()
-				if input.delay_cmd_cb != nil {
-					input.delay_cmd_cb()
+		if input.main != nil {
+			input.main.app.QueueUpdate(func() {
+				if input.delay_cmd != nil {
+					input.delay_cmd.cmd.handle()
+					if input.delay_cmd_cb != nil {
+						input.delay_cmd_cb()
+					}
+					input.main.app.ForceDraw()
 				}
-				input.main.app.ForceDraw()
-			}
-		})
+			})
+		}
 	}()
 }
 
@@ -101,6 +102,7 @@ func (input *inputdelay) run(cmd string) bool {
 	}
 	return false
 }
+
 // func (input *inputdelay) rundelay(word string) {
 // 	go func() {
 // 		timer := time.NewTimer(time.Millisecond * 200) // 两秒后触发
