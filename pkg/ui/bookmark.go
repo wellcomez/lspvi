@@ -90,10 +90,10 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 		for _, v := range result.Matches {
 			v := pk.impl.listdata[v.HayIndex]
 			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
-			callinfo := v.caller
+			a, b := get_list_item(v)
 			listview.AddItem(
-				fmt.Sprintf("%s:%d%s", v.path, v.loc.Range.Start.Line, callinfo),
-				v.line, 0, func() {
+				a, b,
+				0, func() {
 					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
 					pk.impl.parent.hide()
 				})

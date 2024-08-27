@@ -181,14 +181,13 @@ func (v *space_menu) on_cmd_excuted() {
 	v.closemenu()
 }
 func (menu *space_menu) onenter() {
-	menu.closemenu()
 	idx := menu.table.GetCurrentItem()
 	if idx < len(menu.impl.items) {
 		if h := menu.impl.items[idx]; h.handle != nil {
 			h.handle()
 		}
 	}
-
+	menu.closemenu()
 }
 func (item space_menu_item) col(n int) *tview.TableCell {
 	text := ""
