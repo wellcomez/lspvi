@@ -68,7 +68,7 @@ func new_callview(main *mainui) *callinview {
 			nodecurrent := ret.view.GetCurrentNode()
 			root := ret.view.GetRoot()
 			children := root.GetChildren()
-			for _, child := range children {
+			for i, child := range children {
 				var find = false
 				child.Walk(func(node, parent *tview.TreeNode) bool {
 					if node == nodecurrent {
@@ -80,9 +80,18 @@ func new_callview(main *mainui) *callinview {
 				})
 				if find {
 					root.RemoveChild(child)
+					list1 := []lspcore.CallInTask{}
+					if i-1 > 0 {
+						list1 = ret.task_list[0 : i-1]
+					}
+					if i+1 < len(ret.task_list) {
+						list1 = append(list1, ret.task_list[0:i]...)
+					}
+					ret.task_list = list1
 					break
 				}
 			}
+			ret.main.UpdatePageTitle()
 		}},
 		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
 	}
@@ -160,6 +169,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	}
 	root_node.Expand()
 	callin.view.SetRoot(root_node)
+	callin.main.UpdatePageTitle()
 }
 
 func (callin *callinview) callroot(task *lspcore.CallInTask) *tview.TreeNode {
