@@ -67,19 +67,17 @@ func (m *Filter) compare(node, parent *tview.TreeNode) bool {
 				}
 			}
 			if m.ret == nil {
-				m.ret = node
 				m.gap = m.line - sym.Location.Range.Start.Line
-				if m.gap < 0 {
-					m.gap = -m.gap
+				if m.gap >= 0 {
+					m.ret = node
 				}
 			} else {
 				gap2 := m.line - sym.Location.Range.Start.Line
-				if gap2 < 0 {
-					gap2 = -gap2
-				}
-				if gap2 < m.gap {
-					m.gap = gap2
-					m.ret = node
+				if gap2 >= 0 {
+					if gap2 < m.gap {
+						m.gap = gap2
+						m.ret = node
+					}
 				}
 
 			}
