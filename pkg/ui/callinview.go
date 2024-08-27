@@ -217,13 +217,13 @@ func (callin *callinview) callroot(task *lspcore.CallInTask) *tview.TreeNode {
 		if parent == nil {
 			parent = tview.NewTreeNode("+" + callin.itemdisp(c))
 			parent.Collapse()
-			parent.SetReference(NewRootNode(c.Item, c.FromRanges, true, stack.UID))
+			parent.SetReference(NewRootNode(c.Item, c.ReferencePlace, true, stack.UID))
 			root_node.AddChild(parent)
 		}
 		for i = 1; i < len(stack.Items); i++ {
 			c = stack.Items[i]
 			parent1 := tview.NewTreeNode(callin.itemdisp(c))
-			parent1.SetReference(NewRootNode(c.Item, c.FromRanges, false, -1))
+			parent1.SetReference(NewRootNode(c.Item, c.ReferencePlace, false, -1))
 			parent.AddChild(parent1)
 			parent = parent1
 		}

@@ -19,10 +19,11 @@ func key(call lsp.CallHierarchyItem) string {
 
 // CallStackEntry
 type CallStackEntry struct {
-	Name      string
-	Item      lsp.CallHierarchyItem
-	PtrSymobl *Symbol
-	FromRanges []lsp.Range
+	Name           string
+	Item           lsp.CallHierarchyItem
+	PtrSymobl      *Symbol
+	FromRanges     []lsp.Range
+	ReferencePlace []lsp.Range
 }
 
 func (c CallStackEntry) DirName() string {
@@ -75,11 +76,12 @@ func (c CallStackEntry) IsCaller(loc lsp.Location) bool {
 }
 
 // NewCallStackEntry
-func NewCallStackEntry(item lsp.CallHierarchyItem,fromRanges []lsp.Range) *CallStackEntry {
+func NewCallStackEntry(item lsp.CallHierarchyItem, fromRanges []lsp.Range, referenceplace []lsp.Range) *CallStackEntry {
 	return &CallStackEntry{
-		Name: item.Name,
-		Item: item,
-		FromRanges: fromRanges,
+		Name:           item.Name,
+		Item:           item,
+		FromRanges:     fromRanges,
+		ReferencePlace: referenceplace,
 	}
 }
 
@@ -175,10 +177,11 @@ func (c CallInTask) Dir() string {
 }
 
 type callchain struct {
-	parent     *callchain
-	data       lsp.CallHierarchyItem
-	level      int
-	fromRanges []lsp.Range
+	parent         *callchain
+	data           lsp.CallHierarchyItem
+	level          int
+	fromRanges     []lsp.Range
+	ReferencePlace []lsp.Range
 }
 type added struct {
 	set []*callchain
@@ -195,11 +198,13 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 		if task.set[key(cc.From)] {
 			continue
 		}
+		parent.ReferencePlace = append(parent.ReferencePlace, cc.FromRanges...)
 		top := &callchain{
-			data:       cc.From,
-			parent:     parent,
-			level:      parent.level + 1,
-			fromRanges: cc.FromRanges,
+			data:           cc.From,
+			parent:         parent,
+			level:          parent.level + 1,
+			fromRanges:     cc.FromRanges,
+			ReferencePlace: []lsp.Range{},
 		}
 		task.set[key(cc.From)] = true
 		task.addchild(top, leaf)
@@ -229,7 +234,7 @@ func (task *CallInTask) run() error {
 			callstack_id++
 			stacks := &CallStack{resovled: false, UID: callstack_id}
 			for v != nil {
-				stacks.Add(NewCallStackEntry(v.data,v.fromRanges))
+				stacks.Add(NewCallStackEntry(v.data, v.fromRanges, v.ReferencePlace))
 				v = v.parent
 			}
 			task.Allstack = append(task.Allstack, stacks)
