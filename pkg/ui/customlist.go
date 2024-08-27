@@ -40,6 +40,19 @@ type keypattern struct {
 	width int
 }
 
+func find_key_fuzzy2(s string, keys []string, offset int) []keypattern {
+	for i := 0; i < len(keys); i++ {
+		v := strings.Join(keys[:len(keys)-i], "")
+		idx := strings.Index(strings.ToLower(s), v)
+		if idx >= 0 {
+			pth := keypattern{begin: idx + offset, width: len(v)}
+			a := []keypattern{pth}
+			subret := find_key_fuzzy2(s[idx+len(v):], keys[len(v):], pth.width+idx+offset)
+			return append(a, subret...)
+		}
+	}
+	return []keypattern{}
+}
 func find_key_fuzzy(s string, keys []string, offset int) []keypattern {
 	for i, v := range keys {
 		if len(v) == 0 {
@@ -92,7 +105,7 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		MainText, SecondText := l.List.GetItemText(index)
 		Positions := find_key(MainText, keys, 0)
 		if l.fuzz && len(Positions) == 0 && len(keys2) > 0 {
-			Positions = find_key_fuzzy(MainText, keys2, 0)
+			Positions = find_key_fuzzy2(MainText, keys2, 0)
 		}
 		selected := index == l.List.GetCurrentItem()
 		if y >= bottomLimit {
