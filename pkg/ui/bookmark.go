@@ -175,7 +175,7 @@ func new_bookmark_editor(v *fzfmain, cb func(string)) bookmark_edit {
 	main := v.main
 	code := main.codeview
 	var line = code.view.Cursor.Loc.Y + 1
-	line1 := code.view.Buf.Line(line)
+	line1 := code.view.Buf.Line(line - 1)
 	ret := bookmark_edit{
 		fzflist_impl: new_fzflist_impl(nil, v),
 		cb:           cb,
@@ -221,6 +221,6 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 func (pk bookmark_picker) update_preview() {
 	pk.impl.update_preview()
 }
-func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Grid {
-	return pk.impl.grid(input, 2)
+func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Flex {
+	return pk.impl.flex(input, 2)
 }

@@ -252,7 +252,7 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 		return
 	}
 	var line = view.Cursor.Loc.Y + 1
-	view.bookmark.Add(line, comment, view.Buf.Line(line), add)
+	view.bookmark.Add(line, comment, view.Buf.Line(line-1), add)
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
