@@ -90,10 +90,10 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 		for _, v := range result.Matches {
 			v := pk.impl.listdata[v.HayIndex]
 			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
-			a, b := get_list_item(v)
+			callinfo := v.caller
 			listview.AddItem(
-				a, b,
-				0, func() {
+				fmt.Sprintf("%s:%d%s", v.path, v.loc.Range.Start.Line, callinfo),
+				v.line, 0, func() {
 					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
 					pk.impl.parent.hide()
 				})
@@ -152,7 +152,7 @@ func (b bookmark_edit) UpdateQuery(query string) {
 
 func (pk bookmark_edit) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	if event.Key() == tcell.KeyEnter {
-		pk.cb(pk.parent.input.GetText()[1:])
+		pk.cb(pk.parent.input.GetText())
 		pk.parent.hide()
 	}
 }
