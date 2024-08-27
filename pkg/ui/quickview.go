@@ -322,10 +322,11 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 type DateType int
 
 const (
-	data_search = iota
+	data_search DateType = iota
 	data_refs
 	data_callin
 	data_bookmark
+	data_grep_word
 )
 
 func search_key_uid(key lspcore.SymolSearchKey) string {

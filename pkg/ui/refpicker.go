@@ -89,6 +89,7 @@ type prev_picker_impl struct {
 	listdata          []ref_line
 	current_list_data []ref_line
 	fzf               *fzflib.Fzf
+	qf                func(search_reference_result)
 }
 
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
@@ -283,6 +284,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 		codeprev: NewCodeView(v.main),
 		codeline: []string{},
 		parent:   v,
+		qf:       nil,
 	}
 	return x
 }
@@ -331,7 +333,7 @@ func (pk refpicker) UpdateQuery(query string) {
 			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
 			if strings.Contains(strings.ToLower(v.line), query) {
 				listview.AddItem(v.path, v.line, 0, func() {
-					close_bookmark_picker(pk.impl.prev_picker_impl,v.loc)
+					close_bookmark_picker(pk.impl.prev_picker_impl, v.loc)
 					// pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
 					// pk.impl.parent.hide()
 				})

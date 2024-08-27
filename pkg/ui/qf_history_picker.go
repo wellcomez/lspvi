@@ -119,6 +119,8 @@ func (t DateType) String() string {
 		return "Bookmark"
 	case data_callin:
 		return "Callin"
+	case data_grep_word:
+		return "GrepWord"
 	}
 	return ""
 }
@@ -173,7 +175,7 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 func (qk *qk_history_picker) open_in_qf() {
 	i := qk.impl.selectIndex[qk.list.GetCurrentItem()]
 	item := qk.impl.keys[i]
-	if item.Type == data_refs || item.Type == data_search {
+	if item.Type == data_refs || item.Type == data_search || item.Type == data_grep_word {
 		qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
 		qk.parent.main.ActiveTab(view_quickview, false)
 	} else if item.Type == data_callin {

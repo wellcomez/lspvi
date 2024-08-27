@@ -106,6 +106,7 @@ func (v *fzfmain) OpenBookMarkFzf() {
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
+
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	sym := new_refer_picker(*file, v)
@@ -113,11 +114,15 @@ func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	v.create_dialog_content(x, sym)
 	sym.load(ranges)
 }
-func (v *fzfmain) OpenGrepWordFzf(word string) {
+func (v *fzfmain) OpenGrepWordFzf(word string, qf func(search_reference_result)) {
 	sym := new_grep_picker(v)
-	x := sym.grid(v.input)
-	v.create_dialog_content(x, sym)
-	v.Frame.SetTitle(fmt.Sprintf("grep %s", word))
+	sym.parent.Visible = qf == nil
+	sym.qf = qf
+	if qf == nil {
+		x := sym.grid(v.input)
+		v.create_dialog_content(x, sym)
+		v.Frame.SetTitle(fmt.Sprintf("grep %s", word))
+	}
 	sym.livewgreppicker.UpdateQuery(word)
 }
 func (v *fzfmain) OpenLiveGrepFzf() {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/tectiv3/go-lsp"
 )
 
 type grepresult struct {
@@ -20,7 +21,7 @@ type livewgreppicker struct {
 	*prev_picker_impl
 	list *customlist
 	main *mainui
-	impl  *grep_impl
+	impl *grep_impl
 }
 
 // name implements picker.
@@ -114,25 +115,46 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 		}
 	}
 	// log.Printf("end %d %s", task, o.destor)
-	if !grepx.parent.Visible {
-		grep.grep.abort()
-		return
-	}
-	grepx.main.app.QueueUpdate(func() {
-		openpreview := len(grep.result.data) == 0
-		grep.result.data = append(grep.result.data, *o)
-		path := strings.TrimPrefix(o.fpath, grepx.main.root)
-		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
-		grepx.list.AddItem(data, "", func() {
-			grepx.main.OpenFile(o.fpath, nil)
-			grepx.parent.hide()
-		})
-		if openpreview {
-			grepx.update_preview()
+	if grepx.qf == nil {
+		if !grepx.parent.Visible {
+			grep.grep.abort()
+			return
 		}
-		grepx.update_title()
-		grepx.main.app.ForceDraw()
-	})
+		grepx.main.app.QueueUpdate(func() {
+			openpreview := len(grep.result.data) == 0
+			grep.result.data = append(grep.result.data, *o)
+			path := strings.TrimPrefix(o.fpath, grepx.main.root)
+			data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
+			grepx.list.AddItem(data, "", func() {
+				grepx.main.OpenFile(o.fpath, nil)
+				grepx.parent.hide()
+			})
+			if openpreview {
+				grepx.update_preview()
+			}
+			grepx.update_title()
+			grepx.main.app.ForceDraw()
+		})
+	} else {
+		Refs := []ref_with_caller{}
+		grep.result.data = append(grep.result.data, *o)
+		for _, v := range grep.result.data {
+			start := lsp.Position{Line: v.lineNumber-1, Character: 0}
+			end := start
+			ref := ref_with_caller{
+				Loc: lsp.Location{
+					URI: lsp.NewDocumentURI(v.fpath),
+					Range: lsp.Range{
+						Start: start,
+						End:   end,
+					},
+				},
+			}
+			Refs = append(Refs, ref)
+		}
+		r := search_reference_result{Refs: Refs}
+		grepx.qf(r)
+	}
 
 }
 

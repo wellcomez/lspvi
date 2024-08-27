@@ -13,6 +13,7 @@ import (
 	"github.com/pgavlin/femto/runtime"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 	// "github.com/gdamore/tcell"
 )
 
@@ -168,9 +169,9 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
 	if main != nil {
-		bookmark := get_cmd_actor(main, bookmark_it).menu_key(split(""))
-		goto_define := get_cmd_actor(main, goto_define).menu_key(split(""))
-		callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
+		menu_bookmark := get_cmd_actor(main, bookmark_it).menu_key(split(""))
+		menu_goto_define := get_cmd_actor(main, goto_define).menu_key(split(""))
+		menu_callin := get_cmd_actor(main, goto_callin).menu_key(split(""))
 		items := []context_menu_item{
 			{item: cmditem{cmd: cmdactor{desc: "Search"}}, handle: func() {
 				sss := main.codeview.view.Cursor.GetSelection()
@@ -179,18 +180,27 @@ func NewCodeView(main *mainui) *CodeView {
 			{item: cmditem{cmd: cmdactor{desc: "Refer"}}, handle: func() {
 				main.get_refer(ret.rightmenu_select_range, main.codeview.filename)
 			}},
-			{item: goto_define, handle: func() {
+			{item: menu_goto_define, handle: func() {
 				main.get_define(ret.rightmenu_select_range, main.codeview.filename)
 			}},
-			{item: bookmark, handle: func() {
+			{item: menu_bookmark, handle: func() {
 				main.codeview.bookmark()
 			}},
-			{item: callin, handle: func() {
+			{item: menu_callin, handle: func() {
 				loc := lsp.Location{
 					URI:   lsp.NewDocumentURI(ret.filename),
 					Range: ret.rightmenu_select_range,
 				}
 				main.get_callin_stack_by_cursor(loc, ret.filename)
+			}},
+			{item: cmditem{cmd: cmdactor{desc: "Grep word"}}, handle: func() {
+				main.open_picker_grep(ret.rightmenu_select_text, func(s search_reference_result) {
+					main.app.QueueUpdateDraw(func() {
+						main.quickview.UpdateListView(data_grep_word, s.Refs, lspcore.SymolSearchKey{
+							Key: ret.rightmenu_select_text,
+						})
+					})
+				})
 			}},
 		}
 		// m := main
@@ -292,7 +302,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		code.main.codeview.action_goto_define()
 		return tview.MouseConsumed, nil
 	}
-	if action == tview.MouseLeftDown {
+	if action == tview.MouseLeftDown || action == tview.MouseRightClick {
 		code.main.set_viewid_focus(view_code)
 		code.mouse_select_area = true
 		//log.Print(x1, y1, x2, y2, "down")
@@ -510,6 +520,7 @@ func (code *CodeView) update_with_line_changed() {
 	line := root.Cursor.Loc.Y
 	main.OnCodeLineChange(line)
 }
+
 func (code *CodeView) action_grep_word() {
 	main := code.main
 	if main == nil {
@@ -517,7 +528,7 @@ func (code *CodeView) action_grep_word() {
 	}
 	code.view.Cursor.SelectWord()
 	word := code.view.Cursor.GetSelection()
-	main.open_picker_grep(word)
+	main.open_picker_grep(word, nil)
 }
 func (code *CodeView) action_goto_define() {
 	main := code.main
