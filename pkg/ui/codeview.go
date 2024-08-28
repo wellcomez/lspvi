@@ -175,9 +175,11 @@ func NewCodeView(main *mainui) *CodeView {
 		items := []context_menu_item{
 			{item: create_menu_item("Reference"), handle: func() {
 				main.get_refer(ret.rightmenu_select_range, main.codeview.filename)
+				main.ActiveTab(view_quickview,false)
 			}},
 			{item: create_menu_item("Goto define"), handle: func() {
 				main.get_define(ret.rightmenu_select_range, main.codeview.filename)
+				main.ActiveTab(view_quickview,false)
 			}},
 			{item: create_menu_item("Call incoming"), handle: func() {
 				loc := lsp.Location{
@@ -185,6 +187,7 @@ func NewCodeView(main *mainui) *CodeView {
 					Range: ret.rightmenu_select_range,
 				}
 				main.get_callin_stack_by_cursor(loc, ret.filename)
+				main.ActiveTab(view_callin,false)
 			}},
 			{item: create_menu_item("-------------"), handle: func() {
 			}},
@@ -194,12 +197,14 @@ func NewCodeView(main *mainui) *CodeView {
 			{item: create_menu_item("Search"), handle: func() {
 				sss := main.codeview.rightmenu_select_text
 				main.OnSearch(sss, true, true)
+				main.ActiveTab(view_quickview,false)
 			}},
 			{item: create_menu_item("Grep word"), handle: func() {
 				main.quickview.view.Clear()
 				key := lspcore.SymolSearchKey{
 					Key: ret.rightmenu_select_text,
 				}
+				main.ActiveTab(view_quickview,false)
 				main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)
 				main.open_picker_grep(key.Key, func(s ref_with_caller) bool {
 					var ret = ret.rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word

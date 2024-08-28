@@ -138,9 +138,21 @@ func (m *mainui) async_resolve_callstack(call_in_task *lspcore.CallInTask) {
 
 // UpdatePageTitle
 func (m *mainui) UpdatePageTitle() {
-	yes := m.is_tab("quickview")
-	if yes {
-		m.page.SetTitle(m.quickview.String())
+	names := m.page.GetPageNames(true)
+	for _, v := range names {
+		name := v
+		switch name {
+		case "quickview":
+			m.page.SetTitle(m.quickview.String())
+		case "callin":
+			m.page.SetTitle(m.callinview.Name)
+		case "uml":
+			m.page.SetTitle(m.uml.Name)
+		case "log":
+			m.page.SetTitle("log")
+		default:
+			return
+		}
 	}
 
 }
@@ -536,6 +548,9 @@ func MainUI(arg *Arguments) {
 	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
 
 	main.page = console
+	main.page.SetChangedFunc(func() {
+		main.UpdatePageTitle()
+	})
 
 	//   console.SetBorder(true)
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
@@ -733,7 +748,13 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
 				main.ActiveTab(view_quickview, false)
-				main.quickview.main.quickview.OnLspRefenceChanged(locs, data_search, lspcore.SymolSearchKey{Key: txt})
+				data:=[]ref_with_caller{}
+				for _, loc := range locs {
+					data = append(data, ref_with_caller{
+						Loc: loc,
+					})
+				}
+				main.quickview.main.quickview.UpdateListView(data_search, data,lspcore.SymolSearchKey{Key: txt})
 			}
 		} else {
 			main.codeview.gotoline(gs.GetNext())

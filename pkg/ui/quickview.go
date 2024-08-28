@@ -302,7 +302,11 @@ func (main *quick_view) OnSearch(txt string) {
 // String
 func (qk quick_view) String() string {
 	var s = qk.Type.String()
-	return fmt.Sprintf("%s %d/%d", s, qk.currentIndex+1, len(qk.Refs.Refs))
+	index := qk.currentIndex
+	if len(qk.Refs.Refs) > 0 {
+		index++
+	}
+	return fmt.Sprintf("%s %d/%d", s, index, len(qk.Refs.Refs))
 }
 
 // selection_handle
