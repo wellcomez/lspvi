@@ -83,7 +83,7 @@ func (m *mainui) zoom(zoomin bool) {
 	default:
 		return
 	}
-	m.update_layout()
+	m.update_editerea_layout()
 
 }
 
@@ -100,15 +100,15 @@ func (m mainui) toggle_view(id view_id) {
 	default:
 		return
 	}
-	m.update_layout()
+	m.update_editerea_layout()
 }
 
-func (m mainui) update_layout() {
+func (m mainui) update_editerea_layout() {
 	m.layout.editor_area.Clear()
 	if !m.fileexplorer.hide {
 		m.layout.editor_area.AddItem(m.fileexplorer.view, 0, m.fileexplorer.width, false)
 	}
-	m.layout.editor_area.AddItem(m.codeview.view, 0, 4, false)
+	m.layout.editor_area.AddItem(m.codeview.view, 0, m.codeview.width, false)
 	if !m.symboltree.hide {
 		m.layout.editor_area.AddItem(m.symboltree.view, 0, m.symboltree.width, false)
 	}
@@ -541,6 +541,7 @@ func MainUI(arg *Arguments) {
 	app := tview.NewApplication()
 	main.app = app
 	codeview := NewCodeView(&main)
+	codeview.width = 8
 	// main.fzf = new_fzfview()
 	symbol_tree := NewSymbolTreeView(&main)
 	symbol_tree.width = 2
@@ -556,7 +557,7 @@ func MainUI(arg *Arguments) {
 	// symbol_tree.update()
 
 	main.fileexplorer = new_file_tree(&main, "FileExplore", main.root, func(filename string) bool { return true })
-	main.fileexplorer.width = 1
+	main.fileexplorer.width = 2
 	main.fileexplorer.Init()
 	main.fileexplorer.openfile = main.open_file
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
@@ -585,7 +586,7 @@ func MainUI(arg *Arguments) {
 	editor_area :=
 		tview.NewFlex().SetDirection(tview.FlexColumn).
 			AddItem(main.fileexplorer.view, 0, main.fileexplorer.width, false).
-			AddItem(codeview.view, 0, 4, true).
+			AddItem(codeview.view, 0, main.codeview.width, true).
 			AddItem(symbol_tree.view, 0, symbol_tree.width, false)
 	uml, err := NewUmlView(&main, &main.lspmgr.Wk)
 	if err != nil {

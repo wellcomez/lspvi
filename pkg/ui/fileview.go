@@ -105,7 +105,7 @@ func menu_zoom(ret *file_tree_view, zoomin bool) context_menu_item {
 			} else {
 				ret.width++
 			}
-			ret.main.layout.editor_area.ResizeItem(ret.view, 0, ret.width)
+			ret.main.update_editerea_layout()
 		},
 	}
 	return external_open
