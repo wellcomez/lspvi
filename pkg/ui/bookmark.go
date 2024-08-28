@@ -79,8 +79,9 @@ type bookmark_picker struct {
 // UpdateQuery implements picker.
 func (pk bookmark_picker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
-	listview := pk.impl.listview
+	listview := pk.impl.hlist
 	listview.Clear()
+	root := pk.impl.codeprev.main.root
 	var result fzflib.SearchResult
 	if fzf := pk.impl.fzf; fzf != nil {
 		fzf.Search(query)
@@ -89,11 +90,11 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 		for _, v := range result.Matches {
 			v := pk.impl.listdata[v.HayIndex]
 			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
-			a, b := get_list_item(v)
+			a, b := get_list_item(v, root)
 			loc := v.loc
 			listview.AddItem(
 				a, b,
-				0, func() {
+				func() {
 					close_bookmark_picker(pk.impl.prev_picker_impl, loc)
 				})
 		}
@@ -103,8 +104,8 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 			v := pk.impl.listdata[i]
 			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
 			if strings.Contains(strings.ToLower(v.line), query) {
-				a, b := get_list_item(v)
-				listview.AddItem(a, b, 0, func() {
+				a, b := get_list_item(v, root)
+				listview.AddItem(a, b, func() {
 					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
 					pk.impl.parent.hide()
 				})
@@ -132,11 +133,13 @@ func (pk bookmark_picker) name() string {
 
 type bookmark_picker_impl struct {
 	*prev_picker_impl
-	fzf *fzflib.Fzf
+	fzf   *fzflib.Fzf
+	hlist *customlist
 }
 
-func get_list_item(v ref_line) (string, string) {
-	return v.line + ":" + v.path, v.caller
+func get_list_item(v ref_line, root string) (string, string) {
+	path := v.line + ":" + strings.ReplaceAll(v.path, root, "")
+	return fmt.Sprintf("**%s**  %s", v.caller, path), v.code
 }
 
 type bookmark_edit struct {
@@ -186,35 +189,42 @@ func new_bookmark_editor(v *fzfmain, cb func(string)) bookmark_edit {
 
 // new_bookmark_picker
 func new_bookmark_picker(v *fzfmain) bookmark_picker {
-	sym := bookmark_picker{
-		impl: &bookmark_picker_impl{
-			prev_picker_impl: new_preview_picker(v),
-			fzf:              nil,
-		},
+	impl := &bookmark_picker_impl{
+		prev_picker_impl: new_preview_picker(v),
+		fzf:              nil,
+		hlist:            new_customlist(),
 	}
+	sym := bookmark_picker{
+		impl: impl}
+	impl.use_cusutom_list(impl.hlist)
 	sym.impl.codeprev.view.SetBorder(true)
 	marks := v.main.bookmark.Bookmark
-	impl := sym.impl
 	for _, file := range marks {
 		for _, v := range file.LineMark {
-			ref := ref_line{line: fmt.Sprintf("%d", v.Line), path: file.Name, caller: v.Comment + v.Text, loc: lsp.Location{
-				URI: lsp.NewDocumentURI(file.Name),
-				Range: lsp.Range{
-					Start: lsp.Position{Line: v.Line - 1},
-					End:   lsp.Position{Line: v.Line - 1},
+			ref := ref_line{
+				line:   fmt.Sprintf("%d", v.Line),
+				path:   file.Name,
+				caller: v.Comment,
+				code:   v.Text,
+				loc: lsp.Location{
+					URI: lsp.NewDocumentURI(file.Name),
+					Range: lsp.Range{
+						Start: lsp.Position{Line: v.Line - 1},
+						End:   lsp.Position{Line: v.Line - 1},
+					},
 				},
-			},
 			}
 			impl.listdata = append(impl.listdata, ref)
 		}
 	}
 	impl.current_list_data = impl.listdata
 	datafzf := []string{}
+	root := v.main.root
 	for _, v := range impl.listdata {
-		datafzf = append(datafzf, v.path+":"+v.line+v.caller)
-		a, b := get_list_item(v)
+		a, b := get_list_item(v, root)
+		datafzf = append(datafzf, a+b)
 		loc := v.loc
-		impl.listview.AddItem(a, b, 0, func() {
+		impl.hlist.AddItem(a, b, func() {
 			close_bookmark_picker(impl.prev_picker_impl, loc)
 		})
 	}

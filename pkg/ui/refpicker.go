@@ -156,6 +156,7 @@ func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
 
 type ref_line struct {
 	caller string
+	code   string
 	loc    lsp.Location
 	line   string
 	path   string

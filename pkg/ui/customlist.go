@@ -133,21 +133,16 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	}
 	for index := itemoffset; index < len(l.hlitems); index++ {
 		MainText, SecondText := l.List.GetItemText(index)
-		hlkey, MainText := find_hl_key(MainText)
-		hlkey = append(hlkey, keys...)
-		Positions := find_key(MainText, hlkey, 0)
-		if l.fuzz && len(Positions) == 0 && len(keys2) > 0 {
-			Positions = find_key_fuzzy2(MainText, keys2, 0)
-		}
+		MainText, main_postion := get_hl_postion(MainText, keys, l, keys2)
 		selected := index == l.List.GetCurrentItem()
 		if y >= bottomLimit {
 			break
 		}
 		if len(MainText) > 0 {
 			if selected {
-				draw_item_color(Positions, MainText, screen, offset_x, y, selected_style, selected_stylehl)
+				draw_item_color(main_postion, MainText, screen, offset_x, y, selected_style, selected_stylehl)
 			} else {
-				draw_item_color(Positions, MainText, screen, offset_x, y, style, stylehl)
+				draw_item_color(main_postion, MainText, screen, offset_x, y, style, stylehl)
 			}
 			y += 1
 		}
@@ -155,11 +150,12 @@ func (l *customlist) Draw(screen tcell.Screen) {
 			break
 		}
 		if l.showSecondaryText() && len(SecondText) > 0 {
-			if selected {
-				draw_item_color(Positions, SecondText, screen, offset_x, y, selected_style, selected_stylehl)
-			} else {
-				draw_item_color(Positions, SecondText, screen, offset_x, y, style, stylehl)
-			}
+			SecondText, main_postion := get_hl_postion(SecondText, keys, l, keys2)
+			// if selected {
+			// 	draw_item_color(main_postion, SecondText, screen, offset_x, y, selected_style, selected_stylehl)
+			// } else {
+			draw_item_color(main_postion, SecondText, screen, offset_x, y, style, stylehl)
+			// }
 			y += 1
 			if y >= bottomLimit {
 				break
@@ -167,6 +163,16 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		}
 	}
 
+}
+
+func get_hl_postion(MainText string, keys []string, l *customlist, keys2 []string) (string, []keypattern) {
+	hlkey, MainText := find_hl_key(MainText)
+	hlkey = append(hlkey, keys...)
+	main_postion := find_key(MainText, hlkey, 0)
+	if l.fuzz && len(main_postion) == 0 && len(keys2) > 0 {
+		main_postion = find_key_fuzzy2(MainText, keys2, 0)
+	}
+	return MainText, main_postion
 }
 func (list *customlist) showSecondaryText() bool {
 	v := reflect.ValueOf(list.List).Elem()

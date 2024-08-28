@@ -85,6 +85,17 @@ func new_callview(main *mainui) *callinview {
 				}
 			}
 		}},
+		{item: cmditem{cmd: cmdactor{desc: "Call incoming"}}, handle: func() {
+			node := ret.view.GetCurrentNode()
+			value := node.GetReference()
+			if value != nil {
+				if ref, ok := value.(dom_node); ok {
+					sym := ref.call
+					main.get_callin_stack(lsp.Location{URI: sym.URI, Range: sym.Range}, sym.URI.AsPath().String())
+				}
+			}
+		}},
+		{item: create_menu_item("-"), handle: func() {}},
 		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
 		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
 			nodecurrent := ret.view.GetCurrentNode()
@@ -116,7 +127,7 @@ func new_callview(main *mainui) *callinview {
 			ret.main.UpdatePageTitle()
 		}},
 	}
-	ret.menuitem = menuitem
+	ret.menuitem = addjust_menu_width(menuitem)
 
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
