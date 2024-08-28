@@ -79,6 +79,8 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	menu_item := []context_menu_item{
 		external_open,
 		menu_open_parent(ret),
+		menu_zoom(ret, false),
+		menu_zoom(ret, true),
 		{item: create_menu_item("hide"), handle: func() {
 			main.toggle_view(view_file)
 		}}}
@@ -89,6 +91,24 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	}
 	return ret
 
+}
+func menu_zoom(ret *file_tree_view, zoomin bool) context_menu_item {
+	name := "zoom in"
+	if !zoomin {
+		name = "zoom out"
+	}
+	external_open := context_menu_item{
+		item: create_menu_item(name),
+		handle: func() {
+			if zoomin {
+				ret.width--
+			} else {
+				ret.width++
+			}
+			ret.main.layout.editor_area.ResizeItem(ret.view, 0, ret.width)
+		},
+	}
+	return external_open
 }
 func menu_open_parent(ret *file_tree_view) context_menu_item {
 	external_open := context_menu_item{
