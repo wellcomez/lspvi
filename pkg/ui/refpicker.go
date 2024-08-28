@@ -247,7 +247,11 @@ func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_ca
 	for _, v := range file {
 		stacks, err := lsp.Caller(v, false)
 		if err == nil {
-			ref_call_in = newFunction(stacks, v, ref_call_in)
+			if len(stacks)>0{
+				ref_call_in = newFunction(stacks, v, ref_call_in)
+			}else{
+				ref_call_in = append(ref_call_in, ref_with_caller{Loc: v})
+			}
 
 		}
 	}
