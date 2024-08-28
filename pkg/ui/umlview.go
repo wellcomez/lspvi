@@ -5,6 +5,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
+
+	"os/exec"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -89,6 +92,22 @@ func (v *umlview) openfile(name string) {
 func (v *umlview) Init() {
 	v.file.Init()
 }
+
+func openfile(filePath string) {
+
+    var command string
+    switch os := runtime.GOOS; os {
+    case "darwin":
+        command = "open"
+    case "windows":
+        command = "cmd /c start"
+    default:
+        command = "xdg-open" // Linux下的默认命令
+    }
+
+    // 执行命令打开文件
+    exec.Command(command, filePath).Start()
+}
 func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 	ex, err := lspcore.NewExportRoot(wk)
 	if err != nil {
@@ -109,7 +128,7 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 	}
 	menus := []context_menu_item{
 		{
-			item: create_menu_item("Open"),
+			item: create_menu_item("External open "),
 			handle: func() {
 				node := file.view.GetCurrentNode()
 				value := node.GetReference()
@@ -119,18 +138,14 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 					if err != nil {
 						return
 					}
-					if yes {
-						return
-					} else {
-
-					}
-					// value.(string)
-					// os.RemoveAll(filename)
+					if !yes {
+						openfile(filename)
+					} 
 				}
 			},
 		},
 		{
-			item: create_menu_item("Delete"),
+			item: create_menu_item("Delete "),
 			handle: func() {
 				node := file.view.GetCurrentNode()
 				if node == file.view.GetRoot() {
@@ -140,7 +155,14 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 				if value != nil {
 					filename := value.(string)
 					os.RemoveAll(filename)
-					file.Init()
+					file.view.GetRoot().Walk(func(node1, parent *tview.TreeNode) bool {
+						if node1 == node {
+							parent.RemoveChild(node1)
+							file.view.SetCurrentNode(parent)
+							return false
+						}
+						return true
+					})
 				}
 			},
 		},
