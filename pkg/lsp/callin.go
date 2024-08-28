@@ -23,7 +23,7 @@ type CallStackEntry struct {
 	Item           lsp.CallHierarchyItem
 	PtrSymobl      *Symbol
 	FromRanges     []lsp.Range
-	ReferencePlace []lsp.Range
+	ReferencePlace []lsp.Location
 }
 
 func (c CallStackEntry) DirName() string {
@@ -76,7 +76,7 @@ func (c CallStackEntry) IsCaller(loc lsp.Location) bool {
 }
 
 // NewCallStackEntry
-func NewCallStackEntry(item lsp.CallHierarchyItem, fromRanges []lsp.Range, referenceplace []lsp.Range) *CallStackEntry {
+func NewCallStackEntry(item lsp.CallHierarchyItem, fromRanges []lsp.Range, referenceplace []lsp.Location) *CallStackEntry {
 	return &CallStackEntry{
 		Name:           item.Name,
 		Item:           item,
@@ -181,7 +181,7 @@ type callchain struct {
 	data           lsp.CallHierarchyItem
 	level          int
 	fromRanges     []lsp.Range
-	ReferencePlace []lsp.Range
+	ReferencePlace []lsp.Location
 }
 type added struct {
 	set []*callchain
@@ -198,13 +198,20 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 		if task.set[key(cc.From)] {
 			continue
 		}
-		parent.ReferencePlace = append(parent.ReferencePlace, cc.FromRanges...)
+		locations := []lsp.Location{}
+		for i := range cc.FromRanges {
+			locations = append(locations, lsp.Location{
+				Range: cc.FromRanges[i],
+				URI:   cc.From.URI,
+			})
+		}
+		parent.ReferencePlace = append(parent.ReferencePlace, locations...)
 		top := &callchain{
 			data:           cc.From,
 			parent:         parent,
 			level:          parent.level + 1,
 			fromRanges:     cc.FromRanges,
-			ReferencePlace: []lsp.Range{},
+			ReferencePlace: []lsp.Location{},
 		}
 		task.set[key(cc.From)] = true
 		task.addchild(top, leaf)

@@ -167,7 +167,7 @@ func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 				var stack CallStack
 				v := f.From
 				log.Println("caller ", v.Name, v.URI.AsPath().String(), v.Range.Start.Line, v.Kind.String())
-				stack.Add(NewCallStackEntry(f.From, f.FromRanges, f.FromRanges))
+				stack.Add(NewCallStackEntry(f.From, f.FromRanges, []lsp.Location{}))
 				ret = append(ret, stack)
 			}
 		}

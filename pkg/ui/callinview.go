@@ -44,7 +44,7 @@ type callinview struct {
 }
 type dom_node struct {
 	call      lsp.CallHierarchyItem
-	fromrange []lsp.Range
+	fromrange []lsp.Location
 	id        int
 	state     int
 	root      bool
@@ -125,8 +125,8 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			if len(ref.fromrange) > 0 {
 				r := ref.fromrange[0]
 				view.main.gotoline(lsp.Location{
-					URI:   sym.URI,
-					Range: r,
+					URI:   r.URI,
+					Range: r.Range,
 				})
 			} else {
 				view.main.gotoline(lsp.Location{
@@ -147,7 +147,7 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 		}
 	}
 }
-func NewRootNode(call lsp.CallHierarchyItem, fromrange []lsp.Range, root bool, id int) dom_node {
+func NewRootNode(call lsp.CallHierarchyItem, fromrange []lsp.Location, root bool, id int) dom_node {
 	return dom_node{
 		call:      call,
 		fromrange: fromrange,

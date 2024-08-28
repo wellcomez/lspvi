@@ -287,6 +287,7 @@ func (m *mainui) key_map_space_menu() []cmditem {
 		get_cmd_actor(m, open_picker_grep_word).menu_key(split(key_picker_grep_word)),
 		get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
 		get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
+		get_cmd_actor(m, open_picker_wkq).menu_key(split("wk")),
 		get_cmd_actor(m, cmd_quit).menu_key(split("Q")),
 	}
 }

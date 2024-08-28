@@ -855,6 +855,13 @@ func (code *CodeView) gotoline(line int) {
 
 func (code *CodeView) change_topline_with_previousline(line int) {
 	// log.Println("gotoline", line)
+	bufline := code.view.Buf.LinesNum()
+	if line > bufline {
+		line = 0
+	}
+	if bufline < code.LineNumberUnderMouse {
+		code.LineNumberUnderMouse = bufline / 2
+	}
 	_, _, _, linecount := code.view.GetInnerRect()
 	linecount = min(linecount, code.view.Bottomline()-code.view.Topline+1)
 	topline := line - min(code.LineNumberUnderMouse, linecount)
