@@ -37,6 +37,7 @@ type CodeView struct {
 	rightmenu_select_range       lsp.Range
 	rightmenu                    CodeContextMenu
 	LineNumberUnderMouse         int
+	not_preview 				 bool
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -151,6 +152,7 @@ func NewCodeView(main *mainui) *CodeView {
 		down:  view_quickview,
 		left:  view_file},
 		theme: "darcula",
+		not_preview: false,
 	}
 	ret.rightmenu = CodeContextMenu{code: &ret}
 	ret.main = main
@@ -394,6 +396,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	if action == 14 || action == 13 {
 		code.mouse_select_area = false
 		gap := 1
+		posY=root.Cursor.Y
 		if action == 14 {
 			posY = posY + gap
 			root.ScrollDown(gap)
@@ -800,7 +803,7 @@ func (code *CodeView) gotoline(line int) {
 		code.view.EndOfLine()
 		return
 	}
-	if code.main != nil {
+	if code.main != nil && code.not_preview{
 		code.main.bf.history.SaveToHistory(code)
 		code.main.bf.history.AddToHistory(code.filename, NewEditorPosition(line, code))
 	}

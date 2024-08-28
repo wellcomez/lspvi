@@ -409,6 +409,9 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	m.symboltree.Clear()
 	m.codeview.Load(file)
 	if loc != nil {
+		lins := m.codeview.view.Buf.LinesNum()
+		loc.Range.Start.Line = min(lins-1, loc.Range.Start.Line)
+		loc.Range.End.Line = min(lins-1, loc.Range.Start.Line)
 		m.codeview.goto_loation(loc.Range)
 	}
 	go m.async_open(file)
@@ -541,6 +544,7 @@ func MainUI(arg *Arguments) {
 	app := tview.NewApplication()
 	main.app = app
 	codeview := NewCodeView(&main)
+	codeview.not_preview = true
 	codeview.width = 8
 	// main.fzf = new_fzfview()
 	symbol_tree := NewSymbolTreeView(&main)
@@ -679,9 +683,20 @@ func MainUI(arg *Arguments) {
 
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
 	if len(filearg) == 0 {
-		filearg = main.bf.GoBack().Path
+		filearg := main.bf.Last()
+		if len(filearg.Path)>0 {
+			main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
+				URI: lsp.NewDocumentURI(filearg.Path),
+				Range: lsp.Range{
+					Start: lsp.Position{filearg.Pos.Line, 0},
+					End:   lsp.Position{filearg.Pos.Line, 0},
+				},
+			}, offset: 0}, false)
+		}
+	} else {
+
+		main.OpenFile(filearg, nil)
 	}
-	main.OpenFile(filearg, nil)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
 	})

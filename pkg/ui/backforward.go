@@ -71,7 +71,10 @@ func NewEditorPosition(Line int, text *CodeView) *EditorPosition {
 	}
 }
 func (h *History) SaveToHistory(code *CodeView) {
-	line := code.view.Cursor.Loc.Y + code.view.Topline
+	if !code.not_preview {
+		return
+	}
+	line := code.view.Cursor.Loc.Y
 	pos := EditorPosition{
 		Line:   line,
 		Offset: code.view.Topline,
@@ -93,15 +96,19 @@ func (h *History) save_to_file() {
 
 // AddToHistory
 func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
-	lll := h.datalist
+	if newdata == "" {
+		return
+	}
+	lll := h.datalist[h.index:]
 	pos := EditorPosition{
 		Line: 0,
 	}
 	if loc != nil {
 		pos = *loc
 	}
-	h.datalist = h.insertAtFront(lll, backforwarditem{Path: newdata, Pos: pos})
-	// log.Printf("add history %v", h.datalist[0])
+	newhistory := backforwarditem{Path: newdata, Pos: pos}
+	h.datalist = append([]backforwarditem{newhistory}, lll...)
+	h.index = 0
 	h.save_to_file()
 }
 
@@ -116,6 +123,12 @@ type BackForward struct {
 
 func NewBackForward(h *History) *BackForward {
 	return &BackForward{history: h}
+}
+func (bf *BackForward) Last() backforwarditem {
+	if len(bf.history.datalist) > 0 {
+		return bf.history.datalist[len(bf.history.datalist)-1]
+	}
+	return backforwarditem{}
 }
 
 func (bf *BackForward) GoBack() backforwarditem {
