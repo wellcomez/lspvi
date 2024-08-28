@@ -1,25 +1,117 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/exec"
+	"sync/atomic"
+
 	// "strings"
 	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 type read struct {
 }
 
+const consoleDevice string = "/dev/tty"
+
+var devPrefixes = [...]string{"/dev/pts/", "/dev/"}
+
+var tty atomic.Value
+
+func ttyname() string {
+	if cached := tty.Load(); cached != nil {
+		return cached.(string)
+	}
+
+	var stderr syscall.Stat_t
+	if syscall.Fstat(2, &stderr) != nil {
+		return ""
+	}
+
+	for _, prefix := range devPrefixes {
+		files, err := os.ReadDir(prefix)
+		if err != nil {
+			continue
+		}
+
+		for _, file := range files {
+			info, err := file.Info()
+			if err != nil {
+				continue
+			}
+			if stat, ok := info.Sys().(*syscall.Stat_t); ok && stat.Rdev == stderr.Rdev {
+				value := prefix + file.Name()
+				tty.Store(value)
+				return value
+			}
+		}
+	}
+	return ""
+}
+
+// TtyIn returns terminal device to read user input
+func TtyIn() (*os.File, error) {
+	return openTtyIn()
+}
+
+// TtyIn returns terminal device to write to
+func TtyOut() (*os.File, error) {
+	return openTtyOut()
+}
+func openTty(mode int) (*os.File, error) {
+	in, err := os.OpenFile(consoleDevice, mode, 0)
+	if err != nil {
+		tty := ttyname()
+		if len(tty) > 0 {
+			if in, err := os.OpenFile(tty, mode, 0); err == nil {
+				return in, nil
+			}
+		}
+		return nil, errors.New("failed to open " + consoleDevice)
+	}
+	return in, nil
+}
+
+type LightRenderer struct {
+	ttyin  *os.File
+	ttyout *os.File
+}
+type TermSize struct {
+	Lines    int
+	Columns  int
+	PxWidth  int
+	PxHeight int
+}
+
+func (r *LightRenderer) Size() TermSize {
+	ws, err := unix.IoctlGetWinsize(int(r.ttyin.Fd()), unix.TIOCGWINSZ)
+	if err != nil {
+		return TermSize{}
+	}
+	return TermSize{int(ws.Row), int(ws.Col), int(ws.Xpixel), int(ws.Ypixel)}
+}
+func openTtyIn() (*os.File, error) {
+	return openTty(syscall.O_RDONLY)
+}
+
+func openTtyOut() (*os.File, error) {
+	return openTty(syscall.O_WRONLY)
+}
+
 // Write implements io.Writer.
 func (r read) Write(p []byte) (n int, err error) {
-	fmt.Println("read: ", len(p),string(p))
+	fmt.Println("read: ", len(p), string(p))
 	return len(p), nil
 }
 
 func maintty(cmd *exec.Cmd) {
+
 	// 创建一个主从PTY对
 	master, slave, err := ptyOpen()
 	if err != nil {
@@ -73,6 +165,20 @@ func ptyOpen() (master *os.File, slave *os.File, err error) {
 	// 	err = fmt.Errorf("ioctl(TTY_ALLOC): %v", e)
 	// 	return
 	// }
+	ttyin, err := openTtyIn()
+	if err != nil {
+		fmt.Println("ttyin: ", err)
+	}
+
+	ttyout, err := openTtyOut()
+	if err != nil {
+		fmt.Println("ttyout", err)
+	}
+	h := LightRenderer{
+		ttyin:  ttyin,
+		ttyout: ttyout,
+	}
+	fmt.Println(h.Size())
 
 	if err := syscall.Pipe2(fds[:], syscall.O_NONBLOCK); err != nil {
 		log.Fatal(err)
