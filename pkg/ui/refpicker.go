@@ -247,32 +247,32 @@ func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_ca
 	for _, v := range file {
 		stacks, err := lsp.Caller(v, false)
 		if err == nil {
-			if len(stacks)>0{
-				ref_call_in = newFunction(stacks, v, ref_call_in)
-			}else{
-				ref_call_in = append(ref_call_in, ref_with_caller{Loc: v})
+			a := newFunction(stacks, v)
+			if a != nil {
+				ref_call_in = append(ref_call_in, *a)
+				continue
 			}
 
 		}
+		ref_call_in = append(ref_call_in, ref_with_caller{Loc: v})
 	}
 	return ref_call_in
 }
 
-func newFunction(stacks []lspcore.CallStack, v lsp.Location, ref_call_in []ref_with_caller) []ref_with_caller {
+func newFunction(stacks []lspcore.CallStack, v lsp.Location) *ref_with_caller {
 	for _, s := range stacks {
 		for _, item := range s.Items {
 			for _, r := range item.FromRanges {
 				if r.Start.Line == v.Range.Start.Line {
-					ref_call_in = append(ref_call_in, ref_with_caller{
+					return &ref_with_caller{
 						Loc:    v,
 						Caller: item,
-					})
-					return ref_call_in
+					}
 				}
 			}
 		}
 	}
-	return ref_call_in
+	return nil
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
