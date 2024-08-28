@@ -99,17 +99,24 @@ func remove_hl_flag(ss string, key string) ([]string, string) {
 	return keys, ss
 }
 func find_key(s string, keys []string, offset int) []keypattern {
+	idx := len(s)
+	k := ""
 	for _, v := range keys {
 		if len(v) == 0 {
 			continue
 		}
-		idx := strings.Index(strings.ToLower(s), v)
-		if idx >= 0 {
-			pth := keypattern{begin: idx + offset, width: len(v)}
-			a := []keypattern{pth}
-			subret := find_key(s[idx+len(v):], keys, pth.width+idx+offset)
-			return append(a, subret...)
+		n := strings.Index(strings.ToLower(s), v)
+		if n >= 0 && n < idx {
+			k = v
+			idx = n
 		}
+	}
+	v := k
+	if len(k) > 0 {
+		pth := keypattern{begin: idx + offset, width: len(v)}
+		a := []keypattern{pth}
+		subret := find_key(s[idx+len(v):], keys, pth.width+idx+offset)
+		return append(a, subret...)
 	}
 	return []keypattern{}
 }

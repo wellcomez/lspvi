@@ -78,11 +78,12 @@ type bookmark_picker struct {
 
 // UpdateQuery implements picker.
 func (pk bookmark_picker) UpdateQuery(query string) {
-	query = strings.ToLower(query)
 	listview := pk.impl.hlist
+	query = strings.ToLower(query)
 	listview.Clear()
 	root := pk.impl.codeprev.main.root
 	var result fzflib.SearchResult
+	listview.Key = query
 	if fzf := pk.impl.fzf; fzf != nil {
 		fzf.Search(query)
 		result = <-fzf.GetResultChannel()
@@ -197,6 +198,7 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 	sym := bookmark_picker{
 		impl: impl}
 	impl.use_cusutom_list(impl.hlist)
+	impl.hlist.fuzz = true
 	sym.impl.codeprev.view.SetBorder(true)
 	marks := v.main.bookmark.Bookmark
 	for _, file := range marks {
@@ -230,6 +232,7 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 	}
 	option := fzflib.DefaultOptions()
 	option.CaseMode = fzflib.CaseIgnore
+	option.Fuzzy = impl.hlist.fuzz
 	sym.impl.fzf = fzflib.New(datafzf, option)
 	return sym
 }
