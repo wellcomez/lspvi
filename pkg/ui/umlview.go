@@ -25,15 +25,15 @@ type umlview struct {
 }
 
 type uml_filetree_context struct {
-	qk        *file_tree_view
-	menu_item []context_menu_item
-	main      *mainui
+	qk   *file_tree_view
+	main *mainui
 }
 
 func (menu uml_filetree_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if action == tview.MouseRightClick {
 		yes, focuse := menu.qk.view.MouseHandler()(tview.MouseLeftClick, event, nil)
 		log.Println(yes, focuse)
+		update_filetree_menu(menu.main.uml, menu.qk.view.GetCurrentNode())
 		return tview.MouseConsumed, nil
 	}
 	return tview.MouseConsumed, nil
@@ -50,7 +50,10 @@ func (menu uml_filetree_context) getbox() *tview.Box {
 
 // menuitem implements context_menu_handle.
 func (menu uml_filetree_context) menuitem() []context_menu_item {
-	return menu.menu_item
+	if menu.qk.menu_item == nil {
+		return []context_menu_item{}
+	}
+	return menu.qk.menu_item
 }
 func (v *umlview) openfile(name string) {
 	ext := filepath.Ext(name)
@@ -126,8 +129,28 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 		Name:      file.Name,
 		main:      main,
 	}
+
+	ret.file_right_context = uml_filetree_context{qk: file, main: main}
+	// update_filetree_menu(ret)
+	file.openfile = ret.openfile
+	return ret, nil
+}
+
+func update_filetree_menu(ret *umlview, node *tview.TreeNode) {
+	ret.file.menu_item = []context_menu_item{}
+	if node == nil {
+		return
+	}
+	if node == ret.file.view.GetRoot() {
+		return
+	}
+	value := node.GetReference()
+	if value == nil {
+		return
+	}
+	file := ret.file
 	menus := []context_menu_item{
-		menu_open_external(file),
+		menu_open_external(file, false),
 
 		{
 			item: create_menu_item("Delete "),
@@ -152,7 +175,5 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 			},
 		},
 	}
-	ret.file_right_context = uml_filetree_context{qk: file, menu_item: menus, main: main}
-	file.openfile = ret.openfile
-	return ret, nil
+	ret.file.menu_item = addjust_menu_width(menus)
 }

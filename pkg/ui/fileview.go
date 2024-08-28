@@ -28,6 +28,7 @@ type file_tree_view struct {
 	openfile      func(filename string)
 	dir_mode      dir_open_mode
 	right_context filetree_context
+	menu_item     []context_menu_item
 }
 
 type filetree_context struct {
@@ -75,7 +76,7 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
 	ret.dir_mode = dir_open_replace
-	external_open := menu_open_external(ret)
+	external_open := menu_open_external(ret, false)
 	menu_item := []context_menu_item{
 		external_open,
 		menu_open_parent(ret),
@@ -133,7 +134,7 @@ func menu_open_parent(ret *file_tree_view) context_menu_item {
 	}
 	return external_open
 }
-func menu_open_external(ret *file_tree_view) context_menu_item {
+func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 	external_open := context_menu_item{
 		item: create_menu_item("External open "),
 		handle: func() {
@@ -150,6 +151,7 @@ func menu_open_external(ret *file_tree_view) context_menu_item {
 				}
 			}
 		},
+		hide: hide,
 	}
 	return external_open
 }
