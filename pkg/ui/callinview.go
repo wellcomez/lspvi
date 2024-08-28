@@ -65,6 +65,27 @@ func new_callview(main *mainui) *callinview {
 	right_context := callin_view_context{qk: ret}
 	ret.right_context = right_context
 	menuitem := []context_menu_item{
+		{item: cmditem{cmd: cmdactor{desc: "GotoDefine"}}, handle: func() {
+			node := ret.view.GetCurrentNode()
+			value := node.GetReference()
+			if value != nil {
+				if ref, ok := value.(dom_node); ok {
+					sym := ref.call
+					main.get_define(sym.Range, sym.URI.AsPath().String())
+				}
+			}
+		}},
+		{item: cmditem{cmd: cmdactor{desc: "GotoReference"}}, handle: func() {
+			node := ret.view.GetCurrentNode()
+			value := node.GetReference()
+			if value != nil {
+				if ref, ok := value.(dom_node); ok {
+					sym := ref.call
+					main.get_refer(sym.Range, sym.URI.AsPath().String())
+				}
+			}
+		}},
+		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
 		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
 			nodecurrent := ret.view.GetCurrentNode()
 			root := ret.view.GetRoot()
@@ -94,7 +115,6 @@ func new_callview(main *mainui) *callinview {
 			}
 			ret.main.UpdatePageTitle()
 		}},
-		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
 	}
 	ret.menuitem = menuitem
 
