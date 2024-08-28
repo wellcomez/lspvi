@@ -974,6 +974,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (main *mainui) GoForward() {
+	main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoForward()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go forward %v", i)
@@ -984,6 +985,7 @@ func (main *mainui) GoForward() {
 }
 
 func (main *mainui) GoBack() {
+	main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoBack()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go %v", i)

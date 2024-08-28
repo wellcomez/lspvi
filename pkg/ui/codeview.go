@@ -396,7 +396,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	if action == 14 || action == 13 {
 		code.mouse_select_area = false
 		gap := 1
-		posY=root.Cursor.Y
+		// posY=root.Cursor.Y
 		if action == 14 {
 			posY = posY + gap
 			root.ScrollDown(gap)

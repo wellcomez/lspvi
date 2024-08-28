@@ -362,6 +362,8 @@ func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.
 	qk.Type = t
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
 	qk.searchkey = key
+	_,_,width,_:=qk.view.GetRect()
+	caller.width = width
 	secondline := caller.ListItem(qk.main.root)
 	if len(secondline) == 0 {
 		return
@@ -378,7 +380,9 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.Clear()
 	qk.view.SetCurrentItem(-1)
 	qk.currentIndex = 0
+	_,_,width,_:=qk.view.GetRect()
 	for _, caller := range qk.Refs.Refs {
+		caller.width = width
 		secondline := caller.ListItem(qk.main.root)
 		if len(secondline) == 0 {
 			continue
@@ -401,7 +405,7 @@ func (caller ref_with_caller) ListItem(root string) string {
 	if len(line) == 0 {
 		return ""
 	}
-	gap := 40
+	gap := max(40,caller.width/2)
 	begin := max(0, v.Range.Start.Character-gap)
 	end := min(len(line), v.Range.Start.Character+gap)
 	path := strings.Replace(v.URI.AsPath().String(), root, "", -1)

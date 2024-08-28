@@ -206,8 +206,10 @@ func (qk *qk_history_picker) updateprev() {
 	item := qk.impl.keys[index]
 	if item.Type == data_refs {
 		caller := keys[index].Result.Refs
+		_,_,width,_:=qk.prev_picker_impl.listview.GetInnerRect()
 		dataprev := []string{}
 		for _, call := range caller {
+			call.width = width
 			dataprev = append(dataprev, call.ListItem(qk.parent.main.root))
 		}
 		qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")

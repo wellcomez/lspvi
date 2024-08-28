@@ -44,7 +44,7 @@ func (input *inputdelay) get_cmd(key string) (cmd_action, []*cmditem) {
 			return cmd_action_run, cmds
 		}
 	}
-	if matched > 1 {
+	if matched >= 1 {
 		return cmd_action_buffer, cmds
 	}
 	return cmd_action_none, cmds
