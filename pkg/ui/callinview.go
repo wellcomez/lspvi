@@ -72,7 +72,7 @@ func new_callview(main *mainui) *callinview {
 				if ref, ok := value.(dom_node); ok {
 					sym := ref.call
 					main.get_define(sym.Range, sym.URI.AsPath().String())
-					main.ActiveTab(view_quickview,false)
+					main.ActiveTab(view_quickview, false)
 				}
 			}
 		}},
@@ -83,7 +83,7 @@ func new_callview(main *mainui) *callinview {
 				if ref, ok := value.(dom_node); ok {
 					sym := ref.call
 					main.get_refer(sym.Range, sym.URI.AsPath().String())
-					main.ActiveTab(view_quickview,false)
+					main.ActiveTab(view_quickview, false)
 				}
 			}
 		}},
@@ -167,6 +167,17 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 					Range: sym.SelectionRange,
 				})
 			}
+			text := node.GetText()
+			view.view.GetRoot().Walk(func(n, parent *tview.TreeNode) bool {
+				if n != node {
+					if n.GetText() == text {
+						n.SetColor(tcell.ColorGray)
+					} else {
+						n.SetColor(tcell.ColorWhite)
+					}
+				}
+				return true
+			})
 			return
 		}
 		text := node.GetText()
