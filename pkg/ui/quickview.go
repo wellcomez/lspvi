@@ -300,13 +300,14 @@ func (main *quick_view) OnSearch(txt string) {
 }
 
 // String
-func (qk quick_view) String() string {
+func (qk *quick_view) String() string {
 	var s = qk.Type.String()
 	index := qk.currentIndex
 	if len(qk.Refs.Refs) > 0 {
 		index++
 	}
-	return fmt.Sprintf("%s %d/%d", s, index, len(qk.Refs.Refs))
+	key:=qk.searchkey.Key
+	return fmt.Sprintf("%s %s %d/%d", s,key, index, len(qk.Refs.Refs))
 }
 
 // selection_handle

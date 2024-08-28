@@ -616,6 +616,7 @@ func MainUI(arg *Arguments) {
 		main.quickview.right_context,
 		main.callinview.right_context,
 		main.symboltree.right_context,
+		main.uml.file_right_context,
 	}
 
 	var tabid view_id = view_quickview
