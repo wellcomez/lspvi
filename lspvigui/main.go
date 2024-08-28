@@ -86,10 +86,7 @@ func (t *bufferedObjectStream) Close() error {
 	return t.conn.Close()
 }
 
-
-const ioctlSetControllingTty = 0x5412 // TIOCSCTTY
 func run_term() (*bufferedObjectStream, error) {
-	maintty()
 	root := filepath.Dir(os.Args[0])
 	relpath := filepath.Join(root, "..", "lspvi")
 	lspvi, err := filepath.Abs(relpath)
@@ -97,36 +94,8 @@ func run_term() (*bufferedObjectStream, error) {
 		return nil, err
 	}
 	cmd := exec.Command(lspvi, "--root", filepath.Dir(lspvi))
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-
-	}
-	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-	conn := struct {
-		io.Reader
-		io.Writer
-		io.Closer
-	}{
-		Reader: stdout,
-		Writer: stdin,
-		Closer: stdin,
-	}
-	ss := &bufferedObjectStream{
-		conn:  conn,
-		w:     bufio.NewWriter(conn),
-		r:     bufio.NewReader(conn),
-		codec: VSCodeObjectCodec{},
-	}
-	go ss.ReadObject(nil)
-	return ss, nil
-
+	maintty(cmd)
+	return nil, nil
 }
 
 func main() {

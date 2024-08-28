@@ -6,10 +6,20 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	// "strings"
 	"syscall"
 )
 
-func maintty() {
+type read struct {
+}
+
+// Write implements io.Writer.
+func (r read) Write(p []byte) (n int, err error) {
+	fmt.Println("read: ", len(p),string(p))
+	return len(p), nil
+}
+
+func maintty(cmd *exec.Cmd) {
 	// 创建一个主从PTY对
 	master, slave, err := ptyOpen()
 	if err != nil {
@@ -20,7 +30,7 @@ func maintty() {
 	defer slave.Close()
 
 	// 创建子进程
-	cmd := exec.Command("/bin/ls", "-l")
+	// cmd := exec.Command("/bin/ls", "-l")
 
 	// 设置子进程的文件描述符
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -40,7 +50,8 @@ func maintty() {
 
 	// 从主设备读取数据
 	go func() {
-		io.Copy(os.Stdout, master)
+		var r read
+		io.Copy(r, master)
 	}()
 
 	// 向主设备写入数据
@@ -58,10 +69,10 @@ func maintty() {
 // ptyOpen 创建一个PTY对
 func ptyOpen() (master *os.File, slave *os.File, err error) {
 	var fds [2]int
-	if _, _, e := syscall.Syscall(syscall.SYS_IOCTL, uintptr(os.Stdin.Fd()), ioctlTtyAlloc, 0); e != 0 {
-		err = fmt.Errorf("ioctl(TTY_ALLOC): %v", e)
-		return
-	}
+	// if _, _, e := syscall.Syscall(syscall.SYS_IOCTL, uintptr(os.Stdin.Fd()), ioctlTtyAlloc, 0); e != 0 {
+	// 	err = fmt.Errorf("ioctl(TTY_ALLOC): %v", e)
+	// 	return
+	// }
 
 	if err := syscall.Pipe2(fds[:], syscall.O_NONBLOCK); err != nil {
 		log.Fatal(err)
