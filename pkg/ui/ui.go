@@ -61,6 +61,31 @@ type mainui struct {
 func (m *mainui) OnFileChange(file []lsp.Location) {
 	m.OpenFile(file[0].URI.AsPath().String(), &file[0])
 }
+func (m *mainui) zoom(zoomin bool) {
+	viewid := m.get_focus_view_id()
+	switch viewid {
+	case view_file:
+		{
+			if zoomin {
+				m.fileexplorer.width--
+			} else {
+				m.fileexplorer.width++
+			}
+		}
+	case view_outline_list:
+		{
+			if zoomin {
+				m.symboltree.width--
+			} else {
+				m.symboltree.width++
+			}
+		}
+	default:
+		return
+	}
+	m.update_layout()
+
+}
 
 func (m mainui) toggle_view(id view_id) {
 	switch id {
@@ -75,6 +100,10 @@ func (m mainui) toggle_view(id view_id) {
 	default:
 		return
 	}
+	m.update_layout()
+}
+
+func (m mainui) update_layout() {
 	m.layout.editor_area.Clear()
 	if !m.fileexplorer.hide {
 		m.layout.editor_area.AddItem(m.fileexplorer.view, 0, m.fileexplorer.width, false)
@@ -83,7 +112,6 @@ func (m mainui) toggle_view(id view_id) {
 	if !m.symboltree.hide {
 		m.layout.editor_area.AddItem(m.symboltree.view, 0, m.symboltree.width, false)
 	}
-
 }
 func (r *mainui) editor_area_fouched() {
 	// log.Println("change foucse", r.GetFocusViewId())
@@ -901,9 +929,9 @@ func (vl *view_link) next_view(t direction) view_id {
 	return next
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
-	// eventname := event.Name()
-	// log.Println("main ui recieved ",
-	// 	main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
+	eventname := event.Name()
+	log.Println("main ui recieved ",
+		main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
 	//Ctrl+O
 	if main.layout.dialog.Visible {
 		main.layout.dialog.handle_key(event)

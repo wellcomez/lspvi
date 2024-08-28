@@ -30,6 +30,8 @@ const (
 	goto_tab
 	goto_back
 	bookmark_it
+	zoomin
+	zoomout
 	copy_data
 	copy_path
 	next_window_left
@@ -61,6 +63,10 @@ func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_ite
 }
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	switch id {
+	case zoomout:
+		return cmdactor{id, "zoom out", func() { m.zoom(false) }}
+	case zoomin:
+		return cmdactor{id, "zoom in", func() { m.zoom(true) }}
 	case cmd_quit:
 		return cmdactor{id, "Quit", m.quit}
 	case open_picker_qfh:
@@ -304,6 +310,8 @@ func (m *mainui) global_key_map() []cmditem {
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTab),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTAB),
+		get_cmd_actor(m, zoomout).enven_name_key("Rune[+]"),
+		get_cmd_actor(m, zoomin).enven_name_key("Rune[-]"),
 	}
 }
 

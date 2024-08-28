@@ -27,16 +27,16 @@ type file_tree_view struct {
 	handle        func(filename string) bool
 	openfile      func(filename string)
 	dir_mode      dir_open_mode
-	right_context filetree_contextstruct
+	right_context filetree_context
 }
 
-type filetree_contextstruct struct {
+type filetree_context struct {
 	qk        *file_tree_view
 	menu_item []context_menu_item
 	main      *mainui
 }
 
-func (menu filetree_contextstruct) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+func (menu filetree_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if action == tview.MouseRightClick {
 		yes, focuse := menu.qk.view.MouseHandler()(tview.MouseLeftClick, event, nil)
 		log.Println(yes, focuse)
@@ -46,7 +46,7 @@ func (menu filetree_contextstruct) on_mouse(action tview.MouseAction, event *tce
 }
 
 // getbox implements context_menu_handle.
-func (menu filetree_contextstruct) getbox() *tview.Box {
+func (menu filetree_context) getbox() *tview.Box {
 	if menu.qk.hide {
 		return nil
 	}
@@ -54,7 +54,7 @@ func (menu filetree_contextstruct) getbox() *tview.Box {
 }
 
 // menuitem implements context_menu_handle.
-func (menu filetree_contextstruct) menuitem() []context_menu_item {
+func (menu filetree_context) menuitem() []context_menu_item {
 	return menu.menu_item
 }
 func new_file_tree(main *mainui, name string, rootdir string, handle func(filename string) bool) *file_tree_view {
@@ -84,7 +84,7 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 		{item: create_menu_item("hide"), handle: func() {
 			main.toggle_view(view_file)
 		}}}
-	ret.right_context = filetree_contextstruct{
+	ret.right_context = filetree_context{
 		qk:        ret,
 		menu_item: menu_item,
 		main:      main,
