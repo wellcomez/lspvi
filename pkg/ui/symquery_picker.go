@@ -43,6 +43,7 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 				pk.impl.parent.hide()
 			})
 		}
+		pk.update_preview()
 	})
 }
 
@@ -87,6 +88,6 @@ func new_workspace_symbol_picker(v *fzfmain, file *lspcore.Symbol_file) *workspa
 	ret.impl.prev_picker_impl.use_cusutom_list(ret.impl.list)
 	return ret
 }
-func (pk *workspace_query_picker) grid() *tview.Grid {
-	return layout_list_edit(pk.impl.list, pk.impl.codeprev.view, pk.impl.parent.input)
+func (pk *workspace_query_picker) grid() *tview.Flex{
+	return pk.impl.flex(pk.impl.parent.input,1)
 }
