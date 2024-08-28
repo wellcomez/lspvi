@@ -15,10 +15,13 @@ All above features are built in single binary not need to install plugin. Binary
 ![terminal](screen1.png)
 
 ![uml](main.png)
+
 ## Mouse Support
+
 Although it run in terminal, it supports mouse click, wheel scrolling as well as gui. So if you are not vimer, it is also easy to use.
 
-## Keymap 
+## Keymap
+
 It supports most of common keymap of [neo]vim. **Space** will invoke menu and  choose **help** or   **space + h** will invoke keymap help.
 
 ![keymap](keymap.png)
@@ -62,41 +65,49 @@ It supports most of common keymap of [neo]vim. **Space** will invoke menu and  c
 | ctrlw+ l/r/u/d | switch window          |
 
 ## Code/Uml  view in browser
+
 Because of the limitation of terminal, you can still view text call sequence in lspvi console. But if you want to view png clearly, , you can use browser to view  call sequence.
 
 [http:://localhost:108080](http:://localhost:108080)
 ![web](web.png)
 
 ## lsp supported
+
 - gopls
 - clangd
 - python
 - typescript /javascript
 
 ## Install
-~~~sh
+
+```sh
 git submodule init  && git submodule update --recursive
 pushd pkg/lspr
 bash build.sh -w
 popd
 go build
 ./lspvi --root "prj root"
-~~~
+```
 
-## platform /os 
+## platform /os
+
 - MACOS 
 - linux 
 - windows
 
 ## docker
-~~~sh
+
+```sh
 cd docker
-~~~
+```
+
 1. build docker
-   ~~~sh
+   
+   ```sh
    ./dockbuild.sh create
-   ~~~
+   ```
 2. run docker 
-   ~~~sh
+   
+   ```sh
    ./dockbuild.sh 
-   ~~~
+   ```
