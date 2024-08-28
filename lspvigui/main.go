@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sync"
-	"syscall"
 
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -90,6 +89,7 @@ func (t *bufferedObjectStream) Close() error {
 
 const ioctlSetControllingTty = 0x5412 // TIOCSCTTY
 func run_term() (*bufferedObjectStream, error) {
+	maintty()
 	root := filepath.Dir(os.Args[0])
 	relpath := filepath.Join(root, "..", "lspvi")
 	lspvi, err := filepath.Abs(relpath)
