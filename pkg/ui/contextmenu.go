@@ -25,6 +25,7 @@ type contextmenu struct {
 type context_menu_item struct {
 	item   cmditem
 	handle func()
+	hide   bool
 }
 func create_menu_item(name string) cmditem {
 	x := cmditem{cmd: cmdactor{desc: name}}
@@ -40,10 +41,10 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		for _, v := range menu.menu_handle {
 			box := v.getbox()
 			if box != nil && box.InRect(event.Position()) {
-				menu.set_items(v.menuitem())
 				if !menu.visible {
 					v.on_mouse(action, event)
 				}
+				menu.set_items(v.menuitem())
 				visible = true
 			}
 		}

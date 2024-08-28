@@ -69,6 +69,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		code.rightmenu_select_text = root.Cursor.GetSelection()
 		code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
 		log.Println("after ", code.view.Cursor.CurSelection)
+		update_selection_menu(code)
 	}
 	return action, event
 }
@@ -171,96 +172,108 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetMouseCapture(ret.handle_mouse)
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
-	if main != nil {
-		items := []context_menu_item{
-			{item: create_menu_item("Reference"), handle: func() {
-				main.get_refer(ret.rightmenu_select_range, main.codeview.filename)
-				main.ActiveTab(view_quickview,false)
-			}},
-			{item: create_menu_item("Goto define"), handle: func() {
-				main.get_define(ret.rightmenu_select_range, main.codeview.filename)
-				main.ActiveTab(view_quickview,false)
-			}},
-			{item: create_menu_item("Call incoming"), handle: func() {
-				loc := lsp.Location{
-					URI:   lsp.NewDocumentURI(ret.filename),
-					Range: ret.rightmenu_select_range,
-				}
-				main.get_callin_stack_by_cursor(loc, ret.filename)
-				main.ActiveTab(view_callin,false)
-			}},
-			{item: create_menu_item("-------------"), handle: func() {
-			}},
-			{item: create_menu_item("Bookmark"), handle: func() {
-				main.codeview.bookmark()
-			}},
-			{item: create_menu_item("Search"), handle: func() {
-				sss := main.codeview.rightmenu_select_text
-				main.OnSearch(sss, true, true)
-				main.ActiveTab(view_quickview,false)
-			}},
-			{item: create_menu_item("Grep word"), handle: func() {
-				main.quickview.view.Clear()
-				key := lspcore.SymolSearchKey{
-					Key: ret.rightmenu_select_text,
-				}
-				main.ActiveTab(view_quickview,false)
-				main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)
-				main.open_picker_grep(key.Key, func(s ref_with_caller) bool {
-					var ret = ret.rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
-					if ret {
-						main.app.QueueUpdateDraw(func() {
-							main.quickview.AddResult(data_grep_word, s, key)
-						})
-					}
-					return ret
-				})
-			}},
-			{item: create_menu_item("Copy Selection"), handle: func() {
-				data := ret.rightmenu_previous_selection
-				if len(data) == 0 {
-					data = ret.rightmenu_select_text
-				}
-				clipboard.WriteAll(data)
-				// sss := main.codeview.view.Cursor.GetSelection()
-				// main.OnSearch(sss, true, true)
-			}},
-			{item: create_menu_item("-------------"), handle: func() {
-			}},
-			{item: create_menu_item("Toggle file view"), handle: func() {
-				main.toggle_view(view_file)
-			}},
-			{item: create_menu_item("Toggle outline view"), handle: func() {
-				main.toggle_view(view_outline_list)
-			}},
-		}
-		maxlen := 0
-		for _, v := range items {
-			maxlen = max(maxlen, len(v.item.cmd.desc))
-		}
-		sss := strings.Repeat("-", maxlen)
-		for i := range items {
-			v := &items[i]
-			if strings.Index(v.item.cmd.desc, "-") == 0 {
-				v.item.cmd.desc = sss
-			}
-		}
-
-		// m := main
-		// mm := cmditem{
-		// 	get_cmd_actor(m, open_picker_document_symbol).menu_key(split(key_picker_document_symbol)),
-		// 	get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),
-		// 	get_cmd_actor(m, open_picker_history).menu_key(split(key_picker_history)),
-		// 	get_cmd_actor(m, open_picker_grep_word).menu_key(split(key_picker_grep_word)),
-		// 	get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
-		// 	get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
-		// }
-		// ret.rightmenu = &text_right_menu{
-		// 	contextmenu: new_contextmenu(main, items, ret.view.Box),
-		// }
-		ret.rightmenu_items = items
-	}
 	return &ret
+}
+
+func update_selection_menu(ret *CodeView) {
+	main := ret.main
+	toggle_file_view := "Toggle file view"
+	if !main.fileexplorer.hide {
+		toggle_file_view = "Hide file view"
+	}
+	toggle_outline := "Toggle outline view"
+	if !main.symboltree.hide {
+		toggle_outline = "Hide outline view"
+	}
+	items := []context_menu_item{
+		{item: create_menu_item("Reference"), handle: func() {
+			main.get_refer(ret.rightmenu_select_range, main.codeview.filename)
+			main.ActiveTab(view_quickview, false)
+		}},
+		{item: create_menu_item("Goto define"), handle: func() {
+			main.get_define(ret.rightmenu_select_range, main.codeview.filename)
+			main.ActiveTab(view_quickview, false)
+		}},
+		{item: create_menu_item("Call incoming"), handle: func() {
+			loc := lsp.Location{
+				URI:   lsp.NewDocumentURI(ret.filename),
+				Range: ret.rightmenu_select_range,
+			}
+			main.get_callin_stack_by_cursor(loc, ret.filename)
+			main.ActiveTab(view_callin, false)
+		}},
+		{item: create_menu_item("-------------"), handle: func() {
+		}},
+		{item: create_menu_item("Bookmark"), handle: func() {
+			main.codeview.bookmark()
+		}},
+		{item: create_menu_item("Search Selection"), handle: func() {
+			sss := main.codeview.rightmenu_previous_selection
+			main.OnSearch(sss, true, true)
+			main.ActiveTab(view_quickview, false)
+		}, hide: len(main.codeview.rightmenu_previous_selection) == 0},
+		{item: create_menu_item("Search"), handle: func() {
+			sss := main.codeview.rightmenu_select_text
+			main.OnSearch(sss, true, true)
+			main.ActiveTab(view_quickview, false)
+		}, hide: len(main.codeview.rightmenu_select_text) == 0},
+		{item: create_menu_item("Grep word"), handle: func() {
+			main.quickview.view.Clear()
+			key := lspcore.SymolSearchKey{
+				Key: ret.rightmenu_select_text,
+			}
+			main.ActiveTab(view_quickview, false)
+			main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)
+			main.open_picker_grep(key.Key, func(s ref_with_caller) bool {
+				var ret = ret.rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
+				if ret {
+					main.app.QueueUpdateDraw(func() {
+						main.quickview.AddResult(data_grep_word, s, key)
+					})
+				}
+				return true
+			})
+		}, hide: len(ret.rightmenu_select_text) == 0},
+		{item: create_menu_item("Copy Selection"), handle: func() {
+			data := ret.rightmenu_previous_selection
+			if len(data) == 0 {
+				data = ret.rightmenu_select_text
+			}
+			clipboard.WriteAll(data)
+
+		}, hide: len(ret.rightmenu_previous_selection) == 0},
+		{item: create_menu_item("-"), handle: func() {
+		}},
+		{item: create_menu_item(toggle_file_view), handle: func() {
+			main.toggle_view(view_file)
+		}},
+		{item: create_menu_item(toggle_outline), handle: func() {
+			main.toggle_view(view_outline_list)
+		}},
+	}
+	ret.rightmenu_items = addjust_menu_width(items)
+}
+
+func addjust_menu_width(items []context_menu_item) []context_menu_item {
+	leftitems := []context_menu_item{}
+	for i := range items {
+		v := items[i]
+		if !v.hide {
+			leftitems = append(leftitems, v)
+		}
+	}
+	maxlen := 0
+	for _, v := range leftitems {
+		maxlen = max(maxlen, len(v.item.cmd.desc))
+	}
+	sss := strings.Repeat("-", maxlen)
+	for i := range leftitems {
+		v := &leftitems[i]
+		if strings.Index(v.item.cmd.desc, "-") == 0 {
+			v.item.cmd.desc = sss
+		}
+	}
+	return leftitems
 }
 
 func new_codetext_view(buffer *femto.Buffer) *codetextview {

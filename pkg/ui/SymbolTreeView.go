@@ -204,10 +204,10 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	}
 	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy"), func() {
 		ret.handle_commnad(copy_data)
-	}})
+	},false})
 	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Path"), func() {
 		ret.handle_commnad(copy_path)
-	}})
+	},false})
 	ret.right_context = symboltree_view_context{
 		qk:        ret,
 		menu_item: menu_item,
