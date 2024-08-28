@@ -95,18 +95,18 @@ func (v *umlview) Init() {
 
 func openfile(filePath string) {
 
-    var command string
-    switch os := runtime.GOOS; os {
-    case "darwin":
-        command = "open"
-    case "windows":
-        command = "cmd /c start"
-    default:
-        command = "xdg-open" // Linux下的默认命令
-    }
+	var command string
+	switch os := runtime.GOOS; os {
+	case "darwin":
+		command = "open"
+	case "windows":
+		command = "cmd /c start"
+	default:
+		command = "xdg-open" // Linux下的默认命令
+	}
 
-    // 执行命令打开文件
-    exec.Command(command, filePath).Start()
+	// 执行命令打开文件
+	exec.Command(command, filePath).Start()
 }
 func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 	ex, err := lspcore.NewExportRoot(wk)
@@ -127,23 +127,8 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 		main:      main,
 	}
 	menus := []context_menu_item{
-		{
-			item: create_menu_item("External open "),
-			handle: func() {
-				node := file.view.GetCurrentNode()
-				value := node.GetReference()
-				if value != nil {
-					filename := value.(string)
-					yes, err := isDirectory(filename)
-					if err != nil {
-						return
-					}
-					if !yes {
-						openfile(filename)
-					} 
-				}
-			},
-		},
+		menu_open_external(file),
+
 		{
 			item: create_menu_item("Delete "),
 			handle: func() {

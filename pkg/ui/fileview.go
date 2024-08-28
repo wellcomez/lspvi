@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -19,15 +20,43 @@ const (
 
 type file_tree_view struct {
 	*view_link
-	view     *tview.TreeView
-	Name     string
-	main     *mainui
-	rootdir  string
-	handle   func(filename string) bool
-	openfile func(filename string)
-	dir_mode dir_open_mode
+	view          *tview.TreeView
+	Name          string
+	main          *mainui
+	rootdir       string
+	handle        func(filename string) bool
+	openfile      func(filename string)
+	dir_mode      dir_open_mode
+	right_context filetree_contextstruct
 }
 
+type filetree_contextstruct struct {
+	qk        *file_tree_view
+	menu_item []context_menu_item
+	main      *mainui
+}
+
+func (menu filetree_contextstruct) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	if action == tview.MouseRightClick {
+		yes, focuse := menu.qk.view.MouseHandler()(tview.MouseLeftClick, event, nil)
+		log.Println(yes, focuse)
+		return tview.MouseConsumed, nil
+	}
+	return tview.MouseConsumed, nil
+}
+
+// getbox implements context_menu_handle.
+func (menu filetree_contextstruct) getbox() *tview.Box {
+	if menu.qk.hide {
+		return nil
+	}
+	return menu.qk.view.Box
+}
+
+// menuitem implements context_menu_handle.
+func (menu filetree_contextstruct) menuitem() []context_menu_item {
+	return menu.menu_item
+}
 func new_file_tree(main *mainui, name string, rootdir string, handle func(filename string) bool) *file_tree_view {
 	view := tview.NewTreeView()
 	ret := &file_tree_view{
@@ -46,8 +75,38 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
 	ret.dir_mode = dir_open_replace
+	external_open := menu_open_external(ret)
+	menu_item := []context_menu_item{external_open, {item: create_menu_item("hide"), handle: func() {
+		main.toggle_view(view_file)
+	}}}
+	ret.right_context = filetree_contextstruct{
+		qk:        ret,
+		menu_item: menu_item,
+		main:      main,
+	}
 	return ret
 
+}
+
+func menu_open_external(ret *file_tree_view) context_menu_item {
+	external_open := context_menu_item{
+		item: create_menu_item("External open "),
+		handle: func() {
+			node := ret.view.GetCurrentNode()
+			value := node.GetReference()
+			if value != nil {
+				filename := value.(string)
+				yes, err := isDirectory(filename)
+				if err != nil {
+					return
+				}
+				if !yes {
+					openfile(filename)
+				}
+			}
+		},
+	}
+	return external_open
 }
 func CheckIfDir(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)

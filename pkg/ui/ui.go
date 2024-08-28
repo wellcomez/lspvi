@@ -617,6 +617,7 @@ func MainUI(arg *Arguments) {
 		main.callinview.right_context,
 		main.symboltree.right_context,
 		main.uml.file_right_context,
+		main.fileexplorer.right_context,
 	}
 
 	var tabid view_id = view_quickview
@@ -749,13 +750,13 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
 				main.ActiveTab(view_quickview, false)
-				data:=[]ref_with_caller{}
+				data := []ref_with_caller{}
 				for _, loc := range locs {
 					data = append(data, ref_with_caller{
 						Loc: loc,
 					})
 				}
-				main.quickview.main.quickview.UpdateListView(data_search, data,lspcore.SymolSearchKey{Key: txt})
+				main.quickview.main.quickview.UpdateListView(data_search, data, lspcore.SymolSearchKey{Key: txt})
 			}
 		} else {
 			main.codeview.gotoline(gs.GetNext())
