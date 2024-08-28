@@ -306,8 +306,8 @@ func (qk *quick_view) String() string {
 	if len(qk.Refs.Refs) > 0 {
 		index++
 	}
-	key:=qk.searchkey.Key
-	return fmt.Sprintf("%s %s %d/%d", s,key, index, len(qk.Refs.Refs))
+	key := qk.searchkey.Key
+	return fmt.Sprintf("%s %s %d/%d", s, key, index, len(qk.Refs.Refs))
 }
 
 // selection_handle
@@ -352,6 +352,7 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	Refs := get_loc_caller(refs, m.lspmgr.Current)
 
 	qk.UpdateListView(t, Refs, key)
+	qk.save()
 }
 func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.SymolSearchKey) {
 	if key.Key != qk.searchkey.Key {
@@ -409,6 +410,6 @@ func (caller ref_with_caller) ListItem(root string) string {
 		callerstr = caller_to_listitem(caller.Caller, root)
 	}
 	code := line[begin:end]
-	secondline := fmt.Sprintf("%s:%-4d%s		%s", path, v.Range.Start.Line+1, callerstr, code)
+	secondline := fmt.Sprintf("%s -> %s:%-4d %s", callerstr, path, v.Range.Start.Line+1, code)
 	return secondline
 }

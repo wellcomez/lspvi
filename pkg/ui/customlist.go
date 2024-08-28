@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -53,21 +54,50 @@ func find_key_fuzzy2(s string, keys []string, offset int) []keypattern {
 	}
 	return []keypattern{}
 }
-// func find_key_fuzzy(s string, keys []string, offset int) []keypattern {
-// 	for i, v := range keys {
-// 		if len(v) == 0 {
-// 			continue
-// 		}
-// 		idx := strings.Index(strings.ToLower(s), v)
-// 		if idx >= 0 {
-// 			pth := keypattern{begin: idx + offset, width: len(v)}
-// 			a := []keypattern{pth}
-// 			subret := find_key_fuzzy(s[idx+len(v):], keys[i+1:], pth.width+idx+offset)
-// 			return append(a, subret...)
-// 		}
-// 	}
-// 	return []keypattern{}
-// }
+
+//	func find_key_fuzzy(s string, keys []string, offset int) []keypattern {
+//		for i, v := range keys {
+//			if len(v) == 0 {
+//				continue
+//			}
+//			idx := strings.Index(strings.ToLower(s), v)
+//			if idx >= 0 {
+//				pth := keypattern{begin: idx + offset, width: len(v)}
+//				a := []keypattern{pth}
+//				subret := find_key_fuzzy(s[idx+len(v):], keys[i+1:], pth.width+idx+offset)
+//				return append(a, subret...)
+//			}
+//		}
+//		return []keypattern{}
+//	}
+func find_hl_key(ss string) ([]string, string) {
+	key := "**"
+	return remove_hl_flag(ss, key)
+}
+
+func remove_hl_flag(ss string, key string) ([]string, string) {
+	keys := []string{}
+	s := ss
+	for len(s) > 0 {
+		b := strings.Index(s, key)
+		if b >= 0 {
+			e := strings.Index(s[b+1:], key)
+			if e > 0 {
+				key := s[b+2 : b+e+1]
+				keys = append(keys, key)
+				s = s[b+e+3:]
+			} else {
+				break
+			}
+		} else {
+			break
+		}
+	}
+	for _, v := range keys {
+		ss = strings.ReplaceAll(ss, fmt.Sprintf("%s%s%s", key, v, key), v)
+	}
+	return keys, ss
+}
 func find_key(s string, keys []string, offset int) []keypattern {
 	for _, v := range keys {
 		if len(v) == 0 {
@@ -103,7 +133,9 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	}
 	for index := itemoffset; index < len(l.hlitems); index++ {
 		MainText, SecondText := l.List.GetItemText(index)
-		Positions := find_key(MainText, keys, 0)
+		hlkey, MainText := find_hl_key(MainText)
+		hlkey = append(hlkey, keys...)
+		Positions := find_key(MainText, hlkey, 0)
 		if l.fuzz && len(Positions) == 0 && len(keys2) > 0 {
 			Positions = find_key_fuzzy2(MainText, keys2, 0)
 		}
