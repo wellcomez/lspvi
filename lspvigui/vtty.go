@@ -13,6 +13,8 @@ import (
 	"syscall"
 
 	"golang.org/x/sys/unix"
+	"golang.org/x/term"
+
 )
 
 type read struct {
@@ -54,7 +56,13 @@ func ttyname() string {
 	}
 	return ""
 }
-
+func (r *LightRenderer) fd() int {
+	return int(r.ttyin.Fd())
+}
+func (r *LightRenderer) initPlatform() (err error) {
+	r.origState, err = term.MakeRaw(r.fd())
+	return err
+}
 // TtyIn returns terminal device to read user input
 func TtyIn() (*os.File, error) {
 	return openTtyIn()
@@ -81,6 +89,7 @@ func openTty(mode int) (*os.File, error) {
 type LightRenderer struct {
 	ttyin  *os.File
 	ttyout *os.File
+	origState     *term.State
 }
 type TermSize struct {
 	Lines    int
@@ -178,6 +187,10 @@ func ptyOpen() (master *os.File, slave *os.File, err error) {
 		ttyin:  ttyin,
 		ttyout: ttyout,
 	}
+	err=h.initPlatform()
+	if err!=nil{
+		fmt.Println("initPlatform",err)
+	}
 	fmt.Println(h.Size())
 
 	if err := syscall.Pipe2(fds[:], syscall.O_NONBLOCK); err != nil {
@@ -191,11 +204,11 @@ func ptyOpen() (master *os.File, slave *os.File, err error) {
 
 	master = os.NewFile(uintptr(fds[0]), "pty-master")
 	slave = os.NewFile(uintptr(fds[1]), "pty-slave")
-
+	// s,err:=term.MakeRaw(int(slave.Fd()))
+	// if err!=nil{
+	// 	fmt.Println("MakeRaw",err)
+	// }
+	// fmt.Println(s)
 	return
 }
 
-const (
-	// ioctlTtyAlloc 是用于分配一个新的PTY的ioctl命令
-	ioctlTtyAlloc = 0x5412 // TIOCGPT
-)

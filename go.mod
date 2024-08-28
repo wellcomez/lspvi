@@ -63,7 +63,7 @@ require (
 	github.com/rivo/tview v0.0.0-20240807205129-e4c497cc59ed
 	github.com/rivo/uniseg v0.4.7 // indirect
 	go.bug.st/json v1.15.6
-	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/term v0.23.0 // indirect
+	golang.org/x/sys v0.24.0
+	golang.org/x/term v0.23.0
 	golang.org/x/text v0.17.0 // indirect
 )
