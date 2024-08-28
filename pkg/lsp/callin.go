@@ -194,9 +194,12 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 		return err
 	}
 	add := false
+	onechild := len(child) == 1
 	for _, cc := range child {
-		if task.set[key(cc.From)] {
-			continue
+		if !onechild {
+			if task.set[key(cc.From)] {
+				continue
+			}
 		}
 		locations := []lsp.Location{}
 		for i := range cc.FromRanges {

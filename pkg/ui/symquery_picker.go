@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -10,12 +11,11 @@ import (
 )
 
 type workspace_query_picker_impl struct {
-	file     *lspcore.Symbol_file
-	parent   *fzfmain
-	list     *customlist
-	codeprev *CodeView
-	query    string
-	sym      []lsp.SymbolInformation
+	*prev_picker_impl
+	file  *lspcore.Symbol_file
+	list  *customlist
+	query string
+	sym   []lsp.SymbolInformation
 }
 type workspace_query_picker struct {
 	impl *workspace_query_picker_impl
@@ -23,7 +23,7 @@ type workspace_query_picker struct {
 
 // name implements picker.
 func (pk *workspace_query_picker) name() string {
-  return "workspace symbole"
+	return "workspace symbole"
 }
 
 func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInformation, err error) {
@@ -35,7 +35,7 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 				SymInfo: v,
 			}
 			index := i
-			s := fmt.Sprintf("%-40s %s", a.SymbolListStrint(), v.Kind.String())
+			s := fmt.Sprintf("%-4s%-12s%s", a.Icon(), strings.ReplaceAll(v.Kind.String(), "SymbolKind:", ""), strings.TrimLeft(v.Name, " \t"))
 			pk.impl.list.AddItem(s, "", func() {
 				sym := pk.impl.sym[index]
 				main := pk.impl.parent.main
@@ -77,15 +77,14 @@ func (pk *workspace_query_picker) handle() func(event *tcell.EventKey, setFocus 
 }
 
 func new_workspace_symbol_picker(v *fzfmain, file *lspcore.Symbol_file) *workspace_query_picker {
-	main := v.main
 	ret := &workspace_query_picker{
 		impl: &workspace_query_picker_impl{
-			file:     file,
-			parent:   v,
-			list:     new_customlist(),
-			codeprev: NewCodeView(main),
+			prev_picker_impl: new_preview_picker(v),
+			file:             file,
+			list:             new_customlist(),
 		},
 	}
+	ret.impl.prev_picker_impl.use_cusutom_list(ret.impl.list)
 	return ret
 }
 func (pk *workspace_query_picker) grid() *tview.Grid {

@@ -72,6 +72,7 @@ func new_callview(main *mainui) *callinview {
 				if ref, ok := value.(dom_node); ok {
 					sym := ref.call
 					main.get_define(sym.Range, sym.URI.AsPath().String())
+					main.ActiveTab(view_quickview,false)
 				}
 			}
 		}},
@@ -82,6 +83,7 @@ func new_callview(main *mainui) *callinview {
 				if ref, ok := value.(dom_node); ok {
 					sym := ref.call
 					main.get_refer(sym.Range, sym.URI.AsPath().String())
+					main.ActiveTab(view_quickview,false)
 				}
 			}
 		}},
