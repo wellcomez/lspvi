@@ -139,7 +139,7 @@ type bookmark_picker_impl struct {
 
 func get_list_item(v ref_line, root string) (string, string) {
 	path := v.line + ":" + strings.ReplaceAll(v.path, root, "")
-	return fmt.Sprintf("**%s**  %s", v.caller, path), v.code
+	return fmt.Sprintf("%s **%s**", path, v.caller), strings.TrimLeft(v.code, " \t")
 }
 
 type bookmark_edit struct {
