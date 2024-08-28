@@ -76,9 +76,12 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	view.SetInputCapture(ret.KeyHandle)
 	ret.dir_mode = dir_open_replace
 	external_open := menu_open_external(ret)
-	menu_item := []context_menu_item{external_open, {item: create_menu_item("hide"), handle: func() {
-		main.toggle_view(view_file)
-	}}}
+	menu_item := []context_menu_item{
+		external_open,
+		menu_open_parent(ret),
+		{item: create_menu_item("hide"), handle: func() {
+			main.toggle_view(view_file)
+		}}}
 	ret.right_context = filetree_contextstruct{
 		qk:        ret,
 		menu_item: menu_item,
@@ -87,7 +90,29 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	return ret
 
 }
-
+func menu_open_parent(ret *file_tree_view) context_menu_item {
+	external_open := context_menu_item{
+		item: create_menu_item("Goto Parent "),
+		handle: func() {
+			node := ret.view.GetCurrentNode()
+			value := node.GetReference()
+			if value != nil {
+				filename := value.(string)
+				yes, err := isDirectory(filename)
+				if err != nil {
+					return
+				}
+				if !yes {
+					ret.opendir(ret.view.GetRoot(), filepath.Dir(filename))
+				} else {
+					ret.opendir(ret.view.GetRoot(), filepath.Base(filename))
+				}
+				ret.Init()
+			}
+		},
+	}
+	return external_open
+}
 func menu_open_external(ret *file_tree_view) context_menu_item {
 	external_open := context_menu_item{
 		item: create_menu_item("External open "),
