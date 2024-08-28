@@ -19,6 +19,25 @@
             "processId": 0
         },
         {
+            "name": "Launch Package gui",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/lspvigui/main.go",
+            // "console": "externalTerminal",
+            "args": [
+                "-root",
+                // "/Users/jialaizhu/dev/lspgo",
+                // "/home/z/dev/ray/raychain_go/raychain-sdk-go",
+                "/home/z/dev/lsp/goui/",
+                // "/home/z/dev/ray/libusb",
+                // "/chrome/buildcef/chromium/src",
+                // "-file",
+                // "/home/z/dev/lsp/goui/main.go",
+                // "/chrome/buildcef/chromium/src/content/public/browser/navigation_throttle.h"
+            ]
+        },
+        {
             "name": "Launch Package",
             "type": "go",
             "request": "launch",
