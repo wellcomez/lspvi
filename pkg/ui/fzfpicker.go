@@ -24,6 +24,10 @@ type clickdetector struct {
 	lastMouseClick         time.Time // The time when a mouse button was last clicked.
 }
 
+func (c *clickdetector) has_click() bool {
+	return !c.lastMouseClick.Equal(time.Time{})
+}
+
 var DoubleClickInterval = 500 * time.Millisecond
 
 func (a *clickdetector) handle(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -114,7 +118,7 @@ func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	v.create_dialog_content(x, sym)
 	sym.load(ranges)
 }
-func (v *fzfmain) OpenGrepWordFzf(word string, qf func(ref_with_caller)bool) {
+func (v *fzfmain) OpenGrepWordFzf(word string, qf func(ref_with_caller) bool) {
 	sym := new_grep_picker(v)
 	sym.parent.Visible = qf == nil
 	sym.qf = qf
@@ -230,6 +234,8 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 		main:  main,
 		clickcheck: clickdetector{
 			lastMouseClick: time.Time{},
+			mouseDownX:     -1,
+			mouseDownY:     -1,
 		},
 	}
 	new_filewalk(main.root)

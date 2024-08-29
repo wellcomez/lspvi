@@ -26,7 +26,11 @@ func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.
 		layout := layout_list_row_edit(list, code, input)
 		impl.list_click_check = NewFlexListClickCheck(layout, list.List, linenum)
 		impl.list_click_check.on_list_selected = func() {
-			impl.update_preview()
+			if impl.on_list_selected != nil {
+				impl.on_list_selected()
+			} else {
+				impl.update_preview()
+			}
 		}
 		return layout
 	} else {
@@ -35,7 +39,11 @@ func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.
 		layout := layout_list_row_edit(list, code, input)
 		impl.list_click_check = NewFlexListClickCheck(layout, list, linenum)
 		impl.list_click_check.on_list_selected = func() {
-			impl.update_preview()
+			if impl.on_list_selected != nil {
+				impl.on_list_selected()
+			} else {
+				impl.update_preview()
+			}
 		}
 		return layout
 	}
@@ -53,7 +61,11 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 	}
 	impl.list_click_check = NewGridListClickCheck(layout, list, linenum)
 	impl.list_click_check.on_list_selected = func() {
-		impl.update_preview()
+		if impl.on_list_selected != nil {
+			impl.on_list_selected()
+		} else {
+			impl.update_preview()
+		}
 	}
 	return layout
 }
@@ -86,6 +98,7 @@ type prev_picker_impl struct {
 	codeline          []string
 	parent            *fzfmain
 	list_click_check  *GridListClickCheck
+	on_list_selected  func()
 	listdata          []ref_line
 	current_list_data []ref_line
 	fzf               *fzflib.Fzf

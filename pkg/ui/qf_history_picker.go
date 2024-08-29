@@ -137,7 +137,7 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		if len(v.Key.File) > 0 {
 			file_info = fmt.Sprintf("%s %d:%d", strings.ReplaceAll(v.Key.File, root, ""), v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
 		}
-		keymaplist = append(keymaplist, fmt.Sprintf("%s:%s 		%s", v.Type.String(), v.Key.Key, file_info))
+		keymaplist = append(keymaplist, fmt.Sprintf("%-10s %-20s  %s", v.Type.String(), v.Key.Key, file_info))
 	}
 
 	var options = fzf.DefaultOptions()
@@ -158,6 +158,9 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		list: list,
 	}
 	ret.impl.selectIndex = []int32{}
+	x.on_list_selected = func() {
+		ret.updateprev()
+	}
 	for i, value := range keymaplist {
 		index := i
 		ret.impl.selectIndex = append(ret.impl.selectIndex, int32(i))
@@ -204,52 +207,62 @@ func (qk *qk_history_picker) updateprev() {
 	index := qk.impl.selectIndex[qk.list.GetCurrentItem()]
 	keys := qk.impl.keys
 	item := qk.impl.keys[index]
-	if item.Type == data_refs {
-		caller := keys[index].Result.Refs
-		_,_,width,_:=qk.prev_picker_impl.listview.GetInnerRect()
-		dataprev := []string{}
-		for _, call := range caller {
-			call.width = width
-			dataprev = append(dataprev, call.ListItem(qk.parent.main.root))
+	switch item.Type {
+
+	case data_refs, data_grep_word, data_search:
+		{
+			caller := keys[index].Result.Refs
+			_, _, width, _ := qk.prev_picker_impl.listview.GetInnerRect()
+			dataprev := []string{}
+			for _, call := range caller {
+				call.width = width
+				dataprev = append(dataprev, call.ListItem(qk.parent.main.root))
+			}
+			qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
 		}
-		qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
-	} else if item.Type == data_callin {
-		callin := keys[index].Key.File
-		fielname := filepath.Join(callin, "callstack.json")
-		_, err := os.Stat(fielname)
-		if err == nil {
-			buf, err := os.ReadFile(fielname)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			var task lspcore.CallInTask
-			err = json.Unmarshal(buf, &task)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			content := []string{}
-			for _, s := range task.Allstack {
-				tab := ""
-				for _, v := range s.Items {
-					ss := tab + "->" + v.Name
-					content = append(content, ss)
-					tab += " "
+	case data_callin:
+		{
+			callin := keys[index].Key.File
+			fielname := filepath.Join(callin, "callstack.json")
+			_, err := os.Stat(fielname)
+			if err == nil {
+				buf, err := os.ReadFile(fielname)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				var task lspcore.CallInTask
+				err = json.Unmarshal(buf, &task)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				content := []string{}
+				for _, s := range task.Allstack {
+					tab := ""
+					for _, v := range s.Items {
+						ss := tab + "->" + v.Name
+						content = append(content, ss)
+						tab += " "
+					}
+				}
+				data := strings.Join(content, "\n")
+				qk.codeprev.LoadBuffer([]byte(data), "")
+			} else {
+				dirs, err := os.ReadDir(callin)
+				content := []string{}
+				for _, item := range dirs {
+					content = append(content, item.Name())
+				}
+				data := strings.Join(content, "\n")
+				if err == nil {
+					qk.codeprev.LoadBuffer([]byte(data), "")
 				}
 			}
-			data := strings.Join(content, "\n")
-			qk.codeprev.LoadBuffer([]byte(data), "")
-		} else {
-			dirs, err := os.ReadDir(callin)
-			content := []string{}
-			for _, item := range dirs {
-				content = append(content, item.Name())
-			}
-			data := strings.Join(content, "\n")
-			if err == nil {
-				qk.codeprev.LoadBuffer([]byte(data), "")
-			}
+		}
+	default:
+		{
+			qk.codeprev.LoadBuffer([]byte("????"), "")
 		}
 	}
 }

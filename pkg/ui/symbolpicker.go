@@ -43,6 +43,9 @@ func NewBoxListClickCheck(grid *tview.Box, list *tview.List, line int) *GridList
 	}
 	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
 		if action == tview.MouseMove {
+			if !ret.has_click() {
+				return
+			}
 			idx, err := get_grid_list_index(list, event, line)
 			if err == nil {
 				begin, _ := list.GetOffset()
