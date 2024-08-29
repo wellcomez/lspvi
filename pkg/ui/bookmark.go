@@ -213,6 +213,7 @@ func init_bookmark_list(main *mainui, selected func(int)) (*customlist, []ref_li
 }
 
 func reload_bookmark_list(main *mainui, hlist *customlist, selected func(int)) []ref_line {
+	hlist.Clear()
 	bookmark := main.bookmark
 	marks := bookmark.Bookmark
 	listdata := []ref_line{}
@@ -238,7 +239,7 @@ func reload_bookmark_list(main *mainui, hlist *customlist, selected func(int)) [
 	for i, v := range listdata {
 		a, b := get_list_item(v, root)
 		index := i
-		hlist.AddItem(a, b, func() { selected(index) })
+		hlist.AddItem(fmt.Sprintf("**%-03d** %s", i+1, a), fmt.Sprintf("   %s", b), func() { selected(index) })
 	}
 	return listdata
 }
@@ -273,7 +274,7 @@ func (bk bookmark_view) onsave() {
 	b.data = reload_bookmark_list(b.main, b.customlist, func(i int) {
 		b.onclick(i)
 	})
-	b.fzf=new_fzf_on_list(b.customlist,true)
+	b.fzf = new_fzf_on_list(b.customlist, true)
 }
 func (bk *bookmark_view) OnSearch(txt string) {
 	bk.customlist.Key = txt
@@ -288,7 +289,7 @@ func (bk *bookmark_view) OnSearch(txt string) {
 }
 func new_bookmark_view(main *mainui) *bookmark_view {
 	ret := &bookmark_view{
-		view_link: &view_link{up: view_code,left: view_uml,right: view_outline_list},
+		view_link: &view_link{up: view_code, left: view_uml, right: view_outline_list},
 		Name:      view_bookmark.getname(),
 		main:      main,
 	}
