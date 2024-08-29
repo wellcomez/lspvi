@@ -6,20 +6,17 @@ import (
 	"path/filepath"
 )
 
-type uisize struct {
-	Width int
-	Hide  bool
-}
 type editor_area_layout struct {
-	Code uisize
-	File uisize
-	Sym  uisize
 	main *mainui
 	name string
 }
 
 func (e editor_area_layout) save() error {
-	buf, err := json.Marshal(e)
+	buf, err := json.Marshal(editlayout_config_data{
+		Sym:  *e.main.symboltree.view_link,
+		File: *e.main.fileexplorer.view_link,
+		Code: *e.main.codeview.view_link,
+	})
 	if err == nil {
 		return os.WriteFile(e.name, buf, 0666)
 	}
@@ -27,72 +24,56 @@ func (e editor_area_layout) save() error {
 }
 func (e *editor_area_layout) increate(id view_id, a int) {
 	link := id.to_view_link(e.main)
-	if link == nil {
-		return
+	if link != nil {
+		link.Width += a
+		e.save()
 	}
-	s := e.get_view_uisize(id)
-	if s == nil {
-		return
-	}
-	link.Width += a
-	s.Width = link.Width
-	e.config_to_ui()
 }
 
-func (e *editor_area_layout) get_view_uisize(id view_id) *uisize {
-	var s *uisize
-	switch id {
-	case view_code:
-		s = &e.Code
-	case view_file:
-		s = &e.File
-	case view_outline_list:
-		s = &e.Sym
-	}
-	return s
-}
 func (e *editor_area_layout) Hide(id view_id, yes bool) {
-	s := e.get_view_uisize(id)
-	if s == nil {
-		return
+	link := id.to_view_link(e.main)
+	if link != nil {
+		link.Hide = yes
+		e.save()
 	}
-	s.Hide = yes
-	e.config_to_ui()
 }
+
+type editlayout_config_data struct {
+	Code, File, Sym view_link
+}
+
 func new_editor_area_config(m *mainui, root *workdir) *editor_area_layout {
 	e := &editor_area_layout{main: m}
-	e.Code = uisize{Width: 20, Hide: false}
-	e.File = uisize{Width: 5, Hide: false}
-	e.Sym = uisize{Width: 5, Hide: false}
+	m.codeview.Width = 20
+	m.codeview.Hide = false
+
+	m.fileexplorer.Width = 5
+	m.fileexplorer.Hide = false
+
+	m.symboltree.Width = 5
+	m.symboltree.Hide = false
+
 	file := filepath.Join(root.export, "editlayout.json")
 	e.name = file
 	buf, err := os.ReadFile(file)
-	var v editor_area_layout
+	var v editlayout_config_data
 	if err != nil {
 		return e
 	}
 	err = json.Unmarshal(buf, &v)
 	if err == nil {
-		e.Code = v.Code
-		e.File = v.File
-		e.Sym = v.Sym
+		m.codeview.Width = v.Code.Width
+		m.codeview.Hide = v.Code.Hide
+
+		m.fileexplorer.Width = v.File.Width
+		m.fileexplorer.Hide = v.File.Hide
+
+		m.symboltree.Width = v.Sym.Width
+		m.symboltree.Hide = v.Sym.Hide
 	}
-	e.config_to_ui()
 	return e
 }
 
-func (e *editor_area_layout) config_to_ui() {
-	m := e.main
-	m.codeview.Width = e.Code.Width
-	m.codeview.Hide = e.Code.Hide
-
-	m.fileexplorer.Width = e.File.Width
-	m.fileexplorer.Hide = e.File.Hide
-
-	m.symboltree.Width = e.Sym.Width
-	m.symboltree.Hide = e.Sym.Hide
-	e.save()
-}
 func (e *editor_area_layout) zoom(zoomin bool, viewid view_id) {
 	m := e.main
 	add := 1
