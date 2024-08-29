@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
@@ -79,6 +80,7 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	external_open := menu_open_external(ret, false)
 	menu_item := []context_menu_item{
 		external_open,
+		menu_copy_path(ret, false),
 		menu_open_parent(ret),
 		menu_zoom(ret, false),
 		menu_zoom(ret, true),
@@ -126,6 +128,21 @@ func menu_open_parent(ret *file_tree_view) context_menu_item {
 				ret.Init()
 			}
 		},
+	}
+	return external_open
+}
+func menu_copy_path(ret *file_tree_view, hide bool) context_menu_item {
+	external_open := context_menu_item{
+		item: create_menu_item("Copy path name "),
+		handle: func() {
+			node := ret.view.GetCurrentNode()
+			value := node.GetReference()
+			if value != nil {
+				filename := value.(string)
+				clipboard.WriteAll(filename)
+			}
+		},
+		hide: hide,
 	}
 	return external_open
 }
