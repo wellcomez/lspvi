@@ -49,6 +49,7 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 
 // UpdateQuery implements picker.
 func (pk *workspace_query_picker) UpdateQuery(query string) {
+	if pk.impl.file==nil {return }
 	pk.impl.query = query
 	pk.impl.list.Clear()
 	go func() {
