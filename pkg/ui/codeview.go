@@ -37,7 +37,7 @@ type CodeView struct {
 	rightmenu_select_range       lsp.Range
 	rightmenu                    CodeContextMenu
 	LineNumberUnderMouse         int
-	not_preview 				 bool
+	not_preview                  bool
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -151,7 +151,7 @@ func NewCodeView(main *mainui) *CodeView {
 		right: view_outline_list,
 		down:  view_quickview,
 		left:  view_file},
-		theme: "darcula",
+		theme:       "darcula",
 		not_preview: false,
 	}
 	ret.rightmenu = CodeContextMenu{code: &ret}
@@ -324,7 +324,11 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	x, y := event.Position()
+	loc1 := code.view.Cursor.Loc
 	a, b := code.handle_mouse_impl(action, event)
+	loc2 := code.view.Cursor.Loc
+	log.Println("action", action, "x:", x, "y:", y, "loc1:", loc1, "loc2:", loc2)
 	return a, b
 }
 func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -398,17 +402,17 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		gap := 1
 		// posY=root.Cursor.Y
 		if action == 14 {
-			posY = posY + gap
+			// posY = posY + gap
 			root.ScrollDown(gap)
 		} else {
-			posY = posY - gap
+			// posY = posY - gap
 			root.ScrollUp(gap)
 		}
-		posX = posX - int(xOffset)
-		root.Cursor.Loc = tab_loc(root, femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))})
+		// posX = posX - int(xOffset)
+		// root.Cursor.Loc = tab_loc(root, femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))})
 		// log.Println(root.Cursor.Loc)
-		root.SelectLine()
-		code.update_with_line_changed()
+		// root.SelectLine()
+		// code.update_with_line_changed()
 		code.LineNumberUnderMouse = root.Cursor.Loc.Y - root.Topline
 		return tview.MouseConsumed, nil
 	}
@@ -803,7 +807,7 @@ func (code *CodeView) gotoline(line int) {
 		code.view.EndOfLine()
 		return
 	}
-	if code.main != nil && code.not_preview{
+	if code.main != nil && code.not_preview {
 		code.main.bf.history.SaveToHistory(code)
 		code.main.bf.history.AddToHistory(code.filename, NewEditorPosition(line, code))
 	}
@@ -841,6 +845,7 @@ func (code *CodeView) gotoline(line int) {
 	Cur.Loc = Cur.CurSelection[0]
 	code.update_with_line_changed()
 
+	log.Println("loc",code.view.Cursor.Loc,code.view.Cursor.GetSelection())
 	// codeview.view.Cursor.CurSelection[0] = femto.Loc{
 	// 	X: 0,
 	// 	Y: line,
