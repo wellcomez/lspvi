@@ -241,6 +241,7 @@ type bookmark_view struct {
 }
 
 func (bk *bookmark_view) OnSearch(txt string) {
+	bk.customlist.Key = txt
 	old := bk.fzf.OnSearch(txt, true)
 	if len(txt) > 0 {
 		highlight_search_key(old, bk.customlist, txt)
