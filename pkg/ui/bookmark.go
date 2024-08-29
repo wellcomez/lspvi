@@ -3,8 +3,6 @@ package mainui
 import (
 	"encoding/json"
 	"fmt"
-
-	// "log"
 	"os"
 	"strings"
 
@@ -238,10 +236,18 @@ type bookmark_view struct {
 func new_bookmark_view(main *mainui) *bookmark_view {
 	ret := &bookmark_view{
 		view_link: &view_link{},
-		Name:      "bookmark",
+		Name:      view_bookmark.getname(),
 	}
-	a, b := init_bookmark_list(main, func(i int) {})
-	ret.customlist= a
+	a, b := init_bookmark_list(main, func(i int) {
+		loc := ret.data[i].loc
+		ret.customlist.SetCurrentItem(i)
+		main.gotoline(loc)
+	})
+	ret.customlist = a
+	ret.customlist.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
+		loc := ret.data[i].loc
+		main.gotoline(loc)
+	})
 	ret.data = b
 	return ret
 }

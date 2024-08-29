@@ -171,14 +171,12 @@ func (m *mainui) UpdatePageTitle() {
 	for _, v := range names {
 		name := v
 		switch name {
-		case "quickview":
-			m.page.SetTitle(m.quickview.String())
-		case "callin":
-			m.page.SetTitle(m.callinview.Name)
-		case "uml":
-			m.page.SetTitle(m.uml.Name)
-		case "log":
-			m.page.SetTitle("log")
+		case view_bookmark.getname():
+		case view_quickview.getname():
+		case view_callin.getname():
+		case view_uml.getname():
+		case view_log.getname():
+			m.page.SetTitle(name)
 		default:
 			return
 		}

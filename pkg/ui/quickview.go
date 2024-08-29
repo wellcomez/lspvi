@@ -187,7 +187,7 @@ func (menu quick_view_context) on_mouse(action tview.MouseAction, event *tcell.E
 
 // getbox implements context_menu_handle.
 func (menu quick_view_context) getbox() *tview.Box {
-	yes := menu.qk.main.is_tab("quickview")
+	yes := menu.qk.main.is_tab(view_quickview.getname())
 	if yes {
 		return menu.qk.view.Box
 	}

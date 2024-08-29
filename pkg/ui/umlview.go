@@ -41,7 +41,7 @@ func (menu uml_filetree_context) on_mouse(action tview.MouseAction, event *tcell
 
 // getbox implements context_menu_handle.
 func (menu uml_filetree_context) getbox() *tview.Box {
-	yes := menu.main.is_tab("uml")
+	yes := menu.main.is_tab(view_uml.getname())
 	if yes {
 		return menu.qk.view.Box
 	}
