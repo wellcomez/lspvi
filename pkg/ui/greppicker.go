@@ -22,6 +22,7 @@ type livewgreppicker struct {
 	list *customlist
 	main *mainui
 	impl *grep_impl
+	qf   func(ref_with_caller) bool
 }
 
 // name implements picker.
@@ -72,7 +73,7 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 	return pk.handle_key_override
 }
 
-func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex{
+func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	layout := pk.prev_picker_impl.flex(input, 1)
 	pk.list_click_check.on_list_selected = func() {
 		pk.update_preview()
@@ -147,7 +148,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 				},
 			},
 		}
-		if !grepx.qf(ref){
+		if !grepx.qf(ref) {
 			grep.grep.abort()
 		}
 	}

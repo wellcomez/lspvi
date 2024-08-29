@@ -100,7 +100,6 @@ type prev_picker_impl struct {
 	list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
-	qf               func(ref_with_caller) bool
 }
 
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
@@ -309,7 +308,6 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 		listview: tview.NewList(),
 		codeprev: NewCodeView(v.main),
 		parent:   v,
-		qf:       nil,
 	}
 	return x
 }
