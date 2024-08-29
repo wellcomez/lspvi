@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	lsp "github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
@@ -101,8 +100,8 @@ type prev_picker_impl struct {
 	on_list_selected  func()
 	listdata          []ref_line
 	current_list_data []ref_line
-	fzf               *fzflib.Fzf
-	qf                func(ref_with_caller) bool
+	// fzf               *fzflib.Fzf
+	qf func(ref_with_caller) bool
 }
 
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
@@ -122,6 +121,7 @@ type refpicker_impl struct {
 	*prev_picker_impl
 	file *lspcore.Symbol_file
 	refs []ref_with_caller
+	fzf  *fzf_on_listview
 }
 type refpicker struct {
 	impl *refpicker_impl
@@ -243,10 +243,8 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 			impl.open_location(v)
 		})
 	}
-	option := fzflib.DefaultOptions()
-	option.CaseMode = fzflib.CaseIgnore
-	pk.impl.fzf = fzflib.New(datafzf, option)
 	pk.impl.current_list_data = pk.impl.listdata
+	pk.loadlist()
 	pk.update_preview()
 }
 
@@ -301,6 +299,7 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 			file:             &clone,
 		},
 	}
+	sym.impl.use_cusutom_list(new_customlist())
 	sym.impl.codeprev.view.SetBorder(true)
 	return sym
 }
@@ -335,37 +334,36 @@ func (pk refpicker) handle() func(event *tcell.EventKey, setFocus func(p tview.P
 }
 func (pk refpicker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
-	listview := pk.impl.listview
+	listview := pk.impl.listcustom
+	listview.Key = query
 	listview.Clear()
-	var result fzflib.SearchResult
-	if fzf := pk.impl.fzf; fzf != nil {
-		fzf.Search(query)
-		result = <-fzf.GetResultChannel()
-		pk.impl.current_list_data = []ref_line{}
-		for _, v := range result.Matches {
-			v := pk.impl.listdata[v.HayIndex]
-			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
-			callinfo := v.caller
-			listview.AddItem(
-				fmt.Sprintf("%s:%d%s", v.path, v.loc.Range.Start.Line, callinfo),
-				v.line, 0, func() {
-					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
-					pk.impl.parent.hide()
-				})
-		}
-	} else {
-		pk.impl.current_list_data = []ref_line{}
-		for i := range pk.impl.listdata {
-			v := pk.impl.listdata[i]
-			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
-			if strings.Contains(strings.ToLower(v.line), query) {
-				listview.AddItem(v.path, v.line, 0, func() {
-					close_bookmark_picker(pk.impl.prev_picker_impl, v.loc)
-					// pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
-					// pk.impl.parent.hide()
-				})
-			}
-		}
+	selected := func(i int) {
+		pk.onselected(i)
 	}
-	pk.update_preview()
+	if fzf := pk.impl.fzf; fzf != nil {
+		fzf.selected = selected
+		fzf.OnSearch(query, true)
+		pk.update_preview()
+	}
+}
+
+func (pk refpicker) onselected(i int) {
+	index := pk.impl.fzf.get_data_index(i)
+	v := pk.impl.current_list_data[index]
+
+	pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
+	pk.impl.parent.hide()
+}
+
+func (pk *refpicker) loadlist() {
+	listview := pk.impl.listcustom
+	pk.impl.current_list_data = []ref_line{}
+	for i := range pk.impl.listdata {
+		v := pk.impl.listdata[i]
+		pk.impl.current_list_data = append(pk.impl.current_list_data, v)
+		listview.AddItem(v.path, v.line, func() {
+			pk.onselected(i)
+		})
+	}
+	pk.impl.fzf = new_fzf_on_list(listview, true)
 }
