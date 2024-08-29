@@ -27,10 +27,12 @@ type context_menu_item struct {
 	handle func()
 	hide   bool
 }
+
 func create_menu_item(name string) cmditem {
 	x := cmditem{cmd: cmdactor{desc: name}}
 	return x
 }
+
 type contextmenu_impl struct {
 	items []context_menu_item
 }
@@ -58,7 +60,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		if v.visible {
 			mouseX, mouseY := event.Position()
 			height := len(v.impl.items) + 2
-			v.table.SetRect(mouseX, mouseY, v.width, height)
+			v.table.SetRect(mouseX, mouseY, v.width-1, height)
 			menu.MenuPos = MousePosition{mouseX, mouseY}
 		}
 		return tview.MouseConsumed, nil
@@ -104,14 +106,18 @@ type context_menu_handle interface {
 
 func (t *contextmenu) menu_text() []string {
 	ret := []string{}
+	size := 0
 	for _, v := range t.impl.items {
-
-		s1 := fmt.Sprintf("%-5s", v.item.key.string())
+		size = max(len(v.item.cmd.desc), size)
+	}
+	fmtstr := "%-" + fmt.Sprint(size) + "s"
+	for _, v := range t.impl.items {
+		keystr := v.item.key.string()
 		var s string
-		if len(s1) > 0 {
-			s = fmt.Sprintf("%s %s", v.item.key.string(), v.item.cmd.desc)
+		if len(keystr) > 0 {
+			s = fmt.Sprintf(" %-2s "+fmtstr, keystr, v.item.cmd.desc)
 		} else {
-			s = v.item.cmd.desc
+			s = fmt.Sprintf(" "+fmtstr, v.item.cmd.desc)
 		}
 		ret = append(ret, s)
 	}

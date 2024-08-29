@@ -186,15 +186,12 @@ func (m *mainui) UpdatePageTitle() {
 }
 func (m *mainui) is_tab(tabname string) bool {
 	pages := m.page.GetPageNames(true)
-	find := false
 	for _, v := range pages {
 		if v == tabname {
-			find = true
-			break
+			return true
 		}
 	}
-	yes := m.quickview.view.HasFocus() || find
-	return yes
+	return false
 }
 
 func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
