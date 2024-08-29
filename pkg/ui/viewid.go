@@ -10,9 +10,9 @@ import (
 type view_id int
 type view_link struct {
 	next, left, right, up, down view_id
-	width                       int
-	heigth                      int
-	hide                        bool
+	Width                       int
+	Heigth                      int
+	Hide                        bool
 }
 
 const (
@@ -85,7 +85,7 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 }
 func find_name_to_viewid(m string) view_id {
 	for _, v := range all_view_list {
-		if v.getname()==m{
+		if v.getname() == m {
 			return v
 		}
 	}

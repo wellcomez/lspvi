@@ -293,7 +293,7 @@ func (m *mainui) Init() {
 }
 
 func (m mainui) OnCodeLineChange(line int) {
-	if m.symboltree.hide {
+	if m.symboltree.Hide {
 		return
 	}
 	m.symboltree.OnCodeLineChange(line)
@@ -494,10 +494,10 @@ func MainUI(arg *Arguments) {
 	main.app = app
 	codeview := NewCodeView(&main)
 	codeview.not_preview = true
-	codeview.width = 8
+	codeview.Width = 8
 	// main.fzf = new_fzfview()
 	symbol_tree := NewSymbolTreeView(&main)
-	symbol_tree.width = 2
+	symbol_tree.Width = 2
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetBorder(true)
 
@@ -511,7 +511,7 @@ func MainUI(arg *Arguments) {
 	// symbol_tree.update()
 
 	main.fileexplorer = new_file_tree(&main, "FileExplore", main.root, func(filename string) bool { return true })
-	main.fileexplorer.width = 2
+	main.fileexplorer.Width = 2
 	main.fileexplorer.Init()
 	main.fileexplorer.openfile = main.open_file
 	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
@@ -541,9 +541,9 @@ func MainUI(arg *Arguments) {
 	main._editor_area_layout = new_editor_area_config(&main, &lspviroot)
 	editor_area :=
 		tview.NewFlex().SetDirection(tview.FlexColumn).
-			AddItem(main.fileexplorer.view, 0, main.fileexplorer.width, false).
-			AddItem(codeview.view, 0, main.codeview.width, true).
-			AddItem(symbol_tree.view, 0, symbol_tree.width, false)
+			AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
+			AddItem(codeview.view, 0, main.codeview.Width, true).
+			AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
 	uml, err := NewUmlView(&main, &main.lspmgr.Wk)
 	if err != nil {
 		log.Fatal(err)

@@ -180,11 +180,11 @@ func NewCodeView(main *mainui) *CodeView {
 func update_selection_menu(ret *CodeView) {
 	main := ret.main
 	toggle_file_view := "Toggle file view"
-	if !main.fileexplorer.hide {
+	if !main.fileexplorer.Hide {
 		toggle_file_view = "Hide file view"
 	}
 	toggle_outline := "Toggle outline view"
-	if !main.symboltree.hide {
+	if !main.symboltree.Hide {
 		toggle_outline = "Hide outline view"
 	}
 	items := []context_menu_item{
@@ -845,7 +845,7 @@ func (code *CodeView) gotoline(line int) {
 	Cur.Loc = Cur.CurSelection[0]
 	code.update_with_line_changed()
 
-	log.Println("loc",code.view.Cursor.Loc,code.view.Cursor.GetSelection())
+	log.Println("loc", code.view.Cursor.Loc, code.view.Cursor.GetSelection())
 	// codeview.view.Cursor.CurSelection[0] = femto.Loc{
 	// 	X: 0,
 	// 	Y: line,

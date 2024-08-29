@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 )
+
 type uisize struct {
 	Width int
 	Hide  bool
@@ -33,8 +34,8 @@ func (e *editor_area_layout) increate(id view_id, a int) {
 	if s == nil {
 		return
 	}
-	link.width += a
-	s.Width = link.width
+	link.Width += a
+	s.Width = link.Width
 	e.config_to_ui()
 }
 
@@ -82,14 +83,14 @@ func new_editor_area_config(m *mainui, root *workdir) *editor_area_layout {
 
 func (e *editor_area_layout) config_to_ui() {
 	m := e.main
-	m.codeview.width = e.Code.Width
-	m.codeview.hide = e.Code.Hide
+	m.codeview.Width = e.Code.Width
+	m.codeview.Hide = e.Code.Hide
 
-	m.fileexplorer.width = e.File.Width
-	m.fileexplorer.hide = e.File.Hide
+	m.fileexplorer.Width = e.File.Width
+	m.fileexplorer.Hide = e.File.Hide
 
-	m.symboltree.width = e.Sym.Width
-	m.symboltree.hide = e.Sym.Hide
+	m.symboltree.Width = e.Sym.Width
+	m.symboltree.Hide = e.Sym.Hide
 	e.save()
 }
 func (e *editor_area_layout) zoom(zoomin bool, viewid view_id) {
@@ -115,7 +116,7 @@ func (e *editor_area_layout) toggle_view(id view_id) {
 	switch id {
 	case view_file, view_outline_list:
 		if link := id.to_view_link(m); link != nil {
-			m._editor_area_layout.Hide(id, !link.hide)
+			m._editor_area_layout.Hide(id, !link.Hide)
 		} else {
 			return
 		}
@@ -128,11 +129,11 @@ func (e *editor_area_layout) toggle_view(id view_id) {
 func (e editor_area_layout) update_editerea_layout() {
 	m := e.main
 	m.layout.editor_area.Clear()
-	if !m.fileexplorer.hide {
-		m.layout.editor_area.AddItem(m.fileexplorer.view, 0, m.fileexplorer.width, false)
+	if !m.fileexplorer.Hide {
+		m.layout.editor_area.AddItem(m.fileexplorer.view, 0, m.fileexplorer.Width, false)
 	}
-	m.layout.editor_area.AddItem(m.codeview.view, 0, m.codeview.width, false)
-	if !m.symboltree.hide {
-		m.layout.editor_area.AddItem(m.symboltree.view, 0, m.symboltree.width, false)
+	m.layout.editor_area.AddItem(m.codeview.view, 0, m.codeview.Width, false)
+	if !m.symboltree.Hide {
+		m.layout.editor_area.AddItem(m.symboltree.view, 0, m.symboltree.Width, false)
 	}
 }
