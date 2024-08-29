@@ -566,7 +566,9 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 // EnterFind enters find mode.
 func (v *Vim) EnterFind() bool {
 	if v.vi.Escape {
+		aaa:=v.app.prefocused
 		v.MoveFocus()
+		v.app.prefocused=aaa
 		v._enter_find_mode()
 		return true
 	} else {

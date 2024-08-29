@@ -59,6 +59,8 @@ type quick_view struct {
 	menuitem      []context_menu_item
 	searchkey     lspcore.SymolSearchKey
 	right_context quick_view_context
+
+	cmd_search_key string
 }
 type qf_history_data struct {
 	Type   DateType
@@ -296,7 +298,46 @@ func (qk *quick_view) go_next() {
 		qk.selection_handle_impl(next, false)
 	}
 }
-func (main *quick_view) OnSearch(txt string) {
+func (qk *quick_view) OnSearch(txt string) {
+	old_query := qk.cmd_search_key
+	view := qk.view
+
+	highlight_search_key(old_query, view, txt)
+	qk.cmd_search_key = txt
+}
+
+func highlight_search_key(old_query string, view *customlist, new_query string) {
+	sss := [][2]string{}
+	ptn := ""
+	if old_query != "" {
+		ptn = fmt.Sprintf("**%s**", old_query)
+	}
+	for i := 0; i < view.GetItemCount(); i++ {
+		m, s := view.GetItemText(i)
+		if len(ptn) > 0 {
+			m = strings.ReplaceAll(m, ptn, old_query)
+			s = strings.ReplaceAll(s, ptn, old_query)
+		}
+		sss = append(sss, [2]string{m, s})
+	}
+	if len(new_query) > 0 {
+		if new_query != "" {
+			ptn = fmt.Sprintf("**%s**", new_query)
+		}
+		for i := range sss {
+			v := &sss[i]
+			m := v[0]
+			s := v[1]
+			m = strings.ReplaceAll(m, new_query, ptn)
+			s = strings.ReplaceAll(s, new_query, ptn)
+			v[0] = m
+			v[1] = s
+		}
+	}
+	view.Clear()
+	for _, v := range sss {
+		view.AddItem(v[0], v[1], nil)
+	}
 }
 
 // String
@@ -362,7 +403,7 @@ func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.
 	qk.Type = t
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
 	qk.searchkey = key
-	_,_,width,_:=qk.view.GetRect()
+	_, _, width, _ := qk.view.GetRect()
 	caller.width = width
 	secondline := caller.ListItem(qk.main.root)
 	if len(secondline) == 0 {
@@ -380,7 +421,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.Clear()
 	qk.view.SetCurrentItem(-1)
 	qk.currentIndex = 0
-	_,_,width,_:=qk.view.GetRect()
+	_, _, width, _ := qk.view.GetRect()
 	for _, caller := range qk.Refs.Refs {
 		caller.width = width
 		secondline := caller.ListItem(qk.main.root)
@@ -405,7 +446,7 @@ func (caller ref_with_caller) ListItem(root string) string {
 	if len(line) == 0 {
 		return ""
 	}
-	gap := max(40,caller.width/2)
+	gap := max(40, caller.width/2)
 	begin := max(0, v.Range.Start.Character-gap)
 	end := min(len(line), v.Range.Start.Character+gap)
 	path := strings.Replace(v.URI.AsPath().String(), root, "", -1)
