@@ -25,12 +25,12 @@ func grid_list_whole_screen(list tview.Primitive, input *tview.InputField) *tvie
 
 type history_picker_impl struct {
 	*fzflist_impl
-	match_index []int
-	listdata    []history_item
+	listdata []history_item
 }
 
 type history_picker struct {
 	impl *history_picker_impl
+	fzf  *fzf_on_listview
 	// list      *customlist
 	// listcheck *GridListClickCheck
 }
@@ -64,21 +64,31 @@ func new_history_picker(v *fzfmain) history_picker {
 	options.Fuzzy = sym.impl.list.fuzz
 	options.CaseMode = fzflib.CaseIgnore
 	items := []history_item{}
-	fzf_item_strings := []string{}
-	for _, h := range history.history_files() {
+	// fzf_item_strings := []string{}
+	close := func(i int) {
+		index := sym.fzf.get_data_index(i)
+		v := sym.impl.listdata[index]
+		path := v.filepath
+		parent := sym.impl.parent
+		parent.openfile(path)
+	}
+	for i, h := range history.history_files() {
 
 		dispname := strings.TrimPrefix(h, v.main.root)
 		h := history_item{
 			filepath: h,
 			dispname: dispname,
 		}
-		fzf_item_strings = append(fzf_item_strings, dispname)
+		index := i
+		// fzf_item_strings = append(fzf_item_strings, dispname)
+		sym.impl.list.AddItem(h.dispname, "", func() {
+			close(index)
+		})
 		items = append(items, h)
 	}
 	sym.impl.listdata = items
-	fzf := fzflib.New(fzf_item_strings, options)
-	sym.impl.fzf = fzf
-	sym.UpdateQuery("")
+	sym.fzf = new_fzf_on_list(sym.impl.list, true)
+	sym.fzf.selected = close
 	return sym
 }
 func (pk history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -101,22 +111,6 @@ func (pk history_picker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
 	listview := pk.impl.list
 	listview.Clear()
-	fzf := pk.impl.fzf
-	var result fzflib.SearchResult
-	fzf.Search(query)
-	result = <-fzf.GetResultChannel()
-	match_index := []int{}
 	listview.Key = query
-	h := pk.impl.listdata
-	for _, m := range result.Matches {
-		index := m.HayIndex
-		match_index = append(match_index, int(index))
-		v := h[index]
-		listview.AddItem(v.dispname, "", func() {
-			path := v.filepath
-			parent := pk.impl.parent
-			parent.openfile(path)
-		})
-	}
-	pk.impl.match_index = match_index
+	pk.fzf.OnSearch(query, true)
 }

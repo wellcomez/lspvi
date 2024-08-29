@@ -44,7 +44,7 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 		pk.parent.hide()
 		pk.open_in_qf()
 	}
-	pk.impl.OnSearch(query)
+	pk.impl.OnSearch(query,true)
 }
 func (pk *qk_history_picker) grid() tview.Primitive {
 	return pk.flex(pk.parent.input, 1)
@@ -116,7 +116,7 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 }
 
 func (qk *qk_history_picker) open_in_qf() {
-	i := qk.impl.get_data_index()
+	i := qk.impl.get_data_index(-1)
 	item := qk.impl.keys[i]
 	if item.Type == data_refs || item.Type == data_search || item.Type == data_grep_word {
 		qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
@@ -144,7 +144,7 @@ func (qk *qk_history_picker) open_in_qf() {
 }
 
 func (qk *qk_history_picker) updateprev() {
-	index := qk.impl.get_data_index()
+	index := qk.impl.get_data_index(-1)
 	keys := qk.impl.keys
 	item := qk.impl.keys[index]
 	switch item.Type {
