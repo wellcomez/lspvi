@@ -13,7 +13,7 @@ type hlItem struct {
 }
 type customlist struct {
 	*tview.List
-	// hlitems       []*hlItem
+	hlitems       []*hlItem
 	Key           string
 	fuzz          bool
 	default_color tcell.Color
@@ -21,13 +21,13 @@ type customlist struct {
 
 func (l *customlist) Clear() *customlist {
 	l.List.Clear()
-	// l.hlitems = []*hlItem{}
+	l.hlitems = []*hlItem{}
 	return l
 }
 func new_customlist() *customlist {
 	ret := &customlist{default_color: tcell.ColorGreenYellow}
 	ret.List = tview.NewList()
-	// ret.hlitems = []*hlItem{}
+	ret.hlitems = []*hlItem{}
 	ret.fuzz = false
 	return ret
 }

@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/reinhrst/fzf-lib"
+	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
@@ -175,6 +177,57 @@ func new_log_view(main *mainui) *logview {
 	}
 	return ret
 }
+
+type fzf_list_item struct {
+	maintext, secondText string
+}
+type fzf_on_listview struct {
+	selected_index []int
+	fzf            *fzf.Fzf
+	listview       *tview.List
+	fuzz           bool
+	list_data      []fzf_list_item
+	selected       func(int)
+}
+
+func new_fzf_on_list(list *tview.List, fuzz bool) *fzf_on_listview {
+	ret := &fzf_on_listview{
+		listview: list,
+		fuzz:     fuzz,
+	}
+	opt := fzf.DefaultOptions()
+	opt.Fuzzy = fuzz
+	key := []string{}
+	for i := 0; i < list.GetItemCount(); i++ {
+		a, b := list.GetItemText(i)
+		ret.list_data = append(ret.list_data, fzf_list_item{a, b})
+		key = append(key, a+b)
+	}
+	ret.fzf = fzf.New(key, opt)
+	return ret
+}
+func (fzf *fzf_on_listview) OnSearch(txt string) {
+	var result fzflib.SearchResult
+	fzf.fzf.Search(txt)
+	result = <-fzf.fzf.GetResultChannel()
+	fzf.selected_index = []int{}
+	for _, v := range result.Matches {
+		fzf.selected_index = append(fzf.selected_index, int(v.HayIndex))
+	}
+}
+func (fzf *fzf_on_listview) refresh_list() {
+	fzf.listview.Clear()
+	for _, v := range fzf.selected_index {
+		index := v
+		a := fzf.list_data[index]
+		fzf.listview.AddItem(a.maintext, a.secondText, 0, func() {
+			if fzf.selected != nil {
+				fzf.selected(index)
+			}
+		})
+	}
+}
+
 func (log *logview) update_log_view(s string) {
 	t := log.log.GetText(true)
 	log.log.SetText(t + s)
