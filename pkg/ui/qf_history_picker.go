@@ -40,7 +40,7 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 	fzf.Search(query)
 	pk.list.Clear()
 	pk.list.Key = query
-	pk.impl.selected = func(i int) {
+	pk.impl.selected = func(dataindex int,listindex int) {
 		pk.parent.hide()
 		pk.open_in_qf()
 	}

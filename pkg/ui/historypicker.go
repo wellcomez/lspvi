@@ -61,9 +61,8 @@ func new_history_picker(v *fzfmain) history_picker {
 	sym.impl.set_fuzz(true)
 	history := NewHistory(lspviroot.history)
 	items := []history_item{}
-	close := func(i int) {
-		index := i
-		v := sym.impl.listdata[index]
+	close := func(data_index int,listIndex int) {
+		v := sym.impl.listdata[data_index]
 		path := v.filepath
 		parent := sym.impl.parent
 		parent.openfile(path)
@@ -78,7 +77,7 @@ func new_history_picker(v *fzfmain) history_picker {
 		index := i
 		// fzf_item_strings = append(fzf_item_strings, dispname)
 		sym.impl.list.AddItem(h.dispname, "", func() {
-			close(index)
+			close(index,index)
 		})
 		items = append(items, h)
 	}

@@ -333,8 +333,8 @@ func (pk refpicker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
 	listview := pk.impl.listcustom
 	listview.Clear()
-	selected := func(i int) {
-		pk.onselected(i)
+	selected := func(data int ,list int) {
+		pk.onselected(data,list)
 	}
 	if fzf := pk.impl.fzf; fzf != nil {
 		fzf.selected = selected
@@ -344,8 +344,8 @@ func (pk refpicker) UpdateQuery(query string) {
 	}
 }
 
-func (pk refpicker) onselected(i int) {
-	index := i
+func (pk refpicker) onselected(data int,list int) {
+	index := data
 	v := pk.impl.listdata[index]
 
 	pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
@@ -358,7 +358,7 @@ func (pk *refpicker) loadlist() {
 	for i := range pk.impl.listdata {
 		v := pk.impl.listdata[i]
 		listview.AddItem(v.path, v.line, func() {
-			pk.onselected(i)
+			pk.onselected(i,i)
 		})
 	}
 	pk.impl.fzf = new_fzf_on_list(listview, true)

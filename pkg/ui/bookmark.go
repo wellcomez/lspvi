@@ -12,6 +12,9 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
+type bookmark_changed interface {
+	onsave()
+}
 type LineMark struct {
 	Line    int
 	Text    string
@@ -24,6 +27,7 @@ type bookmarkfile struct {
 type proj_bookmark struct {
 	Bookmark []bookmarkfile
 	path     string
+	changed  []bookmark_changed
 }
 
 func (prj *proj_bookmark) load() error {
@@ -43,10 +47,16 @@ func (prj *proj_bookmark) save() error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(prj.path, buf, 0666)
+	ret := os.WriteFile(prj.path, buf, 0666)
+	if ret == nil && prj.changed != nil {
+		for _, v := range prj.changed {
+			v.onsave()
+		}
+	}
+	return ret
 }
 func (prj *proj_bookmark) GetFileBookmark(file string) *bookmarkfile {
-	for i, _ := range prj.Bookmark {
+	for i := range prj.Bookmark {
 		v := &prj.Bookmark[i]
 		if v.Name == file {
 			return v
@@ -82,8 +92,8 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 	listview.Clear()
 
 	listview.Key = query
-	pk.impl.fzf.selected = func(i int) {
-		loc := pk.impl.listdata[i].loc
+	pk.impl.fzf.selected = func(data_index int,listindex int) {
+		loc := pk.impl.listdata[data_index].loc
 		close_bookmark_picker(pk.impl.prev_picker_impl, loc)
 	}
 	pk.impl.fzf.OnSearch(query, true)
@@ -240,14 +250,20 @@ type bookmark_view struct {
 	main *mainui
 }
 
+func (bk bookmark_view) onsave() {
+	b := bk.main.bk
+	b.data = reload_bookmark_list(b.main, b.customlist, func(i int) {
+		b.onclick(i)
+	})
+}
 func (bk *bookmark_view) OnSearch(txt string) {
 	bk.customlist.Key = txt
 	old := bk.fzf.OnSearch(txt, true)
 	if len(txt) > 0 {
 		highlight_search_key(old, bk.customlist, txt)
 	}
-	bk.fzf.selected = func(i int) {
-		loc := bk.data[i].loc
+	bk.fzf.selected = func(dataindex int,listindex int) {
+		loc := bk.data[dataindex].loc
 		bk.main.gotoline(loc)
 	}
 }
@@ -258,16 +274,27 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 		main:      main,
 	}
 	a, b := init_bookmark_list(main, func(i int) {
-		loc := ret.data[i].loc
-		ret.customlist.SetCurrentItem(i)
-		main.gotoline(loc)
+		ret.onclick(i)
 	})
 	ret.customlist = a
 	ret.customlist.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
 		main.gotoline(loc)
 	})
+
+	if main.bookmark.changed == nil {
+		main.bookmark.changed = []bookmark_changed{*ret}
+	} else {
+		main.bookmark.changed = append(main.bookmark.changed, *ret)
+	}
 	ret.data = b
 	ret.fzf = new_fzf_on_list(ret.customlist, true)
 	return ret
+}
+
+func (ret *bookmark_view) onclick(i int) {
+	main := ret.main
+	loc := ret.data[i].loc
+	ret.customlist.SetCurrentItem(i)
+	main.gotoline(loc)
 }

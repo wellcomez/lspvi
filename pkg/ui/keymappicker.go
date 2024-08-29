@@ -75,8 +75,8 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 		})
 	}
 	ret.impl.fzf = new_fzf_on_list(list, true)
-	ret.impl.fzf.selected = func(i int) {
-		ret.newMethod(i)
+	ret.impl.fzf.selected = func(dataindex int,listindex int ) {
+		ret.newMethod(dataindex)
 	}
 	return ret
 }

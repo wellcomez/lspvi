@@ -216,7 +216,7 @@ type fzf_on_listview struct {
 	listview       *customlist
 	fuzz           bool
 	list_data      []fzf_list_item
-	selected       func(int)
+	selected       func(dataindex int, listindex int)
 	query          string
 }
 
@@ -269,12 +269,14 @@ func (fzf *fzf_on_listview) get_data_index(index int) int {
 }
 func (fzf *fzf_on_listview) refresh_list() {
 	fzf.listview.Clear()
-	for _, v := range fzf.selected_index {
-		index := v
-		a := fzf.list_data[index]
+	for i, v := range fzf.selected_index {
+		list:=i
+		data := v
+		a := fzf.list_data[data]
 		fzf.listview.AddItem(a.maintext, a.secondText, func() {
 			if fzf.selected != nil {
-				fzf.selected(index)
+				fzf.listview.SetCurrentItem(list)
+				fzf.selected(data,list)
 			}
 		})
 	}
