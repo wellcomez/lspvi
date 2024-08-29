@@ -652,6 +652,7 @@ func MainUI(arg *Arguments) {
 		main.codeview.rightmenu,
 		main.quickview.right_context,
 		main.callinview.right_context,
+		main.bk.right_context,
 		main.symboltree.right_context,
 		main.uml.file_right_context,
 		main.fileexplorer.right_context,

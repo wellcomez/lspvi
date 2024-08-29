@@ -42,6 +42,19 @@ func (prj *proj_bookmark) load() error {
 	}
 	return err
 }
+func (prj *proj_bookmark) delete(a ref_line) error {
+	for i := range prj.Bookmark {
+		v := &prj.Bookmark[i]
+		if v.Name == a.path {
+			v.Add(a.loc.Range.Start.Line+1, "", a.code, false)
+		}
+	}
+	prj.save()
+	for _, v := range prj.changed {
+		v.onsave()
+	}
+	return nil
+}
 func (prj *proj_bookmark) save() error {
 	buf, err := json.Marshal(prj)
 	if err != nil {
@@ -92,7 +105,7 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 	listview.Clear()
 
 	listview.Key = query
-	pk.impl.fzf.selected = func(data_index int,listindex int) {
+	pk.impl.fzf.selected = func(data_index int, listindex int) {
 		loc := pk.impl.listdata[data_index].loc
 		close_bookmark_picker(pk.impl.prev_picker_impl, loc)
 	}
@@ -244,17 +257,23 @@ func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Flex {
 type bookmark_view struct {
 	*view_link
 	*customlist
-	data []ref_line
-	Name string
-	fzf  *fzf_on_listview
-	main *mainui
+	data          []ref_line
+	Name          string
+	fzf           *fzf_on_listview
+	main          *mainui
+	menuitem      []context_menu_item
+	right_context bk_menu_context
 }
 
 func (bk bookmark_view) onsave() {
 	b := bk.main.bk
+	b.customlist.Clear()
+	b.customlist.SetChangedFunc(nil)
+	b.customlist.SetSelectedFunc(nil)
 	b.data = reload_bookmark_list(b.main, b.customlist, func(i int) {
 		b.onclick(i)
 	})
+	b.fzf=new_fzf_on_list(b.customlist,true)
 }
 func (bk *bookmark_view) OnSearch(txt string) {
 	bk.customlist.Key = txt
@@ -262,7 +281,7 @@ func (bk *bookmark_view) OnSearch(txt string) {
 	if len(txt) > 0 {
 		highlight_search_key(old, bk.customlist, txt)
 	}
-	bk.fzf.selected = func(dataindex int,listindex int) {
+	bk.fzf.selected = func(dataindex int, listindex int) {
 		loc := bk.data[dataindex].loc
 		bk.main.gotoline(loc)
 	}
@@ -289,9 +308,40 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 	}
 	ret.data = b
 	ret.fzf = new_fzf_on_list(ret.customlist, true)
+	ret.menuitem = []context_menu_item{
+		{item: create_menu_item("Delete"), handle: func() {
+			idnex := ret.fzf.get_data_index(ret.GetCurrentItem())
+			r := ret.data[idnex]
+			main.bookmark.delete(r)
+		}},
+	}
+	ret.right_context = bk_menu_context{
+		qk: ret,
+	}
 	return ret
 }
 
+type bk_menu_context struct {
+	qk *bookmark_view
+}
+
+func (menu bk_menu_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	return action, event
+}
+
+// getbox implements context_menu_handle.
+func (menu bk_menu_context) getbox() *tview.Box {
+	yes := menu.qk.main.is_tab(view_bookmark.getname())
+	if yes {
+		return menu.qk.Box
+	}
+	return nil
+}
+
+// menuitem implements context_menu_handle.
+func (menu bk_menu_context) menuitem() []context_menu_item {
+	return menu.qk.menuitem
+}
 func (ret *bookmark_view) onclick(i int) {
 	main := ret.main
 	loc := ret.data[i].loc

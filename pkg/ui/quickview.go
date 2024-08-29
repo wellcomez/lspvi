@@ -250,16 +250,20 @@ func (fzf *fzf_on_listview) OnSearch(txt string, update bool) string {
 			fzf.selected_index = append(fzf.selected_index, int(v.HayIndex))
 		}
 	} else {
-		fzf.selected_index = []int{}
-		for i := 0; i < len(fzf.list_data); i++ {
-			fzf.selected_index = append(fzf.selected_index, i)
-		}
+		fzf.reset_selection_index()
 
 	}
 	if update {
 		fzf.refresh_list()
 	}
 	return old
+}
+
+func (fzf *fzf_on_listview) reset_selection_index() {
+	fzf.selected_index = []int{}
+	for i := 0; i < len(fzf.list_data); i++ {
+		fzf.selected_index = append(fzf.selected_index, i)
+	}
 }
 func (fzf *fzf_on_listview) get_data_index(index int) int {
 	if index == -1 {
@@ -270,13 +274,13 @@ func (fzf *fzf_on_listview) get_data_index(index int) int {
 func (fzf *fzf_on_listview) refresh_list() {
 	fzf.listview.Clear()
 	for i, v := range fzf.selected_index {
-		list:=i
+		list := i
 		data := v
 		a := fzf.list_data[data]
 		fzf.listview.AddItem(a.maintext, a.secondText, func() {
 			if fzf.selected != nil {
 				fzf.listview.SetCurrentItem(list)
-				fzf.selected(data,list)
+				fzf.selected(data, list)
 			}
 		})
 	}
