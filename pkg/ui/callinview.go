@@ -35,12 +35,13 @@ func (menu callin_view_context) menuitem() []context_menu_item {
 
 type callinview struct {
 	*view_link
-	view          *tview.TreeView
-	Name          string
-	main          *mainui
-	task_list     []lspcore.CallInTask
-	menuitem      []context_menu_item
-	right_context callin_view_context
+	view           *tview.TreeView
+	Name           string
+	main           *mainui
+	task_list      []lspcore.CallInTask
+	menuitem       []context_menu_item
+	right_context  callin_view_context
+	cmd_search_key string
 }
 type dom_node struct {
 	call      lsp.CallHierarchyItem
@@ -138,14 +139,8 @@ func new_callview(main *mainui) *callinview {
 }
 
 func (qk *callinview) OnSearch(txt string) {
-	qk.view.GetRoot().Walk(func(node, parent *tview.TreeNode) bool {
-		if strings.Contains(node.GetText(), txt) {
-			node.SetColor(tcell.ColorYellow)
-		}else{
-			node.SetColor(tcell.ColorWhite)
-		}
-		return true
-	})
+	qk.cmd_search_key = txt
+	qk.update_node_color()
 }
 func (view *callinview) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
 	return event
@@ -178,17 +173,7 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 					Range: sym.SelectionRange,
 				})
 			}
-			text := node.GetText()
-			view.view.GetRoot().Walk(func(n, parent *tview.TreeNode) bool {
-				if n != node {
-					if n.GetText() == text {
-						n.SetColor(tcell.ColorGray)
-					} else {
-						n.SetColor(tcell.ColorWhite)
-					}
-				}
-				return true
-			})
+			view.update_node_color()
 			return
 		}
 		text := node.GetText()
@@ -201,6 +186,29 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			node.SetText(text)
 		}
 	}
+}
+func (view *callinview) update_node_color() {
+	node := view.view.GetCurrentNode()
+	text := ""
+	if node != nil {
+		text = node.GetText()
+	}
+	view.view.GetRoot().Walk(func(n, parent *tview.TreeNode) bool {
+		if n != node {
+			if len(view.cmd_search_key) > 0 {
+				if strings.Contains(n.GetText(), view.cmd_search_key) {
+					n.SetColor(tcell.ColorYellow)
+					return true
+				}
+			}
+			if n.GetText() == text {
+				n.SetColor(tcell.ColorGreenYellow)
+			} else {
+				n.SetColor(tcell.ColorWhite)
+			}
+		}
+		return true
+	})
 }
 func NewRootNode(call lsp.CallHierarchyItem, fromrange []lsp.Location, root bool, id int) dom_node {
 	return dom_node{
@@ -235,6 +243,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	root_node.Expand()
 	callin.view.SetRoot(root_node)
 	callin.main.UpdatePageTitle()
+	callin.update_node_color()
 }
 
 func (callin *callinview) callroot(task *lspcore.CallInTask) *tview.TreeNode {
