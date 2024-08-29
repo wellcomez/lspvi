@@ -83,6 +83,14 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 		return nil
 	}
 }
+func find_name_to_viewid(m string) view_id {
+	for _, v := range all_view_list {
+		if v.getname()==m{
+			return v
+		}
+	}
+	return view_none
+}
 func focus_viewid(m *mainui) view_id {
 	for _, v := range all_view_list {
 		if v.to_box(m).HasFocus() {

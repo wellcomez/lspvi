@@ -909,11 +909,27 @@ func (main *mainui) move_to_window(t direction) {
 	if next == view_none {
 		return
 	}
-	if main.tabs.Find(next.getname())==nil{
-		main.set_viewid_focus(next)
-	}else{
+	next_is_tab := main.view_is_tab(next)
+	if next_is_tab {
+		if cur == view_code {
+			names := main.page.GetPageNames(true)
+			for _, v := range names {
+				if n:=find_name_to_viewid(v)	;n!=view_none {
+					main.ActiveTab(n, true)
+					return
+				}
+			}
+
+		}
 		main.ActiveTab(next, true)
+	} else {
+		main.set_viewid_focus(next)
 	}
+}
+
+func (main *mainui) view_is_tab(next view_id) bool {
+	x := main.tabs.Find(next.getname()) != nil
+	return x
 }
 
 func (vl *view_link) next_view(t direction) view_id {
@@ -932,7 +948,7 @@ func (vl *view_link) next_view(t direction) view_id {
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	eventname := event.Name()
-log.Println("main ui recieved ",
+	log.Println("main ui recieved ",
 		main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
 	//Ctrl+O
 	if main.layout.dialog.Visible {
