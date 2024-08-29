@@ -184,13 +184,13 @@ type fzf_list_item struct {
 type fzf_on_listview struct {
 	selected_index []int
 	fzf            *fzf.Fzf
-	listview       *tview.List
+	listview       *customlist
 	fuzz           bool
 	list_data      []fzf_list_item
 	selected       func(int)
 }
 
-func new_fzf_on_list(list *tview.List, fuzz bool) *fzf_on_listview {
+func new_fzf_on_list(list *customlist, fuzz bool) *fzf_on_listview {
 	ret := &fzf_on_listview{
 		listview: list,
 		fuzz:     fuzz,
@@ -220,7 +220,7 @@ func (fzf *fzf_on_listview) refresh_list() {
 	for _, v := range fzf.selected_index {
 		index := v
 		a := fzf.list_data[index]
-		fzf.listview.AddItem(a.maintext, a.secondText, 0, func() {
+		fzf.listview.AddItem(a.maintext, a.secondText, func() {
 			if fzf.selected != nil {
 				fzf.selected(index)
 			}
