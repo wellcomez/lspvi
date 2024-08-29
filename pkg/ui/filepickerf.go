@@ -15,6 +15,7 @@ import (
 
 	"github.com/charlievieth/fastwalk"
 	"github.com/gdamore/tcell/v2"
+	"github.com/reinhrst/fzf-lib"
 	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 )
@@ -52,6 +53,7 @@ type DirWalk struct {
 	root     string
 	cb       func(t querytask)
 	hayStack []string
+	fzf    *fzf.Fzf
 }
 
 type walkerOpts struct {

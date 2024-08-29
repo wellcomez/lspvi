@@ -12,12 +12,12 @@ type fzflist_impl struct {
 	list   *customlist
 	parent *fzfmain
 	click  *GridListClickCheck
-	fzf    *fzf.Fzf
 }
 type keymap_picker_impl struct {
 	*fzflist_impl
 	keymaplist []string
 	keys       []cmditem
+	fzf        *fzf_on_listview
 }
 type keymap_picker struct {
 	impl *keymap_picker_impl
@@ -31,19 +31,15 @@ func (pk keymap_picker) name() string {
 // UpdateQuery implements picker.
 func (pk keymap_picker) UpdateQuery(query string) {
 	impl := pk.impl
-	var result fzf.SearchResult
 	fzf := impl.fzf
-	fzf.Search(query)
 	impl.list.Clear()
 	impl.list.Key = query
-	result = <-fzf.GetResultChannel()
-	for _, m := range result.Matches {
-		index := m.HayIndex
-		impl.list.AddItem(impl.keymaplist[index], "", func() {
-			impl.parent.hide()
-			pk.impl.keys[index].cmd.handle()
-		})
-	}
+	fzf.OnSearch(query, true)
+}
+
+func (pk keymap_picker) newMethod(index int) {
+	pk.impl.parent.hide()
+	pk.impl.keys[index].cmd.handle()
 }
 
 // handle implements picker.
@@ -62,12 +58,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 		keymaplist = append(keymaplist, fmt.Sprintf("%-20s %s", v.key.displaystring(), v.cmd.desc))
 	}
 
-	var options = fzf.DefaultOptions()
-	options.Fuzzy = false
-	options.CaseMode =fzf.CaseIgnore
-	fzf := fzf.New(keymaplist, options)
-
-	x := new_fzflist_impl(fzf, v)
+	x := new_fzflist_impl(nil, v)
 
 	ret := keymap_picker{
 		impl: &keymap_picker_impl{
@@ -76,20 +67,22 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 			keys:         keys,
 		},
 	}
-	list:=ret.impl.list
+	list := ret.impl.list
 	for i, v := range keymaplist {
 		index := i
 		list.AddItem(v, "", func() {
-			ret.impl.parent.hide()
-			ret.impl.keys[index].cmd.handle()
+			ret.newMethod(index)
 		})
+	}
+	ret.impl.fzf = new_fzf_on_list(list, true)
+	ret.impl.fzf.selected = func(i int) {
+		ret.newMethod(i)
 	}
 	return ret
 }
 
 func new_fzflist_impl(fzf *fzf.Fzf, v *fzfmain) *fzflist_impl {
 	x := &fzflist_impl{
-		fzf:    fzf,
 		parent: v,
 		list:   new_customlist(),
 	}
@@ -100,7 +93,7 @@ func (pk *keymap_picker) grid(input *tview.InputField) *tview.Grid {
 	return pk.impl.grid(input)
 }
 func (impl *fzflist_impl) set_fuzz(fuzz bool) {
-	impl.list.fuzz = fuzz 
+	impl.list.fuzz = fuzz
 }
 func (impl *fzflist_impl) grid(input *tview.InputField) *tview.Grid {
 	list := impl.list

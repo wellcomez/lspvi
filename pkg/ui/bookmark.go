@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-	fzflib "github.com/reinhrst/fzf-lib"
+	// fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 )
@@ -81,38 +81,13 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 	listview := pk.impl.hlist
 	query = strings.ToLower(query)
 	listview.Clear()
-	root := pk.impl.codeprev.main.root
-	var result fzflib.SearchResult
+
 	listview.Key = query
-	if fzf := pk.impl.fzf; fzf != nil {
-		fzf.Search(query)
-		result = <-fzf.GetResultChannel()
-		pk.impl.current_list_data = []ref_line{}
-		for _, v := range result.Matches {
-			v := pk.impl.listdata[v.HayIndex]
-			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
-			a, b := get_list_item(v, root)
-			loc := v.loc
-			listview.AddItem(
-				a, b,
-				func() {
-					close_bookmark_picker(pk.impl.prev_picker_impl, loc)
-				})
-		}
-	} else {
-		pk.impl.current_list_data = []ref_line{}
-		for i := range pk.impl.listdata {
-			v := pk.impl.listdata[i]
-			pk.impl.current_list_data = append(pk.impl.current_list_data, v)
-			if strings.Contains(strings.ToLower(v.line), query) {
-				a, b := get_list_item(v, root)
-				listview.AddItem(a, b, func() {
-					pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
-					pk.impl.parent.hide()
-				})
-			}
-		}
+	pk.impl.fzf.selected = func(i int) {
+		loc := pk.impl.listdata[i].loc
+		close_bookmark_picker(pk.impl.prev_picker_impl, loc)
 	}
+	pk.impl.fzf.OnSearch(query, true)
 	pk.update_preview()
 }
 func (pk bookmark_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -134,7 +109,7 @@ func (pk bookmark_picker) name() string {
 
 type bookmark_picker_impl struct {
 	*prev_picker_impl
-	fzf   *fzflib.Fzf
+	fzf   *fzf_on_listview
 	hlist *customlist
 }
 
@@ -220,20 +195,15 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 		}
 	}
 	impl.current_list_data = impl.listdata
-	datafzf := []string{}
 	root := v.main.root
 	for _, v := range impl.listdata {
 		a, b := get_list_item(v, root)
-		datafzf = append(datafzf, a+b)
 		loc := v.loc
 		impl.hlist.AddItem(a, b, func() {
 			close_bookmark_picker(impl.prev_picker_impl, loc)
 		})
 	}
-	option := fzflib.DefaultOptions()
-	option.CaseMode = fzflib.CaseIgnore
-	option.Fuzzy = impl.hlist.fuzz
-	sym.impl.fzf = fzflib.New(datafzf, option)
+	sym.impl.fzf = new_fzf_on_list(sym.impl.hlist, sym.impl.hlist.fuzz)
 	return sym
 }
 

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-	fzflib "github.com/reinhrst/fzf-lib"
+	// fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
@@ -60,11 +60,7 @@ func new_history_picker(v *fzfmain) history_picker {
 	}
 	sym.impl.set_fuzz(true)
 	history := NewHistory(lspviroot.history)
-	var options = fzflib.DefaultOptions()
-	options.Fuzzy = sym.impl.list.fuzz
-	options.CaseMode = fzflib.CaseIgnore
 	items := []history_item{}
-	// fzf_item_strings := []string{}
 	close := func(i int) {
 		index := i
 		v := sym.impl.listdata[index]
