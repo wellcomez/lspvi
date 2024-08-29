@@ -183,6 +183,7 @@ func (log *logview) update_log_view(s string) {
 // new_quikview
 func new_quikview(main *mainui) *quick_view {
 	view := new_customlist()
+	view.default_color = tcell.ColorGreen
 	view.List.SetMainTextStyle(tcell.StyleDefault.Normal()).ShowSecondaryText(false)
 	var vid view_id = view_quickview
 	var items = []context_menu_item{
@@ -398,6 +399,7 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.SymolSearchKey) {
 	if key.Key != qk.searchkey.Key {
 		qk.view.Clear()
+		qk.cmd_search_key = ""
 	}
 
 	qk.Type = t
@@ -421,6 +423,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.Clear()
 	qk.view.SetCurrentItem(-1)
 	qk.currentIndex = 0
+	qk.cmd_search_key = ""
 	_, _, width, _ := qk.view.GetRect()
 	for _, caller := range qk.Refs.Refs {
 		caller.width = width

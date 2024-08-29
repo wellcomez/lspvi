@@ -136,6 +136,17 @@ func new_callview(main *mainui) *callinview {
 	return ret
 
 }
+
+func (qk *callinview) OnSearch(txt string) {
+	qk.view.GetRoot().Walk(func(node, parent *tview.TreeNode) bool {
+		if strings.Contains(node.GetText(), txt) {
+			node.SetColor(tcell.ColorYellow)
+		}else{
+			node.SetColor(tcell.ColorWhite)
+		}
+		return true
+	})
+}
 func (view *callinview) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }

@@ -806,6 +806,8 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			main.codeview.gotoline(gs.GetNext())
 		}
 		main.page.SetTitle(gs.String())
+	} else if prev == view_callin{
+		main.callinview.OnSearch(txt)
 	} else if prev == view_quickview {
 		main.quickview.OnSearch(txt)
 	} else if prev == view_outline_list {
