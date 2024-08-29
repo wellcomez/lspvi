@@ -101,12 +101,7 @@ func menu_zoom(ret *file_tree_view, zoomin bool) context_menu_item {
 	external_open := context_menu_item{
 		item: create_menu_item(name),
 		handle: func() {
-			if zoomin {
-				ret.width--
-			} else {
-				ret.width++
-			}
-			ret.main.update_editerea_layout()
+			ret.main._editor_area_layout.zoom(zoomin,view_file)	
 		},
 	}
 	return external_open

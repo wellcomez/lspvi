@@ -34,85 +34,42 @@ type rootlayout struct {
 // editor_area_fouched
 
 type mainui struct {
-	fileexplorer       *file_tree_view
-	codeview           *CodeView
-	lspmgr             *lspcore.LspWorkspace
-	symboltree         *SymbolTreeView
-	quickview          *quick_view
-	bk                 *bookmark_view
-	activate_tab_name  string
-	page               *tview.Pages
-	callinview         *callinview
-	tabs               *ButtonGroup
-	root               string
-	app                *tview.Application
-	uml                *umlview
-	bf                 *BackForward
-	bookmark           *proj_bookmark
-	log                *logview
-	cmdline            *cmdline
-	prefocused         view_id
-	searchcontext      *GenericSearch
-	statusbar          *tview.TextView
-	layout             *rootlayout
-	right_context_menu *contextmenu
+	fileexplorer        *file_tree_view
+	codeview            *CodeView
+	lspmgr              *lspcore.LspWorkspace
+	symboltree          *SymbolTreeView
+	quickview           *quick_view
+	bk                  *bookmark_view
+	activate_tab_name   string
+	page                *tview.Pages
+	callinview          *callinview
+	tabs                *ButtonGroup
+	root                string
+	app                 *tview.Application
+	uml                 *umlview
+	bf                  *BackForward
+	bookmark            *proj_bookmark
+	log                 *logview
+	cmdline             *cmdline
+	prefocused          view_id
+	searchcontext       *GenericSearch
+	statusbar           *tview.TextView
+	layout              *rootlayout
+	right_context_menu  *contextmenu
+	_editor_area_layout *editor_area_layout
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
 func (m *mainui) OnFileChange(file []lsp.Location) {
 	m.OpenFile(file[0].URI.AsPath().String(), &file[0])
 }
+
 func (m *mainui) zoom(zoomin bool) {
 	viewid := m.get_focus_view_id()
-	switch viewid {
-	case view_file:
-		{
-			if zoomin {
-				m.fileexplorer.width--
-			} else {
-				m.fileexplorer.width++
-			}
-		}
-	case view_outline_list:
-		{
-			if zoomin {
-				m.symboltree.width--
-			} else {
-				m.symboltree.width++
-			}
-		}
-	default:
-		return
-	}
-	m.update_editerea_layout()
-
+	m._editor_area_layout.zoom(zoomin, viewid)
 }
-
-func (m mainui) toggle_view(id view_id) {
-	switch id {
-	case view_file:
-		{
-			m.fileexplorer.hide = !m.fileexplorer.hide
-		}
-	case view_outline_list:
-		{
-			m.symboltree.hide = !m.symboltree.hide
-		}
-	default:
-		return
-	}
-	m.update_editerea_layout()
-}
-
-func (m mainui) update_editerea_layout() {
-	m.layout.editor_area.Clear()
-	if !m.fileexplorer.hide {
-		m.layout.editor_area.AddItem(m.fileexplorer.view, 0, m.fileexplorer.width, false)
-	}
-	m.layout.editor_area.AddItem(m.codeview.view, 0, m.codeview.width, false)
-	if !m.symboltree.hide {
-		m.layout.editor_area.AddItem(m.symboltree.view, 0, m.symboltree.width, false)
-	}
+func (m *mainui) toggle_view(id view_id) {
+	m._editor_area_layout.toggle_view(id)
 }
 func (r *mainui) editor_area_fouched() {
 	// log.Println("change foucse", r.GetFocusViewId())
@@ -350,7 +307,7 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 	}
 	m.page.SwitchToPage(tab.Name)
 	// m.page.SetTitle(tab.Name)
-	if vid:=find_name_to_viewid(tab.Name);vid!=view_none{
+	if vid := find_name_to_viewid(tab.Name); vid != view_none {
 		m.set_viewid_focus(vid)
 	}
 	m.UpdatePageTitle()
@@ -581,6 +538,7 @@ func MainUI(arg *Arguments) {
 
 	//   console.SetBorder(true)
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
+	main._editor_area_layout = new_editor_area_config(&main, &lspviroot)
 	editor_area :=
 		tview.NewFlex().SetDirection(tview.FlexColumn).
 			AddItem(main.fileexplorer.view, 0, main.fileexplorer.width, false).
@@ -915,7 +873,7 @@ func (main *mainui) move_to_window(t direction) {
 		if cur == view_code {
 			names := main.page.GetPageNames(true)
 			for _, v := range names {
-				if n:=find_name_to_viewid(v)	;n!=view_none {
+				if n := find_name_to_viewid(v); n != view_none {
 					main.ActiveTab(n, true)
 					return
 				}
