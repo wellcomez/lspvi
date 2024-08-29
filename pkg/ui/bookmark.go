@@ -3,6 +3,7 @@ package mainui
 import (
 	"encoding/json"
 	"fmt"
+
 	// "log"
 	"os"
 	"strings"
@@ -225,4 +226,22 @@ func (pk bookmark_picker) update_preview() {
 }
 func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Flex {
 	return pk.impl.flex(input, 2)
+}
+
+type bookmark_view struct {
+	*view_link
+	*customlist
+	data []ref_line
+	Name string
+}
+
+func new_bookmark_view(main *mainui) *bookmark_view {
+	ret := &bookmark_view{
+		view_link: &view_link{},
+		Name:      "bookmark",
+	}
+	a, b := init_bookmark_list(main, func(i int) {})
+	ret.customlist= a
+	ret.data = b
+	return ret
 }

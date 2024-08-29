@@ -76,33 +76,62 @@ func (h *qf_history_data) ListItem() string {
 }
 
 func (qk quick_view) save() error {
-	h := quickfix_history{Wk: qk.main.lspmgr.Wk}
-	dir, err := h.InitDir()
+	h, err := new_qf_history(qk.main)
 	if err != nil {
-		log.Println("save ", err)
 		return err
 	}
-	uid := search_key_uid(qk.searchkey)
-	uid = strings.ReplaceAll(uid, qk.main.root, "")
-	hexbuf := md5.Sum([]byte(uid))
-	uid = hex.EncodeToString(hexbuf[:])
-	filename := filepath.Join(dir, uid+".json")
+	return h.save_history(qk.main.root, qf_history_data{qk.Type, qk.searchkey, qk.Refs})
+}
 
-	buf, error := json.Marshal(qf_history_data{
-		Key:    qk.searchkey,
-		Type:   qk.Type,
-		Result: qk.Refs,
-	})
+func (qf *quickfix_history) save_history(
+	root string,
+	data qf_history_data,
+) error {
+
+	buf, error := json.Marshal(data)
 	if error != nil {
 		return error
 	}
+
+	uid := search_key_uid(data.Key)
+	uid = strings.ReplaceAll(uid, root, "")
+	hexbuf := md5.Sum([]byte(uid))
+	uid = hex.EncodeToString(hexbuf[:])
+	dir := qf.qfdir
+	filename := filepath.Join(dir, uid+".json")
+	os.WriteFile(qf.last, buf, 0666)
 	return os.WriteFile(filename, buf, 0666)
 }
 
 type quickfix_history struct {
-	Wk lspcore.WorkSpace
+	Wk    lspcore.WorkSpace
+	last  string
+	qfdir string
 }
 
+func (qk *quick_view) RestoreLast() {
+	data, _ := qk.ReadLast()
+	if data != nil {
+		qk.UpdateListView(data.Type, data.Result.Refs, data.Key)
+	}
+}
+func (qk *quick_view) ReadLast() (*qf_history_data, error) {
+	h, err := new_qf_history(qk.main)
+	if err != nil {
+		return nil, err
+	}
+	buf, err := os.ReadFile(h.last)
+	if err != nil {
+		return nil, err
+	}
+	var ret qf_history_data
+	err = json.Unmarshal(buf, &ret)
+	if err == nil {
+		return &ret, nil
+
+	}
+	return nil, err
+}
 func (h *quickfix_history) Load() ([]qf_history_data, error) {
 	var ret = []qf_history_data{}
 	dir, err := h.InitDir()
@@ -532,4 +561,18 @@ func (caller ref_with_caller) ListItem(root string) string {
 	code := line[begin:end]
 	secondline := fmt.Sprintf("%s -> %s:%-4d %s", callerstr, path, v.Range.Start.Line+1, code)
 	return secondline
+}
+
+func new_qf_history(main *mainui) (*quickfix_history, error) {
+	qf := &quickfix_history{
+		Wk:   main.lspmgr.Wk,
+		last: filepath.Join(main.lspmgr.Wk.Export, "quickfix_last.json"),
+	}
+	qfdir, err := qf.InitDir()
+	qf.qfdir = qfdir
+	if err != nil {
+		log.Println("save ", err)
+		return nil, err
+	}
+	return qf, nil
 }

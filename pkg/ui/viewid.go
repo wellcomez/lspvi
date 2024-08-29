@@ -12,11 +12,11 @@ type view_link struct {
 	next, left, right, up, down view_id
 	width                       int
 	heigth                      int
-	hide 						bool
+	hide                        bool
 }
 
 const (
-	view_none = iota
+	view_none view_id = iota
 	view_log
 	view_quickview
 	view_callin
@@ -25,6 +25,7 @@ const (
 	view_cmd
 	view_file
 	view_outline_list
+	view_bookmark
 )
 
 var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin}
@@ -37,28 +38,6 @@ func find_tab_by_name(name string) view_id {
 	}
 	return view_none
 
-}
-
-var all_view_list = []view_id{
-	view_log,
-	view_quickview,
-	view_callin,
-	view_code,
-	view_uml,
-	view_cmd,
-	view_file,
-	view_outline_list,
-}
-var all_view_name = []string{
-	"none",
-	"log",
-	"quickview",
-	"callin",
-	"code",
-	"uml",
-	"cmd",
-	"file",
-	"outline",
 }
 
 func (viewid view_id) setfocused(m *mainui) {
@@ -98,6 +77,8 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 		return m.fileexplorer.view_link
 	case view_outline_list:
 		return m.symboltree.view_link
+	case view_bookmark:
+		return m.bk.view_link
 	default:
 		return nil
 	}
@@ -189,10 +170,37 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 		return m.fileexplorer.view.Box
 	case view_outline_list:
 		return m.symboltree.view.Box
+	case view_bookmark:
+		return m.bk.Box
 	default:
 		return nil
 	}
 }
+
+var all_view_list = []view_id{
+	view_log,
+	view_quickview,
+	view_callin,
+	view_code,
+	view_uml,
+	view_cmd,
+	view_file,
+	view_outline_list,
+	view_bookmark,
+}
+var all_view_name = []string{
+	"none",
+	"log",
+	"quickview",
+	"callin",
+	"code",
+	"uml",
+	"cmd",
+	"file",
+	"outline",
+	"bookmark",
+}
+
 func (viewid view_id) getname() string {
 	return all_view_name[viewid]
 }

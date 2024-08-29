@@ -16,7 +16,7 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-var tabs []view_id = []view_id{view_quickview, view_callin, view_uml, view_log}
+var tabs []view_id = []view_id{view_quickview, view_callin, view_uml, view_log, view_bookmark}
 var appname = "lspvi"
 var httport = 0
 
@@ -39,6 +39,7 @@ type mainui struct {
 	lspmgr             *lspcore.LspWorkspace
 	symboltree         *SymbolTreeView
 	quickview          *quick_view
+	bk                 *bookmark_view
 	activate_tab_name  string
 	page               *tview.Pages
 	callinview         *callinview
@@ -270,11 +271,10 @@ func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 	lsp.Reference(pos)
 }
 
-func (m *mainui) ActiveTab(id int, focused bool) {
-	tabid := view_id(id)
+func (m *mainui) ActiveTab(id view_id, focused bool) {
 	yes := false
 	for _, v := range tabs {
-		if v == tabid {
+		if v == id {
 			yes = true
 			break
 		}
@@ -284,9 +284,9 @@ func (m *mainui) ActiveTab(id int, focused bool) {
 	}
 	if focused {
 		m.lost_focus(m.get_view_from_id(m.get_focus_view_id()))
-		m.set_focus(m.get_view_from_id(tabid))
+		m.set_focus(m.get_view_from_id(id))
 	}
-	var name = view_id(id).getname()
+	var name = id.getname()
 	m.page.SwitchToPage(name)
 	tab := m.tabs.Find(name)
 	for _, v := range m.tabs.tabs {
@@ -554,6 +554,7 @@ func MainUI(arg *Arguments) {
 
 	main.lspmgr.Handle = &main
 	main.quickview = new_quikview(&main)
+	main.bk = new_bookmark_view(&main)
 	main.callinview = new_callview(&main)
 	// symbol_tree.update()
 
@@ -573,9 +574,10 @@ func MainUI(arg *Arguments) {
 	main.log = new_log_view(&main)
 	main.log.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
-	console.AddPage("log", main.log.log, true, false)
+	console.AddPage(view_log.getname(), main.log.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
 	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
+	console.AddPage(main.bk.Name, main.bk, true, false)
 
 	main.page = console
 	main.page.SetChangedFunc(func() {
@@ -594,12 +596,19 @@ func MainUI(arg *Arguments) {
 		log.Fatal(err)
 	}
 	main.uml = uml
-	var tabs []string = []string{main.quickview.Name, "log", main.callinview.Name}
 	if uml != nil {
-		tabs = append(tabs, uml.Name)
 		console.AddPage(uml.Name, uml.layout, true, false)
 	}
 
+	var tabs []string = []string{}
+	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark} {
+		if uml == nil {
+			if v == view_uml {
+				continue
+			}
+		}
+		tabs = append(tabs, v.getname())
+	}
 	group := NewButtonGroup(tabs, main.OnTabChanged)
 	main.tabs = group
 	tab_area := tview.NewFlex()
@@ -681,7 +690,7 @@ func MainUI(arg *Arguments) {
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
 	if len(filearg) == 0 {
 		filearg := main.bf.Last()
-		if len(filearg.Path)>0 {
+		if len(filearg.Path) > 0 {
 			main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
 				URI: lsp.NewDocumentURI(filearg.Path),
 				Range: lsp.Range{
@@ -752,7 +761,7 @@ func MainUI(arg *Arguments) {
 		// }
 	})
 	view_id_init(&main)
-	// main.set_viewid_focus(view_code)
+	main.quickview.RestoreLast()
 	main_layout.SetTitle("lspvi " + root)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
@@ -803,7 +812,7 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			main.codeview.gotoline(gs.GetNext())
 		}
 		main.page.SetTitle(gs.String())
-	} else if prev == view_callin{
+	} else if prev == view_callin {
 		main.callinview.OnSearch(txt)
 	} else if prev == view_quickview {
 		main.quickview.OnSearch(txt)
@@ -843,7 +852,7 @@ var leadkey = ' '
 func (main *mainui) set_viewid_focus(v view_id) {
 	for _, tab := range tabs {
 		if v == tab {
-			main.ActiveTab(int(tab), true)
+			main.ActiveTab(tab, true)
 			return
 		}
 	}
@@ -918,11 +927,11 @@ func (main *mainui) move_to_window(t direction) {
 		if len(names) == 1 {
 			vid := find_tab_by_name(names[0])
 			if vid != view_none {
-				main.ActiveTab(int(vid), true)
+				main.ActiveTab(vid, true)
 				return
 			}
 		}
-		main.ActiveTab(int(next), true)
+		main.ActiveTab(next, true)
 	default:
 		main.set_viewid_focus(next)
 		// main.set_focus(main.get_view_from_id(next))
