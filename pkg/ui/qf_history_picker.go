@@ -10,60 +10,17 @@ import (
 	// "time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type qf_history_picker_impl struct {
-	keymaplist  []string
-	fzf         *fzf.Fzf
-	keys        []qf_history_data
-	selectIndex []int32
+	*fzf_on_listview
+	// keymaplist  []string
+	// fzf         *fzf.Fzf
+	keys []qf_history_data
+	// selectIndex []int32
 }
-
-// type ListClickCheck struct {
-// 	*clickdetector
-// 	list    *tview.List
-// 	linenum int
-// }
-
-// func NewListClickCheck(list *tview.List, linenum int, click func(), doublehandle func()) *ListClickCheck {
-// 	var l = &ListClickCheck{
-// 		clickdetector: &clickdetector{
-// 			lastMouseClick: time.Time{},
-// 		},
-// 		linenum: linenum,
-// 		list:    list,
-// 	}
-
-// 	list.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-// 		if !InRect(event, list) {
-// 			return action, event
-// 		}
-// 		a1, _ := l.handle(action, event)
-// 		if action != tview.MouseMove {
-// 			log.Println("list click ",
-// 				"action", action, a1,
-// 				"pos:", l.lastMouseX, l.lastMouseY)
-// 			_, y, _, _ := list.GetInnerRect()
-// 			_, mY := event.Position()
-// 			if a1 == tview.MouseLeftClick {
-// 				index := (mY - y) / l.linenum
-// 				list.SetCurrentItem(index)
-// 				if click != nil {
-// 					click()
-// 				}
-// 			} else if a1 == tview.MouseLeftDoubleClick {
-// 				if doublehandle != nil {
-// 					doublehandle()
-// 				}
-// 			}
-// 		}
-// 		return action, event
-// 	})
-// 	return l
-// }
 
 type qk_history_picker struct {
 	*prev_picker_impl
@@ -79,24 +36,15 @@ func (pk qk_history_picker) name() string {
 // UpdateQuery implements picker.
 func (pk qk_history_picker) UpdateQuery(query string) {
 	impl := pk.impl
-	var result fzf.SearchResult
 	fzf := impl.fzf
 	fzf.Search(query)
 	pk.list.Clear()
 	pk.list.Key = query
-	result = <-fzf.GetResultChannel()
-	impl.selectIndex = []int32{}
-	for _, m := range result.Matches {
-		log.Println(m)
-		index := m.HayIndex
-		impl.selectIndex = append(impl.selectIndex, index)
-		pk.list.AddItem(impl.keymaplist[index], "", func() {
-			pk.parent.hide()
-			// item := pk.impl.keys[index]
-			// pk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
-			pk.open_in_qf()
-		})
+	pk.impl.selected = func(i int) {
+		pk.parent.hide()
+		pk.open_in_qf()
 	}
+	pk.impl.OnSearch(query)
 }
 func (pk *qk_history_picker) grid() tview.Primitive {
 	return pk.flex(pk.parent.input, 1)
@@ -140,43 +88,35 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		keymaplist = append(keymaplist, fmt.Sprintf("%-10s %-20s  %s", v.Type.String(), v.Key.Key, file_info))
 	}
 
-	var options = fzf.DefaultOptions()
-	options.Fuzzy = list.fuzz
-	options.CaseMode = fzf.CaseIgnore
-	fzf := fzf.New(keymaplist, options)
-
 	x := new_preview_picker(v)
 	x.use_cusutom_list(list)
 
 	ret := qk_history_picker{
 		prev_picker_impl: x,
 		impl: &qf_history_picker_impl{
-			keymaplist: keymaplist,
-			fzf:        fzf,
-			keys:       keys,
+			keys: keys,
 		},
 		list: list,
 	}
-	ret.impl.selectIndex = []int32{}
 	x.on_list_selected = func() {
 		ret.updateprev()
 	}
 	for i, value := range keymaplist {
 		index := i
-		ret.impl.selectIndex = append(ret.impl.selectIndex, int32(i))
 		list.AddItem(value, "", func() {
 			ret.open_in_qf()
 			ret.parent.hide()
 			log.Println(index)
 		})
 	}
+	ret.impl.fzf_on_listview = new_fzf_on_list(list, true)
 	ret.updateprev()
 
 	return ret
 }
 
 func (qk *qk_history_picker) open_in_qf() {
-	i := qk.impl.selectIndex[qk.list.GetCurrentItem()]
+	i := qk.impl.get_data_index()
 	item := qk.impl.keys[i]
 	if item.Type == data_refs || item.Type == data_search || item.Type == data_grep_word {
 		qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
@@ -204,7 +144,7 @@ func (qk *qk_history_picker) open_in_qf() {
 }
 
 func (qk *qk_history_picker) updateprev() {
-	index := qk.impl.selectIndex[qk.list.GetCurrentItem()]
+	index := qk.impl.get_data_index()
 	keys := qk.impl.keys
 	item := qk.impl.keys[index]
 	switch item.Type {

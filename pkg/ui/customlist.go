@@ -32,7 +32,7 @@ func new_customlist() *customlist {
 	return ret
 }
 func (l *customlist) AddItem(mainText, secondText string, selected func()) *customlist {
-	// l.hlitems = append(l.hlitems, &hlItem{})
+	l.hlitems = append(l.hlitems, &hlItem{})
 	l.List.AddItem(mainText, secondText, 0, selected)
 	return l
 }
@@ -51,7 +51,7 @@ func find_key_fuzzy2(s string, colore_keys []colorkey, offset int) []keypattern 
 		}
 		idx := strings.Index(strings.ToLower(s), v)
 		if idx >= 0 {
-			pth := keypattern{begin: idx + offset, width: len(v), color: colore_keys[idx].color}
+			pth := keypattern{begin: idx + offset, width: len(v), color: tcell.ColorGreenYellow}
 			a := []keypattern{pth}
 			subret := find_key_fuzzy2(s[idx+len(v):], colore_keys[len(v):], pth.width+idx+offset)
 			return append(a, subret...)
