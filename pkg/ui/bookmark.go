@@ -194,7 +194,7 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 			impl.listdata = append(impl.listdata, ref)
 		}
 	}
-	impl.current_list_data = impl.listdata
+	// impl.current_list_data = impl.listdata
 	root := v.main.root
 	for _, v := range impl.listdata {
 		a, b := get_list_item(v, root)

@@ -93,17 +93,14 @@ func layout_list_edit(list tview.Primitive, code tview.Primitive, input *tview.I
 }
 
 type prev_picker_impl struct {
-	listview          *tview.List
-	listcustom        *customlist
-	codeprev          *CodeView
-	codeline          []string
-	parent            *fzfmain
-	list_click_check  *GridListClickCheck
-	on_list_selected  func()
-	listdata          []ref_line
-	current_list_data []ref_line
-	// fzf               *fzflib.Fzf
-	qf func(ref_with_caller) bool
+	listview         *tview.List
+	listcustom       *customlist
+	codeprev         *CodeView
+	parent           *fzfmain
+	list_click_check *GridListClickCheck
+	on_list_selected func()
+	listdata         []ref_line
+	qf               func(ref_with_caller) bool
 }
 
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
@@ -112,8 +109,8 @@ func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
 }
 func (impl *prev_picker_impl) update_preview() {
 	cur := impl.listview.GetCurrentItem()
-	if cur < len(impl.current_list_data) {
-		item := impl.current_list_data[cur]
+	if cur < len(impl.listdata) {
+		item := impl.listdata[cur]
 		impl.codeprev.Load(item.loc.URI.AsPath().String())
 		impl.codeprev.gotoline(item.loc.Range.Start.Line)
 	}
@@ -124,6 +121,7 @@ type refpicker_impl struct {
 	file *lspcore.Symbol_file
 	refs []ref_with_caller
 	fzf  *fzf_on_listview
+	key  string
 }
 type refpicker struct {
 	impl *refpicker_impl
@@ -207,7 +205,6 @@ type ref_with_caller struct {
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
-	datafzf := []string{}
 	lsp := pk.impl.parent.main.lspmgr.Current
 	pk.impl.refs = pk.impl.codeprev.main.get_loc_caller(file, lsp)
 	for i := range pk.impl.refs {
@@ -239,13 +236,12 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 			path:   path,
 		}
 		pk.impl.listdata = append(pk.impl.listdata, r)
-		datafzf = append(datafzf, r.fzf_tring())
 		impl := pk.impl
 		listview.AddItem(secondline, line[begin:end], 0, func() {
 			impl.open_location(v)
 		})
 	}
-	pk.impl.current_list_data = pk.impl.listdata
+	pk.impl.key = key.Key
 	pk.loadlist()
 	pk.update_preview()
 }
@@ -312,7 +308,6 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 	x := &prev_picker_impl{
 		listview: tview.NewList(),
 		codeprev: NewCodeView(v.main),
-		codeline: []string{},
 		parent:   v,
 		qf:       nil,
 	}
@@ -339,21 +334,21 @@ func (pk refpicker) handle() func(event *tcell.EventKey, setFocus func(p tview.P
 func (pk refpicker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
 	listview := pk.impl.listcustom
-	listview.Key = query
 	listview.Clear()
 	selected := func(i int) {
 		pk.onselected(i)
 	}
 	if fzf := pk.impl.fzf; fzf != nil {
 		fzf.selected = selected
-		fzf.OnSearch(query, true)
+		oldkey := fzf.OnSearch(query, true)
+		highlight_search_key(oldkey, listview, query)
 		pk.update_preview()
 	}
 }
 
 func (pk refpicker) onselected(i int) {
 	index := i
-	v := pk.impl.current_list_data[index]
+	v := pk.impl.listdata[index]
 
 	pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
 	pk.impl.parent.hide()
@@ -361,10 +356,9 @@ func (pk refpicker) onselected(i int) {
 
 func (pk *refpicker) loadlist() {
 	listview := pk.impl.listcustom
-	pk.impl.current_list_data = []ref_line{}
+	listview.Key = pk.impl.key
 	for i := range pk.impl.listdata {
 		v := pk.impl.listdata[i]
-		pk.impl.current_list_data = append(pk.impl.current_list_data, v)
 		listview.AddItem(v.path, v.line, func() {
 			pk.onselected(i)
 		})
