@@ -348,7 +348,7 @@ func (pk refpicker) UpdateQuery(query string) {
 }
 
 func (pk refpicker) onselected(i int) {
-	index := pk.impl.fzf.get_data_index(i)
+	index := i
 	v := pk.impl.current_list_data[index]
 
 	pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)

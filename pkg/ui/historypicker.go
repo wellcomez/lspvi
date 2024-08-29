@@ -66,7 +66,7 @@ func new_history_picker(v *fzfmain) history_picker {
 	items := []history_item{}
 	// fzf_item_strings := []string{}
 	close := func(i int) {
-		index := sym.fzf.get_data_index(i)
+		index := i
 		v := sym.impl.listdata[index]
 		path := v.filepath
 		parent := sym.impl.parent
