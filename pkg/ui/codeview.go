@@ -220,21 +220,8 @@ func update_selection_menu(ret *CodeView) {
 			main.ActiveTab(view_quickview, false)
 		}, hide: len(main.codeview.rightmenu_select_text) == 0},
 		{item: create_menu_item("Grep word"), handle: func() {
-			main.quickview.view.Clear()
-			key := lspcore.SymolSearchKey{
-				Key: ret.rightmenu_select_text,
-			}
-			main.ActiveTab(view_quickview, false)
-			main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)
-			main.open_picker_grep(key.Key, func(s ref_with_caller) bool {
-				var ret = ret.rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
-				if ret {
-					main.app.QueueUpdateDraw(func() {
-						main.quickview.AddResult(data_grep_word, s, key)
-					})
-				}
-				return true
-			})
+			rightmenu_select_text := ret.rightmenu_select_text
+			qf_grep_word(main, rightmenu_select_text)
 		}, hide: len(ret.rightmenu_select_text) == 0},
 		{item: create_menu_item("Copy Selection"), handle: func() {
 			data := ret.rightmenu_previous_selection
@@ -254,6 +241,24 @@ func update_selection_menu(ret *CodeView) {
 		}},
 	}
 	ret.rightmenu_items = addjust_menu_width(items)
+}
+
+func qf_grep_word(main *mainui, rightmenu_select_text string) {
+	main.quickview.view.Clear()
+	key := lspcore.SymolSearchKey{
+		Key: rightmenu_select_text,
+	}
+	main.ActiveTab(view_quickview, false)
+	main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)
+	main.open_picker_grep(key.Key, func(s ref_with_caller) bool {
+		var ret = rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
+		if ret {
+			main.app.QueueUpdateDraw(func() {
+				main.quickview.AddResult(data_grep_word, s, key)
+			})
+		}
+		return true
+	})
 }
 
 func addjust_menu_width(items []context_menu_item) []context_menu_item {

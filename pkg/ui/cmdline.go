@@ -40,6 +40,15 @@ func new_cmdline(main *mainui) *cmdline {
 	code.Vim = NewVim(main)
 	return code
 }
+func (cmd *cmdline) OnSearchCommand(command string) bool {
+	if strings.Index(command, "find ") == 0 || strings.Index(command, "grep ") == 0 {
+		i := strings.Index(command, " ")
+		arg := command[i+1:]
+		arg = strings.TrimLeft(arg, " ")
+		qf_grep_word(cmd.main, arg)
+	}
+	return false
+}
 func (cmd *cmdline) OnComand(command string) bool {
 	command = strings.TrimRight(command, "\r")
 	command = strings.TrimRight(command, "\n")
@@ -51,6 +60,8 @@ func (cmd *cmdline) OnComand(command string) bool {
 		get_cmd_actor(cmd.main, vi_quick_prev).handle()
 	} else if command == "q" || command == "quit" || command == "q!" || command == "qa" {
 		cmd.main.Close()
+	} else if cmd.OnSearchCommand(command) {
+		return true
 	} else if command == "h" || command == "help" {
 		cmd.main.helpkey(true)
 	} else if num, err := strconv.ParseInt(command, 10, 32); err == nil {
@@ -568,9 +579,9 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 // EnterFind enters find mode.
 func (v *Vim) EnterFind() bool {
 	if v.vi.Escape {
-		aaa:=v.app.prefocused
+		aaa := v.app.prefocused
 		v.MoveFocus()
-		v.app.prefocused=aaa
+		v.app.prefocused = aaa
 		v._enter_find_mode()
 		return true
 	} else {
