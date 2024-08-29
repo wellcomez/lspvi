@@ -425,6 +425,7 @@ func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 func (qk *quick_view) selection_handle_impl(index int, open bool) {
 	vvv := qk.Refs.Refs[index]
 	qk.currentIndex = index
+	qk.view.SetCurrentItem(index)
 	same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.filename
 	if open || same {
 		qk.main.UpdatePageTitle()
