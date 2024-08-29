@@ -772,6 +772,11 @@ func (main *mainui) Close() {
 }
 func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 	if len(txt) == 0 {
+		prev := main.prefocused
+		switch prev {
+		case view_bookmark:
+			main.bk.OnSearch(txt)
+		}
 		return
 	}
 	if main.prefocused == view_none || main.prefocused == view_cmd {
@@ -810,6 +815,8 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 			main.codeview.gotoline(gs.GetNext())
 		}
 		main.page.SetTitle(gs.String())
+	} else if prev == view_bookmark {
+		main.bk.OnSearch(txt)
 	} else if prev == view_callin {
 		main.callinview.OnSearch(txt)
 	} else if prev == view_quickview {

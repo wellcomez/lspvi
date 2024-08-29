@@ -241,12 +241,20 @@ func new_fzf_on_list(list *customlist, fuzz bool) *fzf_on_listview {
 func (fzf *fzf_on_listview) OnSearch(txt string, update bool) string {
 	var result fzflib.SearchResult
 	old := fzf.query
-	fzf.fzf.Search(txt)
-	fzf.query = txt
-	result = <-fzf.fzf.GetResultChannel()
-	fzf.selected_index = []int{}
-	for _, v := range result.Matches {
-		fzf.selected_index = append(fzf.selected_index, int(v.HayIndex))
+	if len(txt) > 0 {
+		fzf.fzf.Search(txt)
+		fzf.query = txt
+		result = <-fzf.fzf.GetResultChannel()
+		fzf.selected_index = []int{}
+		for _, v := range result.Matches {
+			fzf.selected_index = append(fzf.selected_index, int(v.HayIndex))
+		}
+	} else {
+		fzf.selected_index = []int{}
+		for i := 0; i < len(fzf.list_data); i++ {
+			fzf.selected_index = append(fzf.selected_index, i)
+		}
+
 	}
 	if update {
 		fzf.refresh_list()

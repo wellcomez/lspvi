@@ -276,6 +276,8 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	shouldReturn := handle_backspace(event, cmd)
 	if shouldReturn {
+		txt := cmd.input.GetText()
+		cmd.main.OnSearch(txt[1:], false, false)
 		return true
 	}
 	txt := cmd.input.GetText()

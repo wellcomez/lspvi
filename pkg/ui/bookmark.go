@@ -185,6 +185,11 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 
 func init_bookmark_list(main *mainui, selected func(int)) (*customlist, []ref_line) {
 	hlist := new_customlist()
+	listdata := reload_bookmark_list(main, hlist, selected)
+	return hlist, listdata
+}
+
+func reload_bookmark_list(main *mainui, hlist *customlist, selected func(int)) []ref_line {
 	bookmark := main.bookmark
 	marks := bookmark.Bookmark
 	listdata := []ref_line{}
@@ -212,7 +217,7 @@ func init_bookmark_list(main *mainui, selected func(int)) (*customlist, []ref_li
 		index := i
 		hlist.AddItem(a, b, func() { selected(index) })
 	}
-	return hlist, listdata
+	return listdata
 }
 
 func close_bookmark_picker(impl *prev_picker_impl, loc lsp.Location) {
@@ -231,12 +236,25 @@ type bookmark_view struct {
 	*customlist
 	data []ref_line
 	Name string
+	fzf  *fzf_on_listview
+	main *mainui
 }
 
+func (bk *bookmark_view) OnSearch(txt string) {
+	old := bk.fzf.OnSearch(txt, true)
+	if len(txt) > 0 {
+		highlight_search_key(old, bk.customlist, txt)
+	}
+	bk.fzf.selected = func(i int) {
+		loc := bk.data[i].loc
+		bk.main.gotoline(loc)
+	}
+}
 func new_bookmark_view(main *mainui) *bookmark_view {
 	ret := &bookmark_view{
 		view_link: &view_link{},
 		Name:      view_bookmark.getname(),
+		main:      main,
 	}
 	a, b := init_bookmark_list(main, func(i int) {
 		loc := ret.data[i].loc
@@ -249,5 +267,6 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 		main.gotoline(loc)
 	})
 	ret.data = b
+	ret.fzf = new_fzf_on_list(ret.customlist, true)
 	return ret
 }
