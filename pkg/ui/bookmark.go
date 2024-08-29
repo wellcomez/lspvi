@@ -167,15 +167,28 @@ func new_bookmark_editor(v *fzfmain, cb func(string)) bookmark_edit {
 func new_bookmark_picker(v *fzfmain) bookmark_picker {
 	impl := &bookmark_picker_impl{
 		prev_picker_impl: new_preview_picker(v),
-		fzf:              nil,
-		hlist:            new_customlist(),
 	}
 	sym := bookmark_picker{
-		impl: impl}
-	impl.use_cusutom_list(impl.hlist)
-	impl.hlist.fuzz = true
+		impl: impl,
+	}
 	sym.impl.codeprev.view.SetBorder(true)
-	marks := v.main.bookmark.Bookmark
+
+	impl.hlist, impl.listdata = init_bookmark_list(v.main, func(i int) {
+		loc := sym.impl.listdata[i].loc
+		close_bookmark_picker(impl.prev_picker_impl, loc)
+	})
+	impl.hlist.fuzz = true
+	impl.use_cusutom_list(impl.hlist)
+	fzf := new_fzf_on_list(sym.impl.hlist, sym.impl.hlist.fuzz)
+	sym.impl.fzf = fzf
+	return sym
+}
+
+func init_bookmark_list(main *mainui, selected func(int)) (*customlist, []ref_line) {
+	hlist := new_customlist()
+	bookmark := main.bookmark
+	marks := bookmark.Bookmark
+	listdata := []ref_line{}
 	for _, file := range marks {
 		for _, v := range file.LineMark {
 			ref := ref_line{
@@ -191,20 +204,16 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 					},
 				},
 			}
-			impl.listdata = append(impl.listdata, ref)
+			listdata = append(listdata, ref)
 		}
 	}
-	// impl.current_list_data = impl.listdata
-	root := v.main.root
-	for _, v := range impl.listdata {
+	root := main.root
+	for i, v := range listdata {
 		a, b := get_list_item(v, root)
-		loc := v.loc
-		impl.hlist.AddItem(a, b, func() {
-			close_bookmark_picker(impl.prev_picker_impl, loc)
-		})
+		index := i
+		hlist.AddItem(a, b, func() { selected(index) })
 	}
-	sym.impl.fzf = new_fzf_on_list(sym.impl.hlist, sym.impl.hlist.fuzz)
-	return sym
+	return hlist, listdata
 }
 
 func close_bookmark_picker(impl *prev_picker_impl, loc lsp.Location) {
