@@ -17,6 +17,34 @@ type Symbol_file struct {
 	tokens       *lsp.SemanticTokens
 }
 
+func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
+	for _, v := range sym.Class_object {
+		if v.Is_class() {
+			for i := range v.Members {
+				f := &v.Members[i]
+				f = sym.newMethod(f, rang)
+				if f != nil {
+					return f
+				}
+			}
+		}
+		ret := sym.newMethod(v, rang)
+		if ret != nil {
+			return ret 
+		}
+	}
+	return nil
+}
+
+func (*Symbol_file) newMethod(v *Symbol, rang lsp.Range) *Symbol {
+	if v.SymInfo.Kind == lsp.SymbolKindFunction || v.SymInfo.Kind == lsp.SymbolKindMethod {
+		if rang.Start.Line > v.SymInfo.Location.Range.Start.Line && rang.End.Line <= v.SymInfo.Location.Range.End.Line {
+			return v
+		}
+	}
+	return nil
+
+}
 func (sym *Symbol_file) Filter(key string) *Symbol_file {
 	if len(key) == 0 {
 		return sym

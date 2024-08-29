@@ -455,7 +455,7 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	qk.view.Clear()
 
 	m := qk.main
-	Refs := get_loc_caller(refs, m.lspmgr.Current)
+	Refs := qk.main.get_loc_caller(refs, m.lspmgr.Current)
 
 	qk.UpdateListView(t, Refs, key)
 	qk.save()
@@ -475,7 +475,7 @@ func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.
 	if len(secondline) == 0 {
 		return
 	}
-	qk.view.AddItem(secondline, "", nil)
+	qk.view.AddItem(fmt.Sprintf("%-3d %s", qk.view.GetItemCount()+1, secondline), "", nil)
 	qk.main.UpdatePageTitle()
 	// qk.open_index(qk.view.GetCurrentItem())
 }
@@ -489,13 +489,16 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.currentIndex = 0
 	qk.cmd_search_key = ""
 	_, _, width, _ := qk.view.GetRect()
-	for _, caller := range qk.Refs.Refs {
+	m := qk.main
+	for i, caller := range qk.Refs.Refs {
 		caller.width = width
+		v := caller.Loc
+		caller.Caller = m.lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
 		secondline := caller.ListItem(qk.main.root)
 		if len(secondline) == 0 {
 			continue
 		}
-		qk.view.AddItem(secondline, "", nil)
+		qk.view.AddItem(fmt.Sprintf("%-3d %s", i+1, secondline), "", nil)
 	}
 	qk.main.UpdatePageTitle()
 	// qk.open_index(qk.view.GetCurrentItem())

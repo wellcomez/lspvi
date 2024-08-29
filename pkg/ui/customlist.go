@@ -36,7 +36,6 @@ func (l *customlist) AddItem(mainText, secondText string, selected func()) *cust
 	l.List.AddItem(mainText, secondText, 0, selected)
 	return l
 }
-
 type keypattern struct {
 	begin int
 	width int

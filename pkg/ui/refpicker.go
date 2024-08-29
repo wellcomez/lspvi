@@ -10,7 +10,9 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	lsp "github.com/tectiv3/go-lsp"
+	"github.com/tectiv3/go-lsp"
+
+	// lsp "github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -160,7 +162,7 @@ func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
 	if caller == nil {
 		return ""
 	}
-	callerstr := fmt.Sprintf("%s:%d **%20s**",
+	callerstr := fmt.Sprintf("%s:%d **%-20s**",
 		strings.TrimPrefix(
 			caller.Item.URI.AsPath().String(), root),
 		caller.Item.Range.Start.Line, caller.Name)
@@ -207,7 +209,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 	listview := pk.impl.listview
 	datafzf := []string{}
 	lsp := pk.impl.parent.main.lspmgr.Current
-	pk.impl.refs = get_loc_caller(file, lsp)
+	pk.impl.refs = pk.impl.codeprev.main.get_loc_caller(file, lsp)
 	for i := range pk.impl.refs {
 		caller := pk.impl.refs[i]
 		v := caller.Loc
@@ -253,7 +255,7 @@ func (impl *prev_picker_impl) open_location(v lsp.Location) {
 	impl.parent.hide()
 }
 
-func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
+func (m *mainui) get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
 	ref_call_in := []ref_with_caller{}
 	for _, v := range file {
 		stacks, err := lsp.Caller(v, false)
@@ -265,7 +267,9 @@ func get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_ca
 			}
 
 		}
-		ref_call_in = append(ref_call_in, ref_with_caller{Loc: v})
+		caller := m.lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+		ref_call_in = append(ref_call_in, ref_with_caller{Loc: v, Caller: caller})
+
 	}
 	return ref_call_in
 }

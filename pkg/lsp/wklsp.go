@@ -251,6 +251,32 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 	}
 	return ret, is_new, err
 }
+func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) *CallStackEntry {
+	sym, _ := wk.Get(filename)
+	if sym == nil {
+		return nil
+	}
+	s := sym.Find(r)
+	if s == nil {
+		return nil
+	}
+	return &CallStackEntry{
+		Item: lsp.CallHierarchyItem{
+			Name:  s.SymInfo.Name,
+			Range: r,
+			URI:   lsp.NewDocumentURI(filename),
+		},
+		Name: s.SymInfo.Name,
+	}
+}
+func (wk *LspWorkspace) Get(filename string) (*Symbol_file, error) {
+	ret, ok := wk.filemap[filename]
+	if ok {
+		return ret, nil
+	}
+	return ret, fmt.Errorf("not loaded")
+
+}
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)
 	wk.Current = wk.filemap[filename]
