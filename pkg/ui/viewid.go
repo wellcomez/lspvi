@@ -205,7 +205,7 @@ func (viewid view_id) getname() string {
 	return all_view_name[viewid]
 }
 func config_main_tab_order(main *mainui) {
-	var vieworder = []view_id{view_code, view_outline_list, view_quickview, view_callin, view_uml, view_file, view_code}
+	var vieworder = []view_id{view_code, view_outline_list, view_quickview, view_callin, view_uml, view_bookmark, view_file, view_code}
 	for i, v := range vieworder {
 		if i+1 < len(vieworder) {
 			if link := v.to_view_link(main); link != nil {

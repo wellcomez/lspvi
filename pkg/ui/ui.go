@@ -295,14 +295,10 @@ func (m *mainui) ActiveTab(id view_id, focused bool) {
 		}
 	}
 	switch id {
-	case view_log:
-		m.page.SetTitle("log")
-	case view_uml:
-		m.page.SetTitle(m.uml.Name)
-	case view_callin:
-		m.page.SetTitle(m.callinview.Name)
 	case view_quickview:
 		m.page.SetTitle(m.quickview.String())
+	default:
+		m.page.SetTitle(id.getname())
 	}
 }
 
@@ -897,7 +893,7 @@ func (main *mainui) switch_tab_view() {
 type direction int
 
 const (
-	move_left = iota
+	move_left direction = iota
 	move_right
 	move_up
 	move_down
@@ -905,21 +901,7 @@ const (
 
 func (main *mainui) move_to_window(t direction) {
 	cur := main.get_focus_view_id()
-	var vl *view_link
-	switch cur {
-	case view_cmd:
-		vl = main.cmdline.view_link
-	case view_code:
-		vl = main.codeview.view_link
-	case view_outline_list:
-		vl = main.symboltree.view_link
-	case view_quickview:
-		vl = main.quickview.view_link
-	case view_file:
-		vl = main.fileexplorer.view_link
-	case view_callin:
-		vl = main.callinview.view_link
-	}
+	var vl *view_link = cur.to_view_link(main)
 	if vl == nil {
 		return
 	}
@@ -927,20 +909,10 @@ func (main *mainui) move_to_window(t direction) {
 	if next == view_none {
 		return
 	}
-	switch next {
-	case view_uml, view_log, view_quickview, view_callin:
-		names := main.page.GetPageNames(true)
-		if len(names) == 1 {
-			vid := find_tab_by_name(names[0])
-			if vid != view_none {
-				main.ActiveTab(vid, true)
-				return
-			}
-		}
-		main.ActiveTab(next, true)
-	default:
+	if main.tabs.Find(next.getname())==nil{
 		main.set_viewid_focus(next)
-		// main.set_focus(main.get_view_from_id(next))
+	}else{
+		main.ActiveTab(next, true)
 	}
 }
 
@@ -960,7 +932,7 @@ func (vl *view_link) next_view(t direction) view_id {
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	eventname := event.Name()
-	log.Println("main ui recieved ",
+log.Println("main ui recieved ",
 		main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
 	//Ctrl+O
 	if main.layout.dialog.Visible {

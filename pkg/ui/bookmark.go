@@ -288,7 +288,7 @@ func (bk *bookmark_view) OnSearch(txt string) {
 }
 func new_bookmark_view(main *mainui) *bookmark_view {
 	ret := &bookmark_view{
-		view_link: &view_link{},
+		view_link: &view_link{up: view_code,left: view_uml,right: view_outline_list},
 		Name:      view_bookmark.getname(),
 		main:      main,
 	}
