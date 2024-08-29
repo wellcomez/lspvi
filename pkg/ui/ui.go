@@ -349,10 +349,11 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 
 	}
 	m.page.SwitchToPage(tab.Name)
-	m.page.SetTitle(tab.Name)
-	if vid := find_tab_by_name(tab.Name); vid != view_none {
+	// m.page.SetTitle(tab.Name)
+	if vid:=find_name_to_viewid(tab.Name);vid!=view_none{
 		m.set_viewid_focus(vid)
 	}
+	m.UpdatePageTitle()
 }
 func (m *mainui) quit() {
 	m.Close()
