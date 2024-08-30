@@ -20,12 +20,12 @@ type editor_mouse_resize struct {
 
 func new_editor_resize(main *mainui) editor_mouse_resize {
 	ret := editor_mouse_resize{main: main}
-	aaa:=[]ui_reszier{
-		new_ui_resize(main.codeview.view.Box,main.codeview.view_link,ret),
-		new_ui_resize(main.fileexplorer.view.Box,main.fileexplorer.view_link,ret),
-		new_ui_resize(main.symboltree.view.Box,main.symboltree.view_link,ret),
+	aaa := []ui_reszier{
+		new_ui_resize(main.codeview.view.Box, main.codeview.view_link, ret),
+		new_ui_resize(main.fileexplorer.view.Box, main.fileexplorer.view_link, ret),
+		new_ui_resize(main.symboltree.view.Box, main.symboltree.view_link, ret),
 	}
-	ret.contorls=aaa
+	ret.contorls = aaa
 	return ret
 }
 func (r editor_mouse_resize) zoom(zoomin bool, viewid view_id) {
@@ -35,15 +35,14 @@ func new_ui_resize(box *tview.Box, vl *view_link, layout resizable_layout) ui_re
 	return ui_reszier{box: box, view_link: vl, layout: layout}
 }
 func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) {
-	for i := range resize.contorls  {
-		r:=&resize.contorls[i]
-		r.checkdrag(action, event)	
+	for i := range resize.contorls {
+		r := &resize.contorls[i]
+		r.checkdrag(action, event)
 		if r.yes {
 			return
 		}
 	}
 }
-
 
 func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) {
 	if !resize.box.HasFocus() {
@@ -76,8 +75,6 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 			resize.yes = yes
 			resize.beginX = x
 			resize.beginY = y
-			resize.box.GetBorderColor()
-			resize.box.SetBorderColor(tcell.ColorRed)
 		}
 	case tview.MouseMove:
 		{
@@ -96,5 +93,8 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 		}
 	default:
 		resize.yes = false
+	}
+	if resize.yes {
+		resize.box.SetBorderColor(tcell.ColorRed)
 	}
 }
