@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -9,9 +11,10 @@ type ui_reszier struct {
 	box            *tview.Box
 	view_link      *view_link
 	beginX, beginY int
-	yes            bool
+	dragging       bool
 	left           bool
 	layout         resizable_layout
+	begin_time     time.Time
 }
 type editor_mouse_resize struct {
 	main     *mainui
@@ -38,7 +41,7 @@ func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tc
 	for i := range resize.contorls {
 		r := &resize.contorls[i]
 		r.checkdrag(action, event)
-		if r.yes {
+		if r.dragging {
 			return
 		}
 	}
@@ -46,7 +49,7 @@ func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tc
 
 func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) {
 	if !resize.box.HasFocus() {
-		resize.yes = false
+		resize.dragging = false
 		// resize.box.SetBorderColor(tcell.ColorRed)
 		return
 	}
@@ -56,7 +59,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 	switch action {
 	case tview.MouseLeftDown:
 		{
-			resize.yes = false
+			resize.dragging = false
 			yes := false
 			if y >= top && y <= top+heigth {
 				yes = true
@@ -72,13 +75,20 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 			} else {
 				return
 			}
-			resize.yes = yes
+			resize.dragging = yes
 			resize.beginX = x
 			resize.beginY = y
+			resize.begin_time = time.Now()
 		}
 	case tview.MouseMove:
 		{
-			if resize.yes {
+			if resize.dragging {
+				Duration := time.Since(resize.begin_time)
+				if Duration > time.Second {
+					resize.dragging = false
+					resize.box.Blur()
+					return
+				}
 				if x == bRightX || x == bLeftX {
 					return
 				}
@@ -92,9 +102,12 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 			}
 		}
 	default:
-		resize.yes = false
+		if resize.dragging {
+			resize.box.Focus(nil)
+		}
+		resize.dragging = false
 	}
-	if resize.yes {
+	if resize.dragging {
 		resize.box.SetBorderColor(tcell.ColorRed)
 	}
 }
