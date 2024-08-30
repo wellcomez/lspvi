@@ -8,7 +8,7 @@ import (
 )
 
 type TabButton struct {
-	view  *tview.Button
+	*tview.Button
 	Name  string
 	group *ButtonGroup
 }
@@ -28,9 +28,9 @@ func (group ButtonGroup) Find(tab string) *TabButton {
 func (group ButtonGroup) onselected(tab *TabButton) {
 	for _, v := range group.tabs {
 		if v == tab {
-			v.view.Focus(nil)
+			v.Focus(nil)
 		} else {
-			v.view.Blur()
+			v.Blur()
 		}
 	}
 	group.handler(tab)
@@ -53,17 +53,17 @@ func NewTab(name string, group *ButtonGroup) *TabButton {
 	// var style1 tcell.Style
 	// style1.Foreground(tcell.ColorGreen)
 	ret := &TabButton{
+		Button:  tview.NewButton(name).SetStyle(style),
 		Name:  name,
-		view:  tview.NewButton(name).SetStyle(style),
 		group: group,
 	}
-	ret.view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		if action == tview.MouseMove {
 			return action, event
 		}
 		x, y := event.Position()
 		if action == tview.MouseLeftDown {
-			if ret.view.InRect(x, y) {
+			if ret.InRect(x, y) {
 				ret.selected()
 			}
 		}

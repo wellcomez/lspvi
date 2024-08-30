@@ -246,9 +246,9 @@ func (m *mainui) ActiveTab(id view_id, focused bool) {
 	tab := m.tabs.Find(name)
 	for _, v := range m.tabs.tabs {
 		if v == tab {
-			v.view.Focus(nil)
+			v.Focus(nil)
 		} else {
-			v.view.Blur()
+			v.Blur()
 		}
 	}
 	switch id {
@@ -566,7 +566,7 @@ func MainUI(arg *Arguments) {
 	main.tabs = group
 	tab_area := tview.NewFlex()
 	for _, v := range group.tabs {
-		tab_area.AddItem(v.view, len(v.view.GetLabel())+2, 1, true)
+		tab_area.AddItem(v, len(v.GetLabel())+2, 1, true)
 	}
 	main.statusbar = tview.NewTextView()
 	main.statusbar.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
@@ -615,7 +615,7 @@ func MainUI(arg *Arguments) {
 
 	var tabid view_id = view_quickview
 	fzttab := group.Find(tabid.getname())
-	fzttab.view.Focus(nil)
+	fzttab.Focus(nil)
 	main_layout :=
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(editor_area, 0, 3, true).
