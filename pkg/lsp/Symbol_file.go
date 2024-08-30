@@ -1,11 +1,16 @@
 package lspcore
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/tectiv3/go-lsp"
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/tectiv3/go-lsp"
 )
 
 type Symbol_file struct {
@@ -30,7 +35,7 @@ func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
 		}
 		ret := sym.newMethod(v, rang)
 		if ret != nil {
-			return ret 
+			return ret
 		}
 	}
 	return nil
@@ -215,6 +220,8 @@ func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
 func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func()) {
 	bin, binerr := NewPlanUmlBin()
 	export_root, export_err := NewExportRoot(&sym.Wk.Wk)
+	dir_to_remvoe := filepath.Join(export_root.Dir, task.Dir())
+	os.RemoveAll(dir_to_remvoe)
 	for _, s := range task.Allstack {
 		var xx = class_resolve_task{
 			wklsp:     sym.Wk,
@@ -224,7 +231,15 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 		if hanlde != nil {
 			name := ""
 			if len(s.Items) > 0 {
-				name = s.Items[0].Name
+				for i := range s.Items {
+					index := len(s.Items)
+					index = index - 1 - i
+					name += "." + s.Items[index].Name
+				}
+				if len(name) > 1024 {
+					buf := sha256.Sum256([]byte(name))
+					name = hex.EncodeToString(buf[:])
+				}
 			}
 			if binerr == nil && export_err == nil && len(name) > 0 {
 				content := s.Uml(true)
