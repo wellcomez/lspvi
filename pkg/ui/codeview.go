@@ -148,6 +148,7 @@ func NewCodeView(main *mainui) *CodeView {
 	// view := tview.NewTextView()
 	// view.SetBorder(true)
 	ret := CodeView{view_link: &view_link{
+		id:view_code,
 		right: view_outline_list,
 		down:  view_quickview,
 		left:  view_file},

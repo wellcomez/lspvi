@@ -660,8 +660,9 @@ func MainUI(arg *Arguments) {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
 	})
+	resizer:=new_editor_resize(&main)
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
-		main.fileexplorer.uiresize.checkdrag(action, event)
+		resizer.checkdrag(action, event)
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 		if content_menu_action == tview.MouseConsumed {
 			return nil, tview.MouseConsumed

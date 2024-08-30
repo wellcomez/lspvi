@@ -13,16 +13,37 @@ type ui_reszier struct {
 	left           bool
 	layout         resizable_layout
 }
-type editor_resize struct {
-	main *mainui
+type editor_mouse_resize struct {
+	main     *mainui
+	contorls []ui_reszier
 }
 
-func (r editor_resize) zoom(zoomin bool, viewid view_id) {
+func new_editor_resize(main *mainui) editor_mouse_resize {
+	ret := editor_mouse_resize{main: main}
+	aaa:=[]ui_reszier{
+		new_ui_resize(main.codeview.view.Box,main.codeview.view_link,ret),
+		new_ui_resize(main.fileexplorer.view.Box,main.fileexplorer.view_link,ret),
+		new_ui_resize(main.symboltree.view.Box,main.symboltree.view_link,ret),
+	}
+	ret.contorls=aaa
+	return ret
+}
+func (r editor_mouse_resize) zoom(zoomin bool, viewid view_id) {
 	r.main._editor_area_layout.zoom(zoomin, viewid)
 }
 func new_ui_resize(box *tview.Box, vl *view_link, layout resizable_layout) ui_reszier {
 	return ui_reszier{box: box, view_link: vl, layout: layout}
 }
+func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) {
+	for i := range resize.contorls  {
+		r:=&resize.contorls[i]
+		r.checkdrag(action, event)	
+		if r.yes {
+			return
+		}
+	}
+}
+
 
 func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) {
 	if !resize.box.HasFocus() {

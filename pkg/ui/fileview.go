@@ -30,7 +30,7 @@ type file_tree_view struct {
 	dir_mode      dir_open_mode
 	right_context filetree_context
 	menu_item     []context_menu_item
-	uiresize      ui_reszier
+	// uiresize      ui_reszier
 }
 
 type filetree_context struct {
@@ -77,7 +77,6 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 		handle:  handle,
 	}
 
-	ret.uiresize = new_ui_resize(ret.view.Box, ret.view_link, editor_resize{main})
 	view.SetBorder(true)
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
