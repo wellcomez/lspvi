@@ -660,7 +660,7 @@ func MainUI(arg *Arguments) {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
 	})
-	resizer:=new_editor_resize(&main)
+	resizer := new_editor_resize(&main)
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		resizer.checkdrag(action, event)
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
@@ -892,7 +892,9 @@ func (main *mainui) view_is_tab(next view_id) bool {
 	x := main.tabs.Find(next.getname()) != nil
 	return x
 }
-
+func (main *mainui) IsSource(s string) bool {
+	return main.lspmgr.IsSource(s)
+}
 func (vl *view_link) next_view(t direction) view_id {
 	var next view_id = view_none
 	switch t {

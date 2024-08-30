@@ -311,11 +311,20 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 		}
 		fullpath := filepath.Join(dir, file.Name())
 		prefix := ""
+		yes := file.IsDir()
 		if file.IsDir() {
 			prefix = lspcore.FolderEmoji
 		}
 		c := tview.NewTreeNode(prefix + file.Name())
 		c.SetReference(fullpath)
+		if !yes {
+			yes = lspcore.IsMe(fullpath, []string{"md", "Makefile","json"}) || view.main.IsSource(fullpath)
+			if yes {
+				c.SetColor(tview.Styles.PrimaryTextColor)
+			} else {
+				c.SetColor(tcell.ColorGray)
+			}
+		}
 		root.AddChild(c)
 	}
 }

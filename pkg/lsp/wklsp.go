@@ -176,6 +176,14 @@ type LspWorkspace struct {
 	Handle  lsp_data_changed
 }
 
+func (wk LspWorkspace) IsSource(filename string) bool {
+	for _, v := range wk.clients {
+		if v.IsMe(filename) {
+			return true
+		}
+	}
+	return false
+}
 func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, error) {
 	filename := entry.Item.URI.AsPath().String()
 	symbolfile, isnew, err := wk.open(filename)

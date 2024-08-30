@@ -85,6 +85,7 @@ type WorkSpace struct {
 	Path     string
 	Export   string
 	Callback jsonrpc2.Handler
+	LspCoreList []lspcore
 }
 
 func (core *lspcore) Initialized() error {
