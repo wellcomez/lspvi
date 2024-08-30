@@ -14,6 +14,7 @@ import (
 	"golang.org/x/term"
 )
 
+var logFile, _= setupLogFile("logfile.txt")
 type read_out struct {
 	handle func(p []byte) (n int, err error)
 }
@@ -63,8 +64,7 @@ func (r read_out) Write(p []byte) (n int, err error) {
 	if r.handle != nil {
 		return r.handle(p)
 	}
-	log.Println("<<", string(p))
-	return len(p), nil
+	return logFile.Write(p)
 }
 func setupLogFile(filename string) (*os.File, error) {
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -75,16 +75,12 @@ func setupLogFile(filename string) (*os.File, error) {
 }
 
 func main() {
-	logFile, err := setupLogFile("logfile.txt")
-	if err != nil {
-		log.Fatalf("Failed to open log file: %v", err)
-	}
 	defer logFile.Close()
 	log.SetOutput(logFile)
 
 	// 创建一个新的伪终端
 	lspvi := "/Users/jialaizhu/dev/lspvi/lspvi"
-	test(lspvi)
+	newFunction1(lspvi)
 }
 
 func newFunction1(lspvi string) bool {
@@ -94,10 +90,15 @@ func newFunction1(lspvi string) bool {
 		panic(err)
 	}
 	var stdout2 read_out
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+	if err != nil {
+		log.Fatal(err)
+	}
 	go func() {
 		var stdin2 read_out
 		stdin2.handle = func(p []byte) (n int, err error) {
-			log.Println(">>", len(p), string(p))
+			// log.Println(">>", len(p),"'" ,string(p),"'")
 			return  f.Write(p)
 		}
 		io.Copy(stdin2, os.Stdin)
@@ -106,7 +107,7 @@ func newFunction1(lspvi string) bool {
 	return false
 }
 
-func newFunction() {
+func test_grep() {
 	c := exec.Command("grep", "--color=auto", "bar")
 	f, err := pty.Start(c)
 	if err != nil {
