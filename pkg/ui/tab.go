@@ -13,8 +13,9 @@ type TabButton struct {
 	group *ButtonGroup
 }
 type ButtonGroup struct {
-	tabs    []*TabButton
-	handler func(tab *TabButton)
+	tabs      []*TabButton
+	handler   func(tab *TabButton)
+	activetab *TabButton
 }
 
 func (group ButtonGroup) Find(tab string) *TabButton {
@@ -25,9 +26,10 @@ func (group ButtonGroup) Find(tab string) *TabButton {
 	}
 	return nil
 }
-func (group ButtonGroup) onselected(tab *TabButton) {
+func (group *ButtonGroup) onselected(tab *TabButton) {
 	for _, v := range group.tabs {
 		if v == tab {
+			group.activetab = v
 			v.Focus(nil)
 		} else {
 			v.Blur()
@@ -50,13 +52,21 @@ func (btn *TabButton) selected() {
 }
 func NewTab(name string, group *ButtonGroup) *TabButton {
 	var style tcell.Style
+	activatedStyle := tcell.StyleDefault.Background(tview.Styles.PrimaryTextColor).Foreground(tview.Styles.InverseTextColor)
 	// var style1 tcell.Style
 	// style1.Foreground(tcell.ColorGreen)
 	ret := &TabButton{
-		Button:  tview.NewButton(name).SetStyle(style),
-		Name:  name,
-		group: group,
+		Button: tview.NewButton(name).SetStyle(style),
+		Name:   name,
+		group:  group,
 	}
+	ret.SetBlurFunc(func() {
+		if group.activetab == ret {
+			ret.SetStyle(activatedStyle)
+		} else {
+			ret.SetStyle(style)
+		}
+	})
 	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		if action == tview.MouseMove {
 			return action, event
