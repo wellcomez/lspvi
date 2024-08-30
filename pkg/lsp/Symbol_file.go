@@ -1,8 +1,8 @@
 package lspcore
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
+	// "crypto/sha256"
+	// "encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -222,6 +222,7 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 	export_root, export_err := NewExportRoot(&sym.Wk.Wk)
 	dir_to_remvoe := filepath.Join(export_root.Dir, task.Dir())
 	os.RemoveAll(dir_to_remvoe)
+	rename := map[string]int{}
 	for _, s := range task.Allstack {
 		var xx = class_resolve_task{
 			wklsp:     sym.Wk,
@@ -229,17 +230,24 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 		}
 		xx.Run()
 		if hanlde != nil {
-			name := ""
+			name := "callin"
 			if len(s.Items) > 0 {
-				for i := range s.Items {
-					index := len(s.Items)
-					index = index - 1 - i
-					name += "." + s.Items[index].Name
+				name = s.Items[0].Name
+				if d, ok := rename[name]; ok {
+					rename[name] = d + 1
+					name = fmt.Sprintf("%d_%s", d, name)
+				} else {
+					rename[name] = 1
 				}
-				if len(name) > 1024 {
-					buf := sha256.Sum256([]byte(name))
-					name = hex.EncodeToString(buf[:])
-				}
+				// for i := range s.Items {
+				// 	index := len(s.Items)
+				// 	index = index - 1 - i
+				// 	name += "." + s.Items[index].Name
+				// }
+				// if len(name) > 1024 {
+				// 	buf := sha256.Sum256([]byte(name))
+				// 	name = hex.EncodeToString(buf[:])
+				// }
 			}
 			if binerr == nil && export_err == nil && len(name) > 0 {
 				content := s.Uml(true)
