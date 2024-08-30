@@ -19,10 +19,11 @@ type grep_impl struct {
 }
 type livewgreppicker struct {
 	*prev_picker_impl
-	list *customlist
-	main *mainui
-	impl *grep_impl
-	qf   func(ref_with_caller) bool
+	list       *customlist
+	main       *mainui
+	impl       *grep_impl
+	qf         func(ref_with_caller) bool
+	filesearch bool
 }
 
 // name implements picker.
@@ -33,18 +34,27 @@ func (pk *livewgreppicker) name() string {
 // greppicker
 type greppicker struct {
 	*livewgreppicker
+	query string
 }
 
 // UpdateQuery implements picker.
 // Subtle: this method shadows the method (*livewgreppicker).UpdateQuery of greppicker.livewgreppicker.
 func (g *greppicker) UpdateQuery(query string) {
-	g.livewgreppicker.UpdateQuery(query)
+	g.query = query
+	// if g.hasenter {
+	// 	g.hasenter = false
+	// 	g.livewgreppicker.UpdateQuery(query)
+	// }
 }
 
 // handle implements picker.
 // Subtle: this method shadows the method (*livewgreppicker).handle of greppicker.livewgreppicker.
 func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return g.livewgreppicker.handle()
+	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+		if event.Key() == tcell.KeyEnter {
+			g.livewgreppicker.UpdateQuery(g.query)
+		}
+	}
 }
 
 // name implements picker.
@@ -95,6 +105,7 @@ func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 		list:             new_customlist(),
 		main:             main,
 		impl:             &grep_impl{},
+		filesearch:       false,
 	}
 	x.use_cusutom_list(grep.list)
 	v.Visible = true

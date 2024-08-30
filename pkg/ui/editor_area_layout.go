@@ -2,7 +2,7 @@ package mainui
 
 import (
 	"encoding/json"
-	"log"
+	// "log"
 	"os"
 	"path/filepath"
 )
