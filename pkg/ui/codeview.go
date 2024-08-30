@@ -743,6 +743,8 @@ func (code *CodeView) Load(filename string) error {
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
 	// "monokai"
 	code.LoadBuffer(data, filename)
+	code.view.Cursor.Loc.X = 0
+	code.view.Cursor.Loc.Y = 0
 	code.filename = filename
 	if code.main != nil {
 		code.view.bookmark = code.main.bookmark.GetFileBookmark(filename)
