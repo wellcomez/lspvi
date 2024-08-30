@@ -14,6 +14,7 @@ type view_link struct {
 	Width                       int
 	Heigth                      int
 	Hide                        bool
+	boxview                     *tview.Box
 }
 
 const (

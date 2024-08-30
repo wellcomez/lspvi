@@ -188,7 +188,7 @@ func (m *SymbolTreeView) OnCodeLineChange(line int) {
 func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
 	ret := &SymbolTreeView{
-		view_link: &view_link{id:view_outline_list,left: view_code, down: view_quickview},
+		view_link: &view_link{id: view_outline_list, left: view_code, down: view_quickview, boxview: symbol_tree.Box},
 		main:      main,
 		view:      symbol_tree,
 	}
@@ -204,10 +204,10 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	}
 	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy"), func() {
 		ret.handle_commnad(copy_data)
-	},false})
+	}, false})
 	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Path"), func() {
 		ret.handle_commnad(copy_path)
-	},false})
+	}, false})
 	ret.right_context = symboltree_view_context{
 		qk:        ret,
 		menu_item: menu_item,

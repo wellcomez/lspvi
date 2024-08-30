@@ -204,6 +204,7 @@ func new_log_view(main *mainui) *logview {
 		view_link: &view_link{up: view_code, right: view_callin},
 		log:       tview.NewTextView(),
 	}
+	ret.boxview = ret.log.Box
 	return ret
 }
 

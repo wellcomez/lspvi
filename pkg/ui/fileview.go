@@ -65,10 +65,11 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	view := tview.NewTreeView()
 	ret := &file_tree_view{
 		view_link: &view_link{
-			id:    view_file,
-			right: view_code,
-			down:  view_quickview,
-			left:  view_outline_list,
+			id:      view_file,
+			right:   view_code,
+			down:    view_quickview,
+			left:    view_outline_list,
+			boxview: view.Box,
 		},
 		view:    view,
 		Name:    name,

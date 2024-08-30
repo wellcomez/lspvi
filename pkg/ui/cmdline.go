@@ -33,6 +33,7 @@ func new_cmdline(main *mainui) *cmdline {
 	}
 	code.history.init()
 	code.input.SetBorder(true)
+	code.boxview = code.input.Box
 	input := code.input
 	input.SetMouseCapture(code.handle_mouse)
 	input.SetFieldBackgroundColor(tcell.ColorBlack)

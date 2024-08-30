@@ -148,7 +148,7 @@ func NewCodeView(main *mainui) *CodeView {
 	// view := tview.NewTextView()
 	// view.SetBorder(true)
 	ret := CodeView{view_link: &view_link{
-		id:view_code,
+		id:    view_code,
 		right: view_outline_list,
 		down:  view_quickview,
 		left:  view_file},
@@ -175,6 +175,7 @@ func NewCodeView(main *mainui) *CodeView {
 	root.SetMouseCapture(ret.handle_mouse)
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
+	ret.boxview = root.Box
 	return &ret
 }
 
