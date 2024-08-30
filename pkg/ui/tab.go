@@ -1,8 +1,6 @@
 package mainui
 
 import (
-	// "log"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -50,21 +48,24 @@ func NewButtonGroup(tabs []string, handler func(tab *TabButton)) *ButtonGroup {
 func (btn *TabButton) selected() {
 	btn.group.onselected(btn)
 }
+
+var default_btn_style= tcell.StyleDefault.Foreground(tview.Styles.PrimaryTextColor).Background(tcell.ColorBlack)
+var active_btn_style = tcell.StyleDefault.Background(tview.Styles.InverseTextColor).Foreground(tview.Styles.PrimaryTextColor)
+
 func NewTab(name string, group *ButtonGroup) *TabButton {
-	var style tcell.Style
-	activatedStyle := tcell.StyleDefault.Background(tview.Styles.PrimaryTextColor).Foreground(tview.Styles.InverseTextColor)
+	Button := tview.NewButton(name).SetStyle(default_btn_style).SetActivatedStyle(active_btn_style)
 	// var style1 tcell.Style
 	// style1.Foreground(tcell.ColorGreen)
 	ret := &TabButton{
-		Button: tview.NewButton(name).SetStyle(style),
+		Button: Button,
 		Name:   name,
 		group:  group,
 	}
 	ret.SetBlurFunc(func() {
 		if group.activetab == ret {
-			ret.SetStyle(activatedStyle)
+			ret.SetStyle(active_btn_style)
 		} else {
-			ret.SetStyle(style)
+			ret.SetStyle(default_btn_style)
 		}
 	})
 	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
