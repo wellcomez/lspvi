@@ -426,7 +426,18 @@ type workdir struct {
 }
 
 func new_workdir(root string) workdir {
-	root = filepath.Join(root, ".lspvi")
+	config_root := false
+	full, err := filepath.Abs(root)
+	if err == nil {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			root = filepath.Join(home, ".lspvi", filepath.Base(full))
+			config_root = true
+		}
+	}
+	if !config_root {
+		root = filepath.Join(root, ".lspvi")
+	}
 	export := filepath.Join(root, "export")
 	wk := workdir{
 		root:               root,
