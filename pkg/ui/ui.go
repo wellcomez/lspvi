@@ -661,6 +661,7 @@ func MainUI(arg *Arguments) {
 		return main.handle_key(event)
 	})
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
+		main.fileexplorer.uiresize.checkdrag(action, event)
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 		if content_menu_action == tview.MouseConsumed {
 			return nil, tview.MouseConsumed

@@ -30,6 +30,7 @@ type file_tree_view struct {
 	dir_mode      dir_open_mode
 	right_context filetree_context
 	menu_item     []context_menu_item
+	uiresize      ui_reszier
 }
 
 type filetree_context struct {
@@ -63,6 +64,7 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	view := tview.NewTreeView()
 	ret := &file_tree_view{
 		view_link: &view_link{
+			id:    view_file,
 			right: view_code,
 			down:  view_quickview,
 			left:  view_outline_list,
@@ -72,6 +74,11 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 		main:    main,
 		rootdir: rootdir,
 		handle:  handle,
+	}
+	ret.uiresize = ui_reszier{
+		view_link: ret.view_link,
+		box:       ret.view.Box,
+		main:      main,
 	}
 	view.SetBorder(true)
 	view.SetSelectedFunc(ret.node_selected)
