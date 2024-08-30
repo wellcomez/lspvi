@@ -11,11 +11,17 @@ type ui_reszier struct {
 	beginX, beginY int
 	yes            bool
 	left           bool
-	main           *mainui
+	layout         resizable_layout
+}
+type editor_resize struct {
+	main *mainui
 }
 
-func new_ui_resize(box *tview.Box, vl *view_link, main *mainui) ui_reszier {
-	return ui_reszier{box: box, main: main}
+func (r editor_resize) zoom(zoomin bool, viewid view_id) {
+	r.main._editor_area_layout.zoom(zoomin, viewid)
+}
+func new_ui_resize(box *tview.Box, vl *view_link, layout resizable_layout) ui_reszier {
+	return ui_reszier{box: box, view_link: vl, layout: layout}
 }
 
 func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) {
@@ -64,7 +70,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 				}
 				resize.beginX = x
 				resize.beginY = y
-				resize.main._editor_area_layout.zoom(zoomin, resize.view_link.id)
+				resize.layout.zoom(zoomin, resize.view_link.id)
 			}
 		}
 	default:

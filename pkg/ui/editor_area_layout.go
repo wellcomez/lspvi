@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 )
 
+type resizable_layout interface {
+	zoom(zoomin bool, viewid view_id)
+}
 type editor_area_layout struct {
 	main *mainui
 	name string

@@ -60,6 +60,7 @@ func (menu filetree_context) getbox() *tview.Box {
 func (menu filetree_context) menuitem() []context_menu_item {
 	return menu.menu_item
 }
+
 func new_file_tree(main *mainui, name string, rootdir string, handle func(filename string) bool) *file_tree_view {
 	view := tview.NewTreeView()
 	ret := &file_tree_view{
@@ -75,11 +76,8 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 		rootdir: rootdir,
 		handle:  handle,
 	}
-	ret.uiresize = ui_reszier{
-		view_link: ret.view_link,
-		box:       ret.view.Box,
-		main:      main,
-	}
+
+	ret.uiresize = new_ui_resize(ret.view.Box, ret.view_link, editor_resize{main})
 	view.SetBorder(true)
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
