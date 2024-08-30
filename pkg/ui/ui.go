@@ -662,12 +662,14 @@ func MainUI(arg *Arguments) {
 	})
 	resizer := new_editor_resize(&main)
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
-		resizer.checkdrag(action, event)
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 		if content_menu_action == tview.MouseConsumed {
 			return nil, tview.MouseConsumed
 		}
 		if main.right_context_menu.visible {
+			return nil, tview.MouseConsumed
+		}
+		if resizer.checkdrag(action, event) {
 			return nil, tview.MouseConsumed
 		}
 		if main.layout.spacemenu.visible {

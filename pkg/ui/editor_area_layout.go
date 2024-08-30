@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -29,7 +30,7 @@ func (e *editor_area_layout) increate(id view_id, a int) {
 	link := id.to_view_link(e.main)
 	if link != nil {
 		link.Width += a
-		link.Width=max(1,link.Width)
+		link.Width = max(1, link.Width)
 		e.save()
 	}
 }
@@ -121,4 +122,5 @@ func (e editor_area_layout) update_editerea_layout() {
 	if !m.symboltree.Hide {
 		m.layout.editor_area.AddItem(m.symboltree.view, 0, m.symboltree.Width, false)
 	}
+	// log.Println("file", m.fileexplorer.Width, "sym", m.symboltree.Width)
 }

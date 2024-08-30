@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"log"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -37,14 +38,15 @@ func (r editor_mouse_resize) zoom(zoomin bool, viewid view_id) {
 func new_ui_resize(vl *view_link, layout resizable_layout) ui_reszier {
 	return ui_reszier{box: vl.boxview, view_link: vl, layout: layout}
 }
-func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) {
+func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) bool{
 	for i := range resize.contorls {
 		r := &resize.contorls[i]
 		r.checkdrag(action, event)
 		if r.dragging {
-			return
+			return true
 		}
 	}
+	return false
 }
 
 func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) {
@@ -99,13 +101,14 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 				resize.beginX = x
 				resize.beginY = y
 				resize.layout.zoom(zoomin, resize.view_link.id)
+				log.Println("zoom in", zoomin, resize.view_link.id)
 			}
 		}
 	default:
 		if resize.dragging {
 			resize.box.Focus(nil)
+			resize.dragging = false
 		}
-		resize.dragging = false
 	}
 	if resize.dragging {
 		resize.box.SetBorderColor(tcell.ColorRed)

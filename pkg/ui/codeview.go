@@ -331,11 +331,11 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 }
 
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-	x, y := event.Position()
-	loc1 := code.view.Cursor.Loc
+	// x, y := event.Position()
+	// loc1 := code.view.Cursor.Loc
 	a, b := code.handle_mouse_impl(action, event)
-	loc2 := code.view.Cursor.Loc
-	log.Println("action", action, "x:", x, "y:", y, "loc1:", loc1, "loc2:", loc2)
+	// loc2 := code.view.Cursor.Loc
+	// log.Println("action", action, "x:", x, "y:", y, "loc1:", loc1, "loc2:", loc2)
 	return a, b
 }
 func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
