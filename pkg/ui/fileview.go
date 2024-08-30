@@ -318,7 +318,7 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 		c := tview.NewTreeNode(prefix + file.Name())
 		c.SetReference(fullpath)
 		if !yes {
-			yes = lspcore.IsMe(fullpath, []string{"md", "Makefile","json"}) || view.main.IsSource(fullpath)
+			yes = lspcore.IsMe(fullpath, []string{"md", "Makefile","json","png","puml","utxt"}) || view.main.IsSource(fullpath)
 			if yes {
 				c.SetColor(tview.Styles.PrimaryTextColor)
 			} else {
