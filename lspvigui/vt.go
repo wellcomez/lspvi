@@ -2,27 +2,108 @@ package main
 
 import (
 	"io"
+	"log"
+	"syscall"
+
 	// "log"
 	"os"
 	"os/exec"
+	"os/signal"
 
 	"github.com/creack/pty"
+	"golang.org/x/term"
 )
-type read_out struct{
 
+type read_out struct {
+	handle func(p []byte) (n int, err error)
 }
+
+func test(s string) error {
+	// Create arbitrary command.
+	c := exec.Command(s)
+
+	// Start the command with a pty.
+	ptmx, err := pty.Start(c)
+	if err != nil {
+		return err
+	}
+	// Make sure to close the pty at the end.
+	defer func() { _ = ptmx.Close() }() // Best effort.
+
+	// Handle pty size.
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGWINCH)
+	go func() {
+		for range ch {
+			if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
+				log.Printf("error resizing pty: %s", err)
+			}
+		}
+	}()
+	ch <- syscall.SIGWINCH                        // Initial resize.
+	defer func() { signal.Stop(ch); close(ch) }() // Cleanup signals when done.
+
+	// Set stdin in raw mode.
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		panic(err)
+	}
+	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+
+	// Copy stdin to the pty and the pty to stdout.
+	// NOTE: The goroutine will keep reading until the next keystroke before returning.
+	go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
+	_, _ = io.Copy(os.Stdout, ptmx)
+
+	return nil
+}
+
+// Write implements io.Writer.
+func (r read_out) Write(p []byte) (n int, err error) {
+	if r.handle != nil {
+		return r.handle(p)
+	}
+	log.Println("<<", string(p))
+	return len(p), nil
+}
+func setupLogFile(filename string) (*os.File, error) {
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
+
 func main() {
+	logFile, err := setupLogFile("logfile.txt")
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+	defer logFile.Close()
+	log.SetOutput(logFile)
+
 	// 创建一个新的伪终端
 	lspvi := "/Users/jialaizhu/dev/lspvi/lspvi"
-	c:=exec.Command(lspvi)
+	test(lspvi)
+}
+
+func newFunction1(lspvi string) bool {
+	c := exec.Command(lspvi)
 	f, err := pty.Start(c)
 	if err != nil {
 		panic(err)
 	}
 	var stdout2 read_out
-	io.Copy(os.Stdout, f)
-	// EOT
-	// newFunction()
+	go func() {
+		var stdin2 read_out
+		stdin2.handle = func(p []byte) (n int, err error) {
+			log.Println(">>", len(p), string(p))
+			return  f.Write(p)
+		}
+		io.Copy(stdin2, os.Stdin)
+	}()
+	io.Copy(stdout2, f)
+	return false
 }
 
 func newFunction() {
