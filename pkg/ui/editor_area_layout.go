@@ -29,6 +29,7 @@ func (e *editor_area_layout) increate(id view_id, a int) {
 	link := id.to_view_link(e.main)
 	if link != nil {
 		link.Width += a
+		link.Width=max(1,link.Width)
 		e.save()
 	}
 }
