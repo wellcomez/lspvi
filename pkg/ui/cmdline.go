@@ -103,11 +103,17 @@ func (cmd cmdline) Clear() {
 	cmd.input.SetText("")
 }
 
+type VmapPosition struct {
+	X, Y int
+}
+
 // vimstate structure
 type vimstate struct {
 	Escape    bool
 	Find      bool
 	Command   bool
+	VMap      bool
+	vmapBegin *VmapPosition
 	Virtual   bool
 	Insert    bool
 	Leader    bool
@@ -127,6 +133,9 @@ func (v vimstate) String() string {
 	}
 	if v.Command {
 		return "command"
+	}
+	if v.VMap {
+		return "vmap"
 	}
 	if v.Insert {
 		return "insert"
@@ -382,12 +391,16 @@ func (l EscapeHandle) input_cb(word string) {
 	l.input.run(word)
 }
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
+	ts := l.state.keyseq
+	ch := string(event.Rune())
 	if l.state.init {
 		l.state.keyseq = []string{}
 		l.state.init = false
+		if ch == "v" {
+			l.vi.EnterVmap()
+			return true
+		}
 	}
-	ts := l.state.keyseq
-	ch := string(event.Rune())
 
 	if c, ok := event_to_keyname[event.Key()]; ok {
 		ch = c
@@ -509,6 +522,7 @@ func NewVimState() vimstate {
 		Find:      false,
 		Command:   false,
 		Insert:    false,
+		VMap:      false,
 		FindEnter: "",
 	}
 }
@@ -691,12 +705,15 @@ func (v *Vim) EnterCtrlW() bool {
 	v.vi_handle = vi_handle
 	return true
 }
+func (v *Vim) EnterVmap() {
+	v.vi.VMap = true
+}
 
 // EnterEscape enters escape mode.
 func (v *Vim) EnterEscape() {
 	v.app.cmdline.Clear()
-	v.vi = vimstate{Escape: true}
-
+	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil}
+	v.app.codeview.view.Cursor.ResetSelection()
 	f := v.app.get_focus_view_id()
 	if f == view_cmd || f == view_none {
 		v.app.set_viewid_focus(view_code)

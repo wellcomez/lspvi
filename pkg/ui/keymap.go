@@ -33,6 +33,8 @@ const (
 	zoomin
 	zoomout
 	copy_data
+	vi_copy_text
+	vi_copy_line
 	copy_path
 	next_window_left
 	next_window_right
@@ -163,6 +165,10 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{id, "word left", func() { m.codeview.word_left() }}
 	case vi_right_word:
 		return cmdactor{id, "word right", func() { m.codeview.word_right() }}
+	case vi_copy_text:
+		return cmdactor{id, "Copy", func() { m.codeview.copyline(false) }}
+	case vi_copy_line:
+		return cmdactor{id, "Copy", func() { m.codeview.copyline(true) }}
 	case vi_line_head:
 		return cmdactor{id, "goto line head", func() {
 			code := m.codeview
@@ -268,6 +274,8 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, arrow_down).esc_key([]string{key_down}),
 		get_cmd_actor(m, vi_right_word).esc_key([]string{"e"}),
 		get_cmd_actor(m, vi_left_word).esc_key([]string{"b"}),
+		get_cmd_actor(m, vi_copy_line).esc_key(split("yy")),
+		get_cmd_actor(m, vi_copy_text).esc_key(split("y")),
 		get_cmd_actor(main, goto_define).esc_key(split(key_goto_define)),
 		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),
 		get_cmd_actor(main, goto_first_line).esc_key(split(key_goto_first_line)),

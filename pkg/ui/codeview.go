@@ -523,10 +523,36 @@ func (code *CodeView) word_left() {
 	}
 	code.update_with_line_changed()
 }
+func (code *CodeView) copyline(line bool) {
+	cmd := code.main.cmdline
+	if !cmd.Vim.vi.VMap {
+		if line {
+			s := code.view.Buf.Line(int(code.view.Cursor.Loc.Y))
+			clipboard.WriteAll(s)
+		}
+	} else {
+		s := code.view.Cursor.GetSelection()
+		clipboard.WriteAll(s)
+		cmd.Vim.EnterEscape()
+	}
+}
 func (code *CodeView) word_right() {
 	Cur := code.view.Cursor
 	view := code.view
+	cmd := code.main.cmdline
+	vmap := cmd.Vim.vi.VMap
+	origin := Cur.Loc
 	Cur.WordRight()
+	if vmap {
+		if cmd.Vim.vi.vmapBegin == nil {
+			cmd.Vim.vi.vmapBegin = &VmapPosition{X: origin.X, Y: origin.Y}
+		}
+		code.view.Cursor.SetSelectionStart(femto.Loc{
+			X: cmd.Vim.vi.vmapBegin.X,
+			Y: cmd.Vim.vi.vmapBegin.Y,
+		})
+		code.view.Cursor.SetSelectionEnd(Cur.Loc)
+	}
 	pagesize := view.Bottomline() - view.Topline
 	if Cur.Loc.Y >= view.Bottomline() {
 		view.ScrollDown(pagesize / 2)
