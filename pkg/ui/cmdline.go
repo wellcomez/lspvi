@@ -114,6 +114,7 @@ type vimstate struct {
 	Command   bool
 	VMap      bool
 	vmapBegin *VmapPosition
+	vmapEnd   *VmapPosition
 	Virtual   bool
 	Insert    bool
 	Leader    bool
@@ -712,7 +713,7 @@ func (v *Vim) EnterVmap() {
 // EnterEscape enters escape mode.
 func (v *Vim) EnterEscape() {
 	v.app.cmdline.Clear()
-	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil}
+	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil,vmapEnd: nil}
 	v.app.codeview.view.Cursor.ResetSelection()
 	f := v.app.get_focus_view_id()
 	if f == view_cmd || f == view_none {

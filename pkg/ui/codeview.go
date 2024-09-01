@@ -513,6 +513,56 @@ func (code *CodeView) map_key_handle() {
 	// code.basic_vi_command = code.key_map_command()
 	code.key_map = code.key_map_arrow()
 }
+func (code *CodeView) key_right() {
+	Cur := code.view.Cursor
+	cmd := code.main.cmdline
+	vmap := cmd.Vim.vi.VMap
+	origin := Cur.Loc
+	code.view.Cursor.Right()
+	if vmap {
+		if cmd.Vim.vi.vmapBegin == nil {
+			cmd.Vim.vi.vmapBegin = LocToSelectionPosition(&origin)
+		}
+		cmd.Vim.vi.vmapEnd =LocToSelectionPosition(&Cur.Loc)
+		update_selection(code, cmd)
+	}
+}
+
+func (code *CodeView) key_left() {
+	Cur := code.view.Cursor
+	cmd := code.main.cmdline
+	vmap := cmd.Vim.vi.VMap
+	origin := Cur.Loc
+	code.view.Cursor.Left()
+	if vmap {
+		if cmd.Vim.vi.vmapEnd == nil {
+			cmd.Vim.vi.vmapEnd = &VmapPosition{X: origin.X, Y: origin.Y}
+		}
+		if cmd.Vim.vi.vmapBegin == nil {
+			x := LocToSelectionPosition(&Cur.Loc)
+			cmd.Vim.vi.vmapBegin = x
+		} 
+		if cmd.Vim.vi.vmapBegin.X > Cur.Loc.X {
+			cmd.Vim.vi.vmapBegin = LocToSelectionPosition(&Cur.Loc)
+		}else{
+			cmd.Vim.vi.vmapEnd= LocToSelectionPosition(&Cur.Loc)
+		}
+		update_selection(code, cmd)
+	}
+}
+
+func LocToSelectionPosition(Loc*femto.Loc) *VmapPosition {
+	x := &VmapPosition{X: Loc.X, Y: Loc.Y}
+	return x
+}
+
+func update_selection(code *CodeView, cmd *cmdline) {
+	code.view.Cursor.SetSelectionStart(femto.Loc{
+		X: cmd.Vim.vi.vmapBegin.X,
+		Y: cmd.Vim.vi.vmapBegin.Y,
+	})
+	code.view.Cursor.SetSelectionEnd(femto.Loc{X: cmd.Vim.vi.vmapEnd.X, Y: cmd.Vim.vi.vmapEnd.Y})
+}
 func (code *CodeView) word_left() {
 	Cur := code.view.Cursor
 	view := code.view
@@ -563,10 +613,10 @@ func (code *CodeView) word_right() {
 func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
 	key_map := map[tcell.Key]func(code *CodeView){}
 	key_map[tcell.KeyRight] = func(code *CodeView) {
-		code.view.Cursor.Right()
+		code.key_right()
 	}
 	key_map[tcell.KeyLeft] = func(code *CodeView) {
-		code.view.Cursor.Left()
+		code.key_left()
 	}
 	key_map[tcell.KeyUp] = func(code *CodeView) {
 		code.action_key_up()
