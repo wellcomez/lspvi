@@ -43,6 +43,37 @@ type CodeContextMenu struct {
 	code *CodeView
 }
 
+func SelectWord(view *femto.View, c femto.Cursor) femto.Cursor {
+	if len(view.Buf.Line(c.Y)) == 0 {
+		return c
+	}
+
+	if !femto.IsWordChar(string(c.RuneUnder(c.X))) {
+		c.SetSelectionStart(c.Loc)
+		c.SetSelectionEnd(c.Loc.Move(1, view.Buf))
+		c.OrigSelection = c.CurSelection
+		return c
+	}
+
+	forward, backward := c.X, c.X
+
+	for backward > 0 && femto.IsWordChar(string(c.RuneUnder(backward-1))) {
+		backward--
+	}
+
+	c.SetSelectionStart(femto.Loc{X: backward, Y: c.Y})
+	c.OrigSelection[0] = c.CurSelection[0]
+
+	for forward < femto.Count(view.Buf.Line(c.Y))-1 && femto.IsWordChar(string(c.RuneUnder(forward+1))) {
+		forward++
+	}
+
+	c.SetSelectionEnd(femto.Loc{X: forward, Y: c.Y}.Move(1, view.Buf))
+	c.OrigSelection[1] = c.CurSelection[1]
+	c.Loc = c.CurSelection[1]
+	return c
+}
+
 // on_mouse implements context_menu_handle.
 func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	code := menu.code
@@ -61,15 +92,20 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	pos = avoid_position_overflow(root, pos)
 
 	if action == tview.MouseRightClick {
-		code.rightmenu_previous_selection = root.Cursor.GetSelection()
+		_, s := code.get_selected_lines()
+		code.rightmenu_previous_selection = s
 		// code.rightmenu.text = root.Cursor.GetSelection()
-		root.Cursor.Loc = tab_loc(root, pos)
-		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
-		log.Println("before", code.view.Cursor.CurSelection)
-		root.Cursor.SelectWord()
-		code.rightmenu_select_text = root.Cursor.GetSelection()
-		code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
-		log.Println("after ", code.view.Cursor.CurSelection)
+		cursor := *root.Cursor
+		cursor.Loc = tab_loc(root, pos)
+		cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
+		log.Println("before", cursor.CurSelection)
+		loc := SelectWord(root.View, cursor)
+		_, s = get_codeview_text_loc(root.View, loc.CurSelection[0], loc.CurSelection[1])
+		menu.code.rightmenu_select_text = s
+		// code.get_selected_lines()
+		// code.rightmenu_select_text = root.Cursor.GetSelection()
+		// code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
+		// log.Println("after ", code.view.Cursor.CurSelection)
 		update_selection_menu(code)
 	}
 	return action, event
@@ -329,11 +365,58 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 	var line = view.Cursor.Loc.Y + 1
 	view.bookmark.Add(line, comment, view.Buf.Line(line-1), add)
 }
+func (code *CodeView) get_selected_lines() (int, string) {
+	cur := code.view.Cursor
+	b := cur.CurSelection[0]
+	e := cur.CurSelection[1]
+	return get_codeview_text_loc(code.view.View, b, e)
+}
 
+func get_codeview_text_loc(view *femto.View, b femto.Loc, e femto.Loc) (int, string) {
+	if view.Buf == nil || view.Buf.LinesNum() == 0 || b.Y == 0 {
+		return 0, ""
+	}
+	lines := []string{}
+	line := view.Buf.Line(b.Y)
+	if len(line) < b.X {
+		log.Printf("line %s b.X=%d error b:(%d,%d) e:(%d,%d)", line, b.X, b.X, b.Y, e.X, e.Y)
+
+	} else {
+		if b.Y == e.Y {
+			if len(line) > e.X {
+				line = line[b.X:e.X]
+				return e.X - b.X + 1, line
+			} else {
+				return 0, ""
+			}
+		} else {
+			line = line[b.X:]
+		}
+	}
+	lines = append(lines, line)
+	for i := b.Y + 1; i < e.Y; i++ {
+		line = view.Buf.Line(i)
+		lines = append(lines, line)
+	}
+	if b.Y != e.Y {
+		line = view.Buf.Line(e.Y)
+		if len(line) < e.X {
+			log.Printf("line %s e.X=%d error b:(%d,%d) e:(%d,%d)", line, e.X, b.X, b.Y, e.X, e.Y)
+		} else {
+			line = line[:e.X]
+		}
+		lines = append(lines, line)
+	}
+	txt := strings.Join(lines, "\n")
+	return e.Y - b.Y + 1, txt
+}
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	// x, y := event.Position()
 	// loc1 := code.view.Cursor.Loc
 	a, b := code.handle_mouse_impl(action, event)
+
+	cur := code.view.Cursor
+	log.Println("handle_mouse", cur.CurSelection[0], cur.CurSelection[1])
 	// loc2 := code.view.Cursor.Loc
 	// log.Println("action", action, "x:", x, "y:", y, "loc1:", loc1, "loc2:", loc2)
 	return a, b
@@ -503,10 +586,47 @@ func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 		h(code)
 		return nil
 	}
+	cur := code.view.Cursor
+	log.Println("selection", cur.CurSelection[0], cur.CurSelection[1])
 	// if code.run_command(code.basic_vi_command, ch) {
 	// 	return nil
 	// }
 	return event
+}
+
+type vmap_selection struct {
+	vmapBegin *VmapPosition
+	vmapEnd   *VmapPosition
+}
+
+func get_codeview_vm_position(code *CodeView) *VmapPosition {
+	return LocToSelectionPosition(&code.view.Cursor.Loc)
+}
+func (v *vmap_selection) update_vi_selection(code *CodeView) {
+	code.main.cmdline.Vim.vi.vmapBegin = v.vmapBegin
+	code.main.cmdline.Vim.vi.vmapEnd = v.vmapEnd
+	cmd := code.main.cmdline
+	code.view.Cursor.SetSelectionStart(femto.Loc{
+		X: cmd.Vim.vi.vmapBegin.X,
+		Y: cmd.Vim.vi.vmapBegin.Y,
+	})
+	code.view.Cursor.SetSelectionEnd(femto.Loc{X: cmd.Vim.vi.vmapEnd.X, Y: cmd.Vim.vi.vmapEnd.Y})
+}
+
+func new_vmap_selection(code *CodeView) *vmap_selection {
+	if !code.main.cmdline.Vim.vi.VMap {
+		return nil
+	}
+	var b, e *VmapPosition
+	b = code.main.cmdline.Vim.vi.vmapBegin
+	e = code.main.cmdline.Vim.vi.vmapEnd
+	view := code.view
+	Cur := view.Cursor
+	origin := Cur.Loc
+	if b == nil {
+		b = LocToSelectionPosition(&origin)
+	}
+	return &vmap_selection{b, e}
 }
 
 func (code *CodeView) map_key_handle() {
@@ -523,7 +643,7 @@ func (code *CodeView) key_right() {
 		if cmd.Vim.vi.vmapBegin == nil {
 			cmd.Vim.vi.vmapBegin = LocToSelectionPosition(&origin)
 		}
-		cmd.Vim.vi.vmapEnd =LocToSelectionPosition(&Cur.Loc)
+		cmd.Vim.vi.vmapEnd = LocToSelectionPosition(&Cur.Loc)
 		update_selection(code, cmd)
 	}
 }
@@ -541,17 +661,17 @@ func (code *CodeView) key_left() {
 		if cmd.Vim.vi.vmapBegin == nil {
 			x := LocToSelectionPosition(&Cur.Loc)
 			cmd.Vim.vi.vmapBegin = x
-		} 
+		}
 		if cmd.Vim.vi.vmapBegin.X > Cur.Loc.X {
 			cmd.Vim.vi.vmapBegin = LocToSelectionPosition(&Cur.Loc)
-		}else{
-			cmd.Vim.vi.vmapEnd= LocToSelectionPosition(&Cur.Loc)
+		} else {
+			cmd.Vim.vi.vmapEnd = LocToSelectionPosition(&Cur.Loc)
 		}
 		update_selection(code, cmd)
 	}
 }
 
-func LocToSelectionPosition(Loc*femto.Loc) *VmapPosition {
+func LocToSelectionPosition(Loc *femto.Loc) *VmapPosition {
 	x := &VmapPosition{X: Loc.X, Y: Loc.Y}
 	return x
 }
@@ -632,10 +752,28 @@ func (code *CodeView) action_key_down() {
 }
 
 func (code *CodeView) action_key_up() {
+	vs := new_vmap_selection(code)
 	code.move_up_down(true)
+	if vs != nil {
+		vs.update_after_keyup(code)
+	}
+}
+
+func (vs *vmap_selection) update_after_keyup(code *CodeView) {
+	if vs.vmapEnd == nil {
+		vs.vmapEnd = get_codeview_vm_position(code)
+	}
+	b := vs.vmapBegin
+	e := vs.vmapEnd
+	if b.Y > e.Y {
+		vs.vmapEnd = b
+		vs.vmapBegin = e
+	}
+	vs.update_vi_selection(code)
 }
 
 func (code *CodeView) move_up_down(up bool) {
+	vs := new_vmap_selection(code)
 	Cur := code.view.Cursor
 	view := code.view
 	pagesize := view.Bottomline() - view.Topline
@@ -652,8 +790,13 @@ func (code *CodeView) move_up_down(up bool) {
 	}
 	// Cur.DeleteSelection()
 	// log.Printf("updown: %v %v", Cur.Loc, Cur.CurSelection)
-	Cur.SetSelectionStart(Cur.Loc)
-	Cur.SetSelectionEnd(Cur.Loc)
+	if vs == nil {
+		Cur.SetSelectionStart(Cur.Loc)
+		Cur.SetSelectionEnd(Cur.Loc)
+	} else {
+		vs.update_after_keyup(code)
+
+	}
 	code.update_with_line_changed()
 }
 
@@ -760,11 +903,11 @@ func text_loc_to_range(loc [2]femto.Loc) lsp.Range {
 func (code CodeView) String() string {
 	cursor := code.view.Cursor
 	X := max(cursor.X, cursor.GetVisualX())
-	sel := ""
-	if cursor.HasSelection() {
-		sel = fmt.Sprintf(" sel:%d", len(cursor.GetSelection()))
-	}
-	return fmt.Sprintf("%d:%d%s", cursor.Y+1, X, sel)
+	n, sel := code.get_selected_lines()
+	// if cursor.HasSelection() {
+	// 	sel = fmt.Sprintf(" sel:%d", len(cursor.GetSelection()))
+	// }
+	return fmt.Sprintf("%d:%d%s %d", cursor.Y+1, X, sel, n)
 }
 
 func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
