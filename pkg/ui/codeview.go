@@ -23,21 +23,35 @@ type codetextview struct {
 	bookmark *bookmarkfile
 	filename string
 }
-type CodeView struct {
-	*view_link
-	filename                     string
-	view                         *codetextview
-	theme                        string
-	main                         *mainui
-	key_map                      map[tcell.Key]func(code *CodeView)
-	mouse_select_area            bool
-	rightmenu_items              []context_menu_item
-	rightmenu_previous_selection string
+type editor_selection struct {
+	selected_text string
+	begin, end    femto.Loc
+	filename      string
+}
+
+func (e editor_selection) emtry() bool {
+	return len(e.selected_text) == 0
+}
+
+type right_menu_data struct {
+	rightmenu_previous_selection editor_selection
 	rightmenu_select_text        string
 	rightmenu_select_range       lsp.Range
-	rightmenu                    CodeContextMenu
-	LineNumberUnderMouse         int
-	not_preview                  bool
+	rightmenu_loc                femto.Loc
+}
+type CodeView struct {
+	*view_link
+	filename             string
+	view                 *codetextview
+	theme                string
+	main                 *mainui
+	key_map              map[tcell.Key]func(code *CodeView)
+	mouse_select_area    bool
+	rightmenu_items      []context_menu_item
+	right_menu_data      *right_menu_data
+	rightmenu            CodeContextMenu
+	LineNumberUnderMouse int
+	not_preview          bool
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -81,7 +95,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 
 	code.get_click_line_inview(event)
 	posX, posY := event.Position()
-
+	right_menu_data := code.right_menu_data
 	yOffset := code.yOfffset()
 	xOffset := code.xOffset()
 	// offsetx:=3
@@ -92,16 +106,17 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	pos = avoid_position_overflow(root, pos)
 
 	if action == tview.MouseRightClick {
-		_, s := code.get_selected_lines()
-		code.rightmenu_previous_selection = s
+		selected := code.get_selected_lines()
+		right_menu_data.rightmenu_previous_selection = selected
 		// code.rightmenu.text = root.Cursor.GetSelection()
 		cursor := *root.Cursor
 		cursor.Loc = tab_loc(root, pos)
 		cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
+		right_menu_data.rightmenu_loc = cursor.CurSelection[0]
 		log.Println("before", cursor.CurSelection)
 		loc := SelectWord(root.View, cursor)
-		_, s = get_codeview_text_loc(root.View, loc.CurSelection[0], loc.CurSelection[1])
-		menu.code.rightmenu_select_text = s
+		_, s := get_codeview_text_loc(root.View, loc.CurSelection[0], loc.CurSelection[1])
+		menu.code.right_menu_data.rightmenu_select_text = s
 		// code.get_selected_lines()
 		// code.rightmenu_select_text = root.Cursor.GetSelection()
 		// code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
@@ -191,6 +206,7 @@ func NewCodeView(main *mainui) *CodeView {
 		theme:       "darcula",
 		not_preview: false,
 	}
+	ret.right_menu_data= &right_menu_data{}
 	ret.rightmenu = CodeContextMenu{code: &ret}
 	ret.main = main
 	ret.map_key_handle()
@@ -225,19 +241,20 @@ func update_selection_menu(ret *CodeView) {
 	if !main.symboltree.Hide {
 		toggle_outline = "Hide outline view"
 	}
+	menudata:=ret.main.codeview.right_menu_data
 	items := []context_menu_item{
 		{item: create_menu_item("Reference"), handle: func() {
-			main.get_refer(ret.rightmenu_select_range, main.codeview.filename)
+			main.get_refer(menudata.rightmenu_select_range, main.codeview.filename)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
-			main.get_define(ret.rightmenu_select_range, main.codeview.filename)
+			main.get_define(menudata.rightmenu_select_range, main.codeview.filename)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {
 			loc := lsp.Location{
 				URI:   lsp.NewDocumentURI(ret.filename),
-				Range: ret.rightmenu_select_range,
+				Range: menudata.rightmenu_select_range,
 			}
 			main.get_callin_stack_by_cursor(loc, ret.filename)
 			main.ActiveTab(view_callin, false)
@@ -246,29 +263,33 @@ func update_selection_menu(ret *CodeView) {
 		}},
 		{item: create_menu_item("Bookmark"), handle: func() {
 			main.codeview.bookmark()
+		}, hide: menudata.rightmenu_previous_selection.emtry()},
+		{item: create_menu_item("Save Selection"), handle: func() {
+			main.codeview.save_selection(menudata.rightmenu_previous_selection.selected_text)
 		}},
 		{item: create_menu_item("Search Selection"), handle: func() {
-			sss := main.codeview.rightmenu_previous_selection
-			main.OnSearch(sss, true, true)
+			sss := menudata.rightmenu_previous_selection
+			main.OnSearch(sss.selected_text, true, true)
 			main.ActiveTab(view_quickview, false)
-		}, hide: len(main.codeview.rightmenu_previous_selection) == 0},
+		}, hide: menudata.rightmenu_previous_selection.emtry()},
 		{item: create_menu_item("Search"), handle: func() {
-			sss := main.codeview.rightmenu_select_text
+			sss := menudata.rightmenu_select_text
 			main.OnSearch(sss, true, true)
 			main.ActiveTab(view_quickview, false)
-		}, hide: len(main.codeview.rightmenu_select_text) == 0},
+		}, hide: len(menudata.rightmenu_select_text) == 0},
 		{item: create_menu_item("Grep word"), handle: func() {
-			rightmenu_select_text := ret.rightmenu_select_text
+			rightmenu_select_text := menudata.rightmenu_select_text
 			qf_grep_word(main, rightmenu_select_text)
-		}, hide: len(ret.rightmenu_select_text) == 0},
+		}, hide: len(menudata.rightmenu_select_text) == 0},
 		{item: create_menu_item("Copy Selection"), handle: func() {
-			data := ret.rightmenu_previous_selection
-			if len(data) == 0 {
-				data = ret.rightmenu_select_text
+			selected := menudata.rightmenu_previous_selection
+			data := selected.selected_text
+			if selected.emtry() {
+				data = menudata.rightmenu_select_text
 			}
 			clipboard.WriteAll(data)
 
-		}, hide: len(ret.rightmenu_previous_selection) == 0},
+		}, hide: menudata.rightmenu_previous_selection.emtry()},
 		{item: create_menu_item("-"), handle: func() {
 		}},
 		{item: create_menu_item(toggle_file_view), handle: func() {
@@ -365,14 +386,20 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 	var line = view.Cursor.Loc.Y + 1
 	view.bookmark.Add(line, comment, view.Buf.Line(line-1), add)
 }
-func (code *CodeView) get_selected_lines() (int, string) {
+func (code *CodeView) get_selected_lines() editor_selection {
 	cur := code.view.Cursor
 	b := LocToSelectionPosition(&cur.CurSelection[0])
 	e := LocToSelectionPosition(&cur.CurSelection[1])
 	s := vmap_selection{vmapBegin: b, vmapEnd: e}
 	s.switch_begin_end()
 	ss := s.loc()
-	return get_codeview_text_loc(code.view.View, ss[0], ss[1])
+	_, text := get_codeview_text_loc(code.view.View, ss[0], ss[1])
+	return editor_selection{
+		selected_text: text,
+		begin:         ss[0],
+		end:           ss[1],
+		filename:      code.filename,
+	}
 }
 
 func get_codeview_text_loc(view *femto.View, b femto.Loc, e femto.Loc) (int, string) {
@@ -899,11 +926,13 @@ func text_loc_to_range(loc [2]femto.Loc) lsp.Range {
 func (code CodeView) String() string {
 	cursor := code.view.Cursor
 	X := max(cursor.X, cursor.GetVisualX())
-	n, sel := code.get_selected_lines()
+	selected := code.get_selected_lines()
 	// if cursor.HasSelection() {
 	// 	sel = fmt.Sprintf(" sel:%d", len(cursor.GetSelection()))
 	// }
-	if len(sel) > 0 {
+	if !selected.emtry() {
+		n := len(selected.selected_text)
+		sel := selected.selected_text
 		len := min(5, n)
 		posfix := ""
 		if len < n {
@@ -993,6 +1022,8 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 		}
 	}
 	code.view.SetColorscheme(colorscheme)
+}
+func (code *CodeView) save_selection(s string) {
 }
 func (code *CodeView) bookmark() {
 	if !code.view.has_bookmark() {
