@@ -411,6 +411,9 @@ func get_codeview_text_loc(view *femto.View, b femto.Loc, e femto.Loc) (int, str
 		lines = append(lines, line)
 	}
 	txt := strings.Join(lines, "\n")
+	if e.Y-b.Y == 0 {
+		return 0, txt
+	}
 	return e.Y - b.Y + 1, txt
 }
 func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -900,7 +903,15 @@ func (code CodeView) String() string {
 	// if cursor.HasSelection() {
 	// 	sel = fmt.Sprintf(" sel:%d", len(cursor.GetSelection()))
 	// }
-	return fmt.Sprintf("%d:%d%s %d", cursor.Y+1, X, sel, n)
+	if len(sel) > 0 {
+		len := min(5, n)
+		posfix := ""
+		if len < n {
+			posfix = "..." + sel[n-2:n-1]
+		}
+		return fmt.Sprintf("%d:%d %s%s %d", cursor.Y+1, X, sel[:len-1], posfix, n)
+	}
+	return fmt.Sprintf("%d:%d %s %d", cursor.Y+1, X, "", 0)
 }
 
 func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
