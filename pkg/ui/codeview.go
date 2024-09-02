@@ -34,11 +34,17 @@ func (e editor_selection) emtry() bool {
 }
 
 type right_menu_data struct {
-	rightmenu_previous_selection editor_selection
-	rightmenu_select_text        string
-	rightmenu_select_range       lsp.Range
-	rightmenu_loc                femto.Loc
+	previous_selection editor_selection
+	select_text        string
+	selection_range    lsp.Range
+	rightmenu_loc      femto.Loc
 }
+
+func (data right_menu_data) SelectInEditor(c *femto.Cursor) {
+	c.SetSelectionStart(data.rightmenu_loc)
+	c.SelectWord()
+}
+
 type CodeView struct {
 	*view_link
 	filename             string
@@ -107,7 +113,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 
 	if action == tview.MouseRightClick {
 		selected := code.get_selected_lines()
-		right_menu_data.rightmenu_previous_selection = selected
+		right_menu_data.previous_selection = selected
 		// code.rightmenu.text = root.Cursor.GetSelection()
 		cursor := *root.Cursor
 		cursor.Loc = tab_loc(root, pos)
@@ -116,7 +122,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		log.Println("before", cursor.CurSelection)
 		loc := SelectWord(root.View, cursor)
 		_, s := get_codeview_text_loc(root.View, loc.CurSelection[0], loc.CurSelection[1])
-		menu.code.right_menu_data.rightmenu_select_text = s
+		menu.code.right_menu_data.select_text = s
 		// code.get_selected_lines()
 		// code.rightmenu_select_text = root.Cursor.GetSelection()
 		// code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
@@ -206,7 +212,7 @@ func NewCodeView(main *mainui) *CodeView {
 		theme:       "darcula",
 		not_preview: false,
 	}
-	ret.right_menu_data= &right_menu_data{}
+	ret.right_menu_data = &right_menu_data{}
 	ret.rightmenu = CodeContextMenu{code: &ret}
 	ret.main = main
 	ret.map_key_handle()
@@ -241,20 +247,23 @@ func update_selection_menu(ret *CodeView) {
 	if !main.symboltree.Hide {
 		toggle_outline = "Hide outline view"
 	}
-	menudata:=ret.main.codeview.right_menu_data
+	menudata := ret.main.codeview.right_menu_data
 	items := []context_menu_item{
 		{item: create_menu_item("Reference"), handle: func() {
-			main.get_refer(menudata.rightmenu_select_range, main.codeview.filename)
+			menudata.SelectInEditor(ret.view.Cursor)
+			main.get_refer(menudata.selection_range, main.codeview.filename)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
-			main.get_define(menudata.rightmenu_select_range, main.codeview.filename)
+			menudata.SelectInEditor(ret.view.Cursor)
+			main.get_define(menudata.selection_range, main.codeview.filename)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {
+			menudata.SelectInEditor(ret.view.Cursor)
 			loc := lsp.Location{
 				URI:   lsp.NewDocumentURI(ret.filename),
-				Range: menudata.rightmenu_select_range,
+				Range: menudata.selection_range,
 			}
 			main.get_callin_stack_by_cursor(loc, ret.filename)
 			main.ActiveTab(view_callin, false)
@@ -263,33 +272,35 @@ func update_selection_menu(ret *CodeView) {
 		}},
 		{item: create_menu_item("Bookmark"), handle: func() {
 			main.codeview.bookmark()
-		}, hide: menudata.rightmenu_previous_selection.emtry()},
+		}, hide: menudata.previous_selection.emtry()},
 		{item: create_menu_item("Save Selection"), handle: func() {
-			main.codeview.save_selection(menudata.rightmenu_previous_selection.selected_text)
+			main.codeview.save_selection(menudata.previous_selection.selected_text)
 		}},
 		{item: create_menu_item("Search Selection"), handle: func() {
-			sss := menudata.rightmenu_previous_selection
+			sss := menudata.previous_selection
 			main.OnSearch(sss.selected_text, true, true)
 			main.ActiveTab(view_quickview, false)
-		}, hide: menudata.rightmenu_previous_selection.emtry()},
+		}, hide: menudata.previous_selection.emtry()},
 		{item: create_menu_item("Search"), handle: func() {
-			sss := menudata.rightmenu_select_text
+			sss := menudata.select_text
+			menudata.SelectInEditor(ret.view.Cursor)
 			main.OnSearch(sss, true, true)
 			main.ActiveTab(view_quickview, false)
-		}, hide: len(menudata.rightmenu_select_text) == 0},
+		}, hide: len(menudata.select_text) == 0},
 		{item: create_menu_item("Grep word"), handle: func() {
-			rightmenu_select_text := menudata.rightmenu_select_text
+			rightmenu_select_text := menudata.select_text
 			qf_grep_word(main, rightmenu_select_text)
-		}, hide: len(menudata.rightmenu_select_text) == 0},
+			menudata.SelectInEditor(ret.view.Cursor)
+		}, hide: len(menudata.select_text) == 0},
 		{item: create_menu_item("Copy Selection"), handle: func() {
-			selected := menudata.rightmenu_previous_selection
+			selected := menudata.previous_selection
 			data := selected.selected_text
 			if selected.emtry() {
-				data = menudata.rightmenu_select_text
+				data = menudata.select_text
 			}
 			clipboard.WriteAll(data)
 
-		}, hide: menudata.rightmenu_previous_selection.emtry()},
+		}, hide: menudata.previous_selection.emtry()},
 		{item: create_menu_item("-"), handle: func() {
 		}},
 		{item: create_menu_item(toggle_file_view), handle: func() {
