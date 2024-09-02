@@ -46,10 +46,10 @@
             "program": "${workspaceFolder}/main.go",
             "console": "externalTerminal",
             "args": [
-                "-root",
+                // "-root",
                 // "/Users/jialaizhu/dev/lspgo",
                 // "/home/z/dev/ray/raychain_go/raychain-sdk-go",
-                "/home/z/dev/ray/usb/gadgetfs",
+                // "/home/z/dev/ray/usb/gadgetfs",
                 // "/home/z/dev/lsp/goui/",
                 // "/home/z/dev/ray/uMTP-Responder",
                 // "/home/z/dev/ray/libusb",

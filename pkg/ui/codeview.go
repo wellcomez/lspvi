@@ -774,18 +774,25 @@ func (vs *vmap_selection) update_after_keyup(code *CodeView) {
 
 func (code *CodeView) move_up_down(up bool) {
 	vs := new_vmap_selection(code)
+	if vs != nil && vs.vmapBegin != nil {
+		log.Println("up/down begin ", vs.vmapBegin.Y)
+	}
 	Cur := code.view.Cursor
 	view := code.view
 	pagesize := view.Bottomline() - view.Topline
 	if up {
 		code.view.Cursor.Up()
-		if Cur.Loc.Y <= code.view.Topline {
-			code.view.ScrollUp(pagesize / 2)
+		if vs == nil {
+			if Cur.Loc.Y <= code.view.Topline {
+				code.view.ScrollUp(pagesize / 2)
+			}
 		}
 	} else {
 		code.view.Cursor.Down()
-		if Cur.Loc.Y >= code.view.Bottomline() {
-			code.view.ScrollDown(pagesize / 2)
+		if vs == nil {
+			if Cur.Loc.Y >= code.view.Bottomline() {
+				code.view.ScrollDown(pagesize / 2)
+			}
 		}
 	}
 	// Cur.DeleteSelection()
@@ -795,7 +802,7 @@ func (code *CodeView) move_up_down(up bool) {
 		Cur.SetSelectionEnd(Cur.Loc)
 	} else {
 		vs.update_after_keyup(code)
-
+		log.Println("up/down end", vs.vmapEnd.Y)
 	}
 	code.update_with_line_changed()
 }
