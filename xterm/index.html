@@ -40,7 +40,7 @@
 
         var wl = new WebglAddon.WebglAddon()
         term.loadAddon(wl)
-        var fit=new FitAddon.FitAddon()
+        var fit = new FitAddon.FitAddon()
         term.loadAddon(fit);
         term.onData(function (data) {
             console.log(data)
@@ -60,6 +60,7 @@
 
         //     })
         // })
+        old = ""
         term.open(document.getElementById('terminal'));
         term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
         const get_term = function () {
@@ -67,7 +68,9 @@
                 width: term.cols,
                 height: term.rows,
             }).then(function (response) {
-                term.write(response.data);
+                if (response.data!="0000"){
+                    term.write(response.data);
+                }
                 get_term();
             })
         };
