@@ -10,8 +10,8 @@
 <body>
     <div id="terminal"></div>
     <script>
-        let rows=100
-        let cols=120
+        let rows = 100
+        let cols = 120
         document.onkeydown = function (e) {
             e = e || window.event;//Get event
 
@@ -21,29 +21,35 @@
             e.preventDefault();
             e.stopPropagation();
         };
+
         var term = new Terminal({
             cursorStyle: 'bar',  // 默认为块状光标
             allowTransparency: true,
             cursorBlink: false,
             cursorWidth: 4,
-            rows:rows,
-            cols:cols,
+            rows: rows,
+            cols: cols,
+            vt200Mouse: true,
+            x10Mouse: true,
+            vt300Mouse: true,
+            MouseEvent: true,
             // minimumContrastRatio: 1,
         });
-
-        // term.on('key', function (key, e) {
-        //     axios.get('/key').then(function (response) {
-
-        //     })
-        // });
-        term.onKey(function (a) {
-            console.log(a)
+        term.onData(function (data) {
             axios.post('/key', {
-                key: a.key
+                key: data
             }).then(function (response) {
 
             })
         })
+        // term.onKey(function (a) {
+        //     console.log(a)
+        //     axios.post('/key', {
+        //         key: a.key
+        //     }).then(function (response) {
+
+        //     })
+        // })
         term.open(document.getElementById('terminal'));
         term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
         const get_term = function () {
