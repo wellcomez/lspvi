@@ -10,6 +10,15 @@
 <body>
     <div id="terminal"></div>
     <script>
+        document.onkeydown = function (e) {
+            e = e || window.event;//Get event
+
+            if (!e.ctrlKey) return;
+
+            var code = e.which || e.keyCode;//Get key code
+            e.preventDefault();
+            e.stopPropagation();
+        };
         var term = new Terminal();
         // term.on('key', function (key, e) {
         //     axios.get('/key').then(function (response) {
@@ -18,6 +27,11 @@
         // });
         term.onKey(function (a) {
             console.log(a)
+            axios.post('/key', {
+                key: a.key
+            }).then(function (response) {
+
+            })
         })
         term.open(document.getElementById('terminal'));
         term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +18,11 @@ var sss = ptyout{&ptyout_impl{}}
 var mutex sync.Mutex
 var wg sync.WaitGroup
 var need = true
+var ptystdio *os.File = nil
+
+type keycode struct {
+	Key string `json:"key"`
+}
 
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()
@@ -29,6 +36,16 @@ func NewRouter(root string) *mux.Router {
 		w.Write(buf)
 	}).Methods("GET")
 	r.HandleFunc("/key", func(w http.ResponseWriter, r *http.Request) {
+		var k keycode
+		buf, err := io.ReadAll(r.Body)
+		if err == nil {
+			err = json.Unmarshal(buf, &k)
+			if err == nil {
+				if ptystdio != nil {
+					ptystdio.Write([]byte(k.Key))
+				}
+			}
+		}
 	})
 	r.HandleFunc("/mouse", func(w http.ResponseWriter, r *http.Request) {
 	})
@@ -43,6 +60,10 @@ func NewRouter(root string) *mux.Router {
 	}).Methods("GET")
 	// 处理根路径
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// if !need {
+		// 	wg.Add(1)
+		// 	need = true
+		// }
 		buf, _ := os.ReadFile("index.html")
 		w.Write(buf)
 	}).Methods("GET")
@@ -70,18 +91,20 @@ type ptyout struct {
 }
 
 // Write implements pty.ptyio.
-func (p ptyout) Write(s string) {
-	p.imp.output += s
+func (p ptyout) Write(s []byte) (n int, err error) {
+	p.imp.output += string(s)
 	if need {
 		wg.Done()
 		need = false
 	}
+	return len(s), nil
 }
 
 func main() {
 	wg.Add(1)
 	go func() {
-		pty.Ptymain([]string{"/usr/bin/lspvi"}, sss)
+		ptystdio = pty.Ptymain([]string{"/usr/bin/lspvi"})
+		io.Copy(sss, ptystdio)
 	}()
 	StartServer(filepath.Dir(os.Args[0]), 13000, nil)
 }
