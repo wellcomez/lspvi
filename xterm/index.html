@@ -5,14 +5,15 @@
     <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
     <script src="node_modules/@xterm/addon-webgl/lib/addon-webgl.js"></script>
+    <script src="node_modules/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
     <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
 </head>
 
 <body>
     <div id="terminal"></div>
     <script>
-        let rows = 100
-        let cols = 120
+        let rows = 50
+        let cols = 80
         document.onkeydown = function (e) {
             e = e || window.event;//Get event
 
@@ -37,8 +38,10 @@
             // minimumContrastRatio: 1,
         });
 
-        var wl=new WebglAddon.WebglAddon()
+        var wl = new WebglAddon.WebglAddon()
         term.loadAddon(wl)
+        var fit=new FitAddon.FitAddon()
+        term.loadAddon(fit);
         term.onData(function (data) {
             console.log(data)
             axios.post('/key', {
@@ -46,6 +49,8 @@
             }).then(function (response) {
 
             })
+        })
+        term.onResize((size) => {
         })
         // term.onKey(function (a) {
         //     console.log(a)
@@ -59,14 +64,15 @@
         term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
         const get_term = function () {
             axios.post('/term', {
-                width: cols,
-                height: rows,
+                width: term.cols,
+                height: term.rows,
             }).then(function (response) {
                 term.write(response.data);
                 get_term();
             })
         };
         get_term();
+        fit.fit()
     </script>
 </body>
 

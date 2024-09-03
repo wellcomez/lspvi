@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@xterm/addon-webgl": "^0.18.0",
-    "@xterm/xterm": "^5.5.0"
+    "@xterm/xterm": "^5.5.0",
+    "xterm-addon-fit": "^0.8.0"
   }
 }
