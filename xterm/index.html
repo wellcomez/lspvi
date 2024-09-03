@@ -2,11 +2,14 @@
 <html>
 
 <head>
-    <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
+    <!-- <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" /> -->
+    <!-- <link rel="stylesheet" href="node_modules/xterm.css" /> -->
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
     <script src="node_modules/@xterm/addon-webgl/lib/addon-webgl.js"></script>
     <script src="node_modules/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
-    <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
+    <!-- <script src="node_modules/@xterm/xterm/lib/xterm.js"></script> -->
 </head>
 
 <body>
@@ -39,7 +42,7 @@
         });
 
         var wl = new WebglAddon.WebglAddon()
-        term.loadAddon(wl)
+        // term.loadAddon(wl)
         var fit = new FitAddon.FitAddon()
         term.loadAddon(fit);
         term.onData(function (data) {
@@ -68,7 +71,7 @@
                 width: term.cols,
                 height: term.rows,
             }).then(function (response) {
-                if (response.data!="0000"){
+                if (response.data != "0000") {
                     term.write(response.data);
                 }
                 get_term();
