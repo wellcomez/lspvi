@@ -4,6 +4,7 @@
 <head>
     <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+    <script src="node_modules/@xterm/addon-webgl/lib/addon-webgl.js"></script>
     <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
 </head>
 
@@ -35,7 +36,11 @@
             MouseEvent: true,
             // minimumContrastRatio: 1,
         });
+
+        var wl=new WebglAddon.WebglAddon()
+        term.loadAddon(wl)
         term.onData(function (data) {
+            console.log(data)
             axios.post('/key', {
                 key: data
             }).then(function (response) {
