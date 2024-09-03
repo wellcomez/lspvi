@@ -40,9 +40,11 @@
             MouseEvent: true,
             // minimumContrastRatio: 1,
         });
-
+        window.addEventListener("contextmenu", function (e) {
+            e.preventDefault();
+        })
         var wl = new WebglAddon.WebglAddon()
-        // term.loadAddon(wl)
+        term.loadAddon(wl)
         var fit = new FitAddon.FitAddon()
         term.loadAddon(fit);
         term.onData(function (data) {
