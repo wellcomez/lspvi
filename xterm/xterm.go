@@ -163,6 +163,7 @@ func main() {
 	go func() {
 		ptystdio = pty.Ptymain([]string{"/usr/bin/lspvi"})
 		io.Copy(sss, ptystdio.File)
+		os.Exit(-1)
 	}()
 	StartServer(filepath.Dir(os.Args[0]), 13000, nil)
 }

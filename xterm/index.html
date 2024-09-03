@@ -43,6 +43,26 @@
         window.addEventListener("contextmenu", function (e) {
             e.preventDefault();
         })
+        var socket = new WebSocket('ws://localhost:13000/ws');
+        function sendTextData(data) {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(data);
+                console.log('Sent to server:', data);
+            } else {
+                console.error('WebSocket connection is not open.');
+            }
+        }
+
+        socket.onopen = function (event) {
+            console.log("Connection opened");
+            sendTextData("hello")
+        };
+        socket.onmessage = function (event) {
+            console.log("Received: ", event.data);
+        };
+        socket.onclose = function (event) {
+            console.log("Connection closed");
+        };
         var wl = new WebglAddon.WebglAddon()
         term.loadAddon(wl)
         var fit = new FitAddon.FitAddon()
@@ -80,6 +100,7 @@
             })
         };
         get_term();
+
         fit.fit()
     </script>
 </body>
