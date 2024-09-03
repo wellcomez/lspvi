@@ -543,6 +543,7 @@ func MainUI(arg *Arguments) {
 	console.AddPage(main.bk.Name, main.bk, true, false)
 
 	list := new_customlist()
+	list.ShowSecondaryText(false)
 	list.SetBorder(true)
 	console_layout := tview.NewFlex().AddItem(console, 0, 10, false).AddItem(list, 0, 2, false)
 	keys, keymaplist := load_qf_history(&main)
