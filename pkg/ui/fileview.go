@@ -163,8 +163,13 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 				if err != nil {
 					return
 				}
-				if !yes {
-					openfile(filename)
+
+				if ret.main.tty {
+
+				} else {
+					if !yes {
+						openfile(filename)
+					}
 				}
 			}
 		},
@@ -318,7 +323,7 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 		c := tview.NewTreeNode(prefix + file.Name())
 		c.SetReference(fullpath)
 		if !yes {
-			yes = lspcore.IsMe(fullpath, []string{"md", "Makefile","json","png","puml","utxt"}) || view.main.IsSource(fullpath)
+			yes = lspcore.IsMe(fullpath, []string{"md", "Makefile", "json", "png", "puml", "utxt"}) || view.main.IsSource(fullpath)
 			if yes {
 				c.SetColor(tview.Styles.PrimaryTextColor)
 			} else {

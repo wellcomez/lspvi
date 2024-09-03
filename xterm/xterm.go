@@ -28,6 +28,7 @@ type wsize struct {
 type keycode struct {
 	Key string `json:"key"`
 }
+
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 	if err != nil {
@@ -158,10 +159,11 @@ func (p ptyout) Write(s []byte) (n int, err error) {
 	return len(s), nil
 }
 
+// main
 func main() {
 	wg.Add(1)
 	go func() {
-		ptystdio = pty.Ptymain([]string{"/usr/bin/lspvi"})
+		ptystdio = pty.Ptymain([]string{"/usr/bin/lspvi", "-tty"})
 		io.Copy(sss, ptystdio.File)
 		os.Exit(-1)
 	}()

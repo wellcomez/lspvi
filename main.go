@@ -10,6 +10,7 @@ import (
 
 func main() {
 	gui := flag.Bool("gui", false, "guimain")
+	tty := flag.Bool("tty", false, "guimain")
 	root := flag.String("root", "", "root-dir")
 	file := flag.String("file", "", "source file")
 	flag.Parse()
@@ -28,6 +29,7 @@ func main() {
 	var arg = &mainui.Arguments{
 		Root: *root,
 		File: *file,
+		Tty:  *tty,
 	}
 	mainui.MainUI(arg)
 }
