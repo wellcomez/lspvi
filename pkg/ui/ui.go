@@ -22,7 +22,7 @@ var httport = 0
 
 type rootlayout struct {
 	editor_area *tview.Flex
-	console     *tview.Pages
+	console     *tview.Flex
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
 	mainlayout  *tview.Flex
@@ -539,8 +539,18 @@ func MainUI(arg *Arguments) {
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
 	console.AddPage(view_log.getname(), main.log.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
-	console.AddPage(main.quickview.Name, main.quickview, true, true)
+	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
 	console.AddPage(main.bk.Name, main.bk, true, false)
+
+	list := new_customlist()
+	layout := tview.NewFlex().AddItem(console, 0, 10, false).AddItem(tview.NewBox(), 1, 0, false).AddItem(list, 0, 2, false)
+	keys, keymaplist := load_qf_history(&main)
+	for i, value := range keymaplist {
+		index := i
+		list.AddItem(value, "", func() {
+			open_in_tabview(keys, index, &main)
+		})
+	}
 
 	main.page = console
 	main.page.SetChangedFunc(func() {
@@ -630,13 +640,13 @@ func MainUI(arg *Arguments) {
 	main_layout :=
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(editor_area, 0, 3, true).
-			AddItem(console, 0, 2, false).
+			AddItem(layout, 0, 2, false).
 			AddItem(tab_area, 1, 0, false).
 			AddItem(main.cmdline.input, 3, 1, false)
 	main_layout.SetBorder(true)
 	main.layout = &rootlayout{
 		editor_area: editor_area,
-		console:     console,
+		console:     layout,
 		tab_area:    tab_area,
 		cmdline:     main.cmdline.input,
 		mainlayout:  main_layout,
