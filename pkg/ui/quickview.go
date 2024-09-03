@@ -49,6 +49,7 @@ type logview struct {
 
 // quick_view
 type quick_view struct {
+	*tview.Flex
 	*view_link
 	quickview    *quick_preview
 	view         *customlist
@@ -318,6 +319,16 @@ func new_quikview(main *mainui) *quick_view {
 		menuitem:  items,
 		// menu:      new_contextmenu(main, items,view.Box),
 	}
+	list := new_customlist()
+	layout := tview.NewFlex().AddItem(view, 0, 10, false).AddItem(tview.NewBox(), 1, 0, false).AddItem(list, 0, 2, false)
+	keys, keymaplist := load_qf_history(main)
+	for i, value := range keymaplist {
+		index := i
+		list.AddItem(value, "", func() {
+			open_in_tabview(keys, index, main)
+		})
+	}
+	ret.Flex = layout
 	ret.right_context.qk = ret
 	// view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	// 	is_rightclick := (action == tview.MouseRightClick)

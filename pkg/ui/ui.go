@@ -539,7 +539,7 @@ func MainUI(arg *Arguments) {
 	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
 	console.AddPage(view_log.getname(), main.log.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
-	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
+	console.AddPage(main.quickview.Name, main.quickview, true, true)
 	console.AddPage(main.bk.Name, main.bk, true, false)
 
 	main.page = console
