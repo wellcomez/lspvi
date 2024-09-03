@@ -6,12 +6,16 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/gorilla/mux"
 	"zen108.com/lspvi/pkg/pty"
 )
 
 var sss = ptyout{&ptyout_impl{}}
+var mutex sync.Mutex
+var wg sync.WaitGroup
+var need = true
 
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()
@@ -25,10 +29,13 @@ func NewRouter(root string) *mux.Router {
 		w.Write(buf)
 	}).Methods("GET")
 	r.HandleFunc("/term", func(w http.ResponseWriter, r *http.Request) {
+		wg.Wait()
 		if sss.imp == nil {
 			w.Write([]byte("xx"))
 		}
 		w.Write([]byte(sss.imp.output))
+		need = true
+		wg.Add(1)
 	}).Methods("GET")
 	// 处理根路径
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -61,9 +68,14 @@ type ptyout struct {
 // Write implements pty.ptyio.
 func (p ptyout) Write(s string) {
 	p.imp.output += s
+	if need {
+		wg.Done()
+		need = false
+	}
 }
 
 func main() {
+	wg.Add(1)
 	go func() {
 		pty.Ptymain([]string{"/usr/bin/lspvi"}, sss)
 	}()
