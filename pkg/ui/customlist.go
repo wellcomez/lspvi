@@ -36,6 +36,7 @@ func (l *customlist) AddItem(mainText, secondText string, selected func()) *cust
 	l.List.AddItem(mainText, secondText, 0, selected)
 	return l
 }
+
 type keypattern struct {
 	begin int
 	width int
@@ -164,9 +165,9 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		}
 		if len(MainText) > 0 {
 			if selected {
-				draw_item_color(main_postion, MainText, screen, offset_x, y, selected_style, selected_stylehl)
+				l.draw_item_color(main_postion, MainText, screen, offset_x, y, selected_style, selected_stylehl)
 			} else {
-				draw_item_color(main_postion, MainText, screen, offset_x, y, style, stylehl)
+				l.draw_item_color(main_postion, MainText, screen, offset_x, y, style, stylehl)
 			}
 			y += 1
 		}
@@ -178,7 +179,7 @@ func (l *customlist) Draw(screen tcell.Screen) {
 			// if selected {
 			// 	draw_item_color(main_postion, SecondText, screen, offset_x, y, selected_style, selected_stylehl)
 			// } else {
-			draw_item_color(main_postion, SecondText, screen, offset_x, y, style, stylehl)
+			l.draw_item_color(main_postion, SecondText, screen, offset_x, y, style, stylehl)
 			// }
 			y += 1
 			if y >= bottomLimit {
@@ -216,24 +217,36 @@ func (l *customlist) get_hl_keys() []string {
 	return keys
 }
 
-func draw_item_color(Positions []keypattern, MainText string, screen tcell.Screen, offset_x int, y int, selected_style tcell.Style, selected_stylehl tcell.Style) {
+func (l *customlist) draw_item_color(Positions []keypattern, MainText string, screen tcell.Screen, offset_x int, y int, selected_style tcell.Style, selected_stylehl tcell.Style) {
 	begin := 0
 	for _, e := range Positions {
 		normal := MainText[begin:e.begin]
 		for i, r := range normal {
-			screen.SetContent(offset_x+i+begin, y, r, nil, selected_style)
+			x := offset_x + i + begin
+			if !l.InInnerRect(x, y) {
+				return
+			}
+			screen.SetContent(x, y, r, nil, selected_style)
 		}
 		hltext := MainText[e.begin : e.begin+e.width]
 		for i, r := range hltext {
 			s := selected_stylehl
-			screen.SetContent(offset_x+i+e.begin, y, r, nil, s.Foreground(e.color))
+			x := offset_x + i + e.begin
+			if !l.InInnerRect(x, y) {
+				return
+			}
+			screen.SetContent(x, y, r, nil, s.Foreground(e.color))
 		}
 		begin = e.begin + e.width
 	}
 	if begin < len(MainText) {
 		normal := MainText[begin:]
 		for i, r := range normal {
-			screen.SetContent(offset_x+i+begin, y, r, nil, selected_style)
+			x := offset_x + i + begin
+			if !l.InInnerRect(x, y) {
+				return
+			}
+			screen.SetContent(x, y, r, nil, selected_style)
 		}
 	}
 }
