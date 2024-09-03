@@ -28,6 +28,10 @@ func NewRouter(root string) *mux.Router {
 		buf, _ := os.ReadFile(filepath.Join(".", path))
 		w.Write(buf)
 	}).Methods("GET")
+	r.HandleFunc("/key", func(w http.ResponseWriter, r *http.Request) {
+	})
+	r.HandleFunc("/mouse", func(w http.ResponseWriter, r *http.Request) {
+	})
 	r.HandleFunc("/term", func(w http.ResponseWriter, r *http.Request) {
 		wg.Wait()
 		if sss.imp == nil {
