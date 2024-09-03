@@ -19,7 +19,17 @@
             e.preventDefault();
             e.stopPropagation();
         };
-        var term = new Terminal();
+        var term = new Terminal({
+            cursorStyle: 'bar',  // 默认为块状光标
+            allowTransparency: true,
+            cursorBlink: false,
+            cursorWidth: 4,
+            minimumContrastRatio:1,
+            // theme: {
+            //     selection: "#888"
+            // }
+        });
+
         // term.on('key', function (key, e) {
         //     axios.get('/key').then(function (response) {
 
