@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 	"zen108.com/lspvi/pkg/pty"
@@ -66,13 +67,31 @@ func NewRouter(root string) *mux.Router {
 			wg.Wait()
 		}
 
-		sss.imp.pty = sss.imp.output
 		if sss.imp == nil {
 			w.Write([]byte("xx"))
 		}
+		oldlen := len(sss.imp.pty)
+		different := false
+		for i, _ := range sss.imp.output {
+			if i < oldlen {
+				if sss.imp.output[i] != sss.imp.pty[i] {
+					fmt.Println(time.Now(), "output changed", i, sss.imp.output[i], sss.imp.pty[i])
+					different = true
+				}
+			} else {
+				fmt.Println(time.Now(),"output longger", len(sss.imp.output), len(sss.imp.pty))
+				different = true
+			}
+		}
+		if !different {
+			w.Write([]byte("0000"))
+			return
+		}
+		sss.imp.pty = sss.imp.output
 		w.Write([]byte(sss.imp.pty))
-		need = true
 		wg.Add(1)
+		sss.imp.output = ""
+		need = true
 	})
 	// 处理根路径
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
