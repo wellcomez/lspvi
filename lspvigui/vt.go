@@ -12,6 +12,7 @@ import (
 
 	"github.com/creack/pty"
 	"golang.org/x/term"
+	"zen"
 )
 
 var logFile, _= setupLogFile("logfile.txt")

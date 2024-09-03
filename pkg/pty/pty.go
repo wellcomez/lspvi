@@ -15,7 +15,10 @@ import (
 )
 
 var logFile, _ = setupLogFile("logfile.txt")
-
+type ptyio interface{
+	Write (s string)
+}
+var gui ptyio
 type read_out struct {
 	handle func(p []byte) (n int, err error)
 }
@@ -65,6 +68,7 @@ func (r read_out) Write(p []byte) (n int, err error) {
 	if r.handle != nil {
 		return r.handle(p)
 	}
+	gui.Write(string(p))
 	return logFile.Write(p)
 }
 func setupLogFile(filename string) (*os.File, error) {
@@ -75,21 +79,24 @@ func setupLogFile(filename string) (*os.File, error) {
 	return file, nil
 }
 
-func Ptymain(Args []string) {
+
+
+func Ptymain(Args []string, io ptyio) {
 	defer logFile.Close()
 	log.SetOutput(logFile)
 
 	// 创建一个新的伪终端
 	// lspvi := "/Users/jialaizhu/dev/lspvi/lspvi"
-	newFunction1(Args)
+	newFunction1(Args, io)
 }
 
-func newFunction1(Args []string) bool {
+func newFunction1(Args []string, g ptyio) bool {
+	gui=g
 	c := exec.Command(Args[0])
 	c.Args = Args
 	f, err := pty.Start(c)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	var stdout2 read_out
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
@@ -100,7 +107,6 @@ func newFunction1(Args []string) bool {
 	go func() {
 		var stdin2 read_out
 		stdin2.handle = func(p []byte) (n int, err error) {
-			// log.Println(">>", len(p),"'" ,string(p),"'")
 			return f.Write(p)
 		}
 		io.Copy(stdin2, os.Stdin)

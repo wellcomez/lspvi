@@ -4,7 +4,7 @@ import (
 	"flag"
 	"os"
 
-	pty "zen108.com/lspvi/pkg/pty"
+	// pty "zen108.com/lspvi/pkg/pty"
 	mainui "zen108.com/lspvi/pkg/ui"
 )
 
@@ -23,7 +23,6 @@ func main() {
 			args = append(args, "-root")
 			args = append(args, *root)
 		}
-		pty.Ptymain(args)
 		return
 	}
 	var arg = &mainui.Arguments{

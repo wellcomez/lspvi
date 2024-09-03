@@ -40,11 +40,11 @@ func (pk qk_history_picker) UpdateQuery(query string) {
 	fzf.Search(query)
 	pk.list.Clear()
 	pk.list.Key = query
-	pk.impl.selected = func(dataindex int,listindex int) {
+	pk.impl.selected = func(dataindex int, listindex int) {
 		pk.parent.hide()
 		pk.open_in_qf()
 	}
-	pk.impl.OnSearch(query,true)
+	pk.impl.OnSearch(query, true)
 }
 func (pk *qk_history_picker) grid() tview.Primitive {
 	return pk.flex(pk.parent.input, 1)
@@ -76,17 +76,8 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	list := new_customlist()
 	list.fuzz = true
 	list.SetBorder(true)
-	hh := quickfix_history{Wk: v.main.lspmgr.Wk}
-	keys, _ := hh.Load()
-	keymaplist := []string{}
-	root := v.main.root
-	for _, v := range keys {
-		file_info := ""
-		if len(v.Key.File) > 0 {
-			file_info = fmt.Sprintf("%s %d:%d", strings.ReplaceAll(v.Key.File, root, ""), v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
-		}
-		keymaplist = append(keymaplist, fmt.Sprintf("%-10s %-20s  %s", v.Type.String(), v.Key.Key, file_info))
-	}
+	main := v.main
+	keys, keymaplist := load_qf_history(main)
 
 	x := new_preview_picker(v)
 	x.use_cusutom_list(list)
@@ -115,12 +106,33 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	return ret
 }
 
+func load_qf_history(main *mainui) ([]qf_history_data, []string) {
+	hh := quickfix_history{Wk: main.lspmgr.Wk}
+	keys, _ := hh.Load()
+	keymaplist := []string{}
+	root := main.root
+	for _, v := range keys {
+		file_info := ""
+		if len(v.Key.File) > 0 {
+			file_info = fmt.Sprintf("%s %d:%d", strings.ReplaceAll(v.Key.File, root, ""), v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
+		}
+		keymaplist = append(keymaplist, fmt.Sprintf("%-10s %-20s  %s", v.Type.String(), v.Key.Key, file_info))
+	}
+	return keys, keymaplist
+}
+
 func (qk *qk_history_picker) open_in_qf() {
 	i := qk.impl.get_data_index(-1)
-	item := qk.impl.keys[i]
+	main := qk.parent.main
+	keys := qk.impl.keys
+	open_in_tabview(keys, i, main)
+}
+
+func open_in_tabview(keys []qf_history_data, i int, main *mainui) {
+	item := keys[i]
 	if item.Type == data_refs || item.Type == data_search || item.Type == data_grep_word {
-		qk.parent.main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
-		qk.parent.main.ActiveTab(view_quickview, false)
+		main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
+		main.ActiveTab(view_quickview, false)
 	} else if item.Type == data_callin {
 		callin := item.Key.File
 		fielname := filepath.Join(callin, "callstack.json")
@@ -137,10 +149,11 @@ func (qk *qk_history_picker) open_in_qf() {
 				log.Println(err)
 				return
 			}
-			qk.parent.main.callinview.updatetask(&task)
-			qk.parent.main.ActiveTab(view_callin, false)
+			main.callinview.updatetask(&task)
+			main.ActiveTab(view_callin, false)
 		}
 	}
+	return
 }
 
 func (qk *qk_history_picker) updateprev() {
