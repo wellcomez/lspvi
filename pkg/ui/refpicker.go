@@ -298,7 +298,7 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 			file:             &clone,
 		},
 	}
-	sym.impl.use_cusutom_list(new_customlist())
+	sym.impl.use_cusutom_list(new_customlist(true))
 	sym.impl.codeprev.view.SetBorder(true)
 	return sym
 }

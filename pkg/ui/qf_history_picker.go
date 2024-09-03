@@ -73,7 +73,7 @@ func (t DateType) String() string {
 	return ""
 }
 func new_qk_history_picker(v *fzfmain) qk_history_picker {
-	list := new_customlist()
+	list := new_customlist(false)
 	list.fuzz = true
 	list.SetBorder(true)
 	main := v.main

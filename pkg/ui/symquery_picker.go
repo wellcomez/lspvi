@@ -83,7 +83,7 @@ func new_workspace_symbol_picker(v *fzfmain, file *lspcore.Symbol_file) *workspa
 		impl: &workspace_query_picker_impl{
 			prev_picker_impl: new_preview_picker(v),
 			file:             file,
-			list:             new_customlist(),
+			list:             new_customlist(false),
 		},
 	}
 	ret.impl.prev_picker_impl.use_cusutom_list(ret.impl.list)

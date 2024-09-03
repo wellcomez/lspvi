@@ -24,9 +24,10 @@ func (l *customlist) Clear() *customlist {
 	l.hlitems = []*hlItem{}
 	return l
 }
-func new_customlist() *customlist {
+func new_customlist(two bool) *customlist {
 	ret := &customlist{default_color: tcell.ColorGreenYellow}
 	ret.List = tview.NewList()
+	ret.ShowSecondaryText(two)
 	ret.hlitems = []*hlItem{}
 	ret.fuzz = false
 	return ret

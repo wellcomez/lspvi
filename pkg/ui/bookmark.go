@@ -207,7 +207,7 @@ func new_bookmark_picker(v *fzfmain) bookmark_picker {
 }
 
 func init_bookmark_list(main *mainui, selected func(int)) (*customlist, []ref_line) {
-	hlist := new_customlist()
+	hlist := new_customlist(false)
 	listdata := reload_bookmark_list(main, hlist, selected)
 	return hlist, listdata
 }

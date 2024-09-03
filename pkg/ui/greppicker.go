@@ -102,7 +102,7 @@ func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 	x := new_preview_picker(v)
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
-		list:             new_customlist(),
+		list:             new_customlist(false),
 		main:             main,
 		impl:             &grep_impl{},
 		filesearch:       false,

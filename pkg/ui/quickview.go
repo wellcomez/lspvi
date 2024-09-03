@@ -295,7 +295,7 @@ func (log *logview) update_log_view(s string) {
 
 // new_quikview
 func new_quikview(main *mainui) *quick_view {
-	view := new_customlist()
+	view := new_customlist(false)
 	view.default_color = tcell.ColorGreen
 	view.List.SetMainTextStyle(tcell.StyleDefault.Normal()).ShowSecondaryText(false)
 	var vid view_id = view_quickview

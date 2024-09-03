@@ -84,7 +84,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 func new_fzflist_impl(fzf *fzf.Fzf, v *fzfmain) *fzflist_impl {
 	x := &fzflist_impl{
 		parent: v,
-		list:   new_customlist(),
+		list:   new_customlist(false),
 	}
 	x.list.SetBorder(true)
 	return x
