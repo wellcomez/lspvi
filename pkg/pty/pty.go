@@ -16,7 +16,6 @@ import (
 
 var logFile, _ = setupLogFile("logfile.txt")
 
-
 var gui io.Writer
 
 type read_out struct {
@@ -79,7 +78,20 @@ func setupLogFile(filename string) (*os.File, error) {
 	return file, nil
 }
 
-func Ptymain(Args []string) *os.File {
+type Pty struct {
+	File *os.File
+	ch   chan os.Signal
+	Rows uint16 // ws_row: Number of rows (in cells).
+	Cols uint16 //
+}
+
+func (pty *Pty) UpdateSize(Rows uint16, Cols uint16) {
+	pty.Rows = Rows
+	pty.Cols = Cols
+	pty.ch <- syscall.SIGWINCH
+}
+
+func Ptymain(Args []string) *Pty {
 	defer logFile.Close()
 	log.SetOutput(logFile)
 
@@ -88,7 +100,7 @@ func Ptymain(Args []string) *os.File {
 	return newFunction1(Args)
 }
 
-func newFunction1(Args []string) *os.File {
+func newFunction1(Args []string) *Pty {
 	c := exec.Command(Args[0])
 	c.Args = Args
 	f, err := pty.Start(c)
@@ -108,8 +120,18 @@ func newFunction1(Args []string) *os.File {
 		}
 		io.Copy(stdin2, os.Stdin)
 	}()
-	// io.Copy(stdout2, f)
-	return f
+	ret := &Pty{File: f, ch: make(chan os.Signal, 1)}
+	signal.Notify(ret.ch, syscall.SIGWINCH)
+	go func() {
+		for range ret.ch {
+			// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
+			// }
+			if err := pty.Setsize(ret.File, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
+				log.Printf("error resizing pty: %s", err)
+			}
+		}
+	}()
+	return ret
 }
 
 func test_grep() {

@@ -17,8 +17,12 @@ import (
 var sss = ptyout{&ptyout_impl{}}
 var wg sync.WaitGroup
 var need = true
-var ptystdio *os.File = nil
+var ptystdio *pty.Pty = nil
 
+type wsize struct {
+	Width  uint16 `json:"width"`
+	Height uint16 `json:"height"`
+}
 type keycode struct {
 	Key string `json:"key"`
 }
@@ -41,7 +45,7 @@ func NewRouter(root string) *mux.Router {
 			err = json.Unmarshal(buf, &k)
 			if err == nil {
 				if ptystdio != nil {
-					ptystdio.Write([]byte(k.Key))
+					ptystdio.File.Write([]byte(k.Key))
 				}
 			}
 		}
@@ -49,6 +53,15 @@ func NewRouter(root string) *mux.Router {
 	r.HandleFunc("/mouse", func(w http.ResponseWriter, r *http.Request) {
 	})
 	r.HandleFunc("/term", func(w http.ResponseWriter, r *http.Request) {
+		var k wsize
+		buf, err := io.ReadAll(r.Body)
+		if err == nil {
+			if json.Unmarshal(buf, &k) == nil {
+				if k.Height != ptystdio.Rows || k.Width != ptystdio.Cols {
+					ptystdio.UpdateSize(k.Height, k.Width)
+				}
+			}
+		}
 		if len(sss.imp.output) == 0 {
 			wg.Wait()
 		}
@@ -60,7 +73,7 @@ func NewRouter(root string) *mux.Router {
 		w.Write([]byte(sss.imp.pty))
 		need = true
 		wg.Add(1)
-	}).Methods("GET")
+	})
 	// 处理根路径
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// if !need {
@@ -108,7 +121,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		ptystdio = pty.Ptymain([]string{"/usr/bin/lspvi"})
-		io.Copy(sss, ptystdio)
+		io.Copy(sss, ptystdio.File)
 	}()
 	StartServer(filepath.Dir(os.Args[0]), 13000, nil)
 }
