@@ -15,7 +15,6 @@ import (
 )
 
 var sss = ptyout{&ptyout_impl{}}
-var mutex sync.Mutex
 var wg sync.WaitGroup
 var need = true
 var ptystdio *os.File = nil
@@ -50,11 +49,15 @@ func NewRouter(root string) *mux.Router {
 	r.HandleFunc("/mouse", func(w http.ResponseWriter, r *http.Request) {
 	})
 	r.HandleFunc("/term", func(w http.ResponseWriter, r *http.Request) {
-		wg.Wait()
+		if len(sss.imp.output) == 0 {
+			wg.Wait()
+		}
+
+		sss.imp.pty = sss.imp.output
 		if sss.imp == nil {
 			w.Write([]byte("xx"))
 		}
-		w.Write([]byte(sss.imp.output))
+		w.Write([]byte(sss.imp.pty))
 		need = true
 		wg.Add(1)
 	}).Methods("GET")
@@ -85,6 +88,7 @@ func StartServer(root string, port int, cb func(port int)) {
 
 type ptyout_impl struct {
 	output string
+	pty    string
 }
 type ptyout struct {
 	imp *ptyout_impl
