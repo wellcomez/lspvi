@@ -543,7 +543,8 @@ func MainUI(arg *Arguments) {
 	console.AddPage(main.bk.Name, main.bk, true, false)
 
 	list := new_customlist()
-	layout := tview.NewFlex().AddItem(console, 0, 10, false).AddItem(tview.NewBox(), 1, 0, false).AddItem(list, 0, 2, false)
+	list.SetBorder(true)
+	console_layout := tview.NewFlex().AddItem(console, 0, 10, false).AddItem(list, 0, 2, false)
 	keys, keymaplist := load_qf_history(&main)
 	for i, value := range keymaplist {
 		index := i
@@ -640,13 +641,13 @@ func MainUI(arg *Arguments) {
 	main_layout :=
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(editor_area, 0, 3, true).
-			AddItem(layout, 0, 2, false).
+			AddItem(console_layout, 0, 2, false).
 			AddItem(tab_area, 1, 0, false).
 			AddItem(main.cmdline.input, 3, 1, false)
 	main_layout.SetBorder(true)
 	main.layout = &rootlayout{
 		editor_area: editor_area,
-		console:     layout,
+		console:     console_layout,
 		tab_area:    tab_area,
 		cmdline:     main.cmdline.input,
 		mainlayout:  main_layout,
