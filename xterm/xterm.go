@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"zen108.com/lspvi/pkg/pty"
 )
 
@@ -27,7 +28,27 @@ type wsize struct {
 type keycode struct {
 	Key string `json:"key"`
 }
+func serveWs(w http.ResponseWriter, r *http.Request) {
+	conn, err := websocket.Upgrade(w, r, nil, 1024, 1024)
+	if err != nil {
+		// handle error
+		return
+	}
+	defer conn.Close()
 
+	for {
+		messageType, message, err := conn.ReadMessage()
+		if err != nil {
+			// handle error
+			break
+		}
+		log.Printf("Received: %s", message)
+		err = conn.WriteMessage(messageType, message)
+		if err != nil {
+			break
+		}
+	}
+}
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()
 	// staticDir := "./node_modules"
@@ -39,6 +60,7 @@ func NewRouter(root string) *mux.Router {
 		buf, _ := os.ReadFile(filepath.Join(".", path))
 		w.Write(buf)
 	}).Methods("GET")
+	r.HandleFunc("/ws", serveWs)
 	r.HandleFunc("/key", func(w http.ResponseWriter, r *http.Request) {
 		var k keycode
 		buf, err := io.ReadAll(r.Body)
@@ -79,7 +101,7 @@ func NewRouter(root string) *mux.Router {
 					different = true
 				}
 			} else {
-				fmt.Println(time.Now(),"output longger", len(sss.imp.output), len(sss.imp.pty))
+				fmt.Println(time.Now(), "output longger", len(sss.imp.output), len(sss.imp.pty))
 				different = true
 			}
 		}
