@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"os"
 
 	// pty "zen108.com/lspvi/pkg/pty"
 	mainui "zen108.com/lspvi/pkg/ui"
@@ -15,15 +14,7 @@ func main() {
 	file := flag.String("file", "", "source file")
 	flag.Parse()
 	if *gui {
-		args := []string{os.Args[0]}
-		if *file != "" {
-			args = append(args, "-file")
-			args = append(args, *file)
-		}
-		if *root != "" {
-			args = append(args, "-root")
-			args = append(args, *root)
-		}
+		mainui.StartWebUI()
 		return
 	}
 	var arg = &mainui.Arguments{

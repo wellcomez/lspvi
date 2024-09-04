@@ -326,6 +326,17 @@ func (m *mainui) open_wks_query() {
 // OpenFile
 // OpenFile
 func (m *mainui) OpenFile(file string, loc *lsp.Location) {
+	if m.tty {
+		ext := filepath.Ext(file)
+		image := []string{".png"}
+		for _, v := range image {
+			if v == ext {
+				open_in_web(file)
+				return
+			}
+		}
+
+	}
 	m.OpenFileToHistory(file, &navigation_loc{loc: loc}, true)
 }
 

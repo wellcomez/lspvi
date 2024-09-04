@@ -1,4 +1,4 @@
-package main
+package mainui
 
 import (
 	"encoding/json"
@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"zen108.com/lspvi/pkg/pty"
-	mainui "zen108.com/lspvi/pkg/ui"
 )
 
 var sss = ptyout{&ptyout_impl{}}
@@ -91,7 +90,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				}
 			case "openfile":
 				{
-					var file mainui.Ws_open_file
+					var file Ws_open_file
 					err = json.Unmarshal(message, &file)
 					if err == nil {
 						name := filepath.Base(file.Filename)
@@ -285,11 +284,14 @@ func (p ptyout) Write(s []byte) (n int, err error) {
 }
 
 // main
-func main() {
+func StartWebUI() {
+	argnew := []string{os.Args[0],"-tty"}
+	args := os.Args[2:]
+	argnew = append(argnew, args...)
 	sss.imp.files.Files = []open_file{}
 	wg.Add(1)
 	go func() {
-		ptystdio = pty.Ptymain([]string{"/usr/bin/lspvi", "-tty"})
+		ptystdio = pty.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
 		os.Exit(-1)
 	}()
