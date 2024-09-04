@@ -173,16 +173,7 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 				}
 				log.Println("external open tty=", ret.main.tty)
 				if ret.main.tty {
-					buf, err := os.ReadFile(filename)
-					if err == nil {
-						buf, err = json.Marshal(&Ws_open_file{Filename: filename, Call: "openfile", Buf: buf})
-						if err == nil {
-							SendWsData(buf)
-						}
-					}
-					if err != nil {
-						log.Println("openfile", filename, err)
-					}
+					open_in_web(filename)
 				} else {
 					if !yes {
 						openfile(filename)
@@ -193,6 +184,19 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 		hide: hide,
 	}
 	return external_open
+}
+
+func open_in_web(filename string) {
+	buf, err := os.ReadFile(filename)
+	if err == nil {
+		buf, err = json.Marshal(&Ws_open_file{Filename: filename, Call: "openfile", Buf: buf})
+		if err == nil {
+			SendWsData(buf)
+		}
+	}
+	if err != nil {
+		log.Println("openfile", filename, err)
+	}
 }
 func CheckIfDir(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)

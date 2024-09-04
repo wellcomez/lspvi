@@ -108,7 +108,7 @@
                 console.log("openfile",
                     data.Filename)
                 let ext = getFileExtension(data.Filename)
-                if (is_image(ext)){
+                if (is_image(ext)) {
 
                     document.getElementById("open").innerHTML = "<img src=\"" + data.Filename + "\"/>"
                     document.getElementById("open").style.display = "block"
@@ -133,7 +133,8 @@
         term.onData(function (data) {
             let call = "key"
             let rows = term.rows, cols = term.cols
-            sendTextData({ call, data })
+
+            sendTextData({ call, data, rows, cols })
             console.log(data)
         })
         term.onResize((size) => {

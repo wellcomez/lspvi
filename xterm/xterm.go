@@ -39,6 +39,8 @@ type init_call struct {
 type keydata struct {
 	Call string `json:"call"`
 	Data string `json:"data"`
+	Cols uint16 `json:"cols"`
+	Rows uint16 `json:"rows"`
 }
 type resize struct {
 	Call string `json:"call"`
@@ -116,6 +118,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 					var key keydata
 					err = json.Unmarshal(message, &key)
 					if err == nil {
+						if key.Cols != 0 && key.Rows != 0 {
+							ptystdio.UpdateSize(key.Rows, key.Cols)
+						}
 						ptystdio.File.Write([]byte(key.Data))
 						continue
 					}
