@@ -123,6 +123,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		loc := SelectWord(root.View, cursor)
 		_, s := get_codeview_text_loc(root.View, loc.CurSelection[0], loc.CurSelection[1])
 		menu.code.right_menu_data.select_text = s
+		menu.code.right_menu_data.selection_range = text_loc_to_range(loc.CurSelection)
 		// code.get_selected_lines()
 		// code.rightmenu_select_text = root.Cursor.GetSelection()
 		// code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
