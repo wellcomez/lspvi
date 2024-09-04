@@ -46,6 +46,7 @@
             "program": "${workspaceFolder}/main.go",
             "console": "externalTerminal",
             "args": [
+                "-tty",
                 // "-root",
                 // "/Users/jialaizhu/dev/lspgo",
                 // "/home/z/dev/ray/raychain_go/raychain-sdk-go",

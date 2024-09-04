@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"zen108.com/lspvi/pkg/pty"
+	mainui "zen108.com/lspvi/pkg/ui"
 )
 
 var sss = ptyout{&ptyout_impl{}}
@@ -52,7 +53,6 @@ var upgrader = websocket.Upgrader{
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
-	sss.imp.ws = conn
 	if err != nil {
 		// handle error
 		return
@@ -71,6 +71,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			switch w.Call {
 			case "init":
 				{
+					sss.imp.ws = conn
 					sss.imp._send(sss.imp.unsend)
 				}
 			case "resize":
@@ -85,6 +86,30 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						// ptystdio.File.Write([]byte(key.Data))
 						continue
 					}
+				}
+			case "openfile":
+				{
+					var file mainui.Ws_open_file
+					err = json.Unmarshal(message, &file)
+					if err == nil {
+						name := filepath.Base(file.Filename)
+						dir := filepath.Dir(os.Args[0])
+						dir = filepath.Join(dir, "temp")
+						os.MkdirAll(dir, 0755)
+						x := "__" + name
+						tempfile := filepath.Join(dir, x)
+						err := os.WriteFile(tempfile, file.Buf, 0666)
+						if err != nil {
+							fmt.Println(err)
+						} else {
+							file.Filename = filepath.Join("/temp", x)
+							buf, err := json.Marshal(file)
+							if err == nil {
+								sss.imp.write_ws(buf)
+							}
+						}
+					}
+
 				}
 			case "key":
 				{
@@ -108,6 +133,12 @@ func NewRouter(root string) *mux.Router {
 	// fileServer := http.FileServer(http.Dir(staticDir))
 	// r.Handle("/static/", http.StripPrefix("/static/", fileServer))
 	r.HandleFunc("/node_modules/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		println(path)
+		buf, _ := os.ReadFile(filepath.Join(".", path))
+		w.Write(buf)
+	}).Methods("GET")
+	r.HandleFunc("/temp/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		println(path)
 		buf, _ := os.ReadFile(filepath.Join(".", path))
@@ -188,12 +219,20 @@ func StartServer(root string, port int) {
 	}
 }
 
+type open_file struct {
+	Name string
+	Path string
+}
+type open_files struct {
+	Files []open_file
+}
 type ptyout_impl struct {
 	output string
 	prev   string
 	pty    string
 	ws     *websocket.Conn
 	unsend string
+	files  open_files
 }
 
 func (imp *ptyout_impl) send(s string) {
@@ -202,11 +241,15 @@ func (imp *ptyout_impl) send(s string) {
 	}
 }
 
+func (imp *ptyout_impl) write_ws(s []byte) error {
+	err := imp.ws.WriteMessage(websocket.TextMessage, s)
+	return err
+}
 func (imp *ptyout_impl) _send(s string) bool {
 	fmt.Println("_send", len(s))
 	data := map[string]string{
 		"output": s,
-		"type":   "term",
+		"call":   "term",
 	}
 	buf, err := json.Marshal(data)
 	if imp.ws == nil {
@@ -214,7 +257,7 @@ func (imp *ptyout_impl) _send(s string) bool {
 		return true
 	}
 	if err == nil {
-		imp.ws.WriteMessage(websocket.TextMessage, buf)
+		imp.write_ws(buf)
 		imp.prev = s
 	}
 	return false
@@ -238,6 +281,7 @@ func (p ptyout) Write(s []byte) (n int, err error) {
 
 // main
 func main() {
+	sss.imp.files.Files = []open_file{}
 	wg.Add(1)
 	go func() {
 		ptystdio = pty.Ptymain([]string{"/usr/bin/lspvi", "-tty"})
