@@ -65,7 +65,9 @@
         window.addEventListener("contextmenu", function (e) {
             e.preventDefault();
         })
-        var socket = new WebSocket('ws://localhost:13000/ws');
+        let localhost = window.location.host
+        let port = window.location.port
+        var socket = new WebSocket('ws://' + localhost + '/ws');
         function sendTextData(data) {
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify(data));
