@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
@@ -151,6 +152,13 @@ func menu_copy_path(ret *file_tree_view, hide bool) context_menu_item {
 	}
 	return external_open
 }
+
+type Ws_open_file struct {
+	Call     string `json:"call"`
+	Filename string
+	Buf      []byte
+}
+
 func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 	external_open := context_menu_item{
 		item: create_menu_item("External open "),
@@ -163,9 +171,9 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 				if err != nil {
 					return
 				}
-
+				log.Println("external open tty=", ret.main.tty)
 				if ret.main.tty {
-
+					open_in_web(filename)
 				} else {
 					if !yes {
 						openfile(filename)
@@ -176,6 +184,19 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 		hide: hide,
 	}
 	return external_open
+}
+
+func open_in_web(filename string) {
+	buf, err := os.ReadFile(filename)
+	if err == nil {
+		buf, err = json.Marshal(&Ws_open_file{Filename: filename, Call: "openfile", Buf: buf})
+		if err == nil {
+			SendWsData(buf)
+		}
+	}
+	if err != nil {
+		log.Println("openfile", filename, err)
+	}
 }
 func CheckIfDir(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)

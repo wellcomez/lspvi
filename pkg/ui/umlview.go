@@ -64,6 +64,10 @@ func (v *umlview) openfile(name string) {
 
 	v.preview.Clear()
 	if ext == ".png" {
+		if v.main.tty {
+			open_in_web(name)
+			return
+		}
 		image := tview.NewImage()
 		v.preview.AddItem(image, 0, 1, false)
 		// log.Printf("")
