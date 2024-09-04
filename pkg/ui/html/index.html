@@ -101,7 +101,9 @@
         function is_image(ext) {
             return ["jpg", "png", "gif", "jpeg", "bmp"].includes(ext)
         }
-
+        document.addEventListener("click", function () {
+            document.getElementById("open").style.display = "none"
+        })
         socket.onmessage = function (event) {
             var data = JSON.parse(event.data);
             var { call, output } = data
@@ -114,12 +116,13 @@
                 let ext = getFileExtension(data.Filename)
                 if (is_image(ext)) {
 
-                    document.getElementById("open").innerHTML = "<img src=\"" + data.Filename + "\"/>"
+                    document.getElementById("open").innerHTML = "<img  src=\"" + data.Filename + "\"/>"
                     document.getElementById("open").style.display = "block"
+                    document.getElementById("open").style.width = "80%"
+                    let d = document.getElementById("open")
+                    // d.style.height = "80%"
                     document.getElementById("open").className = "top-div"
-                    document.getElementById("open").addEventListener("click", function () {
-                        document.getElementById("open").style.display = "none"
-                    })
+
                 }
             }
             console.log("Received: ", event.data);

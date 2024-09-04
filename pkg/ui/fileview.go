@@ -173,7 +173,7 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 				}
 				log.Println("external open tty=", ret.main.tty)
 				if ret.main.tty {
-					open_in_web(filename)
+					open_in_web(filename,ret.main.ws)
 				} else {
 					if !yes {
 						openfile(filename)
@@ -186,12 +186,12 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 	return external_open
 }
 
-func open_in_web(filename string) {
+func open_in_web(filename ,ws string) {
 	buf, err := os.ReadFile(filename)
 	if err == nil {
 		buf, err = json.Marshal(&Ws_open_file{Filename: filename, Call: "openfile", Buf: buf})
 		if err == nil {
-			SendWsData(buf)
+			SendWsData(buf,ws)
 		}
 	}
 	if err != nil {

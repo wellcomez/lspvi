@@ -58,6 +58,7 @@ type mainui struct {
 	right_context_menu  *contextmenu
 	_editor_area_layout *editor_area_layout
 	tty                 bool
+	ws                  string
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
@@ -331,7 +332,7 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 		image := []string{".png"}
 		for _, v := range image {
 			if v == ext {
-				open_in_web(file)
+				open_in_web(file,m.ws)
 				return
 			}
 		}
@@ -396,6 +397,7 @@ func (m *mainui) async_open(file string) {
 type Arguments struct {
 	File string
 	Root string
+	Ws   string
 	Tty  bool
 }
 
@@ -502,6 +504,7 @@ func MainUI(arg *Arguments) {
 		bf:       NewBackForward(NewHistory(lspviroot.history)),
 		bookmark: &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}},
 		tty:      arg.Tty,
+		ws:       arg.Ws,
 	}
 	main.bookmark.load()
 	handle.main = &main

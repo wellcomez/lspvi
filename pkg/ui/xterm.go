@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
+
 	// "time"
 
 	"github.com/gorilla/mux"
@@ -73,6 +75,21 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			switch w.Call {
 			case "init":
 				{
+					if ptystdio == nil {
+						newFunction1()
+						var i = 0
+						for {
+							if ptystdio == nil {
+								time.Sleep(time.Millisecond * 10)
+								i++
+								if i > 100 {
+									os.Exit(1)
+								}
+							} else {
+								break
+							}
+						}
+					}
 					sss.imp.ws = conn
 					sss.imp._send(sss.imp.unsend)
 				}
@@ -219,13 +236,15 @@ func NewRouter(root string) *mux.Router {
 	return r
 }
 
+var srv http.Server
+
 func StartServer(root string, port int) {
 	r := NewRouter(root)
 	for i := port; i < 30000; i++ {
 		// fmt.Printf("Server listening on http://localhost:%d\n", i)
 		fmt.Println(i, "Check")
 		x := fmt.Sprintf(":%d", i)
-		srv := http.Server{Addr: x, Handler: r}
+		srv = http.Server{Addr: x, Handler: r}
 		if err := srv.ListenAndServe(); err != nil {
 			continue
 		}
@@ -295,17 +314,23 @@ func (p ptyout) Write(s []byte) (n int, err error) {
 	return len(s), nil
 }
 
+var argnew []string
+
 // main
 func StartWebUI() {
-	argnew := []string{os.Args[0], "-tty"}
+	argnew = []string{os.Args[0], "-tty"}
 	args := os.Args[2:]
 	argnew = append(argnew, args...)
 	sss.imp.files.Files = []open_file{}
 	wg.Add(1)
+	StartServer(filepath.Dir(os.Args[0]), 13000)
+}
+
+func newFunction1() {
 	go func() {
+		argnew = append(argnew, "-ws", srv.Addr)
 		ptystdio = pty.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
 		os.Exit(-1)
 	}()
-	StartServer(filepath.Dir(os.Args[0]), 13000)
 }

@@ -9,6 +9,7 @@ import (
 
 func main() {
 	gui := flag.Bool("gui", false, "guimain")
+	ws := flag.String("ws", "", "guimain")
 	tty := flag.Bool("tty", false, "guimain")
 	root := flag.String("root", "", "root-dir")
 	file := flag.String("file", "", "source file")
@@ -21,6 +22,7 @@ func main() {
 		Root: *root,
 		File: *file,
 		Tty:  *tty,
+		Ws:   *ws,
 	}
 	mainui.MainUI(arg)
 }

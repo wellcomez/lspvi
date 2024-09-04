@@ -8,10 +8,10 @@ import (
 
 var con *websocket.Conn
 
-func SendWsData(t []byte) {
+func SendWsData(t []byte, ws string) {
 	// url := "ws://localhost:8080/ws"
 	if con == nil {
-		url := "ws://localhost:13000/ws"
+		url := "ws://localhost" + ws + "/ws"
 		c, _, err := websocket.DefaultDialer.Dial(url, nil)
 		con = c
 		if err != nil {
