@@ -224,7 +224,9 @@ func StartServer(root string, port int) {
 	for i := port; i < 30000; i++ {
 		// fmt.Printf("Server listening on http://localhost:%d\n", i)
 		fmt.Println(i, "Check")
-		if err := http.ListenAndServe(fmt.Sprintf(":%d", i), r); err != nil {
+		x := fmt.Sprintf(":%d", i)
+		srv := http.Server{Addr: x, Handler: r}
+		if err := srv.ListenAndServe(); err != nil {
 			continue
 		}
 	}
