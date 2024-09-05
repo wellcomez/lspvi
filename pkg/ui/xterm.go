@@ -20,6 +20,7 @@ import (
 	"zen108.com/lspvi/pkg/pty"
 )
 
+var wk *workdir
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
 var ptystdio *pty.Pty = nil
@@ -107,13 +108,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				{
 					var file Ws_open_file
 					err = json.Unmarshal(message, &file)
-					if err == nil {
+					if err == nil && wk != nil {
 						name := filepath.Base(file.Filename)
-						dir := filepath.Dir(os.Args[0])
-						dir = filepath.Join(dir, "temp")
-						os.MkdirAll(dir, 0755)
 						x := "__" + name
-						tempfile := filepath.Join(dir, x)
+						tempfile := filepath.Join(wk.temp, x)
 						err := os.WriteFile(tempfile, file.Buf, 0666)
 						if err != nil {
 							fmt.Println(err)
@@ -150,6 +148,8 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 }
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()
+	ss := new_workdir(root)
+	wk = &ss
 	// staticDir := "./node_modules"
 	// fileServer := http.FileServer(http.Dir(staticDir))
 	// r.Handle("/static/", http.StripPrefix("/static/", fileServer))
@@ -162,7 +162,7 @@ func NewRouter(root string) *mux.Router {
 	r.HandleFunc("/temp/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		// println(path)
-		buf, _ := os.ReadFile(filepath.Join(".", path))
+		buf, _ := os.ReadFile(filepath.Join(wk.root, path))
 		w.Write(buf)
 	}).Methods("GET")
 	r.HandleFunc("/ws", serveWs)

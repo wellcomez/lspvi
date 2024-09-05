@@ -436,6 +436,7 @@ type workdir struct {
 	cmdhistory         string
 	search_cmd_history string
 	export             string
+	temp               string
 	filelist           string
 	bookmark           string
 }
@@ -462,11 +463,13 @@ func new_workdir(root string) workdir {
 		cmdhistory:         filepath.Join(root, "cmdhistory.log"),
 		search_cmd_history: filepath.Join(root, "search_cmd_history.log"),
 		export:             export,
+		temp:               filepath.Join(root, "temp"),
 		uml:                filepath.Join(export, "uml"),
 		filelist:           filepath.Join(root, ".file"),
 	}
 	ensure_dir(root)
 	ensure_dir(export)
+	ensure_dir(wk.temp)
 	ensure_dir(wk.uml)
 	return wk
 }
