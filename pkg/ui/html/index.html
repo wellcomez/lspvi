@@ -4,6 +4,7 @@
 <head>
     <!-- <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" /> -->
     <!-- <link rel="stylesheet" href="node_modules/xterm.css" /> -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
@@ -26,11 +27,17 @@
             height: 400px;
             padding: 20px;
             border: 2px;
-            border-color: aquamarine;
+            border-color: red;
             z-index: 2;
         }
     </style>
     <div id="open" style="display: none;"></div>
+    <div id="app" class="top-div">
+        <div v-if="isVisible">
+            <img :src="imageurl" />
+            {{ message }}
+        </div>
+    </div>
     <div id="terminal"></div>
     <script>
         function appendToTerminal(message) {
@@ -49,7 +56,24 @@
             e.preventDefault();
             e.stopPropagation();
         };
-
+        var app = new Vue({
+            el: '#app',
+            data: {
+                message: 'Hello Vue!',
+                isVisible: false,
+                imageurl: "",
+            },
+            methods: {
+                onhide() {
+                    this.isVisible = false
+                },
+                popimage(image) {
+                    this.isVisible = true
+                    this.showimage = image != undefined
+                    this.imageurl = image
+                }
+            }
+        })
         var term = new Terminal({
             cursorStyle: 'bar',  // 默认为块状光标
             allowTransparency: true,
@@ -105,7 +129,7 @@
             return ["jpg", "png", "gif", "jpeg", "bmp"].includes(ext)
         }
         document.addEventListener("click", function () {
-            document.getElementById("open").style.display = "none"
+            app.onhide()
         })
         socket.binaryType = "blob";
         socket.onmessage = function incoming(evt) {
@@ -133,12 +157,13 @@
                 let ext = getFileExtension(data.Filename)
                 if (is_image(ext)) {
 
-                    document.getElementById("open").innerHTML = "<img  src=\"" + data.Filename + "\"/>"
-                    document.getElementById("open").style.display = "block"
-                    document.getElementById("open").style.width = "80%"
-                    let d = document.getElementById("open")
-                    // d.style.height = "80%"
-                    document.getElementById("open").className = "top-div"
+                    // document.getElementById("open").innerHTML = "<img  src=\"" + data.Filename + "\"/>"
+                    // document.getElementById("open").style.display = "block"
+                    // document.getElementById("open").style.width = "80%"
+                    // let d = document.getElementById("open")
+                    // // d.style.height = "80%"
+                    // document.getElementById("open").className = "top-div"
+                    app.popimage(data.Filename)
 
                 }
             }
@@ -195,7 +220,7 @@
                     return scrollbarWidth
                 }
                 resize = () => {
-                    this._terminal.element.style.height = (window.innerHeight-50) + "px"
+                    this._terminal.element.style.height = (window.innerHeight - 50) + "px"
                     this._terminal.element.style.width = window.innerWidth + "px"
                     let dims = this.check()
                     // console.log("col-row", ss)
