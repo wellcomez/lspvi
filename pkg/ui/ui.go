@@ -55,7 +55,7 @@ type mainui struct {
 	searchcontext       *GenericSearch
 	statusbar           *tview.TextView
 	layout              *rootlayout
-	console_index_list  *customlist
+	console_index_list  *qf_index_view
 	right_context_menu  *contextmenu
 	_editor_area_layout *editor_area_layout
 	tty                 bool
@@ -563,10 +563,8 @@ func MainUI(arg *Arguments) {
 	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
 	console.AddPage(main.bk.Name, main.bk, true, false)
 
-	list := new_customlist(false)
-	list.SetBorder(true)
-	main.console_index_list = list
-	console_layout := tview.NewFlex().AddItem(console, 0, 10, false).AddItem(list, 0, 2, false)
+	main.console_index_list = new_qf_index_view(&main)
+	console_layout := tview.NewFlex().AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
 	main.reload_index_list()
 
 	main.page = console
@@ -765,21 +763,7 @@ func MainUI(arg *Arguments) {
 }
 
 func (main *mainui) reload_index_list() {
-	var list *customlist = main.console_index_list
-	cur := list.GetCurrentItem()
-	list.Clear()
-	keys, keymaplist := load_qf_history(main)
-	n := len(keymaplist)
-	for i := range keymaplist {
-		ind := n - i - 1
-		value := keymaplist[ind]
-		list.AddItem(value, "", func() {
-			open_in_tabview(keys, ind, main)
-		})
-	}
-	if cur >= 0 && cur < n {
-		list.SetCurrentItem(cur)
-	}
+	main.console_index_list.Load()
 }
 
 func (main *mainui) Close() {
@@ -985,6 +969,14 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			v.cmd.handle()
 			return nil
 		}
+	}
+	if main.console_index_list.HasFocus() {
+		if event.Rune() == 'd' {
+			main.console_index_list.Delete(main.console_index_list.GetCurrentItem())
+			return nil
+		}
+		main.console_index_list.InputHandler()(event, nil)
+		return nil
 	}
 	shouldReturn, returnValue := main.cmdline.Vim.VimKeyModelMethod(event)
 	if shouldReturn {

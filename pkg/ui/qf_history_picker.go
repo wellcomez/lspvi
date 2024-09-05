@@ -108,15 +108,22 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	return ret
 }
 
+type ByAge []qf_history_data
+
+func (a ByAge) Len() int      { return len(a) }
+func (a ByAge) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByAge) Less(i, j int) bool {
+
+	if a[i].Date == a[j].Date {
+		return a[i].Key.Key < a[j].Key.Key
+	}
+	return a[i].Date > a[j].Date
+}
+
 func load_qf_history(main *mainui) ([]qf_history_data, []string) {
 	hh := quickfix_history{Wk: main.lspmgr.Wk}
 	keys, _ := hh.Load()
-	sort.Slice(keys, func(i, j int) bool {
-		if keys[i].Date == keys[j].Date {
-			return keys[i].Key.Key > keys[j].Key.Key
-		}
-		return keys[i].Date < keys[j].Date
-	})
+	sort.Sort(ByAge(keys))
 	keymaplist := []string{}
 	root := main.root
 	for _, v := range keys {

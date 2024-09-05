@@ -71,6 +71,7 @@ type qf_history_data struct {
 	Key    lspcore.SymolSearchKey
 	Result search_reference_result
 	Date   int64
+	UID    string
 }
 
 func save_qf_uirefresh(main *mainui, data qf_history_data) error {
@@ -78,7 +79,7 @@ func save_qf_uirefresh(main *mainui, data qf_history_data) error {
 	if err != nil {
 		return err
 	}
-	err = h.save_history(main.root, data)
+	err = h.save_history(main.root, data, true)
 	if err == nil {
 		main.console_index_list.SetCurrentItem(0)
 	}
@@ -93,26 +94,37 @@ func (h *qf_history_data) ListItem() string {
 func (qk quick_view) save() error {
 	date := time.Now().Unix()
 	save_qf_uirefresh(qk.main,
-		qf_history_data{qk.Type, qk.searchkey, qk.Refs, date})
+		qf_history_data{qk.Type, qk.searchkey, qk.Refs, date, ""})
 	return nil
 }
 
 func (qf *quickfix_history) save_history(
 	root string,
-	data qf_history_data,
+	data qf_history_data, add bool,
 ) error {
-
+	dir := qf.qfdir
+	uid := ""
+	if add {
+		uid = search_key_uid(data.Key)
+		uid = strings.ReplaceAll(uid, root, "")
+		hexbuf := md5.Sum([]byte(uid))
+		uid = hex.EncodeToString(hexbuf[:])
+		data.UID = uid
+	} else {
+		uid = data.UID
+	}
+	filename := filepath.Join(dir, uid+".json")
+	if !add {
+		if len(data.UID) != 0 {
+			return os.Remove(filename)
+		} else {
+			return fmt.Errorf("uid is empty")
+		}
+	}
 	buf, error := json.Marshal(data)
 	if error != nil {
 		return error
 	}
-
-	uid := search_key_uid(data.Key)
-	uid = strings.ReplaceAll(uid, root, "")
-	hexbuf := md5.Sum([]byte(uid))
-	uid = hex.EncodeToString(hexbuf[:])
-	dir := qf.qfdir
-	filename := filepath.Join(dir, uid+".json")
 	os.WriteFile(qf.last, buf, 0666)
 	return os.WriteFile(filename, buf, 0666)
 }
@@ -613,4 +625,54 @@ func new_qf_history(main *mainui) (*quickfix_history, error) {
 		return nil, err
 	}
 	return qf, nil
+}
+
+type qf_index_view struct {
+	*customlist
+	keys       []qf_history_data
+	keymaplist []string
+	main       *mainui
+}
+
+func (view *qf_index_view) Delete(index int) {
+	view.List.RemoveItem(index)
+	view.Add(view.keys[index], false)
+}
+func (view *qf_index_view) Load() {
+	list := view
+	cur := list.GetCurrentItem()
+	main := view.main
+	list.Clear()
+	keys, keymaplist := load_qf_history(main)
+	n := len(keymaplist)
+	for i := range keymaplist {
+		ind := i
+		value := keymaplist[ind]
+		list.AddItem(value, "", func() {
+			open_in_tabview(keys, ind, main)
+		})
+	}
+	if cur >= 0 && cur < n {
+		list.SetCurrentItem(cur)
+	}
+	view.keys = keys
+	view.keymaplist = keymaplist
+}
+func (view *qf_index_view) Add(data qf_history_data, add bool) error {
+	main := view.main
+	h, err := new_qf_history(main)
+	if err != nil {
+		return err
+	}
+	err = h.save_history(main.root, data, add)
+	main.console_index_list.SetCurrentItem(0)
+	view.Load()
+	return err
+}
+func new_qf_index_view(main *mainui) *qf_index_view {
+	ret := &qf_index_view{
+		customlist: new_customlist(false),
+		main:       main}
+	ret.customlist.SetBorder(true)
+	return ret
 }
