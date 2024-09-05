@@ -236,8 +236,12 @@ type ptyout_data struct {
 	Output []byte
 }
 
+var count = 0
+
 func (imp *ptyout_impl) _send(s []byte) bool {
-	// fmt.Println("_send", len(s))
+	fmt.Println("_send", len(s))
+	// printf("\033[5;10HHello, World!\n"); // 将光标移动到第5行第10列，然后打印 "Hello, World!"
+	// newFunction2(s)
 	data := ptyout_data{
 		Output: s,
 		Call:   "term",
@@ -252,6 +256,70 @@ func (imp *ptyout_impl) _send(s []byte) bool {
 		imp.prev = append(imp.prev, s...)
 	}
 	return false
+}
+
+func newFunction2(s []byte) {
+	for i, v := range s {
+		count++
+		name := ""
+		switch v {
+		case 0xC:
+			name = "newpage"
+		case 0xD:
+			name = "Enter"
+		case 0xA:
+			{
+				name = "LF"
+			}
+
+		case 033:
+			{
+				var line, col string
+				var err string
+				var afterline = false
+				for i, v := range s[i+1:] {
+					err = string(v)
+					if i == 0 {
+						if v != '[' {
+							break
+						}
+						continue
+					}
+					if !afterline {
+						if v >= '0' && v <= '0' {
+							line += string(v)
+							continue
+						}
+						if v == ';' {
+							afterline = true
+						} else {
+							break
+						}
+					} else {
+						if v >= '0' && v <= '0' {
+							col += string(v)
+						} else {
+							break
+						}
+					}
+				}
+				println("tttt", err, line, col)
+
+			}
+		case 0x1A:
+			{
+				name = "LF"
+			}
+		default:
+			continue
+			if v > 0x80 {
+				name = fmt.Sprintf("0x%0x", v)
+			} else {
+				continue
+			}
+		}
+		println(i, count, name, len(s))
+	}
 }
 
 type ptyout struct {
