@@ -301,7 +301,11 @@ var argnew []string
 func StartWebUI(cb func(int, string)) {
 	start_process = cb
 	argnew = []string{os.Args[0], "-tty"}
-	args := os.Args[2:]
+
+	args := []string{}
+	if len(os.Args) > 2 {
+		args = os.Args[2:]
+	}
 	argnew = append(argnew, args...)
 	sss.imp.files.Files = []open_file{}
 	wg.Add(1)
