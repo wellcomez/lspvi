@@ -319,7 +319,7 @@ func new_quikview(main *mainui) *quick_view {
 		menuitem:  items,
 		// menu:      new_contextmenu(main, items,view.Box),
 	}
-	
+
 	// ret.Flex = layout
 	ret.right_context.qk = ret
 	// view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -564,9 +564,12 @@ func (caller ref_with_caller) ListItem(root string) string {
 		return ""
 	}
 	lines := strings.Split(string(data), "\n")
-	line := lines[v.Range.Start.Line]
-	if len(line) == 0 {
-		return ""
+	line := ""
+	if len(lines) > v.Range.Start.Line {
+		line = lines[v.Range.Start.Line]
+		if len(line) == 0 {
+			return ""
+		}
 	}
 	gap := max(40, caller.width/2)
 	begin := max(0, v.Range.Start.Character-gap)

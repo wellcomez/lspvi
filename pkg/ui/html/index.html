@@ -12,6 +12,7 @@
     <!-- <script src="node_modules/@xterm/addon-fit/lib/addon-fit.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-image@0.5.0/lib/xterm-addon-image.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/msgpack5@6.0.2/dist/msgpack5.min.js"></script>
     <!-- <script src="node_modules/@xterm/xterm/lib/xterm.js"></script> -->
 </head>
 
@@ -104,13 +105,27 @@
         document.addEventListener("click", function () {
             document.getElementById("open").style.display = "none"
         })
-        socket.onmessage = function (event) {
-            var data = JSON.parse(event.data);
-            var { call, output } = data
-            if (call == "term") {
-                term.write(output)
+        socket.binaryType = "blob";
+        socket.onmessage = function incoming(evt) {
+            try {
+                var reader = new FileReader();
+                reader.readAsArrayBuffer(evt.data);
+                reader.addEventListener("loadend", function (e) {
+                    const buffer = new Uint16Array(e.target.result);  // arraybuffer object
+                    const message = msgpack5().decode(buffer);
+                    handleMessage(message)
+                });
+            } catch (error) {
+                console.error('Failed to decode data:', error);
             }
-            else if (call == "openfile") {
+        };
+        function handleMessage(data) {
+            // 处理解码后的数据
+            var { Call, Output } = data
+            if (Call == "term") {
+                term.write(Output)
+            }
+            else if (Call == "openfile") {
                 console.log("openfile",
                     data.Filename)
                 let ext = getFileExtension(data.Filename)
@@ -126,7 +141,7 @@
                 }
             }
             console.log("Received: ", event.data);
-        };
+        }
         socket.onclose = function (event) {
             console.log("Connection closed");
         };
