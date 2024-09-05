@@ -161,7 +161,7 @@ func NewRouter(root string) *mux.Router {
 	}).Methods("GET")
 	r.HandleFunc("/temp/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		println(path)
+		// println(path)
 		buf, _ := os.ReadFile(filepath.Join(".", path))
 		w.Write(buf)
 	}).Methods("GET")
@@ -237,8 +237,7 @@ type ptyout_data struct {
 }
 
 func (imp *ptyout_impl) _send(s []byte) bool {
-	fmt.Println("_send", len(s))
-
+	// fmt.Println("_send", len(s))
 	data := ptyout_data{
 		Output: s,
 		Call:   "term",
