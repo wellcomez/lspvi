@@ -41,6 +41,76 @@
     <script>
         let rows = 50
         let cols = 80
+        const MINIMUM_COLS = 2;
+        const MINIMUM_ROWS = 1;
+        class fullscreen_check {
+            constructor(term) {
+                this._terminal = term
+                // fit.call(this)
+            }
+            dims = () => {
+                if (!this._terminal) {
+                    return undefined;
+                }
+
+                if (!this._terminal.element || !this._terminal.element.parentElement) {
+                    return undefined;
+                }
+
+                // TODO: Remove reliance on private API
+                const core = this._terminal._core;
+                const dims = core._renderService.dimensions;
+
+                if (dims.css.cell.width === 0 || dims.css.cell.height === 0) {
+                    return undefined;
+                }
+                return dims
+
+            }
+            scrollbarWidth = () => {
+                const scrollbarWidth = (this._terminal.options.scrollback === 0
+                    ? 0
+                    : (this._terminal.options.overviewRuler?.width || 1));
+                return scrollbarWidth
+            }
+            resize = (call) => {
+                this._terminal.element.style.height = (window.innerHeight - 50) + "px"
+                this._terminal.element.style.width = window.innerWidth + "px"
+                let dims = this.check()
+                // console.log("col-row", ss)
+                if (dims != undefined) {
+                    this._terminal.resize(dims.cols, dims.rows);
+                    if (call)
+                        resizecall()
+                }
+            }
+            check = () => {
+                const dims = this.dims()
+                const scrollbarWidth = this.scrollbarWidth()
+                const parentElementStyle = window.getComputedStyle(this._terminal.element.parentElement);
+                const parentElementHeight = parseInt(parentElementStyle.getPropertyValue('height'));
+                const parentElementWidth = Math.max(0, parseInt(parentElementStyle.getPropertyValue('width')));
+                const elementStyle = window.getComputedStyle(this._terminal.element);
+                const elementPadding = {
+                    top: parseInt(elementStyle.getPropertyValue('padding-top')),
+                    bottom: parseInt(elementStyle.getPropertyValue('padding-bottom')),
+                    right: parseInt(elementStyle.getPropertyValue('padding-right')),
+                    left: parseInt(elementStyle.getPropertyValue('padding-left'))
+                };
+                const elementPaddingVer = elementPadding.top + elementPadding.bottom;
+                const elementPaddingHor = elementPadding.right + elementPadding.left;
+                const availableHeight = parentElementHeight - elementPaddingVer;
+                const availableWidth = parentElementWidth - elementPaddingHor - scrollbarWidth;
+                return this.fit(availableWidth, availableHeight, dims)
+            }
+            fit = (availableWidth, availableHeight, dims) => {
+                const geometry = {
+                    cols: Math.max(MINIMUM_COLS, Math.floor(availableWidth / dims.css.cell.width)),
+                    rows: Math.max(MINIMUM_ROWS, Math.floor(availableHeight / dims.css.cell.height))
+                };
+                return geometry;
+            }
+        }
         document.onkeydown = function (e) {
             e = e || window.event;//Get event
 
@@ -80,6 +150,29 @@
             MouseEvent: true,
             // minimumContrastRatio: 1,
         });
+        var wl = new WebglAddon.WebglAddon()
+        term.loadAddon(wl)
+        var fit = new FitAddon.FitAddon()
+        term.loadAddon(fit);
+
+        // const imageAddon = new ImageAddon.ImageAddon(customSettings);
+        // terminal.loadAddon(imageAddon);
+        term.onData(function (data) {
+            let call = "key"
+            let rows = term.rows, cols = term.cols
+
+            sendTextData({ call, data, rows, cols })
+            // console.log(data)
+        })
+        old = ""
+        term.open(document.getElementById('terminal'));
+        
+        let f = new fullscreen_check(term)
+        f.resize(false)
+        
+        fit.fit()
+
+
         window.addEventListener("contextmenu", function (e) {
             e.preventDefault();
         })
@@ -105,7 +198,6 @@
             let rows = term.rows, cols = term.cols
             let host = window.location.host
             sendTextData({ call, cols, rows, host })
-
         };
 
 
@@ -165,100 +257,16 @@
         socket.onclose = function (event) {
             console.log("Connection closed");
         };
-        var wl = new WebglAddon.WebglAddon()
-        term.loadAddon(wl)
-        var fit = new FitAddon.FitAddon()
-        term.loadAddon(fit);
 
-        // const imageAddon = new ImageAddon.ImageAddon(customSettings);
-        // terminal.loadAddon(imageAddon);
-        term.onData(function (data) {
-            let call = "key"
-            let rows = term.rows, cols = term.cols
-
-            sendTextData({ call, data, rows, cols })
-            // console.log(data)
-        })
         window.addEventListener('resize', function (evt) {
-            const MINIMUM_COLS = 2;
-            const MINIMUM_ROWS = 1;
-            class fit {
-                constructor(term) {
-                    this._terminal = term
-                    // fit.call(this)
-                }
-                dims = () => {
-                    if (!this._terminal) {
-                        return undefined;
-                    }
-
-                    if (!this._terminal.element || !this._terminal.element.parentElement) {
-                        return undefined;
-                    }
-
-                    // TODO: Remove reliance on private API
-                    const core = this._terminal._core;
-                    const dims = core._renderService.dimensions;
-
-                    if (dims.css.cell.width === 0 || dims.css.cell.height === 0) {
-                        return undefined;
-                    }
-                    return dims
-
-                }
-                scrollbarWidth = () => {
-                    const scrollbarWidth = (this._terminal.options.scrollback === 0
-                        ? 0
-                        : (this._terminal.options.overviewRuler?.width || 1));
-                    return scrollbarWidth
-                }
-                resize = () => {
-                    this._terminal.element.style.height = (window.innerHeight - 50) + "px"
-                    this._terminal.element.style.width = window.innerWidth + "px"
-                    let dims = this.check()
-                    // console.log("col-row", ss)
-                    if (dims != undefined) {
-                        this._terminal.resize(dims.cols, dims.rows);
-                        resizecall()
-                    }
-                }
-                check = () => {
-                    const dims = this.dims()
-                    const scrollbarWidth = this.scrollbarWidth()
-                    const parentElementStyle = window.getComputedStyle(this._terminal.element.parentElement);
-                    const parentElementHeight = parseInt(parentElementStyle.getPropertyValue('height'));
-                    const parentElementWidth = Math.max(0, parseInt(parentElementStyle.getPropertyValue('width')));
-                    const elementStyle = window.getComputedStyle(this._terminal.element);
-                    const elementPadding = {
-                        top: parseInt(elementStyle.getPropertyValue('padding-top')),
-                        bottom: parseInt(elementStyle.getPropertyValue('padding-bottom')),
-                        right: parseInt(elementStyle.getPropertyValue('padding-right')),
-                        left: parseInt(elementStyle.getPropertyValue('padding-left'))
-                    };
-                    const elementPaddingVer = elementPadding.top + elementPadding.bottom;
-                    const elementPaddingHor = elementPadding.right + elementPadding.left;
-                    const availableHeight = parentElementHeight - elementPaddingVer;
-                    const availableWidth = parentElementWidth - elementPaddingHor - scrollbarWidth;
-                    return this.fit(availableWidth, availableHeight, dims)
-                }
-                fit = (availableWidth, availableHeight, dims) => {
-                    const geometry = {
-                        cols: Math.max(MINIMUM_COLS, Math.floor(availableWidth / dims.css.cell.width)),
-                        rows: Math.max(MINIMUM_ROWS, Math.floor(availableHeight / dims.css.cell.height))
-                    };
-                    return geometry;
-                }
-            }
-            let f = new fit(term)
+            let f = new fullscreen_check(term)
             f.resize()
         })
         term.onResize((size) => {
             console.log("event resize", size)
             resizecall()
         })
-        old = ""
-        term.open(document.getElementById('terminal'));
-        fit.fit()
+
     </script>
 </body>
 
