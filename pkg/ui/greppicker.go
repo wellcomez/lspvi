@@ -143,6 +143,11 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 	if o == nil {
 		if grepx.not_live {
 			grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
+			grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
+				o := grepx.impl.result.data[dataindex]
+				grepx.main.OpenFile(o.fpath, nil)
+				grepx.parent.hide()
+			}
 		}
 		return
 	}
