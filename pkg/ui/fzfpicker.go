@@ -118,7 +118,7 @@ func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
 	v.create_dialog_content(x, sym)
 	sym.load(ranges)
 }
-func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool,ref_with_caller) bool) {
+func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bool) {
 	sym := new_grep_picker(v)
 	sym.parent.Visible = qf == nil
 	sym.qf = qf
@@ -189,23 +189,9 @@ func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		v.Visible = false
 		return nil
 	}
-	if event.Key() == tcell.KeyEnter {
-		v.currentpicker.handle()(event, nil)
-		// if v.symbolwalk != nil {
-		// 	handle := v.symbol.view.InputHandler()
-		// 	handle(event, nil)
-		// }
-		// if v.filewalk != nil {
-		// 	handle := v.list.InputHandler()
-		// 	handle(event, nil)
-		// }
-		return nil
-	}
-	if event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
-		// if v.filewalk != nil {
-		// 	handle := v.list.InputHandler()
-		// 	handle(event, nil)
-		// }
+	key := event.Key()
+	switch key {
+	case tcell.KeyEnter, tcell.KeyCtrlS, tcell.KeyDown, tcell.KeyUp:
 		v.currentpicker.handle()(event, nil)
 		return nil
 	}

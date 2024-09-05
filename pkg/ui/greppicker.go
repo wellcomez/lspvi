@@ -3,10 +3,12 @@ package mainui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type grepresult struct {
@@ -16,6 +18,7 @@ type grep_impl struct {
 	result        *grepresult
 	grep          *gorep
 	taskid        int
+	key           string
 	fzf_on_result *fzf_on_listview
 }
 type livewgreppicker struct {
@@ -53,12 +56,14 @@ func (g *greppicker) UpdateQuery(query string) {
 func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		focused := g.grep_list_view.HasFocus()
-		if event.Key() == tcell.KeyEnter && !focused {
+		var key = event.Key()
+		if key == tcell.KeyEnter && !focused {
 			g.impl.fzf_on_result = nil
 			g.parent.input.SetText(">")
 			g.livewgreppicker.UpdateQuery(g.query)
+		} else if key == tcell.KeyCtrlS {
+			g.Save()
 		} else {
-			var key = event.Key()
 			if key == tcell.KeyDown || key == tcell.KeyUp {
 				g.grep_list_view.List.Focus(nil)
 			}
@@ -181,22 +186,41 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			grepx.main.app.ForceDraw()
 		})
 	} else {
-		start := lsp.Position{Line: o.lineNumber - 1, Character: 0}
-		end := start
-		ref := ref_with_caller{
-			Loc: lsp.Location{
-				URI: lsp.NewDocumentURI(o.fpath),
-				Range: lsp.Range{
-					Start: start,
-					End:   end,
-				},
-			},
-		}
+		ref := o.to_ref_caller()
 		if !grepx.qf(false, ref) {
 			grep.grep.abort()
 		}
 	}
 
+}
+
+func (o *grep_output) to_ref_caller() ref_with_caller {
+	start := lsp.Position{Line: o.lineNumber - 1, Character: 0}
+	end := start
+	ref := ref_with_caller{
+		Loc: lsp.Location{
+			URI: lsp.NewDocumentURI(o.fpath),
+			Range: lsp.Range{
+				Start: start,
+				End:   end,
+			},
+		},
+	}
+	return ref
+}
+
+func (pk livewgreppicker) Save() {
+	Result := search_reference_result{}
+	data := qf_history_data{Type: data_grep_word,
+		Key:  lspcore.SymolSearchKey{Key: pk.impl.key},
+		Date: time.Now().Unix(),
+	}
+	for _, v := range pk.impl.result.data {
+		Result.Refs = append(Result.Refs, v.to_ref_caller())
+	}
+	data.Result = Result
+	main := pk.main
+	save_qf_uirefresh(main, data)
 }
 
 func (pk livewgreppicker) UpdateQuery(query string) {
@@ -212,6 +236,7 @@ func (pk livewgreppicker) __updatequery(query string) {
 		g:         true,
 	}
 	pk.impl.taskid++
+	pk.impl.key = query
 	pk.grep_list_view.Key = query
 	pk.grep_list_view.Clear()
 	g, err := newGorep(pk.impl.taskid, query, &opt)

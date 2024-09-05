@@ -73,23 +73,28 @@ type qf_history_data struct {
 	Date   int64
 }
 
+func save_qf_uirefresh(main *mainui, data qf_history_data) error {
+	h, err := new_qf_history(main)
+	if err != nil {
+		return err
+	}
+	err = h.save_history(main.root, data)
+	if err == nil {
+		main.console_index_list.SetCurrentItem(0)
+	}
+	main.reload_index_list()
+	return err
+}
 func (h *qf_history_data) ListItem() string {
 
 	return ""
 }
 
 func (qk quick_view) save() error {
-	h, err := new_qf_history(qk.main)
-	if err != nil {
-		return err
-	}
 	date := time.Now().Unix()
-	err = h.save_history(qk.main.root, qf_history_data{qk.Type, qk.searchkey, qk.Refs, date})
-	if err == nil {
-		qk.main.console_index_list.SetCurrentItem(0)
-	}
-	qk.main.reload_index_list()
-	return err
+	save_qf_uirefresh(qk.main,
+		qf_history_data{qk.Type, qk.searchkey, qk.Refs, date})
+	return nil
 }
 
 func (qf *quickfix_history) save_history(
