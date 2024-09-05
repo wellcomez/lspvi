@@ -19,11 +19,11 @@ type grep_impl struct {
 }
 type livewgreppicker struct {
 	*prev_picker_impl
-	list       *customlist
-	main       *mainui
-	impl       *grep_impl
-	qf         func(ref_with_caller) bool
-	filesearch bool
+	grep_list_view *customlist
+	main           *mainui
+	impl           *grep_impl
+	qf             func(ref_with_caller) bool
+	filesearch     bool
 }
 
 // name implements picker.
@@ -34,17 +34,14 @@ func (pk *livewgreppicker) name() string {
 // greppicker
 type greppicker struct {
 	*livewgreppicker
-	query string
+	query         string
+	fzf_on_result *fzf_on_listview
 }
 
 // UpdateQuery implements picker.
 // Subtle: this method shadows the method (*livewgreppicker).UpdateQuery of greppicker.livewgreppicker.
 func (g *greppicker) UpdateQuery(query string) {
 	g.query = query
-	// if g.hasenter {
-	// 	g.hasenter = false
-	// 	g.livewgreppicker.UpdateQuery(query)
-	// }
 }
 
 // handle implements picker.
@@ -63,7 +60,7 @@ func (g *greppicker) name() string {
 }
 
 func (pk livewgreppicker) update_preview() {
-	cur := pk.list.GetCurrentItem()
+	cur := pk.grep_list_view.GetCurrentItem()
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
 		pk.codeprev.Load(item.fpath)
@@ -72,7 +69,7 @@ func (pk livewgreppicker) update_preview() {
 }
 
 func (pk livewgreppicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	handle := pk.list.InputHandler()
+	handle := pk.grep_list_view.InputHandler()
 	handle(event, setFocus)
 	pk.update_preview()
 	pk.update_title()
@@ -102,17 +99,17 @@ func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 	x := new_preview_picker(v)
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
-		list:             new_customlist(false),
+		grep_list_view:   new_customlist(false),
 		main:             main,
 		impl:             &grep_impl{},
 		filesearch:       false,
 	}
-	x.use_cusutom_list(grep.list)
+	x.use_cusutom_list(grep.grep_list_view)
 	v.Visible = true
 	return grep
 }
 func (grepx *livewgreppicker) update_title() {
-	s := fmt.Sprintf("Grep %s %d/%d", grepx.list.Key, grepx.list.GetCurrentItem(), len(grepx.impl.result.data))
+	s := fmt.Sprintf("Grep %s %d/%d", grepx.grep_list_view.Key, grepx.grep_list_view.GetCurrentItem(), len(grepx.impl.result.data))
 	grepx.parent.Frame.SetTitle(s)
 }
 
@@ -137,7 +134,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			grep.result.data = append(grep.result.data, *o)
 			path := strings.TrimPrefix(o.fpath, grepx.main.root)
 			data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
-			grepx.list.AddItem(data, "", func() {
+			grepx.grep_list_view.AddItem(data, "", func() {
 				grepx.main.OpenFile(o.fpath, nil)
 				grepx.parent.hide()
 			})
@@ -171,13 +168,16 @@ func (pk livewgreppicker) UpdateQuery(query string) {
 	pk.__updatequery(query)
 }
 func (pk livewgreppicker) __updatequery(query string) {
+	if len(query) == 0 {
+		return
+	}
 	opt := optionSet{
 		grep_only: true,
 		g:         true,
 	}
 	pk.impl.taskid++
-	pk.list.Key = query
-	pk.list.Clear()
+	pk.grep_list_view.Key = query
+	pk.grep_list_view.Clear()
 	g, err := newGorep(pk.impl.taskid, query, &opt)
 	if err != nil {
 		return
