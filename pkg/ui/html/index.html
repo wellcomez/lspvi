@@ -85,7 +85,9 @@
         socket.onopen = function (event) {
             console.log("Connection opened");
             call = "init"
-            sendTextData({ call })
+            let rows = term.rows, cols = term.cols
+            let host=window.location.host
+            sendTextData({ call,cols,rows,host })
 
         };
 
@@ -111,7 +113,7 @@
                 var reader = new FileReader();
                 reader.readAsArrayBuffer(evt.data);
                 reader.addEventListener("loadend", function (e) {
-                    const buffer = new Uint16Array(e.target.result);  // arraybuffer object
+                    const buffer = new Uint8Array(e.target.result);  // arraybuffer object
                     const message = msgpack5().decode(buffer);
                     handleMessage(message)
                 });

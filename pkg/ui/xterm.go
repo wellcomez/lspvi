@@ -22,22 +22,13 @@ import (
 
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
-var need = true
 var ptystdio *pty.Pty = nil
 
-type wsize struct {
-	Width  uint16 `json:"width"`
-	Height uint16 `json:"height"`
-}
-type base_type interface{}
-type keycode struct {
-	Key string `json:"key"`
-}
-type wsbase struct {
-	Call string `json:"call"`
-}
 type init_call struct {
 	Call string `json:"call"`
+	Cols uint16 `json:"cols"`
+	Rows uint16 `json:"rows"`
+	Host string `json:"host"`
 }
 type keydata struct {
 	Call string `json:"call"`
@@ -77,7 +68,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			case "init":
 				{
 					if ptystdio == nil {
-						newFunction1()
+						newFunction1(w.Host)
 						var i = 0
 						for {
 							if ptystdio == nil {
@@ -90,6 +81,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 								break
 							}
 						}
+					} else {
+						ptystdio.File.Write([]byte("j"))
+					}
+					if w.Cols != 0 && w.Rows != 0 {
+						ptystdio.UpdateSize(w.Rows, w.Cols)
 					}
 					sss.imp.ws = conn
 					sss.imp._send(sss.imp.unsend)
@@ -122,8 +118,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						if err != nil {
 							fmt.Println(err)
 						} else {
-							file.Filename = filepath.Join("/temp", x)
-							buf, err := msgpack.Marshal(file)
+							buf, err := msgpack.Marshal(Ws_open_file{
+								Filename: filepath.Join("/temp", x),
+								Call:     "openfile",
+							})
 							if err == nil {
 								sss.imp.write_ws(buf)
 							}
@@ -288,9 +286,9 @@ func StartWebUI() {
 	StartServer(filepath.Dir(os.Args[0]), 13000)
 }
 
-func newFunction1() {
+func newFunction1(host string) {
 	go func() {
-		argnew = append(argnew, "-ws", srv.Addr)
+		argnew = append(argnew, "-ws", host)
 		ptystdio = pty.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
 		os.Exit(-1)
