@@ -321,11 +321,11 @@ func qf_grep_word(main *mainui, rightmenu_select_text string) {
 	}
 	main.ActiveTab(view_quickview, false)
 	main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)
-	main.open_picker_grep(key.Key, func(s ref_with_caller) bool {
+	main.open_picker_grep(key.Key, func(end bool, s ref_with_caller) bool {
 		var ret = rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
 		if ret {
 			main.app.QueueUpdateDraw(func() {
-				main.quickview.AddResult(data_grep_word, s, key)
+				main.quickview.AddResult(end,data_grep_word, s, key)
 			})
 		}
 		return true
@@ -855,7 +855,7 @@ func (code *CodeView) action_grep_word(selected bool) {
 	if !selected {
 		main.open_picker_grep("", nil)
 		return
-	} 
+	}
 	code.view.Cursor.SelectWord()
 	word := code.view.Cursor.GetSelection()
 	main.open_picker_grep(word, nil)

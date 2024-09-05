@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/reinhrst/fzf-lib"
@@ -69,6 +70,7 @@ type qf_history_data struct {
 	Type   DateType
 	Key    lspcore.SymolSearchKey
 	Result search_reference_result
+	Date   int64
 }
 
 func (h *qf_history_data) ListItem() string {
@@ -81,7 +83,13 @@ func (qk quick_view) save() error {
 	if err != nil {
 		return err
 	}
-	return h.save_history(qk.main.root, qf_history_data{qk.Type, qk.searchkey, qk.Refs})
+	date := time.Now().Unix()
+	err = h.save_history(qk.main.root, qf_history_data{qk.Type, qk.searchkey, qk.Refs, date})
+	if err == nil {
+		qk.main.console_index_list.SetCurrentItem(0)
+	}
+	qk.main.reload_index_list()
+	return err
 }
 
 func (qf *quickfix_history) save_history(
@@ -512,12 +520,15 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	qk.UpdateListView(t, Refs, key)
 	qk.save()
 }
-func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.SymolSearchKey) {
+func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, key lspcore.SymolSearchKey) {
 	if key.Key != qk.searchkey.Key {
 		qk.view.Clear()
 		qk.cmd_search_key = ""
 	}
-
+	if end {
+		qk.save()
+		return
+	}
 	qk.Type = t
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
 	qk.searchkey = key
@@ -529,6 +540,7 @@ func (qk *quick_view) AddResult(t DateType, caller ref_with_caller, key lspcore.
 	}
 	qk.view.AddItem(fmt.Sprintf("%-3d %s", qk.view.GetItemCount()+1, secondline), "", nil)
 	qk.main.UpdatePageTitle()
+
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {

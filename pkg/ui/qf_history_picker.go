@@ -6,7 +6,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+
 	// "time"
 
 	"github.com/gdamore/tcell/v2"
@@ -109,6 +111,12 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 func load_qf_history(main *mainui) ([]qf_history_data, []string) {
 	hh := quickfix_history{Wk: main.lspmgr.Wk}
 	keys, _ := hh.Load()
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].Date == keys[j].Date {
+			return keys[i].Key.Key > keys[j].Key.Key
+		}
+		return keys[i].Date < keys[j].Date
+	})
 	keymaplist := []string{}
 	root := main.root
 	for _, v := range keys {

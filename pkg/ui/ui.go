@@ -55,6 +55,7 @@ type mainui struct {
 	searchcontext       *GenericSearch
 	statusbar           *tview.TextView
 	layout              *rootlayout
+	console_index_list  *customlist
 	right_context_menu  *contextmenu
 	_editor_area_layout *editor_area_layout
 	tty                 bool
@@ -564,14 +565,9 @@ func MainUI(arg *Arguments) {
 
 	list := new_customlist(false)
 	list.SetBorder(true)
+	main.console_index_list = list
 	console_layout := tview.NewFlex().AddItem(console, 0, 10, false).AddItem(list, 0, 2, false)
-	keys, keymaplist := load_qf_history(&main)
-	for i, value := range keymaplist {
-		index := i
-		list.AddItem(value, "", func() {
-			open_in_tabview(keys, index, &main)
-		})
-	}
+	main.reload_index_list()
 
 	main.page = console
 	main.page.SetChangedFunc(func() {
@@ -768,6 +764,24 @@ func MainUI(arg *Arguments) {
 	}
 }
 
+func (main *mainui) reload_index_list() {
+	var list *customlist = main.console_index_list
+	cur := list.GetCurrentItem()
+	list.Clear()
+	keys, keymaplist := load_qf_history(main)
+	n := len(keymaplist)
+	for i := range keymaplist {
+		ind := n - i - 1
+		value := keymaplist[ind]
+		list.AddItem(value, "", func() {
+			open_in_tabview(keys, ind, main)
+		})
+	}
+	if cur >= 0 && cur < n {
+		list.SetCurrentItem(cur)
+	}
+}
+
 func (main *mainui) Close() {
 	main.lspmgr.Close()
 	main.app.Stop()
@@ -792,7 +806,7 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 		if changed {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
 		}
-		if tofzf ||!noloop{
+		if tofzf || !noloop {
 			main.cmdline.Vim.EnterGrep(txt)
 		}
 	}
@@ -1020,7 +1034,7 @@ func (main mainui) open_picker_refs() {
 func (main mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(main.root)
 }
-func (main mainui) open_picker_grep(word string, qf func(ref_with_caller) bool) {
+func (main mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) {
 	main.layout.dialog.OpenGrepWordFzf(word, qf)
 }
 func (main mainui) open_picker_livegrep() {

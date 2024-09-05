@@ -23,7 +23,7 @@ type livewgreppicker struct {
 	grep_list_view *customlist
 	main           *mainui
 	impl           *grep_impl
-	qf             func(ref_with_caller) bool
+	qf             func(bool, ref_with_caller) bool
 	not_live       bool
 }
 
@@ -141,7 +141,9 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 		return
 	}
 	if o == nil {
-		if grepx.not_live {
+		if grepx.qf != nil {
+			grepx.qf(true, ref_with_caller{})
+		} else if grepx.not_live {
 			grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 			grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
 				o := grepx.impl.result.data[dataindex]
@@ -190,7 +192,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 				},
 			},
 		}
-		if !grepx.qf(ref) {
+		if !grepx.qf(false, ref) {
 			grep.grep.abort()
 		}
 	}
