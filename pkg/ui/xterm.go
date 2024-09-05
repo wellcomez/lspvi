@@ -89,14 +89,18 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 								}
 							}
 						} else {
-							ptystdio.File.Write([]byte("j"))
+							ptystdio.File.Write([]byte{27})
+							ptystdio.File.Write([]byte{12})
 						}
 						if w.Cols != 0 && w.Rows != 0 {
 							ptystdio.UpdateSize(w.Rows, w.Cols)
 						}
 					}
 					sss.imp.ws = conn
-					sss.imp._send(sss.imp.unsend)
+					if len(sss.imp.unsend) > 0 {
+						sss.imp._send(sss.imp.unsend)
+						sss.imp.unsend = []byte{}
+					}
 				}
 			case "resize":
 				{
@@ -191,6 +195,7 @@ func NewRouter(root string) *mux.Router {
 		// 	wg.Add(1)
 		// 	need = true
 		// }
+		sss.imp.ws = nil
 		p := filepath.Join("html", "index.html")
 		buf, err := uiFS.Open(p)
 		if err != nil {
@@ -229,9 +234,7 @@ type open_files struct {
 	Files []open_file
 }
 type ptyout_impl struct {
-	// output string
-	prev []byte
-	// pty    string
+	prev   []byte
 	ws     *websocket.Conn
 	unsend []byte
 	files  open_files

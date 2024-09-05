@@ -616,6 +616,8 @@ func MainUI(arg *Arguments) {
 	}
 	main.statusbar = tview.NewTextView()
 	main.statusbar.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		// primary, combining, style, width := screen.GetContent(0, 0)
+		// log.Println("---",primary, combining, style, width)
 		viewname := main.getfocusviewname()
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
