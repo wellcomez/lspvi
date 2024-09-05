@@ -189,21 +189,20 @@ func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		v.Visible = false
 		return nil
 	}
-	key := event.Key()
-	switch key {
-	case tcell.KeyEnter, tcell.KeyCtrlS, tcell.KeyDown, tcell.KeyUp:
-		v.currentpicker.handle()(event, nil)
+	text := v.input.GetText()
+	v.input.InputHandler()(event, nil)
+	text2 := v.input.GetText()
+	if text != text2 {
+		if len(text2) == 0 {
+			v.input.SetText(">")
+		} else {
+			query := v.input.GetText()[1:]
+			v.currentpicker.UpdateQuery(query)
+		}
 		return nil
 	}
-	v.input.InputHandler()(event, nil)
-	if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
-		if len(v.input.GetText()) == 0 {
-			v.input.SetText(">")
-		}
-	}
-	query := v.input.GetText()[1:]
-	v.currentpicker.UpdateQuery(query)
-	return event
+	v.currentpicker.handle()(event, nil)
+	return nil
 }
 
 func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
