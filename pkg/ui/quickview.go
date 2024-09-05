@@ -524,14 +524,14 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	if key.Key != qk.searchkey.Key {
 		qk.view.Clear()
 		qk.cmd_search_key = ""
+		qk.Type = t
+		qk.searchkey = key
 	}
 	if end {
 		qk.save()
 		return
 	}
-	qk.Type = t
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
-	qk.searchkey = key
 	_, _, width, _ := qk.view.GetRect()
 	caller.width = width
 	secondline := caller.ListItem(qk.main.root)
