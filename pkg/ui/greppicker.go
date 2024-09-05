@@ -53,8 +53,9 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		if event.Key() == tcell.KeyEnter {
 			g.impl.fzf_on_result = nil
+			g.parent.input.SetText(">")
 			g.livewgreppicker.UpdateQuery(g.query)
-		}else{
+		} else {
 			g.livewgreppicker.handle_key_override(event, nil)
 		}
 	}
@@ -67,6 +68,9 @@ func (g *greppicker) name() string {
 
 func (pk livewgreppicker) update_preview() {
 	cur := pk.grep_list_view.GetCurrentItem()
+	if pk.impl.fzf_on_result != nil {
+		cur= pk.impl.fzf_on_result.get_data_index(cur)
+	}
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
 		pk.codeprev.Load(item.fpath)

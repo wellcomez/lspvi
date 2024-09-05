@@ -19,6 +19,7 @@ const (
 	open_picker_livegrep
 	open_picker_history
 	open_picker_grep_word
+	open_picker_global_search
 	open_picker_ctrlp
 	goto_first_line
 	goto_last_line
@@ -86,7 +87,9 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case open_picker_history:
 		return cmdactor{id, "history", m.open_picker_history}
 	case open_picker_grep_word:
-		return cmdactor{id, "grep word", func() { m.codeview.action_grep_word() }}
+		return cmdactor{id, "grep word", func() { m.codeview.action_grep_word(true) }}
+	case open_picker_global_search:
+		return cmdactor{id, "Search in files", func() { m.codeview.action_grep_word(false) }}
 	case open_picker_ctrlp:
 		return cmdactor{id, "picker file", m.open_picker_ctrlp}
 	case bookmark_it:
@@ -240,6 +243,7 @@ const key_picker_document_symbol = "o"
 const key_picker_qfh = "hq"
 const key_picker_live_grep = "g"
 const key_picker_grep_word = "fw"
+const key_picker_search_in_file = "ff"
 const key_picker_help = "h"
 
 func (main *mainui) ctrl_w_map() []cmditem {
@@ -293,6 +297,7 @@ func (m *mainui) key_map_space_menu() []cmditem {
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),
 		get_cmd_actor(m, open_picker_history).menu_key(split(key_picker_history)),
 		get_cmd_actor(m, open_picker_grep_word).menu_key(split(key_picker_grep_word)),
+		get_cmd_actor(m, open_picker_global_search).menu_key(split(key_picker_search_in_file)),
 		get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
 		get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
 		get_cmd_actor(m, open_picker_wkq).menu_key(split("wk")),

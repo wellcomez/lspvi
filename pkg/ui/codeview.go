@@ -399,7 +399,7 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 	view.bookmark.Add(line, comment, view.Buf.Line(line-1), add)
 }
 func (code *CodeView) get_selected_lines() editor_selection {
-	CurSelection:= code.view.Cursor.CurSelection
+	CurSelection := code.view.Cursor.CurSelection
 	b := LocToSelectionPosition(&CurSelection[0])
 	e := LocToSelectionPosition(&CurSelection[1])
 	s := vmap_selection{vmapBegin: b, vmapEnd: e}
@@ -415,8 +415,8 @@ func (code *CodeView) get_selected_lines() editor_selection {
 }
 
 func get_codeview_text_loc(view *femto.View, b femto.Loc, e femto.Loc) (int, string) {
-	b.X=femto.Max(0,b.X)
-	e.X=femto.Max(0,e.X)
+	b.X = femto.Max(0, b.X)
+	e.X = femto.Max(0, e.X)
 	if view.Buf == nil || view.Buf.LinesNum() == 0 || b.Y == 0 {
 		return 0, ""
 	}
@@ -847,11 +847,15 @@ func (code *CodeView) update_with_line_changed() {
 	main.OnCodeLineChange(line)
 }
 
-func (code *CodeView) action_grep_word() {
+func (code *CodeView) action_grep_word(selected bool) {
 	main := code.main
 	if main == nil {
 		return
 	}
+	if !selected {
+		main.open_picker_grep("", nil)
+		return
+	} 
 	code.view.Cursor.SelectWord()
 	word := code.view.Cursor.GetSelection()
 	main.open_picker_grep(word, nil)
