@@ -13,9 +13,10 @@ type grepresult struct {
 	data []grep_output
 }
 type grep_impl struct {
-	result *grepresult
-	grep   *gorep
-	taskid int
+	result        *grepresult
+	grep          *gorep
+	taskid        int
+	fzf_on_result *fzf_on_listview
 }
 type livewgreppicker struct {
 	*prev_picker_impl
@@ -23,7 +24,7 @@ type livewgreppicker struct {
 	main           *mainui
 	impl           *grep_impl
 	qf             func(ref_with_caller) bool
-	filesearch     bool
+	not_live       bool
 }
 
 // name implements picker.
@@ -34,14 +35,16 @@ func (pk *livewgreppicker) name() string {
 // greppicker
 type greppicker struct {
 	*livewgreppicker
-	query         string
-	fzf_on_result *fzf_on_listview
+	query string
 }
 
 // UpdateQuery implements picker.
 // Subtle: this method shadows the method (*livewgreppicker).UpdateQuery of greppicker.livewgreppicker.
 func (g *greppicker) UpdateQuery(query string) {
 	g.query = query
+	if g.impl.fzf_on_result != nil {
+		g.impl.fzf_on_result.OnSearch(query, true)
+	}
 }
 
 // handle implements picker.
@@ -49,7 +52,10 @@ func (g *greppicker) UpdateQuery(query string) {
 func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		if event.Key() == tcell.KeyEnter {
+			g.impl.fzf_on_result = nil
 			g.livewgreppicker.UpdateQuery(g.query)
+		}else{
+			g.livewgreppicker.handle_key_override(event, nil)
 		}
 	}
 }
@@ -92,6 +98,7 @@ func new_grep_picker(v *fzfmain) *greppicker {
 	grep := &greppicker{
 		livewgreppicker: new_live_grep_picker(v),
 	}
+	grep.not_live = true
 	return grep
 }
 func new_live_grep_picker(v *fzfmain) *livewgreppicker {
@@ -102,19 +109,31 @@ func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 		grep_list_view:   new_customlist(false),
 		main:             main,
 		impl:             &grep_impl{},
-		filesearch:       false,
+		not_live:         false,
 	}
 	x.use_cusutom_list(grep.grep_list_view)
 	v.Visible = true
 	return grep
 }
 func (grepx *livewgreppicker) update_title() {
-	s := fmt.Sprintf("Grep %s %d/%d", grepx.grep_list_view.Key, grepx.grep_list_view.GetCurrentItem(), len(grepx.impl.result.data))
+	index := grepx.grep_list_view.GetCurrentItem()
+
+	x := len(grepx.impl.result.data)
+	if x > 0 {
+		index = index + 1
+	}
+	s := fmt.Sprintf("Grep %s %d/%d", grepx.grep_list_view.Key, index, x)
 	grepx.parent.Frame.SetTitle(s)
 }
 
 func (grepx *livewgreppicker) end(task int, o *grep_output) {
 	if task != grepx.impl.taskid {
+		return
+	}
+	if o == nil {
+		if grepx.not_live {
+			grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
+		}
 		return
 	}
 	grep := grepx.impl

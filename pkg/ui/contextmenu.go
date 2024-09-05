@@ -38,6 +38,9 @@ type contextmenu_impl struct {
 }
 
 func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	if event == nil {
+		return action, event
+	}
 	if action == tview.MouseRightClick {
 		visible := false
 		for _, v := range menu.menu_handle {

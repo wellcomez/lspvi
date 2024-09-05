@@ -189,6 +189,21 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 	var waitReports sync.WaitGroup
 
 	chPrint := make(chan grep_output)
+	chPrintEnd := make(chan string)
+	go func() {
+		var i = 0
+		for {
+			msg := <-chPrintEnd
+			log.Println("chPrintEnd--------->", msg)
+			i++
+			if i == 4 {
+				if grep.cb != nil {
+					grep.cb(grep.id, nil)
+				}
+				break
+			}
+		}
+	}()
 	// printer
 	go func() {
 		for {
@@ -215,21 +230,21 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 				if msg.lineNumber != 0 {
 					decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
 					a := grep_output{
-						destor:       decoStr,
-						grepInfo:     &grepInfo{
+						destor: decoStr,
+						grepInfo: &grepInfo{
 							lineNumber: msg.lineNumber,
-							line: msg.line,
-							fpath: msg.fpath,
+							line:       msg.line,
+							fpath:      msg.fpath,
 						},
 						content_type: FILE_TYPE,
 					}
 					chPrint <- a
 				} else { // binary file
 					a := grep_output{
-grepInfo:     &grepInfo{
+						grepInfo: &grepInfo{
 							lineNumber: msg.lineNumber,
-							line: msg.line,
-							fpath: msg.fpath,
+							line:       msg.line,
+							fpath:      msg.fpath,
 						},
 						content_type: BINARY_TYPE,
 					}
@@ -240,6 +255,7 @@ grepInfo:     &grepInfo{
 			log.Printf("reporter type error!\n")
 			return
 		}
+		chPrintEnd <- mark
 	}
 
 	waitReports.Add(4)
@@ -247,6 +263,7 @@ grepInfo:     &grepInfo{
 	go reporter(markFile, markMatch, chans.file)
 	go reporter(markSymlink, markMatch, chans.symlink)
 	go reporter(markGrep, markMatch, chans.grep)
+	log.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 	waitReports.Wait()
 }
 
@@ -352,7 +369,7 @@ func verifyHidden(fpath string) bool {
 
 func (grep *gorep) mapsend(fpath string, chans *channelSet) {
 	defer grep.waitMaps.Done()
-	if grep.bAbort{
+	if grep.bAbort {
 		return
 	}
 	/* expand dir */
