@@ -20,7 +20,9 @@ import (
 	"zen108.com/lspvi/pkg/pty"
 )
 
+var start_process func(int, string)
 var wk *workdir
+var httpport = 0
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
 var ptystdio *pty.Pty = nil
@@ -68,31 +70,39 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			switch w.Call {
 			case "init":
 				{
-					if ptystdio == nil {
-						newFunction1(w.Host)
-						var i = 0
-						for {
-							if ptystdio == nil {
-								time.Sleep(time.Millisecond * 10)
-								i++
-								if i > 100 {
-									os.Exit(1)
-								}
-							} else {
-								break
-							}
-						}
-					} else {
-						ptystdio.File.Write([]byte("j"))
+					if start_process != nil {
+						start_process(httpport, w.Host)
 					}
-					if w.Cols != 0 && w.Rows != 0 {
-						ptystdio.UpdateSize(w.Rows, w.Cols)
+					if start_process == nil {
+						if ptystdio == nil {
+							newFunction1(w.Host)
+							var i = 0
+							for {
+								if ptystdio == nil {
+									time.Sleep(time.Millisecond * 10)
+									i++
+									if i > 100 {
+										os.Exit(1)
+									}
+								} else {
+									break
+								}
+							}
+						} else {
+							ptystdio.File.Write([]byte("j"))
+						}
+						if w.Cols != 0 && w.Rows != 0 {
+							ptystdio.UpdateSize(w.Rows, w.Cols)
+						}
 					}
 					sss.imp.ws = conn
 					sss.imp._send(sss.imp.unsend)
 				}
 			case "resize":
 				{
+					if ptystdio == nil {
+						return
+					}
 					var res resize
 					err = json.Unmarshal(message, &res)
 
@@ -129,6 +139,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				}
 			case "key":
 				{
+					if ptystdio == nil {
+						return
+					}
 					var key keydata
 					err = json.Unmarshal(message, &key)
 					if err == nil {
@@ -198,6 +211,10 @@ func StartServer(root string, port int) {
 		fmt.Println(i, "Check")
 		x := fmt.Sprintf(":%d", i)
 		srv = http.Server{Addr: x, Handler: r}
+		httpport = port
+		if start_process != nil {
+			start_process(i, "")
+		}
 		if err := srv.ListenAndServe(); err != nil {
 			continue
 		}
@@ -236,8 +253,6 @@ type ptyout_data struct {
 	Output []byte
 }
 
-var count = 0
-
 func (imp *ptyout_impl) _send(s []byte) bool {
 	fmt.Println("_send", len(s))
 	// printf("\033[5;10HHello, World!\n"); // 将光标移动到第5行第10列，然后打印 "Hello, World!"
@@ -256,70 +271,6 @@ func (imp *ptyout_impl) _send(s []byte) bool {
 		imp.prev = append(imp.prev, s...)
 	}
 	return false
-}
-
-func newFunction2(s []byte) {
-	for i, v := range s {
-		count++
-		name := ""
-		switch v {
-		case 0xC:
-			name = "newpage"
-		case 0xD:
-			name = "Enter"
-		case 0xA:
-			{
-				name = "LF"
-			}
-
-		case 033:
-			{
-				var line, col string
-				var err string
-				var afterline = false
-				for i, v := range s[i+1:] {
-					err = string(v)
-					if i == 0 {
-						if v != '[' {
-							break
-						}
-						continue
-					}
-					if !afterline {
-						if v >= '0' && v <= '0' {
-							line += string(v)
-							continue
-						}
-						if v == ';' {
-							afterline = true
-						} else {
-							break
-						}
-					} else {
-						if v >= '0' && v <= '0' {
-							col += string(v)
-						} else {
-							break
-						}
-					}
-				}
-				println("tttt", err, line, col)
-
-			}
-		case 0x1A:
-			{
-				name = "LF"
-			}
-		default:
-			continue
-			if v > 0x80 {
-				name = fmt.Sprintf("0x%0x", v)
-			} else {
-				continue
-			}
-		}
-		println(i, count, name, len(s))
-	}
 }
 
 type ptyout struct {
@@ -344,7 +295,8 @@ func (p ptyout) Write(s []byte) (n int, err error) {
 var argnew []string
 
 // main
-func StartWebUI() {
+func StartWebUI(cb func(int, string)) {
+	start_process = cb
 	argnew = []string{os.Args[0], "-tty"}
 	args := os.Args[2:]
 	argnew = append(argnew, args...)

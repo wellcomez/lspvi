@@ -15,9 +15,9 @@ func main() {
 	file := flag.String("file", "", "source file")
 	flag.Parse()
 	if *gui {
-		mainui.StartWebUI()
+		mainui.StartWebUI(nil)
 		return
-	}
+	} 	
 	var arg = &mainui.Arguments{
 		Root: *root,
 		File: *file,
