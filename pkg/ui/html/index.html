@@ -21,30 +21,24 @@
     <style>
         .top-div {
             position: absolute;
-            top: 50px;
-            left: 100px;
-            width: 600px;
-            height: 400px;
+            display: flex;
+            top: 5%;
+            left: 5%;
+            width: 90%;
+            height: 90%;
             padding: 20px;
             border: 2px;
             border-color: red;
+            justify-content: center;
+            align-items: center;
             z-index: 2;
         }
     </style>
-    <div id="open" style="display: none;"></div>
-    <div id="app" class="top-div">
-        <div v-if="isVisible">
-            <img :src="imageurl" />
-            {{ message }}
-        </div>
+    <div id="app" class="top-div" v-if="isVisible">
+        <img style="width: 90%;" :src="imageurl" />
     </div>
     <div id="terminal"></div>
     <script>
-        function appendToTerminal(message) {
-            const terminal = document.getElementById('terminal');
-            terminal.innerHTML += message + '<br>';
-            terminal.scrollTop = terminal.scrollHeight; // 自动滚动到底部
-        }
         let rows = 50
         let cols = 80
         document.onkeydown = function (e) {
@@ -69,7 +63,6 @@
                 },
                 popimage(image) {
                     this.isVisible = true
-                    this.showimage = image != undefined
                     this.imageurl = image
                 }
             }
