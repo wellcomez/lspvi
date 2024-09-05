@@ -20,6 +20,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.4.1
 	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
+	github.com/vmihailenco/msgpack/v5 v5.4.1
 )
 
 require (
@@ -46,6 +47,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yuin/goldmark v1.7.1 // indirect
 	github.com/zyedidia/micro v1.4.1 // indirect
 	golang.org/x/image v0.18.0 // indirect

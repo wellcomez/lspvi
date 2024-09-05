@@ -332,7 +332,7 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 		image := []string{".png"}
 		for _, v := range image {
 			if v == ext {
-				open_in_web(file,m.ws)
+				open_in_web(file, m.ws)
 				return
 			}
 		}
@@ -613,7 +613,7 @@ func MainUI(arg *Arguments) {
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
 		}
-		titlename := fmt.Sprintf("%s %s", appname, viewname)
+		titlename := fmt.Sprintf("%s %s", appname, main.root)
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {
@@ -759,7 +759,7 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(&main)
 	main.quickview.RestoreLast()
-	main_layout.SetTitle("lspvi " + root)
+	main_layout.SetTitle("lspvi " + main.root)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}

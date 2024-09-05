@@ -13,30 +13,22 @@ import (
 	"time"
 
 	// "time"
-
+	// "github.com/tinylib/msgp/msgp"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/vmihailenco/msgpack/v5"
 	"zen108.com/lspvi/pkg/pty"
 )
 
-var sss = ptyout{&ptyout_impl{}}
+var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
-var need = true
 var ptystdio *pty.Pty = nil
 
-type wsize struct {
-	Width  uint16 `json:"width"`
-	Height uint16 `json:"height"`
-}
-type base_type interface{}
-type keycode struct {
-	Key string `json:"key"`
-}
-type wsbase struct {
-	Call string `json:"call"`
-}
 type init_call struct {
 	Call string `json:"call"`
+	Cols uint16 `json:"cols"`
+	Rows uint16 `json:"rows"`
+	Host string `json:"host"`
 }
 type keydata struct {
 	Call string `json:"call"`
@@ -76,7 +68,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			case "init":
 				{
 					if ptystdio == nil {
-						newFunction1()
+						newFunction1(w.Host)
 						var i = 0
 						for {
 							if ptystdio == nil {
@@ -89,6 +81,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 								break
 							}
 						}
+					} else {
+						ptystdio.File.Write([]byte("j"))
+					}
+					if w.Cols != 0 && w.Rows != 0 {
+						ptystdio.UpdateSize(w.Rows, w.Cols)
 					}
 					sss.imp.ws = conn
 					sss.imp._send(sss.imp.unsend)
@@ -121,8 +118,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						if err != nil {
 							fmt.Println(err)
 						} else {
-							file.Filename = filepath.Join("/temp", x)
-							buf, err := json.Marshal(file)
+							buf, err := msgpack.Marshal(Ws_open_file{
+								Filename: filepath.Join("/temp", x),
+								Call:     "openfile",
+							})
 							if err == nil {
 								sss.imp.write_ws(buf)
 							}
@@ -162,64 +161,18 @@ func NewRouter(root string) *mux.Router {
 	}).Methods("GET")
 	r.HandleFunc("/temp/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		println(path)
+		// println(path)
 		buf, _ := os.ReadFile(filepath.Join(".", path))
 		w.Write(buf)
 	}).Methods("GET")
 	r.HandleFunc("/ws", serveWs)
-	// r.HandleFunc("/key", func(w http.ResponseWriter, r *http.Request) {
-	// 	var k keycode
-	// 	buf, err := io.ReadAll(r.Body)
-	// 	if err == nil {
-	// 		err = json.Unmarshal(buf, &k)
-	// 		if err == nil {
-	// 			if ptystdio != nil {
-	// 				ptystdio.File.Write([]byte(k.Key))
-	// 			}
-	// 		}
-	// 	}
-	// })
-	// r.HandleFunc("/term", func(w http.ResponseWriter, r *http.Request) {
-	// 	var k wsize
-	// 	buf, err := io.ReadAll(r.Body)
-	// 	if err == nil {
-	// 		if json.Unmarshal(buf, &k) == nil {
-	// 			if k.Height != ptystdio.Rows || k.Width != ptystdio.Cols {
-	// 				ptystdio.UpdateSize(k.Height, k.Width)
-	// 			}
-	// 		}
-	// 	}
-	// 	if len(sss.imp.output) == 0 {
-	// 		wg.Wait()
-	// 	}
-
-	// 	if sss.imp == nil {
-	// 		w.Write([]byte("xx"))
-	// 	}
-	// 	oldlen := len(sss.imp.pty)
-	// 	different := false
-	// 	for i := range sss.imp.output {
-	// 		if i < oldlen {
-	// 			if sss.imp.output[i] != sss.imp.pty[i] {
-	// 				fmt.Println(time.Now(), "output changed", i, sss.imp.output[i], sss.imp.pty[i])
-	// 				different = true
-	// 			}
-	// 		} else {
-	// 			fmt.Println(time.Now(), "output longger", len(sss.imp.output), len(sss.imp.pty))
-	// 			different = true
-	// 		}
-	// 	}
-	// 	if !different {
-	// 		w.Write([]byte("0000"))
-	// 		return
-	// 	}
-	// 	sss.imp.pty = sss.imp.output
-	// 	w.Write([]byte(sss.imp.pty))
-	// 	wg.Add(1)
-	// 	sss.imp.output = ""
-	// 	need = true
-	// })
-	// 处理根路径
+	r.HandleFunc("/term", func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+	})
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// if !need {
 		// 	wg.Add(1)
@@ -259,38 +212,44 @@ type open_files struct {
 	Files []open_file
 }
 type ptyout_impl struct {
-	output string
-	prev   string
-	pty    string
+	// output string
+	prev []byte
+	// pty    string
 	ws     *websocket.Conn
-	unsend string
+	unsend []byte
 	files  open_files
 }
 
-func (imp *ptyout_impl) send(s string) {
-	if imp.prev != s {
+func (imp *ptyout_impl) send(s []byte) {
+	if len(imp.prev) != len(s) {
 		imp._send(s)
 	}
 }
 
 func (imp *ptyout_impl) write_ws(s []byte) error {
-	err := imp.ws.WriteMessage(websocket.TextMessage, s)
+	err := imp.ws.WriteMessage(websocket.BinaryMessage, s)
 	return err
 }
-func (imp *ptyout_impl) _send(s string) bool {
-	fmt.Println("_send", len(s))
-	data := map[string]string{
-		"output": s,
-		"call":   "term",
+
+type ptyout_data struct {
+	Call   string
+	Output []byte
+}
+
+func (imp *ptyout_impl) _send(s []byte) bool {
+	// fmt.Println("_send", len(s))
+	data := ptyout_data{
+		Output: s,
+		Call:   "term",
 	}
-	buf, err := json.Marshal(data)
+	buf, err := msgpack.Marshal(data)
 	if imp.ws == nil {
-		imp.unsend += s
+		imp.unsend = append(imp.unsend, s...)
 		return true
 	}
 	if err == nil {
 		imp.write_ws(buf)
-		imp.prev = s
+		imp.prev = append(imp.prev, s...)
 	}
 	return false
 }
@@ -304,7 +263,7 @@ var uiFS embed.FS
 
 // Write implements pty.ptyio.
 func (p ptyout) Write(s []byte) (n int, err error) {
-	p.imp.send(string(s))
+	p.imp.send(s)
 	// fmt.Println("xxx",len(s),string(s))
 	// p.imp.output += string(s)
 	// if need {
@@ -326,9 +285,9 @@ func StartWebUI() {
 	StartServer(filepath.Dir(os.Args[0]), 13000)
 }
 
-func newFunction1() {
+func newFunction1(host string) {
 	go func() {
-		argnew = append(argnew, "-ws", srv.Addr)
+		argnew = append(argnew, "-ws", host)
 		ptystdio = pty.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
 		os.Exit(-1)
