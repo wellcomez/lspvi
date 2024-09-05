@@ -35,7 +35,7 @@
         }
     </style>
     <div id="app" class="top-div" v-if="isVisible">
-        <img style="width: 90%;" :src="imageurl" />
+        <img style="max-width: 90%;" :src="imageurl" />
     </div>
     <div id="terminal"></div>
     <script>
@@ -169,7 +169,7 @@
         
         let f = new fullscreen_check(term)
         f.resize(false)
-        
+
         fit.fit()
 
 
