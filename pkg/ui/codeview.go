@@ -399,9 +399,9 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 	view.bookmark.Add(line, comment, view.Buf.Line(line-1), add)
 }
 func (code *CodeView) get_selected_lines() editor_selection {
-	cur := code.view.Cursor
-	b := LocToSelectionPosition(&cur.CurSelection[0])
-	e := LocToSelectionPosition(&cur.CurSelection[1])
+	CurSelection:= code.view.Cursor.CurSelection
+	b := LocToSelectionPosition(&CurSelection[0])
+	e := LocToSelectionPosition(&CurSelection[1])
 	s := vmap_selection{vmapBegin: b, vmapEnd: e}
 	s.switch_begin_end()
 	ss := s.loc()
@@ -415,6 +415,8 @@ func (code *CodeView) get_selected_lines() editor_selection {
 }
 
 func get_codeview_text_loc(view *femto.View, b femto.Loc, e femto.Loc) (int, string) {
+	b.X=femto.Max(0,b.X)
+	e.X=femto.Max(0,e.X)
 	if view.Buf == nil || view.Buf.LinesNum() == 0 || b.Y == 0 {
 		return 0, ""
 	}
@@ -1026,6 +1028,8 @@ func (code *CodeView) Load(filename string) error {
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
+	// code.view.Buf.Settings["softwrap"] = true
+	// code.view.Buf.Settings["cursorline"] = true
 	var colorscheme femto.Colorscheme
 
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {

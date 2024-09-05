@@ -151,7 +151,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case file_in_file_vi_loop:
 		return cmdactor{id, "file in file vi", func() {
-			m.codeview.OnFindInfile(true, false)
+			m.codeview.OnFindInfile(false, false)
 		}}
 	case arrow_up:
 		return cmdactor{id, "up", func() { m.codeview.action_key_up() }}

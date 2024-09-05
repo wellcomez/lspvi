@@ -792,7 +792,7 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 		if changed {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
 		}
-		if tofzf {
+		if tofzf ||!noloop{
 			main.cmdline.Vim.EnterGrep(txt)
 		}
 	}
