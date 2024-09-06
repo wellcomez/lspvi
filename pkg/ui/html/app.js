@@ -102,6 +102,14 @@ app_init = () => {
     document.addEventListener("click", function () {
         app.onhide()
     })
+    wheel = (evt) => {
+        console.log(evt)
+    }
+    document.addEventListener("wheel", wheel)
+    const div = document.getElementById('terminal')
+    if (div) {
+        div.addEventListener("wheel", wheel)
+    }
     return app
 }
 const term_init = () => {
@@ -140,20 +148,29 @@ const term_init = () => {
         let rows = term.rows, cols = term.cols
         ws_sendTextData({ call, data, rows, cols })
     })
+    term.attachCustomKeyEventHandler(ev => {
+        // console.log(ev)
+        return true;
+    })
+    // term.attachCustomWheelEventHandler(ev => {
+    //     console.log(ev)
+    //     return true;
+    // })
     old = ""
     term.open(document.getElementById('terminal'));
     let f = new fullscreen_check(term)
     f.resize(false)
     fit.fit()
+    term.focus()
     return term
 }
-socket_int = (term,app) => {
+socket_int = (term, app) => {
     let localhost = window.location.host
     var socket = new WebSocket('ws://' + localhost + '/ws');
     const sendTextData = (data) => {
         if (socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(data));
-            console.log('Sent to server:', data);
+            // console.log('Sent to server:', data);
         } else {
             console.error('WebSocket connection is not open.');
         }
@@ -204,7 +221,7 @@ socket_int = (term,app) => {
         }
     };
     socket.onclose = function (event) {
-        console.log("Connection closed");
+        console.error("Connection closed");
     };
     window.addEventListener('resize', function (evt) {
         let f = new fullscreen_check(term)
@@ -218,6 +235,6 @@ socket_int = (term,app) => {
 main = () => {
     var app = app_init()
     var term = term_init()
-    socket_int(term,app)
+    socket_int(term, app)
 }
 main()
