@@ -127,6 +127,7 @@ const term_init = (app) => {
         e.stopPropagation();
     };
     var term = new Terminal({
+        allowProposedApi: true,
         cursorStyle: 'bar',  // 默认为块状光标
         allowTransparency: true,
         cursorBlink: false,
@@ -137,13 +138,13 @@ const term_init = (app) => {
         x10Mouse: true,
         vt300Mouse: true,
         MouseEvent: true,
+        fontFamily: '"Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
         // minimumContrastRatio: 1,
     });
     var wl = new WebglAddon.WebglAddon()
     term.loadAddon(wl)
     var fit = new FitAddon.FitAddon()
     term.loadAddon(fit);
-
     // const imageAddon = new ImageAddon.ImageAddon(customSettings);
     // terminal.loadAddon(imageAddon);
     term.onData(function (data) {
@@ -164,11 +165,21 @@ const term_init = (app) => {
     })
     old = ""
     term.open(document.getElementById('terminal'));
+    LoadLigaturesAddon();
     let f = new fullscreen_check(term)
     f.resize(false)
     fit.fit()
     term.focus()
     return term
+
+    function LoadLigaturesAddon() {
+        try {
+            const newLocal = new LigaturesAddon.LigaturesAddon();
+            term.loadAddon(newLocal);
+        } catch (error) {
+            console.error(error);
+        }
+    }
 }
 socket_int = (term, app) => {
     let localhost = window.location.host
