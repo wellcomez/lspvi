@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -178,33 +179,42 @@ func NewRouter(root string) *mux.Router {
 	}).Methods("GET")
 	r.HandleFunc("/temp/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		// println(path)
 		buf, _ := os.ReadFile(filepath.Join(wk.root, path))
 		w.Write(buf)
 	}).Methods("GET")
 	r.HandleFunc("/ws", serveWs)
-	r.HandleFunc("/term", func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer conn.Close()
+	// r.HandleFunc("/term", func(w http.ResponseWriter, r *http.Request) {
+	// 	conn, err := upgrader.Upgrade(w, r, nil)
+	// 	if err != nil {
+	// 		return
+	// 	}
+	// 	defer conn.Close()
+	// })
+	r.HandleFunc("/static/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
+		read_embbed(r, w)
 	})
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// if !need {
-		// 	wg.Add(1)
-		// 	need = true
-		// }
-		sss.imp.ws = nil
-		p := filepath.Join("html", "index.html")
-		buf, err := uiFS.Open(p)
-		if err != nil {
-			w.Write([]byte(err.Error()))
-			return
-		}
-		io.Copy(w, buf)
+		read_embbed(r, w)
 	}).Methods("GET")
 	return r
+}
+
+func read_embbed(r *http.Request, w http.ResponseWriter) {
+	file := r.URL.Path
+	if file == "/" {
+		file = "index.html"
+	}
+	if s,ok:=strings.CutPrefix(file, "/static/");ok{
+		file=s
+	}
+	sss.imp.ws = nil
+	p := filepath.Join("html", file)
+	buf, err := uiFS.Open(p)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+		return
+	}
+	io.Copy(w, buf)
 }
 
 var srv http.Server

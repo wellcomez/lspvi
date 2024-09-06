@@ -47,8 +47,8 @@
             "console": "externalTerminal",
             "args": [
                 // "-gui",
-                "-root",
-                "/home/z/dev/usb/samsumg/gadgetd"
+                // "-root",
+                // "/home/z/dev/usb/samsumg/gadgetd"
                 // "/Users/jialaizhu/dev/lspgo",
                 // "/home/z/dev/ray/raychain_go/raychain-sdk-go",
                 // "/home/z/dev/ray/usb/gadgetfs",
