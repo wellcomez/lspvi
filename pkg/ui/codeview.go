@@ -325,7 +325,7 @@ func qf_grep_word(main *mainui, rightmenu_select_text string) {
 		var ret = rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
 		if ret {
 			main.app.QueueUpdateDraw(func() {
-				main.quickview.AddResult(end,data_grep_word, s, key)
+				main.quickview.AddResult(end, data_grep_word, s, key)
 			})
 		}
 		return true
@@ -1068,7 +1068,9 @@ func (code *CodeView) goto_loation(loc lsp.Range) {
 	loc.End.Line = min(code.view.Buf.LinesNum(), loc.End.Line)
 
 	line := loc.Start.Line
-	code.change_topline_with_previousline(line)
+	if code.view.Topline > line || code.view.Bottomline() < line {
+		code.change_topline_with_previousline(line)
+	}
 	// if line < code.view.Topline || code.view.Bottomline() < line {
 	// 	code.view.Topline = max(line-code.focus_line(), 0)
 	// }
@@ -1106,7 +1108,9 @@ func (code *CodeView) gotoline(line int) {
 	// if line < code.view.Topline || code.view.Bottomline() < line {
 	// 	code.view.Topline = max(line-code.focus_line(), 0)
 	// }
-	code.change_topline_with_previousline(line)
+	if line < code.view.Topline || code.view.Bottomline() < line {
+		code.change_topline_with_previousline(line)
+	}
 	text := strings.ToLower(code.view.Buf.Line(line))
 	RightX := len(text)
 	leftX := 0
