@@ -93,6 +93,9 @@ app_init = () => {
             onhide() {
                 this.isVisible = false
             },
+            on_wheel(evt) {
+                return this.isVisible == true
+            },
             popimage(image) {
                 this.isVisible = true
                 this.imageurl = image
@@ -112,7 +115,7 @@ app_init = () => {
     }
     return app
 }
-const term_init = () => {
+const term_init = (app) => {
     window.addEventListener("contextmenu", function (e) {
         e.preventDefault();
     })
@@ -149,13 +152,16 @@ const term_init = () => {
         ws_sendTextData({ call, data, rows, cols })
     })
     term.attachCustomKeyEventHandler(ev => {
-        // console.log(ev)
+        console.log(ev)
         return true;
     })
-    // term.attachCustomWheelEventHandler(ev => {
-    //     console.log(ev)
-    //     return true;
-    // })
+    term.attachCustomWheelEventHandler(ev => {
+        if (app && app.on_wheel(ev)) {
+            return false
+        }
+        console.log(ev)
+        return true;
+    })
     old = ""
     term.open(document.getElementById('terminal'));
     let f = new fullscreen_check(term)
@@ -234,7 +240,7 @@ socket_int = (term, app) => {
 }
 main = () => {
     var app = app_init()
-    var term = term_init()
+    var term = term_init(app)
     socket_int(term, app)
 }
 main()
