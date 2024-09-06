@@ -15,25 +15,28 @@
 
 <body>
     <style>
-        .top-div {
+        .image-div {
             position: absolute;
             display: flex;
             top: 5%;
+            right: 5%;
             left: 5%;
-            width: 90%;
-            height: 90%;
+            height: 80%;
             padding: 20px;
             border: 2px;
             border-color: red;
             justify-content: center;
             align-items: center;
+            /* max-width: 90%; */
             z-index: 2;
         }
     </style>
-    <div id="app" class="top-div" v-if="isVisible">
-        <img style="max-width: 90%;" :src="imageurl" />
+    <div id="app">
+        <div class="image-div" v-if="isVisible">
+            <img style="max-width: 100%;" :src="imageurl" />
+        </div>
+        <div id="terminal"></div>
     </div>
-    <div id="terminal"></div>
     <script src="/static/app.js" lang="javascript"></script>
 </body>
 
