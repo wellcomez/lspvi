@@ -19,6 +19,7 @@ require (
 	github.com/creack/pty v1.1.23
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.4.1
+	github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82
 	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 )

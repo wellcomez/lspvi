@@ -8,6 +8,9 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
+type Treesitter_parser interface {
+	GetSymbol() []lsp.SymbolInformation
+}
 type lspclient interface {
 	WorkSpaceSymbol(query string) ([]lsp.SymbolInformation, error)
 	Semantictokens_full(file string) (*lsp.SemanticTokens, error)

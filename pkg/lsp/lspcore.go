@@ -57,7 +57,7 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 		// log.Fatal(err)
 	}
 	if err := cmd.Start(); err != nil {
-    	log.Println("failed to start",err)
+		log.Println("failed to start", err)
 		return err
 		// log.Fatal(err)
 	}
@@ -82,9 +82,9 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 }
 
 type WorkSpace struct {
-	Path     string
-	Export   string
-	Callback jsonrpc2.Handler
+	Path        string
+	Export      string
+	Callback    jsonrpc2.Handler
 	LspCoreList []lspcore
 }
 

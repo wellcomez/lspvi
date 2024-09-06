@@ -1,16 +1,51 @@
 package lspcore
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
+	sitter "github.com/smacker/go-tree-sitter"
+	treego "github.com/smacker/go-tree-sitter/golang"
 	lsp "github.com/tectiv3/go-lsp"
 )
 
 type lsp_lang_go struct {
 }
+type TreeSitter struct {
+	filename string
+	kind     []lsp.SymbolKind
+	parser   *sitter.Parser
+	tree     *sitter.Tree
+}
 
+func NewTreeSitter() *TreeSitter {
+	ret := &TreeSitter{
+		parser: sitter.NewParser(),
+	}
+	return ret
+}
+func (ts *TreeSitter) Loadfile(lang *sitter.Language) error {
+	ts.parser.SetLanguage(lang)
+	buf, err := os.ReadFile(ts.filename)
+	if err != nil {
+		return err
+	}
+	tree, err := ts.parser.ParseCtx(context.Background(), nil, buf)
+	ts.tree = tree
+	return err
+}
+
+func (l lsp_lang_go) TreeSymbolParser(ts TreeSitter) []lsp.SymbolInformation {
+	ret := []lsp.SymbolInformation{}
+	if ts.Loadfile(treego.GetLanguage()) != nil {
+		return ret
+	}
+	return ret
+	panic("unimplemented")
+}
 func (l lsp_lang_go) IsSource(filename string) bool {
 	return true
 }

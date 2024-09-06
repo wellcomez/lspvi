@@ -46,7 +46,7 @@
             "program": "${workspaceFolder}/main.go",
             "console": "externalTerminal",
             "args": [
-                "-gui",
+                // "-gui",
                 // "-root",
                 // "/home/z/dev/usb/samsumg/gadgetd"
                 // "/Users/jialaizhu/dev/lspgo",
