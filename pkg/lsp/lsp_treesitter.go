@@ -3,6 +3,7 @@ package lspcore
 import (
 	"context"
 	"embed"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -19,6 +20,7 @@ type TreeSitter struct {
 	tree     *sitter.Tree
 	langname string
 	lang     *sitter.Language
+	sourceCode []byte
 }
 
 func (t *TreeSitter) load_hightlight() ([]lsp.SymbolInformation, error) {
@@ -36,6 +38,21 @@ func (t *TreeSitter) load_hightlight() ([]lsp.SymbolInformation, error) {
 	}
 	qc := sitter.NewQueryCursor()
 	qc.Exec(q, t.tree.RootNode())
+
+		for {
+		m, ok := qc.NextMatch()
+		if !ok {
+			break
+		}
+		// Apply predicates filtering
+		m = qc.FilterPredicates(m, t.sourceCode)
+		for _, c := range m.Captures {
+			x := c.Node.Symbol()
+			start:=c.Node.StartPoint()
+			end:=c.Node.EndPoint()
+			fmt.Println(t.lang.SymbolName(x),x ,start,end, c.Node.Content(t.sourceCode))
+		}
+	}
 	return []lsp.SymbolInformation{}, nil
 }
 
@@ -71,9 +88,10 @@ func (ts TreeSitter) read_embbed(p string) ([]byte, error) {
 	}
 	return []byte{}, err
 }
-func NewTreeSitter() *TreeSitter {
+func NewTreeSitter(name string) *TreeSitter {
 	ret := &TreeSitter{
 		parser: sitter.NewParser(),
+		filename:name,
 	}
 	return ret
 }
@@ -92,6 +110,7 @@ func (ts *TreeSitter) _load_file(lang *sitter.Language) error {
 	if err != nil {
 		return err
 	}
+	ts.sourceCode = buf
 	tree, err := ts.parser.ParseCtx(context.Background(), nil, buf)
 	ts.tree = tree
 	return err
