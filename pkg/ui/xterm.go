@@ -183,17 +183,14 @@ func NewRouter(root string) *mux.Router {
 		w.Write(buf)
 	}).Methods("GET")
 	r.HandleFunc("/ws", serveWs)
-	// r.HandleFunc("/term", func(w http.ResponseWriter, r *http.Request) {
-	// 	conn, err := upgrader.Upgrade(w, r, nil)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	defer conn.Close()
-	// })
 	r.HandleFunc("/static/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		read_embbed(r, w)
 	})
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		sss.imp.ws = nil
+		if start_process == nil {
+			ptystdio = nil
+		}
 		read_embbed(r, w)
 	}).Methods("GET")
 	return r
@@ -204,10 +201,9 @@ func read_embbed(r *http.Request, w http.ResponseWriter) {
 	if file == "/" {
 		file = "index.html"
 	}
-	if s,ok:=strings.CutPrefix(file, "/static/");ok{
-		file=s
+	if s, ok := strings.CutPrefix(file, "/static/"); ok {
+		file = s
 	}
-	sss.imp.ws = nil
 	p := filepath.Join("html", file)
 	buf, err := uiFS.Open(p)
 	if err != nil {
