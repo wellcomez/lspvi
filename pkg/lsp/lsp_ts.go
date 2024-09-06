@@ -25,8 +25,8 @@ type lsp_ts struct {
 	LanguageID string
 }
 
-func (l lsp_ts) TreeSymbolParser(TreeSitter) []lsp.SymbolInformation {
-	panic("unimplemented")
+func (l lsp_ts) TreeSymbolParser(*TreeSitter) []lsp.SymbolInformation {
+	return []lsp.SymbolInformation{}
 }
 
 // Launch_Lsp_Server implements lsplang.

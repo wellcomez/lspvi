@@ -24,8 +24,8 @@ var rootFiles = []string{
 type lsp_lang_py struct {
 }
 
-func (l lsp_lang_py) TreeSymbolParser(TreeSitter) []lsp.SymbolInformation {
-	panic("unimplemented")
+func (l lsp_lang_py) TreeSymbolParser(*TreeSitter) []lsp.SymbolInformation {
+	return []lsp.SymbolInformation{}
 }
 
 // Launch_Lsp_Server implements lsplang.

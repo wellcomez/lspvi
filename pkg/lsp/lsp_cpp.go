@@ -25,8 +25,8 @@ type lsp_lang_cpp struct {
 }
 
 // TreeSymbolParser implements lsplang.
-func (l lsp_lang_cpp) TreeSymbolParser(TreeSitter) []lsp.SymbolInformation {
-	panic("unimplemented")
+func (l lsp_lang_cpp) TreeSymbolParser(*TreeSitter) []lsp.SymbolInformation {
+	return []lsp.SymbolInformation{}
 }
 
 // IsMe implements lsplang.

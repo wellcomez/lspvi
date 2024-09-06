@@ -10,5 +10,5 @@ type lsplang interface {
 	IsSource(filename string) bool
 	Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool
 	IsMe(filename string) bool
-	TreeSymbolParser(TreeSitter) []lsp.SymbolInformation
+	TreeSymbolParser(*TreeSitter) []lsp.SymbolInformation
 }
