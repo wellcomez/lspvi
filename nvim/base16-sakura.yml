@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #755f64
+
+ - Group: "Constant"
+   foreground: #f6661e
+
+ - Group: "String"
+   foreground: #2e916d
+
+ - Group: "Function"
+   foreground: #6e93
+
+ - Group: "Keyword"
+   foreground: #5e2180
+
+ - Group: "Type"
+   foreground: #c29461
+
+ - Group: "Character"
+   foreground: #df2d52
+
+ - Group: "Number"
+   foreground: #f6661e
+
+ - Group: "Boolean"
+   foreground: #f6661e
+
+ - Group: "Float"
+   foreground: #f6661e
+
+ - Group: "Identifier"
+   foreground: #df2d52
+
+ - Group: "Function"
+   foreground: #6e93
+
+ - Group: "Statement"
+   foreground: #df2d52
+
+ - Group: "Conditional"
+   foreground: #5e2180
+
+ - Group: "Repeat"
+   foreground: #c29461
+
+ - Group: "Label"
+   foreground: #c29461
+
+ - Group: "Operator"
+   foreground: #5e2180
+
+ - Group: "Keyword"
+   foreground: #5e2180
+
+ - Group: "Exception"
+   foreground: #df2d52
+
+ - Group: "PreProc"
+   foreground: #c29461
+
+ - Group: "Include"
+   foreground: #6e93
+
+ - Group: "Define"
+   foreground: #5e2180
+
+ - Group: "Macro"
+   foreground: #df2d52
+
+ - Group: "PreCondit"
+   foreground: #c29461
+
+ - Group: "Type"
+   foreground: #c29461
+
+ - Group: "StorageClass"
+   foreground: #c29461
+
+ - Group: "Structure"
+   foreground: #5e2180
+
+ - Group: "Typedef"
+   foreground: #c29461
+
+ - Group: "Special"
+   foreground: #1d8991
+
+ - Group: "SpecialChar"
+   foreground: #ba0d35
+
+ - Group: "Tag"
+   foreground: #c29461
+
+ - Group: "Delimiter"
+   foreground: #ba0d35
+
+ - Group: "SpecialComment"
+   foreground: #1d8991
+
+ - Group: "Debug"
+   foreground: #df2d52
+
+ - Group: "Underlined"
+   foreground: #df2d52
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #feedf3
+   foreground: #df2d52
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #f8e2e7
+
+ - Group: "CursorColumn"
+   background: #f8e2e7
+
+ - Group: "Visual"
+   background: #e0ccd1
+
+ - Group: "StatusLine"
+   background: #e0ccd1
+   foreground: #564448
+
+ - Group: "Normal"
+   background: #feedf3
+   foreground: #564448
+
+ - Group: "DiagnosticError"
+   foreground: #df2d52
+
+ - Group: "DiagnosticWarn"
+   foreground: #5e2180
+
+ - Group: "DiagnosticInfo"
+   foreground: #6e93
+
+ - Group: "DiagnosticHint"
+   foreground: #1d8991
+
+ - Group: "DiffAdd"
+   background: #feedf3
+   foreground: #2e916d
+
+ - Group: "DiffChange"
+   background: #feedf3
+   foreground: #755f64
+
+ - Group: "DiffDelete"
+   background: #feedf3
+   foreground: #df2d52
+
+ - Group: "LspReferenceText"
+   special: 6705237
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 6705237
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 6705237
+   underline: true
+
+ - Group: "@variable"
+   foreground: #df2d52
+
+ - Group: "@variable.member"
+   foreground: #564448
+
+ - Group: "@variable.parameter"
+   foreground: #564448
+
+ - Group: "@function"
+   foreground: #6e93
+
+ - Group: "@function.method"
+   foreground: #6e93
+
+ - Group: "@function.call"
+   foreground: #6e93
+
+ - Group: "@keyword"
+   foreground: #5e2180
+
+ - Group: "@keyword.type"
+   foreground: #5e2180
+
+ - Group: "@keyword.Conditional"
+   foreground: #5e2180
+
+ - Group: "@keyword.function"
+   foreground: #5e2180
+
+ - Group: "@keyword.return"
+   foreground: #5e2180
+
+ - Group: "@keyword.modifier"
+   foreground: #5e2180
+
+ - Group: "@keyword.import"
+   foreground: #6e93
+
+ - Group: "@module"
+   foreground: #df2d52
+
+ - Group: "@String"
+   foreground: #2e916d
+
+ - Group: "@type"
+   foreground: #c29461
+
+ - Group: "@type.definition"
+   foreground: #c29461
+
+ - Group: "@type.class"
+   foreground: #c29461
+
+ - Group: "@property"
+   foreground: #564448
+
+ - Group: "@Operator"
+   foreground: #564448
+
+ - Group: "@Boolean"
+   foreground: #f6661e
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #755f64
+
+ - Group: "@Constant"
+   foreground: #f6661e
+
+ - Group: "@Constant.builtin"
+   foreground: #f6661e
+

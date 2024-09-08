@@ -83,8 +83,29 @@ local highlight_groups = {
     "@Constant",
     "@Constant.builtin"
 }
+local function get_available_themes()
+    local themes = {}
+
+    -- Get runtime path
+    local runtimepath = vim.o.runtimepath
+    for path in runtimepath:gmatch("[^,]+") do
+        local colors_dir = path .. "/colors"
+        -- Check if the colors directory exists
+        if vim.fn.isdirectory(colors_dir) == 1 then
+            -- List all .vim files in the colors directory
+            for _, file in ipairs(vim.fn.split(vim.fn.globpath(colors_dir, "*.vim"), "\n")) do
+                local theme_name = vim.fn.fnamemodify(file, ":t:r") -- Get filename without extension
+                if theme_name and not vim.tbl_contains(themes, theme_name) then
+                    table.insert(themes, theme_name)
+                end
+            end
+        end
+    end
+
+    return themes
+end
 local colorscheme = vim.g.colors_name
-local function save_scheme()
+local function save_scheme(colorscheme)
     local output_file = colorscheme .. ".yml" -- Path to the output file
     -- Function to get highlight settings and write to a file
     local function save_highlights_to_file(groups, file)

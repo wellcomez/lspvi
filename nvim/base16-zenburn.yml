@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #6f6f6f
+
+ - Group: "Constant"
+   foreground: #dfaf8f
+
+ - Group: "String"
+   foreground: #5f7f5f
+
+ - Group: "Function"
+   foreground: #7cb8bb
+
+ - Group: "Keyword"
+   foreground: #dc8cc3
+
+ - Group: "Type"
+   foreground: #e0cf9f
+
+ - Group: "Character"
+   foreground: #dca3a3
+
+ - Group: "Number"
+   foreground: #dfaf8f
+
+ - Group: "Boolean"
+   foreground: #dfaf8f
+
+ - Group: "Float"
+   foreground: #dfaf8f
+
+ - Group: "Identifier"
+   foreground: #dca3a3
+
+ - Group: "Function"
+   foreground: #7cb8bb
+
+ - Group: "Statement"
+   foreground: #dca3a3
+
+ - Group: "Conditional"
+   foreground: #dc8cc3
+
+ - Group: "Repeat"
+   foreground: #e0cf9f
+
+ - Group: "Label"
+   foreground: #e0cf9f
+
+ - Group: "Operator"
+   foreground: #dc8cc3
+
+ - Group: "Keyword"
+   foreground: #dc8cc3
+
+ - Group: "Exception"
+   foreground: #dca3a3
+
+ - Group: "PreProc"
+   foreground: #e0cf9f
+
+ - Group: "Include"
+   foreground: #7cb8bb
+
+ - Group: "Define"
+   foreground: #dc8cc3
+
+ - Group: "Macro"
+   foreground: #dca3a3
+
+ - Group: "PreCondit"
+   foreground: #e0cf9f
+
+ - Group: "Type"
+   foreground: #e0cf9f
+
+ - Group: "StorageClass"
+   foreground: #e0cf9f
+
+ - Group: "Structure"
+   foreground: #dc8cc3
+
+ - Group: "Typedef"
+   foreground: #e0cf9f
+
+ - Group: "Special"
+   foreground: #93e0e3
+
+ - Group: "SpecialChar"
+   foreground: #0
+
+ - Group: "Tag"
+   foreground: #e0cf9f
+
+ - Group: "Delimiter"
+   foreground: #0
+
+ - Group: "SpecialComment"
+   foreground: #93e0e3
+
+ - Group: "Debug"
+   foreground: #dca3a3
+
+ - Group: "Underlined"
+   foreground: #dca3a3
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #383838
+   foreground: #dca3a3
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #404040
+
+ - Group: "CursorColumn"
+   background: #404040
+
+ - Group: "Visual"
+   background: #606060
+
+ - Group: "StatusLine"
+   background: #606060
+   foreground: #dcdccc
+
+ - Group: "Normal"
+   background: #383838
+   foreground: #dcdccc
+
+ - Group: "DiagnosticError"
+   foreground: #dca3a3
+
+ - Group: "DiagnosticWarn"
+   foreground: #dc8cc3
+
+ - Group: "DiagnosticInfo"
+   foreground: #7cb8bb
+
+ - Group: "DiagnosticHint"
+   foreground: #93e0e3
+
+ - Group: "DiffAdd"
+   background: #383838
+   foreground: #5f7f5f
+
+ - Group: "DiffChange"
+   background: #383838
+   foreground: #6f6f6f
+
+ - Group: "DiffDelete"
+   background: #383838
+   foreground: #dca3a3
+
+ - Group: "LspReferenceText"
+   special: 8421504
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 8421504
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 8421504
+   underline: true
+
+ - Group: "@variable"
+   foreground: #dca3a3
+
+ - Group: "@variable.member"
+   foreground: #dcdccc
+
+ - Group: "@variable.parameter"
+   foreground: #dcdccc
+
+ - Group: "@function"
+   foreground: #7cb8bb
+
+ - Group: "@function.method"
+   foreground: #7cb8bb
+
+ - Group: "@function.call"
+   foreground: #7cb8bb
+
+ - Group: "@keyword"
+   foreground: #dc8cc3
+
+ - Group: "@keyword.type"
+   foreground: #dc8cc3
+
+ - Group: "@keyword.Conditional"
+   foreground: #dc8cc3
+
+ - Group: "@keyword.function"
+   foreground: #dc8cc3
+
+ - Group: "@keyword.return"
+   foreground: #dc8cc3
+
+ - Group: "@keyword.modifier"
+   foreground: #dc8cc3
+
+ - Group: "@keyword.import"
+   foreground: #7cb8bb
+
+ - Group: "@module"
+   foreground: #dca3a3
+
+ - Group: "@String"
+   foreground: #5f7f5f
+
+ - Group: "@type"
+   foreground: #e0cf9f
+
+ - Group: "@type.definition"
+   foreground: #e0cf9f
+
+ - Group: "@type.class"
+   foreground: #e0cf9f
+
+ - Group: "@property"
+   foreground: #dcdccc
+
+ - Group: "@Operator"
+   foreground: #dcdccc
+
+ - Group: "@Boolean"
+   foreground: #dfaf8f
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #6f6f6f
+
+ - Group: "@Constant"
+   foreground: #dfaf8f
+
+ - Group: "@Constant.builtin"
+   foreground: #dfaf8f
+

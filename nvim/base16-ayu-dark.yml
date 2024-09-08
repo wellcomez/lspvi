@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #3e4b59
+
+ - Group: "Constant"
+   foreground: #ff8f40
+
+ - Group: "String"
+   foreground: #b8cc52
+
+ - Group: "Function"
+   foreground: #59c2ff
+
+ - Group: "Keyword"
+   foreground: #d2a6ff
+
+ - Group: "Type"
+   foreground: #ffb454
+
+ - Group: "Character"
+   foreground: #f07178
+
+ - Group: "Number"
+   foreground: #ff8f40
+
+ - Group: "Boolean"
+   foreground: #ff8f40
+
+ - Group: "Float"
+   foreground: #ff8f40
+
+ - Group: "Identifier"
+   foreground: #f07178
+
+ - Group: "Function"
+   foreground: #59c2ff
+
+ - Group: "Statement"
+   foreground: #f07178
+
+ - Group: "Conditional"
+   foreground: #d2a6ff
+
+ - Group: "Repeat"
+   foreground: #ffb454
+
+ - Group: "Label"
+   foreground: #ffb454
+
+ - Group: "Operator"
+   foreground: #d2a6ff
+
+ - Group: "Keyword"
+   foreground: #d2a6ff
+
+ - Group: "Exception"
+   foreground: #f07178
+
+ - Group: "PreProc"
+   foreground: #ffb454
+
+ - Group: "Include"
+   foreground: #59c2ff
+
+ - Group: "Define"
+   foreground: #d2a6ff
+
+ - Group: "Macro"
+   foreground: #f07178
+
+ - Group: "PreCondit"
+   foreground: #ffb454
+
+ - Group: "Type"
+   foreground: #ffb454
+
+ - Group: "StorageClass"
+   foreground: #ffb454
+
+ - Group: "Structure"
+   foreground: #d2a6ff
+
+ - Group: "Typedef"
+   foreground: #ffb454
+
+ - Group: "Special"
+   foreground: #95e6cb
+
+ - Group: "SpecialChar"
+   foreground: #e6b673
+
+ - Group: "Tag"
+   foreground: #ffb454
+
+ - Group: "Delimiter"
+   foreground: #e6b673
+
+ - Group: "SpecialComment"
+   foreground: #95e6cb
+
+ - Group: "Debug"
+   foreground: #f07178
+
+ - Group: "Underlined"
+   foreground: #f07178
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #f1419
+   foreground: #f07178
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #131721
+
+ - Group: "CursorColumn"
+   background: #131721
+
+ - Group: "Visual"
+   background: #272d38
+
+ - Group: "StatusLine"
+   background: #272d38
+   foreground: #e6e1cf
+
+ - Group: "Normal"
+   background: #f1419
+   foreground: #e6e1cf
+
+ - Group: "DiagnosticError"
+   foreground: #f07178
+
+ - Group: "DiagnosticWarn"
+   foreground: #d2a6ff
+
+ - Group: "DiagnosticInfo"
+   foreground: #59c2ff
+
+ - Group: "DiagnosticHint"
+   foreground: #95e6cb
+
+ - Group: "DiffAdd"
+   background: #f1419
+   foreground: #b8cc52
+
+ - Group: "DiffChange"
+   background: #f1419
+   foreground: #3e4b59
+
+ - Group: "DiffDelete"
+   background: #f1419
+   foreground: #f07178
+
+ - Group: "LspReferenceText"
+   special: 12565942
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 12565942
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 12565942
+   underline: true
+
+ - Group: "@variable"
+   foreground: #f07178
+
+ - Group: "@variable.member"
+   foreground: #e6e1cf
+
+ - Group: "@variable.parameter"
+   foreground: #e6e1cf
+
+ - Group: "@function"
+   foreground: #59c2ff
+
+ - Group: "@function.method"
+   foreground: #59c2ff
+
+ - Group: "@function.call"
+   foreground: #59c2ff
+
+ - Group: "@keyword"
+   foreground: #d2a6ff
+
+ - Group: "@keyword.type"
+   foreground: #d2a6ff
+
+ - Group: "@keyword.Conditional"
+   foreground: #d2a6ff
+
+ - Group: "@keyword.function"
+   foreground: #d2a6ff
+
+ - Group: "@keyword.return"
+   foreground: #d2a6ff
+
+ - Group: "@keyword.modifier"
+   foreground: #d2a6ff
+
+ - Group: "@keyword.import"
+   foreground: #59c2ff
+
+ - Group: "@module"
+   foreground: #f07178
+
+ - Group: "@String"
+   foreground: #b8cc52
+
+ - Group: "@type"
+   foreground: #ffb454
+
+ - Group: "@type.definition"
+   foreground: #ffb454
+
+ - Group: "@type.class"
+   foreground: #ffb454
+
+ - Group: "@property"
+   foreground: #e6e1cf
+
+ - Group: "@Operator"
+   foreground: #e6e1cf
+
+ - Group: "@Boolean"
+   foreground: #ff8f40
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #3e4b59
+
+ - Group: "@Constant"
+   foreground: #ff8f40
+
+ - Group: "@Constant.builtin"
+   foreground: #ff8f40
+

@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #f01818
+
+ - Group: "Constant"
+   foreground: #183048
+
+ - Group: "String"
+   foreground: #5c5c6a
+
+ - Group: "Function"
+   foreground: #1878
+
+ - Group: "Keyword"
+   foreground: #900000
+
+ - Group: "Type"
+   foreground: #426395
+
+ - Group: "Character"
+   foreground: #487830
+
+ - Group: "Number"
+   foreground: #183048
+
+ - Group: "Boolean"
+   foreground: #183048
+
+ - Group: "Float"
+   foreground: #183048
+
+ - Group: "Identifier"
+   foreground: #487830
+
+ - Group: "Function"
+   foreground: #1878
+
+ - Group: "Statement"
+   foreground: #487830
+
+ - Group: "Conditional"
+   foreground: #900000
+
+ - Group: "Repeat"
+   foreground: #426395
+
+ - Group: "Label"
+   foreground: #426395
+
+ - Group: "Operator"
+   foreground: #900000
+
+ - Group: "Keyword"
+   foreground: #900000
+
+ - Group: "Exception"
+   foreground: #487830
+
+ - Group: "PreProc"
+   foreground: #426395
+
+ - Group: "Include"
+   foreground: #1878
+
+ - Group: "Define"
+   foreground: #900000
+
+ - Group: "Macro"
+   foreground: #487830
+
+ - Group: "PreCondit"
+   foreground: #426395
+
+ - Group: "Type"
+   foreground: #426395
+
+ - Group: "StorageClass"
+   foreground: #426395
+
+ - Group: "Structure"
+   foreground: #900000
+
+ - Group: "Typedef"
+   foreground: #426395
+
+ - Group: "Special"
+   foreground: #2c3c57
+
+ - Group: "SpecialChar"
+   foreground: #140c0d
+
+ - Group: "Tag"
+   foreground: #426395
+
+ - Group: "Delimiter"
+   foreground: #140c0d
+
+ - Group: "SpecialComment"
+   foreground: #2c3c57
+
+ - Group: "Debug"
+   foreground: #487830
+
+ - Group: "Underlined"
+   foreground: #487830
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #f0f0f0
+   foreground: #487830
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #f0d848
+
+ - Group: "CursorColumn"
+   background: #f0d848
+
+ - Group: "Visual"
+   background: #fff018
+
+ - Group: "StatusLine"
+   background: #fff018
+   foreground: #d80000
+
+ - Group: "Normal"
+   background: #f0f0f0
+   foreground: #d80000
+
+ - Group: "DiagnosticError"
+   foreground: #487830
+
+ - Group: "DiagnosticWarn"
+   foreground: #900000
+
+ - Group: "DiagnosticInfo"
+   foreground: #1878
+
+ - Group: "DiagnosticHint"
+   foreground: #2c3c57
+
+ - Group: "DiffAdd"
+   background: #f0f0f0
+   foreground: #5c5c6a
+
+ - Group: "DiffChange"
+   background: #f0f0f0
+   foreground: #f01818
+
+ - Group: "DiffDelete"
+   background: #f0f0f0
+   foreground: #487830
+
+ - Group: "LspReferenceText"
+   special: 15728640
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 15728640
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 15728640
+   underline: true
+
+ - Group: "@variable"
+   foreground: #487830
+
+ - Group: "@variable.member"
+   foreground: #d80000
+
+ - Group: "@variable.parameter"
+   foreground: #d80000
+
+ - Group: "@function"
+   foreground: #1878
+
+ - Group: "@function.method"
+   foreground: #1878
+
+ - Group: "@function.call"
+   foreground: #1878
+
+ - Group: "@keyword"
+   foreground: #900000
+
+ - Group: "@keyword.type"
+   foreground: #900000
+
+ - Group: "@keyword.Conditional"
+   foreground: #900000
+
+ - Group: "@keyword.function"
+   foreground: #900000
+
+ - Group: "@keyword.return"
+   foreground: #900000
+
+ - Group: "@keyword.modifier"
+   foreground: #900000
+
+ - Group: "@keyword.import"
+   foreground: #1878
+
+ - Group: "@module"
+   foreground: #487830
+
+ - Group: "@String"
+   foreground: #5c5c6a
+
+ - Group: "@type"
+   foreground: #426395
+
+ - Group: "@type.definition"
+   foreground: #426395
+
+ - Group: "@type.class"
+   foreground: #426395
+
+ - Group: "@property"
+   foreground: #d80000
+
+ - Group: "@Operator"
+   foreground: #d80000
+
+ - Group: "@Boolean"
+   foreground: #183048
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #f01818
+
+ - Group: "@Constant"
+   foreground: #183048
+
+ - Group: "@Constant.builtin"
+   foreground: #183048
+

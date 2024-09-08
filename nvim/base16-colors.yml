@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #777777
+
+ - Group: "Constant"
+   foreground: #ff851b
+
+ - Group: "String"
+   foreground: #2ecc40
+
+ - Group: "Function"
+   foreground: #74d9
+
+ - Group: "Keyword"
+   foreground: #b10dc9
+
+ - Group: "Type"
+   foreground: #ffdc00
+
+ - Group: "Character"
+   foreground: #ff4136
+
+ - Group: "Number"
+   foreground: #ff851b
+
+ - Group: "Boolean"
+   foreground: #ff851b
+
+ - Group: "Float"
+   foreground: #ff851b
+
+ - Group: "Identifier"
+   foreground: #ff4136
+
+ - Group: "Function"
+   foreground: #74d9
+
+ - Group: "Statement"
+   foreground: #ff4136
+
+ - Group: "Conditional"
+   foreground: #b10dc9
+
+ - Group: "Repeat"
+   foreground: #ffdc00
+
+ - Group: "Label"
+   foreground: #ffdc00
+
+ - Group: "Operator"
+   foreground: #b10dc9
+
+ - Group: "Keyword"
+   foreground: #b10dc9
+
+ - Group: "Exception"
+   foreground: #ff4136
+
+ - Group: "PreProc"
+   foreground: #ffdc00
+
+ - Group: "Include"
+   foreground: #74d9
+
+ - Group: "Define"
+   foreground: #b10dc9
+
+ - Group: "Macro"
+   foreground: #ff4136
+
+ - Group: "PreCondit"
+   foreground: #ffdc00
+
+ - Group: "Type"
+   foreground: #ffdc00
+
+ - Group: "StorageClass"
+   foreground: #ffdc00
+
+ - Group: "Structure"
+   foreground: #b10dc9
+
+ - Group: "Typedef"
+   foreground: #ffdc00
+
+ - Group: "Special"
+   foreground: #7fdbff
+
+ - Group: "SpecialChar"
+   foreground: #85144b
+
+ - Group: "Tag"
+   foreground: #ffdc00
+
+ - Group: "Delimiter"
+   foreground: #85144b
+
+ - Group: "SpecialComment"
+   foreground: #7fdbff
+
+ - Group: "Debug"
+   foreground: #ff4136
+
+ - Group: "Underlined"
+   foreground: #ff4136
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #111111
+   foreground: #ff4136
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #333333
+
+ - Group: "CursorColumn"
+   background: #333333
+
+ - Group: "Visual"
+   background: #555555
+
+ - Group: "StatusLine"
+   background: #555555
+   foreground: #bbbbbb
+
+ - Group: "Normal"
+   background: #111111
+   foreground: #bbbbbb
+
+ - Group: "DiagnosticError"
+   foreground: #ff4136
+
+ - Group: "DiagnosticWarn"
+   foreground: #b10dc9
+
+ - Group: "DiagnosticInfo"
+   foreground: #74d9
+
+ - Group: "DiagnosticHint"
+   foreground: #7fdbff
+
+ - Group: "DiffAdd"
+   background: #111111
+   foreground: #2ecc40
+
+ - Group: "DiffChange"
+   background: #111111
+   foreground: #777777
+
+ - Group: "DiffDelete"
+   background: #111111
+   foreground: #ff4136
+
+ - Group: "LspReferenceText"
+   special: 10066329
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 10066329
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 10066329
+   underline: true
+
+ - Group: "@variable"
+   foreground: #ff4136
+
+ - Group: "@variable.member"
+   foreground: #bbbbbb
+
+ - Group: "@variable.parameter"
+   foreground: #bbbbbb
+
+ - Group: "@function"
+   foreground: #74d9
+
+ - Group: "@function.method"
+   foreground: #74d9
+
+ - Group: "@function.call"
+   foreground: #74d9
+
+ - Group: "@keyword"
+   foreground: #b10dc9
+
+ - Group: "@keyword.type"
+   foreground: #b10dc9
+
+ - Group: "@keyword.Conditional"
+   foreground: #b10dc9
+
+ - Group: "@keyword.function"
+   foreground: #b10dc9
+
+ - Group: "@keyword.return"
+   foreground: #b10dc9
+
+ - Group: "@keyword.modifier"
+   foreground: #b10dc9
+
+ - Group: "@keyword.import"
+   foreground: #74d9
+
+ - Group: "@module"
+   foreground: #ff4136
+
+ - Group: "@String"
+   foreground: #2ecc40
+
+ - Group: "@type"
+   foreground: #ffdc00
+
+ - Group: "@type.definition"
+   foreground: #ffdc00
+
+ - Group: "@type.class"
+   foreground: #ffdc00
+
+ - Group: "@property"
+   foreground: #bbbbbb
+
+ - Group: "@Operator"
+   foreground: #bbbbbb
+
+ - Group: "@Boolean"
+   foreground: #ff851b
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #777777
+
+ - Group: "@Constant"
+   foreground: #ff851b
+
+ - Group: "@Constant.builtin"
+   foreground: #ff851b
+

@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #b8b8b8
+
+ - Group: "Constant"
+   foreground: #ffaa61
+
+ - Group: "String"
+   foreground: #a0d2c8
+
+ - Group: "Function"
+   foreground: #a0a7d2
+
+ - Group: "Keyword"
+   foreground: #c8a0d2
+
+ - Group: "Type"
+   foreground: #ffdc61
+
+ - Group: "Character"
+   foreground: #fa8480
+
+ - Group: "Number"
+   foreground: #ffaa61
+
+ - Group: "Boolean"
+   foreground: #ffaa61
+
+ - Group: "Float"
+   foreground: #ffaa61
+
+ - Group: "Identifier"
+   foreground: #fa8480
+
+ - Group: "Function"
+   foreground: #a0a7d2
+
+ - Group: "Statement"
+   foreground: #fa8480
+
+ - Group: "Conditional"
+   foreground: #c8a0d2
+
+ - Group: "Repeat"
+   foreground: #ffdc61
+
+ - Group: "Label"
+   foreground: #ffdc61
+
+ - Group: "Operator"
+   foreground: #c8a0d2
+
+ - Group: "Keyword"
+   foreground: #c8a0d2
+
+ - Group: "Exception"
+   foreground: #fa8480
+
+ - Group: "PreProc"
+   foreground: #ffdc61
+
+ - Group: "Include"
+   foreground: #a0a7d2
+
+ - Group: "Define"
+   foreground: #c8a0d2
+
+ - Group: "Macro"
+   foreground: #fa8480
+
+ - Group: "PreCondit"
+   foreground: #ffdc61
+
+ - Group: "Type"
+   foreground: #ffdc61
+
+ - Group: "StorageClass"
+   foreground: #ffdc61
+
+ - Group: "Structure"
+   foreground: #c8a0d2
+
+ - Group: "Typedef"
+   foreground: #ffdc61
+
+ - Group: "Special"
+   foreground: #a2d6f5
+
+ - Group: "SpecialChar"
+   foreground: #d2b2a0
+
+ - Group: "Tag"
+   foreground: #ffdc61
+
+ - Group: "Delimiter"
+   foreground: #d2b2a0
+
+ - Group: "SpecialComment"
+   foreground: #a2d6f5
+
+ - Group: "Debug"
+   foreground: #fa8480
+
+ - Group: "Underlined"
+   foreground: #fa8480
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #f8f8f8
+   foreground: #fa8480
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #e8e8e8
+
+ - Group: "CursorColumn"
+   background: #e8e8e8
+
+ - Group: "Visual"
+   background: #d8d8d8
+
+ - Group: "StatusLine"
+   background: #d8d8d8
+   foreground: #383838
+
+ - Group: "Normal"
+   background: #f8f8f8
+   foreground: #383838
+
+ - Group: "DiagnosticError"
+   foreground: #fa8480
+
+ - Group: "DiagnosticWarn"
+   foreground: #c8a0d2
+
+ - Group: "DiagnosticInfo"
+   foreground: #a0a7d2
+
+ - Group: "DiagnosticHint"
+   foreground: #a2d6f5
+
+ - Group: "DiffAdd"
+   background: #f8f8f8
+   foreground: #a0d2c8
+
+ - Group: "DiffChange"
+   background: #f8f8f8
+   foreground: #b8b8b8
+
+ - Group: "DiffDelete"
+   background: #f8f8f8
+   foreground: #fa8480
+
+ - Group: "LspReferenceText"
+   special: 5789784
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 5789784
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 5789784
+   underline: true
+
+ - Group: "@variable"
+   foreground: #fa8480
+
+ - Group: "@variable.member"
+   foreground: #383838
+
+ - Group: "@variable.parameter"
+   foreground: #383838
+
+ - Group: "@function"
+   foreground: #a0a7d2
+
+ - Group: "@function.method"
+   foreground: #a0a7d2
+
+ - Group: "@function.call"
+   foreground: #a0a7d2
+
+ - Group: "@keyword"
+   foreground: #c8a0d2
+
+ - Group: "@keyword.type"
+   foreground: #c8a0d2
+
+ - Group: "@keyword.Conditional"
+   foreground: #c8a0d2
+
+ - Group: "@keyword.function"
+   foreground: #c8a0d2
+
+ - Group: "@keyword.return"
+   foreground: #c8a0d2
+
+ - Group: "@keyword.modifier"
+   foreground: #c8a0d2
+
+ - Group: "@keyword.import"
+   foreground: #a0a7d2
+
+ - Group: "@module"
+   foreground: #fa8480
+
+ - Group: "@String"
+   foreground: #a0d2c8
+
+ - Group: "@type"
+   foreground: #ffdc61
+
+ - Group: "@type.definition"
+   foreground: #ffdc61
+
+ - Group: "@type.class"
+   foreground: #ffdc61
+
+ - Group: "@property"
+   foreground: #383838
+
+ - Group: "@Operator"
+   foreground: #383838
+
+ - Group: "@Boolean"
+   foreground: #ffaa61
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #b8b8b8
+
+ - Group: "@Constant"
+   foreground: #ffaa61
+
+ - Group: "@Constant.builtin"
+   foreground: #ffaa61
+

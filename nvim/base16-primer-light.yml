@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #959da5
+
+ - Group: "Constant"
+   foreground: #f66a0a
+
+ - Group: "String"
+   foreground: #28a745
+
+ - Group: "Function"
+   foreground: #366d6
+
+ - Group: "Keyword"
+   foreground: #ea4aaa
+
+ - Group: "Type"
+   foreground: #ffd33d
+
+ - Group: "Character"
+   foreground: #d73a49
+
+ - Group: "Number"
+   foreground: #f66a0a
+
+ - Group: "Boolean"
+   foreground: #f66a0a
+
+ - Group: "Float"
+   foreground: #f66a0a
+
+ - Group: "Identifier"
+   foreground: #d73a49
+
+ - Group: "Function"
+   foreground: #366d6
+
+ - Group: "Statement"
+   foreground: #d73a49
+
+ - Group: "Conditional"
+   foreground: #ea4aaa
+
+ - Group: "Repeat"
+   foreground: #ffd33d
+
+ - Group: "Label"
+   foreground: #ffd33d
+
+ - Group: "Operator"
+   foreground: #ea4aaa
+
+ - Group: "Keyword"
+   foreground: #ea4aaa
+
+ - Group: "Exception"
+   foreground: #d73a49
+
+ - Group: "PreProc"
+   foreground: #ffd33d
+
+ - Group: "Include"
+   foreground: #366d6
+
+ - Group: "Define"
+   foreground: #ea4aaa
+
+ - Group: "Macro"
+   foreground: #d73a49
+
+ - Group: "PreCondit"
+   foreground: #ffd33d
+
+ - Group: "Type"
+   foreground: #ffd33d
+
+ - Group: "StorageClass"
+   foreground: #ffd33d
+
+ - Group: "Structure"
+   foreground: #ea4aaa
+
+ - Group: "Typedef"
+   foreground: #ffd33d
+
+ - Group: "Special"
+   foreground: #79b8ff
+
+ - Group: "SpecialChar"
+   foreground: #a04100
+
+ - Group: "Tag"
+   foreground: #ffd33d
+
+ - Group: "Delimiter"
+   foreground: #a04100
+
+ - Group: "SpecialComment"
+   foreground: #79b8ff
+
+ - Group: "Debug"
+   foreground: #d73a49
+
+ - Group: "Underlined"
+   foreground: #d73a49
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #fafbfc
+   foreground: #d73a49
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #e1e4e8
+
+ - Group: "CursorColumn"
+   background: #e1e4e8
+
+ - Group: "Visual"
+   background: #d1d5da
+
+ - Group: "StatusLine"
+   background: #d1d5da
+   foreground: #2f363d
+
+ - Group: "Normal"
+   background: #fafbfc
+   foreground: #2f363d
+
+ - Group: "DiagnosticError"
+   foreground: #d73a49
+
+ - Group: "DiagnosticWarn"
+   foreground: #ea4aaa
+
+ - Group: "DiagnosticInfo"
+   foreground: #366d6
+
+ - Group: "DiagnosticHint"
+   foreground: #79b8ff
+
+ - Group: "DiffAdd"
+   background: #fafbfc
+   foreground: #28a745
+
+ - Group: "DiffChange"
+   background: #fafbfc
+   foreground: #959da5
+
+ - Group: "DiffDelete"
+   background: #fafbfc
+   foreground: #d73a49
+
+ - Group: "LspReferenceText"
+   special: 4476246
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 4476246
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 4476246
+   underline: true
+
+ - Group: "@variable"
+   foreground: #d73a49
+
+ - Group: "@variable.member"
+   foreground: #2f363d
+
+ - Group: "@variable.parameter"
+   foreground: #2f363d
+
+ - Group: "@function"
+   foreground: #366d6
+
+ - Group: "@function.method"
+   foreground: #366d6
+
+ - Group: "@function.call"
+   foreground: #366d6
+
+ - Group: "@keyword"
+   foreground: #ea4aaa
+
+ - Group: "@keyword.type"
+   foreground: #ea4aaa
+
+ - Group: "@keyword.Conditional"
+   foreground: #ea4aaa
+
+ - Group: "@keyword.function"
+   foreground: #ea4aaa
+
+ - Group: "@keyword.return"
+   foreground: #ea4aaa
+
+ - Group: "@keyword.modifier"
+   foreground: #ea4aaa
+
+ - Group: "@keyword.import"
+   foreground: #366d6
+
+ - Group: "@module"
+   foreground: #d73a49
+
+ - Group: "@String"
+   foreground: #28a745
+
+ - Group: "@type"
+   foreground: #ffd33d
+
+ - Group: "@type.definition"
+   foreground: #ffd33d
+
+ - Group: "@type.class"
+   foreground: #ffd33d
+
+ - Group: "@property"
+   foreground: #2f363d
+
+ - Group: "@Operator"
+   foreground: #2f363d
+
+ - Group: "@Boolean"
+   foreground: #f66a0a
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #959da5
+
+ - Group: "@Constant"
+   foreground: #f66a0a
+
+ - Group: "@Constant.builtin"
+   foreground: #f66a0a
+
