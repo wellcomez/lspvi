@@ -96,12 +96,17 @@ local function save_highlights_to_file(groups, file)
     end
 
     -- Write the highlight settings to the file
-      f:write("Data:\n")
+    f:write("Data:\n")
     for _, group in ipairs(groups) do
         local hl = vim.api.nvim_get_hl_by_name(group, true)
-        f:write(" - Group: " .. group .. "\n")
+        f:write(" - Group: " .. '"' .. group .. '"' .. "\n")
         for k, v in pairs(hl) do
-            f:write("   "..tostring(k) .. ": " .. tostring(v) .. "\n")
+            if k == "foreground" or k == "background" then
+                local d = string.format("#%x", v)
+                f:write("   " .. tostring(k) .. ": " .. tostring(d) .. "\n")
+            else
+                f:write("   " .. tostring(k) .. ": " .. tostring(v) .. "\n")
+            end
         end
         f:write("\n")
     end
