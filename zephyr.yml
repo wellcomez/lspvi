@@ -1,0 +1,249 @@
+Data:
+ - Group: "Comment"
+   italic: true
+   foreground: #73797e
+
+ - Group: "Constant"
+   foreground: #36d0e0
+
+ - Group: "String"
+   foreground: #fab795
+
+ - Group: "Function"
+   foreground: #f7bb3b
+
+ - Group: "Keyword"
+   foreground: #afd700
+
+ - Group: "Type"
+   foreground: #1abc9c
+
+ - Group: "Character"
+   foreground: #afd700
+
+ - Group: "Number"
+   foreground: #c78665
+
+ - Group: "Boolean"
+   foreground: #ff8700
+
+ - Group: "Float"
+   foreground: #c78665
+
+ - Group: "Identifier"
+   foreground: #61afef
+
+ - Group: "Function"
+   foreground: #f7bb3b
+
+ - Group: "Statement"
+   foreground: #e95678
+
+ - Group: "Conditional"
+   foreground: #c678dd
+
+ - Group: "Repeat"
+   foreground: #c678dd
+
+ - Group: "Label"
+   foreground: #ff8700
+
+ - Group: "Operator"
+   foreground: #d16d9e
+
+ - Group: "Keyword"
+   foreground: #afd700
+
+ - Group: "Exception"
+   foreground: #e95678
+
+ - Group: "PreProc"
+   foreground: #cba6f7
+
+ - Group: "Include"
+   foreground: #cba6f7
+
+ - Group: "Define"
+   foreground: #cba6f7
+
+ - Group: "Macro"
+   foreground: #36d0e0
+
+ - Group: "PreCondit"
+   foreground: #cba6f7
+
+ - Group: "Type"
+   foreground: #1abc9c
+
+ - Group: "StorageClass"
+   foreground: #ff8700
+
+ - Group: "Structure"
+   foreground: #ff8700
+
+ - Group: "Typedef"
+   foreground: #e95678
+
+ - Group: "Special"
+   foreground: #f7bb3b
+
+ - Group: "SpecialChar"
+   foreground: #f7bb3b
+
+ - Group: "Tag"
+   foreground: #ff8700
+
+ - Group: "Delimiter"
+   foreground: #bbc2cf
+
+ - Group: "SpecialComment"
+   foreground: #928374
+
+ - Group: "Debug"
+   foreground: #ff8700
+
+ - Group: "Underlined"
+   underline: true
+
+ - Group: "Ignore"
+   foreground: #928374
+
+ - Group: "Error"
+   foreground: #e95678
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #2e323c
+
+ - Group: "CursorColumn"
+   background: #2e323c
+
+ - Group: "Visual"
+   background: #b3deef
+   foreground: #0
+
+ - Group: "StatusLine"
+   background: #202328
+   foreground: #b1b1b1
+
+ - Group: "Normal"
+   background: #262a33
+   foreground: #bbc2cf
+
+ - Group: "DiagnosticError"
+   foreground: #e95678
+
+ - Group: "DiagnosticWarn"
+   foreground: #f7bb3b
+
+ - Group: "DiagnosticInfo"
+   foreground: #61afef
+
+ - Group: "DiagnosticHint"
+   foreground: #36d0e0
+
+ - Group: "DiffAdd"
+   background: #98be65
+   foreground: #0
+
+ - Group: "DiffChange"
+   background: #f7bb3b
+   foreground: #0
+
+ - Group: "DiffDelete"
+   background: #e95678
+   foreground: #0
+
+ - Group: "LspReferenceText"
+   bold: true
+   background: #2e323c
+
+ - Group: "LspReferenceRead"
+   bold: true
+   background: #2e323c
+
+ - Group: "LspReferenceWrite"
+   bold: true
+   background: #2e323c
+
+ - Group: "@variable"
+   foreground: #f2f2bf
+
+ - Group: "@variable.member"
+   foreground: #f2f2bf
+
+ - Group: "@variable.parameter"
+   foreground: #f2f2bf
+
+ - Group: "@function"
+   foreground: #36d0e0
+
+ - Group: "@function.method"
+   foreground: #36d0e0
+
+ - Group: "@function.call"
+   foreground: #36d0e0
+
+ - Group: "@keyword"
+   foreground: #afd700
+
+ - Group: "@keyword.type"
+   foreground: #afd700
+
+ - Group: "@keyword.Conditional"
+   foreground: #afd700
+
+ - Group: "@keyword.function"
+   foreground: #e95678
+
+ - Group: "@keyword.return"
+   foreground: #afd700
+
+ - Group: "@keyword.modifier"
+   foreground: #afd700
+
+ - Group: "@keyword.import"
+   foreground: #afd700
+
+ - Group: "@module"
+   true: 6
+
+ - Group: "@String"
+   foreground: #fab795
+
+ - Group: "@type"
+   foreground: #1abc9c
+
+ - Group: "@type.definition"
+   foreground: #e95678
+
+ - Group: "@type.class"
+   foreground: #1abc9c
+
+ - Group: "@property"
+   foreground: #f7bb3b
+
+ - Group: "@Operator"
+   foreground: #d16d9e
+
+ - Group: "@Boolean"
+   foreground: #ff8700
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #73797e
+
+ - Group: "@Constant"
+   foreground: #36d0e0
+
+ - Group: "@Constant.builtin"
+   foreground: #f7bb3b
+
