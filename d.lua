@@ -141,5 +141,24 @@ local function save_scheme(colorscheme)
     -- Call the function
     save_highlights_to_file(highlight_groups, output_file)
 end
-save_scheme(colorscheme)
+
+local function set_colorscheme(theme_name)
+    -- Validate that the theme exists
+    local success, _ = pcall(vim.cmd, "colorscheme " .. theme_name)
+    if not success then
+        print("Colorscheme '" .. theme_name .. "' not found.")
+    else
+        print("Colorscheme set to '" .. theme_name .. "'.")
+    end
+end
+
+local function save_themes_to_file(themes)
+    for _, theme in ipairs(themes) do
+        set_colorscheme(theme)
+        save_scheme(theme)
+    end
+end
+local themes = get_available_themes()
+save_themes_to_file(themes)
+--save_scheme(colorscheme)
 --TSVariable
