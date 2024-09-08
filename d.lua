@@ -84,7 +84,7 @@ local highlight_groups = {
     "@Constant.builtin"
 }
 
-local output_file = "all_highlight_groups_info.txt" -- Path to the output file
+local output_file = "all_highlight_groups_info.yml" -- Path to the output file
 
 -- Function to get highlight settings and write to a file
 local function save_highlights_to_file(groups, file)
@@ -96,11 +96,12 @@ local function save_highlights_to_file(groups, file)
     end
 
     -- Write the highlight settings to the file
+      f:write("Data:\n")
     for _, group in ipairs(groups) do
         local hl = vim.api.nvim_get_hl_by_name(group, true)
-        f:write("Highlight Group: " .. group .. "\n")
+        f:write(" - Group: " .. group .. "\n")
         for k, v in pairs(hl) do
-            f:write(tostring(k) .. ": " .. tostring(v) .. "\n")
+            f:write("   "..tostring(k) .. ": " .. tostring(v) .. "\n")
         end
         f:write("\n")
     end
