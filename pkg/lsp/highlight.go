@@ -1,4 +1,4 @@
-package main
+package lspcore
 
 var symbols = map[string]map[string]string {
 	"bash": {
