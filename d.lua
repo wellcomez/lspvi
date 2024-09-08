@@ -84,39 +84,41 @@ local highlight_groups = {
     "@Constant.builtin"
 }
 local colorscheme = vim.g.colors_name
-local output_file = colorscheme..".yml" -- Path to the output file
-
--- Function to get highlight settings and write to a file
-local function save_highlights_to_file(groups, file)
-    -- Open the file for writing
-    local f = io.open(file, "w")
-    if not f then
-        print("Error opening file!")
-        return
-    end
-
-    -- Write the highlight settings to the file
-    f:write("Data:\n")
-    for _, group in ipairs(groups) do
-        local hl = vim.api.nvim_get_hl_by_name(group, true)
-        f:write(" - Group: " .. '"' .. group .. '"' .. "\n")
-        for k, v in pairs(hl) do
-            if k == "foreground" or k == "background" then
-                local d = string.format("#%x", v)
-                f:write("   " .. tostring(k) .. ": " .. tostring(d) .. "\n")
-            else
-                f:write("   " .. tostring(k) .. ": " .. tostring(v) .. "\n")
-            end
+local function save_scheme()
+    local output_file = colorscheme .. ".yml" -- Path to the output file
+    -- Function to get highlight settings and write to a file
+    local function save_highlights_to_file(groups, file)
+        -- Open the file for writing
+        local f = io.open(file, "w")
+        if not f then
+            print("Error opening file!")
+            return
         end
-        f:write("\n")
+
+        -- Write the highlight settings to the file
+        f:write("Data:\n")
+        for _, group in ipairs(groups) do
+            local hl = vim.api.nvim_get_hl_by_name(group, true)
+            f:write(" - Group: " .. '"' .. group .. '"' .. "\n")
+            for k, v in pairs(hl) do
+                if k == "foreground" or k == "background" then
+                    local d = string.format("#%x", v)
+                    f:write("   " .. tostring(k) .. ": " .. tostring(d) .. "\n")
+                else
+                    f:write("   " .. tostring(k) .. ": " .. tostring(v) .. "\n")
+                end
+            end
+            f:write("\n")
+        end
+
+        -- Close the file
+        f:close()
+
+        print("Highlight settings saved to " .. file)
     end
 
-    -- Close the file
-    f:close()
-
-    print("Highlight settings saved to " .. file)
+    -- Call the function
+    save_highlights_to_file(highlight_groups, output_file)
 end
-
--- Call the function
-save_highlights_to_file(highlight_groups, output_file)
+save_scheme(colorscheme)
 --TSVariable
