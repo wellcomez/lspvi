@@ -83,8 +83,8 @@ local highlight_groups = {
     "@Constant",
     "@Constant.builtin"
 }
-
-local output_file = "all_highlight_groups_info.yml" -- Path to the output file
+local colorscheme = vim.g.colors_name
+local output_file = colorscheme..".yml" -- Path to the output file
 
 -- Function to get highlight settings and write to a file
 local function save_highlights_to_file(groups, file)
