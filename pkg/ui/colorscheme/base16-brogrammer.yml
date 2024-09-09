@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #ecba0f
+
+ - Group: "Constant"
+   foreground: #de352e
+
+ - Group: "String"
+   foreground: #f3bd09
+
+ - Group: "Function"
+   foreground: #5350b9
+
+ - Group: "Keyword"
+   foreground: #f7ddb
+
+ - Group: "Type"
+   foreground: #1dd361
+
+ - Group: "Character"
+   foreground: #d6dbe5
+
+ - Group: "Number"
+   foreground: #de352e
+
+ - Group: "Boolean"
+   foreground: #de352e
+
+ - Group: "Float"
+   foreground: #de352e
+
+ - Group: "Identifier"
+   foreground: #d6dbe5
+
+ - Group: "Function"
+   foreground: #5350b9
+
+ - Group: "Statement"
+   foreground: #d6dbe5
+
+ - Group: "Conditional"
+   foreground: #f7ddb
+
+ - Group: "Repeat"
+   foreground: #1dd361
+
+ - Group: "Label"
+   foreground: #1dd361
+
+ - Group: "Operator"
+   foreground: #f7ddb
+
+ - Group: "Keyword"
+   foreground: #f7ddb
+
+ - Group: "Exception"
+   foreground: #d6dbe5
+
+ - Group: "PreProc"
+   foreground: #1dd361
+
+ - Group: "Include"
+   foreground: #5350b9
+
+ - Group: "Define"
+   foreground: #f7ddb
+
+ - Group: "Macro"
+   foreground: #d6dbe5
+
+ - Group: "PreCondit"
+   foreground: #1dd361
+
+ - Group: "Type"
+   foreground: #1dd361
+
+ - Group: "StorageClass"
+   foreground: #1dd361
+
+ - Group: "Structure"
+   foreground: #f7ddb
+
+ - Group: "Typedef"
+   foreground: #1dd361
+
+ - Group: "Special"
+   foreground: #1081d6
+
+ - Group: "SpecialChar"
+   foreground: #ffffff
+
+ - Group: "Tag"
+   foreground: #1dd361
+
+ - Group: "Delimiter"
+   foreground: #ffffff
+
+ - Group: "SpecialComment"
+   foreground: #1081d6
+
+ - Group: "Debug"
+   foreground: #d6dbe5
+
+ - Group: "Underlined"
+   foreground: #d6dbe5
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #1f1f1f
+   foreground: #d6dbe5
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #f81118
+
+ - Group: "CursorColumn"
+   background: #f81118
+
+ - Group: "Visual"
+   background: #2dc55e
+
+ - Group: "StatusLine"
+   background: #2dc55e
+   foreground: #4e5ab7
+
+ - Group: "Normal"
+   background: #1f1f1f
+   foreground: #4e5ab7
+
+ - Group: "DiagnosticError"
+   foreground: #d6dbe5
+
+ - Group: "DiagnosticWarn"
+   foreground: #f7ddb
+
+ - Group: "DiagnosticInfo"
+   foreground: #5350b9
+
+ - Group: "DiagnosticHint"
+   foreground: #1081d6
+
+ - Group: "DiffAdd"
+   background: #1f1f1f
+   foreground: #f3bd09
+
+ - Group: "DiffChange"
+   background: #1f1f1f
+   foreground: #ecba0f
+
+ - Group: "DiffDelete"
+   background: #1f1f1f
+   foreground: #d6dbe5
+
+ - Group: "LspReferenceText"
+   special: 2786514
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 2786514
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 2786514
+   underline: true
+
+ - Group: "@variable"
+   foreground: #d6dbe5
+
+ - Group: "@variable.member"
+   foreground: #4e5ab7
+
+ - Group: "@variable.parameter"
+   foreground: #4e5ab7
+
+ - Group: "@function"
+   foreground: #5350b9
+
+ - Group: "@function.method"
+   foreground: #5350b9
+
+ - Group: "@function.call"
+   foreground: #5350b9
+
+ - Group: "@keyword"
+   foreground: #f7ddb
+
+ - Group: "@keyword.type"
+   foreground: #f7ddb
+
+ - Group: "@keyword.Conditional"
+   foreground: #f7ddb
+
+ - Group: "@keyword.function"
+   foreground: #f7ddb
+
+ - Group: "@keyword.return"
+   foreground: #f7ddb
+
+ - Group: "@keyword.modifier"
+   foreground: #f7ddb
+
+ - Group: "@keyword.import"
+   foreground: #5350b9
+
+ - Group: "@module"
+   foreground: #d6dbe5
+
+ - Group: "@String"
+   foreground: #f3bd09
+
+ - Group: "@type"
+   foreground: #1dd361
+
+ - Group: "@type.definition"
+   foreground: #1dd361
+
+ - Group: "@type.class"
+   foreground: #1dd361
+
+ - Group: "@property"
+   foreground: #4e5ab7
+
+ - Group: "@Operator"
+   foreground: #4e5ab7
+
+ - Group: "@Boolean"
+   foreground: #de352e
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #ecba0f
+
+ - Group: "@Constant"
+   foreground: #de352e
+
+ - Group: "@Constant.builtin"
+   foreground: #de352e
+

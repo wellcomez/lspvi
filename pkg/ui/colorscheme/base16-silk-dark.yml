@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #587073
+
+ - Group: "Constant"
+   foreground: #fcab74
+
+ - Group: "String"
+   foreground: #73d8ad
+
+ - Group: "Function"
+   foreground: #46bddd
+
+ - Group: "Keyword"
+   foreground: #756b8a
+
+ - Group: "Type"
+   foreground: #fce380
+
+ - Group: "Character"
+   foreground: #fb6953
+
+ - Group: "Number"
+   foreground: #fcab74
+
+ - Group: "Boolean"
+   foreground: #fcab74
+
+ - Group: "Float"
+   foreground: #fcab74
+
+ - Group: "Identifier"
+   foreground: #fb6953
+
+ - Group: "Function"
+   foreground: #46bddd
+
+ - Group: "Statement"
+   foreground: #fb6953
+
+ - Group: "Conditional"
+   foreground: #756b8a
+
+ - Group: "Repeat"
+   foreground: #fce380
+
+ - Group: "Label"
+   foreground: #fce380
+
+ - Group: "Operator"
+   foreground: #756b8a
+
+ - Group: "Keyword"
+   foreground: #756b8a
+
+ - Group: "Exception"
+   foreground: #fb6953
+
+ - Group: "PreProc"
+   foreground: #fce380
+
+ - Group: "Include"
+   foreground: #46bddd
+
+ - Group: "Define"
+   foreground: #756b8a
+
+ - Group: "Macro"
+   foreground: #fb6953
+
+ - Group: "PreCondit"
+   foreground: #fce380
+
+ - Group: "Type"
+   foreground: #fce380
+
+ - Group: "StorageClass"
+   foreground: #fce380
+
+ - Group: "Structure"
+   foreground: #756b8a
+
+ - Group: "Typedef"
+   foreground: #fce380
+
+ - Group: "Special"
+   foreground: #3fb2b9
+
+ - Group: "SpecialChar"
+   foreground: #9b647b
+
+ - Group: "Tag"
+   foreground: #fce380
+
+ - Group: "Delimiter"
+   foreground: #9b647b
+
+ - Group: "SpecialComment"
+   foreground: #3fb2b9
+
+ - Group: "Debug"
+   foreground: #fb6953
+
+ - Group: "Underlined"
+   foreground: #fb6953
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #e3c46
+   foreground: #fb6953
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #1d494e
+
+ - Group: "CursorColumn"
+   background: #1d494e
+
+ - Group: "Visual"
+   background: #2a5054
+
+ - Group: "StatusLine"
+   background: #2a5054
+   foreground: #c7dbdd
+
+ - Group: "Normal"
+   background: #e3c46
+   foreground: #c7dbdd
+
+ - Group: "DiagnosticError"
+   foreground: #fb6953
+
+ - Group: "DiagnosticWarn"
+   foreground: #756b8a
+
+ - Group: "DiagnosticInfo"
+   foreground: #46bddd
+
+ - Group: "DiagnosticHint"
+   foreground: #3fb2b9
+
+ - Group: "DiffAdd"
+   background: #e3c46
+   foreground: #73d8ad
+
+ - Group: "DiffChange"
+   background: #e3c46
+   foreground: #587073
+
+ - Group: "DiffDelete"
+   background: #e3c46
+   foreground: #fb6953
+
+ - Group: "LspReferenceText"
+   special: 10340557
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 10340557
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 10340557
+   underline: true
+
+ - Group: "@variable"
+   foreground: #fb6953
+
+ - Group: "@variable.member"
+   foreground: #c7dbdd
+
+ - Group: "@variable.parameter"
+   foreground: #c7dbdd
+
+ - Group: "@function"
+   foreground: #46bddd
+
+ - Group: "@function.method"
+   foreground: #46bddd
+
+ - Group: "@function.call"
+   foreground: #46bddd
+
+ - Group: "@keyword"
+   foreground: #756b8a
+
+ - Group: "@keyword.type"
+   foreground: #756b8a
+
+ - Group: "@keyword.Conditional"
+   foreground: #756b8a
+
+ - Group: "@keyword.function"
+   foreground: #756b8a
+
+ - Group: "@keyword.return"
+   foreground: #756b8a
+
+ - Group: "@keyword.modifier"
+   foreground: #756b8a
+
+ - Group: "@keyword.import"
+   foreground: #46bddd
+
+ - Group: "@module"
+   foreground: #fb6953
+
+ - Group: "@String"
+   foreground: #73d8ad
+
+ - Group: "@type"
+   foreground: #fce380
+
+ - Group: "@type.definition"
+   foreground: #fce380
+
+ - Group: "@type.class"
+   foreground: #fce380
+
+ - Group: "@property"
+   foreground: #c7dbdd
+
+ - Group: "@Operator"
+   foreground: #c7dbdd
+
+ - Group: "@Boolean"
+   foreground: #fcab74
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #587073
+
+ - Group: "@Constant"
+   foreground: #fcab74
+
+ - Group: "@Constant.builtin"
+   foreground: #fcab74
+

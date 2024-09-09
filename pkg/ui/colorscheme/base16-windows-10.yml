@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #767676
+
+ - Group: "Constant"
+   foreground: #c19c00
+
+ - Group: "String"
+   foreground: #16c60c
+
+ - Group: "Function"
+   foreground: #3b78ff
+
+ - Group: "Keyword"
+   foreground: #b4009e
+
+ - Group: "Type"
+   foreground: #f9f1a5
+
+ - Group: "Character"
+   foreground: #e74856
+
+ - Group: "Number"
+   foreground: #c19c00
+
+ - Group: "Boolean"
+   foreground: #c19c00
+
+ - Group: "Float"
+   foreground: #c19c00
+
+ - Group: "Identifier"
+   foreground: #e74856
+
+ - Group: "Function"
+   foreground: #3b78ff
+
+ - Group: "Statement"
+   foreground: #e74856
+
+ - Group: "Conditional"
+   foreground: #b4009e
+
+ - Group: "Repeat"
+   foreground: #f9f1a5
+
+ - Group: "Label"
+   foreground: #f9f1a5
+
+ - Group: "Operator"
+   foreground: #b4009e
+
+ - Group: "Keyword"
+   foreground: #b4009e
+
+ - Group: "Exception"
+   foreground: #e74856
+
+ - Group: "PreProc"
+   foreground: #f9f1a5
+
+ - Group: "Include"
+   foreground: #3b78ff
+
+ - Group: "Define"
+   foreground: #b4009e
+
+ - Group: "Macro"
+   foreground: #e74856
+
+ - Group: "PreCondit"
+   foreground: #f9f1a5
+
+ - Group: "Type"
+   foreground: #f9f1a5
+
+ - Group: "StorageClass"
+   foreground: #f9f1a5
+
+ - Group: "Structure"
+   foreground: #b4009e
+
+ - Group: "Typedef"
+   foreground: #f9f1a5
+
+ - Group: "Special"
+   foreground: #61d6d6
+
+ - Group: "SpecialChar"
+   foreground: #13a10e
+
+ - Group: "Tag"
+   foreground: #f9f1a5
+
+ - Group: "Delimiter"
+   foreground: #13a10e
+
+ - Group: "SpecialComment"
+   foreground: #61d6d6
+
+ - Group: "Debug"
+   foreground: #e74856
+
+ - Group: "Underlined"
+   foreground: #e74856
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #c0c0c
+   foreground: #e74856
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #2f2f2f
+
+ - Group: "CursorColumn"
+   background: #2f2f2f
+
+ - Group: "Visual"
+   background: #535353
+
+ - Group: "StatusLine"
+   background: #535353
+   foreground: #cccccc
+
+ - Group: "Normal"
+   background: #c0c0c
+   foreground: #cccccc
+
+ - Group: "DiagnosticError"
+   foreground: #e74856
+
+ - Group: "DiagnosticWarn"
+   foreground: #b4009e
+
+ - Group: "DiagnosticInfo"
+   foreground: #3b78ff
+
+ - Group: "DiagnosticHint"
+   foreground: #61d6d6
+
+ - Group: "DiffAdd"
+   background: #c0c0c
+   foreground: #16c60c
+
+ - Group: "DiffChange"
+   background: #c0c0c
+   foreground: #767676
+
+ - Group: "DiffDelete"
+   background: #c0c0c
+   foreground: #e74856
+
+ - Group: "LspReferenceText"
+   special: 12171705
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 12171705
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 12171705
+   underline: true
+
+ - Group: "@variable"
+   foreground: #e74856
+
+ - Group: "@variable.member"
+   foreground: #cccccc
+
+ - Group: "@variable.parameter"
+   foreground: #cccccc
+
+ - Group: "@function"
+   foreground: #3b78ff
+
+ - Group: "@function.method"
+   foreground: #3b78ff
+
+ - Group: "@function.call"
+   foreground: #3b78ff
+
+ - Group: "@keyword"
+   foreground: #b4009e
+
+ - Group: "@keyword.type"
+   foreground: #b4009e
+
+ - Group: "@keyword.Conditional"
+   foreground: #b4009e
+
+ - Group: "@keyword.function"
+   foreground: #b4009e
+
+ - Group: "@keyword.return"
+   foreground: #b4009e
+
+ - Group: "@keyword.modifier"
+   foreground: #b4009e
+
+ - Group: "@keyword.import"
+   foreground: #3b78ff
+
+ - Group: "@module"
+   foreground: #e74856
+
+ - Group: "@String"
+   foreground: #16c60c
+
+ - Group: "@type"
+   foreground: #f9f1a5
+
+ - Group: "@type.definition"
+   foreground: #f9f1a5
+
+ - Group: "@type.class"
+   foreground: #f9f1a5
+
+ - Group: "@property"
+   foreground: #cccccc
+
+ - Group: "@Operator"
+   foreground: #cccccc
+
+ - Group: "@Boolean"
+   foreground: #c19c00
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #767676
+
+ - Group: "@Constant"
+   foreground: #c19c00
+
+ - Group: "@Constant.builtin"
+   foreground: #c19c00
+

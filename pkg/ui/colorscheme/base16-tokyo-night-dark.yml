@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #444b6a
+
+ - Group: "Constant"
+   foreground: #a9b1d6
+
+ - Group: "String"
+   foreground: #9ece6a
+
+ - Group: "Function"
+   foreground: #2ac3de
+
+ - Group: "Keyword"
+   foreground: #bb9af7
+
+ - Group: "Type"
+   foreground: #db9d7
+
+ - Group: "Character"
+   foreground: #c0caf5
+
+ - Group: "Number"
+   foreground: #a9b1d6
+
+ - Group: "Boolean"
+   foreground: #a9b1d6
+
+ - Group: "Float"
+   foreground: #a9b1d6
+
+ - Group: "Identifier"
+   foreground: #c0caf5
+
+ - Group: "Function"
+   foreground: #2ac3de
+
+ - Group: "Statement"
+   foreground: #c0caf5
+
+ - Group: "Conditional"
+   foreground: #bb9af7
+
+ - Group: "Repeat"
+   foreground: #db9d7
+
+ - Group: "Label"
+   foreground: #db9d7
+
+ - Group: "Operator"
+   foreground: #bb9af7
+
+ - Group: "Keyword"
+   foreground: #bb9af7
+
+ - Group: "Exception"
+   foreground: #c0caf5
+
+ - Group: "PreProc"
+   foreground: #db9d7
+
+ - Group: "Include"
+   foreground: #2ac3de
+
+ - Group: "Define"
+   foreground: #bb9af7
+
+ - Group: "Macro"
+   foreground: #c0caf5
+
+ - Group: "PreCondit"
+   foreground: #db9d7
+
+ - Group: "Type"
+   foreground: #db9d7
+
+ - Group: "StorageClass"
+   foreground: #db9d7
+
+ - Group: "Structure"
+   foreground: #bb9af7
+
+ - Group: "Typedef"
+   foreground: #db9d7
+
+ - Group: "Special"
+   foreground: #b4f9f8
+
+ - Group: "SpecialChar"
+   foreground: #f7768e
+
+ - Group: "Tag"
+   foreground: #db9d7
+
+ - Group: "Delimiter"
+   foreground: #f7768e
+
+ - Group: "SpecialComment"
+   foreground: #b4f9f8
+
+ - Group: "Debug"
+   foreground: #c0caf5
+
+ - Group: "Underlined"
+   foreground: #c0caf5
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #1a1b26
+   foreground: #c0caf5
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #16161e
+
+ - Group: "CursorColumn"
+   background: #16161e
+
+ - Group: "Visual"
+   background: #2f3549
+
+ - Group: "StatusLine"
+   background: #2f3549
+   foreground: #a9b1d6
+
+ - Group: "Normal"
+   background: #1a1b26
+   foreground: #a9b1d6
+
+ - Group: "DiagnosticError"
+   foreground: #c0caf5
+
+ - Group: "DiagnosticWarn"
+   foreground: #bb9af7
+
+ - Group: "DiagnosticInfo"
+   foreground: #2ac3de
+
+ - Group: "DiagnosticHint"
+   foreground: #b4f9f8
+
+ - Group: "DiffAdd"
+   background: #1a1b26
+   foreground: #9ece6a
+
+ - Group: "DiffChange"
+   background: #1a1b26
+   foreground: #444b6a
+
+ - Group: "DiffDelete"
+   background: #1a1b26
+   foreground: #c0caf5
+
+ - Group: "LspReferenceText"
+   special: 7896217
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 7896217
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 7896217
+   underline: true
+
+ - Group: "@variable"
+   foreground: #c0caf5
+
+ - Group: "@variable.member"
+   foreground: #a9b1d6
+
+ - Group: "@variable.parameter"
+   foreground: #a9b1d6
+
+ - Group: "@function"
+   foreground: #2ac3de
+
+ - Group: "@function.method"
+   foreground: #2ac3de
+
+ - Group: "@function.call"
+   foreground: #2ac3de
+
+ - Group: "@keyword"
+   foreground: #bb9af7
+
+ - Group: "@keyword.type"
+   foreground: #bb9af7
+
+ - Group: "@keyword.Conditional"
+   foreground: #bb9af7
+
+ - Group: "@keyword.function"
+   foreground: #bb9af7
+
+ - Group: "@keyword.return"
+   foreground: #bb9af7
+
+ - Group: "@keyword.modifier"
+   foreground: #bb9af7
+
+ - Group: "@keyword.import"
+   foreground: #2ac3de
+
+ - Group: "@module"
+   foreground: #c0caf5
+
+ - Group: "@String"
+   foreground: #9ece6a
+
+ - Group: "@type"
+   foreground: #db9d7
+
+ - Group: "@type.definition"
+   foreground: #db9d7
+
+ - Group: "@type.class"
+   foreground: #db9d7
+
+ - Group: "@property"
+   foreground: #a9b1d6
+
+ - Group: "@Operator"
+   foreground: #a9b1d6
+
+ - Group: "@Boolean"
+   foreground: #a9b1d6
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #444b6a
+
+ - Group: "@Constant"
+   foreground: #a9b1d6
+
+ - Group: "@Constant.builtin"
+   foreground: #a9b1d6
+

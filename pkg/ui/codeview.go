@@ -1011,7 +1011,9 @@ func (code *CodeView) Load(filename string) error {
 		return err
 	}
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
-	// "monokai"
+	// "monokai"A
+	b:=code.view.Buf
+	b.Settings["syntax"]=false
 	code.LoadBuffer(data, filename)
 	code.view.Cursor.Loc.X = 0
 	code.view.Cursor.Loc.Y = 0
@@ -1034,6 +1036,7 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	code.view.OpenBuffer(buffer)
 	// code.view.Buf.Settings["softwrap"] = true
 	// code.view.Buf.Settings["cursorline"] = true
+	code.view.Buf.Settings["syntax"]=false
 	var colorscheme femto.Colorscheme
 
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {

@@ -1,0 +1,248 @@
+Data:
+ - Group: "Comment"
+   foreground: #b5b4b6
+
+ - Group: "Constant"
+   foreground: #fe6d08
+
+ - Group: "String"
+   foreground: #47f74c
+
+ - Group: "Function"
+   foreground: #2931df
+
+ - Group: "Keyword"
+   foreground: #611fce
+
+ - Group: "Type"
+   foreground: #f7e203
+
+ - Group: "Character"
+   foreground: #fe3e31
+
+ - Group: "Number"
+   foreground: #fe6d08
+
+ - Group: "Boolean"
+   foreground: #fe6d08
+
+ - Group: "Float"
+   foreground: #fe6d08
+
+ - Group: "Identifier"
+   foreground: #fe3e31
+
+ - Group: "Function"
+   foreground: #2931df
+
+ - Group: "Statement"
+   foreground: #fe3e31
+
+ - Group: "Conditional"
+   foreground: #611fce
+
+ - Group: "Repeat"
+   foreground: #f7e203
+
+ - Group: "Label"
+   foreground: #f7e203
+
+ - Group: "Operator"
+   foreground: #611fce
+
+ - Group: "Keyword"
+   foreground: #611fce
+
+ - Group: "Exception"
+   foreground: #fe3e31
+
+ - Group: "PreProc"
+   foreground: #f7e203
+
+ - Group: "Include"
+   foreground: #2931df
+
+ - Group: "Define"
+   foreground: #611fce
+
+ - Group: "Macro"
+   foreground: #fe3e31
+
+ - Group: "PreCondit"
+   foreground: #f7e203
+
+ - Group: "Type"
+   foreground: #f7e203
+
+ - Group: "StorageClass"
+   foreground: #f7e203
+
+ - Group: "Structure"
+   foreground: #611fce
+
+ - Group: "Typedef"
+   foreground: #f7e203
+
+ - Group: "Special"
+   foreground: #f9cfd
+
+ - Group: "SpecialChar"
+   foreground: #b16f40
+
+ - Group: "Tag"
+   foreground: #f7e203
+
+ - Group: "Delimiter"
+   foreground: #b16f40
+
+ - Group: "SpecialComment"
+   foreground: #f9cfd
+
+ - Group: "Debug"
+   foreground: #fe3e31
+
+ - Group: "Underlined"
+   foreground: #fe3e31
+
+ - Group: "Ignore"
+   true: 6
+
+ - Group: "Error"
+   background: #f1ecf1
+   foreground: #fe3e31
+
+ - Group: "Added"
+   true: 6
+
+ - Group: "Changed"
+   true: 6
+
+ - Group: "Removed"
+   true: 6
+
+ - Group: "CursorLine"
+   background: #e0dee0
+
+ - Group: "CursorColumn"
+   background: #e0dee0
+
+ - Group: "Visual"
+   background: #d8d5d5
+
+ - Group: "StatusLine"
+   background: #d8d5d5
+   foreground: #515151
+
+ - Group: "Normal"
+   background: #f1ecf1
+   foreground: #515151
+
+ - Group: "DiagnosticError"
+   foreground: #fe3e31
+
+ - Group: "DiagnosticWarn"
+   foreground: #611fce
+
+ - Group: "DiagnosticInfo"
+   foreground: #2931df
+
+ - Group: "DiagnosticHint"
+   foreground: #f9cfd
+
+ - Group: "DiffAdd"
+   background: #f1ecf1
+   foreground: #47f74c
+
+ - Group: "DiffChange"
+   background: #f1ecf1
+   foreground: #b5b4b6
+
+ - Group: "DiffDelete"
+   background: #f1ecf1
+   foreground: #fe3e31
+
+ - Group: "LspReferenceText"
+   special: 9934232
+   underline: true
+
+ - Group: "LspReferenceRead"
+   special: 9934232
+   underline: true
+
+ - Group: "LspReferenceWrite"
+   special: 9934232
+   underline: true
+
+ - Group: "@variable"
+   foreground: #fe3e31
+
+ - Group: "@variable.member"
+   foreground: #515151
+
+ - Group: "@variable.parameter"
+   foreground: #515151
+
+ - Group: "@function"
+   foreground: #2931df
+
+ - Group: "@function.method"
+   foreground: #2931df
+
+ - Group: "@function.call"
+   foreground: #2931df
+
+ - Group: "@keyword"
+   foreground: #611fce
+
+ - Group: "@keyword.type"
+   foreground: #611fce
+
+ - Group: "@keyword.Conditional"
+   foreground: #611fce
+
+ - Group: "@keyword.function"
+   foreground: #611fce
+
+ - Group: "@keyword.return"
+   foreground: #611fce
+
+ - Group: "@keyword.modifier"
+   foreground: #611fce
+
+ - Group: "@keyword.import"
+   foreground: #2931df
+
+ - Group: "@module"
+   foreground: #fe3e31
+
+ - Group: "@String"
+   foreground: #47f74c
+
+ - Group: "@type"
+   foreground: #f7e203
+
+ - Group: "@type.definition"
+   foreground: #f7e203
+
+ - Group: "@type.class"
+   foreground: #f7e203
+
+ - Group: "@property"
+   foreground: #515151
+
+ - Group: "@Operator"
+   foreground: #515151
+
+ - Group: "@Boolean"
+   foreground: #fe6d08
+
+ - Group: "@Comment"
+   italic: true
+   foreground: #b5b4b6
+
+ - Group: "@Constant"
+   foreground: #fe6d08
+
+ - Group: "@Constant.builtin"
+   foreground: #fe6d08
+
