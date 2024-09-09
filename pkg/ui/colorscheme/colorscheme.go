@@ -76,8 +76,12 @@ func main() {
 				break
 			}
 		}
+		bg = strings.ToUpper(bg)
+		if len(bg)< 7 {
+			continue
+		}
 		for _, v := range data.Data {
-			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), v.Foreground, bg)
+			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), strings.ToUpper(v.Foreground), bg)
 			ret = append(ret, s)
 		}
 		sss := strings.Join(ret, "\n")

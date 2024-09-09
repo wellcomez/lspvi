@@ -1040,6 +1040,11 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
+			buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
+			if err == nil {
+				colorscheme = femto.ParseColorscheme(string(buf))
+				data = append(data, buf...)
+			}
 			colorscheme = femto.ParseColorscheme(string(data))
 		}
 	}
