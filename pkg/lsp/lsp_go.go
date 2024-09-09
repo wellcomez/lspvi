@@ -5,17 +5,12 @@ import (
 	"os/exec"
 	"strings"
 
-	treego "github.com/smacker/go-tree-sitter/golang"
 	lsp "github.com/tectiv3/go-lsp"
 )
 
 type lsp_lang_go struct {
 }
 
-func (l lsp_lang_go) TreeSymbolParser(ts *TreeSitter) []lsp.SymbolInformation {
-	ret ,_:=ts.Loadfile(treego.GetLanguage()) 
-	return ret
-}
 func (l lsp_lang_go) IsSource(filename string) bool {
 	return true
 }

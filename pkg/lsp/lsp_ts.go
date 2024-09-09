@@ -2,9 +2,8 @@ package lspcore
 
 import (
 	// "fmt"
-	"os/exec"
-
 	"github.com/tectiv3/go-lsp"
+	"os/exec"
 )
 
 func (l lsp_ts) IsSource(filename string) bool {
@@ -23,10 +22,6 @@ func (l lsp_ts) IsSource(filename string) bool {
 
 type lsp_ts struct {
 	LanguageID string
-}
-
-func (l lsp_ts) TreeSymbolParser(*TreeSitter) []lsp.SymbolInformation {
-	return []lsp.SymbolInformation{}
 }
 
 // Launch_Lsp_Server implements lsplang.
@@ -74,5 +69,5 @@ func (l lsp_ts) IsMe(filename string) bool {
 	if l.LanguageID == string(JAVASCRIPT) {
 		return IsMe(filename, []string{"js"})
 	}
-	return IsMe(filename, []string{"ts", "tsx", "js"})
+	return IsMe(filename, []string{"ts","tsx","js"})
 }
