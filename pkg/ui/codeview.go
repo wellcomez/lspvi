@@ -1035,7 +1035,7 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	code.view.OpenBuffer(buffer)
 	// code.view.Buf.Settings["softwrap"] = true
 	// code.view.Buf.Settings["cursorline"] = true
-	code.view.Buf.Settings["syntax"] = false
+	// code.view.Buf.Settings["syntax"] = false
 	var colorscheme femto.Colorscheme
 
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
