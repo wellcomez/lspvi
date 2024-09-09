@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 	"unicode/utf8"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 func sliceStart(slc []byte, index int) []byte {
@@ -81,6 +82,8 @@ type LineStates interface {
 type Highlighter struct {
 	lastRegion *region
 	Def        *Def
+	// Tdongshangnezha reeSitter
+	Tree *lspcore.TreeSitter
 }
 
 // NewHighlighter returns a new highlighter from the given syntax definition
@@ -334,11 +337,19 @@ func (h *Highlighter) HighlightStates(input LineStates) {
 // It sets all other matches in the buffer to nil to conserve memory
 // This assumes that all the states are set correctly
 func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int) {
+
 	for i := startline; i < endline; i++ {
 		if i >= input.LinesNum() {
 			break
 		}
-
+		symbol_of_line := []int{}
+		if h.Tree != nil {
+			for i, v := range h.Tree.Symbols {
+				if v.Begin.Row == uint32(i) {
+					symbol_of_line = append(symbol_of_line, i)
+				}
+			}
+		}
 		line := input.LineBytes(i)
 		highlights := make(LineMatch)
 

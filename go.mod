@@ -53,7 +53,6 @@ require (
 	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yuin/goldmark v1.7.1 // indirect
-	github.com/zyedidia/micro v1.4.1 // indirect
 	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/mobile v0.0.0-20231127183840-76ac6878050a // indirect
 	golang.org/x/net v0.25.0 // indirect

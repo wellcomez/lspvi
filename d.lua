@@ -124,7 +124,7 @@ local function save_scheme(colorscheme)
             for k, v in pairs(hl) do
                 if k == "foreground" or k == "background" then
                     local d = string.format("#%x", v)
-                    f:write("   " .. tostring(k) .. ": " .. tostring(d) .. "\n")
+                    f:write("   " .. tostring(k) .. ": \"" .. tostring(d) .. "\"\n")
                 else
                     f:write("   " .. tostring(k) .. ": " .. tostring(v) .. "\n")
                 end

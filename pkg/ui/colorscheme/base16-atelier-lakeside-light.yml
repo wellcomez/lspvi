@@ -1,165 +1,166 @@
 Data:
  - Group: "Comment"
-   foreground: #7195a8
+   foreground: "#7195a8"
 
  - Group: "Constant"
-   foreground: #935c25
+   foreground: "#935c25"
 
  - Group: "String"
-   foreground: #568c3b
+   foreground: "#568c3b"
 
  - Group: "Function"
-   foreground: #257fad
+   foreground: "#257fad"
 
  - Group: "Keyword"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "Type"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "Character"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "Number"
-   foreground: #935c25
+   foreground: "#935c25"
 
  - Group: "Boolean"
-   foreground: #935c25
+   foreground: "#935c25"
 
  - Group: "Float"
-   foreground: #935c25
+   foreground: "#935c25"
 
  - Group: "Identifier"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "Function"
-   foreground: #257fad
+   foreground: "#257fad"
 
  - Group: "Statement"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "Conditional"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "Repeat"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "Label"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "Operator"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "Keyword"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "Exception"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "PreProc"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "Include"
-   foreground: #257fad
+   foreground: "#257fad"
 
  - Group: "Define"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "Macro"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "PreCondit"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "Type"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "StorageClass"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "Structure"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "Typedef"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "Special"
-   foreground: #2d8f6f
+   foreground: "#2d8f6f"
 
  - Group: "SpecialChar"
-   foreground: #b72dd2
+   foreground: "#b72dd2"
 
  - Group: "Tag"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "Delimiter"
-   foreground: #b72dd2
+   foreground: "#b72dd2"
 
  - Group: "SpecialComment"
-   foreground: #2d8f6f
+   foreground: "#2d8f6f"
 
  - Group: "Debug"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "Underlined"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "Ignore"
-   true: 6
+   foreground: "#516d7b"
+   background: "#ebf8ff"
 
  - Group: "Error"
-   background: #ebf8ff
-   foreground: #d22d72
+   foreground: "#d22d72"
+   background: "#ebf8ff"
 
  - Group: "Added"
-   true: 6
+   foreground: "#b3f6c0"
 
  - Group: "Changed"
-   true: 6
+   foreground: "#8cf8f7"
 
  - Group: "Removed"
-   true: 6
+   foreground: "#ffc0b9"
 
  - Group: "CursorLine"
-   background: #c1e4f6
+   background: "#c1e4f6"
 
  - Group: "CursorColumn"
-   background: #c1e4f6
+   background: "#c1e4f6"
 
  - Group: "Visual"
-   background: #7ea2b4
+   background: "#7ea2b4"
 
  - Group: "StatusLine"
-   background: #7ea2b4
-   foreground: #516d7b
+   foreground: "#516d7b"
+   background: "#7ea2b4"
 
  - Group: "Normal"
-   background: #ebf8ff
-   foreground: #516d7b
+   foreground: "#516d7b"
+   background: "#ebf8ff"
 
  - Group: "DiagnosticError"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "DiagnosticWarn"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "DiagnosticInfo"
-   foreground: #257fad
+   foreground: "#257fad"
 
  - Group: "DiagnosticHint"
-   foreground: #2d8f6f
+   foreground: "#2d8f6f"
 
  - Group: "DiffAdd"
-   background: #ebf8ff
-   foreground: #568c3b
+   foreground: "#568c3b"
+   background: "#ebf8ff"
 
  - Group: "DiffChange"
-   background: #ebf8ff
-   foreground: #7195a8
+   foreground: "#7195a8"
+   background: "#ebf8ff"
 
  - Group: "DiffDelete"
-   background: #ebf8ff
-   foreground: #d22d72
+   foreground: "#d22d72"
+   background: "#ebf8ff"
 
  - Group: "LspReferenceText"
    special: 5929868
@@ -174,75 +175,75 @@ Data:
    underline: true
 
  - Group: "@variable"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "@variable.member"
-   foreground: #516d7b
+   foreground: "#516d7b"
 
  - Group: "@variable.parameter"
-   foreground: #516d7b
+   foreground: "#516d7b"
 
  - Group: "@function"
-   foreground: #257fad
+   foreground: "#257fad"
 
  - Group: "@function.method"
-   foreground: #257fad
+   foreground: "#257fad"
 
  - Group: "@function.call"
-   foreground: #257fad
+   foreground: "#257fad"
 
  - Group: "@keyword"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "@keyword.type"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "@keyword.Conditional"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "@keyword.function"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "@keyword.return"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "@keyword.modifier"
-   foreground: #6b6bb8
+   foreground: "#6b6bb8"
 
  - Group: "@keyword.import"
-   foreground: #257fad
+   foreground: "#257fad"
 
  - Group: "@module"
-   foreground: #d22d72
+   foreground: "#d22d72"
 
  - Group: "@String"
-   foreground: #568c3b
+   foreground: "#568c3b"
 
  - Group: "@type"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "@type.definition"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "@type.class"
-   foreground: #8a8a0f
+   foreground: "#8a8a0f"
 
  - Group: "@property"
-   foreground: #516d7b
+   foreground: "#516d7b"
 
  - Group: "@Operator"
-   foreground: #516d7b
+   foreground: "#516d7b"
 
  - Group: "@Boolean"
-   foreground: #935c25
+   foreground: "#935c25"
 
  - Group: "@Comment"
+   foreground: "#7195a8"
    italic: true
-   foreground: #7195a8
 
  - Group: "@Constant"
-   foreground: #935c25
+   foreground: "#935c25"
 
  - Group: "@Constant.builtin"
-   foreground: #935c25
+   foreground: "#935c25"
 
