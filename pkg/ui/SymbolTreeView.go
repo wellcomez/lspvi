@@ -188,7 +188,7 @@ func (m *SymbolTreeView) OnCodeLineChange(line int) {
 func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
 	ret := &SymbolTreeView{
-		view_link: &view_link{id: view_outline_list, left: view_code, down: view_quickview, boxview: symbol_tree.Box},
+		view_link: &view_link{id: view_outline_list, left: view_code, down: view_quickview},
 		main:      main,
 		view:      symbol_tree,
 	}

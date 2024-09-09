@@ -14,31 +14,74 @@ type ui_reszier struct {
 	beginX, beginY int
 	dragging       bool
 	left           bool
-	layout         resizable_layout
+	layout         *editor_mouse_resize
 	begin_time     time.Time
 }
 type editor_mouse_resize struct {
-	main     *mainui
+	layout   *flex_area
 	contorls []ui_reszier
+	main     *mainui
 }
 
-func new_editor_resize(main *mainui) editor_mouse_resize {
-	ret := editor_mouse_resize{main: main}
-	aaa := []ui_reszier{
-		new_ui_resize(main.codeview.view_link, ret),
-		new_ui_resize(main.fileexplorer.view_link, ret),
-		new_ui_resize(main.symboltree.view_link, ret),
+func new_editor_resize(main *mainui, layout *flex_area, views []*view_link) *editor_mouse_resize {
+	ret := &editor_mouse_resize{layout: layout, main: main}
+	aaa := []ui_reszier{}
+	for _, v := range views {
+		a := new_ui_resize(v, ret)
+		aaa = append(aaa, a)
 	}
 	ret.contorls = aaa
 	return ret
 }
-func (r editor_mouse_resize) zoom(zoomin bool, viewid view_id) {
-	r.main._editor_area_layout.zoom(zoomin, viewid)
+
+func (e *editor_mouse_resize) save() error {
+	// x := editlayout_config_data{
+	// 	Sym:  *e.main.symboltree.view_link,
+	// 	File: *e.main.fileexplorer.view_link,
+	// 	Code: *e.main.codeview.view_link,
+	// }
+	// buf, err := json.Marshal(x)
+	// if err == nil {
+	// 	return os.WriteFile(e.name, buf, 0666)
+	// }
+	// return err
+	return nil
 }
-func new_ui_resize(vl *view_link, layout resizable_layout) ui_reszier {
-	return ui_reszier{box: vl.boxview, view_link: vl, layout: layout}
+func (e *editor_mouse_resize) increate(link *view_link, a int) {
+	// link := id.to_view_link(e.main)
+	if link != nil {
+		link.Width += a
+		link.Width = max(1, link.Width)
+		e.save()
+	}
 }
-func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) bool{
+func (m *editor_mouse_resize) update_editerea_layout() {
+	// m := e.main
+	m.layout.Clear()
+	for _, v := range m.contorls {
+		if !v.view_link.Hide {
+			m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Width, false)
+		}
+	}
+	// log.Println("file", m.fileexplorer.Width, "sym", m.symboltree.Width)
+}
+
+func (layout *editor_mouse_resize) zoom(zoomin bool, viewid *view_link) {
+
+	// m := e.main
+	add := 1
+	if zoomin {
+		add = -1
+	}
+	layout.increate(viewid, add)
+	layout.update_editerea_layout()
+
+}
+
+func new_ui_resize(vl *view_link, layout *editor_mouse_resize) ui_reszier {
+	return ui_reszier{box: vl.id.to_box(layout.main), view_link: vl, layout: layout}
+}
+func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) bool {
 	for i := range resize.contorls {
 		r := &resize.contorls[i]
 		r.checkdrag(action, event)
@@ -100,7 +143,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 				}
 				resize.beginX = x
 				resize.beginY = y
-				resize.layout.zoom(zoomin, resize.view_link.id)
+				resize.layout.zoom(zoomin, resize.view_link)
 				log.Println("zoom in", zoomin, resize.view_link.id)
 			}
 		}

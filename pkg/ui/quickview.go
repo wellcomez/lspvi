@@ -230,7 +230,6 @@ func new_log_view(main *mainui) *logview {
 		view_link: &view_link{up: view_code, right: view_callin},
 		log:       tview.NewTextView(),
 	}
-	ret.boxview = ret.log.Box
 	return ret
 }
 
@@ -601,7 +600,7 @@ func (caller ref_with_caller) ListItem(root string) string {
 		}
 	}
 	gap := max(40, caller.width/2)
-	begin := max(0, v.Range.Start.Character-gap)
+	begin := min(len(line), max(0, v.Range.Start.Character-gap))
 	end := min(len(line), v.Range.Start.Character+gap)
 	path := strings.Replace(v.URI.AsPath().String(), root, "", -1)
 	callerstr := ""

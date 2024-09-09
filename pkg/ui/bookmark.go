@@ -297,7 +297,6 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 		ret.onclick(i)
 	})
 	ret.customlist = a
-	ret.view_link.boxview = ret.customlist.Box
 	ret.customlist.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
 		main.gotoline(loc)

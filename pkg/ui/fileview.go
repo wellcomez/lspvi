@@ -70,7 +70,6 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 			right:   view_code,
 			down:    view_quickview,
 			left:    view_outline_list,
-			boxview: view.Box,
 		},
 		view:    view,
 		Name:    name,
@@ -109,7 +108,7 @@ func menu_zoom(ret *file_tree_view, zoomin bool) context_menu_item {
 	external_open := context_menu_item{
 		item: create_menu_item(name),
 		handle: func() {
-			ret.main._editor_area_layout.zoom(zoomin, view_file)
+			// ret.main._editor_area_layout.zoom(zoomin, view_file)
 		},
 	}
 	return external_open

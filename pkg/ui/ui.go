@@ -3,6 +3,7 @@ package mainui
 
 import (
 	"context"
+	// "encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -20,9 +21,24 @@ var tabs []view_id = []view_id{view_quickview, view_callin, view_uml, view_log, 
 var appname = "lspvi"
 var httport = 0
 
+type flex_area struct {
+	*tview.Flex
+	*view_link
+	main *mainui
+	name string
+}
+func new_flex_area(id view_id, main *mainui) *flex_area {
+	return &flex_area{
+		tview.NewFlex(),
+		&view_link{id: id},
+		main,
+		id.getname(),
+	}
+}
+
 type rootlayout struct {
-	editor_area *tview.Flex
-	console     *tview.Flex
+	editor_area *flex_area
+	console     *flex_area
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
 	mainlayout  *tview.Flex
@@ -34,32 +50,32 @@ type rootlayout struct {
 // editor_area_fouched
 
 type mainui struct {
-	fileexplorer        *file_tree_view
-	codeview            *CodeView
-	lspmgr              *lspcore.LspWorkspace
-	symboltree          *SymbolTreeView
-	quickview           *quick_view
-	bk                  *bookmark_view
-	activate_tab_name   string
-	page                *tview.Pages
-	callinview          *callinview
-	tabs                *ButtonGroup
-	root                string
-	app                 *tview.Application
-	uml                 *umlview
-	bf                  *BackForward
-	bookmark            *proj_bookmark
-	log                 *logview
-	cmdline             *cmdline
-	prefocused          view_id
-	searchcontext       *GenericSearch
-	statusbar           *tview.TextView
-	layout              *rootlayout
-	console_index_list  *qf_index_view
-	right_context_menu  *contextmenu
-	_editor_area_layout *editor_area_layout
-	tty                 bool
-	ws                  string
+	fileexplorer       *file_tree_view
+	codeview           *CodeView
+	lspmgr             *lspcore.LspWorkspace
+	symboltree         *SymbolTreeView
+	quickview          *quick_view
+	bk                 *bookmark_view
+	activate_tab_name  string
+	page               *tview.Pages
+	callinview         *callinview
+	tabs               *ButtonGroup
+	root               string
+	app                *tview.Application
+	uml                *umlview
+	bf                 *BackForward
+	bookmark           *proj_bookmark
+	log                *logview
+	cmdline            *cmdline
+	prefocused         view_id
+	searchcontext      *GenericSearch
+	statusbar          *tview.TextView
+	layout             *rootlayout
+	console_index_list *qf_index_view
+	right_context_menu *contextmenu
+	// _editor_area_layout *editor_area_layout
+	tty bool
+	ws  string
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
@@ -68,11 +84,11 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 }
 
 func (m *mainui) zoom(zoomin bool) {
-	viewid := m.get_focus_view_id()
-	m._editor_area_layout.zoom(zoomin, viewid)
+	// viewid := m.get_focus_view_id()
+	// m._editor_area_layout.zoom(zoomin, viewid)
 }
 func (m *mainui) toggle_view(id view_id) {
-	m._editor_area_layout.toggle_view(id)
+	// m._editor_area_layout.toggle_view(id)
 }
 func (r *mainui) editor_area_fouched() {
 	// log.Println("change foucse", r.GetFocusViewId())
@@ -574,7 +590,8 @@ func MainUI(arg *Arguments) {
 	console.AddPage(main.bk.Name, main.bk, true, false)
 
 	main.console_index_list = new_qf_index_view(main)
-	console_layout := tview.NewFlex().AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
+	console_layout := new_flex_area(view_console_area, main)
+	console_layout.AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
 	main.reload_index_list()
 
 	main.page = console
@@ -584,12 +601,13 @@ func MainUI(arg *Arguments) {
 
 	//   console.SetBorder(true)
 	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
-	main._editor_area_layout = new_editor_area_config(main, &lspviroot)
+	// main._editor_area_layout = new_editor_area_config(main, &lspviroot)
 	editor_area :=
-		tview.NewFlex().SetDirection(tview.FlexColumn).
-			AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
-			AddItem(codeview.view, 0, main.codeview.Width, true).
-			AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
+		new_flex_area(view_code_area, main)
+	editor_area.SetDirection(tview.FlexColumn).
+		AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
+		AddItem(codeview.view, 0, main.codeview.Width, true).
+		AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
 	uml, err := NewUmlView(main, &main.lspmgr.Wk)
 	if err != nil {
 		log.Fatal(err)
@@ -708,7 +726,7 @@ func MainUI(arg *Arguments) {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
 	})
-	resizer := new_editor_resize(main)
+	resizer := new_editor_resize(main,editor_area, []*view_link{main.fileexplorer.view_link, main.codeview.view_link, main.symboltree.view_link})
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 		if content_menu_action == tview.MouseConsumed {
