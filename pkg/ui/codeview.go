@@ -461,8 +461,8 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	// loc1 := code.view.Cursor.Loc
 	a, b := code.handle_mouse_impl(action, event)
 
-	cur := code.view.Cursor
-	log.Println("handle_mouse", cur.CurSelection[0], cur.CurSelection[1])
+	// cur := code.view.Cursor
+	// log.Println("handle_mouse", cur.CurSelection[0], cur.CurSelection[1])
 	// loc2 := code.view.Cursor.Loc
 	// log.Println("action", action, "x:", x, "y:", y, "loc1:", loc1, "loc2:", loc2)
 	return a, b

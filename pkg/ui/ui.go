@@ -746,11 +746,11 @@ func MainUI(arg *Arguments) {
 	resizer2 := new_editor_resize(main, main_layout)
 	resizer2.add(editor_area.view_link, 0)
 	resizer2.add(console_layout.view_link, 1)
-	// go func() {
-	// 	app.QueueUpdate(func() {
-	// 		resizer2.load()
-	// 	})
-	// }()
+	go func() {
+		app.QueueUpdate(func() {
+			resizer2.load()
+		})
+	}()
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 		if content_menu_action == tview.MouseConsumed {

@@ -148,9 +148,9 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 	vv := []tview.Primitive{}
 	for i := 0; i < m.layout.GetItemCount(); i++ {
 		v := m.layout.GetItem(i)
-		x, y, w, h := v.GetRect()
+		// x, y, w, h := v.GetRect()
 		vv = append(vv, v)
-		log.Println(x, y, w, h)
+		// log.Println(x, y, w, h)
 	}
 	m.layout.Clear()
 	for index := range vv {
@@ -160,6 +160,7 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 			if v.index == index {
 				add = true
 				if !v.view_link.Hide {
+					log.Println(index,"update link",v.view_link)
 					if m.layout.dir == tview.FlexColumn {
 						m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Width, false)
 					}
@@ -172,6 +173,7 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 		}
 		if !add {
 			_, _, width, height := item.GetRect()
+			log.Println(index,"update width",width,height)
 			if m.layout.dir == tview.FlexColumn {
 				m.layout.AddItem(item, width, 0, false)
 			}
