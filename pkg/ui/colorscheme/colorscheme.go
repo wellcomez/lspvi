@@ -67,14 +67,23 @@ func main() {
 			continue
 		}
 		ret := []string{}
+		bg := "#263238"
 		for _, v := range data.Data {
-			s := fmt.Sprintf("color-link %s \"%s,#263238\"", v.Group, v.Foreground)
+			if v.Group == "Normal" {
+				if len(v.Background) > 0 {
+					bg = v.Background
+				}
+				break
+			}
+		}
+		for _, v := range data.Data {
+			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), v.Foreground, bg)
 			ret = append(ret, s)
 		}
 		sss := strings.Join(ret, "\n")
 		filename := filepath.Join(dir, fmt.Sprintf("%s.micro", name))
-		err=os.WriteFile(filename, []byte(sss), 0666)
-		if err!=nil{
+		err = os.WriteFile(filename, []byte(sss), 0666)
+		if err != nil {
 			fmt.Println(path, err)
 		}
 	}
