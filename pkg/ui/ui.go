@@ -741,11 +741,16 @@ func MainUI(arg *Arguments) {
 	resizer := new_editor_resize(main, editor_area)
 	resizer.add(main.fileexplorer.view_link, 0)
 	resizer.add(main.codeview.view_link, 1)
-	resizer.add(main.symboltree.view_link, 2)
+	resizer.add(main.symboltree.view_link, 2).load()
 
-	resizer2 := new_vetical_resize(main, main_layout)
+	resizer2 := new_editor_resize(main, main_layout)
 	resizer2.add(editor_area.view_link, 0)
 	resizer2.add(console_layout.view_link, 1)
+	// go func() {
+	// 	app.QueueUpdate(func() {
+	// 		resizer2.load()
+	// 	})
+	// }()
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 		if content_menu_action == tview.MouseConsumed {
@@ -754,10 +759,10 @@ func MainUI(arg *Arguments) {
 		if main.right_context_menu.visible {
 			return nil, tview.MouseConsumed
 		}
-		if resizer2.checkdrag(action, event) {
+		if resizer2.checkdrag(action, event) == tview.MouseConsumed {
 			return nil, tview.MouseConsumed
 		}
-		if resizer.checkdrag(action, event) {
+		if resizer.checkdrag(action, event) == tview.MouseConsumed {
 			return nil, tview.MouseConsumed
 		}
 		if main.layout.spacemenu.visible {

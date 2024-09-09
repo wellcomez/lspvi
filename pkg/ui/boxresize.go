@@ -41,39 +41,41 @@ func (resize *editor_mouse_resize) add(parent *view_link, index int) *editor_mou
 	resize.contorls = append(resize.contorls, a)
 	return resize
 }
-func (resize *vertical_resize) add(parent *view_link, index int) *vertical_resize {
-	main := resize.main
-	a := new_ui_resize(parent, main, resize)
-	a.index = index
-	resize.editor_mouse_resize.contorls = append(resize.editor_mouse_resize.contorls, a)
-	return resize
-}
+
+// func (resize *vertical_resize) add(parent *view_link, index int) *vertical_resize {
+// 	main := resize.main
+// 	a := new_ui_resize(parent, main, resize)
+// 	a.index = index
+// 	resize.editor_mouse_resize.contorls = append(resize.editor_mouse_resize.contorls, a)
+// 	return resize
+// }
 
 type control_size_changer interface {
 	zoom(zoomin bool, viewid *view_link)
 }
-type vertical_resize struct {
-	*editor_mouse_resize
-}
 
-func (vr vertical_resize) zoom(zoomin bool, viewid *view_link) {
-	link := viewid
-	add := 1
-	if zoomin {
-		add = -1
-	}
-	vr.editor_mouse_resize.set_heigth(link, add)
-	vr.editor_mouse_resize.update_editerea_layout()
-}
+// type vertical_resize struct {
+// 	*editor_mouse_resize
+// }
 
-func new_vetical_resize(main *mainui, layout *flex_area) *vertical_resize {
-	ret :=
-		&vertical_resize{
-			editor_mouse_resize: &editor_mouse_resize{layout: layout, main: main},
-		}
+// func (vr vertical_resize) zoom(zoomin bool, viewid *view_link) {
+// 	link := viewid
+// 	add := 1
+// 	if zoomin {
+// 		add = -1
+// 	}
+// 	vr.editor_mouse_resize.set_heigth(link, add)
+// 	vr.editor_mouse_resize.update_editerea_layout()
+// }
 
-	return ret
-}
+// func new_vetical_resize(main *mainui, layout *flex_area) *vertical_resize {
+// 	ret :=
+// 		&vertical_resize{
+// 			editor_mouse_resize: &editor_mouse_resize{layout: layout, main: main},
+// 		}
+
+//		return ret
+//	}
 func new_editor_resize(main *mainui, layout *flex_area) *editor_mouse_resize {
 	ret := &editor_mouse_resize{layout: layout, main: main}
 	// ret.load()
@@ -127,7 +129,6 @@ func (e *editor_mouse_resize) config_filename() string {
 	return filename
 }
 func (e *editor_mouse_resize) set_heigth(link *view_link, a int) {
-	// link := id.to_view_link(e.main)
 	if link != nil {
 		link.Height += a
 		link.Height = max(1, link.Height)
@@ -184,12 +185,15 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 
 func (layout *editor_mouse_resize) zoom(zoomin bool, viewid *view_link) {
 
-	// m := e.main
 	add := 1
 	if zoomin {
 		add = -1
 	}
-	layout.increate(viewid, add)
+	if layout.layout.dir != int(move_direction_hirizon) {
+		layout.set_heigth(viewid, add)
+	} else {
+		layout.increate(viewid, add)
+	}
 	layout.update_editerea_layout()
 
 }
@@ -197,7 +201,7 @@ func (layout *editor_mouse_resize) zoom(zoomin bool, viewid *view_link) {
 func new_ui_resize(vl *view_link, main *mainui, layout control_size_changer) *ui_reszier {
 	return &ui_reszier{box: vl.id.to_box(main), view_link: vl, layout: layout}
 }
-func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) bool {
+func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) tview.MouseAction {
 	end := false
 	for i := range resize.contorls {
 		r := resize.contorls[i]
@@ -205,17 +209,17 @@ func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tc
 			end = true
 		}
 		if r.dragging {
-			return true
+			return tview.MouseConsumed
 		}
 	}
 	if end {
 		for i := range resize.contorls {
 			r := resize.contorls[i]
 			r.dragging = false
-
 		}
+		return tview.MouseConsumed
 	}
-	return false
+	return action
 }
 
 func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) bool {
@@ -227,14 +231,14 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 	uprange_2 := top + 1
 	botom_1 := top + heigth - 1
 	botom_2 := top + heigth + 1
-	bb := tview.NewBox()
-	bb.SetRect(bLeftX-1, top-1, bw+2, heigth+2)
 	x, y := event.Position()
-	inside := bb.InRect(x, y)
 	end := false
 	switch action {
 	case tview.MouseLeftDown:
 		{
+			bb := tview.NewBox()
+			bb.SetRect(bLeftX, top, bw, heigth)
+			inside := bb.InRect(x, y)
 			if !inside {
 				return end
 			}
