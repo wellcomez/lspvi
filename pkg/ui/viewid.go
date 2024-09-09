@@ -12,7 +12,7 @@ type view_link struct {
 	id                          view_id
 	next, left, right, up, down view_id
 	Width                       int
-	Heigth                      int
+	Height                      int
 	Hide                        bool
 	// boxview                     *tview.Box
 	// Primitive                   tview.Primitive

@@ -1,7 +1,10 @@
 package mainui
 
 import (
+	"encoding/json"
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -31,21 +34,55 @@ func new_editor_resize(main *mainui, layout *flex_area, views []*view_link) *edi
 		aaa = append(aaa, a)
 	}
 	ret.contorls = aaa
+	ret.load()
 	return ret
 }
 
+func (e *editor_mouse_resize) load() error {
+	data := map[string]view_link{}
+	filename := e.config_filename()
+	buf, err := os.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(buf, &data)
+	if err != nil {
+		return err
+	}
+	for i := range e.contorls {
+		v := e.contorls[i]
+		if c, ok := data[v.view_link.id.getname()]; ok {
+			v.view_link.Width = c.Width
+			v.view_link.Height = c.Height
+			v.view_link.Hide= c.Hide
+
+		}
+	}
+	e.update_editerea_layout()
+	return nil
+}
 func (e *editor_mouse_resize) save() error {
+	data := map[string]view_link{}
+	for _, v := range e.contorls {
+		data[v.view_link.id.getname()] = *v.view_link
+	}
 	// x := editlayout_config_data{
 	// 	Sym:  *e.main.symboltree.view_link,
 	// 	File: *e.main.fileexplorer.view_link,
 	// 	Code: *e.main.codeview.view_link,
 	// }
-	// buf, err := json.Marshal(x)
-	// if err == nil {
-	// 	return os.WriteFile(e.name, buf, 0666)
-	// }
-	// return err
-	return nil
+	buf, err := json.Marshal(data)
+	if err == nil {
+		filename := e.config_filename()
+		return os.WriteFile(filename, buf, 0666)
+	}
+	return err
+}
+
+func (e *editor_mouse_resize) config_filename() string {
+	name := e.layout.view_link.id.getname() + "_layout.json"
+	filename := filepath.Join(lspviroot.root, name)
+	return filename
 }
 func (e *editor_mouse_resize) increate(link *view_link, a int) {
 	// link := id.to_view_link(e.main)
