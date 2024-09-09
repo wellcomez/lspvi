@@ -27,16 +27,21 @@ type ui_reszier struct {
 	layout         control_size_changer
 	begin_time     time.Time
 	index          int
+	cb_begin_drag  func(*ui_reszier)
+	defaultWidth   int
 }
 type editor_mouse_resize struct {
-	layout   *flex_area
-	contorls []*ui_reszier
-	main     *mainui
+	layout           *flex_area
+	contorls         []*ui_reszier
+	main             *mainui
+	cb_update_layout func()
+	cb_begin_drag    func(*ui_reszier)
 }
 
 func (resize *editor_mouse_resize) add(parent *view_link, index int) *editor_mouse_resize {
 	main := resize.main
 	a := new_ui_resize(parent, main, resize)
+	a.cb_begin_drag = resize.cb_begin_drag
 	a.index = index
 	resize.contorls = append(resize.contorls, a)
 	return resize
@@ -54,31 +59,9 @@ type control_size_changer interface {
 	zoom(zoomin bool, viewid *view_link)
 }
 
-// type vertical_resize struct {
-// 	*editor_mouse_resize
-// }
-
-// func (vr vertical_resize) zoom(zoomin bool, viewid *view_link) {
-// 	link := viewid
-// 	add := 1
-// 	if zoomin {
-// 		add = -1
-// 	}
-// 	vr.editor_mouse_resize.set_heigth(link, add)
-// 	vr.editor_mouse_resize.update_editerea_layout()
-// }
-
-// func new_vetical_resize(main *mainui, layout *flex_area) *vertical_resize {
-// 	ret :=
-// 		&vertical_resize{
-// 			editor_mouse_resize: &editor_mouse_resize{layout: layout, main: main},
-// 		}
-
-//		return ret
-//	}
-func new_editor_resize(main *mainui, layout *flex_area) *editor_mouse_resize {
-	ret := &editor_mouse_resize{layout: layout, main: main}
-	// ret.load()
+func new_editor_resize(main *mainui, layout *flex_area, updatelayout func(), begindrag func(*ui_reszier)) *editor_mouse_resize {
+	ret := &editor_mouse_resize{layout: layout, main: main, cb_update_layout: updatelayout, cb_begin_drag: begindrag}
+	layout.resizer = ret
 	return ret
 }
 
@@ -110,11 +93,6 @@ func (e *editor_mouse_resize) save() error {
 	for _, v := range e.contorls {
 		data[v.view_link.id.getname()] = *v.view_link
 	}
-	// x := editlayout_config_data{
-	// 	Sym:  *e.main.symboltree.view_link,
-	// 	File: *e.main.fileexplorer.view_link,
-	// 	Code: *e.main.codeview.view_link,
-	// }
 	buf, err := json.Marshal(data)
 	if err == nil {
 		filename := e.config_filename()
@@ -159,21 +137,19 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 		for _, v := range m.contorls {
 			if v.index == index {
 				add = true
-				if !v.view_link.Hide {
-					log.Println(index,"update link",v.view_link)
-					if m.layout.dir == tview.FlexColumn {
-						m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Width, false)
-					}
-					if m.layout.dir == tview.FlexRow {
-						m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Height, false)
-					}
-					break
+				log.Println(index, "update link", v.view_link)
+				if m.layout.dir == tview.FlexColumn {
+					m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Width, false)
 				}
+				if m.layout.dir == tview.FlexRow {
+					m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Height, false)
+				}
+				break
 			}
 		}
 		if !add {
 			_, _, width, height := item.GetRect()
-			log.Println(index,"update width",width,height)
+			log.Println(index, "update width", width, height)
 			if m.layout.dir == tview.FlexColumn {
 				m.layout.AddItem(item, width, 0, false)
 			}
@@ -182,19 +158,52 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 			}
 		}
 	}
+	if m.cb_update_layout != nil {
+
+	}
 	// log.Println("file", m.fileexplorer.Width, "sym", m.symboltree.Width)
 }
 
-func (layout *editor_mouse_resize) zoom(zoomin bool, viewid *view_link) {
-
+func (layout *editor_mouse_resize) hide(viewlink *view_link) {
+	var ui *ui_reszier
+	for i := range layout.contorls {
+		v := layout.contorls[i]
+		if v.view_link == viewlink {
+			ui = v
+			break
+		}
+	}
+	if ui == nil {
+		return
+	}
+	if viewlink.Hide {
+		viewlink.Width = ui.defaultWidth
+	} else {
+		ui.defaultWidth = viewlink.Width
+		viewlink.Width = 0
+	}
+	viewlink.Hide = !viewlink.Hide
+	layout.update_editerea_layout()
+}
+func (layout *editor_mouse_resize) zoom(zoomin bool, viewlink *view_link) {
+	has := false
+	for _, v := range layout.contorls {
+		has = v.view_link == viewlink
+		if has {
+			break
+		}
+	}
+	if !has {
+		return
+	}
 	add := 1
 	if zoomin {
 		add = -1
 	}
 	if layout.layout.dir != int(move_direction_hirizon) {
-		layout.set_heigth(viewid, add)
+		layout.set_heigth(viewlink, add)
 	} else {
-		layout.increate(viewid, add)
+		layout.increate(viewlink, add)
 	}
 	layout.update_editerea_layout()
 
@@ -274,14 +283,17 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 			resize.beginX = x
 			resize.beginY = y
 			resize.begin_time = time.Now()
+			if resize.cb_begin_drag != nil {
+				resize.cb_begin_drag(resize)
+			}
 		}
 	case tview.MouseMove:
 		{
 			if resize.dragging {
 				Duration := time.Since(resize.begin_time)
 				if Duration > time.Second {
-					resize.dragging = false
 					resize.box.Blur()
+					resize.drag_off()
 					return end
 				}
 				zoomin := false
@@ -305,7 +317,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 	default:
 		if resize.dragging {
 			resize.box.Focus(nil)
-			resize.dragging = false
+			resize.drag_off()
 			end = true
 		}
 	}
@@ -317,21 +329,9 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 	return end
 }
 
-func check_hirizon(y int, top int, heigth int, x int, bLeftX int, resize *ui_reszier, bRightX int) bool {
-	yes := false
-	if y >= top && y <= top+heigth {
-		yes = true
-		if x >= bLeftX-1 && x <= bLeftX+1 {
-			resize.left = move_direction_hirizon
-			yes = true
-		} else if x >= bRightX-1 && x <= bRightX+1 {
-			resize.left = move_direction_hirizon
-			yes = true
-		} else {
-			return false
-		}
-	} else {
-		return false
+func (resize *ui_reszier) drag_off() {
+	resize.dragging = false
+	if resize.cb_begin_drag != nil {
+		resize.cb_begin_drag(resize)
 	}
-	return yes
 }

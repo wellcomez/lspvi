@@ -21,12 +21,14 @@ var tabs []view_id = []view_id{view_quickview, view_callin, view_uml, view_log, 
 var appname = "lspvi"
 var httport = 0
 
+// flex_area
 type flex_area struct {
 	*tview.Flex
 	*view_link
-	main *mainui
-	name string
-	dir  int
+	main    *mainui
+	name    string
+	dir     int
+	resizer *editor_mouse_resize
 }
 
 func (v *flex_area) set_dir(d int) {
@@ -41,6 +43,7 @@ func new_flex_area(id view_id, main *mainui) *flex_area {
 		main,
 		id.getname(),
 		tview.FlexColumn,
+		nil,
 	}
 }
 
@@ -92,17 +95,19 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 }
 
 func (m *mainui) zoom(zoomin bool) {
-	// viewid := m.get_focus_view_id()
-	// m._editor_area_layout.zoom(zoomin, viewid)
+	viewid := m.get_focus_view_id()
+	m.layout.editor_area.resizer.zoom(zoomin, viewid.to_view_link(m))
+	// // m._editor_area_layout.zoom(zoomin, viewid)
 }
 func (m *mainui) toggle_view(id view_id) {
-	// m._editor_area_layout.toggle_view(id)
+	m.layout.editor_area.resizer.hide(id.to_view_link(m))
 }
-func (r *mainui) editor_area_fouched() {
-	// log.Println("change foucse", r.GetFocusViewId())
-	r.layout.mainlayout.ResizeItem(r.layout.editor_area, 0, 3)
-	r.layout.mainlayout.ResizeItem(r.layout.console, 0, 2)
-}
+
+// func (r *mainui) editor_area_fouched() {
+// 	// log.Println("change foucse", r.GetFocusViewId())
+// 	r.layout.mainlayout.ResizeItem(r.layout.editor_area, 0, 3)
+// 	r.layout.mainlayout.ResizeItem(r.layout.console, 0, 2)
+// }
 
 // OnLspCallTaskInViewResovled implements lspcore.lsp_data_changed.
 func (m *mainui) OnLspCallTaskInViewResovled(stacks *lspcore.CallInTask) {
@@ -738,12 +743,20 @@ func MainUI(arg *Arguments) {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
 	})
-	resizer := new_editor_resize(main, editor_area)
+	resizer := new_editor_resize(main, editor_area, nil, nil)
 	resizer.add(main.fileexplorer.view_link, 0)
 	resizer.add(main.codeview.view_link, 1)
 	resizer.add(main.symboltree.view_link, 2).load()
 
-	resizer2 := new_editor_resize(main, main_layout)
+	resizer2 := new_editor_resize(main, main_layout, func() {}, func(u *ui_reszier) {
+		if !u.dragging {
+			go func() {
+				main.app.QueueUpdate(func() {
+					main.codeview.Load(main.codeview.filename)
+				})
+			}()
+		}
+	})
 	resizer2.add(editor_area.view_link, 0)
 	resizer2.add(console_layout.view_link, 1)
 	go func() {
@@ -1095,13 +1108,6 @@ func (main mainui) open_picker_history() {
 func (main mainui) open_document_symbol_picker() {
 	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
 }
-
-// func (m *mainui) OnGrep() {
-// 	if m.prefocused == view_code || m.codeview.view.HasFocus() {
-// 		m.set_viewid_focus(view_fzf)
-// 		m.codeview.OnGrep()
-// 	}
-// }
 
 type Search interface {
 	Findall(key string) []int
