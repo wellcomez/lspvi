@@ -31,6 +31,7 @@ const (
 	view_bookmark
 	view_code_area
 	view_console_area
+	view_main_layout
 )
 
 var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin}
@@ -84,9 +85,14 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 		return m.symboltree.view_link
 	case view_bookmark:
 		return m.bk.view_link
-	default:
-		return nil
+	case view_main_layout:
+		return m.layout.mainlayout.view_link
+	case view_code_area:
+		return m.layout.editor_area.view_link
+	case view_console_area:
+		return m.layout.console.view_link
 	}
+	return nil
 }
 func find_name_to_viewid(m string) view_id {
 	for _, v := range all_view_list {
@@ -189,9 +195,10 @@ func (viewid view_id) Primitive(m *mainui) tview.Primitive {
 		return m.layout.editor_area
 	case view_console_area:
 		return m.layout.console
-	default:
-		return nil
+	case view_main_layout:
+		return m.layout.mainlayout
 	}
+	return nil
 }
 
 func (viewid view_id) to_box(m *mainui) *tview.Box {
@@ -218,9 +225,10 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 		return m.layout.editor_area.Box
 	case view_console_area:
 		return m.layout.console.Box
-	default:
-		return nil
+	case view_main_layout:
+		return m.layout.mainlayout.Box
 	}
+	return nil
 }
 
 var all_view_list = []view_id{
@@ -235,6 +243,7 @@ var all_view_list = []view_id{
 	view_bookmark,
 	view_code_area,
 	view_console_area,
+	view_main_layout,
 }
 var all_view_name = []string{
 	"none",
@@ -249,6 +258,7 @@ var all_view_name = []string{
 	"bookmark",
 	"view_code_area",
 	"view_console_area",
+	"view_main_layout",
 }
 
 func (viewid view_id) getname() string {

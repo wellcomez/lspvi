@@ -126,7 +126,7 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 	preview := tview.NewFlex()
 	layout.AddItem(preview, 0, 7, false)
 	ret := &umlview{
-		view_link: &view_link{up: view_code, left: view_callin, right: view_bookmark},
+		view_link: &view_link{id: view_uml, up: view_code, left: view_callin, right: view_bookmark},
 		preview:   preview,
 		file:      file,
 		layout:    layout,

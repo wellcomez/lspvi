@@ -55,6 +55,7 @@ func new_callview(main *mainui) *callinview {
 	view := tview.NewTreeView()
 	ret := &callinview{
 		view_link: &view_link{
+			id:    view_callin,
 			right: view_uml,
 			up:    view_code,
 			left:  view_quickview,

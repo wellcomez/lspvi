@@ -26,13 +26,21 @@ type flex_area struct {
 	*view_link
 	main *mainui
 	name string
+	dir  int
 }
+
+func (v *flex_area) set_dir(d int) {
+	v.dir = d
+	v.Flex.SetDirection(d)
+}
+
 func new_flex_area(id view_id, main *mainui) *flex_area {
 	return &flex_area{
 		tview.NewFlex(),
 		&view_link{id: id},
 		main,
 		id.getname(),
+		tview.FlexColumn,
 	}
 }
 
@@ -41,7 +49,7 @@ type rootlayout struct {
 	console     *flex_area
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
-	mainlayout  *tview.Flex
+	mainlayout  *flex_area
 	dialog      *fzfmain
 	spacemenu   *space_menu
 	// hide_cb     func()
@@ -604,7 +612,8 @@ func MainUI(arg *Arguments) {
 	// main._editor_area_layout = new_editor_area_config(main, &lspviroot)
 	editor_area :=
 		new_flex_area(view_code_area, main)
-	editor_area.SetDirection(tview.FlexColumn).
+	editor_area.set_dir(tview.FlexColumn)
+	editor_area.
 		AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
 		AddItem(codeview.view, 0, main.codeview.Width, true).
 		AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
@@ -682,12 +691,15 @@ func MainUI(arg *Arguments) {
 	var tabid view_id = view_quickview
 	fzttab := group.Find(tabid.getname())
 	fzttab.Focus(nil)
-	main_layout :=
-		tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(editor_area, 0, 3, true).
-			AddItem(console_layout, 0, 2, false).
-			AddItem(tab_area, 1, 0, false).
-			AddItem(main.cmdline.input, 3, 1, false)
+	main_layout := new_flex_area(view_main_layout, main)
+	main_layout.set_dir(tview.FlexRow)
+	editor_area.Height = 100
+	console_layout.Height = 80
+	main_layout.
+		AddItem(editor_area, 0, editor_area.Height, true).
+		AddItem(console_layout, 0, console_layout.Height, false).
+		AddItem(tab_area, 1, 0, false).
+		AddItem(main.cmdline.input, 3, 1, false)
 	main_layout.SetBorder(true)
 	main.layout = &rootlayout{
 		editor_area: editor_area,
@@ -726,13 +738,23 @@ func MainUI(arg *Arguments) {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
 	})
-	resizer := new_editor_resize(main,editor_area, []*view_link{main.fileexplorer.view_link, main.codeview.view_link, main.symboltree.view_link})
+	resizer := new_editor_resize(main, editor_area)
+	resizer.add(main.fileexplorer.view_link, 0)
+	resizer.add(main.codeview.view_link, 1)
+	resizer.add(main.symboltree.view_link, 2)
+
+	resizer2 := new_vetical_resize(main, main_layout)
+	resizer2.add(editor_area.view_link, 0)
+	resizer2.add(console_layout.view_link, 1)
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 		if content_menu_action == tview.MouseConsumed {
 			return nil, tview.MouseConsumed
 		}
 		if main.right_context_menu.visible {
+			return nil, tview.MouseConsumed
+		}
+		if resizer2.checkdrag(action, event) {
 			return nil, tview.MouseConsumed
 		}
 		if resizer.checkdrag(action, event) {

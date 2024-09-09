@@ -227,7 +227,7 @@ func (menu quick_view_context) menuitem() []context_menu_item {
 
 func new_log_view(main *mainui) *logview {
 	ret := &logview{
-		view_link: &view_link{up: view_code, right: view_callin},
+		view_link: &view_link{id: view_log, up: view_code, right: view_callin},
 		log:       tview.NewTextView(),
 	}
 	return ret
@@ -335,7 +335,7 @@ func new_quikview(main *mainui) *quick_view {
 		}},
 	}
 	ret := &quick_view{
-		view_link: &view_link{up: view_code, right: view_callin},
+		view_link: &view_link{id: view_quickview, up: view_code, right: view_callin},
 		Name:      vid.getname(),
 		view:      view,
 		main:      main,

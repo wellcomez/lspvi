@@ -11,30 +11,72 @@ import (
 	"github.com/rivo/tview"
 )
 
+type move_direction int
+
+const (
+	move_direction_vetical move_direction = iota
+	move_direction_hirizon
+)
+
 type ui_reszier struct {
 	box            *tview.Box
 	view_link      *view_link
 	beginX, beginY int
 	dragging       bool
-	left           bool
-	layout         *editor_mouse_resize
+	left           move_direction
+	layout         control_size_changer
 	begin_time     time.Time
+	index          int
 }
 type editor_mouse_resize struct {
 	layout   *flex_area
-	contorls []ui_reszier
+	contorls []*ui_reszier
 	main     *mainui
 }
 
-func new_editor_resize(main *mainui, layout *flex_area, views []*view_link) *editor_mouse_resize {
-	ret := &editor_mouse_resize{layout: layout, main: main}
-	aaa := []ui_reszier{}
-	for _, v := range views {
-		a := new_ui_resize(v, ret)
-		aaa = append(aaa, a)
+func (resize *editor_mouse_resize) add(parent *view_link, index int) *editor_mouse_resize {
+	main := resize.main
+	a := new_ui_resize(parent, main, resize)
+	a.index = index
+	resize.contorls = append(resize.contorls, a)
+	return resize
+}
+func (resize *vertical_resize) add(parent *view_link, index int) *vertical_resize {
+	main := resize.main
+	a := new_ui_resize(parent, main, resize)
+	a.index = index
+	resize.editor_mouse_resize.contorls = append(resize.editor_mouse_resize.contorls, a)
+	return resize
+}
+
+type control_size_changer interface {
+	zoom(zoomin bool, viewid *view_link)
+}
+type vertical_resize struct {
+	*editor_mouse_resize
+}
+
+func (vr vertical_resize) zoom(zoomin bool, viewid *view_link) {
+	link := viewid
+	add := 1
+	if zoomin {
+		add = -1
 	}
-	ret.contorls = aaa
-	ret.load()
+	vr.editor_mouse_resize.set_heigth(link, add)
+	vr.editor_mouse_resize.update_editerea_layout()
+}
+
+func new_vetical_resize(main *mainui, layout *flex_area) *vertical_resize {
+	ret :=
+		&vertical_resize{
+			editor_mouse_resize: &editor_mouse_resize{layout: layout, main: main},
+		}
+
+	return ret
+}
+func new_editor_resize(main *mainui, layout *flex_area) *editor_mouse_resize {
+	ret := &editor_mouse_resize{layout: layout, main: main}
+	// ret.load()
 	return ret
 }
 
@@ -54,7 +96,7 @@ func (e *editor_mouse_resize) load() error {
 		if c, ok := data[v.view_link.id.getname()]; ok {
 			v.view_link.Width = c.Width
 			v.view_link.Height = c.Height
-			v.view_link.Hide= c.Hide
+			v.view_link.Hide = c.Hide
 
 		}
 	}
@@ -84,6 +126,14 @@ func (e *editor_mouse_resize) config_filename() string {
 	filename := filepath.Join(lspviroot.root, name)
 	return filename
 }
+func (e *editor_mouse_resize) set_heigth(link *view_link, a int) {
+	// link := id.to_view_link(e.main)
+	if link != nil {
+		link.Height += a
+		link.Height = max(1, link.Height)
+		e.save()
+	}
+}
 func (e *editor_mouse_resize) increate(link *view_link, a int) {
 	// link := id.to_view_link(e.main)
 	if link != nil {
@@ -94,10 +144,39 @@ func (e *editor_mouse_resize) increate(link *view_link, a int) {
 }
 func (m *editor_mouse_resize) update_editerea_layout() {
 	// m := e.main
+	vv := []tview.Primitive{}
+	for i := 0; i < m.layout.GetItemCount(); i++ {
+		v := m.layout.GetItem(i)
+		x, y, w, h := v.GetRect()
+		vv = append(vv, v)
+		log.Println(x, y, w, h)
+	}
 	m.layout.Clear()
-	for _, v := range m.contorls {
-		if !v.view_link.Hide {
-			m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Width, false)
+	for index := range vv {
+		add := false
+		item := vv[index]
+		for _, v := range m.contorls {
+			if v.index == index {
+				add = true
+				if !v.view_link.Hide {
+					if m.layout.dir == tview.FlexColumn {
+						m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Width, false)
+					}
+					if m.layout.dir == tview.FlexRow {
+						m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Height, false)
+					}
+					break
+				}
+			}
+		}
+		if !add {
+			_, _, width, height := item.GetRect()
+			if m.layout.dir == tview.FlexColumn {
+				m.layout.AddItem(item, width, 0, false)
+			}
+			if m.layout.dir == tview.FlexRow {
+				m.layout.AddItem(item, height, 0, false)
+			}
 		}
 	}
 	// log.Println("file", m.fileexplorer.Width, "sym", m.symboltree.Width)
@@ -115,48 +194,76 @@ func (layout *editor_mouse_resize) zoom(zoomin bool, viewid *view_link) {
 
 }
 
-func new_ui_resize(vl *view_link, layout *editor_mouse_resize) ui_reszier {
-	return ui_reszier{box: vl.id.to_box(layout.main), view_link: vl, layout: layout}
+func new_ui_resize(vl *view_link, main *mainui, layout control_size_changer) *ui_reszier {
+	return &ui_reszier{box: vl.id.to_box(main), view_link: vl, layout: layout}
 }
 func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) bool {
+	end := false
 	for i := range resize.contorls {
-		r := &resize.contorls[i]
-		r.checkdrag(action, event)
+		r := resize.contorls[i]
+		if r.checkdrag(action, event) {
+			end = true
+		}
 		if r.dragging {
 			return true
+		}
+	}
+	if end {
+		for i := range resize.contorls {
+			r := resize.contorls[i]
+			r.dragging = false
+
 		}
 	}
 	return false
 }
 
-func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) {
-	if !resize.box.HasFocus() {
-		resize.dragging = false
-		// resize.box.SetBorderColor(tcell.ColorRed)
-		return
-	}
-	x, y := event.Position()
+func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) bool {
+
 	bLeftX, top, bw, heigth := resize.box.GetRect()
-	bRightX := bLeftX + bw
+	bRightX := bLeftX + bw - 1
+	bottom := top + heigth
+	uprange_1 := top - 1
+	uprange_2 := top + 1
+	botom_1 := top + heigth - 1
+	botom_2 := top + heigth + 1
+	bb := tview.NewBox()
+	bb.SetRect(bLeftX-1, top-1, bw+2, heigth+2)
+	x, y := event.Position()
+	inside := bb.InRect(x, y)
+	end := false
 	switch action {
 	case tview.MouseLeftDown:
 		{
+			if !inside {
+				return end
+			}
 			resize.dragging = false
 			yes := false
 			if y >= top && y <= top+heigth {
-				yes = true
-			} else {
-				return
+				if x >= bLeftX && x <= bLeftX+1 {
+					resize.left = move_direction_hirizon
+					yes = true
+				} else if x >= bRightX-1 && x <= bRightX {
+					resize.left = move_direction_hirizon
+					yes = true
+				}
 			}
-			if x >= bLeftX-1 && x <= bLeftX+1 {
-				resize.left = true
-				yes = true
-			} else if x >= bRightX-1 && x <= bRightX+1 {
-				resize.left = false
-				yes = true
-			} else {
-				return
+			if !yes {
+				if x >= bLeftX && x <= bRightX {
+					if uprange_1 <= y && y <= uprange_2 {
+						resize.left = move_direction_vetical
+						yes = true
+					} else if botom_1 <= y && y <= botom_2 {
+						resize.left = move_direction_vetical
+						yes = true
+					}
+				}
 			}
+			if !yes {
+				return end
+			}
+
 			resize.dragging = yes
 			resize.beginX = x
 			resize.beginY = y
@@ -169,28 +276,56 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 				if Duration > time.Second {
 					resize.dragging = false
 					resize.box.Blur()
-					return
+					return end
 				}
-				if x == bRightX || x == bLeftX {
-					return
-				}
-				zoomin := !(x > bRightX)
-				if x < bLeftX {
-					zoomin = false
+				zoomin := false
+				if resize.left == move_direction_hirizon {
+					if x == bRightX || x == bLeftX {
+						return end
+					}
+					zoomin = x > bLeftX && x < bRightX
+				} else if resize.left == move_direction_vetical {
+					if y == top || y == bottom {
+						return end
+					}
+					zoomin = y > top && y < bottom
 				}
 				resize.beginX = x
 				resize.beginY = y
 				resize.layout.zoom(zoomin, resize.view_link)
-				log.Println("zoom in", zoomin, resize.view_link.id)
+				log.Println("zoom in", "zoom:", zoomin, "v:", resize.left, resize.view_link.id)
 			}
 		}
 	default:
 		if resize.dragging {
 			resize.box.Focus(nil)
 			resize.dragging = false
+			end = true
 		}
 	}
 	if resize.dragging {
+		// resize.box.SetBorder(true)
 		resize.box.SetBorderColor(tcell.ColorRed)
 	}
+	end = false
+	return end
+}
+
+func check_hirizon(y int, top int, heigth int, x int, bLeftX int, resize *ui_reszier, bRightX int) bool {
+	yes := false
+	if y >= top && y <= top+heigth {
+		yes = true
+		if x >= bLeftX-1 && x <= bLeftX+1 {
+			resize.left = move_direction_hirizon
+			yes = true
+		} else if x >= bRightX-1 && x <= bRightX+1 {
+			resize.left = move_direction_hirizon
+			yes = true
+		} else {
+			return false
+		}
+	} else {
+		return false
+	}
+	return yes
 }
