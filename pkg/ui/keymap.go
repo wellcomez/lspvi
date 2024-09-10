@@ -44,6 +44,7 @@ const (
 	next_window_up
 	file_in_file
 	file_in_file_vi_loop
+	brack_match
 	arrow_up
 	arrow_down
 	arrow_left
@@ -159,6 +160,11 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{id, "file in file vi", func() {
 			m.codeview.OnFindInfile(false, false)
 		}}
+	case brack_match:{
+		return cmdactor{id, "match", func() { 
+			m.codeview.view.JumpToMatchingBrace() 
+		}}
+	}
 	case arrow_up:
 		return cmdactor{id, "up", func() { m.codeview.action_key_up() }}
 	case arrow_down:
@@ -273,6 +279,7 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, goto_callin).esc_key(split(chr_goto_callin)),
 		get_cmd_actor(m, goto_refer).esc_key(split(chr_goto_refer)),
 		get_cmd_actor(m, arrow_up).esc_key([]string{"k"}),
+		get_cmd_actor(m, brack_match).esc_key([]string{"%"}),
 		get_cmd_actor(m, arrow_up).esc_key([]string{key_up}),
 		get_cmd_actor(m, arrow_left).esc_key([]string{"h"}),
 		get_cmd_actor(m, arrow_left).esc_key([]string{key_left}),
