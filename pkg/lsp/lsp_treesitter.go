@@ -36,30 +36,33 @@ type TreeSitter struct {
 	sourceCode []byte
 	Symbols    []TreeSitterSymbol
 }
-
+func TreesitterCheckIsSourceFile(filename string)bool{
+	for _, v := range lsp_lang_map {
+		if v.IsMe(filename) {
+			return true
+		}
+	}
+	return false
+}
+var lsp_lang_map =map[string]lsplang{
+	"go":lsp_lang_go{},
+	"c" : lsp_lang_cpp{},
+	"py":lsp_lang_py{},
+	"js":lsp_ts{},
+}
+var ts_lang_map =map[string]*sitter.Language{
+	"go":treego.GetLanguage(),
+	"c" : treec.GetLanguage(),
+	"py":treepyt.GetLanguage(),
+	"js":ts.GetLanguage(),
+}
 func (t *TreeSitter) Init() error {
-	langgo := lsp_lang_go{}
-	if langgo.IsMe(t.filename) {
-		t.langname = "go"
-		t.Loadfile(treego.GetLanguage())
-		return nil
-	}
-	c := lsp_lang_cpp{}
-	if c.IsMe(t.filename) {
-		t.langname = "c"
-		t.Loadfile(treec.GetLanguage())
-		return nil
-	}
-	py := lsp_lang_py{}
-	if py.IsMe(t.filename) {
-		t.langname = "py"
-		t.Loadfile(treepyt.GetLanguage())
-		return nil
-	}
-	_ts := lsp_ts{}
-	if _ts.IsMe(t.filename) {
-		t.langname = "js"
-		t.Loadfile(ts.GetLanguage())
+	for k, v := range lsp_lang_map {
+		if v.IsMe(t.filename) {
+			t.langname = k
+			t.Loadfile(ts_lang_map[k])
+			return nil
+		}
 	}
 	return fmt.Errorf("not implemented")
 }

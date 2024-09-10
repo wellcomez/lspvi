@@ -563,166 +563,14 @@ func MainUI(arg *Arguments) {
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
 	main.app = app
-	codeview := NewCodeView(main)
-	codeview.not_preview = true
-	codeview.Width = 8
-	// main.fzf = new_fzfview()
-	symbol_tree := NewSymbolTreeView(main)
-	symbol_tree.Width = 2
-	main.symboltree = symbol_tree
-	symbol_tree.view.SetBorder(true)
+	
+	editor_area := create_edit_area(main)
+	console_layout, tab_area := create_console_area(main)
 
-	main.codeview = codeview
-	codeview.view.SetBorder(true)
-
-	main.lspmgr.Handle = main
-	main.quickview = new_quikview(main)
-	main.bk = new_bookmark_view(main)
-	main.callinview = new_callview(main)
-	// symbol_tree.update()
-
-	main.fileexplorer = new_file_tree(main, "FileExplore", main.root, func(filename string) bool { return true })
-	main.fileexplorer.Width = 2
-	main.fileexplorer.Init()
-	main.fileexplorer.openfile = main.open_file
-	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
-	console := tview.NewPages()
-	console.SetChangedFunc(func() {
-		xx := console.GetPageNames(true)
-		if len(xx) == 1 {
-			main.activate_tab_name = xx[0]
-		}
-		log.Println(strings.Join(xx, ","))
-	})
-	main.log = new_log_view(main)
-	main.log.log.SetText("Started")
-	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
-	console.AddPage(view_log.getname(), main.log.log, true, false)
-	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
-	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
-	console.AddPage(main.bk.Name, main.bk, true, false)
-
-	main.console_index_list = new_qf_index_view(main)
-	console_layout := new_flex_area(view_console_area, main)
-	console_layout.AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
-	main.reload_index_list()
-
-	main.page = console
-	main.page.SetChangedFunc(func() {
-		main.UpdatePageTitle()
-	})
-
-	//   console.SetBorder(true)
-	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
-	// main._editor_area_layout = new_editor_area_config(main, &lspviroot)
-	editor_area :=
-		new_flex_area(view_code_area, main)
-	editor_area.set_dir(tview.FlexColumn)
-	editor_area.
-		AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
-		AddItem(codeview.view, 0, main.codeview.Width, true).
-		AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
-	uml, err := NewUmlView(main, &main.lspmgr.Wk)
-	if err != nil {
-		log.Fatal(err)
-	}
-	main.uml = uml
-	if uml != nil {
-		console.AddPage(uml.Name, uml.layout, true, false)
-	}
-
-	var tabs []string = []string{}
-	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark} {
-		if uml == nil {
-			if v == view_uml {
-				continue
-			}
-		}
-		tabs = append(tabs, v.getname())
-	}
-	group := NewButtonGroup(tabs, main.OnTabChanged)
-	main.tabs = group
-	tab_area := tview.NewFlex()
-	for _, v := range group.tabs {
-		tab_area.AddItem(v, len(v.GetLabel())+2, 1, true)
-	}
-	main.statusbar = tview.NewTextView()
-	main.statusbar.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		// primary, combining, style, width := screen.GetContent(0, 0)
-		// log.Println("---",primary, combining, style, width)
-		viewname := main.getfocusviewname()
-		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
-			viewname = main.searchcontext.view.getname()
-		}
-		titlename := fmt.Sprintf("%s %s", appname, main.root)
-		if main.layout.mainlayout.GetTitle() != titlename {
-			go func(viewname string) {
-				main.app.QueueUpdateDraw(func() {
-					main.layout.mainlayout.SetTitle(viewname)
-				})
-			}(titlename)
-		}
-		cursor := main.codeview.String()
-		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s| ::%5d ", cursor, main.cmdline.Vim.String(), viewname, httport))
-		return main.statusbar.GetInnerRect()
-	})
-	// main.statusbar.SetBorder(true)
-	main.statusbar.SetTextAlign(tview.AlignRight)
-	// main.statusbar.SetText("------------------------------------------------------------------")
-	tab_area.AddItem(tview.NewBox(), 1, 0, false)
-	tab_area.AddItem(main.statusbar, 0, 10, false)
-	mainmenu := tview.NewButton("Menu")
-	mainmenu.SetSelectedFunc(func() {
-		if main.layout.spacemenu.visible {
-			main.layout.spacemenu.closemenu()
-		} else {
-			main.layout.spacemenu.openmenu()
-		}
-	})
-
-	tab_area.AddItem(mainmenu, 10, 0, false)
-
-	main.right_context_menu = new_contextmenu(main)
-	main.right_context_menu.menu_handle = []context_menu_handle{
-		main.codeview.rightmenu,
-		main.quickview.right_context,
-		main.callinview.right_context,
-		main.bk.right_context,
-		main.symboltree.right_context,
-		main.uml.file_right_context,
-		main.fileexplorer.right_context,
-	}
-
-	var tabid view_id = view_quickview
-	fzttab := group.Find(tabid.getname())
-	fzttab.Focus(nil)
-	main_layout := new_flex_area(view_main_layout, main)
-	main_layout.set_dir(tview.FlexRow)
-	editor_area.Height = 100
-	console_layout.Height = 80
-	main_layout.
-		AddItem(editor_area, 0, editor_area.Height, true).
-		AddItem(console_layout, 0, console_layout.Height, false).
-		AddItem(tab_area, 1, 0, false).
-		AddItem(main.cmdline.input, 3, 1, false)
-	main_layout.SetBorder(true)
-	main.layout = &rootlayout{
-		editor_area: editor_area,
-		console:     console_layout,
-		tab_area:    tab_area,
-		cmdline:     main.cmdline.input,
-		mainlayout:  main_layout,
-		dialog:      Newfuzzpicker(main, app),
-	}
-	spacemenu := new_spacemenu(main)
-	spacemenu.menustate = func(s *space_menu) {
-		if s.visible {
-			mainmenu.Focus(nil)
-		} else {
-			mainmenu.Blur()
-		}
-	}
-	main.layout.spacemenu = spacemenu
+	main_layout := main.create_main_layout(editor_area, console_layout, tab_area)
+	mainmenu := main.create_menu_bar(tab_area)
+	
+	main.create_right_context_menu()
 
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
 	if len(filearg) == 0 {
@@ -737,7 +585,6 @@ func MainUI(arg *Arguments) {
 			}, offset: 0}, false)
 		}
 	} else {
-
 		main.OpenFile(filearg, nil)
 	}
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -830,6 +677,186 @@ func MainUI(arg *Arguments) {
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
+}
+
+func (main *mainui)create_right_context_menu() {
+	main.right_context_menu = new_contextmenu(main)
+	main.right_context_menu.menu_handle = []context_menu_handle{
+		main.codeview.rightmenu,
+		main.quickview.right_context,
+		main.callinview.right_context,
+		main.bk.right_context,
+		main.symboltree.right_context,
+		main.uml.file_right_context,
+		main.fileexplorer.right_context,
+	}
+}
+
+func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *flex_area, tab_area *tview.Flex) *flex_area {
+	app := main.app
+	main_layout := new_flex_area(view_main_layout, main)
+	main_layout.set_dir(tview.FlexRow)
+	editor_area.Height = 100
+	console_layout.Height = 80
+	main_layout.
+		AddItem(editor_area, 0, editor_area.Height, true).
+		AddItem(console_layout, 0, console_layout.Height, false).
+		AddItem(tab_area, 1, 0, false).
+		AddItem(main.cmdline.input, 3, 1, false)
+	main_layout.SetBorder(true)
+	main.layout = &rootlayout{
+		editor_area: editor_area,
+		console:     console_layout,
+		tab_area:    tab_area,
+		cmdline:     main.cmdline.input,
+		mainlayout:  main_layout,
+		dialog:      Newfuzzpicker(main, app),
+	}
+	return main_layout
+}
+
+func (main *mainui) create_menu_bar(tab_area *tview.Flex) *tview.Button {
+	main.add_statusbar_to_tabarea(tab_area)
+
+	mainmenu := tview.NewButton("Menu")
+	mainmenu.SetSelectedFunc(func() {
+		if main.layout.spacemenu.visible {
+			main.layout.spacemenu.closemenu()
+		} else {
+			main.layout.spacemenu.openmenu()
+		}
+	})
+
+	tab_area.AddItem(mainmenu, 10, 0, false)
+
+	spacemenu := new_spacemenu(main)
+	spacemenu.menustate = func(s *space_menu) {
+		if s.visible {
+			mainmenu.Focus(nil)
+		} else {
+			mainmenu.Blur()
+		}
+	}
+	main.layout.spacemenu = spacemenu
+	return mainmenu
+}
+
+func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
+	main.statusbar = tview.NewTextView()
+	main.statusbar.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+
+		viewname := main.getfocusviewname()
+		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
+			viewname = main.searchcontext.view.getname()
+		}
+		titlename := fmt.Sprintf("%s %s", appname, main.root)
+		if main.layout.mainlayout.GetTitle() != titlename {
+			go func(viewname string) {
+				main.app.QueueUpdateDraw(func() {
+					main.layout.mainlayout.SetTitle(viewname)
+				})
+			}(titlename)
+		}
+		cursor := main.codeview.String()
+		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s| ::%5d ", cursor, main.cmdline.Vim.String(), viewname, httport))
+		return main.statusbar.GetInnerRect()
+	})
+
+	main.statusbar.SetTextAlign(tview.AlignRight)
+
+	tab_area.AddItem(tview.NewBox(), 1, 0, false)
+	tab_area.AddItem(main.statusbar, 0, 10, false)
+}
+
+func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
+
+	console := tview.NewPages()
+	console.SetChangedFunc(func() {
+		xx := console.GetPageNames(true)
+		if len(xx) == 1 {
+			main.activate_tab_name = xx[0]
+		}
+		log.Println(strings.Join(xx, ","))
+	})
+	main.log = new_log_view(main)
+	main.log.log.SetText("Started")
+	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
+	console.AddPage(view_log.getname(), main.log.log, true, false)
+	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
+	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
+	console.AddPage(main.bk.Name, main.bk, true, false)
+
+	main.console_index_list = new_qf_index_view(main)
+	console_layout := new_flex_area(view_console_area, main)
+	console_layout.AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
+	main.reload_index_list()
+
+	main.page = console
+	main.page.SetChangedFunc(func() {
+		main.UpdatePageTitle()
+	})
+
+	uml, err := NewUmlView(main, &main.lspmgr.Wk)
+	if err != nil {
+		log.Fatal(err)
+	}
+	main.uml = uml
+	if uml != nil {
+		console.AddPage(uml.Name, uml.layout, true, false)
+	}
+
+	var tabs []string = []string{}
+	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark} {
+		if uml == nil {
+			if v == view_uml {
+				continue
+			}
+		}
+		tabs = append(tabs, v.getname())
+	}
+	group := NewButtonGroup(tabs, main.OnTabChanged)
+	main.tabs = group
+	tab_area := tview.NewFlex()
+	for _, v := range group.tabs {
+		tab_area.AddItem(v, len(v.GetLabel())+2, 1, true)
+	}
+	var tabid view_id = view_quickview
+	fzttab := group.Find(tabid.getname())
+	fzttab.Focus(nil)
+	return console_layout, tab_area
+}
+
+func create_edit_area(main *mainui) *flex_area {
+	codeview := NewCodeView(main)
+	codeview.not_preview = true
+	codeview.Width = 8
+
+	symbol_tree := NewSymbolTreeView(main)
+	symbol_tree.Width = 2
+	main.symboltree = symbol_tree
+	symbol_tree.view.SetBorder(true)
+
+	main.codeview = codeview
+	codeview.view.SetBorder(true)
+
+	main.lspmgr.Handle = main
+	main.quickview = new_quikview(main)
+	main.bk = new_bookmark_view(main)
+	main.callinview = new_callview(main)
+
+	main.fileexplorer = new_file_tree(main, "FileExplore", main.root, func(filename string) bool { return true })
+	main.fileexplorer.Width = 2
+	main.fileexplorer.Init()
+	main.fileexplorer.openfile = main.open_file
+
+	editor_area :=
+		new_flex_area(view_code_area, main)
+	editor_area.set_dir(tview.FlexColumn)
+	editor_area.
+		AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
+		AddItem(codeview.view, 0, main.codeview.Width, true).
+		AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
+	return editor_area
 }
 
 func (main *mainui) reload_index_list() {
