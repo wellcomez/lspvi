@@ -1,10 +1,12 @@
 package mainui
 
 import (
+	"embed"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -1030,6 +1032,9 @@ func (code *CodeView) Load(filename string) error {
 	return nil
 }
 
+//go:embed  colorscheme/output
+var load_scheme embed.FS
+
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
@@ -1040,12 +1045,16 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
-			buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
+			// colorscheme/output/dracula.micro
+			path := filepath.Join("colorscheme","output",code.theme+".micro")
+			buf, err := load_scheme.ReadFile(path)
+			// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
 			if err == nil {
 				// colorscheme = femto.ParseColorscheme(string(buf))
 				data = append(data, buf...)
 			}
 			colorscheme = femto.ParseColorscheme(string(data))
+			log.Println(colorscheme)
 		}
 	}
 	code.view.SetColorscheme(colorscheme)
