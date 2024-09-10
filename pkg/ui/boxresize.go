@@ -138,6 +138,11 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 			if v.index == index {
 				add = true
 				log.Println(index, "update link", v.view_link)
+				if v.view_link.Hide {
+					box := tview.NewBox()
+					m.layout.AddItem(box, 0, 0, false)
+					break
+				}
 				if m.layout.dir == tview.FlexColumn {
 					m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Width, false)
 				}
@@ -175,12 +180,6 @@ func (layout *editor_mouse_resize) hide(viewlink *view_link) {
 	}
 	if ui == nil {
 		return
-	}
-	if viewlink.Hide {
-		viewlink.Width = ui.defaultWidth
-	} else {
-		ui.defaultWidth = viewlink.Width
-		viewlink.Width = 0
 	}
 	viewlink.Hide = !viewlink.Hide
 	layout.update_editerea_layout()
