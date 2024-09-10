@@ -1122,6 +1122,9 @@ func (main mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) 
 func (main mainui) open_picker_livegrep() {
 	main.layout.dialog.OpenLiveGrepFzf()
 }
+func (main *mainui) open_colorescheme() {
+	main.layout.dialog.OpenColorFzf()
+}
 func (main mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }

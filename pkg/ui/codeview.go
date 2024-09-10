@@ -1033,21 +1033,20 @@ func (code *CodeView) Load(filename string) error {
 }
 
 //go:embed  colorscheme/output
-var load_scheme embed.FS
+var TreesitterSchemeLoader embed.FS
 
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
+
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
-	// code.view.Buf.Settings["softwrap"] = true
-	// code.view.Buf.Settings["cursorline"] = true
-	// code.view.Buf.Settings["syntax"] = false
+	code.view.Buf.Settings["softwrap"] = lspcore.TreesitterCheckIsSourceFile(filename)
 	var colorscheme femto.Colorscheme
 
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
 			// colorscheme/output/dracula.micro
 			path := filepath.Join("colorscheme", "output", code.theme+".micro")
-			buf, err := load_scheme.ReadFile(path)
+			buf, err := TreesitterSchemeLoader.ReadFile(path)
 			// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
 			if err == nil {
 				// colorscheme = femto.ParseColorscheme(string(buf))
@@ -1056,8 +1055,8 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 			colorscheme = femto.ParseColorscheme(string(data))
 			if n, ok := colorscheme["normal"]; ok {
 				colorscheme["default"] = n
-				_, b, _ := n.Decompose()
-				tview.Styles.PrimitiveBackgroundColor = b
+				// _, b, _ := n.Decompose()
+				// tview.Styles.PrimitiveBackgroundColor = b
 			}
 			log.Println(colorscheme)
 		}

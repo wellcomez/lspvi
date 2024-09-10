@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -35,6 +37,70 @@ type history_picker struct {
 	// listcheck *GridListClickCheck
 }
 
+type color_theme_file struct {
+	treesitter bool
+	filename   string
+	name       string
+}
+type color_pick_impl struct {
+	*fzflist_impl
+	data []color_theme_file
+}
+type color_picker struct {
+	impl *color_pick_impl
+	fzf  *fzf_on_listview
+}
+
+func (pk *color_picker) grid(input *tview.InputField) *tview.Grid {
+	return pk.impl.grid(input)
+}
+
+// UpdateQuery implements picker.
+func (c *color_picker) UpdateQuery(query string) {
+	c.fzf.OnSearch(query, true)
+}
+func (pk color_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	handle := pk.impl.list.InputHandler()
+	handle(event, setFocus)
+}
+
+func (pk color_picker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return pk.handle_key_override
+}
+
+func (c *color_picker) name() string {
+	return "color_picker"
+}
+
+func new_color_picker(v *fzfmain) *color_picker {
+	impl := &color_pick_impl{
+		new_fzflist_impl(nil, v),
+		[]color_theme_file{},
+	}
+	ret := &color_picker{impl: impl}
+	dir := "colorscheme/output"
+	dirs, err := TreesitterSchemeLoader.ReadDir(dir)
+	if err == nil {
+		for i := range dirs {
+			d := dirs[i]
+			a := color_theme_file{
+				false,
+				filepath.Join(dir, d.Name()),
+				d.Name()}
+			ret.impl.data = append(ret.impl.data, a)
+			impl.list.AddItem(a.name, "", func() {
+				log.Println(d)
+			})
+		}
+	}
+	ret.fzf = new_fzf_on_list(ret.impl.list, true)
+	ret.fzf.selected = func(dataindex, listindex int) {
+		a := ret.impl.data[dataindex]
+		log.Println(a)
+	}
+	return ret
+}
+
 // name implements picker.
 func (pk history_picker) name() string {
 	return "history"
@@ -61,7 +127,7 @@ func new_history_picker(v *fzfmain) history_picker {
 	sym.impl.set_fuzz(true)
 	history := NewHistory(lspviroot.history)
 	items := []history_item{}
-	close := func(data_index int,listIndex int) {
+	close := func(data_index int, listIndex int) {
 		v := sym.impl.listdata[data_index]
 		path := v.filepath
 		parent := sym.impl.parent
@@ -77,7 +143,7 @@ func new_history_picker(v *fzfmain) history_picker {
 		index := i
 		// fzf_item_strings = append(fzf_item_strings, dispname)
 		sym.impl.list.AddItem(h.dispname, "", func() {
-			close(index,index)
+			close(index, index)
 		})
 		items = append(items, h)
 	}
