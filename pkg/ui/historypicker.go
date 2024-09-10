@@ -1,11 +1,15 @@
 package mainui
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/pgavlin/femto"
+	"github.com/pgavlin/femto/runtime"
+
 	// fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
@@ -87,9 +91,21 @@ func new_color_picker(v *fzfmain) *color_picker {
 				false,
 				filepath.Join(dir, d.Name()),
 				d.Name()}
+			a.name = a.name[:strings.Index(a.name, ".")]
 			ret.impl.data = append(ret.impl.data, a)
-			impl.list.AddItem(a.name, "", func() {
-				log.Println(d)
+			impl.list.AddItem(fmt.Sprintf("%-30s *ts", a.name), "", func() {
+				ret.on_select(&a)
+			})
+		}
+		files := runtime.Files.ListRuntimeFiles(femto.RTColorscheme)
+		for _, v := range files {
+			a := color_theme_file{
+				name:       v.Name(),
+				treesitter: false,
+			}
+			ret.impl.data = append(ret.impl.data, a)
+			impl.list.AddItem(fmt.Sprintf("%-30s ", a.name), "", func() {
+				ret.on_select(&a)
 			})
 		}
 	}
@@ -97,8 +113,15 @@ func new_color_picker(v *fzfmain) *color_picker {
 	ret.fzf.selected = func(dataindex, listindex int) {
 		a := ret.impl.data[dataindex]
 		log.Println(a)
+		ret.on_select(&a)
 	}
 	return ret
+}
+
+func (pk *color_picker) on_select(c *color_theme_file) {
+	code := pk.impl.parent.main.codeview
+	code.on_change_color(c)
+	pk.impl.parent.hide()
 }
 
 // name implements picker.

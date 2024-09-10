@@ -1035,33 +1035,47 @@ func (code *CodeView) Load(filename string) error {
 //go:embed  colorscheme/output
 var TreesitterSchemeLoader embed.FS
 
+func (code *CodeView) on_change_color(c *color_theme_file) {
+	code.theme = c.name
+	code.change_theme()
+}
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
 
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
 	code.view.Buf.Settings["softwrap"] = lspcore.TreesitterCheckIsSourceFile(filename)
-	var colorscheme femto.Colorscheme
+	// colorscheme/output/dracula.micro
+	// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
+	// colorscheme = femto.ParseColorscheme(string(buf))
+	// _, b, _ := n.Decompose()
+	// tview.Styles.PrimitiveBackgroundColor = b
+	code.change_theme()
+}
 
+func (code *CodeView) change_theme() {
+	var colorscheme femto.Colorscheme
+	micro_buffer := []byte{}
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
-			// colorscheme/output/dracula.micro
-			path := filepath.Join("colorscheme", "output", code.theme+".micro")
-			buf, err := TreesitterSchemeLoader.ReadFile(path)
-			// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
-			if err == nil {
-				// colorscheme = femto.ParseColorscheme(string(buf))
-				data = append(data, buf...)
-			}
-			colorscheme = femto.ParseColorscheme(string(data))
-			if n, ok := colorscheme["normal"]; ok {
-				colorscheme["default"] = n
-				// _, b, _ := n.Decompose()
-				// tview.Styles.PrimitiveBackgroundColor = b
-			}
-			log.Println(colorscheme)
+			micro_buffer = data
+
 		}
 	}
-	code.view.SetColorscheme(colorscheme)
+	path := filepath.Join("colorscheme", "output", code.theme+".micro")
+	buf, err := TreesitterSchemeLoader.ReadFile(path)
+
+	if err == nil {
+		micro_buffer = append(micro_buffer, buf...)
+	}
+	if len(micro_buffer) > 0 {
+		colorscheme = femto.ParseColorscheme(string(micro_buffer))
+		if n, ok := colorscheme["normal"]; ok {
+			colorscheme["default"] = n
+
+		}
+		log.Println(colorscheme)
+		code.view.SetColorscheme(colorscheme)
+	}
 }
 func (code *CodeView) save_selection(s string) {
 }
