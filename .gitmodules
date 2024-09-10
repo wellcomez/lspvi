@@ -6,3 +6,6 @@
 [submodule "pkg/femto"]
 	path = pkg/femto
 	url = git@github.com:wellcomez/femto.git
+[submodule "pkg/go-tree-sitter"]
+	path = pkg/go-tree-sitter
+	url = git@github.com:wellcomez/go-tree-sitter.git

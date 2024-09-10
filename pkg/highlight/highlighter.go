@@ -1,9 +1,11 @@
 package femto
 
 import (
+	// "log"
 	"regexp"
 	"strings"
 	"unicode/utf8"
+
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -232,6 +234,15 @@ func (h *Highlighter) highlightRegion(highlights LineMatch, start int, canMatchE
 	return highlights
 }
 
+// AddColoreTheme
+func AddColoreTheme(colore []string) {
+	for _, groupStr := range colore {
+		if _, ok := Groups[groupStr]; !ok {
+			numGroups++
+			Groups[groupStr] = numGroups
+		}
+	}
+}
 func (h *Highlighter) highlightEmptyRegion(highlights LineMatch, start int, canMatchEnd bool, lineNum int, line []byte, statesOnly bool) LineMatch {
 	lineLen := utf8.RuneCount(line)
 	if lineLen == 0 {
@@ -343,14 +354,38 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 			break
 		}
 		symbol_of_line := []int{}
+		line := input.LineBytes(i)
+		var match_tree_match LineMatch = make(LineMatch)
 		if h.Tree != nil {
 			for symi, v := range h.Tree.Symbols {
 				if v.Begin.Row == uint32(i) {
 					symbol_of_line = append(symbol_of_line, symi)
+					x := []string{"@" + v.SymobName, v.SymobName}
+					ind := strings.Index(v.SymobName, ".")
+					if ind > 0 {
+						s := v.SymobName[0:ind]
+						x = append(x, "@"+s)
+						x = append(x, s)
+					}
+					for _, key := range x {
+						if value, ok := Groups[key]; ok {
+							if _, ok := match_tree_match[int(v.Begin.Column)]; ok {
+								// log.Println("===hh>>", i, v.Begin.Column, ":", v.End.Column, groupvalue)
+							} else {
+								match_tree_match[int(v.Begin.Column)] = value
+								match_tree_match[int(v.End.Column)] = 0
+								// log.Println("===hh>>", i, v.Begin.Column, ":", v.End.Column, key, string(line[v.Begin.Column:v.End.Column]))
+							}
+							break
+						}
+					}
 				}
 			}
 		}
-		line := input.LineBytes(i)
+		if len(match_tree_match) > 1 {
+			input.SetMatch(i, match_tree_match)
+			continue
+		}
 		highlights := make(LineMatch)
 
 		var match LineMatch
@@ -361,10 +396,10 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 					sym := h.Tree.Symbols[v]
 					if _, ok := match[int(sym.Begin.Column)]; !ok {
 						// for iGroups
-						if group,ok:=Groups[sym.SymobName];ok{
-							match[int(sym.Begin.Column)]=group	
-							if _,ok:=match[int(sym.End.Column)];!ok{
-								match[int(sym.End.Column)]=0
+						if group, ok := Groups[sym.SymobName]; ok {
+							match[int(sym.Begin.Column)] = group
+							if _, ok := match[int(sym.End.Column)]; !ok {
+								match[int(sym.End.Column)] = 0
 							}
 						}
 						// hi[int(sym.Begin.Column)] = Group(sym.Type)oups

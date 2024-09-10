@@ -6,6 +6,8 @@ replace zen108.com/lspsrv => ./pkg/lspr
 
 replace github.com/pgavlin/femto => ./pkg/femto
 
+replace github.com/smacker/go-tree-sitter => ./pkg/go-tree-sitter
+
 require (
 	github.com/charlievieth/fastwalk v1.0.8
 	github.com/reinhrst/fzf-lib v0.9.0
@@ -21,10 +23,15 @@ require (
 	github.com/creack/pty v1.1.23
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.4.1
-	github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82
-	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
+	// github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82
+	// github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
+	github.com/smacker/go-tree-sitter v0.0.0-00010101000000-000000000000
+	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
 )
 
 require (

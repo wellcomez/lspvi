@@ -2,7 +2,7 @@ from os import read
 import tree_sitter
 
 # 初始化JavaScript解析器
-go_so="/nvim.plugin/nvim-treesitter/parser/go.so"
+go_so="/home/z/nvim.plugin/nvim-treesitter/parser/go.so"
 lang= tree_sitter.Language(go_so, 'go')
 parser=tree_sitter.Parser()
 
@@ -22,6 +22,6 @@ for match in matches:
     node, index = match
     func_name = code[node.start_byte:node.end_byte]
     # print(f"Function name: {func_name.decode('utf8')}")
-    print(index,node,"\n")
+    print("%-10s"%(func_name),"->","%30s"%(index),"-","%-10s"%(node.type))
 # 打印树结构
 print(tree.root_node.sexp())

@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
+	// "strings"
+
 	sitter "github.com/smacker/go-tree-sitter"
 
 	treec "github.com/smacker/go-tree-sitter/c"
@@ -76,22 +78,34 @@ func (t *TreeSitter) load_hightlight() error {
 	}
 	qc := sitter.NewQueryCursor()
 	qc.Exec(q, t.tree.RootNode())
-
 	for {
 		m, ok := qc.NextMatch()
 		if !ok {
 			break
 		}
 		// Apply predicates filtering
-		m = qc.FilterPredicates(m, t.sourceCode)
-		for _, c := range m.Captures {
-			x := c.Node.Symbol()
+		// m = qc.FilterPredicates(m, t.sourceCode)
+		for i := range m.Captures {
+			c := m.Captures[i]
+
+			captureName := q.CaptureNameForId(c.Index)
+			// symbol := c.Node.Symbol()
 			start := c.Node.StartPoint()
 			end := c.Node.EndPoint()
-			log.Println("symbolname", t.lang.SymbolName(x), "symbotype:", t.lang.SymbolType(x), start, end, c.Node.Content(t.sourceCode))
-			s := TreeSitterSymbol{Point(start), Point(end), t.lang.SymbolName(x)}
+			// name := c.Node.Content(t.sourceCode)
+			// symbolname := t.lang.SymbolName(symbol)
+			// log.Println(strings.Join([]string{symbolname, captureName}, "."), symbolname, symbol, c.Node.Type(), start, end, name)
+			// log.Println(captureName, symbolname, start, end, name)
+			hlname := captureName
+			s := TreeSitterSymbol{Point(start), Point(end), hlname}
 			t.Symbols = append(t.Symbols, s)
 		}
+		// match, a, b := qc.NextCapture()
+		// println(match, a, b)
+		// for _, v := range match.Captures {
+		// println(v)
+		// }
+
 	}
 	return nil
 }

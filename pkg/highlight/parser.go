@@ -233,7 +233,6 @@ func resolveIncludesInRegion(files []*File, region *region) {
 		r.parent = region
 	}
 }
-
 func parseRules(input []interface{}, curRegion *region) (ru *rules, err error) {
 	defer func() {
 		if r := recover(); r != nil {

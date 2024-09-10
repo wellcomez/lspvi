@@ -217,19 +217,19 @@ func NewCodeView(main *mainui) *CodeView {
 	ret.rightmenu = CodeContextMenu{code: &ret}
 	ret.main = main
 	ret.map_key_handle()
-	var colorscheme femto.Colorscheme
+	// var colorscheme femto.Colorscheme
 	//"monokai"
-	if monokai := runtime.Files.FindFile(femto.RTColorscheme, ret.theme); monokai != nil {
-		if data, err := monokai.Data(); err == nil {
-			colorscheme = femto.ParseColorscheme(string(data))
-		}
-	}
+	// if monokai := runtime.Files.FindFile(femto.RTColorscheme, ret.theme); monokai != nil {
+	// 	if data, err := monokai.Data(); err == nil {
+	// 		colorscheme = femto.ParseColorscheme(string(data))
+	// 	}
+	// }
 	path := ""
 	content := ""
 	buffer := femto.NewBufferFromString(string(content), path)
 	root := new_codetext_view(buffer)
 	root.SetRuntimeFiles(runtime.Files)
-	root.SetColorscheme(colorscheme)
+	// root.SetColorscheme(colorscheme)
 
 	root.SetMouseCapture(ret.handle_mouse)
 	root.SetInputCapture(ret.handle_key)
@@ -1042,7 +1042,7 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 		if data, err := monokai.Data(); err == nil {
 			buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
 			if err == nil {
-				colorscheme = femto.ParseColorscheme(string(buf))
+				// colorscheme = femto.ParseColorscheme(string(buf))
 				data = append(data, buf...)
 			}
 			colorscheme = femto.ParseColorscheme(string(data))

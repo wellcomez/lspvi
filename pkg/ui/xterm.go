@@ -263,7 +263,8 @@ type ptyout_data struct {
 }
 
 func (imp *ptyout_impl) _send(s []byte) bool {
-	fmt.Println("_send", len(s))
+	log.Println("_send", len(s))
+	// log.Println("_send", len(s), string(s))
 	// printf("\033[5;10HHello, World!\n"); // 将光标移动到第5行第10列，然后打印 "Hello, World!"
 	// newFunction2(s)
 	data := ptyout_data{

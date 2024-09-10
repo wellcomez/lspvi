@@ -7,7 +7,8 @@ import (
 )
 
 func Test_Go(t *testing.T) {
-	filename := "/home/z/dev/lsp/goui/pkg/lsp/lsp_go.go"
+	// filename := "/home/z/dev/lsp/goui/pkg/lsp/lsp_go.go"
+	filename:="/home/z/dev/lsp/goui/main.go"
 	ts := NewTreeSitter(filename)
 	ts.langname = "go"
 	// /home/z/dev/lsp/goui/pkg/lsp/queries/go/highlights.scm
