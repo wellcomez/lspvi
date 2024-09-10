@@ -182,6 +182,7 @@ func (layout *editor_mouse_resize) hide(viewlink *view_link) {
 		return
 	}
 	viewlink.Hide = !viewlink.Hide
+	layout.save()
 	layout.update_editerea_layout()
 }
 func (layout *editor_mouse_resize) zoom(zoomin bool, viewlink *view_link) {
