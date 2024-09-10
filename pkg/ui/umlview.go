@@ -32,7 +32,7 @@ type uml_filetree_context struct {
 func (menu uml_filetree_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if action == tview.MouseRightClick {
 		yes, focuse := menu.qk.view.MouseHandler()(tview.MouseLeftClick, event, nil)
-		log.Println(yes, focuse)
+		log.Println("on_mouse", yes, focuse)
 		update_filetree_menu(menu.main.uml, menu.qk.view.GetCurrentNode())
 		return tview.MouseConsumed, nil
 	}
@@ -74,12 +74,12 @@ func (v *umlview) openfile(name string) {
 		// 打开文件
 		file, err := os.Open(name)
 		if err != nil {
-			log.Println(err)
+			log.Println("umlopen", name, err)
 		}
 		defer file.Close()
 		img, err := png.Decode(file)
 		if err != nil {
-			log.Println(err)
+			log.Println("umlopen decode", name, err)
 		}
 		image.SetColors(256)
 		image.SetImage(img)

@@ -193,7 +193,7 @@ func (v *command_history) add(item command_history_record) {
 	if err == nil {
 		err = os.WriteFile(v.filepath, buf, 0644)
 		if err != nil {
-			log.Println(err)
+			log.Println("add command",err)
 		}
 	}
 }
