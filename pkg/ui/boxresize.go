@@ -142,12 +142,13 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 					box := tview.NewBox()
 					m.layout.AddItem(box, 0, 0, false)
 					break
-				}
-				if m.layout.dir == tview.FlexColumn {
-					m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Width, false)
-				}
-				if m.layout.dir == tview.FlexRow {
-					m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Height, false)
+				} else {
+					if m.layout.dir == tview.FlexColumn {
+						m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Width, false)
+					}
+					if m.layout.dir == tview.FlexRow {
+						m.layout.AddItem(v.view_link.id.Primitive(m.main), 0, v.view_link.Height, false)
+					}
 				}
 				break
 			}
