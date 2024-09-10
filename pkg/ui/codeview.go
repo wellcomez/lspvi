@@ -118,7 +118,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		right_menu_data.previous_selection = selected
 		// code.rightmenu.text = root.Cursor.GetSelection()
 		cursor := *root.Cursor
-		cursor.Loc = tab_loc(root, pos)
+		cursor.Loc = code.tab_loc(pos)
 		cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		right_menu_data.rightmenu_loc = cursor.CurSelection[0]
 		log.Println("before", cursor.CurSelection)
@@ -496,7 +496,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	}
 
 	if action == tview.MouseLeftDoubleClick {
-		root.Cursor.Loc = tab_loc(root, pos)
+		root.Cursor.Loc = code.tab_loc(pos)
 		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		root.Cursor.SelectWord()
 		code.main.codeview.action_goto_define()
@@ -506,21 +506,21 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		code.main.set_viewid_focus(view_code)
 		code.mouse_select_area = true
 		//log.Print(x1, y1, x2, y2, "down")
-		pos = tab_loc(root, pos)
+		pos = code.tab_loc(pos)
 		code.view.Cursor.SetSelectionStart(pos)
 		code.view.Cursor.SetSelectionEnd(pos)
 		return tview.MouseConsumed, nil
 	}
 	if action == tview.MouseMove {
 		if code.mouse_select_area {
-			pos = tab_loc(root, pos)
+			pos = code.tab_loc(pos)
 			code.view.Cursor.SetSelectionEnd(pos)
 		}
 		return tview.MouseConsumed, nil
 	}
 	if action == tview.MouseLeftUp {
 		if code.mouse_select_area {
-			code.view.Cursor.SetSelectionEnd(tab_loc(root, pos))
+			code.view.Cursor.SetSelectionEnd(code.tab_loc(pos))
 			code.mouse_select_area = false
 		}
 		//log.Print(x1, y1, x2, y2, "up")
@@ -529,7 +529,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	if action == tview.MouseLeftClick {
 		code.main.set_viewid_focus(view_code)
 		code.mouse_select_area = false
-		root.Cursor.Loc = tab_loc(root, pos)
+		root.Cursor.Loc = code.tab_loc(pos)
 		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		root.Cursor.SetSelectionEnd(femto.Loc{X: pos.X, Y: pos.Y})
 		code.update_with_line_changed()
@@ -580,11 +580,17 @@ func avoid_position_overflow(root *codetextview, pos femto.Loc) femto.Loc {
 	pos.Y = min(root.Buf.LinesNum()-1, pos.Y)
 	return pos
 }
-func tab_loc(root *codetextview, pos femto.Loc) femto.Loc {
+func (code *CodeView) tab_loc(pos femto.Loc) femto.Loc {
+	root := code.view
 	LastVisualX := GetVisualX(root, pos.Y, pos.X)
 	tabw := LastVisualX - pos.X
 	if tabw > 0 {
 		pos.X = pos.X - tabw
+	}
+	pos.X = max(0,pos.X)
+	if code.is_softwrap(){
+		add:=code.view.VirtualLine(pos.Y,pos.X)
+		pos.Y = pos.Y - add
 	}
 	return pos
 }
@@ -1038,6 +1044,9 @@ var TreesitterSchemeLoader embed.FS
 func (code *CodeView) on_change_color(c *color_theme_file) {
 	code.theme = c.name
 	code.change_theme()
+}
+func (code *CodeView) is_softwrap() bool {
+	return code.view.Buf.Settings["softwrap"] == true
 }
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
 
