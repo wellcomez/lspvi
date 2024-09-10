@@ -103,13 +103,6 @@ func (m *mainui) toggle_view(id view_id) {
 	m.layout.editor_area.resizer.hide(id.to_view_link(m))
 }
 
-// func (r *mainui) editor_area_fouched() {
-// 	// log.Println("change foucse", r.GetFocusViewId())
-// 	r.layout.mainlayout.ResizeItem(r.layout.editor_area, 0, 3)
-// 	r.layout.mainlayout.ResizeItem(r.layout.console, 0, 2)
-// }
-
-// OnLspCallTaskInViewResovled implements lspcore.lsp_data_changed.
 func (m *mainui) OnLspCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	// panic("unimplemented")
 	focus := m.get_focus_view_id()
@@ -563,13 +556,13 @@ func MainUI(arg *Arguments) {
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
 	main.app = app
-	
+
 	editor_area := create_edit_area(main)
 	console_layout, tab_area := create_console_area(main)
 
 	main_layout := main.create_main_layout(editor_area, console_layout, tab_area)
 	mainmenu := main.create_menu_bar(tab_area)
-	
+
 	main.create_right_context_menu()
 
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
@@ -679,7 +672,7 @@ func MainUI(arg *Arguments) {
 	}
 }
 
-func (main *mainui)create_right_context_menu() {
+func (main *mainui) create_right_context_menu() {
 	main.right_context_menu = new_contextmenu(main)
 	main.right_context_menu.menu_handle = []context_menu_handle{
 		main.codeview.rightmenu,
