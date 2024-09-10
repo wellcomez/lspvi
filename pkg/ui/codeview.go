@@ -582,16 +582,18 @@ func avoid_position_overflow(root *codetextview, pos femto.Loc) femto.Loc {
 }
 func (code *CodeView) tab_loc(pos femto.Loc) femto.Loc {
 	root := code.view
+	if code.is_softwrap() {
+		x,lineY := code.view.VirtualLine(pos.Y, pos.X)
+		pos.Y = lineY
+		pos.X = x
+	}
 	LastVisualX := GetVisualX(root, pos.Y, pos.X)
 	tabw := LastVisualX - pos.X
 	if tabw > 0 {
 		pos.X = pos.X - tabw
 	}
-	pos.X = max(0,pos.X)
-	if code.is_softwrap(){
-		add:=code.view.VirtualLine(pos.Y,pos.X)
-		pos.Y = pos.Y - add
-	}
+	pos.X = max(0, pos.X)
+	
 	return pos
 }
 
