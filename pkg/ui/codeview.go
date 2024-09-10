@@ -583,7 +583,7 @@ func avoid_position_overflow(root *codetextview, pos femto.Loc) femto.Loc {
 func (code *CodeView) tab_loc(pos femto.Loc) femto.Loc {
 	root := code.view
 	if code.is_softwrap() {
-		x,lineY := code.view.VirtualLine(pos.Y, pos.X)
+		x, lineY := code.view.VirtualLine(pos.Y, pos.X)
 		pos.Y = lineY
 		pos.X = x
 	}
@@ -593,7 +593,7 @@ func (code *CodeView) tab_loc(pos femto.Loc) femto.Loc {
 		pos.X = pos.X - tabw
 	}
 	pos.X = max(0, pos.X)
-	
+
 	return pos
 }
 
@@ -1082,11 +1082,21 @@ func (code *CodeView) change_theme() {
 		colorscheme = femto.ParseColorscheme(string(micro_buffer))
 		if n, ok := colorscheme["normal"]; ok {
 			colorscheme["default"] = n
-
+			_, bg, _ := n.Decompose()
+			main := code.main
+			for _, v := range all_view_list {
+				v.to_box(main).SetBackgroundColor(bg)
+			}
+			tview.Styles.PrimitiveBackgroundColor = bg
+			main.layout.console.SetBackgroundColor(bg)
+			main.page.SetBackgroundColor(bg)
+			main.layout.editor_area.SetBackgroundColor(bg)
+			main.layout.tab_area.SetBackgroundColor(bg)
 		}
 		log.Println(colorscheme)
 		code.view.SetColorscheme(colorscheme)
 	}
+
 }
 func (code *CodeView) save_selection(s string) {
 }
