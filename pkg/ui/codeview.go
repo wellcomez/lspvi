@@ -1056,6 +1056,8 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 			colorscheme = femto.ParseColorscheme(string(data))
 			if n, ok := colorscheme["normal"]; ok {
 				colorscheme["default"] = n
+				_, b, _ := n.Decompose()
+				tview.Styles.PrimitiveBackgroundColor = b
 			}
 			log.Println(colorscheme)
 		}
