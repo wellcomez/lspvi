@@ -34,9 +34,11 @@ type TreeSitter struct {
 	langname   string
 	lang       *sitter.Language
 	sourceCode []byte
-	Symbols    []TreeSitterSymbol
+	// Symbols     []TreeSitterSymbol
+	SymbolsLine map[int][]TreeSitterSymbol
 }
-func TreesitterCheckIsSourceFile(filename string)bool{
+
+func TreesitterCheckIsSourceFile(filename string) bool {
 	for _, v := range lsp_lang_map {
 		if v.IsMe(filename) {
 			return true
@@ -44,18 +46,20 @@ func TreesitterCheckIsSourceFile(filename string)bool{
 	}
 	return false
 }
-var lsp_lang_map =map[string]lsplang{
-	"go":lsp_lang_go{},
-	"c" : lsp_lang_cpp{},
-	"py":lsp_lang_py{},
-	"js":lsp_ts{},
+
+var lsp_lang_map = map[string]lsplang{
+	"go": lsp_lang_go{},
+	"c":  lsp_lang_cpp{},
+	"py": lsp_lang_py{},
+	"js": lsp_ts{},
 }
-var ts_lang_map =map[string]*sitter.Language{
-	"go":treego.GetLanguage(),
-	"c" : treec.GetLanguage(),
-	"py":treepyt.GetLanguage(),
-	"js":ts.GetLanguage(),
+var ts_lang_map = map[string]*sitter.Language{
+	"go": treego.GetLanguage(),
+	"c":  treec.GetLanguage(),
+	"py": treepyt.GetLanguage(),
+	"js": ts.GetLanguage(),
 }
+
 func (t *TreeSitter) Init() error {
 	for k, v := range lsp_lang_map {
 		if v.IsMe(t.filename) {
@@ -101,7 +105,14 @@ func (t *TreeSitter) load_hightlight() error {
 			// log.Println(captureName, symbolname, start, end, name)
 			hlname := captureName
 			s := TreeSitterSymbol{Point(start), Point(end), hlname}
-			t.Symbols = append(t.Symbols, s)
+			// t.Symbols = append(t.Symbols, s)
+			row := int(s.Begin.Row)
+			if _, ok := t.SymbolsLine[row]; !ok {
+				t.SymbolsLine[row] = []TreeSitterSymbol{s}
+			} else {
+				t.SymbolsLine[row] =
+					append(t.SymbolsLine[row], s)
+			}
 		}
 		// match, a, b := qc.NextCapture()
 		// println(match, a, b)
@@ -149,6 +160,7 @@ func NewTreeSitter(name string) *TreeSitter {
 		parser:   sitter.NewParser(),
 		filename: name,
 	}
+	ret.SymbolsLine = make(map[int][]TreeSitterSymbol)
 	return ret
 }
 

@@ -353,13 +353,11 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 		if i >= input.LinesNum() {
 			break
 		}
-		symbol_of_line := []int{}
 		line := input.LineBytes(i)
 		var match_tree_match LineMatch = make(LineMatch)
 		if h.Tree != nil {
-			for symi, v := range h.Tree.Symbols {
-				if v.Begin.Row == uint32(i) {
-					symbol_of_line = append(symbol_of_line, symi)
+			if sym_in_line, ok := h.Tree.SymbolsLine[i]; ok {
+				for _, v := range sym_in_line {
 					x := []string{"@" + v.SymobName, v.SymobName}
 					ind := strings.Index(v.SymobName, ".")
 					if ind > 0 {
@@ -391,22 +389,6 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 		var match LineMatch
 		if i == 0 || input.State(i-1) == nil {
 			match = h.highlightEmptyRegion(highlights, 0, true, i, line, false)
-			if len(symbol_of_line) > 0 {
-				for _, v := range symbol_of_line {
-					sym := h.Tree.Symbols[v]
-					if _, ok := match[int(sym.Begin.Column)]; !ok {
-						// for iGroups
-						if group, ok := Groups[sym.SymobName]; ok {
-							match[int(sym.Begin.Column)] = group
-							if _, ok := match[int(sym.End.Column)]; !ok {
-								match[int(sym.End.Column)] = 0
-							}
-						}
-						// hi[int(sym.Begin.Column)] = Group(sym.Type)oups
-						continue
-					}
-				}
-			}
 		} else {
 			match = h.highlightRegion(highlights, 0, true, i, line, input.State(i-1), false)
 		}
