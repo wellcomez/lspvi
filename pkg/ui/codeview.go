@@ -1092,6 +1092,8 @@ func (code *CodeView) change_theme() {
 			main.page.SetBackgroundColor(bg)
 			main.layout.editor_area.SetBackgroundColor(bg)
 			main.layout.tab_area.SetBackgroundColor(bg)
+			main.statusbar.SetBackgroundColor(bg)
+			main.console_index_list.SetBackgroundColor(bg)
 		}
 		log.Println(colorscheme)
 		code.view.SetColorscheme(colorscheme)
