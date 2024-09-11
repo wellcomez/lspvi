@@ -18,7 +18,6 @@ type cmdline struct {
 	input   *tview.InputField
 	Vim     *Vim
 	history *command_history
-	// find_history *command_history
 	cmds []cmd_processor
 }
 
@@ -124,33 +123,6 @@ func (cmd *cmdline) OnComand(commandinput string) bool {
 			return true
 		}
 	}
-	// switch command {
-	// case "cn", "cp":
-	// 	{
-	// 		if command != "cn" {
-	// 			get_cmd_actor(cmd.main, vi_quick_prev).handle()
-	// 		} else {
-	// 			get_cmd_actor(cmd.main, vi_quick_next).handle()
-	// 		}
-	// 	}
-	// case "q", "quit", "q!", "qa", "x":
-	// 	{
-	// 		cmd.main.Close()
-	// 	}
-	// case "h", "help":
-	// 	{
-	// 		cmd.main.helpkey(true)
-	// 	}
-	// case "search", "grep":
-	// 	{
-	// 		cmd.OnSearchCommand(args)
-	// 	}
-	// case "set":
-	// 	{
-	// 	}
-	// default:
-	// 	return false
-	// }
 	return true
 }
 
@@ -398,10 +370,7 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		prev = history.next()
 	} else if event.Key() == tcell.KeyEnter {
 		vim.vi.FindEnter = txt
-		added := len(history.data) > 0 && history.data[len(history.data)-1].cmdline() == txt
-		if !added {
-			cmd.history.add(command_history_record{Cmd: vim.vi.FindEnter, Find: true})
-		}
+		history.add_search_txt(txt)
 		cmd.main.OnSearch(txt, false, false)
 		return true
 	}
@@ -423,9 +392,21 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		}
 		txt = txt + string(event.Rune())
 		cmd.input.SetText(txt)
+		history.add_search_txt(txt)
 		cmd.main.OnSearch(txt, false, false)
 		return true
 	}
+}
+
+func (history *command_history) add_search_txt(txt string) {
+	if history.need_add_cmd_history(txt) {
+		history.add(command_history_record{Cmd: txt, Find: true})
+	}
+}
+
+func (history *command_history) need_add_cmd_history(txt string) bool {
+	added := len(history.data) > 0 && history.data[len(history.data)-1].cmdline() == txt
+	return !added
 }
 
 func handle_backspace(event *tcell.EventKey, cmd *cmdline) bool {
