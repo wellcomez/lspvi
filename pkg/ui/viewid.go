@@ -32,6 +32,7 @@ const (
 	view_code_area
 	view_console_area
 	view_main_layout
+	view_qf_index_view
 )
 
 var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin}
@@ -87,6 +88,8 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 		return m.bk.view_link
 	case view_main_layout:
 		return m.layout.mainlayout.view_link
+	case view_qf_index_view:
+		return m.console_index_list.view_link
 	case view_code_area:
 		return m.layout.editor_area.view_link
 	case view_console_area:
@@ -197,6 +200,8 @@ func (viewid view_id) Primitive(m *mainui) tview.Primitive {
 		return m.layout.console
 	case view_main_layout:
 		return m.layout.mainlayout
+	case view_qf_index_view:
+		return m.console_index_list
 	}
 	return nil
 }
@@ -227,6 +232,8 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 		return m.layout.console.Box
 	case view_main_layout:
 		return m.layout.mainlayout.Box
+	case view_qf_index_view:
+		return m.console_index_list.Box
 	}
 	return nil
 }
@@ -244,6 +251,7 @@ var all_view_list = []view_id{
 	view_code_area,
 	view_console_area,
 	view_main_layout,
+	view_outline_list,
 }
 var all_view_name = []string{
 	"none",
@@ -259,6 +267,7 @@ var all_view_name = []string{
 	"view_code_area",
 	"view_console_area",
 	"view_main_layout",
+	"view_qf_index_view",
 }
 
 func (viewid view_id) getname() string {
