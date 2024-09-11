@@ -106,7 +106,8 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 }
 
 func (m *mainui) on_select_project(prj *Project) {
-
+	prj.Load(&apparg, m)
+	load_from_history(m)
 }
 func (m *mainui) zoom(zoomin bool) {
 	viewid := m.get_focus_view_id()
@@ -527,7 +528,11 @@ var global_config *LspviConfig
 func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
 }
+
+var apparg Arguments
+
 func MainUI(arg *Arguments) {
+	apparg = *arg
 	var filearg = ""
 	//  "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
 	root, _ := filepath.Abs(".")
@@ -560,7 +565,8 @@ func MainUI(arg *Arguments) {
 	// 	tty:      arg.Tty,
 	// 	ws:       arg.Ws,
 	// }
-	main := prj.Load(arg)
+	main := &mainui{}
+	prj.Load(arg, main)
 	go StartWebUI(func(port int, url string) {
 		if len(url) > 0 {
 			main.ws = url
@@ -595,16 +601,7 @@ func MainUI(arg *Arguments) {
 
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
 	if len(filearg) == 0 {
-		filearg := main.bf.Last()
-		if len(filearg.Path) > 0 {
-			main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
-				URI: lsp.NewDocumentURI(filearg.Path),
-				Range: lsp.Range{
-					Start: lsp.Position{Line: filearg.Pos.Line, Character: 0},
-					End:   lsp.Position{Line: filearg.Pos.Line, Character: 0},
-				},
-			}, offset: 0}, false)
-		}
+		load_from_history(main)
 	} else {
 		main.OpenFile(filearg, nil)
 	}
@@ -711,6 +708,24 @@ func MainUI(arg *Arguments) {
 	main_layout.SetTitle("lspvi " + main.root)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
+	}
+}
+
+func load_from_history(main *mainui) {
+	filearg := main.bf.Last()
+	main.quickview.view.Clear()
+	main.symboltree.Clear()
+	main.console_index_list.Clear()
+	if len(filearg.Path) > 0 {
+		main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
+			URI: lsp.NewDocumentURI(filearg.Path),
+			Range: lsp.Range{
+				Start: lsp.Position{Line: filearg.Pos.Line, Character: 0},
+				End:   lsp.Position{Line: filearg.Pos.Line, Character: 0},
+			},
+		}, offset: 0}, false)
+	}else{
+		main.codeview.LoadBuffer([]byte{},"")
 	}
 }
 

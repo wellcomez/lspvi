@@ -21,7 +21,7 @@ type workspace_list struct {
 
 var gload_workspace_list workspace_list
 
-func (prj *Project) Load(arg *Arguments) *mainui {
+func (prj *Project) Load(arg *Arguments, main *mainui) {
 	root := prj.Root
 	lspviroot = new_workdir(root)
 	global_config, _ = LspviConfig{}.Load()
@@ -30,12 +30,12 @@ func (prj *Project) Load(arg *Arguments) *mainui {
 	// })
 
 	handle := LspHandle{}
-	var main = &mainui{
-		bf:       NewBackForward(NewHistory(lspviroot.history)),
-		bookmark: &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}},
-		tty:      arg.Tty,
-		ws:       arg.Ws,
-	}
+	// var main = &mainui{
+	main.bf = NewBackForward(NewHistory(lspviroot.history))
+	main.bookmark = &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}}
+	main.tty = arg.Tty
+	main.ws = arg.Ws
+	// }
 	main.bookmark.load()
 	handle.main = main
 	if !filepath.IsAbs(root) {
@@ -44,15 +44,15 @@ func (prj *Project) Load(arg *Arguments) *mainui {
 	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
 	main.lspmgr = lspmgr
 	main.root = root
-	return main
 }
 func (wk *workspace_list) Add(root string) (*Project, error) {
 	if !checkDirExists(root) {
 		return nil, os.ErrNotExist
 	}
-	for _, v := range wk.Projects {
+	for i := range wk.Projects {
+		v := wk.Projects[i]
 		if v.Root == root {
-			return nil, nil
+			return &v, nil
 		}
 	}
 	x := Project{
@@ -81,7 +81,7 @@ func (wk *workspace_list) Load() error {
 		return err
 	}
 	buf, err := os.ReadFile(config)
-	if err == nil {
+	if err != nil {
 		return nil
 	}
 	return json.Unmarshal(buf, wk)
@@ -134,6 +134,7 @@ func new_workspace_picker(v *fzfmain) *workspace_picker {
 	impl := &wk_picker_impl{
 		new_fzflist_impl(nil, v),
 	}
+	gload_workspace_list.Load()
 	ret := &workspace_picker{impl: impl}
 	for i := range gload_workspace_list.Projects {
 		a := gload_workspace_list.Projects[i]
