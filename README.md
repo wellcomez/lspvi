@@ -4,7 +4,7 @@ lspvi is tui code reader powsered by lsp. **Just code reader not editor**
 
 It provides goto define ,goto declaration, call hierarchy,reference  etc which also provided by common ide.
 
-But compared with vscode,neovim ..., lspvi provide  more powerful function for call hierarchy,reference ...
+But compared with vscode,neovim ..., lspvi provide  more powerful function for call hierarchy,reference  to analyze code.
 
 It can prvoides **UML call sequence** which can help you to understand the code. 
 
@@ -40,6 +40,10 @@ start with 13000
 - clangd
 - python
 - typescript /javascript
+
+**prerequisite**:
+
+above lsp serveries you have installed
 
 ## Install
 
