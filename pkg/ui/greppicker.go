@@ -152,7 +152,8 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 			grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
 				o := grepx.impl.result.data[dataindex]
-				grepx.main.OpenFile(o.fpath, nil)
+				loc := convert_grep_info_location(&o)
+				grepx.main.OpenFile(o.fpath, &loc)
 				grepx.parent.hide()
 			}
 		}
@@ -176,7 +177,8 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			path := strings.TrimPrefix(o.fpath, grepx.main.root)
 			data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
 			grepx.grep_list_view.AddItem(data, "", func() {
-				grepx.main.OpenFile(o.fpath, nil)
+				loc := convert_grep_info_location(o)
+				grepx.main.OpenFile(o.fpath, &loc)
 				grepx.parent.hide()
 			})
 			if openpreview {
@@ -192,6 +194,17 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 		}
 	}
 
+}
+
+func convert_grep_info_location(o *grep_output) lsp.Location {
+	loc := lsp.Location{
+		URI: lsp.NewDocumentURI(o.fpath),
+		Range: lsp.Range{
+			Start: lsp.Position{Line: o.lineNumber - 1, Character: 0},
+			End:   lsp.Position{Line: o.lineNumber - 1, Character: 0},
+		},
+	}
+	return loc
 }
 
 func (o *grep_output) to_ref_caller() ref_with_caller {
