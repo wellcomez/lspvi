@@ -292,13 +292,13 @@ func (fzf *fzf_on_listview) reset_selection_index() {
 	}
 }
 func (fzf *fzf_on_listview) get_data_index(index int) int {
+	if len(fzf.selected_index) == 0 {
+		return -1
+	}
 	if index == -1 {
 		return fzf.selected_index[fzf.listview.GetCurrentItem()]
 	}
-	if len(fzf.selected_index) > 0 {
-		return fzf.selected_index[index]
-	}
-	return -1
+	return fzf.selected_index[index]
 }
 func (fzf *fzf_on_listview) refresh_list() {
 	fzf.listview.Clear()
