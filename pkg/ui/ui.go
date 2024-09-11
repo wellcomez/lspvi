@@ -1177,8 +1177,8 @@ func (main *mainui) open_picker_refs() {
 func (main *mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(main.root)
 }
-func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) {
-	main.layout.dialog.OpenGrepWordFzf(word, qf)
+func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker {
+	return main.layout.dialog.OpenGrepWordFzf(word, qf)
 }
 func (main *mainui) open_picker_livegrep() {
 	main.layout.dialog.OpenLiveGrepFzf()

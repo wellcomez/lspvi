@@ -18,7 +18,7 @@ type cmdline struct {
 	input   *tview.InputField
 	Vim     *Vim
 	history *command_history
-	cmds []cmd_processor
+	cmds    []cmd_processor
 }
 
 func new_cmdline(main *mainui) *cmdline {
@@ -80,6 +80,7 @@ func (cmd *cmdline) OnSet(args []string) bool {
 func (cmd *cmdline) OnSearchCommand(args []string) bool {
 	if len(args) > 1 {
 		arg := args[1]
+
 		qf_grep_word(cmd.main, arg)
 	}
 	return true

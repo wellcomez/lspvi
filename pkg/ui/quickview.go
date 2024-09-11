@@ -65,6 +65,7 @@ type quick_view struct {
 	right_context quick_view_context
 
 	cmd_search_key string
+	grep           *greppicker
 }
 type qf_history_data struct {
 	Type   DateType
@@ -545,6 +546,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 		qk.cmd_search_key = ""
 		qk.Type = t
 		qk.searchkey = key
+		qk.grep.close()
 	}
 	if end {
 		qk.save()
@@ -558,7 +560,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 		return
 	}
 	qk.view.AddItem(fmt.Sprintf("%-3d %s", qk.view.GetItemCount()+1, secondline), "", nil)
-	qk.main.UpdatePageTitle()
+	// qk.main.UpdatePageTitle()
 
 	// qk.open_index(qk.view.GetCurrentItem())
 }
