@@ -16,11 +16,12 @@ import (
 	ts_c "github.com/smacker/go-tree-sitter/c"
 	ts_go "github.com/smacker/go-tree-sitter/golang"
 	ts_js "github.com/smacker/go-tree-sitter/javascript"
-	ts_py "github.com/smacker/go-tree-sitter/python"
 	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
+	ts_py "github.com/smacker/go-tree-sitter/python"
 	//"github.com/smacker/go-tree-sitter/markdown"
 )
 
+type t_symbol_line map[int][]TreeSitterSymbol
 type Point struct {
 	Row    uint32
 	Column uint32
@@ -28,6 +29,7 @@ type Point struct {
 type TreeSitterSymbol struct {
 	Begin, End Point
 	SymobName  string
+	Code       string
 }
 type TreeSitter struct {
 	filename   string
@@ -37,7 +39,8 @@ type TreeSitter struct {
 	lang       *sitter.Language
 	sourceCode []byte
 	// Symbols     []TreeSitterSymbol
-	SymbolsLine map[int][]TreeSitterSymbol
+	HlLine  t_symbol_line
+	Outline t_symbol_line
 }
 
 func TreesitterCheckIsSourceFile(filename string) bool {
@@ -75,18 +78,20 @@ func (t *TreeSitter) Init() error {
 	}
 	return fmt.Errorf("not implemented")
 }
-func (t *TreeSitter) load_hightlight() error {
+
+func (t TreeSitter) query(queryname string) (error, t_symbol_line) {
+	var SymbolsLine = make(t_symbol_line)
 	// pkg/lsp/queries/ada/highlights.scm
 	// /home/z/dev/lsp/goui/pkg/lsp/queries/go/highlights.scm
-	path := filepath.Join("queries", t.langname, "highlights.scm")
+	path := filepath.Join("queries", t.langname, queryname+".scm")
 
 	buf, err := t.read_embbed(path)
 	if err != nil {
-		return err
+		return err, SymbolsLine
 	}
 	q, err := sitter.NewQuery(buf, t.lang)
 	if err != nil {
-		return err
+		return err, SymbolsLine
 	}
 	qc := sitter.NewQueryCursor()
 	qc.Exec(q, t.tree.RootNode())
@@ -104,29 +109,23 @@ func (t *TreeSitter) load_hightlight() error {
 			// symbol := c.Node.Symbol()
 			start := c.Node.StartPoint()
 			end := c.Node.EndPoint()
-			// name := c.Node.Content(t.sourceCode)
+			name := c.Node.Content(t.sourceCode)
 			// symbolname := t.lang.SymbolName(symbol)
 			// log.Println(strings.Join([]string{symbolname, captureName}, "."), symbolname, symbol, c.Node.Type(), start, end, name)
 			// log.Println(captureName, symbolname, start, end, name)
 			hlname := captureName
-			s := TreeSitterSymbol{Point(start), Point(end), hlname}
+			s := TreeSitterSymbol{Point(start), Point(end), hlname, name}
 			// t.Symbols = append(t.Symbols, s)
 			row := int(s.Begin.Row)
-			if _, ok := t.SymbolsLine[row]; !ok {
-				t.SymbolsLine[row] = []TreeSitterSymbol{s}
+			if _, ok := SymbolsLine[row]; !ok {
+				SymbolsLine[row] = []TreeSitterSymbol{s}
 			} else {
-				t.SymbolsLine[row] =
-					append(t.SymbolsLine[row], s)
+				SymbolsLine[row] =
+					append(SymbolsLine[row], s)
 			}
 		}
-		// match, a, b := qc.NextCapture()
-		// println(match, a, b)
-		// for _, v := range match.Captures {
-		// println(v)
-		// }
-
 	}
-	return nil
+	return nil, SymbolsLine
 }
 
 //go:embed  queries
@@ -165,15 +164,27 @@ func NewTreeSitter(name string) *TreeSitter {
 		parser:   sitter.NewParser(),
 		filename: name,
 	}
-	ret.SymbolsLine = make(map[int][]TreeSitterSymbol)
+	ret.HlLine = make(map[int][]TreeSitterSymbol)
 	return ret
 }
 
 func (ts *TreeSitter) Loadfile(lang *sitter.Language) error {
 	if err := ts._load_file(lang); err != nil {
+		log.Println("fail to load treesitter", err)
 		return err
 	}
-	return ts.load_hightlight()
+	hlerr, ret := ts.query("highlights")
+	ts.HlLine = ret
+	if hlerr != nil {
+		log.Println("fail to load highlights", hlerr)
+	}
+	local_err, ret := ts.query("locals")
+	if local_err != nil {
+		log.Println("fail to load locals", local_err)
+	}
+	ts.Outline = ret
+	// pkg/lsp/queries/c/.scm
+	return hlerr
 }
 
 func (ts *TreeSitter) _load_file(lang *sitter.Language) error {

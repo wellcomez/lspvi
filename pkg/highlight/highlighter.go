@@ -356,7 +356,7 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 		line := input.LineBytes(i)
 		var match_tree_match LineMatch = make(LineMatch)
 		if h.Tree != nil {
-			if sym_in_line, ok := h.Tree.SymbolsLine[i]; ok {
+			if sym_in_line, ok := h.Tree.HlLine[i]; ok {
 				for _, v := range sym_in_line {
 					x := []string{"@" + v.SymobName, v.SymobName}
 					ind := strings.Index(v.SymobName, ".")
