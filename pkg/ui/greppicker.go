@@ -30,10 +30,6 @@ type livewgreppicker struct {
 	not_live       bool
 }
 
-// close implements picker.
-func (pk *livewgreppicker) close() {
-}
-
 // name implements picker.
 func (pk *livewgreppicker) name() string {
 	return "live grep"
@@ -47,6 +43,7 @@ type greppicker struct {
 
 // close implements picker.
 func (g *greppicker) close() {
+	g.livewgreppicker.close()
 }
 
 // UpdateQuery implements picker.
@@ -256,8 +253,15 @@ func (pk livewgreppicker) UpdateQuery(query string) {
 	// pk.defer_input.start(query)
 	pk.__updatequery(query)
 }
-func (pk livewgreppicker) __updatequery(query string) {
+
+// close implements picker.
+func (pk *livewgreppicker) close() {
+	pk.stop_grep()
+}
+
+func (pk *livewgreppicker) __updatequery(query string) {
 	if len(query) == 0 {
+		pk.stop_grep()
 		return
 	}
 	opt := optionSet{
@@ -282,4 +286,10 @@ func (pk livewgreppicker) __updatequery(query string) {
 	chans := g.kick(pk.main.root)
 	go g.report(chans, false)
 
+}
+
+func (pk livewgreppicker) stop_grep() {
+	if pk.impl != nil && pk.impl.grep != nil {
+		pk.impl.grep.bAbort = true
+	}
 }
