@@ -139,7 +139,6 @@ func (s Symbol) Icon() string {
 	}
 }
 
-
 func (sym Symbol) SymbolListStrint() string {
 	return sym.Icon() + " " + sym.SymInfo.Name
 }
@@ -170,11 +169,12 @@ func symbol_contain(a lsp.SymbolInformation, b lsp.SymbolInformation) bool {
 }
 
 type LspWorkspace struct {
-	clients []lspclient
-	Wk      WorkSpace
-	Current *Symbol_file
-	filemap map[string]*Symbol_file
-	Handle  lsp_data_changed
+	clients   []lspclient
+	Wk        WorkSpace
+	Current   *Symbol_file
+	filemap   map[string]*Symbol_file
+	Handle    lsp_data_changed
+	lspconfig string
 }
 
 func (wk LspWorkspace) IsSource(filename string) bool {
