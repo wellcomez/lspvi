@@ -655,11 +655,6 @@ func MainUI(arg *Arguments) {
 		if main.right_context_menu.visible {
 			return nil, tview.MouseConsumed
 		}
-		for _, v := range resizer {
-			if v.checkdrag(action, event) == tview.MouseConsumed {
-				return nil, tview.MouseConsumed
-			}
-		}
 		if main.layout.spacemenu.visible {
 			spacemenu := main.layout.spacemenu
 			action, event = spacemenu.handle_mouse(action, event)
@@ -673,6 +668,7 @@ func MainUI(arg *Arguments) {
 				return nil, tview.MouseConsumed
 			}
 		}
+
 		if main.layout.dialog.Visible {
 			if !InRect(event, main.layout.dialog.Frame) {
 				if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
@@ -682,6 +678,11 @@ func MainUI(arg *Arguments) {
 				main.layout.dialog.MouseHanlde(event, action)
 			}
 			return nil, tview.MouseConsumed
+		}
+		for _, v := range resizer {
+			if v.checkdrag(action, event) == tview.MouseConsumed {
+				return nil, tview.MouseConsumed
+			}
 		}
 		return event, action
 	})

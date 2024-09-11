@@ -139,6 +139,7 @@ func (s Symbol) Icon() string {
 	}
 }
 
+
 func (sym Symbol) SymbolListStrint() string {
 	return sym.Icon() + " " + sym.SymInfo.Name
 }

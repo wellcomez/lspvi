@@ -138,7 +138,7 @@ const term_init = (app) => {
         x10Mouse: true,
         vt300Mouse: true,
         MouseEvent: true,
-        fontFamily: '"Cascadia Code","Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
+        // fontFamily: '"Cascadia Code","Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
         // minimumContrastRatio: 1,
     });
     var wl = new WebglAddon.WebglAddon()

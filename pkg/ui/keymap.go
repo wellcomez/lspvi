@@ -261,6 +261,7 @@ const key_picker_live_grep = "g"
 const key_picker_grep_word = "fw"
 const key_picker_search_in_file = "ff"
 const key_picker_help = "h"
+const key_workspace_symbole_query = "ws"
 
 func (main *mainui) ctrl_w_map() []cmditem {
 	return []cmditem{
@@ -314,12 +315,12 @@ func (m *mainui) key_map_space_menu() []cmditem {
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),
 		get_cmd_actor(m, open_picker_history).menu_key(split(key_picker_history)),
 		get_cmd_actor(m, open_picker_colorscheme).menu_key(split(key_picker_color)),
-		get_cmd_actor(m, open_picker_workspace).menu_key(split(key_picker_color)),
+		get_cmd_actor(m, open_picker_workspace).menu_key(split("wk")),
 		get_cmd_actor(m, open_picker_grep_word).menu_key(split(key_picker_grep_word)),
 		get_cmd_actor(m, open_picker_global_search).menu_key(split(key_picker_search_in_file)),
 		get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
 		get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
-		get_cmd_actor(m, open_picker_wkq).menu_key(split("wk")),
+		get_cmd_actor(m, open_picker_wkq).menu_key(split(key_workspace_symbole_query)),
 		get_cmd_actor(m, cmd_quit).menu_key(split("Q")),
 	}
 }
@@ -328,7 +329,7 @@ func (main *mainui) key_map_leader() []cmditem {
 	sss := []cmditem{
 		get_cmd_actor(main, open_picker_ctrlp).leader(split(key_picker_ctrlp)),
 		get_cmd_actor(main, open_picker_grep_word).leader(split(key_picker_grep_word)),
-		get_cmd_actor(main, open_picker_wkq).leader(split("wk")),
+		get_cmd_actor(main, open_picker_wkq).leader(split(key_workspace_symbole_query)),
 		get_cmd_actor(main, open_picker_qfh).leader(split(key_picker_qfh)),
 		get_cmd_actor(main, open_picker_refs).leader(split(chr_goto_refer)),
 		get_cmd_actor(main, open_picker_history).leader(split(key_picker_history)),

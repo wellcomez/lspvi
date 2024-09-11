@@ -28,14 +28,17 @@ func (pk *workspace_query_picker) name() string {
 
 func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInformation, err error) {
 	pk.impl.sym = sym
+	root := pk.impl.parent.main.root
 	pk.impl.parent.app.QueueUpdateDraw(func() {
 		pk.impl.list.Key = pk.impl.query
 		for i, v := range sym {
-			a := lspcore.Symbol{
-				SymInfo: v,
-			}
+			// a := lspcore.Symbol{
+			// 	SymInfo: v,
+			// }
 			index := i
-			s := fmt.Sprintf("%-4s%-12s%s", a.Icon(), strings.ReplaceAll(v.Kind.String(), "SymbolKind:", ""), strings.TrimLeft(v.Name, " \t"))
+			filename := v.Location.URI.AsPath().String()
+			filename = strings.ReplaceAll(filename, root, "")
+			s := fmt.Sprintf("%-8s %-20s %s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", ""), strings.TrimLeft(v.Name, " \t"), filename)
 			pk.impl.list.AddItem(s, "", func() {
 				sym := pk.impl.sym[index]
 				main := pk.impl.parent.main
@@ -49,7 +52,9 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 
 // UpdateQuery implements picker.
 func (pk *workspace_query_picker) UpdateQuery(query string) {
-	if pk.impl.file==nil {return }
+	if pk.impl.file == nil {
+		return
+	}
 	pk.impl.query = query
 	pk.impl.list.Clear()
 	go func() {
@@ -89,6 +94,6 @@ func new_workspace_symbol_picker(v *fzfmain, file *lspcore.Symbol_file) *workspa
 	ret.impl.prev_picker_impl.use_cusutom_list(ret.impl.list)
 	return ret
 }
-func (pk *workspace_query_picker) grid() *tview.Flex{
-	return pk.impl.flex(pk.impl.parent.input,1)
+func (pk *workspace_query_picker) grid() *tview.Flex {
+	return pk.impl.flex(pk.impl.parent.input, 1)
 }
