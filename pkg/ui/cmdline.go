@@ -313,6 +313,9 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	cmd := v.vi.app.cmdline
 	vim := cmd.Vim
 	if handle_backspace(event, cmd) {
+		if len(cmd.input.GetText())==0{
+			v.vi.EnterEscape()
+		}
 		return true
 	}
 	var prev *command_history_record = nil
@@ -379,7 +382,11 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	shouldReturn := handle_backspace(event, cmd)
 	if shouldReturn {
 		txt := cmd.input.GetText()
-		cmd.main.OnSearch(txt, false, false)
+		if len(txt) > 0 {
+			cmd.main.OnSearch(txt, false, false)
+		} else {
+			v.vi.EnterEscape()
+		}
 		return true
 	}
 	txt := cmd.input.GetText()
@@ -421,7 +428,7 @@ func handle_backspace(event *tcell.EventKey, cmd *cmdline) bool {
 	txt := cmd.input.GetText()
 	vim := cmd.Vim
 	if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
-		if len(txt) > 1 {
+		if len(txt) > 0 {
 			txt = txt[0 : len(txt)-1]
 			cmd.input.SetText(txt)
 			vim.vi.FindEnter = ""
