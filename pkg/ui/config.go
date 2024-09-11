@@ -28,8 +28,7 @@ func (config LspviConfig) Load() (*LspviConfig, error) {
 	return &default_ret, err
 }
 func (config LspviConfig) Save() error {
-	var ret LspviConfig
-	if buf, err := yaml.Marshal(&ret); err == nil {
+	if buf, err := yaml.Marshal(&config); err == nil {
 		return os.WriteFile(lspviroot.configfile, buf, 0644)
 	} else {
 		return err
