@@ -539,23 +539,28 @@ func MainUI(arg *Arguments) {
 		root = arg.Root
 	}
 	gload_workspace_list.Load()
-	err := gload_workspace_list.Add(root)
+	prj, err := gload_workspace_list.Add(root)
 	if err != nil {
 		log.Printf("add workspace failed:%v", err)
 	}
-	lspviroot = new_workdir(root)
-	global_config, _ = LspviConfig{}.Load()
+	if prj == nil {
+		log.Printf("load failed:%v", err)
+		panic(err)
+	}
+	// lspviroot = new_workdir(root)
+	// global_config, _ = LspviConfig{}.Load()
 	// go servmain(lspviroot.uml, 18080, func(port int) {
 	// 	httport = port
 	// })
 
-	handle := LspHandle{}
-	var main = &mainui{
-		bf:       NewBackForward(NewHistory(lspviroot.history)),
-		bookmark: &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}},
-		tty:      arg.Tty,
-		ws:       arg.Ws,
-	}
+	// handle := LspHandle{}
+	// var main = &mainui{
+	// 	bf:       NewBackForward(NewHistory(lspviroot.history)),
+	// 	bookmark: &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}},
+	// 	tty:      arg.Tty,
+	// 	ws:       arg.Ws,
+	// }
+	main := prj.Load(arg)
 	go StartWebUI(func(port int, url string) {
 		if len(url) > 0 {
 			main.ws = url
@@ -565,14 +570,14 @@ func MainUI(arg *Arguments) {
 			httport = port
 		}
 	})
-	main.bookmark.load()
-	handle.main = main
-	if !filepath.IsAbs(root) {
-		root, _ = filepath.Abs(root)
-	}
-	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
-	main.lspmgr = lspmgr
-	main.root = root
+	// main.bookmark.load()
+	// handle.main = main
+	// if !filepath.IsAbs(root) {
+	// 	root, _ = filepath.Abs(root)
+	// }
+	// lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
+	// main.lspmgr = lspmgr
+	// main.root = root
 
 	main.cmdline = new_cmdline(main)
 	var logfile, _ = os.OpenFile(lspviroot.logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type Project struct {
@@ -20,20 +21,46 @@ type workspace_list struct {
 
 var gload_workspace_list workspace_list
 
-func (wk *workspace_list) Add(root string) error {
+func (prj *Project) Load(arg *Arguments) *mainui {
+	root := prj.Root
+	lspviroot = new_workdir(root)
+	global_config, _ = LspviConfig{}.Load()
+	// go servmain(lspviroot.uml, 18080, func(port int) {
+	// 	httport = port
+	// })
+
+	handle := LspHandle{}
+	var main = &mainui{
+		bf:       NewBackForward(NewHistory(lspviroot.history)),
+		bookmark: &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}},
+		tty:      arg.Tty,
+		ws:       arg.Ws,
+	}
+	main.bookmark.load()
+	handle.main = main
+	if !filepath.IsAbs(root) {
+		root, _ = filepath.Abs(root)
+	}
+	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
+	main.lspmgr = lspmgr
+	main.root = root
+	return main
+}
+func (wk *workspace_list) Add(root string) (*Project, error) {
 	if !checkDirExists(root) {
-		return os.ErrNotExist
+		return nil, os.ErrNotExist
 	}
 	for _, v := range wk.Projects {
 		if v.Root == root {
-			return nil
+			return nil, nil
 		}
 	}
-	wk.Projects = append(wk.Projects, Project{
+	x := Project{
 		Name: filepath.Base(root),
 		Root: root,
-	})
-	return save_workspace_list(wk)
+	}
+	wk.Projects = append(wk.Projects, x)
+	return &x, save_workspace_list(wk)
 }
 
 func save_workspace_list(wk *workspace_list) error {
