@@ -117,6 +117,18 @@ type cmdkey struct {
 func (cmd cmdkey) displaystring() string {
 	t := []string{}
 	switch cmd.Type {
+	case cmd_key_event_name:
+		{
+			switch cmd.eventname {
+			case "Rune[O]":
+				return "Shift + o"
+			case "Rune[+]":
+				return "Shift + +"
+			case "Rune[-]":
+				return "-"
+			}
+			return cmd.eventname
+		}
 	case cmd_key_menu:
 		t = append(t, "menu")
 	case cmd_key_escape:

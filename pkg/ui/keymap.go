@@ -405,7 +405,7 @@ func (m *mainui) keymap(keytype cmdkeytype, markdown bool) []string {
 	return ret
 }
 func (m *mainui) helpkey(print bool) []string {
-	types := []cmdkeytype{cmd_key_escape, cmd_key_leader, cmd_key_menu}
+	types := []cmdkeytype{cmd_key_escape, cmd_key_leader, cmd_key_menu, cmd_key_event_name}
 	if print {
 		types = append(types, cmd_key_rune)
 		types = append(types, cmd_key_tcell_key)
@@ -420,6 +420,13 @@ func (m *mainui) helpkey(print bool) []string {
 	for _, k := range types {
 		s := m.keymap(k, print)
 		ret = append(ret, s...)
+	}
+	for _, v := range m.cmdline.cmds {
+		if print {
+			ret = append(ret, fmt.Sprintf("|%-10s |%s|", v.displaystring(), v.descriptor))
+		} else {
+			ret = append(ret, fmt.Sprintf("%-10s %s", v.displaystring(), v.descriptor))
+		}
 	}
 	if print {
 		for _, l := range ret {

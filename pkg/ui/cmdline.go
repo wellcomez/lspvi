@@ -19,6 +19,7 @@ type cmdline struct {
 	Vim          *Vim
 	history      *command_history
 	find_history *command_history
+	cmds         []cmd_processor
 }
 
 func new_cmdline(main *mainui) *cmdline {
@@ -39,6 +40,28 @@ func new_cmdline(main *mainui) *cmdline {
 	input.SetFieldBackgroundColor(tcell.ColorBlack)
 	input.SetInputCapture(code.Keyhandle)
 	code.Vim = NewVim(main)
+	code.cmds = []cmd_processor{
+		cmd_processor{[]string{"cn", "cp"}, "next/prev quick fix", func(s []string) {
+			command := s[0]
+			if command != "cn" {
+				get_cmd_actor(main, vi_quick_prev).handle()
+			} else {
+				get_cmd_actor(main, vi_quick_next).handle()
+			}
+		}},
+		cmd_processor{[]string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string) {
+			main.Close()
+		}},
+		cmd_processor{[]string{"h", "help"}, "help", func(s []string) {
+			main.helpkey(true)
+		}},
+		cmd_processor{[]string{"search", "grep"}, "search", func(args []string) {
+			code.OnSearchCommand(args)
+		}},
+		cmd_processor{[]string{"set"}, "set", func(args []string) {
+			code.OnSet(args)
+		}},
+	}
 	return code
 }
 func (cmd *cmdline) OnSet(args []string) bool {
@@ -62,6 +85,25 @@ func (cmd *cmdline) OnSearchCommand(args []string) bool {
 	}
 	return true
 }
+
+type cmd_processor struct {
+	arg0       []string
+	descriptor string
+	run        func([]string)
+}
+
+func (cmd *cmd_processor) displaystring() string {
+	return strings.Join(cmd.arg0, ",")
+}
+func (cmd cmd_processor) is(a string) bool {
+	for _, v := range cmd.arg0 {
+		if v == a {
+			return true
+		}
+	}
+	return false
+}
+
 func (cmd *cmdline) OnComand(commandinput string) bool {
 	command := commandinput
 	command = strings.TrimRight(command, "\r")
@@ -76,35 +118,39 @@ func (cmd *cmdline) OnComand(commandinput string) bool {
 	if len(args) > 0 {
 		command = args[0]
 	}
-
-	switch command {
-	case "cn", "cp":
-		{
-			if command != "cn" {
-				get_cmd_actor(cmd.main, vi_quick_prev).handle()
-			} else {
-				get_cmd_actor(cmd.main, vi_quick_next).handle()
-			}
+	for _, v := range cmd.cmds {
+		if v.is(command) {
+			v.run(args)
+			return true
 		}
-	case "q", "quit", "q!", "qa", "x":
-		{
-			cmd.main.Close()
-		}
-	case "h", "help":
-		{
-			cmd.main.helpkey(true)
-		}
-	case "search", "grep":
-		{
-			cmd.OnSearchCommand(args)
-		}
-	case "set":
-		{
-			cmd.OnSet(args)
-		}
-	default:
-		return false
 	}
+	// switch command {
+	// case "cn", "cp":
+	// 	{
+	// 		if command != "cn" {
+	// 			get_cmd_actor(cmd.main, vi_quick_prev).handle()
+	// 		} else {
+	// 			get_cmd_actor(cmd.main, vi_quick_next).handle()
+	// 		}
+	// 	}
+	// case "q", "quit", "q!", "qa", "x":
+	// 	{
+	// 		cmd.main.Close()
+	// 	}
+	// case "h", "help":
+	// 	{
+	// 		cmd.main.helpkey(true)
+	// 	}
+	// case "search", "grep":
+	// 	{
+	// 		cmd.OnSearchCommand(args)
+	// 	}
+	// case "set":
+	// 	{
+	// 	}
+	// default:
+	// 	return false
+	// }
 	return true
 }
 
