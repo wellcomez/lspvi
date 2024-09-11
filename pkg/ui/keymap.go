@@ -207,7 +207,9 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case vi_right_word:
 		return cmdactor{id, "word right", func() { m.codeview.word_right() }}
 	case vi_copy_text:
-		return cmdactor{id, "Copy", func() { m.codeview.copyline(false) }}
+		return cmdactor{id, "Copy", func() { 
+			m.codeview.copyline(false) 
+		}}
 	case vi_copy_line:
 		return cmdactor{id, "Copy", func() { m.codeview.copyline(true) }}
 	case vi_line_head:
