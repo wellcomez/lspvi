@@ -535,6 +535,11 @@ func MainUI(arg *Arguments) {
 	if len(arg.Root) > 0 {
 		root = arg.Root
 	}
+	gload_workspace_list.Load()
+	err:=gload_workspace_list.Add(root)
+	if err!=nil{
+		log.Printf("add workspace failed:%v",err)
+	}
 	lspviroot = new_workdir(root)
 	global_config, _ = LspviConfig{}.Load()
 	// go servmain(lspviroot.uml, 18080, func(port int) {
