@@ -3,6 +3,7 @@ package pty
 import (
 	"io"
 	"log"
+	"path/filepath"
 	"syscall"
 
 	// "log"
@@ -14,7 +15,8 @@ import (
 	"golang.org/x/term"
 )
 
-var logFile, _ = setupLogFile("logfile.txt")
+var home, _ = os.UserHomeDir()
+var logFile, _ = setupLogFile(filepath.Join(home, ".lspvi", "ttylogfile.txt"))
 
 var gui io.Writer
 
