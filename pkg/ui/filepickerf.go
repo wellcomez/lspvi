@@ -31,6 +31,10 @@ type filepicker struct {
 	impl *DirWalk
 }
 
+// close implements picker.
+func (f filepicker) close() {
+}
+
 // name implements picker.
 func (f filepicker) name() string {
 	return "files"

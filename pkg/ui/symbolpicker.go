@@ -207,6 +207,10 @@ type symbolpicker struct {
 	impl *SymbolWalkImpl
 }
 
+// close implements picker.
+func (sym symbolpicker) close() {
+}
+
 // name implements picker.
 func (sym symbolpicker) name() string {
 	return "document symbol"

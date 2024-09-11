@@ -23,6 +23,10 @@ type keymap_picker struct {
 	impl *keymap_picker_impl
 }
 
+// close implements picker.
+func (pk keymap_picker) close() {
+}
+
 // name implements picker.
 func (pk keymap_picker) name() string {
 	return "key map"
@@ -75,7 +79,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 		})
 	}
 	ret.impl.fzf = new_fzf_on_list(list, true)
-	ret.impl.fzf.selected = func(dataindex int,listindex int ) {
+	ret.impl.fzf.selected = func(dataindex int, listindex int) {
 		ret.newMethod(dataindex)
 	}
 	return ret

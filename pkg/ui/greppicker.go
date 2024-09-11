@@ -30,6 +30,10 @@ type livewgreppicker struct {
 	not_live       bool
 }
 
+// close implements picker.
+func (pk *livewgreppicker) close() {
+}
+
 // name implements picker.
 func (pk *livewgreppicker) name() string {
 	return "live grep"
@@ -39,6 +43,10 @@ func (pk *livewgreppicker) name() string {
 type greppicker struct {
 	*livewgreppicker
 	query string
+}
+
+// close implements picker.
+func (g *greppicker) close() {
 }
 
 // UpdateQuery implements picker.

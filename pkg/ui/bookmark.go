@@ -98,6 +98,10 @@ type bookmark_picker struct {
 	impl *bookmark_picker_impl
 }
 
+// close implements picker.
+func (pk bookmark_picker) close() {
+}
+
 // UpdateQuery implements picker.
 func (pk bookmark_picker) UpdateQuery(query string) {
 	listview := pk.impl.hlist
@@ -143,6 +147,10 @@ func get_list_item(v ref_line, root string) (string, string) {
 type bookmark_edit struct {
 	*fzflist_impl
 	cb func(s string)
+}
+
+// close implements picker.
+func (b bookmark_edit) close() {
 }
 
 // UpdateQuery implements picker.

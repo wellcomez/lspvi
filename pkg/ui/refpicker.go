@@ -126,6 +126,10 @@ type refpicker struct {
 	impl *refpicker_impl
 }
 
+// close implements picker.
+func (pk refpicker) close() {
+}
+
 // name implements picker.
 func (pk refpicker) name() string {
 	return "refs"
@@ -333,8 +337,8 @@ func (pk refpicker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
 	listview := pk.impl.listcustom
 	listview.Clear()
-	selected := func(data int ,list int) {
-		pk.onselected(data,list)
+	selected := func(data int, list int) {
+		pk.onselected(data, list)
 	}
 	if fzf := pk.impl.fzf; fzf != nil {
 		fzf.selected = selected
@@ -344,7 +348,7 @@ func (pk refpicker) UpdateQuery(query string) {
 	}
 }
 
-func (pk refpicker) onselected(data int,list int) {
+func (pk refpicker) onselected(data int, list int) {
 	index := data
 	v := pk.impl.listdata[index]
 
@@ -358,7 +362,7 @@ func (pk *refpicker) loadlist() {
 	for i := range pk.impl.listdata {
 		v := pk.impl.listdata[i]
 		listview.AddItem(v.path, v.line, func() {
-			pk.onselected(i,i)
+			pk.onselected(i, i)
 		})
 	}
 	pk.impl.fzf = new_fzf_on_list(listview, true)

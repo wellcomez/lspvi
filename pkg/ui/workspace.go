@@ -124,6 +124,10 @@ type workspace_picker struct {
 	fzf  *fzf_on_listview
 }
 
+// close implements picker.
+func (pk *workspace_picker) close() {
+}
+
 func (pk *workspace_picker) grid(input *tview.InputField) *tview.Grid {
 	return pk.impl.grid(input)
 }

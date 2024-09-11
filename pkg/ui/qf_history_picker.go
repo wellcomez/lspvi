@@ -30,6 +30,10 @@ type qk_history_picker struct {
 	list *customlist
 }
 
+// close implements picker.
+func (pk qk_history_picker) close() {
+}
+
 // name implements picker.
 func (pk qk_history_picker) name() string {
 	return "quickfix history"

@@ -21,6 +21,10 @@ type workspace_query_picker struct {
 	impl *workspace_query_picker_impl
 }
 
+// close implements picker.
+func (pk *workspace_query_picker) close() {
+}
+
 // name implements picker.
 func (pk *workspace_query_picker) name() string {
 	return "workspace symbol"
@@ -38,7 +42,7 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 			index := i
 			filename := v.Location.URI.AsPath().String()
 			filename = strings.ReplaceAll(filename, root, "")
-			s :=  fmt.Sprintf("%-8s %-20s %s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", ""), strings.TrimLeft(v.Name, " \t"), filename)
+			s := fmt.Sprintf("%-8s %-20s %s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", ""), strings.TrimLeft(v.Name, " \t"), filename)
 			pk.impl.list.AddItem(s, "", func() {
 				sym := pk.impl.sym[index]
 				main := pk.impl.parent.main

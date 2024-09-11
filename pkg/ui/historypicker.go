@@ -41,6 +41,10 @@ type history_picker struct {
 	// listcheck *GridListClickCheck
 }
 
+// close implements picker.
+func (pk history_picker) close() {
+}
+
 type color_theme_file struct {
 	treesitter bool
 	filename   string
@@ -53,6 +57,11 @@ type color_pick_impl struct {
 type color_picker struct {
 	impl *color_pick_impl
 	fzf  *fzf_on_listview
+}
+
+// close implements picker.
+func (pk *color_picker) close() {
+	panic("unimplemented")
 }
 
 func (pk *color_picker) grid(input *tview.InputField) *tview.Grid {

@@ -93,6 +93,7 @@ func (pick *fzfmain) MouseHanlde(event *tcell.EventMouse, action tview.MouseActi
 
 func (v *fzfmain) hide() {
 	v.Visible = false
+	v.currentpicker.close()
 }
 func (v *fzfmain) open_qfh_picker(file *lspcore.Symbol_file) {
 	sym := new_qk_history_picker(v)
@@ -191,6 +192,7 @@ type picker interface {
 	name() string
 	handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive))
 	UpdateQuery(query string)
+	close()
 }
 
 // handle_key
