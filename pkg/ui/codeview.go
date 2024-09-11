@@ -332,13 +332,37 @@ func qf_grep_word(main *mainui, rightmenu_select_text string) {
 	if main.quickview.grep != nil {
 		main.quickview.grep.close()
 	}
-	main.quickview.grep = main.open_picker_grep(key.Key, func(end bool, s ref_with_caller) bool {
+	add := 0
+	buf := []ref_with_caller{}
+	buf2 := []ref_with_caller{}
+	coping := false
+	main.quickview.grep = main.open_picker_grep(key.Key, func(end bool, ss ref_with_caller) bool {
 		var ret = rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
 		if ret {
-			main.app.QueueUpdateDraw(func() {
-				main.quickview.AddResult(end, data_grep_word, s, key)
-				main.page.SetTitle(main.quickview.String())
-			})
+			if add > 1000 {
+				return false
+			}
+			if coping {
+				buf2 = append(buf2, ss)
+			} else {
+				if len(buf2) > 0 {
+					buf = append(buf, buf2...)
+					buf2 = []ref_with_caller{}
+				}
+				buf = append(buf, ss)
+			}
+			if add < 15 || len(buf) >= 100 || end {
+				main.app.QueueUpdateDraw(func() {
+					coping = true
+					for _, s := range buf {
+						add++
+						main.quickview.AddResult(end, data_grep_word, s, key)
+						main.page.SetTitle(main.quickview.String())
+					}
+					buf = []ref_with_caller{}
+					coping = false
+				})
+			}
 		}
 		return true
 	})

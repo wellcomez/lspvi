@@ -565,6 +565,9 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
+	if qk.grep != nil {
+		qk.grep.close()
+	}
 	qk.Type = t
 	qk.Refs.Refs = Refs
 	qk.searchkey = key
