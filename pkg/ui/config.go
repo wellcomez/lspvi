@@ -3,14 +3,16 @@ package mainui
 import (
 	"os"
 	"gopkg.in/yaml.v2"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type LspviConfig struct {
-	Colorscheme string `yaml:"colorscheme"`
-	Wrap        bool   `yaml:"wrap"`
+	Colorscheme string            `yaml:"colorscheme"`
+	Wrap        bool              `yaml:"wrap"`
+	Lsp         lspcore.LspConfig `yaml:"lsp"`
 }
 
-func (config LspviConfig) Load() (*LspviConfig, error) {	
+func (config LspviConfig) Load() (*LspviConfig, error) {
 	buf, err := os.ReadFile(lspviroot.configfile)
 	default_ret := LspviConfig{
 		Colorscheme: "darcula",
