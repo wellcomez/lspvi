@@ -59,7 +59,7 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 		var key = event.Key()
 		if key == tcell.KeyEnter && !focused {
 			g.impl.fzf_on_result = nil
-			g.parent.input.SetText(">")
+			g.parent.input.SetLabel(">")
 			g.livewgreppicker.UpdateQuery(g.query)
 		} else if key == tcell.KeyCtrlS {
 			g.Save()

@@ -157,7 +157,7 @@ func (v *fzfmain) OpenKeymapFzf() {
 func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
 	v.Frame.SetBorder(true)
-	v.input.SetText(">")
+	v.input.SetLabel(">")
 	v.Frame.SetTitle(sym.name())
 	v.app.SetFocus(v.input)
 	v.Visible = true
@@ -175,7 +175,7 @@ func (v *fzfmain) OpenDocumntSymbolFzf(file *lspcore.Symbol_file) {
 func (v *fzfmain) OpenFileFzf(root string) {
 	filewalk := NewDirWalk(root, v)
 	v.Frame = tview.NewFrame(filewalk.grid(v.input))
-	v.input.SetText(">")
+	v.input.SetLabel(">")
 	v.app.SetFocus(v.input)
 	v.Visible = true
 	v.currentpicker = filepicker{
@@ -201,14 +201,11 @@ func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	text := v.input.GetText()
 	v.input.InputHandler()(event, nil)
+	v.input.SetLabel(">")
 	text2 := v.input.GetText()
 	if text != text2 {
-		if len(text2) == 0 {
-			v.input.SetText(">")
-		} else {
-			query := v.input.GetText()[1:]
-			v.currentpicker.UpdateQuery(query)
-		}
+		query := v.input.GetText()
+		v.currentpicker.UpdateQuery(query)
 		return nil
 	}
 	v.currentpicker.handle()(event, nil)
