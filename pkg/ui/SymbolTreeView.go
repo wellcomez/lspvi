@@ -222,6 +222,7 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 			bw := width / 2
 			bh := height / 2
 			ret.waiter.SetRect((width-bw)/2+x, y+(height-bh)/2, bw, bh)
+			ret.waiter.SetBackgroundColor(ret.main.codeview.bgcolor)
 			ret.waiter.Draw(screen)
 		}
 		return ret.view.GetInnerRect()

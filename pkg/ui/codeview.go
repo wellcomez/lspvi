@@ -60,6 +60,7 @@ type CodeView struct {
 	rightmenu            CodeContextMenu
 	LineNumberUnderMouse int
 	not_preview          bool
+	bgcolor              tcell.Color
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -1106,6 +1107,8 @@ func (code *CodeView) change_theme() {
 			main.layout.tab_area.SetBackgroundColor(bg)
 			main.statusbar.SetBackgroundColor(bg)
 			main.console_index_list.SetBackgroundColor(bg)
+			main.layout.dialog.Frame.SetBackgroundColor(bg)
+			code.bgcolor = bg
 		}
 		log.Println(colorscheme)
 		code.view.SetColorscheme(colorscheme)
