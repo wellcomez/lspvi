@@ -176,11 +176,12 @@ func (ret *cmdline) handle_mouse(action tview.MouseAction, event *tcell.EventMou
 func (cmd *cmdline) SetValue(value string) {
 	cmd.input.SetText(value)
 }
-func (cmd cmdline) Value() string {
-	return cmd.input.GetText()
-}
+// func (cmd cmdline) Value() string {
+// 	return cmd.input.GetText()
+// }
 func (cmd cmdline) Clear() {
 	cmd.input.SetText("")
+	cmd.input.SetLabel("")
 }
 
 type VmapPosition struct {
@@ -379,7 +380,7 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	shouldReturn := handle_backspace(event, cmd)
 	if shouldReturn {
 		txt := cmd.input.GetText()
-		cmd.main.OnSearch(txt[1:], false, false)
+		cmd.main.OnSearch(txt, false, false)
 		return true
 	}
 	txt := cmd.input.GetText()
@@ -389,21 +390,19 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	} else if event.Key() == tcell.KeyDown {
 		prev = cmd.find_history.next()
 	} else if event.Key() == tcell.KeyEnter {
-		if len(txt) > 1 {
-			vim.vi.FindEnter = txt[1:]
-		}
+		vim.vi.FindEnter = txt
 		added := len(cmd.find_history.data) > 0 && cmd.find_history.data[len(cmd.find_history.data)-1].cmdline() == txt
 		if !added {
 			cmd.find_history.add(command_history_record{Cmd: vim.vi.FindEnter, Find: true})
 		}
-		cmd.main.OnSearch(txt[1:], false, false)
+		cmd.main.OnSearch(txt, false, false)
 		return true
 	}
 	if prev != nil {
 		txt := prev.cmdline()
 		cmd.input.SetText(txt)
-		vim.vi.FindEnter = txt[1:]
-		cmd.main.OnSearch(txt[1:], false, false)
+		vim.vi.FindEnter = txt
+		cmd.main.OnSearch(txt, false, false)
 		return true
 	} else {
 		if len(vim.vi.FindEnter) > 0 {
@@ -414,7 +413,7 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		}
 		txt = txt + string(event.Rune())
 		cmd.input.SetText(txt)
-		cmd.main.OnSearch(txt[1:], false, false)
+		cmd.main.OnSearch(txt, false, false)
 		return true
 	}
 }
@@ -625,7 +624,8 @@ func (v *Vim) MoveFocus() {
 func (v *Vim) EnterGrep(txt string) {
 	v._enter_find_mode()
 	v.vi.FindEnter = txt
-	v.app.cmdline.SetValue("/" + txt)
+	v.app.cmdline.input.SetLabel("/")
+	v.app.cmdline.input.SetText(txt)
 }
 func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 	if event.Rune() == ':' {
@@ -692,7 +692,7 @@ func (v *Vim) _enter_find_mode() {
 		vi:   v,
 	}
 	v.vi_handle = a
-	v.app.cmdline.SetValue("/")
+	v.app.cmdline.input.SetLabel("/")
 }
 
 // EnterLead jj
@@ -822,7 +822,7 @@ func (v *Vim) EnterCommand() bool {
 		v.vi = vimstate{Command: true}
 		v.MoveFocus()
 		v.app.cmdline.input.Focus(nil)
-		v.app.cmdline.SetValue(":")
+		v.app.cmdline.input.SetLabel(":")
 		v.vi_handle = vi_command_mode_handle{
 			main: v.app,
 			vi:   v,
