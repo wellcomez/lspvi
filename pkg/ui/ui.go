@@ -672,7 +672,7 @@ func MainUI(arg *Arguments) {
 		if main.layout.dialog.Visible {
 			if !InRect(event, main.layout.dialog.Frame) {
 				if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
-					main.layout.dialog.Visible = false
+					main.layout.dialog.hide()
 				}
 			} else {
 				main.layout.dialog.MouseHanlde(event, action)

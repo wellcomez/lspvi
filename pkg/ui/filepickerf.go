@@ -339,7 +339,7 @@ func update_list_view(list *customlist, t querytask, v *fzfmain) {
 		list.AddItem(a.name, "", func() {
 			idx := list.GetCurrentItem()
 			f := t.ret[idx]
-			v.Visible = false
+			v.hide()
 			v.main.OpenFile(f.path, nil)
 		})
 	}

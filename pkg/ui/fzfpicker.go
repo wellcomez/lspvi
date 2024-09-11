@@ -196,7 +196,7 @@ type picker interface {
 // handle_key
 func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyEsc {
-		v.Visible = false
+		v.hide()
 		return nil
 	}
 	text := v.input.GetText()
