@@ -42,7 +42,7 @@ type TreeSitter struct {
 	sourceCode []byte
 	// Symbols     []TreeSitterSymbol
 	HlLine  t_symbol_line
-	Outline t_symbol_line
+	Outline []lsp.SymbolInformation
 }
 
 func TreesitterCheckIsSourceFile(filename string) bool {
@@ -184,34 +184,54 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language) error {
 	if local_err != nil {
 		log.Println("fail to load locals", local_err)
 	} else {
-		lsp.NewDocumentURI(ts.filename)
-		prefix := "local.definition."
-		for i := range ret {
-			v := ret[i]
-			for i := 0; i < len(v); i++ {
-				s := v[i]
-				if strings.Index(s.SymobName, prefix) == 0 {
-					symboltype := strings.Replace(s.SymobName, prefix, "", 1)
-					switch symboltype {
-					case "type":
-						{
-							log.Println("outline", s.Code, symboltype)
-						}
-					case "method", "function", "namespace":
-						{
-							log.Println("outline", s.Code, symboltype)
-						}
-					case "var":
-						continue
-					default:
-						log.Println("unhandled symbol type:", symboltype)
+		symbols := get_ts_symbol(ret, ts)
+		ts.Outline = symbols
+	}
+	return hlerr
+}
+
+func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
+	prefix := "local.definition."
+	symbols := []lsp.SymbolInformation{}
+	for i := range ret {
+		v := ret[i]
+		for i := 0; i < len(v); i++ {
+			s := v[i]
+			if strings.Index(s.SymobName, prefix) == 0 {
+				symboltype := strings.Replace(s.SymobName, prefix, "", 1)
+				switch symboltype {
+				case "type":
+					{
+						log.Println("outline", s.Code, symboltype)
 					}
+				case "method", "function", "namespace":
+					{
+						kind := map[string]lsp.SymbolKind{
+							"method": lsp.SymbolKindMethod,
+						}
+						log.Println("outline", s.Code, symboltype)
+						s := lsp.SymbolInformation{
+							Name: s.Code,
+							Kind: kind[symboltype],
+							Location: lsp.Location{
+								URI: lsp.NewDocumentURI(ts.filename),
+								Range: lsp.Range{
+									Start: lsp.Position{Line: int(s.Begin.Row), Character: int(s.Begin.Column)},
+									End:   lsp.Position{Line:int(s.End.Row),Character:  int(s.End.Column)},
+								},
+							},
+						}
+						symbols = append(symbols, s)
+					}
+				case "var":
+					continue
+				default:
+					log.Println("unhandled symbol type:", symboltype)
 				}
 			}
 		}
-		ts.Outline = ret
 	}
-	return hlerr
+	return symbols
 }
 
 func (ts *TreeSitter) _load_file(lang *sitter.Language) error {

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
@@ -66,10 +67,10 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	view := tview.NewTreeView()
 	ret := &file_tree_view{
 		view_link: &view_link{
-			id:      view_file,
-			right:   view_code,
-			down:    view_quickview,
-			left:    view_outline_list,
+			id:    view_file,
+			right: view_code,
+			down:  view_quickview,
+			left:  view_outline_list,
 		},
 		view:    view,
 		Name:    name,
@@ -271,9 +272,15 @@ func (view *file_tree_view) dir_replace(node *tview.TreeNode, filename string) {
 		}
 		node.Collapse()
 	} else {
-		dirname := filepath.Dir(filename)
-
-		view.view.SetTitle(dirname)
+		dirname := filename
+		if yes, _ := isDirectory(filename); !yes {
+			dirname = filepath.Dir(filename)
+		}
+		title := dirname
+		if len(title) > len(view.main.root) {
+			title = strings.Replace(title, view.main.root, "", 1)
+		}
+		view.view.SetTitle(title)
 		root2 := tview.NewTreeNode(node.GetText())
 		parent := tview.NewTreeNode("..")
 		parent.SetReference(filepath.Dir(filename))
@@ -296,13 +303,25 @@ func (view *file_tree_view) ChangeDir(dir string) {
 	parent.SetReference(filepath.Dir(dir))
 	root.AddChild(parent)
 	view.view.SetRoot(root)
-
 }
 func (view *file_tree_view) Init() *file_tree_view {
 	root := tview.NewTreeNode(view.rootdir)
 	view.opendir(root, view.rootdir)
 	view.view.SetRoot(root)
 	return view
+}
+func (view *file_tree_view) FocusFile(file string) {
+	child := view.view.GetRoot().GetChildren()
+	for _, node := range child {
+		value := node.GetReference()
+		if value != nil {
+			filename := value.(string)
+			if filename == file {
+				view.view.SetCurrentNode(node)
+				return
+			}
+		}
+	}
 }
 func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 	files, err := os.ReadDir(dir)

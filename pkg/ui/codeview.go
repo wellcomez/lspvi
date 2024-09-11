@@ -270,6 +270,12 @@ func update_selection_menu(ret *CodeView) {
 			main.get_callin_stack_by_cursor(loc, ret.filename)
 			main.ActiveTab(view_callin, false)
 		}},
+		{item: create_menu_item("Open in explorer"), handle: func() {
+			// ret.filename
+			dir := filepath.Dir(ret.filename)
+			main.fileexplorer.ChangeDir(dir)
+			main.fileexplorer.FocusFile(ret.filename)
+		}},
 		{item: create_menu_item("-------------"), handle: func() {
 		}},
 		{item: create_menu_item("Bookmark"), handle: func() {
