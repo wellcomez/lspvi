@@ -107,6 +107,9 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 
 func (m *mainui) on_select_project(prj *Project) {
 	prj.Load(&apparg, m)
+	m.fileexplorer.ChangeDir(prj.Root)
+  m.uml.file.rootdir =lspviroot.uml
+  m.uml.Init()
 	load_from_history(m)
 }
 func (m *mainui) zoom(zoomin bool) {
@@ -716,6 +719,7 @@ func load_from_history(main *mainui) {
 	main.quickview.view.Clear()
 	main.symboltree.Clear()
 	main.console_index_list.Clear()
+	main.bk.Clear()
 	if len(filearg.Path) > 0 {
 		main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
 			URI: lsp.NewDocumentURI(filearg.Path),
@@ -724,8 +728,8 @@ func load_from_history(main *mainui) {
 				End:   lsp.Position{Line: filearg.Pos.Line, Character: 0},
 			},
 		}, offset: 0}, false)
-	}else{
-		main.codeview.LoadBuffer([]byte{},"")
+	} else {
+		main.codeview.Load("")
 	}
 }
 
@@ -889,7 +893,6 @@ func create_edit_area(main *mainui) *flex_area {
 	main.codeview = codeview
 	codeview.view.SetBorder(true)
 
-	main.lspmgr.Handle = main
 	main.quickview = new_quikview(main)
 	main.bk = new_bookmark_view(main)
 	main.callinview = new_callview(main)

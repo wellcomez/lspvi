@@ -43,6 +43,7 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	}
 	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
 	main.lspmgr = lspmgr
+	main.lspmgr.Handle = main
 	main.root = root
 }
 func (wk *workspace_list) Add(root string) (*Project, error) {
