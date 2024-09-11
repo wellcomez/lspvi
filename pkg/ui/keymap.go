@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -135,7 +136,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		{
 			return cmdactor{id, "goto file explorer", func() {
 				dir := filepath.Dir(m.codeview.filename)
-				if view_file.to_view_link(m).Hide{
+				if view_file.to_view_link(m).Hide {
 					m.toggle_view(view_file)
 				}
 				m.fileexplorer.ChangeDir(dir)
@@ -279,15 +280,15 @@ const key_focus_in_fileview = "xf"
 
 func (main *mainui) ctrl_w_map() []cmditem {
 	return []cmditem{
-		get_cmd_actor(main, next_window_down).tcell_key(tcell.KeyDown),
-		get_cmd_actor(main, next_window_up).tcell_key(tcell.KeyUp),
-		get_cmd_actor(main, next_window_left).tcell_key(tcell.KeyLeft),
-		get_cmd_actor(main, next_window_right).tcell_key(tcell.KeyRight),
+		get_cmd_actor(main, next_window_down).tcell_key(tcell.KeyDown).ctrlw(),
+		get_cmd_actor(main, next_window_up).tcell_key(tcell.KeyUp).ctrlw(),
+		get_cmd_actor(main, next_window_left).tcell_key(tcell.KeyLeft).ctrlw(),
+		get_cmd_actor(main, next_window_right).tcell_key(tcell.KeyRight).ctrlw(),
 
-		get_cmd_actor(main, next_window_down).runne('j'),
-		get_cmd_actor(main, next_window_up).runne('k'),
-		get_cmd_actor(main, next_window_left).runne('h'),
-		get_cmd_actor(main, next_window_right).runne('l'),
+		get_cmd_actor(main, next_window_down).runne('j').ctrlw(),
+		get_cmd_actor(main, next_window_up).runne('k').ctrlw(),
+		get_cmd_actor(main, next_window_left).runne('h').ctrlw(),
+		get_cmd_actor(main, next_window_right).runne('l').ctrlw(),
 	}
 }
 func (main *mainui) key_map_escape() []cmditem {
@@ -374,32 +375,57 @@ func (m *mainui) global_key_map() []cmditem {
 		}
 	}
 */
-func (m *mainui) keymap(keytype cmdkeytype) []string {
+func (m *mainui) keymap(keytype cmdkeytype, markdown bool) []string {
 	ret := []string{}
 	var items = []cmditem{}
-	switch keytype {
-	case cmd_key_menu:
-		items = m.key_map_space_menu()
-	case cmd_key_leader:
-		items = m.key_map_leader()
-	}
+	items = append(items, m.ctrl_w_map()...)
+	items = append(items, m.global_key_map()...)
+	items = append(items, m.key_map_space_menu()...)
+	items = append(items, m.key_map_escape()...)
+	items = append(items, m.key_map_leader()...)
+
 	for _, k := range items {
-		s := fmt.Sprintf("%-10s %s", k.key.displaystring(), k.cmd.desc)
+		if k.key.Type != keytype {
+			continue
+		}
+		pre := ""
+		if k.key.hasctrlw {
+			pre = "ctrl+w "
+		}
+		var s string
+		if markdown {
+			s = fmt.Sprintf("|%-10s |%s|", pre+k.key.displaystring(), k.cmd.desc)
+
+		} else {
+			s = fmt.Sprintf("%-10s %s", k.key.displaystring(), k.cmd.desc)
+		}
+
 		ret = append(ret, s)
 	}
 	return ret
 }
 func (m *mainui) helpkey(print bool) []string {
 	types := []cmdkeytype{cmd_key_escape, cmd_key_leader, cmd_key_menu}
+	if print {
+		types = append(types, cmd_key_rune)
+		types = append(types, cmd_key_tcell_key)
+	}
 	ret := []string{}
+	if print {
+		s := fmt.Sprintf("|%-10s |%s|", "key", "function")
+		ret = append(ret, s)
+		s = fmt.Sprintf("|%-10s |%s|", "---", "---")
+		ret = append(ret, s)
+	}
 	for _, k := range types {
-		s := m.keymap(k)
+		s := m.keymap(k, print)
 		ret = append(ret, s...)
 	}
 	if print {
 		for _, l := range ret {
 			m.update_log_view(l + "\n")
 		}
+		os.WriteFile("help.md", []byte(strings.Join(ret, "\n")), 0666)
 	}
 	return ret
 }

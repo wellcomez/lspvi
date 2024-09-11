@@ -20,56 +20,19 @@ All above features are built in single binary not need to install plugin. Binary
 
 Although it run in terminal, it supports mouse click, wheel scrolling as well as gui. So if you are not vimer, it is also easy to use.
 
-## Keymap
 
-It supports most of common keymap of [neo]vim. **Space** will invoke menu and  choose **help** or   **space + h** will invoke keymap help.
+## User in Browser/Remotely
+- start as web server
+~~~sh
+lspvi -gui
+~~~
+- open browser 
 
-![keymap](keymap.png)
-| key            | function               |
-| -------------- | ---------------------- |
-| escape + gd    | goto define            |
-| escape + gr    | goto refer             |
-| escape + gg    | goto first line        |
-| escape + G     | goto first line        |
-| escape + gd    | goto define            |
-| escape + gr    | goto refer             |
-| escape + gg    | goto first line        |
-| escape + G     | goto first line        |
-| space + f      | picker file            |
-| space + fw     | grep word              |
-| space + wk     | query workspace symbol |
-| space + r      | reference              |
-| space + hh     | history                |
-| space + o      | open symbol            |
-| o              | open symbol            |
-| r              | reference              |
-| g              | live grep              |
-| hh             | history                |
-| fw             | grep word              |
-| f              | picker file            |
-| h              | help                   |
-| escape + k     | up                     |
-| escape + h     | left                   |
-| escape + l     | right                  |
-| escape + j     | down                   |
-| escape + e     | word right             |
-| escape + b     | word left              |
-| escape + D     | goto decl              |
-| escape + gd    | goto define            |
-| escape + f     | file in file           |
-| escape + *     | file in file vi        |
-| escape + c     | goto callin            |
-| escape + r     | goto refer             |
-| escape + /     | search mode            |
-| escape + 0     | goto line head         |
-| ctrlw+ l/r/u/d | switch window          |
+start with 13000
+[http:://localhost:1300x](http:://localhost:13000)
 
-## Code/Uml  view in browser
-
-Because of the limitation of terminal, you can still view text call sequence in lspvi console. But if you want to view png clearly, , you can use browser to view  call sequence.
-
-[http:://localhost:108080](http:://localhost:108080)
-![web](web.png)
+![webpng](web.png)
+- with power of xterm.js 
 
 ## lsp supported
 
@@ -111,3 +74,67 @@ cd docker
    ```sh
    ./dockbuild.sh 
    ```
+
+# Keymap
+
+It supports most of common keymap of [neo]vim. **Space** will invoke menu and  choose **help** or   **space + h** will invoke keymap help.
+
+![keymap](keymap.png)
+| key            | function               |
+| -------------- | ---------------------- |
+| escape + f     | file in file           |
+| escape + *     | file in file vi        |
+| escape + /     | search mode            |
+| escape + 0     | goto line head         |
+| escape + c     | goto callin            |
+| escape + r     | goto refer             |
+| escape + k     | up                     |
+| escape + %     | match                  |
+| escape + Up    | up                     |
+| escape + h     | left                   |
+| escape + Left  | left                   |
+| escape + l     | right                  |
+| escape + Right | right                  |
+| escape + j     | down                   |
+| escape + Down  | down                   |
+| escape + e     | word right             |
+| escape + b     | word left              |
+| escape + yy    | Copy                   |
+| escape + y     | Copy                   |
+| escape + gd    | goto define            |
+| escape + gr    | goto refer             |
+| escape + gg    | goto first line        |
+| escape + G     | goto first line        |
+| escape + B     | Bookmark               |
+| escape + xf    | goto file explorer     |
+| space + f      | picker file            |
+| space + fw     | grep word              |
+| space + ws     | query workspace symbol |
+| space + hq     | quickfix history       |
+| space + r      | reference              |
+| space + hh     | history                |
+| space + o      | open symbol            |
+| menu + o       | open symbol            |
+| menu + q       | quickfix history       |
+| menu + r       | reference              |
+| menu + B       | bookmark               |
+| menu + g       | live grep              |
+| menu + hh      | history                |
+| menu +         | colorscheme            |
+| menu + wk      | workspace              |
+| menu + fw      | grep word              |
+| menu + ff      | Search in files        |
+| menu + f       | picker file            |
+| menu + h       | help                   |
+| menu + ws      | query workspace symbol |
+| menu + Q       | Quit                   |
+| ctrl+w j       | next window down       |
+| ctrl+w k       | next window up         |
+| ctrl+w h       | next window left       |
+| ctrl+w l       | next window right      |
+| ctrl+w Down    | next window down       |
+| ctrl+w Up      | next window up         |
+| ctrl+w Left    | next window left       |
+| ctrl+w Right   | next window right      |
+| Ctrl-P         | picker file            |
+| Tab            | tab                    |

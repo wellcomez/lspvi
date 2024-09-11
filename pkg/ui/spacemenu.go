@@ -58,6 +58,10 @@ func (actor cmdactor) runne(key rune) cmditem {
 		rune: key,
 	}, actor}
 }
+func (c cmditem) ctrlw() cmditem {
+	c.key.hasctrlw = true
+	return c
+}
 func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
 	return cmditem{cmdkey{
 		Type:      cmd_key_tcell_key,
@@ -106,13 +110,20 @@ type cmdkey struct {
 	eventname string
 	rune      rune
 	tcell_key tcell.Key
+	hasctrlw  bool
 }
 
 func (cmd cmdkey) displaystring() string {
 	t := []string{}
 	switch cmd.Type {
+	case cmd_key_menu:
+		t = append(t, "menu")
 	case cmd_key_escape:
 		t = append(t, "escape")
+	case cmd_key_tcell_key:
+		return tcell.KeyNames[cmd.tcell_key]
+	case cmd_key_rune:
+		return fmt.Sprintf("%c", cmd.rune)
 	case cmd_key_leader:
 		t = append(t, "space")
 	}

@@ -1097,17 +1097,19 @@ func (code *CodeView) change_theme() {
 			colorscheme["default"] = n
 			_, bg, _ := n.Decompose()
 			main := code.main
-			for _, v := range all_view_list {
-				v.to_box(main).SetBackgroundColor(bg)
+			if main != nil {
+				for _, v := range all_view_list {
+					v.to_box(main).SetBackgroundColor(bg)
+				}
+				tview.Styles.PrimitiveBackgroundColor = bg
+				main.layout.console.SetBackgroundColor(bg)
+				main.page.SetBackgroundColor(bg)
+				main.layout.editor_area.SetBackgroundColor(bg)
+				main.layout.tab_area.SetBackgroundColor(bg)
+				main.statusbar.SetBackgroundColor(bg)
+				main.console_index_list.SetBackgroundColor(bg)
+				main.layout.dialog.Frame.SetBackgroundColor(bg)
 			}
-			tview.Styles.PrimitiveBackgroundColor = bg
-			main.layout.console.SetBackgroundColor(bg)
-			main.page.SetBackgroundColor(bg)
-			main.layout.editor_area.SetBackgroundColor(bg)
-			main.layout.tab_area.SetBackgroundColor(bg)
-			main.statusbar.SetBackgroundColor(bg)
-			main.console_index_list.SetBackgroundColor(bg)
-			main.layout.dialog.Frame.SetBackgroundColor(bg)
 			code.bgcolor = bg
 		}
 		log.Println(colorscheme)
