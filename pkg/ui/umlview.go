@@ -57,10 +57,11 @@ func (menu uml_filetree_context) menuitem() []context_menu_item {
 }
 func (v *umlview) openfile(name string) {
 	ext := filepath.Ext(name)
-
-	layout := v.file.main.layout
-	layout.mainlayout.ResizeItem(layout.editor_area, 0, 1)
-	layout.mainlayout.ResizeItem(layout.console, 0, 5)
+	if !v.file.main.tty {
+		layout := v.file.main.layout
+		layout.mainlayout.ResizeItem(layout.editor_area, 0, 1)
+		layout.mainlayout.ResizeItem(layout.console, 0, 5)
+	}
 
 	v.preview.Clear()
 	if ext == ".png" {
