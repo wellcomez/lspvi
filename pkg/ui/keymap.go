@@ -182,7 +182,16 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case brack_match:
 		{
 			return cmdactor{id, "match", func() {
-				m.codeview.view.JumpToMatchingBrace()
+				if m.cmdline.Vim.vi.VMap {
+					begin := m.codeview.view.Cursor.Loc
+					m.codeview.view.JumpToMatchingBrace()
+					end := m.codeview.view.Cursor.Loc
+					end.X += 1
+					m.codeview.view.Cursor.SetSelectionStart(begin)
+					m.codeview.view.Cursor.SetSelectionEnd(end)
+				} else {
+					m.codeview.view.JumpToMatchingBrace()
+				}
 			}}
 		}
 	case arrow_up:
