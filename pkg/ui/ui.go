@@ -68,7 +68,7 @@ type mainui struct {
 	quickview          *quick_view
 	bk                 *bookmark_view
 	activate_tab_name  string
-	page               *tview.Pages
+	page               *console_pages
 	callinview         *callinview
 	tabs               *ButtonGroup
 	root               string
@@ -87,6 +87,17 @@ type mainui struct {
 	// _editor_area_layout *editor_area_layout
 	tty bool
 	ws  string
+}
+type console_pages struct {
+	*tview.Pages
+	*view_link
+}
+
+func new_console_pages() *console_pages {
+	return &console_pages{
+		tview.NewPages(),
+		&view_link{id: view_console_pages},
+	}
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
@@ -588,15 +599,16 @@ func MainUI(arg *Arguments) {
 		return main.handle_key(event)
 	})
 	console_area_resizer := new_editor_resize(main, main.layout.console, nil, nil)
-	console_area_resizer.add(main.console_index_list.view_link, 1).load()
-	if main.console_index_list.Width == 0 {
-		go func() {
-			main.app.QueueUpdate(func() {
-				_, _, w, _ := main.console_index_list.GetRect()
-				main.console_index_list.Width = w
-			})
-		}()
-	}
+	console_area_resizer.add(main.page.view_link, 0)
+	console_area_resizer.add(main.console_index_list.view_link, 1)
+	go func() {
+		main.app.QueueUpdate(func() {
+			_, _, w, _ := main.page.GetRect()
+			main.page.Width = w
+			_, _, w, _ = main.console_index_list.GetRect()
+			main.console_index_list.Width = w
+		})
+	}()
 
 	edit_area_resizer := new_editor_resize(main, editor_area, nil, nil)
 	edit_area_resizer.add(main.fileexplorer.view_link, 0)
@@ -780,7 +792,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 
 func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 
-	console := tview.NewPages()
+	console := new_console_pages()
 	console.SetChangedFunc(func() {
 		xx := console.GetPageNames(true)
 		if len(xx) == 1 {
