@@ -3,11 +3,11 @@ package mainui
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 	"log"
 	"os"
 	"path/filepath"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 type Project struct {
@@ -110,7 +110,7 @@ func new_workspace_picker(v *fzfmain) *workspace_picker {
 	ret := &workspace_picker{impl: impl}
 	for i := range gload_workspace_list.Projects {
 		a := gload_workspace_list.Projects[i]
-		impl.list.AddItem(fmt.Sprintf("%-30s *ts", a.Root), "", func() {
+		impl.list.AddItem(fmt.Sprintf("%-10s %-30s", a.Name, a.Root), "", func() {
 			ret.on_select(&a)
 		})
 	}

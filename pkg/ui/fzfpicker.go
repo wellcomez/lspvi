@@ -139,6 +139,11 @@ func (v *fzfmain) OpenColorFzf() {
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
+func (v *fzfmain) OpenWorkspaceFzf() {
+	sym := new_workspace_picker(v)
+	x := sym.grid(v.input)
+	v.create_dialog_content(x, sym)
+}
 func (v *fzfmain) OpenHistoryFzf() {
 	sym := new_history_picker(v)
 	x := sym.grid(v.input)
