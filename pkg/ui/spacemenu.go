@@ -102,6 +102,7 @@ const (
 	cmd_key_event_name
 	cmd_key_tcell_key
 	cmd_key_rune
+	cmd_key_command
 )
 
 type cmdkey struct {

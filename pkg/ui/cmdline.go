@@ -41,34 +41,68 @@ func new_cmdline(main *mainui) *cmdline {
 	code.Vim = NewVim(main)
 	return code
 }
-func (cmd *cmdline) OnSearchCommand(command string) bool {
-	if strings.Index(command, "find ") == 0 || strings.Index(command, "grep ") == 0 {
-		i := strings.Index(command, " ")
-		arg := command[i+1:]
-		arg = strings.TrimLeft(arg, " ")
+func (cmd *cmdline) OnSet(args []string) bool {
+	if len(args) == 1 {
+		return false
+	}
+	switch args[1] {
+	case "wrap":
+		{
+			global_config.Wrap = !global_config.Wrap
+			global_config.Save()
+			cmd.main.codeview.change_appearance()
+		}
+	}
+	return true
+}
+func (cmd *cmdline) OnSearchCommand(args []string) bool {
+	if len(args) > 1 {
+		arg := args[1]
 		qf_grep_word(cmd.main, arg)
 	}
-	return false
+	return true
 }
-func (cmd *cmdline) OnComand(command string) bool {
+func (cmd *cmdline) OnComand(commandinput string) bool {
+	command := commandinput
 	command = strings.TrimRight(command, "\r")
 	command = strings.TrimRight(command, "\n")
-	if command == "cn" {
-		get_cmd_actor(cmd.main, vi_quick_next).handle()
-		return true
-	}
-	if command == "cp" {
-		get_cmd_actor(cmd.main, vi_quick_prev).handle()
-	} else if command == "q" || command == "quit" || command == "q!" || command == "qa" {
-		cmd.main.Close()
-	} else if cmd.OnSearchCommand(command) {
-		return true
-	} else if command == "h" || command == "help" {
-		cmd.main.helpkey(true)
-	} else if num, err := strconv.ParseInt(command, 10, 32); err == nil {
+
+	if num, err := strconv.ParseInt(command, 10, 32); err == nil {
 		cmd.main.codeview.gotoline(int(num) - 1)
 		return true
-	} else {
+	}
+
+	args := strings.Split(command, " ")
+	if len(args) > 0 {
+		command = args[0]
+	}
+
+	switch command {
+	case "cn", "cp":
+		{
+			if command != "cn" {
+				get_cmd_actor(cmd.main, vi_quick_prev).handle()
+			} else {
+				get_cmd_actor(cmd.main, vi_quick_next).handle()
+			}
+		}
+	case "q", "quit", "q!", "qa", "x":
+		{
+			cmd.main.Close()
+		}
+	case "h", "help":
+		{
+			cmd.main.helpkey(true)
+		}
+	case "search", "grep":
+		{
+			cmd.OnSearchCommand(args)
+		}
+	case "set":
+		{
+			cmd.OnSet(args)
+		}
+	default:
 		return false
 	}
 	return true
@@ -193,7 +227,7 @@ func (v *command_history) add(item command_history_record) {
 	if err == nil {
 		err = os.WriteFile(v.filepath, buf, 0644)
 		if err != nil {
-			log.Println("add command",err)
+			log.Println("add command", err)
 		}
 	}
 }

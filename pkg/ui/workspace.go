@@ -1,4 +1,4 @@
-,package mainui
+package mainui
 
 import (
 	"encoding/json"
@@ -41,7 +41,8 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)
 	}
-	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle,ConfigFile:gload_workspace_list.get_config_file()})
+	ConfigFile, _ := gload_workspace_list.get_config_file()
+	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle, ConfigFile: ConfigFile})
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main
 	main.root = root

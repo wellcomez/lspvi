@@ -1050,6 +1050,10 @@ func (code *CodeView) Load(filename string) error {
 //go:embed  colorscheme/output
 var TreesitterSchemeLoader embed.FS
 
+func (code *CodeView) change_appearance() {
+	code.config_wrap(code.filename)
+	code.change_theme()
+}
 func (code *CodeView) on_change_color(c *color_theme_file) {
 	code.theme = c.name
 	global_config.Colorscheme = c.name
@@ -1063,17 +1067,21 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
-	if global_config.Wrap {
-		code.view.Buf.Settings["softwrap"] = lspcore.TreesitterCheckIsSourceFile(filename)
-	} else {
-		code.view.Buf.Settings["softwrap"] = false
-	}
+	code.config_wrap(filename)
 	// colorscheme/output/dracula.micro
 	// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
 	// colorscheme = femto.ParseColorscheme(string(buf))
 	// _, b, _ := n.Decompose()
 	// tview.Styles.PrimitiveBackgroundColor = b
 	code.change_theme()
+}
+
+func (code *CodeView) config_wrap(filename string) {
+	if global_config.Wrap {
+		code.view.Buf.Settings["softwrap"] = lspcore.TreesitterCheckIsSourceFile(filename)
+	} else {
+		code.view.Buf.Settings["softwrap"] = false
+	}
 }
 
 func (code *CodeView) change_theme() {
