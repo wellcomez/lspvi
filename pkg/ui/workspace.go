@@ -95,6 +95,15 @@ func (wk *workspace_list) Load() error {
 }
 
 func (*workspace_list) get_config_file() (string, error) {
+	root, err := CreateLspviRoot()
+	if err != nil {
+		return "", err
+	}
+	config := filepath.Join(root, "workspace.json")
+	return config, nil
+}
+
+func CreateLspviRoot() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -104,8 +113,7 @@ func (*workspace_list) get_config_file() (string, error) {
 	if _, err := os.Stat(root); err != nil {
 		return "", err
 	}
-	config := filepath.Join(root, "workspace.json")
-	return config, nil
+	return root, nil
 }
 
 type wk_picker_impl struct {

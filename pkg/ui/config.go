@@ -2,20 +2,19 @@ package mainui
 
 import (
 	"os"
-
 	"gopkg.in/yaml.v2"
 )
 
 type LspviConfig struct {
 	Colorscheme string `yaml:"colorscheme"`
-	Wrap        bool `yaml:"wrap"`
+	Wrap        bool   `yaml:"wrap"`
 }
 
-func (config LspviConfig) Load() (*LspviConfig, error) {
+func (config LspviConfig) Load() (*LspviConfig, error) {	
 	buf, err := os.ReadFile(lspviroot.configfile)
-	default_ret:=LspviConfig{
-		Colorscheme:        "darcula",
-		Wrap: false,
+	default_ret := LspviConfig{
+		Colorscheme: "darcula",
+		Wrap:        false,
 	}
 	if err != nil {
 		return &default_ret, err

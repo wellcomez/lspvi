@@ -485,11 +485,11 @@ type workdir struct {
 
 func new_workdir(root string) workdir {
 	config_root := false
-	full, err := filepath.Abs(root)
+	globalroot, err := CreateLspviRoot()
 	if err == nil {
-		home, err := os.UserHomeDir()
+		full, err := filepath.Abs(root)
 		if err == nil {
-			root = filepath.Join(home, ".lspvi", filepath.Base(full))
+			root = filepath.Join(globalroot, filepath.Base(full))
 			config_root = true
 		}
 	}
@@ -499,7 +499,7 @@ func new_workdir(root string) workdir {
 	export := filepath.Join(root, "export")
 	wk := workdir{
 		root:               root,
-		configfile:         filepath.Join(root, "config.yml"),
+		configfile:         filepath.Join(globalroot, "config.yaml"),
 		logfile:            filepath.Join(root, "lspvi.log"),
 		history:            filepath.Join(root, "history.log"),
 		bookmark:           filepath.Join(root, "bookmark.json"),
