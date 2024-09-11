@@ -295,7 +295,10 @@ func (fzf *fzf_on_listview) get_data_index(index int) int {
 	if index == -1 {
 		return fzf.selected_index[fzf.listview.GetCurrentItem()]
 	}
-	return fzf.selected_index[index]
+	if len(fzf.selected_index) > 0 {
+		return fzf.selected_index[index]
+	}
+	return -1
 }
 func (fzf *fzf_on_listview) refresh_list() {
 	fzf.listview.Clear()

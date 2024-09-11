@@ -657,7 +657,7 @@ func MainUI(arg *Arguments) {
 		}
 		if main.layout.spacemenu.visible {
 			spacemenu := main.layout.spacemenu
-			action, event = spacemenu.handle_mouse(action, event)
+			action, event := spacemenu.handle_mouse(action, event)
 			if action == tview.MouseConsumed {
 				return event, action
 			}

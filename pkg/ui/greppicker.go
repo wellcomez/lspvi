@@ -81,6 +81,12 @@ func (pk livewgreppicker) update_preview() {
 	cur := pk.grep_list_view.GetCurrentItem()
 	if pk.impl.fzf_on_result != nil {
 		cur = pk.impl.fzf_on_result.get_data_index(cur)
+		if cur < 0 {
+			return
+		}
+	}
+	if pk.impl.result == nil {
+		return
 	}
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
@@ -131,8 +137,10 @@ func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 	return grep
 }
 func (grepx *livewgreppicker) update_title() {
+	if grepx.impl.result == nil {
+		return
+	}
 	index := grepx.grep_list_view.GetCurrentItem()
-
 	x := len(grepx.impl.result.data)
 	if x > 0 {
 		index = index + 1

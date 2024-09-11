@@ -312,6 +312,9 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 	ret.menuitem = []context_menu_item{
 		{item: create_menu_item("Delete"), handle: func() {
 			idnex := ret.fzf.get_data_index(ret.GetCurrentItem())
+			if idnex < 0 {
+				return
+			}
 			r := ret.data[idnex]
 			main.bookmark.delete(r)
 		}},

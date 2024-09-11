@@ -138,6 +138,9 @@ func load_qf_history(main *mainui) ([]qf_history_data, []string) {
 
 func (qk *qk_history_picker) open_in_qf() {
 	i := qk.impl.get_data_index(-1)
+	if i < 0 {
+		return
+	}
 	main := qk.parent.main
 	keys := qk.impl.keys
 	open_in_tabview(keys, i, main)
@@ -172,6 +175,9 @@ func open_in_tabview(keys []qf_history_data, i int, main *mainui) {
 
 func (qk *qk_history_picker) updateprev() {
 	index := qk.impl.get_data_index(-1)
+	if index < 0 {
+		return
+	}
 	keys := qk.impl.keys
 	item := qk.impl.keys[index]
 	switch item.Type {
