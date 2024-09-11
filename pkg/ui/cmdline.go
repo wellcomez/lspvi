@@ -14,12 +14,12 @@ import (
 
 type cmdline struct {
 	*view_link
-	main         *mainui
-	input        *tview.InputField
-	Vim          *Vim
-	history      *command_history
-	find_history *command_history
-	cmds         []cmd_processor
+	main    *mainui
+	input   *tview.InputField
+	Vim     *Vim
+	history *command_history
+	// find_history *command_history
+	cmds []cmd_processor
 }
 
 func new_cmdline(main *mainui) *cmdline {
@@ -28,10 +28,10 @@ func new_cmdline(main *mainui) *cmdline {
 			id: view_cmd,
 			up: view_quickview,
 		},
-		main:         main,
-		input:        tview.NewInputField(),
-		history:      &command_history{filepath: lspviroot.cmdhistory},
-		find_history: &command_history{filepath: lspviroot.search_cmd_history},
+		main:    main,
+		input:   tview.NewInputField(),
+		history: &command_history{filepath: lspviroot.cmdhistory},
+		// find_history: &command_history{filepath: lspviroot.search_cmd_history},
 	}
 	code.history.init()
 	code.input.SetBorder(true)
@@ -264,7 +264,7 @@ type command_history_record struct {
 
 func (v command_history_record) cmdline() string {
 	if v.Find {
-		return "/" + v.Cmd
+		return v.Cmd
 	} else {
 		return v.Cmd
 	}
@@ -313,7 +313,7 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	cmd := v.vi.app.cmdline
 	vim := cmd.Vim
 	if handle_backspace(event, cmd) {
-		if len(cmd.input.GetText())==0{
+		if len(cmd.input.GetText()) == 0 {
 			v.vi.EnterEscape()
 		}
 		return true
@@ -335,7 +335,7 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	if event.Key() == tcell.KeyEnter {
 		vim.vi.FindEnter = txt
 		if cmd.OnComand(vim.vi.FindEnter) {
-			cmd.find_history.add(command_history_record{Cmd: vim.vi.FindEnter})
+			cmd.history.add(command_history_record{Cmd: vim.vi.FindEnter})
 			cmd.Vim.EnterEscape()
 		}
 		return true
@@ -391,24 +391,28 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	txt := cmd.input.GetText()
 	var prev *command_history_record = nil
+	history := cmd.history
 	if event.Key() == tcell.KeyUp {
-		prev = cmd.find_history.prev()
+		prev = history.prev()
 	} else if event.Key() == tcell.KeyDown {
-		prev = cmd.find_history.next()
+		prev = history.next()
 	} else if event.Key() == tcell.KeyEnter {
 		vim.vi.FindEnter = txt
-		added := len(cmd.find_history.data) > 0 && cmd.find_history.data[len(cmd.find_history.data)-1].cmdline() == txt
+		added := len(history.data) > 0 && history.data[len(history.data)-1].cmdline() == txt
 		if !added {
-			cmd.find_history.add(command_history_record{Cmd: vim.vi.FindEnter, Find: true})
+			cmd.history.add(command_history_record{Cmd: vim.vi.FindEnter, Find: true})
 		}
 		cmd.main.OnSearch(txt, false, false)
 		return true
 	}
 	if prev != nil {
 		txt := prev.cmdline()
-		cmd.input.SetText(txt)
-		vim.vi.FindEnter = txt
-		cmd.main.OnSearch(txt, false, false)
+		if prev.Find {
+			cmd.input.SetText(txt)
+			cmd.main.OnSearch(txt, false, false)
+		} else {
+			cmd.Vim.EnterCommand()
+		}
 		return true
 	} else {
 		if len(vim.vi.FindEnter) > 0 {
