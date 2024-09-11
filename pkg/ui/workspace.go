@@ -125,7 +125,6 @@ func new_workspace_picker(v *fzfmain) *workspace_picker {
 }
 
 func (pk *workspace_picker) on_select(c *Project) {
-	// code := pk.impl.parent.main.codeview
-	// code.on_change_color(c)
+	pk.impl.parent.main.on_select_project(c)
 	pk.impl.parent.hide()
 }

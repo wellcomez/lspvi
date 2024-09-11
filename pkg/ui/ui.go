@@ -105,6 +105,9 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 	m.OpenFile(file[0].URI.AsPath().String(), &file[0])
 }
 
+func (m *mainui) on_select_project(prj *Project) {
+
+}
 func (m *mainui) zoom(zoomin bool) {
 	viewid := m.get_focus_view_id()
 	m.layout.editor_area.resizer.zoom(zoomin, viewid.to_view_link(m))
@@ -536,9 +539,9 @@ func MainUI(arg *Arguments) {
 		root = arg.Root
 	}
 	gload_workspace_list.Load()
-	err:=gload_workspace_list.Add(root)
-	if err!=nil{
-		log.Printf("add workspace failed:%v",err)
+	err := gload_workspace_list.Add(root)
+	if err != nil {
+		log.Printf("add workspace failed:%v", err)
 	}
 	lspviroot = new_workdir(root)
 	global_config, _ = LspviConfig{}.Load()
