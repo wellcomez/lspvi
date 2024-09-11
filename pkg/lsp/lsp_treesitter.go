@@ -8,10 +8,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	// "strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/tectiv3/go-lsp"
 
 	ts_c "github.com/smacker/go-tree-sitter/c"
 	ts_go "github.com/smacker/go-tree-sitter/golang"
@@ -181,9 +183,34 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language) error {
 	local_err, ret := ts.query("locals")
 	if local_err != nil {
 		log.Println("fail to load locals", local_err)
+	} else {
+		lsp.NewDocumentURI(ts.filename)
+		prefix := "local.definition."
+		for i := range ret {
+			v := ret[i]
+			for i := 0; i < len(v); i++ {
+				s := v[i]
+				if strings.Index(s.SymobName, prefix) == 0 {
+					symboltype := strings.Replace(s.SymobName, prefix, "", 1)
+					switch symboltype {
+					case "type":
+						{
+							log.Println("outline", s.Code, symboltype)
+						}
+					case "method", "function", "namespace":
+						{
+							log.Println("outline", s.Code, symboltype)
+						}
+					case "var":
+						continue
+					default:
+						log.Println("unhandled symbol type:", symboltype)
+					}
+				}
+			}
+		}
+		ts.Outline = ret
 	}
-	ts.Outline = ret
-	// pkg/lsp/queries/c/.scm
 	return hlerr
 }
 
