@@ -3,9 +3,11 @@ package lspcore
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
+	"gopkg.in/yaml.v2"
 )
 
 var FolderEmoji = "\U0001f4c1"
@@ -292,20 +294,41 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	return ret, err
 
 }
+
+type LangConfig struct {
+	Cmd string `yaml:"cmd"`
+}
+type lspconfigdata struct {
+	C          LangConfig `yaml:"c"`
+	Golang     LangConfig `yaml:"go"`
+	Py         LangConfig `yaml:"py"`
+	Javascript LangConfig `yaml:"javascript"`
+	Typescript LangConfig `yaml:"typescript"`
+}
+func(c LangConfig)is_cmd_ok()bool{
+	_,err:= os.Stat(c.Cmd)
+	return err==nil
+}
+
 func NewLspWk(wk WorkSpace) *LspWorkspace {
+	buf, lsp_config_err := os.ReadFile(wk.ConfigFile)
+	var config lspconfigdata
+	if lsp_config_err == nil {
+		yaml.Unmarshal(buf, &config)
+	}
 	cpp := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_cpp{}, handle: wk.Callback, LanguageID: string(CPP)},
+		core: &lspcore{lang: lsp_lang_cpp{config.C}, handle: wk.Callback, LanguageID: string(CPP)},
 	}
 	py := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_py{}, handle: wk.Callback, LanguageID: string(PYTHON)},
+		core: &lspcore{lang: lsp_lang_py{config.Py}, handle: wk.Callback, LanguageID: string(PYTHON)},
 	}
 
-	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{}, handle: wk.Callback, LanguageID: string(GO)}}
+	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{config.Golang}, handle: wk.Callback, LanguageID: string(GO)}}
 
-	ts := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(TYPE_SCRIPT)}, handle: wk.Callback, LanguageID: string(TYPE_SCRIPT)}}
-	js := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT)}, handle: wk.Callback, LanguageID: string(JAVASCRIPT)}}
+	ts := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(TYPE_SCRIPT), config: config.Javascript}, handle: wk.Callback, LanguageID: string(TYPE_SCRIPT)}}
+	js := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT), config: config.Typescript}, handle: wk.Callback, LanguageID: string(JAVASCRIPT)}}
 	ret := &LspWorkspace{
 		clients: []lspclient{
 			cpp, py, golang, ts, js,

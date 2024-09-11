@@ -22,6 +22,7 @@ var root_files = []string{
 }
 
 type lsp_lang_cpp struct {
+	LangConfig
 }
 
 // IsMe implements lsplang.
@@ -124,7 +125,11 @@ func (l lsp_lang_cpp) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 		return nil
 	}
 	root := "--compile-commands-dir=" + wk.Path
-	core.cmd = exec.Command("clangd", root,"--background-index")
+	cmd := "clangd"
+	if l.is_cmd_ok(){
+		cmd = l.Cmd
+	}
+	core.cmd = exec.Command(cmd, root, "--background-index")
 	err := core.Lauch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err

@@ -9,6 +9,7 @@ import (
 )
 
 type lsp_lang_go struct {
+	LangConfig
 }
 
 func (l lsp_lang_go) IsSource(filename string) bool {
@@ -20,7 +21,11 @@ func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	if core.started {
 		return nil
 	}
-	core.cmd = exec.Command("gopls")
+	if l.is_cmd_ok() {
+		core.cmd = exec.Command(l.Cmd)
+	} else {
+		core.cmd = exec.Command("gopls")
+	}
 	err := core.Lauch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
