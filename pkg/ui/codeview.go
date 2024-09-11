@@ -1056,7 +1056,11 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
-	code.view.Buf.Settings["softwrap"] = lspcore.TreesitterCheckIsSourceFile(filename)
+	if global_config.Wrap {
+		code.view.Buf.Settings["softwrap"] = lspcore.TreesitterCheckIsSourceFile(filename)
+	} else {
+		code.view.Buf.Settings["softwrap"] = false
+	}
 	// colorscheme/output/dracula.micro
 	// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
 	// colorscheme = femto.ParseColorscheme(string(buf))
