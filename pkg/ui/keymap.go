@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -25,6 +26,7 @@ const (
 	open_picker_ctrlp
 	goto_first_line
 	goto_last_line
+	goto_to_fileview
 	goto_define
 	goto_refer
 	goto_decl
@@ -129,6 +131,17 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{id, "goto first line", func() {
 			m.codeview.gotoline(0)
 		}}
+	case goto_to_fileview:
+		{
+			return cmdactor{id, "goto file explorer", func() {
+				dir := filepath.Dir(m.codeview.filename)
+				if view_file.to_view_link(m).Hide{
+					m.toggle_view(view_file)
+				}
+				m.fileexplorer.ChangeDir(dir)
+				m.fileexplorer.FocusFile(m.codeview.filename)
+			}}
+		}
 	case goto_last_line:
 		return cmdactor{id, "goto first line", func() {
 			m.codeview.gotoline(-1)
@@ -262,6 +275,7 @@ const key_picker_grep_word = "fw"
 const key_picker_search_in_file = "ff"
 const key_picker_help = "h"
 const key_workspace_symbol_query = "ws"
+const key_focus_in_fileview = "xf"
 
 func (main *mainui) ctrl_w_map() []cmditem {
 	return []cmditem{
@@ -303,6 +317,7 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(main, goto_first_line).esc_key(split(key_goto_first_line)),
 		get_cmd_actor(main, goto_last_line).esc_key(split(key_goto_last_line)),
 		get_cmd_actor(main, bookmark_it).esc_key(split(chr_bookmark)),
+		get_cmd_actor(main, goto_to_fileview).esc_key(split(key_focus_in_fileview)),
 	}
 	return sss
 }
