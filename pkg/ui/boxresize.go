@@ -19,16 +19,17 @@ const (
 )
 
 type ui_reszier struct {
-	box            *tview.Box
-	view_link      *view_link
-	beginX, beginY int
-	dragging       bool
-	left           move_direction
-	layout         control_size_changer
-	begin_time     time.Time
-	index          int
-	cb_begin_drag  func(*ui_reszier)
-	defaultWidth   int
+	box             *tview.Box
+	view_link       *view_link
+	beginX, beginY  int
+	dragging        bool
+	left            move_direction
+	layout          control_size_changer
+	begin_time      time.Time
+	index           int
+	cb_begin_drag   func(*ui_reszier)
+	defaultWidth    int
+	resize_vertical bool
 }
 type editor_mouse_resize struct {
 	layout           *flex_area
@@ -40,7 +41,7 @@ type editor_mouse_resize struct {
 
 func (resize *editor_mouse_resize) add(parent *view_link, index int) *editor_mouse_resize {
 	main := resize.main
-	a := new_ui_resize(parent, main, resize)
+	a := new_ui_resize(parent, main, resize, resize.layout.dir == tview.FlexRow)
 	a.cb_begin_drag = resize.cb_begin_drag
 	a.index = index
 	resize.contorls = append(resize.contorls, a)
@@ -210,8 +211,8 @@ func (layout *editor_mouse_resize) zoom(zoomin bool, viewlink *view_link) {
 
 }
 
-func new_ui_resize(vl *view_link, main *mainui, layout control_size_changer) *ui_reszier {
-	return &ui_reszier{box: vl.id.to_box(main), view_link: vl, layout: layout}
+func new_ui_resize(vl *view_link, main *mainui, layout control_size_changer, verical bool) *ui_reszier {
+	return &ui_reszier{box: vl.id.to_box(main), view_link: vl, layout: layout, resize_vertical: verical}
 }
 func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) tview.MouseAction {
 	end := false
@@ -256,7 +257,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 			}
 			resize.dragging = false
 			yes := false
-			if y >= top && y <= top+heigth {
+			if y >= top && y <= top+heigth && !resize.resize_vertical {
 				if x >= bLeftX && x <= bLeftX+1 {
 					resize.left = move_direction_hirizon
 					yes = true
@@ -266,7 +267,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 				}
 			}
 			if !yes {
-				if x >= bLeftX && x <= bRightX {
+				if x >= bLeftX && x <= bRightX && resize.resize_vertical {
 					if uprange_1 <= y && y <= uprange_2 {
 						resize.left = move_direction_vetical
 						yes = true
