@@ -108,8 +108,8 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 func (m *mainui) on_select_project(prj *Project) {
 	prj.Load(&apparg, m)
 	m.fileexplorer.ChangeDir(prj.Root)
-  m.uml.file.rootdir =lspviroot.uml
-  m.uml.Init()
+	m.uml.file.rootdir = lspviroot.uml
+	m.uml.Init()
 	load_from_history(m)
 }
 func (m *mainui) zoom(zoomin bool) {
@@ -1168,27 +1168,27 @@ func (main *mainui) GoBack() {
 func (main *mainui) open_picker_bookmark() {
 	main.layout.dialog.OpenBookMarkFzf()
 }
-func (main mainui) open_picker_refs() {
+func (main *mainui) open_picker_refs() {
 	main.codeview.view.Cursor.SelectWord()
 	loc := main.codeview.lsp_cursor_loc()
 	main.layout.dialog.OpenRefFzf(main.lspmgr.Current, loc)
 }
-func (main mainui) open_picker_ctrlp() {
+func (main *mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(main.root)
 }
-func (main mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) {
+func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) {
 	main.layout.dialog.OpenGrepWordFzf(word, qf)
 }
-func (main mainui) open_picker_livegrep() {
+func (main *mainui) open_picker_livegrep() {
 	main.layout.dialog.OpenLiveGrepFzf()
 }
 func (main *mainui) open_colorescheme() {
 	main.layout.dialog.OpenColorFzf()
 }
-func (main mainui) open_picker_history() {
+func (main *mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }
-func (main mainui) open_document_symbol_picker() {
+func (main *mainui) open_document_symbol_picker() {
 	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
 }
 
