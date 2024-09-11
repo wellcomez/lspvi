@@ -87,12 +87,14 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	menu_item := []context_menu_item{
 		external_open,
 		menu_copy_path(ret, false),
+		menu_open_prj(ret, false),
 		menu_open_parent(ret),
 		menu_zoom(ret, false),
 		menu_zoom(ret, true),
 		{item: create_menu_item("hide"), handle: func() {
 			main.toggle_view(view_file)
-		}}}
+		}},
+	}
 	ret.right_context = filetree_context{
 		qk:        ret,
 		menu_item: menu_item,
@@ -134,6 +136,25 @@ func menu_open_parent(ret *file_tree_view) context_menu_item {
 				ret.Init()
 			}
 		},
+	}
+	return external_open
+}
+func menu_open_prj(ret *file_tree_view, hide bool) context_menu_item {
+	external_open := context_menu_item{
+		item: create_menu_item("Open Project "),
+		handle: func() {
+			node := ret.view.GetCurrentNode()
+			value := node.GetReference()
+			if value != nil {
+				filename := value.(string)
+				if yes, _ := isDirectory(filename); yes {
+					if prj, _ := gload_workspace_list.Add(filename); prj != nil {
+						ret.main.on_select_project(prj)
+					}
+				}
+			}
+		},
+		hide: hide,
 	}
 	return external_open
 }

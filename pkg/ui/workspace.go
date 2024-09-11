@@ -56,12 +56,17 @@ func (wk *workspace_list) Add(root string) (*Project, error) {
 			return &v, nil
 		}
 	}
+	x := new_prj(root)
+	wk.Projects = append(wk.Projects, x)
+	return &x, save_workspace_list(wk)
+}
+
+func new_prj(root string) Project {
 	x := Project{
 		Name: filepath.Base(root),
 		Root: root,
 	}
-	wk.Projects = append(wk.Projects, x)
-	return &x, save_workspace_list(wk)
+	return x
 }
 
 func save_workspace_list(wk *workspace_list) error {
