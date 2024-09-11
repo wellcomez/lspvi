@@ -16,6 +16,7 @@ type grepresult struct {
 }
 type grep_impl struct {
 	result        *grepresult
+	temp          *grepresult
 	grep          *gorep
 	taskid        int
 	key           string
@@ -153,7 +154,30 @@ func (grepx *livewgreppicker) update_title() {
 	s := fmt.Sprintf("Grep %s %d/%d", grepx.grep_list_view.Key, index, x)
 	grepx.parent.Frame.SetTitle(s)
 }
-
+func (grepx *livewgreppicker) grep_to_list() {
+	grep := grepx.impl
+	openpreview := len(grep.result.data) == 0
+	tmp := grep.temp
+	if tmp == nil {
+		return
+	}
+	grep.temp = nil
+	grep.result.data = append(grep.result.data, tmp.data...)
+	for _, o := range tmp.data {
+		path := strings.TrimPrefix(o.fpath, grepx.main.root)
+		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
+		grepx.grep_list_view.AddItem(data, "", func() {
+			loc := convert_grep_info_location(&o)
+			grepx.main.OpenFile(o.fpath, &loc)
+			grepx.parent.hide()
+		})
+	}
+	if openpreview {
+		grepx.update_preview()
+	}
+	grepx.update_title()
+	grepx.main.app.ForceDraw()
+}
 func (grepx *livewgreppicker) end(task int, o *grep_output) {
 	if task != grepx.impl.taskid {
 		return
@@ -162,13 +186,16 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 		if grepx.qf != nil {
 			grepx.qf(true, ref_with_caller{})
 		} else if grepx.not_live {
-			grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
-			grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
-				o := grepx.impl.result.data[dataindex]
-				loc := convert_grep_info_location(&o)
-				grepx.main.OpenFile(o.fpath, &loc)
-				grepx.parent.hide()
-			}
+			grepx.main.app.QueueUpdate(func() {
+				grepx.grep_to_list()
+				grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
+				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
+					o := grepx.impl.result.data[dataindex]
+					loc := convert_grep_info_location(&o)
+					grepx.main.OpenFile(o.fpath, &loc)
+					grepx.parent.hide()
+				}
+			})
 		}
 		return
 	}
@@ -178,27 +205,25 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			data: []grep_output{},
 		}
 	}
+	if grep.temp == nil {
+		grep.temp = &grepresult{
+			data: []grep_output{},
+		}
+	}
 	// log.Printf("end %d %s", task, o.destor)
 	if grepx.qf == nil {
 		if !grepx.parent.Visible {
 			grep.grep.abort()
 			return
 		}
-		grepx.main.app.QueueUpdate(func() {
-			openpreview := len(grep.result.data) == 0
-			grep.result.data = append(grep.result.data, *o)
-			path := strings.TrimPrefix(o.fpath, grepx.main.root)
-			data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
-			grepx.grep_list_view.AddItem(data, "", func() {
-				loc := convert_grep_info_location(o)
-				grepx.main.OpenFile(o.fpath, &loc)
-				grepx.parent.hide()
-			})
-			if openpreview {
-				grepx.update_preview()
+		grep.temp.data = append(grep.temp.data, *o)
+		if len(grep.result.data) > 10 {
+			if len(grep.temp.data) < 50 {
+				return
 			}
-			grepx.update_title()
-			grepx.main.app.ForceDraw()
+		}
+		grepx.main.app.QueueUpdate(func() {
+			grepx.grep_to_list()
 		})
 	} else {
 		ref := o.to_ref_caller()
@@ -290,6 +315,6 @@ func (pk *livewgreppicker) __updatequery(query string) {
 
 func (pk livewgreppicker) stop_grep() {
 	if pk.impl != nil && pk.impl.grep != nil {
-		pk.impl.grep.bAbort = true
+		pk.impl.grep.abort()
 	}
 }

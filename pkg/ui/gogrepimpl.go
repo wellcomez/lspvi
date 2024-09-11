@@ -11,6 +11,9 @@ import (
 	"syscall"
 )
 func PosixRunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
+	if grep.bAbort{
+		return true
+	}
 	defer func() {
 		<-semFopenLimit
 		grep.waitGreps.Done()
@@ -53,6 +56,9 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
 	lineNumber := 0
 
 	for scanner.Scan() {
+		if grep.bAbort{
+			return true
+		}
 		lineNumber++
 		strline := scanner.Text()
 		if grep.pattern.MatchString(strline) {
