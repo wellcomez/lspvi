@@ -126,7 +126,7 @@ func NewBackForward(h *History) *BackForward {
 }
 func (bf *BackForward) Last() backforwarditem {
 	if len(bf.history.datalist) > 0 {
-		return bf.history.datalist[len(bf.history.datalist)-1]
+		return bf.history.datalist[0]
 	}
 	return backforwarditem{}
 }

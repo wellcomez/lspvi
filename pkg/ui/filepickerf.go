@@ -53,7 +53,7 @@ type DirWalk struct {
 	root     string
 	cb       func(t querytask)
 	hayStack []string
-	fzf    *fzf.Fzf
+	fzf      *fzf.Fzf
 }
 
 type walkerOpts struct {
@@ -147,7 +147,9 @@ var global_walk *filewalk = nil
 
 func new_filewalk(root string) *filewalk {
 	if global_walk != nil {
-		return global_walk
+		if global_walk.root == root {
+			return global_walk
+		}
 	}
 	ret := &filewalk{
 		filelist: []string{},

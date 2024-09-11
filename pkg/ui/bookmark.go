@@ -289,7 +289,7 @@ func (bk *bookmark_view) OnSearch(txt string) {
 }
 func new_bookmark_view(main *mainui) *bookmark_view {
 	ret := &bookmark_view{
-		view_link: &view_link{up: view_code, left: view_uml, right: view_outline_list},
+		view_link: &view_link{id: view_bookmark, up: view_code, left: view_uml, right: view_outline_list},
 		Name:      view_bookmark.getname(),
 		main:      main,
 	}
@@ -297,7 +297,6 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 		ret.onclick(i)
 	})
 	ret.customlist = a
-	ret.view_link.boxview = ret.customlist.Box
 	ret.customlist.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
 		main.gotoline(loc)

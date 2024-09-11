@@ -263,7 +263,7 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 	go reporter(markFile, markMatch, chans.file)
 	go reporter(markSymlink, markMatch, chans.symlink)
 	go reporter(markGrep, markMatch, chans.grep)
-	log.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+	// log.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 	waitReports.Wait()
 }
 

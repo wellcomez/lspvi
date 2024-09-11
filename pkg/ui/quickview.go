@@ -227,10 +227,9 @@ func (menu quick_view_context) menuitem() []context_menu_item {
 
 func new_log_view(main *mainui) *logview {
 	ret := &logview{
-		view_link: &view_link{up: view_code, right: view_callin},
+		view_link: &view_link{id: view_log, up: view_code, right: view_callin},
 		log:       tview.NewTextView(),
 	}
-	ret.boxview = ret.log.Box
 	return ret
 }
 
@@ -336,7 +335,7 @@ func new_quikview(main *mainui) *quick_view {
 		}},
 	}
 	ret := &quick_view{
-		view_link: &view_link{up: view_code, right: view_callin},
+		view_link: &view_link{id: view_quickview, up: view_code, right: view_callin},
 		Name:      vid.getname(),
 		view:      view,
 		main:      main,
@@ -601,7 +600,7 @@ func (caller ref_with_caller) ListItem(root string) string {
 		}
 	}
 	gap := max(40, caller.width/2)
-	begin := max(0, v.Range.Start.Character-gap)
+	begin := min(len(line), max(0, v.Range.Start.Character-gap))
 	end := min(len(line), v.Range.Start.Character+gap)
 	path := strings.Replace(v.URI.AsPath().String(), root, "", -1)
 	callerstr := ""
@@ -628,6 +627,7 @@ func new_qf_history(main *mainui) (*quickfix_history, error) {
 }
 
 type qf_index_view struct {
+	*view_link
 	*customlist
 	keys       []qf_history_data
 	keymaplist []string
@@ -671,6 +671,9 @@ func (view *qf_index_view) Add(data qf_history_data, add bool) error {
 }
 func new_qf_index_view(main *mainui) *qf_index_view {
 	ret := &qf_index_view{
+		view_link: &view_link{
+			id: view_qf_index_view,
+		},
 		customlist: new_customlist(false),
 		main:       main}
 	ret.customlist.SetBorder(true)

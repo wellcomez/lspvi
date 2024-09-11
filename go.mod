@@ -4,6 +4,10 @@ go 1.21.3
 
 replace zen108.com/lspsrv => ./pkg/lspr
 
+replace github.com/pgavlin/femto => ./pkg/femto
+
+replace github.com/smacker/go-tree-sitter => ./pkg/go-tree-sitter
+
 require (
 	github.com/charlievieth/fastwalk v1.0.8
 	github.com/reinhrst/fzf-lib v0.9.0
@@ -19,9 +23,15 @@ require (
 	github.com/creack/pty v1.1.23
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.4.1
+	// github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82
+	// github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
+	github.com/vmihailenco/msgpack/v5 v5.4.1
+	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
 	github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82
 	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
-	github.com/vmihailenco/msgpack/v5 v5.4.1
 )
 
 require (
@@ -50,11 +60,9 @@ require (
 	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yuin/goldmark v1.7.1 // indirect
-	github.com/zyedidia/micro v1.4.1 // indirect
 	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/mobile v0.0.0-20231127183840-76ac6878050a // indirect
 	golang.org/x/net v0.25.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

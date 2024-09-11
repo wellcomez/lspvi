@@ -3,3 +3,9 @@
 	url = https://github.com/wellcomez/lspr.git
 	# url = git@github.com:wellcomez/lspr.git
 	# git@gitlab.com:wellcomez/lspr.git
+[submodule "pkg/femto"]
+	path = pkg/femto
+	url = git@github.com:wellcomez/femto.git
+[submodule "pkg/go-tree-sitter"]
+	path = pkg/go-tree-sitter
+	url = git@github.com:wellcomez/go-tree-sitter.git

@@ -24,6 +24,7 @@ type cmdline struct {
 func new_cmdline(main *mainui) *cmdline {
 	code := &cmdline{
 		view_link: &view_link{
+			id: view_cmd,
 			up: view_quickview,
 		},
 		main:         main,
@@ -33,7 +34,6 @@ func new_cmdline(main *mainui) *cmdline {
 	}
 	code.history.init()
 	code.input.SetBorder(true)
-	code.boxview = code.input.Box
 	input := code.input
 	input.SetMouseCapture(code.handle_mouse)
 	input.SetFieldBackgroundColor(tcell.ColorBlack)
@@ -193,7 +193,7 @@ func (v *command_history) add(item command_history_record) {
 	if err == nil {
 		err = os.WriteFile(v.filepath, buf, 0644)
 		if err != nil {
-			log.Println(err)
+			log.Println("add command",err)
 		}
 	}
 }
@@ -713,7 +713,7 @@ func (v *Vim) EnterVmap() {
 // EnterEscape enters escape mode.
 func (v *Vim) EnterEscape() {
 	v.app.cmdline.Clear()
-	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil,vmapEnd: nil}
+	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}
 	v.app.codeview.view.Cursor.ResetSelection()
 	f := v.app.get_focus_view_id()
 	if f == view_cmd || f == view_none {

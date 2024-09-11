@@ -24,11 +24,6 @@ var root_files = []string{
 type lsp_lang_cpp struct {
 }
 
-// TreeSymbolParser implements lsplang.
-func (l lsp_lang_cpp) TreeSymbolParser(TreeSitter) []lsp.SymbolInformation {
-	panic("unimplemented")
-}
-
 // IsMe implements lsplang.
 func (l lsp_lang_cpp) IsMe(filename string) bool {
 	return IsMe(filename, file_extensions)
@@ -129,7 +124,7 @@ func (l lsp_lang_cpp) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 		return nil
 	}
 	root := "--compile-commands-dir=" + wk.Path
-	core.cmd = exec.Command("clangd", root, "--background-index")
+	core.cmd = exec.Command("clangd", root,"--background-index")
 	err := core.Lauch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err

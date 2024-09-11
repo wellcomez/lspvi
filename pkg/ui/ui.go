@@ -3,6 +3,7 @@ package mainui
 
 import (
 	"context"
+	// "encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -20,12 +21,38 @@ var tabs []view_id = []view_id{view_quickview, view_callin, view_uml, view_log, 
 var appname = "lspvi"
 var httport = 0
 
+// flex_area
+type flex_area struct {
+	*tview.Flex
+	*view_link
+	main    *mainui
+	name    string
+	dir     int
+	resizer *editor_mouse_resize
+}
+
+func (v *flex_area) set_dir(d int) {
+	v.dir = d
+	v.Flex.SetDirection(d)
+}
+
+func new_flex_area(id view_id, main *mainui) *flex_area {
+	return &flex_area{
+		tview.NewFlex(),
+		&view_link{id: id},
+		main,
+		id.getname(),
+		tview.FlexColumn,
+		nil,
+	}
+}
+
 type rootlayout struct {
-	editor_area *tview.Flex
-	console     *tview.Flex
+	editor_area *flex_area
+	console     *flex_area
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
-	mainlayout  *tview.Flex
+	mainlayout  *flex_area
 	dialog      *fzfmain
 	spacemenu   *space_menu
 	// hide_cb     func()
@@ -34,32 +61,43 @@ type rootlayout struct {
 // editor_area_fouched
 
 type mainui struct {
-	fileexplorer        *file_tree_view
-	codeview            *CodeView
-	lspmgr              *lspcore.LspWorkspace
-	symboltree          *SymbolTreeView
-	quickview           *quick_view
-	bk                  *bookmark_view
-	activate_tab_name   string
-	page                *tview.Pages
-	callinview          *callinview
-	tabs                *ButtonGroup
-	root                string
-	app                 *tview.Application
-	uml                 *umlview
-	bf                  *BackForward
-	bookmark            *proj_bookmark
-	log                 *logview
-	cmdline             *cmdline
-	prefocused          view_id
-	searchcontext       *GenericSearch
-	statusbar           *tview.TextView
-	layout              *rootlayout
-	console_index_list  *qf_index_view
-	right_context_menu  *contextmenu
-	_editor_area_layout *editor_area_layout
-	tty                 bool
-	ws                  string
+	fileexplorer       *file_tree_view
+	codeview           *CodeView
+	lspmgr             *lspcore.LspWorkspace
+	symboltree         *SymbolTreeView
+	quickview          *quick_view
+	bk                 *bookmark_view
+	activate_tab_name  string
+	page               *console_pages
+	callinview         *callinview
+	tabs               *ButtonGroup
+	root               string
+	app                *tview.Application
+	uml                *umlview
+	bf                 *BackForward
+	bookmark           *proj_bookmark
+	log                *logview
+	cmdline            *cmdline
+	prefocused         view_id
+	searchcontext      *GenericSearch
+	statusbar          *tview.TextView
+	layout             *rootlayout
+	console_index_list *qf_index_view
+	right_context_menu *contextmenu
+	// _editor_area_layout *editor_area_layout
+	tty bool
+	ws  string
+}
+type console_pages struct {
+	*tview.Pages
+	*view_link
+}
+
+func new_console_pages() *console_pages {
+	return &console_pages{
+		tview.NewPages(),
+		&view_link{id: view_console_pages},
+	}
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
@@ -67,20 +105,22 @@ func (m *mainui) OnFileChange(file []lsp.Location) {
 	m.OpenFile(file[0].URI.AsPath().String(), &file[0])
 }
 
+func (m *mainui) on_select_project(prj *Project) {
+	prj.Load(&apparg, m)
+	m.fileexplorer.ChangeDir(prj.Root)
+  m.uml.file.rootdir =lspviroot.uml
+  m.uml.Init()
+	load_from_history(m)
+}
 func (m *mainui) zoom(zoomin bool) {
 	viewid := m.get_focus_view_id()
-	m._editor_area_layout.zoom(zoomin, viewid)
+	m.layout.editor_area.resizer.zoom(zoomin, viewid.to_view_link(m))
+	// // m._editor_area_layout.zoom(zoomin, viewid)
 }
 func (m *mainui) toggle_view(id view_id) {
-	m._editor_area_layout.toggle_view(id)
-}
-func (r *mainui) editor_area_fouched() {
-	// log.Println("change foucse", r.GetFocusViewId())
-	r.layout.mainlayout.ResizeItem(r.layout.editor_area, 0, 3)
-	r.layout.mainlayout.ResizeItem(r.layout.console, 0, 2)
+	m.layout.editor_area.resizer.hide(id.to_view_link(m))
 }
 
-// OnLspCallTaskInViewResovled implements lspcore.lsp_data_changed.
 func (m *mainui) OnLspCallTaskInViewResovled(stacks *lspcore.CallInTask) {
 	// panic("unimplemented")
 	focus := m.get_focus_view_id()
@@ -432,6 +472,7 @@ func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 type workdir struct {
 	root               string
 	logfile            string
+	configfile         string
 	uml                string
 	history            string
 	cmdhistory         string
@@ -458,6 +499,7 @@ func new_workdir(root string) workdir {
 	export := filepath.Join(root, "export")
 	wk := workdir{
 		root:               root,
+		configfile:         filepath.Join(root, "config.yml"),
 		logfile:            filepath.Join(root, "lspvi.log"),
 		history:            filepath.Join(root, "history.log"),
 		bookmark:           filepath.Join(root, "bookmark.json"),
@@ -484,11 +526,16 @@ func ensure_dir(root string) {
 }
 
 var lspviroot workdir
+var global_config *LspviConfig
 
 func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
 }
+
+var apparg Arguments
+
 func MainUI(arg *Arguments) {
+	apparg = *arg
 	var filearg = ""
 	//  "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
 	root, _ := filepath.Abs(".")
@@ -499,18 +546,30 @@ func MainUI(arg *Arguments) {
 	if len(arg.Root) > 0 {
 		root = arg.Root
 	}
-	lspviroot = new_workdir(root)
+	gload_workspace_list.Load()
+	prj, err := gload_workspace_list.Add(root)
+	if err != nil {
+		log.Printf("add workspace failed:%v", err)
+	}
+	if prj == nil {
+		log.Printf("load failed:%v", err)
+		panic(err)
+	}
+	// lspviroot = new_workdir(root)
+	// global_config, _ = LspviConfig{}.Load()
 	// go servmain(lspviroot.uml, 18080, func(port int) {
 	// 	httport = port
 	// })
 
-	handle := LspHandle{}
-	var main = &mainui{
-		bf:       NewBackForward(NewHistory(lspviroot.history)),
-		bookmark: &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}},
-		tty:      arg.Tty,
-		ws:       arg.Ws,
-	}
+	// handle := LspHandle{}
+	// var main = &mainui{
+	// 	bf:       NewBackForward(NewHistory(lspviroot.history)),
+	// 	bookmark: &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}},
+	// 	tty:      arg.Tty,
+	// 	ws:       arg.Ws,
+	// }
+	main := &mainui{}
+	prj.Load(arg, main)
 	go StartWebUI(func(port int, url string) {
 		if len(url) > 0 {
 			main.ws = url
@@ -520,195 +579,74 @@ func MainUI(arg *Arguments) {
 			httport = port
 		}
 	})
-	main.bookmark.load()
-	handle.main = main
-	if !filepath.IsAbs(root) {
-		root, _ = filepath.Abs(root)
-	}
-	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
-	main.lspmgr = lspmgr
-	main.root = root
+	// main.bookmark.load()
+	// handle.main = main
+	// if !filepath.IsAbs(root) {
+	// 	root, _ = filepath.Abs(root)
+	// }
+	// lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
+	// main.lspmgr = lspmgr
+	// main.root = root
 
 	main.cmdline = new_cmdline(main)
 	var logfile, _ = os.OpenFile(lspviroot.logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
 	app := tview.NewApplication()
 	main.app = app
-	codeview := NewCodeView(main)
-	codeview.not_preview = true
-	codeview.Width = 8
-	// main.fzf = new_fzfview()
-	symbol_tree := NewSymbolTreeView(main)
-	symbol_tree.Width = 2
-	main.symboltree = symbol_tree
-	symbol_tree.view.SetBorder(true)
 
-	main.codeview = codeview
-	codeview.view.SetBorder(true)
+	editor_area := create_edit_area(main)
+	console_layout, tab_area := create_console_area(main)
 
-	main.lspmgr.Handle = main
-	main.quickview = new_quikview(main)
-	main.bk = new_bookmark_view(main)
-	main.callinview = new_callview(main)
-	// symbol_tree.update()
+	main_layout := main.create_main_layout(editor_area, console_layout, tab_area)
+	mainmenu := main.create_menu_bar(tab_area)
 
-	main.fileexplorer = new_file_tree(main, "FileExplore", main.root, func(filename string) bool { return true })
-	main.fileexplorer.Width = 2
-	main.fileexplorer.Init()
-	main.fileexplorer.openfile = main.open_file
-	// console := tview.NewBox().SetBorder(true).SetTitle("Middle (3 x height of Top)")
-	console := tview.NewPages()
-	console.SetChangedFunc(func() {
-		xx := console.GetPageNames(true)
-		if len(xx) == 1 {
-			main.activate_tab_name = xx[0]
-		}
-		log.Println(strings.Join(xx, ","))
-	})
-	main.log = new_log_view(main)
-	main.log.log.SetText("Started")
-	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
-	console.AddPage(view_log.getname(), main.log.log, true, false)
-	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
-	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
-	console.AddPage(main.bk.Name, main.bk, true, false)
-
-	main.console_index_list = new_qf_index_view(main)
-	console_layout := tview.NewFlex().AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
-	main.reload_index_list()
-
-	main.page = console
-	main.page.SetChangedFunc(func() {
-		main.UpdatePageTitle()
-	})
-
-	//   console.SetBorder(true)
-	// editor_area := tview.NewBox().SetBorder(true).SetTitle("Top")
-	main._editor_area_layout = new_editor_area_config(main, &lspviroot)
-	editor_area :=
-		tview.NewFlex().SetDirection(tview.FlexColumn).
-			AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
-			AddItem(codeview.view, 0, main.codeview.Width, true).
-			AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
-	uml, err := NewUmlView(main, &main.lspmgr.Wk)
-	if err != nil {
-		log.Fatal(err)
-	}
-	main.uml = uml
-	if uml != nil {
-		console.AddPage(uml.Name, uml.layout, true, false)
-	}
-
-	var tabs []string = []string{}
-	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark} {
-		if uml == nil {
-			if v == view_uml {
-				continue
-			}
-		}
-		tabs = append(tabs, v.getname())
-	}
-	group := NewButtonGroup(tabs, main.OnTabChanged)
-	main.tabs = group
-	tab_area := tview.NewFlex()
-	for _, v := range group.tabs {
-		tab_area.AddItem(v, len(v.GetLabel())+2, 1, true)
-	}
-	main.statusbar = tview.NewTextView()
-	main.statusbar.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		// primary, combining, style, width := screen.GetContent(0, 0)
-		// log.Println("---",primary, combining, style, width)
-		viewname := main.getfocusviewname()
-		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
-			viewname = main.searchcontext.view.getname()
-		}
-		titlename := fmt.Sprintf("%s %s", appname, main.root)
-		if main.layout.mainlayout.GetTitle() != titlename {
-			go func(viewname string) {
-				main.app.QueueUpdateDraw(func() {
-					main.layout.mainlayout.SetTitle(viewname)
-				})
-			}(titlename)
-		}
-		cursor := main.codeview.String()
-		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s| ::%5d ", cursor, main.cmdline.Vim.String(), viewname, httport))
-		return main.statusbar.GetInnerRect()
-	})
-	// main.statusbar.SetBorder(true)
-	main.statusbar.SetTextAlign(tview.AlignRight)
-	// main.statusbar.SetText("------------------------------------------------------------------")
-	tab_area.AddItem(tview.NewBox(), 1, 0, false)
-	tab_area.AddItem(main.statusbar, 0, 10, false)
-	mainmenu := tview.NewButton("Menu")
-	mainmenu.SetSelectedFunc(func() {
-		if main.layout.spacemenu.visible {
-			main.layout.spacemenu.closemenu()
-		} else {
-			main.layout.spacemenu.openmenu()
-		}
-	})
-
-	tab_area.AddItem(mainmenu, 10, 0, false)
-
-	main.right_context_menu = new_contextmenu(main)
-	main.right_context_menu.menu_handle = []context_menu_handle{
-		main.codeview.rightmenu,
-		main.quickview.right_context,
-		main.callinview.right_context,
-		main.bk.right_context,
-		main.symboltree.right_context,
-		main.uml.file_right_context,
-		main.fileexplorer.right_context,
-	}
-
-	var tabid view_id = view_quickview
-	fzttab := group.Find(tabid.getname())
-	fzttab.Focus(nil)
-	main_layout :=
-		tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(editor_area, 0, 3, true).
-			AddItem(console_layout, 0, 2, false).
-			AddItem(tab_area, 1, 0, false).
-			AddItem(main.cmdline.input, 3, 1, false)
-	main_layout.SetBorder(true)
-	main.layout = &rootlayout{
-		editor_area: editor_area,
-		console:     console_layout,
-		tab_area:    tab_area,
-		cmdline:     main.cmdline.input,
-		mainlayout:  main_layout,
-		dialog:      Newfuzzpicker(main, app),
-	}
-	spacemenu := new_spacemenu(main)
-	spacemenu.menustate = func(s *space_menu) {
-		if s.visible {
-			mainmenu.Focus(nil)
-		} else {
-			mainmenu.Blur()
-		}
-	}
-	main.layout.spacemenu = spacemenu
+	main.create_right_context_menu()
 
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
 	if len(filearg) == 0 {
-		filearg := main.bf.Last()
-		if len(filearg.Path) > 0 {
-			main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
-				URI: lsp.NewDocumentURI(filearg.Path),
-				Range: lsp.Range{
-					Start: lsp.Position{filearg.Pos.Line, 0},
-					End:   lsp.Position{filearg.Pos.Line, 0},
-				},
-			}, offset: 0}, false)
-		}
+		load_from_history(main)
 	} else {
-
 		main.OpenFile(filearg, nil)
 	}
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
 	})
-	resizer := new_editor_resize(main)
+	console_area_resizer := new_editor_resize(main, main.layout.console, nil, nil)
+	console_area_resizer.add(main.page.view_link, 0)
+	console_area_resizer.add(main.console_index_list.view_link, 1)
+	go func() {
+		main.app.QueueUpdate(func() {
+			_, _, w, _ := main.page.GetRect()
+			main.page.Width = w
+			_, _, w, _ = main.console_index_list.GetRect()
+			main.console_index_list.Width = w
+		})
+	}()
+
+	edit_area_resizer := new_editor_resize(main, editor_area, nil, nil)
+	edit_area_resizer.add(main.fileexplorer.view_link, 0)
+	edit_area_resizer.add(main.codeview.view_link, 1)
+	edit_area_resizer.add(main.symboltree.view_link, 2).load()
+
+	main_layout_resizer := new_editor_resize(main, main_layout, func() {}, func(u *ui_reszier) {
+		if !u.dragging {
+			go func() {
+				main.app.QueueUpdate(func() {
+					main.codeview.Load(main.codeview.filename)
+				})
+			}()
+		}
+	})
+	main_layout_resizer.add(editor_area.view_link, 0)
+	main_layout_resizer.add(console_layout.view_link, 1)
+
+	go func() {
+		app.QueueUpdate(func() {
+			main_layout_resizer.load()
+		})
+	}()
+
+	resizer := []editor_mouse_resize{*console_area_resizer, *edit_area_resizer, *main_layout_resizer}
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 		if content_menu_action == tview.MouseConsumed {
@@ -717,8 +655,10 @@ func MainUI(arg *Arguments) {
 		if main.right_context_menu.visible {
 			return nil, tview.MouseConsumed
 		}
-		if resizer.checkdrag(action, event) {
-			return nil, tview.MouseConsumed
+		for _, v := range resizer {
+			if v.checkdrag(action, event) == tview.MouseConsumed {
+				return nil, tview.MouseConsumed
+			}
 		}
 		if main.layout.spacemenu.visible {
 			spacemenu := main.layout.spacemenu
@@ -772,6 +712,204 @@ func MainUI(arg *Arguments) {
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
+}
+
+func load_from_history(main *mainui) {
+	filearg := main.bf.Last()
+	main.quickview.view.Clear()
+	main.symboltree.Clear()
+	main.console_index_list.Clear()
+	main.bk.Clear()
+	if len(filearg.Path) > 0 {
+		main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
+			URI: lsp.NewDocumentURI(filearg.Path),
+			Range: lsp.Range{
+				Start: lsp.Position{Line: filearg.Pos.Line, Character: 0},
+				End:   lsp.Position{Line: filearg.Pos.Line, Character: 0},
+			},
+		}, offset: 0}, false)
+	} else {
+		main.codeview.Load("")
+	}
+}
+
+func (main *mainui) create_right_context_menu() {
+	main.right_context_menu = new_contextmenu(main)
+	main.right_context_menu.menu_handle = []context_menu_handle{
+		main.codeview.rightmenu,
+		main.quickview.right_context,
+		main.callinview.right_context,
+		main.bk.right_context,
+		main.symboltree.right_context,
+		main.uml.file_right_context,
+		main.fileexplorer.right_context,
+	}
+}
+
+func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *flex_area, tab_area *tview.Flex) *flex_area {
+	app := main.app
+	main_layout := new_flex_area(view_main_layout, main)
+	main_layout.set_dir(tview.FlexRow)
+	editor_area.Height = 100
+	console_layout.Height = 80
+	main_layout.
+		AddItem(editor_area, 0, editor_area.Height, true).
+		AddItem(console_layout, 0, console_layout.Height, false).
+		AddItem(tab_area, 1, 0, false).
+		AddItem(main.cmdline.input, 3, 1, false)
+	main_layout.SetBorder(true)
+	main.layout = &rootlayout{
+		editor_area: editor_area,
+		console:     console_layout,
+		tab_area:    tab_area,
+		cmdline:     main.cmdline.input,
+		mainlayout:  main_layout,
+		dialog:      Newfuzzpicker(main, app),
+	}
+	return main_layout
+}
+
+func (main *mainui) create_menu_bar(tab_area *tview.Flex) *tview.Button {
+	main.add_statusbar_to_tabarea(tab_area)
+
+	mainmenu := tview.NewButton("Menu")
+	mainmenu.SetSelectedFunc(func() {
+		if main.layout.spacemenu.visible {
+			main.layout.spacemenu.closemenu()
+		} else {
+			main.layout.spacemenu.openmenu()
+		}
+	})
+
+	tab_area.AddItem(mainmenu, 10, 0, false)
+
+	spacemenu := new_spacemenu(main)
+	spacemenu.menustate = func(s *space_menu) {
+		if s.visible {
+			mainmenu.Focus(nil)
+		} else {
+			mainmenu.Blur()
+		}
+	}
+	main.layout.spacemenu = spacemenu
+	return mainmenu
+}
+
+func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
+	main.statusbar = tview.NewTextView()
+	main.statusbar.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+
+		viewname := main.getfocusviewname()
+		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
+			viewname = main.searchcontext.view.getname()
+		}
+		titlename := fmt.Sprintf("%s %s", appname, main.root)
+		if main.layout.mainlayout.GetTitle() != titlename {
+			go func(viewname string) {
+				main.app.QueueUpdateDraw(func() {
+					main.layout.mainlayout.SetTitle(viewname)
+				})
+			}(titlename)
+		}
+		cursor := main.codeview.String()
+		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s| ::%5d ", cursor, main.cmdline.Vim.String(), viewname, httport))
+		return main.statusbar.GetInnerRect()
+	})
+
+	main.statusbar.SetTextAlign(tview.AlignRight)
+
+	tab_area.AddItem(tview.NewBox(), 1, 0, false)
+	tab_area.AddItem(main.statusbar, 0, 10, false)
+}
+
+func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
+
+	console := new_console_pages()
+	console.SetChangedFunc(func() {
+		xx := console.GetPageNames(true)
+		if len(xx) == 1 {
+			main.activate_tab_name = xx[0]
+		}
+		log.Println(strings.Join(xx, ","))
+	})
+	main.log = new_log_view(main)
+	main.log.log.SetText("Started")
+	console.SetBorder(true).SetBorderColor(tcell.ColorGreen)
+	console.AddPage(view_log.getname(), main.log.log, true, false)
+	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
+	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
+	console.AddPage(main.bk.Name, main.bk, true, false)
+
+	main.console_index_list = new_qf_index_view(main)
+	console_layout := new_flex_area(view_console_area, main)
+	console_layout.AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
+	main.reload_index_list()
+
+	main.page = console
+	main.page.SetChangedFunc(func() {
+		main.UpdatePageTitle()
+	})
+
+	uml, err := NewUmlView(main, &main.lspmgr.Wk)
+	if err != nil {
+		log.Fatal(err)
+	}
+	main.uml = uml
+	if uml != nil {
+		console.AddPage(uml.Name, uml.layout, true, false)
+	}
+
+	var tabs []string = []string{}
+	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark} {
+		if uml == nil {
+			if v == view_uml {
+				continue
+			}
+		}
+		tabs = append(tabs, v.getname())
+	}
+	group := NewButtonGroup(tabs, main.OnTabChanged)
+	main.tabs = group
+	tab_area := tview.NewFlex()
+	for _, v := range group.tabs {
+		tab_area.AddItem(v, len(v.GetLabel())+2, 1, true)
+	}
+	var tabid view_id = view_quickview
+	fzttab := group.Find(tabid.getname())
+	fzttab.Focus(nil)
+	return console_layout, tab_area
+}
+
+func create_edit_area(main *mainui) *flex_area {
+	codeview := NewCodeView(main)
+	codeview.not_preview = true
+	codeview.Width = 8
+
+	symbol_tree := NewSymbolTreeView(main)
+	symbol_tree.Width = 2
+	main.symboltree = symbol_tree
+	symbol_tree.view.SetBorder(true)
+
+	main.codeview = codeview
+	codeview.view.SetBorder(true)
+
+	main.quickview = new_quikview(main)
+	main.bk = new_bookmark_view(main)
+	main.callinview = new_callview(main)
+
+	main.fileexplorer = new_file_tree(main, "FileExplore", main.root, func(filename string) bool { return true })
+	main.fileexplorer.Width = 2
+	main.fileexplorer.Init()
+	main.fileexplorer.openfile = main.open_file
+
+	editor_area :=
+		new_flex_area(view_code_area, main)
+	editor_area.set_dir(tview.FlexColumn)
+	editor_area.
+		AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
+		AddItem(codeview.view, 0, main.codeview.Width, true).
+		AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
+	return editor_area
 }
 
 func (main *mainui) reload_index_list() {
@@ -1044,19 +1182,15 @@ func (main mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) 
 func (main mainui) open_picker_livegrep() {
 	main.layout.dialog.OpenLiveGrepFzf()
 }
+func (main *mainui) open_colorescheme() {
+	main.layout.dialog.OpenColorFzf()
+}
 func (main mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }
 func (main mainui) open_document_symbol_picker() {
 	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
 }
-
-// func (m *mainui) OnGrep() {
-// 	if m.prefocused == view_code || m.codeview.view.HasFocus() {
-// 		m.set_viewid_focus(view_fzf)
-// 		m.codeview.OnGrep()
-// 	}
-// }
 
 type Search interface {
 	Findall(key string) []int

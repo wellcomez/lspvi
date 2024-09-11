@@ -12,9 +12,10 @@ type view_link struct {
 	id                          view_id
 	next, left, right, up, down view_id
 	Width                       int
-	Heigth                      int
+	Height                      int
 	Hide                        bool
-	boxview                     *tview.Box
+	// boxview                     *tview.Box
+	// Primitive                   tview.Primitive
 }
 
 const (
@@ -28,6 +29,11 @@ const (
 	view_file
 	view_outline_list
 	view_bookmark
+	view_code_area
+	view_console_area
+	view_main_layout
+	view_qf_index_view
+	view_console_pages
 )
 
 var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin}
@@ -81,9 +87,16 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 		return m.symboltree.view_link
 	case view_bookmark:
 		return m.bk.view_link
-	default:
-		return nil
+	case view_main_layout:
+		return m.layout.mainlayout.view_link
+	case view_qf_index_view:
+		return m.console_index_list.view_link
+	case view_console_pages:
+		return m.page.view_link
+	case view_console_area:
+		return m.layout.console.view_link
 	}
+	return nil
 }
 func find_name_to_viewid(m string) view_id {
 	for _, v := range all_view_list {
@@ -110,7 +123,7 @@ func view_id_init(m *mainui) {
 			case view_code:
 				{
 					box.SetFocusFunc(func() {
-						m.editor_area_fouched()
+						// m.editor_area_fouched()
 						change_after_focused(box, m)
 						if m.cmdline.Vim.vi.String() == "none" {
 							m.cmdline.Vim.EnterEscape()
@@ -162,6 +175,40 @@ func change_after_focused(box *tview.Box, m *mainui) {
 		m.cmdline.Vim.ExitEnterEscape()
 	}
 }
+func (viewid view_id) Primitive(m *mainui) tview.Primitive {
+	switch viewid {
+	case view_log:
+		return m.log.log
+	case view_quickview:
+		return m.quickview.view
+	case view_callin:
+		return m.callinview.view
+	case view_code:
+		return m.codeview.view
+	case view_uml:
+		return m.uml.layout
+	case view_cmd:
+		return m.cmdline.input
+	case view_file:
+		return m.fileexplorer.view
+	case view_outline_list:
+		return m.symboltree.view
+	case view_bookmark:
+		return m.bk
+	case view_code_area:
+		return m.layout.editor_area
+	case view_console_area:
+		return m.layout.console
+	case view_main_layout:
+		return m.layout.mainlayout
+	case view_qf_index_view:
+		return m.console_index_list
+	case view_console_pages:
+		return m.page
+	}
+	return nil
+}
+
 func (viewid view_id) to_box(m *mainui) *tview.Box {
 	switch viewid {
 	case view_log:
@@ -182,9 +229,18 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 		return m.symboltree.view.Box
 	case view_bookmark:
 		return m.bk.Box
-	default:
-		return nil
+	case view_code_area:
+		return m.layout.editor_area.Box
+	case view_console_area:
+		return m.layout.console.Box
+	case view_main_layout:
+		return m.layout.mainlayout.Box
+	case view_qf_index_view:
+		return m.console_index_list.Box
+	case view_console_pages:
+		return m.page.Box
 	}
+	return nil
 }
 
 var all_view_list = []view_id{
@@ -197,6 +253,11 @@ var all_view_list = []view_id{
 	view_file,
 	view_outline_list,
 	view_bookmark,
+	view_code_area,
+	view_console_area,
+	view_main_layout,
+	view_qf_index_view,
+	view_console_pages,
 }
 var all_view_name = []string{
 	"none",
@@ -209,6 +270,11 @@ var all_view_name = []string{
 	"file",
 	"outline",
 	"bookmark",
+	"view_code_area",
+	"view_console_area",
+	"view_main_layout",
+	"view_qf_index_view",
+	"view_console_pages",
 }
 
 func (viewid view_id) getname() string {

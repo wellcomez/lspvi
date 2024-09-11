@@ -66,7 +66,7 @@ func NewBody(location lsp.Location) (*Body, error) {
 	end := _range.End
 
 	// 读取文件内容
-	content, err := ioutil.ReadFile(from_file(location.URI.String()))
+	content, err := ioutil.ReadFile(from_file(location.URI.AsPath().String()))
 	if err != nil {
 		return nil, err
 	}

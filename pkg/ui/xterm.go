@@ -50,6 +50,7 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
+var is_chan_start = false
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -102,6 +103,16 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						sss.imp._send(sss.imp.unsend)
 						sss.imp.unsend = []byte{}
 					}
+					go func() {
+						if is_chan_start {
+							return
+						}
+						is_chan_start = true
+						for {
+							data := <-ws_buffer_chan
+							sss.imp.ws.WriteMessage(websocket.BinaryMessage, data.Buf)
+						}
+					}()
 				}
 			case "resize":
 				{
@@ -253,17 +264,23 @@ func (imp *ptyout_impl) send(s []byte) {
 }
 
 func (imp *ptyout_impl) write_ws(s []byte) error {
-	err := imp.ws.WriteMessage(websocket.BinaryMessage, s)
-	return err
+	ws_buffer_chan <- buffer_to_send{s}
+	return nil
 }
 
 type ptyout_data struct {
 	Call   string
 	Output []byte
 }
+type buffer_to_send struct {
+	Buf []byte
+}
+
+var ws_buffer_chan = make(chan buffer_to_send)
 
 func (imp *ptyout_impl) _send(s []byte) bool {
-	fmt.Println("_send", len(s))
+	log.Println("_send", len(s))
+	// log.Println("_send", len(s), string(s))
 	// printf("\033[5;10HHello, World!\n"); // 将光标移动到第5行第10列，然后打印 "Hello, World!"
 	// newFunction2(s)
 	data := ptyout_data{

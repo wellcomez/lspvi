@@ -94,12 +94,12 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	x.on_list_selected = func() {
 		ret.updateprev()
 	}
-	for i, value := range keymaplist {
-		index := i
+	for _, value := range keymaplist {
+		// index := i
 		list.AddItem(value, "", func() {
 			ret.open_in_qf()
 			ret.parent.hide()
-			log.Println(index)
+			// log.Println(,index)
 		})
 	}
 	ret.impl.fzf_on_listview = new_fzf_on_list(list, true)
@@ -155,20 +155,19 @@ func open_in_tabview(keys []qf_history_data, i int, main *mainui) {
 		if err == nil {
 			buf, err := os.ReadFile(fielname)
 			if err != nil {
-				log.Println(err)
+				log.Println("open_in_tab", fielname, err)
 				return
 			}
 			var task lspcore.CallInTask
 			err = json.Unmarshal(buf, &task)
 			if err != nil {
-				log.Println(err)
+				log.Println("open_in_tab Unmarshal", fielname, err)
 				return
 			}
 			main.callinview.updatetask(&task)
 			main.ActiveTab(view_callin, false)
 		}
 	}
-	return
 }
 
 func (qk *qk_history_picker) updateprev() {
@@ -196,13 +195,13 @@ func (qk *qk_history_picker) updateprev() {
 			if err == nil {
 				buf, err := os.ReadFile(fielname)
 				if err != nil {
-					log.Println(err)
+					log.Println("updateprev", fielname, err)
 					return
 				}
 				var task lspcore.CallInTask
 				err = json.Unmarshal(buf, &task)
 				if err != nil {
-					log.Println(err)
+					log.Println("updateprev Unmarshal", fielname, err)
 					return
 				}
 				content := []string{}

@@ -32,7 +32,7 @@ type uml_filetree_context struct {
 func (menu uml_filetree_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if action == tview.MouseRightClick {
 		yes, focuse := menu.qk.view.MouseHandler()(tview.MouseLeftClick, event, nil)
-		log.Println(yes, focuse)
+		log.Println("on_mouse", yes, focuse)
 		update_filetree_menu(menu.main.uml, menu.qk.view.GetCurrentNode())
 		return tview.MouseConsumed, nil
 	}
@@ -57,10 +57,11 @@ func (menu uml_filetree_context) menuitem() []context_menu_item {
 }
 func (v *umlview) openfile(name string) {
 	ext := filepath.Ext(name)
-
-	layout := v.file.main.layout
-	layout.mainlayout.ResizeItem(layout.editor_area, 0, 1)
-	layout.mainlayout.ResizeItem(layout.console, 0, 5)
+	if !v.file.main.tty {
+		layout := v.file.main.layout
+		layout.mainlayout.ResizeItem(layout.editor_area, 0, 1)
+		layout.mainlayout.ResizeItem(layout.console, 0, 5)
+	}
 
 	v.preview.Clear()
 	if ext == ".png" {
@@ -74,12 +75,12 @@ func (v *umlview) openfile(name string) {
 		// 打开文件
 		file, err := os.Open(name)
 		if err != nil {
-			log.Println(err)
+			log.Println("umlopen", name, err)
 		}
 		defer file.Close()
 		img, err := png.Decode(file)
 		if err != nil {
-			log.Println(err)
+			log.Println("umlopen decode", name, err)
 		}
 		image.SetColors(256)
 		image.SetImage(img)
@@ -126,14 +127,13 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 	preview := tview.NewFlex()
 	layout.AddItem(preview, 0, 7, false)
 	ret := &umlview{
-		view_link: &view_link{up: view_code, left: view_callin, right: view_bookmark},
+		view_link: &view_link{id: view_uml, up: view_code, left: view_callin, right: view_bookmark},
 		preview:   preview,
 		file:      file,
 		layout:    layout,
 		Name:      file.Name,
 		main:      main,
 	}
-	ret.boxview = layout.Box
 	ret.file_right_context = uml_filetree_context{qk: file, main: main}
 	// update_filetree_menu(ret)
 	file.openfile = ret.openfile

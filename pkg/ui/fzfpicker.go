@@ -134,6 +134,16 @@ func (v *fzfmain) OpenLiveGrepFzf() {
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
+func (v *fzfmain) OpenColorFzf() {
+	sym := new_color_picker(v)
+	x := sym.grid(v.input)
+	v.create_dialog_content(x, sym)
+}
+func (v *fzfmain) OpenWorkspaceFzf() {
+	sym := new_workspace_picker(v)
+	x := sym.grid(v.input)
+	v.create_dialog_content(x, sym)
+}
 func (v *fzfmain) OpenHistoryFzf() {
 	sym := new_history_picker(v)
 	x := sym.grid(v.input)

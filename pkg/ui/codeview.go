@@ -1,10 +1,12 @@
 package mainui
 
 import (
+	"embed"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -58,6 +60,7 @@ type CodeView struct {
 	rightmenu            CodeContextMenu
 	LineNumberUnderMouse int
 	not_preview          bool
+	bgcolor              tcell.Color
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -116,7 +119,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		right_menu_data.previous_selection = selected
 		// code.rightmenu.text = root.Cursor.GetSelection()
 		cursor := *root.Cursor
-		cursor.Loc = tab_loc(root, pos)
+		cursor.Loc = code.tab_loc(pos)
 		cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		right_menu_data.rightmenu_loc = cursor.CurSelection[0]
 		log.Println("before", cursor.CurSelection)
@@ -210,31 +213,30 @@ func NewCodeView(main *mainui) *CodeView {
 		right: view_outline_list,
 		down:  view_quickview,
 		left:  view_file},
-		theme:       "darcula",
+		theme:       global_config.Colorscheme,
 		not_preview: false,
 	}
 	ret.right_menu_data = &right_menu_data{}
 	ret.rightmenu = CodeContextMenu{code: &ret}
 	ret.main = main
 	ret.map_key_handle()
-	var colorscheme femto.Colorscheme
+	// var colorscheme femto.Colorscheme
 	//"monokai"
-	if monokai := runtime.Files.FindFile(femto.RTColorscheme, ret.theme); monokai != nil {
-		if data, err := monokai.Data(); err == nil {
-			colorscheme = femto.ParseColorscheme(string(data))
-		}
-	}
+	// if monokai := runtime.Files.FindFile(femto.RTColorscheme, ret.theme); monokai != nil {
+	// 	if data, err := monokai.Data(); err == nil {
+	// 		colorscheme = femto.ParseColorscheme(string(data))
+	// 	}
+	// }
 	path := ""
 	content := ""
 	buffer := femto.NewBufferFromString(string(content), path)
 	root := new_codetext_view(buffer)
 	root.SetRuntimeFiles(runtime.Files)
-	root.SetColorscheme(colorscheme)
+	// root.SetColorscheme(colorscheme)
 
 	root.SetMouseCapture(ret.handle_mouse)
 	root.SetInputCapture(ret.handle_key)
 	ret.view = root
-	ret.boxview = root.Box
 	return &ret
 }
 
@@ -268,6 +270,12 @@ func update_selection_menu(ret *CodeView) {
 			}
 			main.get_callin_stack_by_cursor(loc, ret.filename)
 			main.ActiveTab(view_callin, false)
+		}},
+		{item: create_menu_item("Open in explorer"), handle: func() {
+			// ret.filename
+			dir := filepath.Dir(ret.filename)
+			main.fileexplorer.ChangeDir(dir)
+			main.fileexplorer.FocusFile(ret.filename)
 		}},
 		{item: create_menu_item("-------------"), handle: func() {
 		}},
@@ -462,8 +470,8 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	// loc1 := code.view.Cursor.Loc
 	a, b := code.handle_mouse_impl(action, event)
 
-	cur := code.view.Cursor
-	log.Println("handle_mouse", cur.CurSelection[0], cur.CurSelection[1])
+	// cur := code.view.Cursor
+	// log.Println("handle_mouse", cur.CurSelection[0], cur.CurSelection[1])
 	// loc2 := code.view.Cursor.Loc
 	// log.Println("action", action, "x:", x, "y:", y, "loc1:", loc1, "loc2:", loc2)
 	return a, b
@@ -495,7 +503,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	}
 
 	if action == tview.MouseLeftDoubleClick {
-		root.Cursor.Loc = tab_loc(root, pos)
+		root.Cursor.Loc = code.tab_loc(pos)
 		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		root.Cursor.SelectWord()
 		code.main.codeview.action_goto_define()
@@ -505,21 +513,21 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		code.main.set_viewid_focus(view_code)
 		code.mouse_select_area = true
 		//log.Print(x1, y1, x2, y2, "down")
-		pos = tab_loc(root, pos)
+		pos = code.tab_loc(pos)
 		code.view.Cursor.SetSelectionStart(pos)
 		code.view.Cursor.SetSelectionEnd(pos)
 		return tview.MouseConsumed, nil
 	}
 	if action == tview.MouseMove {
 		if code.mouse_select_area {
-			pos = tab_loc(root, pos)
+			pos = code.tab_loc(pos)
 			code.view.Cursor.SetSelectionEnd(pos)
 		}
 		return tview.MouseConsumed, nil
 	}
 	if action == tview.MouseLeftUp {
 		if code.mouse_select_area {
-			code.view.Cursor.SetSelectionEnd(tab_loc(root, pos))
+			code.view.Cursor.SetSelectionEnd(code.tab_loc(pos))
 			code.mouse_select_area = false
 		}
 		//log.Print(x1, y1, x2, y2, "up")
@@ -528,7 +536,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	if action == tview.MouseLeftClick {
 		code.main.set_viewid_focus(view_code)
 		code.mouse_select_area = false
-		root.Cursor.Loc = tab_loc(root, pos)
+		root.Cursor.Loc = code.tab_loc(pos)
 		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		root.Cursor.SetSelectionEnd(femto.Loc{X: pos.X, Y: pos.Y})
 		code.update_with_line_changed()
@@ -579,12 +587,20 @@ func avoid_position_overflow(root *codetextview, pos femto.Loc) femto.Loc {
 	pos.Y = min(root.Buf.LinesNum()-1, pos.Y)
 	return pos
 }
-func tab_loc(root *codetextview, pos femto.Loc) femto.Loc {
+func (code *CodeView) tab_loc(pos femto.Loc) femto.Loc {
+	root := code.view
+	if code.is_softwrap() {
+		x, lineY := code.view.VirtualLine(pos.Y, pos.X)
+		pos.Y = lineY
+		pos.X = x
+	}
 	LastVisualX := GetVisualX(root, pos.Y, pos.X)
 	tabw := LastVisualX - pos.X
 	if tabw > 0 {
 		pos.X = pos.X - tabw
 	}
+	pos.X = max(0, pos.X)
+
 	return pos
 }
 
@@ -1011,7 +1027,9 @@ func (code *CodeView) Load(filename string) error {
 		return err
 	}
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
-	// "monokai"
+	// "monokai"A
+	b := code.view.Buf
+	b.Settings["syntax"] = false
 	code.LoadBuffer(data, filename)
 	code.view.Cursor.Loc.X = 0
 	code.view.Cursor.Loc.Y = 0
@@ -1029,19 +1047,73 @@ func (code *CodeView) Load(filename string) error {
 	return nil
 }
 
+//go:embed  colorscheme/output
+var TreesitterSchemeLoader embed.FS
+
+func (code *CodeView) on_change_color(c *color_theme_file) {
+	code.theme = c.name
+	global_config.Colorscheme = c.name
+	global_config.Save()
+	code.change_theme()
+}
+func (code *CodeView) is_softwrap() bool {
+	return code.view.Buf.Settings["softwrap"] == true
+}
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
+
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
-	// code.view.Buf.Settings["softwrap"] = true
-	// code.view.Buf.Settings["cursorline"] = true
-	var colorscheme femto.Colorscheme
+	if global_config.Wrap {
+		code.view.Buf.Settings["softwrap"] = lspcore.TreesitterCheckIsSourceFile(filename)
+	} else {
+		code.view.Buf.Settings["softwrap"] = false
+	}
+	// colorscheme/output/dracula.micro
+	// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
+	// colorscheme = femto.ParseColorscheme(string(buf))
+	// _, b, _ := n.Decompose()
+	// tview.Styles.PrimitiveBackgroundColor = b
+	code.change_theme()
+}
 
+func (code *CodeView) change_theme() {
+	var colorscheme femto.Colorscheme
+	micro_buffer := []byte{}
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
 		if data, err := monokai.Data(); err == nil {
-			colorscheme = femto.ParseColorscheme(string(data))
+			micro_buffer = data
+
 		}
 	}
-	code.view.SetColorscheme(colorscheme)
+	path := filepath.Join("colorscheme", "output", code.theme+".micro")
+	buf, err := TreesitterSchemeLoader.ReadFile(path)
+
+	if err == nil {
+		micro_buffer = append(micro_buffer, buf...)
+	}
+	if len(micro_buffer) > 0 {
+		colorscheme = femto.ParseColorscheme(string(micro_buffer))
+		if n, ok := colorscheme["normal"]; ok {
+			colorscheme["default"] = n
+			_, bg, _ := n.Decompose()
+			main := code.main
+			for _, v := range all_view_list {
+				v.to_box(main).SetBackgroundColor(bg)
+			}
+			tview.Styles.PrimitiveBackgroundColor = bg
+			main.layout.console.SetBackgroundColor(bg)
+			main.page.SetBackgroundColor(bg)
+			main.layout.editor_area.SetBackgroundColor(bg)
+			main.layout.tab_area.SetBackgroundColor(bg)
+			main.statusbar.SetBackgroundColor(bg)
+			main.console_index_list.SetBackgroundColor(bg)
+			main.layout.dialog.Frame.SetBackgroundColor(bg)
+			code.bgcolor = bg
+		}
+		log.Println(colorscheme)
+		code.view.SetColorscheme(colorscheme)
+	}
+
 }
 func (code *CodeView) save_selection(s string) {
 }

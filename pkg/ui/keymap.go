@@ -14,6 +14,8 @@ const (
 	open_picker_document_symbol = iota
 	open_picker_bookmark
 	open_picker_refs
+	open_picker_colorscheme
+	open_picker_workspace
 	open_picker_qfh
 	open_picker_wkq
 	open_picker_livegrep
@@ -43,6 +45,7 @@ const (
 	next_window_up
 	file_in_file
 	file_in_file_vi_loop
+	brack_match
 	arrow_up
 	arrow_down
 	arrow_left
@@ -78,6 +81,12 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{id, "query workspace symbol", m.open_wks_query}
 	case open_picker_document_symbol:
 		return cmdactor{id, "open symbol", m.open_document_symbol_picker}
+	case open_picker_colorscheme:
+		return cmdactor{id, "colorscheme", m.open_colorescheme}
+	case open_picker_workspace:
+		return cmdactor{id, "workspace", func() {
+			m.layout.dialog.OpenWorkspaceFzf()
+		}}
 	case open_picker_refs:
 		return cmdactor{id, "reference", m.open_picker_refs}
 	case open_picker_bookmark:
@@ -156,6 +165,12 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{id, "file in file vi", func() {
 			m.codeview.OnFindInfile(false, false)
 		}}
+	case brack_match:
+		{
+			return cmdactor{id, "match", func() {
+				m.codeview.view.JumpToMatchingBrace()
+			}}
+		}
 	case arrow_up:
 		return cmdactor{id, "up", func() { m.codeview.action_key_up() }}
 	case arrow_down:
@@ -238,6 +253,7 @@ const key_goto_first_line = "gg"
 const key_goto_last_line = "G"
 
 const key_picker_history = "hh"
+const key_picker_color = ""
 const key_picker_ctrlp = "f"
 const key_picker_document_symbol = "o"
 const key_picker_qfh = "hq"
@@ -269,6 +285,7 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, goto_callin).esc_key(split(chr_goto_callin)),
 		get_cmd_actor(m, goto_refer).esc_key(split(chr_goto_refer)),
 		get_cmd_actor(m, arrow_up).esc_key([]string{"k"}),
+		get_cmd_actor(m, brack_match).esc_key([]string{"%"}),
 		get_cmd_actor(m, arrow_up).esc_key([]string{key_up}),
 		get_cmd_actor(m, arrow_left).esc_key([]string{"h"}),
 		get_cmd_actor(m, arrow_left).esc_key([]string{key_left}),
@@ -296,6 +313,8 @@ func (m *mainui) key_map_space_menu() []cmditem {
 		get_cmd_actor(m, open_picker_bookmark).menu_key(split(chr_bookmark)),
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),
 		get_cmd_actor(m, open_picker_history).menu_key(split(key_picker_history)),
+		get_cmd_actor(m, open_picker_colorscheme).menu_key(split(key_picker_color)),
+		get_cmd_actor(m, open_picker_workspace).menu_key(split(key_picker_color)),
 		get_cmd_actor(m, open_picker_grep_word).menu_key(split(key_picker_grep_word)),
 		get_cmd_actor(m, open_picker_global_search).menu_key(split(key_picker_search_in_file)),
 		get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
