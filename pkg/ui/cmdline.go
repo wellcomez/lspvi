@@ -176,9 +176,10 @@ func (ret *cmdline) handle_mouse(action tview.MouseAction, event *tcell.EventMou
 func (cmd *cmdline) SetValue(value string) {
 	cmd.input.SetText(value)
 }
-// func (cmd cmdline) Value() string {
-// 	return cmd.input.GetText()
-// }
+
+//	func (cmd cmdline) Value() string {
+//		return cmd.input.GetText()
+//	}
 func (cmd cmdline) Clear() {
 	cmd.input.SetText("")
 	cmd.input.SetLabel("")
@@ -329,9 +330,7 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	txt := cmd.input.GetText()
 	if event.Key() == tcell.KeyEnter {
-		if len(txt) > 1 {
-			vim.vi.FindEnter = txt[1:]
-		}
+		vim.vi.FindEnter = txt
 		if cmd.OnComand(vim.vi.FindEnter) {
 			cmd.find_history.add(command_history_record{Cmd: vim.vi.FindEnter})
 			cmd.Vim.EnterEscape()
