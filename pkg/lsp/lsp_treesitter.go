@@ -17,8 +17,7 @@ import (
 	ts_go "github.com/smacker/go-tree-sitter/golang"
 	ts_js "github.com/smacker/go-tree-sitter/javascript"
 	ts_py "github.com/smacker/go-tree-sitter/python"
-	//tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
-	tree_sitter_markdown_inline "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown-inline"
+	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
 	//"github.com/smacker/go-tree-sitter/markdown"
 )
 
@@ -50,22 +49,20 @@ func TreesitterCheckIsSourceFile(filename string) bool {
 	return false
 }
 
-
-
-
+var ts_name_markdown = "markdown"
 var lsp_lang_map = map[string]lsplang{
-	"go": lsp_lang_go{},
-	"c":  lsp_lang_cpp{},
-	"py": lsp_lang_py{},
-	"js": lsp_ts{},
-	"md": lsp_md{},
+	"go":             lsp_lang_go{},
+	"c":              lsp_lang_cpp{},
+	"py":             lsp_lang_py{},
+	"js":             lsp_ts{},
+	ts_name_markdown: lsp_md{},
 }
 var ts_lang_map = map[string]*sitter.Language{
-	"go": ts_go.GetLanguage(),
-	"c":  ts_c.GetLanguage(),
-	"py": ts_py.GetLanguage(),
-	"js": ts_js.GetLanguage(),
-	"md": tree_sitter_markdown_inline.GetLanguage(),
+	"go":             ts_go.GetLanguage(),
+	"c":              ts_c.GetLanguage(),
+	"py":             ts_py.GetLanguage(),
+	"js":             ts_js.GetLanguage(),
+	ts_name_markdown: tree_sitter_markdown.GetLanguage(),
 }
 
 func (t *TreeSitter) Init() error {
