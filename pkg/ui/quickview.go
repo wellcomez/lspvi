@@ -627,6 +627,7 @@ func new_qf_history(main *mainui) (*quickfix_history, error) {
 }
 
 type qf_index_view struct {
+	*view_link
 	*customlist
 	keys       []qf_history_data
 	keymaplist []string
@@ -670,6 +671,9 @@ func (view *qf_index_view) Add(data qf_history_data, add bool) error {
 }
 func new_qf_index_view(main *mainui) *qf_index_view {
 	ret := &qf_index_view{
+		view_link: &view_link{
+			id: view_qf_index_view,
+		},
 		customlist: new_customlist(false),
 		main:       main}
 	ret.customlist.SetBorder(true)

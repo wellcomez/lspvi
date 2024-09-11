@@ -576,8 +576,8 @@ func MainUI(arg *Arguments) {
 			main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
 				URI: lsp.NewDocumentURI(filearg.Path),
 				Range: lsp.Range{
-					Start: lsp.Position{filearg.Pos.Line, 0},
-					End:   lsp.Position{filearg.Pos.Line, 0},
+					Start: lsp.Position{Line: filearg.Pos.Line, Character: 0},
+					End:   lsp.Position{Line: filearg.Pos.Line, Character: 0},
 				},
 			}, offset: 0}, false)
 		}
@@ -587,12 +587,23 @@ func MainUI(arg *Arguments) {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		return main.handle_key(event)
 	})
-	resizer := new_editor_resize(main, editor_area, nil, nil)
-	resizer.add(main.fileexplorer.view_link, 0)
-	resizer.add(main.codeview.view_link, 1)
-	resizer.add(main.symboltree.view_link, 2).load()
+	console_area_resizer := new_editor_resize(main, main.layout.console, nil, nil)
+	console_area_resizer.add(main.console_index_list.view_link, 1).load()
+	if main.console_index_list.Width == 0 {
+		go func() {
+			main.app.QueueUpdate(func() {
+				_, _, w, _ := main.console_index_list.GetRect()
+				main.console_index_list.Width = w
+			})
+		}()
+	}
 
-	resizer2 := new_editor_resize(main, main_layout, func() {}, func(u *ui_reszier) {
+	edit_area_resizer := new_editor_resize(main, editor_area, nil, nil)
+	edit_area_resizer.add(main.fileexplorer.view_link, 0)
+	edit_area_resizer.add(main.codeview.view_link, 1)
+	edit_area_resizer.add(main.symboltree.view_link, 2).load()
+
+	main_layout_resizer := new_editor_resize(main, main_layout, func() {}, func(u *ui_reszier) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
@@ -601,13 +612,16 @@ func MainUI(arg *Arguments) {
 			}()
 		}
 	})
-	resizer2.add(editor_area.view_link, 0)
-	resizer2.add(console_layout.view_link, 1)
+	main_layout_resizer.add(editor_area.view_link, 0)
+	main_layout_resizer.add(console_layout.view_link, 1)
+
 	go func() {
 		app.QueueUpdate(func() {
-			resizer2.load()
+			main_layout_resizer.load()
 		})
 	}()
+
+	resizer := []editor_mouse_resize{*console_area_resizer, *edit_area_resizer, *main_layout_resizer}
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 		if content_menu_action == tview.MouseConsumed {
@@ -616,11 +630,10 @@ func MainUI(arg *Arguments) {
 		if main.right_context_menu.visible {
 			return nil, tview.MouseConsumed
 		}
-		if resizer2.checkdrag(action, event) == tview.MouseConsumed {
-			return nil, tview.MouseConsumed
-		}
-		if resizer.checkdrag(action, event) == tview.MouseConsumed {
-			return nil, tview.MouseConsumed
+		for _, v := range resizer {
+			if v.checkdrag(action, event) == tview.MouseConsumed {
+				return nil, tview.MouseConsumed
+			}
 		}
 		if main.layout.spacemenu.visible {
 			spacemenu := main.layout.spacemenu
