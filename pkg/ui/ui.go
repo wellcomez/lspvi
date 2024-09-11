@@ -454,6 +454,7 @@ func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 type workdir struct {
 	root               string
 	logfile            string
+	configfile         string
 	uml                string
 	history            string
 	cmdhistory         string
@@ -480,6 +481,7 @@ func new_workdir(root string) workdir {
 	export := filepath.Join(root, "export")
 	wk := workdir{
 		root:               root,
+		configfile:         filepath.Join(root, "config.yml"),
 		logfile:            filepath.Join(root, "lspvi.log"),
 		history:            filepath.Join(root, "history.log"),
 		bookmark:           filepath.Join(root, "bookmark.json"),
@@ -506,6 +508,7 @@ func ensure_dir(root string) {
 }
 
 var lspviroot workdir
+var global_config *LspviConfig
 
 func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
@@ -522,6 +525,7 @@ func MainUI(arg *Arguments) {
 		root = arg.Root
 	}
 	lspviroot = new_workdir(root)
+	global_config, _ = LspviConfig{}.Load()
 	// go servmain(lspviroot.uml, 18080, func(port int) {
 	// 	httport = port
 	// })

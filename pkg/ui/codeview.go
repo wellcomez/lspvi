@@ -212,7 +212,7 @@ func NewCodeView(main *mainui) *CodeView {
 		right: view_outline_list,
 		down:  view_quickview,
 		left:  view_file},
-		theme:       "darcula",
+		theme:       global_config.Colorscheme,
 		not_preview: false,
 	}
 	ret.right_menu_data = &right_menu_data{}
@@ -1045,6 +1045,8 @@ var TreesitterSchemeLoader embed.FS
 
 func (code *CodeView) on_change_color(c *color_theme_file) {
 	code.theme = c.name
+	global_config.Colorscheme = c.name
+	global_config.Save()
 	code.change_theme()
 }
 func (code *CodeView) is_softwrap() bool {
