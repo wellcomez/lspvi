@@ -20,6 +20,8 @@ import (
 	ts_js "github.com/smacker/go-tree-sitter/javascript"
 	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
 	ts_py "github.com/smacker/go-tree-sitter/python"
+	// ts_tsx "github.com/smacker/go-tree-sitter/typescript/tsx"
+	ts_ts "github.com/smacker/go-tree-sitter/typescript/typescript"
 	//"github.com/smacker/go-tree-sitter/markdown"
 )
 
@@ -55,19 +57,23 @@ func TreesitterCheckIsSourceFile(filename string) bool {
 }
 
 var ts_name_markdown = "markdown"
+var ts_name_typescript = "typescript"
+var ts_name_javascript = "javascript"
 var lsp_lang_map = map[string]lsplang{
-	"go":             lsp_lang_go{},
-	"c":              lsp_lang_cpp{},
-	"py":             lsp_lang_py{},
-	"js":             lsp_ts{},
-	ts_name_markdown: lsp_md{},
+	"go":               lsp_lang_go{},
+	"c":                lsp_lang_cpp{},
+	"py":               lsp_lang_py{},
+	ts_name_javascript: lsp_ts{LanguageID: string(JAVASCRIPT)},
+	ts_name_typescript: lsp_ts{LanguageID: string(TYPE_SCRIPT)},
+	ts_name_markdown:   lsp_md{},
 }
 var ts_lang_map = map[string]*sitter.Language{
-	"go":             ts_go.GetLanguage(),
-	"c":              ts_c.GetLanguage(),
-	"py":             ts_py.GetLanguage(),
-	"js":             ts_js.GetLanguage(),
-	ts_name_markdown: tree_sitter_markdown.GetLanguage(),
+	"go":               ts_go.GetLanguage(),
+	"c":                ts_c.GetLanguage(),
+	"py":               ts_py.GetLanguage(),
+	ts_name_javascript: ts_js.GetLanguage(),
+	ts_name_typescript: ts_ts.GetLanguage(),
+	ts_name_markdown:   tree_sitter_markdown.GetLanguage(),
 }
 
 func (t *TreeSitter) Init() error {
@@ -217,7 +223,7 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 								URI: lsp.NewDocumentURI(ts.filename),
 								Range: lsp.Range{
 									Start: lsp.Position{Line: int(s.Begin.Row), Character: int(s.Begin.Column)},
-									End:   lsp.Position{Line:int(s.End.Row),Character:  int(s.End.Column)},
+									End:   lsp.Position{Line: int(s.End.Row), Character: int(s.End.Column)},
 								},
 							},
 						}
