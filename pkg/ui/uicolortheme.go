@@ -1,8 +1,12 @@
 package mainui
 
 import (
+	"errors"
+
+	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
+	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -11,6 +15,21 @@ type symbol_colortheme struct {
 	main        *mainui
 }
 
+func (mgr *symbol_colortheme) get_color_style(kind lsp.SymbolKind) (tcell.Style, error) {
+	switch kind {
+	case lsp.SymbolKindClass:
+		return mgr.colorscheme.GetColor("@type.class"), nil
+	case lsp.SymbolKindFunction:
+		return mgr.colorscheme.GetColor("@function"), nil
+	case lsp.SymbolKindMethod:
+		return mgr.colorscheme.GetColor("@function.method"), nil
+	case lsp.SymbolKindStruct:
+		return mgr.colorscheme.GetColor("structure"), nil
+	case lsp.SymbolKindConstant:
+		return mgr.colorscheme.GetColor("@constant"), nil
+	}
+	return tcell.StyleDefault, errors.New("not found")
+}
 func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 
 	if n, ok := mgr.colorscheme["normal"]; ok {

@@ -453,15 +453,18 @@ func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 	}
 	root_node := tview.NewTreeNode("symbol")
 	root_node.SetReference("1")
+	query := v.main.codeview.colorscheme
 	for _, v := range file.Class_object {
 		if v.Is_class() {
 			c := tview.NewTreeNode(v.SymbolListStrint())
+			add_symbol_node_color(query, v, c)
 			root_node.AddChild(c)
 			c.SetReference(v.SymInfo)
 			if len(v.Members) > 0 {
 				childnode := tview.NewTreeNode(v.SymbolListStrint())
 				for _, c := range v.Members {
 					cc := tview.NewTreeNode(c.SymbolListStrint())
+					add_symbol_node_color(query, &c, cc)
 					cc.SetReference(c.SymInfo)
 					childnode.AddChild(cc)
 				}
@@ -470,8 +473,18 @@ func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 		} else {
 			c := tview.NewTreeNode(v.SymbolListStrint())
 			c.SetReference(v.SymInfo)
+			add_symbol_node_color(query, v, c)
 			root_node.AddChild(c)
 		}
 	}
 	v.view.SetRoot(root_node)
+}
+
+func add_symbol_node_color(query *symbol_colortheme, c *lspcore.Symbol, cc *tview.TreeNode) {
+	if query != nil {
+		if style, err := query.get_color_style(c.SymInfo.Kind); err == nil {
+			fg, _, _ := style.Decompose()
+			cc.SetColor(fg)
+		}
+	}
 }
