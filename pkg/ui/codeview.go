@@ -1153,6 +1153,9 @@ func (code *CodeView) change_theme() {
 		}
 		log.Println(colorscheme)
 		code.view.SetColorscheme(colorscheme, func() {
+			if code.main == nil {
+				return
+			}
 			code.main.app.Draw()
 		})
 	}
