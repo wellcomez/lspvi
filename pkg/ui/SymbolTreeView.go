@@ -262,7 +262,7 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 						code := symview.main.codeview
 						symview.main.bf.history.SaveToHistory(code)
 						symview.main.bf.history.AddToHistory(code.filename, NewEditorPosition(r.Start.Line, symview.main.codeview))
-						symview.main.codeview.goto_loation(r)
+						symview.main.codeview.goto_loation_noupdate(r)
 						return
 					}
 				}
@@ -271,9 +271,10 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 				Range.End.Line = Range.Start.Line
 				Range.End.Character = Range.Start.Character + len(sym.Name)
 			}
-			symview.main.codeview.goto_loation(Range)
+			symview.main.codeview.goto_loation_noupdate(Range)
 		}
 	}
+	symview.view.SetCurrentNode(node)
 }
 func (c *SymbolTreeView) handle_commnad(cmd command_id) {
 	cur := c.view.GetCurrentNode()
@@ -408,19 +409,6 @@ func (c *SymbolTreeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
 	return r
 }
 
-// func (v SymbolTreeView) Findall(key string) []int {
-// 	var ret []int
-// 	for i := 0; i < len(v.symbols); i++ {
-// 		sss := v.symbols[i].displayname()
-// 		if len(sss) > 0 {
-// 			ret = append(ret, i)
-// 		}
-
-// 	}
-// 	return ret
-// }
-
-// Clear
 func (v *SymbolTreeView) Clear() {
 	root_node := tview.NewTreeNode("")
 	v.show_wait = true

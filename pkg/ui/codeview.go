@@ -1221,9 +1221,20 @@ func is_lsppos_ok(pos lsp.Position) bool {
 	return true
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
+	// if line < code.view.Topline || code.view.Bottomline() < line {
+	// 	code.view.Topline = max(line-code.focus_line(), 0)
+	// }
+	shouldReturn1 := code.goto_loation_noupdate(loc)
+	if shouldReturn1 {
+		return
+	}
+	code.update_with_line_changed()
+}
+
+func (code *CodeView) goto_loation_noupdate(loc lsp.Range) bool {
 	shouldReturn := is_lsprange_ok(loc)
 	if shouldReturn {
-		return
+		return true
 	}
 	x := 0
 	loc.Start.Line = min(code.view.Buf.LinesNum(), loc.Start.Line)
@@ -1233,9 +1244,7 @@ func (code *CodeView) goto_loation(loc lsp.Range) {
 	if code.view.Topline > line || code.view.Bottomline() < line {
 		code.change_topline_with_previousline(line)
 	}
-	// if line < code.view.Topline || code.view.Bottomline() < line {
-	// 	code.view.Topline = max(line-code.focus_line(), 0)
-	// }
+
 	Cur := code.view.Cursor
 	Cur.SetSelectionStart(femto.Loc{
 		X: loc.Start.Character + x,
@@ -1247,7 +1256,7 @@ func (code *CodeView) goto_loation(loc lsp.Range) {
 	}
 	Cur.SetSelectionEnd(end)
 	Cur.Loc = end
-	code.update_with_line_changed()
+	return false
 }
 
 func is_lsprange_ok(loc lsp.Range) bool {
