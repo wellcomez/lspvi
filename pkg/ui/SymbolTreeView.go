@@ -102,7 +102,7 @@ func (m *Filter) compare(node, parent *tview.TreeNode) bool {
 				}
 			}
 			if m.ret == nil {
-				gap :=  m.line - start_y
+				gap := m.line - start_y
 				if gap >= 0 {
 					m.save_to_cur(node, sym)
 				}
@@ -244,10 +244,21 @@ func NewSymbolTreeView(main *mainui) *SymbolTreeView {
 	return ret
 }
 func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
+	const openmark = " + "
 	if node.IsExpanded() {
+		if len(node.GetChildren()) > 0 {
+			s := node.GetText()
+			if !strings.HasSuffix(s, openmark) {
+				node.SetText(s + openmark)
+			}
+		}
 		node.Collapse()
 	} else {
 		node.Expand()
+		s := node.GetText()
+		if strings.HasSuffix(s, openmark) {
+			node.SetText(strings.TrimSuffix(s, openmark))
+		}
 	}
 	value := node.GetReference()
 	if value != nil {
