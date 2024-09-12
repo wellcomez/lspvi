@@ -16,6 +16,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 
 	ts_c "github.com/smacker/go-tree-sitter/c"
+	ts_cpp "github.com/smacker/go-tree-sitter/cpp"
 	ts_go "github.com/smacker/go-tree-sitter/golang"
 	ts_js "github.com/smacker/go-tree-sitter/javascript"
 	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
@@ -65,22 +66,59 @@ type ts_lang_def struct {
 	name       string
 	filedetect lsplang
 	tslang     *sitter.Language
+	def_ext    []string
+}
+
+func TsPtn(
+	name string,
+	filedetect lsplang,
+	tslang *sitter.Language,
+) ts_lang_def {
+	return ts_lang_def{
+		name,
+		filedetect,
+		tslang,
+		[]string{},
+	}
+}
+
+func (s ts_lang_def) set_ext(file []string) ts_lang_def {
+	s.def_ext = append(s.def_ext, file...)
+	return s
+}
+func (s *ts_lang_def) get_ts_name(file string) string {
+	if s.is_me(file) {
+		return s.name
+	}
+	return ""
+}
+func (s *ts_lang_def) is_me(file string) bool {
+	if len(s.def_ext) > 0 {
+		if IsMe(file, s.def_ext) {
+			return true
+		}
+	}
+	if s.filedetect.IsMe(file) {
+		return true
+	}
+	return false
 }
 
 var lsp_lang_map = []ts_lang_def{
-	{"go", lsp_lang_go{}, ts_go.GetLanguage()},
-	{"c", lsp_lang_cpp{}, ts_c.GetLanguage()},
-	{"python", lsp_lang_py{}, ts_py.GetLanguage()},
-	{ts_name_typescript, lsp_ts{LanguageID: ts_name_tsx}, ts_tsx.GetLanguage()},
-	{ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()},
-	{ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()},
-	{ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()},
+	TsPtn("go", lsp_lang_go{}, ts_go.GetLanguage()),
+	TsPtn("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}),
+	TsPtn("c", lsp_lang_cpp{}, ts_c.GetLanguage()),
+	TsPtn("python", lsp_lang_py{}, ts_py.GetLanguage()),
+	TsPtn(ts_name_typescript, lsp_ts{LanguageID: ts_name_tsx}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
+	TsPtn(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}),
+	TsPtn(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}),
+	TsPtn(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()),
 }
 
 func (t *TreeSitter) Init() error {
 	for _, v := range lsp_lang_map {
-		if v.filedetect.IsMe(t.filename) {
-			t.langname = v.name
+		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 {
+			t.langname = ts_name
 			t.Loadfile(v.tslang)
 			return nil
 		}
@@ -182,19 +220,21 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language) error {
 		log.Println("fail to load treesitter", err)
 		return err
 	}
-	hlerr, ret := ts.query("highlights")
-	ts.HlLine = ret
-	if hlerr != nil {
-		log.Println("fail to load highlights", hlerr)
-	}
-	local_err, ret := ts.query("locals")
-	if local_err != nil {
-		log.Println("fail to load locals", local_err)
-	} else {
-		symbols := get_ts_symbol(ret, ts)
-		ts.Outline = symbols
-	}
-	return hlerr
+	go func() {
+		hlerr, ret := ts.query("highlights")
+		ts.HlLine = ret
+		if hlerr != nil {
+			log.Println("fail to load highlights", hlerr)
+		}
+		local_err, ret := ts.query("locals")
+		if local_err != nil {
+			log.Println("fail to load locals", local_err)
+		} else {
+			symbols := get_ts_symbol(ret, ts)
+			ts.Outline = symbols
+		}
+	}()
+	return nil
 }
 
 func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {

@@ -1050,6 +1050,9 @@ func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
 	return r, nil
 }
 func (code *CodeView) Load(filename string) error {
+	if filename == code.filename {
+		return nil
+	}
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
