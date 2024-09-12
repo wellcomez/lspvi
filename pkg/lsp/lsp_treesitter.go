@@ -104,12 +104,40 @@ func (s *ts_lang_def) is_me(file string) bool {
 	return false
 }
 
+type lsp_dummy struct {
+}
+
+// InitializeLsp implements lsplang.
+func (l lsp_dummy) InitializeLsp(core *lspcore, wk WorkSpace) error {
+	panic("unimplemented")
+}
+
+// IsMe implements lsplang.
+func (l lsp_dummy) IsMe(filename string) bool {
+	return false
+}
+
+// IsSource implements lsplang.
+func (l lsp_dummy) IsSource(filename string) bool {
+	panic("unimplemented")
+}
+
+// Launch_Lsp_Server implements lsplang.
+func (l lsp_dummy) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
+	panic("unimplemented")
+}
+
+// Resolve implements lsplang.
+func (l lsp_dummy) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {
+	panic("unimplemented")
+}
+
 var lsp_lang_map = []ts_lang_def{
 	TsPtn("go", lsp_lang_go{}, ts_go.GetLanguage()),
 	TsPtn("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}),
 	TsPtn("c", lsp_lang_cpp{}, ts_c.GetLanguage()),
 	TsPtn("python", lsp_lang_py{}, ts_py.GetLanguage()),
-	TsPtn(ts_name_typescript, lsp_ts{LanguageID: ts_name_tsx}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
+	TsPtn(ts_name_typescript, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
 	TsPtn(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}),
 	TsPtn(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}),
 	TsPtn(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()),
