@@ -461,14 +461,13 @@ func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 			root_node.AddChild(c)
 			c.SetReference(v.SymInfo)
 			if len(v.Members) > 0 {
-				childnode := tview.NewTreeNode(v.SymbolListStrint())
+				childnode := c
 				for _, c := range v.Members {
 					cc := tview.NewTreeNode(c.SymbolListStrint())
 					add_symbol_node_color(query, &c, cc)
 					cc.SetReference(c.SymInfo)
 					childnode.AddChild(cc)
 				}
-				root_node.AddChild(childnode)
 			}
 		} else {
 			c := tview.NewTreeNode(v.SymbolListStrint())

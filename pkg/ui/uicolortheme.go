@@ -17,7 +17,7 @@ type symbol_colortheme struct {
 
 func (mgr *symbol_colortheme) get_color_style(kind lsp.SymbolKind) (tcell.Style, error) {
 	switch kind {
-	case lsp.SymbolKindClass:
+	case lsp.SymbolKindClass, lsp.SymbolKindInterface:
 		return mgr.colorscheme.GetColor("@type.class"), nil
 	case lsp.SymbolKindFunction:
 		return mgr.colorscheme.GetColor("@function"), nil
