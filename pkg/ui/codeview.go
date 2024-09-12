@@ -1182,7 +1182,7 @@ func (code *CodeView) change_theme() {
 		code.view.SetColorscheme(colorscheme, func(ts *lspcore.TreeSitter) {
 			if code.main == nil {
 				return
-			} else {
+			} else if len(ts.Outline) > 0 {
 				code.main.symboltree.update(&lspcore.Symbol_file{
 					Class_object: ts.Outline,
 				})

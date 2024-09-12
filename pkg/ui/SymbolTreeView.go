@@ -240,42 +240,38 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 
 		if sym, ok := value.(lsp.SymbolInformation); ok {
 			Range := sym.Location.Range
-			// if Range.Start.Line != Range.End.Line {
 			body, err := lspcore.NewBody(sym.Location)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			var beginline = Range.Start.Line
-			for i, v := range body.Subline {
-				idx := strings.Index(v, sym.Name)
-				if i == 0 {
-					idx = Range.Start.Character + idx
-				}
-				if idx >= 0 {
-					r := lsp.Range{
-						Start: lsp.Position{
-							Line:      beginline + i,
-							Character: idx,
-						},
-						End: lsp.Position{
-							Line:      beginline + i,
-							Character: idx + len(sym.Name),
-						},
+			if err == nil {
+				var beginline = Range.Start.Line
+				for i, v := range body.Subline {
+					idx := strings.Index(v, sym.Name)
+					if i == 0 {
+						idx = Range.Start.Character + idx
 					}
-					code := symview.main.codeview
-					symview.main.bf.history.SaveToHistory(code)
-					symview.main.bf.history.AddToHistory(code.filename, NewEditorPosition(r.Start.Line, symview.main.codeview))
-					symview.main.codeview.goto_loation(r)
-					// symview.main.set_viewid_focus(view_code)
-					break
+					if idx >= 0 {
+						r := lsp.Range{
+							Start: lsp.Position{
+								Line:      beginline + i,
+								Character: idx,
+							},
+							End: lsp.Position{
+								Line:      beginline + i,
+								Character: idx + len(sym.Name),
+							},
+						}
+						code := symview.main.codeview
+						symview.main.bf.history.SaveToHistory(code)
+						symview.main.bf.history.AddToHistory(code.filename, NewEditorPosition(r.Start.Line, symview.main.codeview))
+						symview.main.codeview.goto_loation(r)
+						return
+					}
 				}
 			}
-			// } else {
-			// 	symview.main.codeview.goto_loation(Range)
-			// 	symview.main.set_focus(symview.main.codeview.view.Box)
-			// }
-
+			if Range.Start.Line != Range.End.Line {
+				Range.End.Line = Range.Start.Line
+				Range.End.Character = Range.Start.Character + len(sym.Name)
+			}
+			symview.main.codeview.goto_loation(Range)
 		}
 	}
 }
