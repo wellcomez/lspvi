@@ -914,8 +914,7 @@ func (code *CodeView) update_with_line_changed() {
 	if main == nil {
 		return
 	}
-	line := root.Cursor.Loc.Y
-	main.OnCodeLineChange(line)
+	main.OnCodeLineChange(root.Cursor.X,root.Cursor.Y)
 }
 
 func (code *CodeView) action_grep_word(selected bool) {

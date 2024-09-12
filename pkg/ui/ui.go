@@ -335,11 +335,11 @@ func (m *mainui) Init() {
 	m.lspmgr.Handle = m
 }
 
-func (m mainui) OnCodeLineChange(line int) {
+func (m mainui) OnCodeLineChange(x,y int) {
 	if m.symboltree.Hide {
 		return
 	}
-	m.symboltree.OnCodeLineChange(line)
+	m.symboltree.OnCodeLineChange(x,y)
 }
 func (m *mainui) OnTabChanged(tab *TabButton) {
 	if tab.Name == "uml" {

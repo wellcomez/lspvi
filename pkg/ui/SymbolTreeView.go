@@ -77,10 +77,12 @@ func (menu symboltree_view_context) menuitem() []context_menu_item {
 }
 
 type Filter struct {
-	line     int
-	ret      *tview.TreeNode
-	gap      int
+	line int
+	col  int
+	ret  *tview.TreeNode
+	// gap      int
 	finished bool
+	cur      lsp.Position
 }
 
 func (m *Filter) compare(node, parent *tview.TreeNode) bool {
@@ -90,24 +92,31 @@ func (m *Filter) compare(node, parent *tview.TreeNode) bool {
 	}
 	if value != nil {
 		if sym, ok := value.(lsp.SymbolInformation); ok {
+			start_y := sym.Location.Range.Start.Line
+			end_y := sym.Location.Range.End.Line
+			x := sym.Location.Range.Start.Character
 			if sym.Kind == lsp.SymbolKindFunction || sym.Kind == lsp.SymbolKindMethod {
-				if m.line >= sym.Location.Range.Start.Line && m.line <= sym.Location.Range.End.Line {
-					m.ret = node
+				if m.line >= start_y && m.line <= end_y {
+					save_to_cur(m, node, sym)
 					m.finished = true
 					return true
 				}
 			}
 			if m.ret == nil {
-				m.gap = m.line - sym.Location.Range.Start.Line
-				if m.gap >= 0 {
-					m.ret = node
+				gap := m.line - start_y
+				if gap >= 0 {
+					save_to_cur(m, node, sym)
 				}
 			} else {
-				gap2 := m.line - sym.Location.Range.Start.Line
-				if gap2 >= 0 {
-					if gap2 < m.gap {
-						m.gap = gap2
-						m.ret = node
+				offset_y := m.line - start_y
+				offset_x := m.col - x
+				if offset_y >= 0 && offset_x >= 0 {
+					if offset_y < m.cur.Line-start_y {
+						save_to_cur(m, node, sym)
+					} else if offset_y == m.cur.Line-start_y {
+						if offset_x < m.cur.Character-x {
+							save_to_cur(m, node, sym)
+						}
 					}
 				}
 
@@ -115,6 +124,11 @@ func (m *Filter) compare(node, parent *tview.TreeNode) bool {
 		}
 	}
 	return true
+}
+
+func save_to_cur(m *Filter, node *tview.TreeNode, sym lsp.SymbolInformation) {
+	m.ret = node
+	m.cur = sym.Location.Range.Start
 }
 
 type TextFilter struct {
@@ -175,8 +189,8 @@ func (m *SymbolTreeView) OnSearch(key string) []SearchPos {
 	}
 	return ret
 }
-func (m *SymbolTreeView) OnCodeLineChange(line int) {
-	ss := Filter{line: line, finished: false}
+func (m *SymbolTreeView) OnCodeLineChange(x, y int) {
+	ss := Filter{line: y, col: x, finished: false}
 	if m.view.GetRoot() != nil {
 		m.view.GetRoot().Walk(ss.compare)
 	}
