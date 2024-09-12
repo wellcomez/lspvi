@@ -48,6 +48,7 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 			main.statusbar.SetBackgroundColor(bg)
 			main.console_index_list.SetBackgroundColor(bg)
 			main.layout.dialog.Frame.SetBackgroundColor(bg)
+			main.symboltree.update(main.lspmgr.Current)
 		}
 		code.bgcolor = bg
 	}
