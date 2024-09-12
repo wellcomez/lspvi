@@ -38,11 +38,11 @@ type TreeSitterSymbol struct {
 	Code       string
 }
 type TreeSitter struct {
-	filename   string
-	parser     *sitter.Parser
-	tree       *sitter.Tree
-	tsname     string
-	lang       *sitter.Language
+	filename string
+	parser   *sitter.Parser
+	tree     *sitter.Tree
+	// tsname     string
+	// lang       *sitter.Language
 	sourceCode []byte
 	// Symbols     []TreeSitterSymbol
 	HlLine  t_symbol_line
@@ -70,25 +70,56 @@ type ts_lang_def struct {
 	tslang     *sitter.Language
 	def_ext    []string
 	cb         func(*TreeSitter)
+	hl         *sitter.Query
 }
 
-func (ts ts_lang_def) new_treesitter(name string) *TreeSitter {
-	ret := NewTreeSitter(name)
-	ret.lang = ts.tslang
-	ret.tsname = ts.name
-	return ret
-}
+const query_highlights = "highlights"
+
 func TsPtn(
 	name string,
 	filedetect lsplang,
 	tslang *sitter.Language,
 ) ts_lang_def {
-	return ts_lang_def{
+	ret := ts_lang_def{
 		name,
 		filedetect,
 		tslang,
 		[]string{},
 		nil,
+		nil,
+	}
+	if h, er := ret.query(query_highlights); er == nil {
+		ret.hl = h
+	}
+	return ret
+}
+func (t *ts_lang_def) create_query_buffer(lang string, queryname string) ([]byte, error) {
+	path := filepath.Join("queries", lang, queryname+".scm")
+	buf, err := t.read_embbed(path)
+	if err != nil {
+		return nil, err
+	}
+	ss := string(buf)
+	heris := get_inherits(ss)
+	log.Println(t.name, "heri", queryname, heris)
+	var merge_buf = []byte{}
+	if len(heris) > 0 {
+		for _, v := range heris {
+			if b, err := t.create_query_buffer(v,queryname); err == nil {
+				merge_buf = append(merge_buf, b...)
+			}
+		}
+		merge_buf = append(merge_buf, buf...)
+	} else {
+		merge_buf = append(merge_buf, buf...)
+	}
+	return merge_buf, nil
+}
+func (t *ts_lang_def) query(queryname string) (*sitter.Query, error) {
+	if buf, err := t.create_query_buffer(t.name, queryname); err == nil {
+		return t.create_query(buf)
+	} else {
+		return nil, err
 	}
 }
 func (s ts_lang_def) setcb(cb func(*TreeSitter)) ts_lang_def {
@@ -168,7 +199,7 @@ func markdown_parser(ts *TreeSitter) {
 			}
 		}
 	}
-	 sort.Slice(ts.Outline, func(i, j int) bool {
+	sort.Slice(ts.Outline, func(i, j int) bool {
 		return ts.Outline[i].SymInfo.Location.Range.Start.Line < ts.Outline[j].SymInfo.Location.Range.Start.Line
 	})
 }
@@ -186,8 +217,7 @@ var tree_sitter_lang_map = []ts_lang_def{
 
 func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	for _, v := range tree_sitter_lang_map {
-		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 {
-			t.tsname = ts_name
+		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 && v.hl != nil {
 			t.tsdef = v
 			t.Loadfile(v.tslang, cb)
 			return nil
@@ -197,57 +227,16 @@ func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 }
 
 func (t TreeSitter) query(queryname string) (t_symbol_line, error) {
-	var SymbolsLine = make(t_symbol_line)
-	path := filepath.Join("queries", t.tsname, queryname+".scm")
-	buf, err := t.read_embbed(path)
-	if err != nil {
-		return SymbolsLine, err
+	if queryname == query_highlights {
+		return t.query_buf(t.tsdef.hl)
 	}
-	ss := string(buf)
-	heris := get_inherits(ss)
-	log.Println(t.tsname, "heri", queryname, heris)
-	ret, err := t.__query(queryname)
-	if err != nil {
-		return SymbolsLine, err
-	}
-	if len(ret) == 0 {
-		for _, v := range heris {
-			var ptr *ts_lang_def
-			for i := range tree_sitter_lang_map {
-				vv := tree_sitter_lang_map[i]
-				if vv.name == v {
-					ptr = &vv
-					break
-				}
-			}
-			if ptr != nil {
-				ts := ptr.new_treesitter(t.filename)
-				if err := ts._load_file(ptr.tslang); err == nil {
-					if aaa, err := ts.__query(queryname); err == nil {
-						for k, v := range aaa {
-							SymbolsLine[k] = append(SymbolsLine[k], v...)
-						}
-					}
-				}
-			}
-		}
-		return SymbolsLine, nil
-	}
-	return ret, nil
+	return make(t_symbol_line), nil
 }
-func (t TreeSitter) __query(queryname string) (t_symbol_line, error) {
-	var SymbolsLine = make(t_symbol_line)
-	// pkg/lsp/queries/ada/highlights.scm
-	// /home/z/dev/lsp/goui/pkg/lsp/queries/go/highlights.scm
-	path := filepath.Join("queries", t.tsname, queryname+".scm")
 
-	buf, err := t.read_embbed(path)
-	if err != nil {
-		return SymbolsLine, err
-	}
-	q, err := sitter.NewQuery(buf, t.lang)
-	if err != nil {
-		return SymbolsLine, err
+func (t *TreeSitter) query_buf(q *sitter.Query) (t_symbol_line, error) {
+	var SymbolsLine t_symbol_line = make(t_symbol_line)
+	if q == nil {
+		return SymbolsLine, fmt.Errorf("query not found")
 	}
 	qc := sitter.NewQueryCursor()
 	qc.Exec(q, t.tree.RootNode())
@@ -256,22 +245,19 @@ func (t TreeSitter) __query(queryname string) (t_symbol_line, error) {
 		if !ok {
 			break
 		}
-		// Apply predicates filtering
-		// m = qc.FilterPredicates(m, t.sourceCode)
+
 		for i := range m.Captures {
 			c := m.Captures[i]
 
 			captureName := q.CaptureNameForId(c.Index)
-			// symbol := c.Node.Symbol()
+
 			start := c.Node.StartPoint()
 			end := c.Node.EndPoint()
 			name := c.Node.Content(t.sourceCode)
-			// symbolname := t.lang.SymbolName(symbol)
-			// log.Println(strings.Join([]string{symbolname, captureName}, "."), symbolname, symbol, c.Node.Type(), start, end, name)
-			// log.Println(captureName, symbolname, start, end, name)
+
 			hlname := captureName
 			s := TreeSitterSymbol{Point(start), Point(end), hlname, name}
-			// t.Symbols = append(t.Symbols, s)
+
 			row := int(s.Begin.Row)
 			if _, ok := SymbolsLine[row]; !ok {
 				SymbolsLine[row] = []TreeSitterSymbol{s}
@@ -284,17 +270,25 @@ func (t TreeSitter) __query(queryname string) (t_symbol_line, error) {
 	return SymbolsLine, nil
 }
 
+func (t *ts_lang_def) create_query(buf []byte) (*sitter.Query, error) {
+	q, err := sitter.NewQuery(buf, t.tslang)
+	return q, err
+}
+
 func get_inherits(ss string) []string {
 	ind := strings.Index(ss, "\n")
 	if ind > 0 {
 		ss = ss[:ind]
-		ss = strings.TrimPrefix(ss, "; inherits:")
-		args := strings.Split(ss, ",")
-		inerits := []string{}
-		for _, v := range args {
-			inerits = append(inerits, strings.TrimSpace(v))
+		const x = "; inherits:"
+		if strings.HasPrefix(ss, x) {
+			ss = strings.TrimPrefix(ss, x)
+			args := strings.Split(ss, ",")
+			inerits := []string{}
+			for _, v := range args {
+				inerits = append(inerits, strings.TrimSpace(v))
+			}
+			return inerits
 		}
-		return inerits
 	}
 	return []string{}
 }
@@ -315,7 +309,7 @@ func (c copydata) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (ts TreeSitter) read_embbed(p string) ([]byte, error) {
+func (ts ts_lang_def) read_embbed(p string) ([]byte, error) {
 	file, err := query_fs.Open(p)
 	if err == nil {
 		imp := &imp_copydata{}
@@ -339,8 +333,6 @@ func NewTreeSitter(name string) *TreeSitter {
 	return ret
 }
 
-const query_highlights = "highlights"
-
 func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) error {
 	if err := ts._load_file(lang); err != nil {
 		log.Println("fail to load treesitter", err)
@@ -352,13 +344,13 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 		if hlerr != nil {
 			log.Println("fail to load highlights", hlerr)
 		}
-		ret, local_err := ts.query("locals")
-		if local_err != nil {
-			log.Println("fail to load locals", local_err)
-		} else {
-			// symbols := get_ts_symbol(ret, ts)
-			// ts.Outline = symbols
-		}
+		// ret, local_err := ts.query("locals")
+		// if local_err != nil {
+		// 	log.Println("fail to load locals", local_err)
+		// } else {
+		// 	// symbols := get_ts_symbol(ret, ts)
+		// 	// ts.Outline = symbols
+		// }
 		if ts.tsdef.cb != nil {
 			ts.tsdef.cb(ts)
 		}
@@ -414,7 +406,6 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 }
 
 func (ts *TreeSitter) _load_file(lang *sitter.Language) error {
-	ts.lang = lang
 	ts.parser.SetLanguage(lang)
 	buf, err := os.ReadFile(ts.filename)
 	if err != nil {
