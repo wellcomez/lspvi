@@ -709,7 +709,7 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(main)
 	main.quickview.RestoreLast()
-	main_layout.SetTitle("lspvi " + main.root)
+	main_layout.SetTitle(main.codeview.filename)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
@@ -804,7 +804,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
 		}
-		titlename := fmt.Sprintf("%s %s", appname, main.root)
+		titlename := fmt.Sprintf("%s",main.codeview.filename)
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {

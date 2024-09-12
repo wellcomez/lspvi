@@ -22,6 +22,9 @@ type Symbol_file struct {
 	tokens       *lsp.SemanticTokens
 }
 
+func (sym *Symbol_file) HasLsp() bool {
+	return sym.lsp != nil
+}
 func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
 	for _, v := range sym.Class_object {
 		if v.Is_class() {
