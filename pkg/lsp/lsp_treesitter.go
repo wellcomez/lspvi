@@ -20,7 +20,7 @@ import (
 	ts_js "github.com/smacker/go-tree-sitter/javascript"
 	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
 	ts_py "github.com/smacker/go-tree-sitter/python"
-	// ts_tsx "github.com/smacker/go-tree-sitter/typescript/tsx"
+	ts_tsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 	ts_ts "github.com/smacker/go-tree-sitter/typescript/typescript"
 	//"github.com/smacker/go-tree-sitter/markdown"
 )
@@ -49,7 +49,7 @@ type TreeSitter struct {
 
 func TreesitterCheckIsSourceFile(filename string) bool {
 	for _, v := range lsp_lang_map {
-		if v.IsMe(filename) {
+		if v.filedetect.IsMe(filename) {
 			return true
 		}
 	}
@@ -59,28 +59,29 @@ func TreesitterCheckIsSourceFile(filename string) bool {
 var ts_name_markdown = "markdown"
 var ts_name_typescript = "typescript"
 var ts_name_javascript = "javascript"
-var lsp_lang_map = map[string]lsplang{
-	"go":               lsp_lang_go{},
-	"c":                lsp_lang_cpp{},
-	"py":               lsp_lang_py{},
-	ts_name_javascript: lsp_ts{LanguageID: string(JAVASCRIPT)},
-	ts_name_typescript: lsp_ts{LanguageID: string(TYPE_SCRIPT)},
-	ts_name_markdown:   lsp_md{},
+var ts_name_tsx = "tsx"
+
+type ts_lang_def struct {
+	name       string
+	filedetect lsplang
+	tslang     *sitter.Language
 }
-var ts_lang_map = map[string]*sitter.Language{
-	"go":               ts_go.GetLanguage(),
-	"c":                ts_c.GetLanguage(),
-	"py":               ts_py.GetLanguage(),
-	ts_name_javascript: ts_js.GetLanguage(),
-	ts_name_typescript: ts_ts.GetLanguage(),
-	ts_name_markdown:   tree_sitter_markdown.GetLanguage(),
+
+var lsp_lang_map = []ts_lang_def{
+	{"go", lsp_lang_go{}, ts_go.GetLanguage()},
+	{"c", lsp_lang_cpp{}, ts_c.GetLanguage()},
+	{"python", lsp_lang_py{}, ts_py.GetLanguage()},
+	{ts_name_typescript, lsp_ts{LanguageID: ts_name_tsx}, ts_tsx.GetLanguage()},
+	{ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()},
+	{ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()},
+	{ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()},
 }
 
 func (t *TreeSitter) Init() error {
-	for k, v := range lsp_lang_map {
-		if v.IsMe(t.filename) {
-			t.langname = k
-			t.Loadfile(ts_lang_map[k])
+	for _, v := range lsp_lang_map {
+		if v.filedetect.IsMe(t.filename) {
+			t.langname = v.name
+			t.Loadfile(v.tslang)
 			return nil
 		}
 	}

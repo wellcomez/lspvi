@@ -71,6 +71,9 @@ func (l lsp_ts) InitializeLsp(core *lspcore, wk WorkSpace) error {
 
 // IsMe implements lsplang.
 func (l lsp_ts) IsMe(filename string) bool {
+	if l.LanguageID == "tsx" {
+		return IsMe(filename, []string{"tsx"})
+	}
 	if l.LanguageID == string(JAVASCRIPT) {
 		return IsMe(filename, []string{"js"})
 	}
