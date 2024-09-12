@@ -173,11 +173,14 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case file_in_file:
 		return cmdactor{id, "file in file", func() {
-			m.codeview.OnFindInfile(true, true)
+			w:=m.codeview.OnFindInfile(true, true)
+			m.cmdline.set_escape_search_mode(w)
 		}}
 	case file_in_file_vi_word:
 		return cmdactor{id, "file in file vi", func() {
-			m.codeview.OnFindInfileWordOption(false, false, true)
+			word := m.codeview.OnFindInfileWordOption(false, false, true)
+			cmdline := m.cmdline
+			cmdline.set_escape_search_mode(word)
 		}}
 	case brack_match:
 		{
@@ -247,6 +250,13 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			"", nil,
 		}
 	}
+}
+
+func (cmdline *cmdline) set_escape_search_mode(word string) {
+	cmdline.Vim.EnterEscape()
+	cmdline.Vim.set_entered(word)
+	cmdline.Vim.update_find_label()
+	cmdline.input.SetText(word)
 }
 
 const ctrlw = "c-w"

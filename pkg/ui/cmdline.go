@@ -153,7 +153,7 @@ func (cmd *cmdline) SetValue(value string) {
 //	func (cmd cmdline) Value() string {
 //		return cmd.input.GetText()
 //	}
-func (cmd cmdline) Clear() {
+func (cmd *cmdline) Clear() {
 	cmd.input.SetText("")
 	cmd.input.SetLabel("")
 }
@@ -302,7 +302,7 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	txt := cmd.input.GetText()
 	if event.Key() == tcell.KeyEnter {
-		vim.vi.FindEnter = txt
+		vim.set_entered(txt)
 		if cmd.OnComand(vim.vi.FindEnter) {
 			cmd.history.add(command_history_record{Cmd: vim.vi.FindEnter})
 			cmd.Vim.EnterEscape()
@@ -312,6 +312,11 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	txt = txt + string(event.Rune())
 	cmd.input.SetText(txt)
 	return true
+}
+
+func (vim *Vim) set_entered(txt string) {
+	vim.EnterEscape()
+	vim.vi.FindEnter = txt
 }
 
 type vi_find_handle struct {
@@ -331,21 +336,18 @@ func (v vi_find_handle) State() string {
 
 // HanldeKey implements vim_mode_handle.
 func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
-	cmd := v.vi.app.cmdline
-	vim := v.vi
-	if !cmd.input.HasFocus() {
-		if event.Rune() == 'n' {
-			cmd.main.OnSearch(search_option{vim.vi.FindEnter, false, false, false})
-			return true
-		}
-		return false
-	}
+	cmd := v.main.cmdline
+	// if !cmd.input.HasFocus() {
+	// 	if event.Rune() == 'n' {
+	// 		vim.set_entered(cmd.input.GetText())
+	// 		cmd.main.OnSearch(search_option{vim.vi.FindEnter, false, false, false})
+	// 		return true
+	// 	}
+	// 	return false
+	// }
 	shouldReturn := handle_backspace(event, cmd)
 	if shouldReturn {
-		txt := cmd.input.GetText()
-		if len(txt) > 0 {
-			cmd.main.OnSearch(search_option{txt, false, false, false})
-		} else {
+		if cmd.input.GetText() == "" {
 			v.vi.EnterEscape()
 		}
 		return true
@@ -354,25 +356,27 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	var prev *command_history_record = nil
 	history := cmd.history
 	x := event.Key()
-	run := event.Rune()
-	if run == '/' && !cmd.main.searchcontext.next_or_prev {
-		cmd.main.searchcontext.next_or_prev = true
-		v.vi.update_find_label()
-		return true
-	}
-	if run == '?' && cmd.main.searchcontext.next_or_prev {
-		cmd.main.searchcontext.next_or_prev = false
-		v.vi.update_find_label()
-		return true
-	}
+	// run := event.Rune()
+	// if run == '/' && !cmd.main.searchcontext.next_or_prev {
+	// 	cmd.main.searchcontext.next_or_prev = true
+	// 	v.vi.update_find_label()
+	// 	return true
+	// }
+	// if run == '?' && cmd.main.searchcontext.next_or_prev {
+	// 	cmd.main.searchcontext.next_or_prev = false
+	// 	v.vi.update_find_label()
+	// 	return true
+	// }
 	if x == tcell.KeyUp {
 		prev = history.prev()
 	} else if event.Key() == tcell.KeyDown {
 		prev = history.next()
 	} else if event.Key() == tcell.KeyEnter {
-		vim.vi.FindEnter = txt
 		history.add_search_txt(txt)
-		cmd.main.OnSearch(search_option{txt, false, false, false})
+		v.vi.set_entered(txt)
+		v.vi.update_find_label()
+		cmd.input.SetText(txt)
+		// cmd.main.OnSearch(search_option{txt, false, false, false})
 		return true
 	}
 	if prev != nil {
@@ -385,12 +389,12 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		}
 		return true
 	} else {
-		if len(vim.vi.FindEnter) > 0 {
-			if event.Rune() == 'n' {
-				cmd.main.OnSearch(search_option{vim.vi.FindEnter, false, false, false})
-				return true
-			}
-		}
+		// if len(vim.vi.FindEnter) > 0 {
+		// 	if event.Rune() == 'n' {
+		// 		cmd.main.OnSearch(search_option{vim.vi.FindEnter, false, false, false})
+		// 		return true
+		// 	}
+		// }
 		txt = txt + string(event.Rune())
 		cmd.input.SetText(txt)
 		history.add_search_txt(txt)
@@ -465,6 +469,23 @@ func (l EscapeHandle) input_cb(word string) {
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	ts := l.state.keyseq
 	ch := string(event.Rune())
+	if len(l.main.cmdline.Vim.vi.FindEnter) > 0 {
+		search := false
+		if handle_backspace(event, l.main.cmdline) {
+			if l.main.cmdline.input.GetText() == "" {
+				l.vi.EnterEscape()
+			} else {
+				l.vi.EnterFind()
+			}
+			return true
+		} else if event.Key() == tcell.KeyEnter || event.Rune() == 'n' {
+			search = true
+		}
+		if search {
+			l.main.OnSearch(search_option{l.main.cmdline.Vim.vi.FindEnter, false, false, false})
+			return true
+		}
+	}
 	if l.state.init {
 		l.state.keyseq = []string{}
 		l.state.init = false
@@ -615,7 +636,6 @@ func (v *Vim) MoveFocus() {
 // EnterGrep
 func (v *Vim) EnterGrep(txt string) {
 	v._enter_find_mode()
-	v.vi.FindEnter = txt
 	v.update_find_label()
 	v.app.cmdline.input.SetText(txt)
 }
@@ -641,14 +661,15 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 		}
 	}
 	if event.Rune() == '/' || event.Rune() == '?' {
-		if !v.vi.Find {
+		if v.vi.Escape {
 			if v.app.searchcontext == nil {
 				v.app.searchcontext = NewGenericSearch(view_code, "")
 			}
-			v.app.searchcontext.next_or_prev = (event.Rune() == '/')
-			if v.EnterFind() {
-				return true, nil
-			}
+			aa := (event.Rune() == '/')
+			v.app.searchcontext.next_or_prev = aa
+			v.app.cmdline.Clear()
+			v.EnterFind()
+			return true, nil
 		}
 	}
 	if event.Key() == tcell.KeyEscape {

@@ -114,9 +114,9 @@ func search_on_ui(option search_option, main *mainui) {
 			main.searchcontext = NewGenericSearch(prefocused, txt)
 			main.searchcontext.next_or_prev = prev
 		}
-		if tofzf || !noloop {
-			main.cmdline.Vim.EnterGrep(txt)
-		}
+		// if tofzf || !noloop {
+		// 	main.cmdline.Vim.EnterGrep(txt)
+		// }
 	}
 	gs := main.searchcontext
 	switch prefocused {
