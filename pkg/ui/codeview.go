@@ -196,8 +196,9 @@ func (code *CodeView) OnSearch(txt string, whole bool) []SearchPos {
 							add = false
 						}
 					}
-					if add && index+1 < len(s)-1 {
-						if femto.IsWordChar(string(s[index+len(txt)])) {
+					x := index + len(txt)
+					if add && x < len(s)-1 {
+						if femto.IsWordChar(string(s[x])) {
 							add = false
 						}
 					}
@@ -212,18 +213,18 @@ func (code *CodeView) OnSearch(txt string, whole bool) []SearchPos {
 			s = s[index+len(txt):]
 		}
 	}
-	// if code.view.HasFocus() {
-	// 	Y := code.view.Cursor.Loc.Y
-	// 	closeI := 0
-	// 	for i := 0; i < len(ret); i++ {
-	// 		if femto.Abs(ret[i]-Y) < femto.Abs(ret[closeI]-Y) {
-	// 			closeI = i
-	// 		}
-	// 	}
-	// 	ret2 := ret[closeI:]
-	// 	ret1 := ret[0:closeI]
-	// 	return append(ret2, ret1...)
-	// }
+	if code.view.HasFocus() {
+		Y := code.view.Cursor.Loc.Y
+		closeI := 0
+		for i := 0; i < len(ret); i++ {
+			if femto.Abs(ret[i].Y-Y) < femto.Abs(ret[closeI].Y-Y) {
+				closeI = i
+			}
+		}
+		ret2 := ret[closeI:]
+		ret1 := ret[0:closeI]
+		return append(ret2, ret1...)
+	}
 	return ret
 }
 func NewCodeView(main *mainui) *CodeView {
