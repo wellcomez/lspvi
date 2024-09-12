@@ -14,6 +14,7 @@ type Group uint8
 // Groups contains all of the groups that are defined
 // You can access them in the map via their string name
 var Groups map[string]Group
+var GroupsArray map[Group]string
 var numGroups Group
 
 // String returns the group name attached to the specific group
@@ -80,6 +81,7 @@ type region struct {
 
 func init() {
 	Groups = make(map[string]Group)
+	GroupsArray = make(map[Group]string)
 }
 
 func ParseFtDetect(file *File) (r [2]*regexp.Regexp, err error) {
@@ -265,6 +267,7 @@ func parseRules(input []interface{}, curRegion *region) (ru *rules, err error) {
 					if _, ok := Groups[groupStr]; !ok {
 						numGroups++
 						Groups[groupStr] = numGroups
+						GroupsArray[numGroups] = groupStr
 					}
 					groupNum := Groups[groupStr]
 					ru.patterns = append(ru.patterns, &pattern{groupNum, r})
@@ -300,6 +303,7 @@ func parseRegion(group string, regionInfo map[interface{}]interface{}, prevRegio
 	if _, ok := Groups[group]; !ok {
 		numGroups++
 		Groups[group] = numGroups
+		GroupsArray[numGroups] = group
 	}
 	groupNum := Groups[group]
 	r.group = groupNum
@@ -332,6 +336,7 @@ func parseRegion(group string, regionInfo map[interface{}]interface{}, prevRegio
 		if _, ok := Groups[groupStr]; !ok {
 			numGroups++
 			Groups[groupStr] = numGroups
+			GroupsArray[numGroups] = groupStr
 		}
 		groupNum := Groups[groupStr]
 		r.limitGroup = groupNum

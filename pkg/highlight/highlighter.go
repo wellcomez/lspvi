@@ -2,6 +2,8 @@ package femto
 
 import (
 	// "log"
+	// "fmt"
+	// "log"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -240,11 +242,12 @@ func AddColoreTheme(colore []string) {
 		if _, ok := Groups[groupStr]; !ok {
 			numGroups++
 			Groups[groupStr] = numGroups
+			GroupsArray[numGroups] = groupStr
 		}
 	}
 }
 func (h *Highlighter) highlightEmptyRegion(highlights LineMatch, start int, canMatchEnd bool, lineNum int, line []byte, statesOnly bool) LineMatch {
-	if h.Def==nil{
+	if h.Def == nil {
 		return highlights
 	}
 	lineLen := utf8.RuneCount(line)
@@ -368,18 +371,25 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 						x = append(x, "@"+s)
 						x = append(x, s)
 					}
+					// yes := false
+					// code := string(line[v.Begin.Column:v.End.Column])
 					for _, key := range x {
 						if value, ok := Groups[key]; ok {
 							if _, ok := match_tree_match[int(v.Begin.Column)]; ok {
-								// log.Println("===hh>>", i, v.Begin.Column, ":", v.End.Column, groupvalue)
+								// vartype := GroupsArray[groupvalue]
+								// log.Println("===hh>>", i, fmt.Sprintf("%10s \"%s\"", fmt.Sprintf("%d:%d;%d", v.Begin.Row, v.Begin.Column, v.End.Column), code), key, "->", vartype)
+								// yes = true
 							} else {
 								match_tree_match[int(v.Begin.Column)] = value
 								match_tree_match[int(v.End.Column)] = 0
-								// log.Println("===hh>>", i, v.Begin.Column, ":", v.End.Column, key, string(line[v.Begin.Column:v.End.Column]))
+								// yes = true
 							}
 							break
 						}
 					}
+					// if !yes {
+					// 	// log.Println("===hh>> symbol missed", i, fmt.Sprintf("%10s \"%s\"", fmt.Sprintf("%d:%d;%d", v.Begin.Row, v.Begin.Column, v.End.Column), code), v.SymobName)
+					// }
 				}
 			}
 		}

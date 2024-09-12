@@ -40,7 +40,7 @@ type TreeSitter struct {
 	filename   string
 	parser     *sitter.Parser
 	tree       *sitter.Tree
-	langname   string
+	tsname     string
 	lang       *sitter.Language
 	sourceCode []byte
 	// Symbols     []TreeSitterSymbol
@@ -49,7 +49,7 @@ type TreeSitter struct {
 }
 
 func TreesitterCheckIsSourceFile(filename string) bool {
-	for _, v := range lsp_lang_map {
+	for _, v := range tree_sitter_lang_map {
 		if v.filedetect.IsMe(filename) {
 			return true
 		}
@@ -69,6 +69,12 @@ type ts_lang_def struct {
 	def_ext    []string
 }
 
+func (ts ts_lang_def) new_treesitter(name string) *TreeSitter {
+	ret := NewTreeSitter(name)
+	ret.lang = ts.tslang
+	ret.tsname = ts.name
+	return ret
+}
 func TsPtn(
 	name string,
 	filedetect lsplang,
@@ -132,7 +138,7 @@ func (l lsp_dummy) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool
 	panic("unimplemented")
 }
 
-var lsp_lang_map = []ts_lang_def{
+var tree_sitter_lang_map = []ts_lang_def{
 	TsPtn("go", lsp_lang_go{}, ts_go.GetLanguage()),
 	TsPtn("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}),
 	TsPtn("c", lsp_lang_cpp{}, ts_c.GetLanguage()),
@@ -144,9 +150,9 @@ var lsp_lang_map = []ts_lang_def{
 }
 
 func (t *TreeSitter) Init() error {
-	for _, v := range lsp_lang_map {
+	for _, v := range tree_sitter_lang_map {
 		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 {
-			t.langname = ts_name
+			t.tsname = ts_name
 			t.Loadfile(v.tslang)
 			return nil
 		}
@@ -156,9 +162,48 @@ func (t *TreeSitter) Init() error {
 
 func (t TreeSitter) query(queryname string) (t_symbol_line, error) {
 	var SymbolsLine = make(t_symbol_line)
+	path := filepath.Join("queries", t.tsname, queryname+".scm")
+	buf, err := t.read_embbed(path)
+	if err != nil {
+		return SymbolsLine, err
+	}
+	ss := string(buf)
+	heris := get_inherits(ss)
+	log.Println(t.tsname, "heri", queryname, heris)
+	ret, err := t.__query(queryname)
+	if err != nil {
+		return SymbolsLine, err
+	}
+	if len(ret) == 0 {
+		for _, v := range heris {
+			var ptr *ts_lang_def
+			for i := range tree_sitter_lang_map {
+				vv := tree_sitter_lang_map[i]
+				if vv.name == v {
+					ptr = &vv
+					break
+				}
+			}
+			if ptr != nil {
+				ts := ptr.new_treesitter(t.filename)
+				if err := ts._load_file(ptr.tslang); err == nil {
+					if aaa, err := ts.__query(queryname); err == nil {
+						for k, v := range aaa {
+							SymbolsLine[k] = append(SymbolsLine[k], v...)
+						}
+					}
+				}
+			}
+		}
+		return SymbolsLine, nil
+	}
+	return ret, nil
+}
+func (t TreeSitter) __query(queryname string) (t_symbol_line, error) {
+	var SymbolsLine = make(t_symbol_line)
 	// pkg/lsp/queries/ada/highlights.scm
 	// /home/z/dev/lsp/goui/pkg/lsp/queries/go/highlights.scm
-	path := filepath.Join("queries", t.langname, queryname+".scm")
+	path := filepath.Join("queries", t.tsname, queryname+".scm")
 
 	buf, err := t.read_embbed(path)
 	if err != nil {
@@ -203,6 +248,21 @@ func (t TreeSitter) query(queryname string) (t_symbol_line, error) {
 	return SymbolsLine, nil
 }
 
+func get_inherits(ss string) []string {
+	ind := strings.Index(ss, "\n")
+	if ind > 0 {
+		ss = ss[:ind]
+		ss = strings.TrimPrefix(ss, "; inherits:")
+		args := strings.Split(ss, ",")
+		inerits := []string{}
+		for _, v := range args {
+			inerits = append(inerits, strings.TrimSpace(v))
+		}
+		return inerits
+	}
+	return []string{}
+}
+
 //go:embed  queries
 var query_fs embed.FS
 
@@ -244,6 +304,7 @@ func NewTreeSitter(name string) *TreeSitter {
 }
 
 const query_highlights = "highlights"
+
 func (ts *TreeSitter) Loadfile(lang *sitter.Language) error {
 	if err := ts._load_file(lang); err != nil {
 		log.Println("fail to load treesitter", err)
