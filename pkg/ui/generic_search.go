@@ -14,6 +14,7 @@ type GenericSearch struct {
 	view         view_id
 	key          string
 	currentIndex int
+	next_or_prev bool
 }
 
 // NewGenericSearch is a constructor function for GenericSearch
@@ -23,6 +24,7 @@ func NewGenericSearch(view view_id, key string) *GenericSearch {
 		view:         view,
 		key:          key,
 		currentIndex: 0,
+		next_or_prev: true,
 	}
 }
 
@@ -35,9 +37,9 @@ func (g GenericSearch) Changed(view view_id, key string) bool {
 	}
 	return false
 }
-func (gs *GenericSearch) GetPrev() SearchPos{
+func (gs *GenericSearch) GetPrev() SearchPos {
 	if len(gs.indexList) == 0 {
-		return SearchPos{-1,-1}
+		return SearchPos{-1, -1}
 	}
 	gs.currentIndex = gs.currentIndex - 1 + len(gs.indexList)
 	gs.currentIndex %= len(gs.indexList)
@@ -45,9 +47,9 @@ func (gs *GenericSearch) GetPrev() SearchPos{
 }
 
 // GetNext returns the next index in the indexList
-func (gs *GenericSearch) GetNext() SearchPos{
+func (gs *GenericSearch) GetNext() SearchPos {
 	if len(gs.indexList) == 0 {
-		return SearchPos{-1,-1}
+		return SearchPos{-1, -1}
 	}
 	gs.currentIndex++
 	gs.currentIndex %= len(gs.indexList)
@@ -55,9 +57,9 @@ func (gs *GenericSearch) GetNext() SearchPos{
 }
 
 // GetIndex returns the current index in the indexList
-func (gs *GenericSearch) GetIndex() SearchPos{
+func (gs *GenericSearch) GetIndex() SearchPos {
 	if len(gs.indexList) == 0 {
-		return SearchPos{-1,-1}
+		return SearchPos{-1, -1}
 	}
 	return gs.indexList[gs.currentIndex]
 }

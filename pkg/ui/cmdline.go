@@ -357,7 +357,19 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	txt := cmd.input.GetText()
 	var prev *command_history_record = nil
 	history := cmd.history
-	if event.Key() == tcell.KeyUp {
+	x := event.Key()
+	run := event.Rune()
+	if run == '/' && !cmd.main.searchcontext.next_or_prev {
+		cmd.main.searchcontext.next_or_prev = true
+		cmd.input.SetLabel("/")
+		return true
+	}
+	if run == '?' && cmd.main.searchcontext.next_or_prev {
+		cmd.main.searchcontext.next_or_prev = false
+		cmd.input.SetLabel("?")
+		return true
+	}
+	if x == tcell.KeyUp {
 		prev = history.prev()
 	} else if event.Key() == tcell.KeyDown {
 		prev = history.next()
@@ -386,7 +398,7 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		txt = txt + string(event.Rune())
 		cmd.input.SetText(txt)
 		history.add_search_txt(txt)
-		cmd.main.OnSearch(search_option{txt, false, false,false})
+		cmd.main.OnSearch(search_option{txt, false, false, false})
 		return true
 	}
 }

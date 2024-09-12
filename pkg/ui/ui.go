@@ -963,7 +963,7 @@ func (main *mainui) OnSearch(option search_option) {
 		if changed {
 			gs.indexList = main.codeview.OnSearch(txt, whole)
 			pos := gs.GetIndex()
-			main.codeview.goto_loation(convert_search_pos_lsprange(pos,gs))
+			main.codeview.goto_loation(convert_search_pos_lsprange(pos, gs))
 			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
 				main.ActiveTab(view_quickview, false)
@@ -976,7 +976,12 @@ func (main *mainui) OnSearch(option search_option) {
 				main.quickview.main.quickview.UpdateListView(data_search, data, lspcore.SymolSearchKey{Key: txt})
 			}
 		} else {
-			pos := gs.GetNext()
+			var pos SearchPos
+			if gs.next_or_prev {
+				pos = gs.GetNext()
+			} else {
+				pos = gs.GetPrev()
+			}
 			main.codeview.goto_loation(convert_search_pos_lsprange(pos, gs))
 		}
 		main.page.SetTitle(gs.String())
@@ -1001,7 +1006,7 @@ func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {
 	for _, loc := range gs.indexList {
 		x := convert_search_pos_lsprange(loc, gs)
 		loc := lsp.Location{
-			URI: lsp.NewDocumentURI(main.codeview.filename),
+			URI:   lsp.NewDocumentURI(main.codeview.filename),
 			Range: x,
 		}
 		locs = append(locs, loc)
