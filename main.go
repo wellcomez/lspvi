@@ -6,7 +6,10 @@ import (
 	// pty "zen108.com/lspvi/pkg/pty"
 	mainui "zen108.com/lspvi/pkg/ui"
 )
-
+type arg struct{
+	count int
+	ws string
+}
 func main() {
 	gui := flag.Bool("gui", false, "guimain")
 	ws := flag.String("ws", "", "guimain")
