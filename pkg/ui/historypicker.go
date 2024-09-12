@@ -61,7 +61,7 @@ type color_picker struct {
 
 // close implements picker.
 func (pk *color_picker) close() {
-	panic("unimplemented")
+	// panic("unimplemented")
 }
 
 func (pk *color_picker) grid(input *tview.InputField) *tview.Grid {
