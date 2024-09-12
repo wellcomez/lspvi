@@ -1,87 +1,78 @@
 -- Define highlight groups and output file path
 ---@type
-local highlight_groups = {
-    "Comment",
-    --"Variable",
-    "Constant",
-    "String",
-    "Function",
-    "Keyword",
-    "Type",
-    "Character",
-    "Number",
-    "Boolean",
-    "Float",
-    "Identifier",
-    "Function",
-    "Statement",
-    "Conditional",
-    "Repeat",
-    "Label",
-    "Operator",
-    "Keyword",
-    "Exception",
-    "PreProc",
-    "Include",
-    "Define",
-    "Macro",
-    "PreCondit",
-    "Type",
-    "StorageClass",
-    "Structure",
-    "Typedef",
-    "Special",
-    "SpecialChar",
-    "Tag",
-    "Delimiter",
-    "SpecialComment",
-    "Debug",
-    "Underlined",
-    "Ignore",
-    "Error",
-    "Added",
-    "Changed",
-    "Removed",
-    "CursorLine",
-    "CursorColumn",
-    "Visual",
-    "StatusLine",
-    "Normal",
-    "DiagnosticError",
-    "DiagnosticWarn",
-    "DiagnosticInfo",
-    "DiagnosticHint",
-    --> 'TSKeyword', 'TSFunction','TSMethod',
-    "DiffAdd",
-    "DiffChange",
-    "DiffDelete",
-    "LspReferenceText",
-    "LspReferenceRead",
-    "LspReferenceWrite",
-    "@variable",
-    "@variable.member",
-    "@variable.parameter",
-    "@function",
-    "@function.method",
-    "@function.call",
-    "@keyword",
-    "@keyword.type",
-    "@keyword.Conditional",
-    "@keyword.function",
-    "@keyword.return",
-    "@keyword.modifier",
-    "@keyword.import",
-    "@module",
-    "@String",
-    "@type",
-    "@type.definition",
-    "@type.class",
-    "@property",
-    "@Operator",
-    "@Boolean",
-    "@Comment",
-    "@Constant",
-    "@Constant.builtin"
+local highlight_groups = {"Comment", -- "Variable",
+  "Constant", "String", "Function", "Keyword", "Type", "Character", "Number", "Boolean", "Float", "Identifier",
+  "Function", "Statement", "Conditional", "Repeat", "Label", "Operator", "Keyword", "Exception",
+  "PreProc", "Include", "Define", "Macro", "PreCondit", "Type", "StorageClass", "Structure",
+  "Typedef", "Special", "SpecialChar", "Tag", "Delimiter", "SpecialComment", "Debug",
+  "Underlined", "Ignore", "Error", "Added", "Changed", "Removed", "CursorLine", "CursorColumn",
+  "Visual", "StatusLine", "Normal", "DiagnosticError", "DiagnosticWarn", "DiagnosticInfo",
+  "DiagnosticHint", -- > 'TSKeyword', 'TSFunction','TSMethod',
+  "DiffAdd", "DiffChange", "DiffDelete", "LspReferenceText", "LspReferenceRead", "LspReferenceWrite", "@variable", --                    ; various variable names
+  "@variable.builtin", --            ; built-in variable names (e.g. `this`)
+  "@variable.parameter", --          ; parameters of a function
+  "@variable.parameter", -- .builtin  ; special parameters (e.g. `_`, `it`)
+  "@variable.member", --             ; object and struct fields
+  "@constant", --          ; constant identifiers
+  "@constant.builtin", --  ; built-in constant values
+  "@constant.macro", --    ; constants defined by the preprocessor
+  "@module", --            ; modules or namespaces
+  "@module.builtin", --    ; built-in modules or namespaces
+  "@label", --             ; GOTO and other labels (e.g. `label:` in C), including heredoc labels
+  "@function", --             ; function definitions
+  "@function.builtin", --     ; built-in functions
+  "@function.call", --        ; function calls
+  "@function.macro", --       ; preprocessor macros
+  "@function.method", --      ; method definitions
+  "@function.method", -- .call ; method calls
+  "@constructor", --          ; constructor calls and definitions
+  "@operator", --         ; symbolic operators (e.g. `+` / `*`)
+  "@String", "@type", --             ; type or class definitions and annotations
+  "@type.builtin", --     ; built-in types
+  "@type.definition", --  ; identifiers in type definitions (e.g. `typedef <type> <identifier>` in C)
+  "@type.class", "@attribute", --          ; attribute annotations (e.g. Python decorators, Rust lifetimes)
+  "@attribute.builtin", --  ; builtin annotations (e.g. `@property` in Python)
+  "@property", --           ; the key in key/value pairs
+  "@Comment", 
+  "@keyword", "@keyword.coroutine", "@keyword.function", "@keyword.operator", "@keyword.import",
+  "@keyword.type", "@keyword.modifier", "@keyword.repeat", "@keyword.return", "@keyword.debug",
+  "@keyword.exception", "@keyword.conditional", "@keyword.conditional.ternary",
+  "@keyword.directive", "@keyword.directive.define", 
+  "@string", --                 ; string literals
+  "@string.documentation", --   ; string documenting code (e.g. Python docstrings)
+  "@string.regexp", --          ; regular expressions
+  "@string.escape", --          ; escape sequences
+  "@string.special", --         ; other special strings (e.g. dates)
+  "@string.special", -- .symbol  ; symbols or atoms
+  "@string.special", -- .url     ; URIs (e.g. hyperlinks)
+  "@string.special", -- .path    ; filenames
+  "@character", --              ; character literals
+  "@character.special", --      ; special characters (e.g. wildcards)
+  "@boolean", --                ; boolean literals
+  "@number", --                 ; numeric literals
+  "@number.float", --           ; floating-point number literals
+  "@markup.strong", --         ; bold text
+  "@markup.italic", --         ; italic text
+  "@markup.strikethrough", --  ; struck-through text
+  "@markup.underline", --      ; underlined text (only for literal underline markup!)
+  "@markup.heading", --        ; headings, titles (including markers)
+  "@markup.heading", -- .1      ; top-level heading
+  "@markup.heading", -- .2      ; section heading
+  "@markup.heading", -- .3      ; subsection heading
+  "@markup.heading", -- .4      ; and so on
+  "@markup.heading", -- .5      ; and so forth
+  "@markup.heading", -- .6      ; six levels ought to be enough for anybody
+  "@markup.quote", --          ; block quotes
+  "@markup.math", --           ; math environments (e.g. `$ ... $` in LaTeX)
+  "@markup.link", --           ; text references, footnotes, citations, etc.
+  "@markup.link", -- .label     ; link, reference descriptions
+  "@markup.link", -- .url       ; URL-style links
+  "@markup.raw", --            ; literal or verbatim text (e.g. inline code)
+  "@markup.raw", -- .block      ; literal or verbatim text as a stand-alone block
+  --                       ; (use priority 90 for blocks with injections)
+  "@markup.list", --           ; list markers
+  "@markup.list", -- .checked   ; checked todo-style list markers
+  "@markup.list" -- .unchecked ; unchecked todo-style list markers
 }
 local function get_available_themes()
     local themes = {}
@@ -160,5 +151,5 @@ local function save_themes_to_file(themes)
 end
 local themes = get_available_themes()
 save_themes_to_file(themes)
---save_scheme(colorscheme)
---TSVariable
+-- save_scheme(colorscheme)
+-- TSVariable
