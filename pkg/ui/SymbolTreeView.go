@@ -77,10 +77,9 @@ func (menu symboltree_view_context) menuitem() []context_menu_item {
 }
 
 type Filter struct {
-	line int
-	col  int
-	ret  *tview.TreeNode
-	// gap      int
+	line     int
+	col      int
+	ret      *tview.TreeNode
 	finished bool
 	cur      lsp.Position
 }
@@ -97,25 +96,26 @@ func (m *Filter) compare(node, parent *tview.TreeNode) bool {
 			x := sym.Location.Range.Start.Character
 			if sym.Kind == lsp.SymbolKindFunction || sym.Kind == lsp.SymbolKindMethod {
 				if m.line >= start_y && m.line <= end_y {
-					save_to_cur(m, node, sym)
+					m.save_to_cur(node, sym)
 					m.finished = true
 					return true
 				}
 			}
 			if m.ret == nil {
-				gap := m.line - start_y
+				gap :=  m.line - start_y
 				if gap >= 0 {
-					save_to_cur(m, node, sym)
+					m.save_to_cur(node, sym)
 				}
 			} else {
 				offset_y := m.line - start_y
 				offset_x := m.col - x
 				if offset_y >= 0 && offset_x >= 0 {
-					if offset_y < m.cur.Line-start_y {
-						save_to_cur(m, node, sym)
+					pref_off_y := m.line - m.cur.Line
+					if offset_y < pref_off_y {
+						m.save_to_cur(node, sym)
 					} else if offset_y == m.cur.Line-start_y {
 						if offset_x < m.cur.Character-x {
-							save_to_cur(m, node, sym)
+							m.save_to_cur(node, sym)
 						}
 					}
 				}
@@ -126,7 +126,7 @@ func (m *Filter) compare(node, parent *tview.TreeNode) bool {
 	return true
 }
 
-func save_to_cur(m *Filter, node *tview.TreeNode, sym lsp.SymbolInformation) {
+func (m *Filter) save_to_cur(node *tview.TreeNode, sym lsp.SymbolInformation) {
 	m.ret = node
 	m.cur = sym.Location.Range.Start
 }
