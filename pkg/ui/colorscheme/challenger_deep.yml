@@ -135,8 +135,8 @@ Data:
    background: "#565575"
 
  - Group: "Normal"
-   foreground: "#cbe3e7"
    background: "#1e1c31"
+   foreground: "#cbe3e7"
 
  - Group: "DiagnosticError"
    foreground: "#ffc0b9"
@@ -177,8 +177,8 @@ Data:
  - Group: "@variable.parameter"
    foreground: "#e0e2ea"
 
- - Group: "@variable.parameter"
-   foreground: "#e0e2ea"
+ - Group: "@variable.parameter.builtin"
+   foreground: "#aaffe4"
 
  - Group: "@variable.member"
    foreground: "#e0e2ea"
@@ -216,7 +216,7 @@ Data:
  - Group: "@function.method"
    foreground: "#c991e1"
 
- - Group: "@function.method"
+ - Group: "@function.method.call"
    foreground: "#c991e1"
 
  - Group: "@constructor"
@@ -312,13 +312,14 @@ Data:
  - Group: "@string.special"
    foreground: "#aaffe4"
 
- - Group: "@string.special"
+ - Group: "@string.special.symbol"
    foreground: "#aaffe4"
 
- - Group: "@string.special"
-   foreground: "#aaffe4"
+ - Group: "@string.special.url"
+   underline: true
+   foreground: "#cbe3e7"
 
- - Group: "@string.special"
+ - Group: "@string.special.path"
    foreground: "#aaffe4"
 
  - Group: "@character"
@@ -351,22 +352,22 @@ Data:
  - Group: "@markup.heading"
    foreground: "#65b2ff"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.1"
    foreground: "#65b2ff"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.2"
    foreground: "#65b2ff"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.3"
    foreground: "#65b2ff"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.4"
    foreground: "#65b2ff"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.5"
    foreground: "#65b2ff"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.6"
    foreground: "#65b2ff"
 
  - Group: "@markup.quote"
@@ -379,26 +380,26 @@ Data:
    underline: true
    foreground: "#cbe3e7"
 
- - Group: "@markup.link"
+ - Group: "@markup.link.label"
    underline: true
    foreground: "#cbe3e7"
 
- - Group: "@markup.link"
+ - Group: "@markup.link.url"
    underline: true
    foreground: "#cbe3e7"
 
  - Group: "@markup.raw"
    foreground: "#aaffe4"
 
- - Group: "@markup.raw"
+ - Group: "@markup.raw.block"
    foreground: "#aaffe4"
 
  - Group: "@markup.list"
    foreground: "#aaffe4"
 
- - Group: "@markup.list"
+ - Group: "@markup.list.checked"
    foreground: "#aaffe4"
 
- - Group: "@markup.list"
+ - Group: "@markup.list.unchecked"
    foreground: "#aaffe4"
 
