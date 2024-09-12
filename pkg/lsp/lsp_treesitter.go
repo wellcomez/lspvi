@@ -137,7 +137,7 @@ var lsp_lang_map = []ts_lang_def{
 	TsPtn("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}),
 	TsPtn("c", lsp_lang_cpp{}, ts_c.GetLanguage()),
 	TsPtn("python", lsp_lang_py{}, ts_py.GetLanguage()),
-	TsPtn(ts_name_typescript, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
+	TsPtn(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
 	TsPtn(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}),
 	TsPtn(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}),
 	TsPtn(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()),
@@ -154,7 +154,7 @@ func (t *TreeSitter) Init() error {
 	return fmt.Errorf("not implemented")
 }
 
-func (t TreeSitter) query(queryname string) (error, t_symbol_line) {
+func (t TreeSitter) query(queryname string) (t_symbol_line, error) {
 	var SymbolsLine = make(t_symbol_line)
 	// pkg/lsp/queries/ada/highlights.scm
 	// /home/z/dev/lsp/goui/pkg/lsp/queries/go/highlights.scm
@@ -162,11 +162,11 @@ func (t TreeSitter) query(queryname string) (error, t_symbol_line) {
 
 	buf, err := t.read_embbed(path)
 	if err != nil {
-		return err, SymbolsLine
+		return SymbolsLine, err
 	}
 	q, err := sitter.NewQuery(buf, t.lang)
 	if err != nil {
-		return err, SymbolsLine
+		return SymbolsLine, err
 	}
 	qc := sitter.NewQueryCursor()
 	qc.Exec(q, t.tree.RootNode())
@@ -200,7 +200,7 @@ func (t TreeSitter) query(queryname string) (error, t_symbol_line) {
 			}
 		}
 	}
-	return nil, SymbolsLine
+	return SymbolsLine, nil
 }
 
 //go:embed  queries
@@ -243,18 +243,19 @@ func NewTreeSitter(name string) *TreeSitter {
 	return ret
 }
 
+const query_highlights = "highlights"
 func (ts *TreeSitter) Loadfile(lang *sitter.Language) error {
 	if err := ts._load_file(lang); err != nil {
 		log.Println("fail to load treesitter", err)
 		return err
 	}
 	go func() {
-		hlerr, ret := ts.query("highlights")
+		ret, hlerr := ts.query(query_highlights)
 		ts.HlLine = ret
 		if hlerr != nil {
 			log.Println("fail to load highlights", hlerr)
 		}
-		local_err, ret := ts.query("locals")
+		ret, local_err := ts.query("locals")
 		if local_err != nil {
 			log.Println("fail to load locals", local_err)
 		} else {
