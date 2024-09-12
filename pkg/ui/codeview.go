@@ -178,10 +178,27 @@ func (code *CodeView) OnFindInfileWordOption(fzf bool, noloop bool, whole bool) 
 }
 
 func (code *CodeView) OnSearch(txt string, whole bool) []SearchPos {
+	Buf := code.view.Buf
+	ret := search_text_in_buffer(txt, Buf, whole)
+	if code.view.HasFocus() {
+		Y := code.view.Cursor.Loc.Y
+		closeI := 0
+		for i := 0; i < len(ret); i++ {
+			if femto.Abs(ret[i].Y-Y) < femto.Abs(ret[closeI].Y-Y) {
+				closeI = i
+			}
+		}
+		ret2 := ret[closeI:]
+		ret1 := ret[0:closeI]
+		return append(ret2, ret1...)
+	}
+	return ret
+}
+
+func search_text_in_buffer(txt string, Buf *femto.Buffer, whole bool) []SearchPos {
 	var ret []SearchPos
 	var lino = 0
 	txt = strings.ToLower(txt)
-	Buf := code.view.Buf
 	for ; lino < Buf.LinesNum(); lino++ {
 		s := Buf.Line(lino)
 		s = strings.ToLower(s)
@@ -212,18 +229,6 @@ func (code *CodeView) OnSearch(txt string, whole bool) []SearchPos {
 			offset = offset + index + len(txt)
 			s = s[index+len(txt):]
 		}
-	}
-	if code.view.HasFocus() {
-		Y := code.view.Cursor.Loc.Y
-		closeI := 0
-		for i := 0; i < len(ret); i++ {
-			if femto.Abs(ret[i].Y-Y) < femto.Abs(ret[closeI].Y-Y) {
-				closeI = i
-			}
-		}
-		ret2 := ret[closeI:]
-		ret1 := ret[0:closeI]
-		return append(ret2, ret1...)
 	}
 	return ret
 }
