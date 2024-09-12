@@ -326,9 +326,9 @@ func (view *file_tree_view) ChangeDir(dir string) {
 	view.rootdir = dir
 	root := tview.NewTreeNode(view.rootdir)
 	parent := tview.NewTreeNode("..")
+	root.AddChild(parent)
 	view.opendir(root, view.rootdir)
 	parent.SetReference(filepath.Dir(dir))
-	root.AddChild(parent)
 	view.view.SetRoot(root)
 }
 func (view *file_tree_view) Init() *file_tree_view {
