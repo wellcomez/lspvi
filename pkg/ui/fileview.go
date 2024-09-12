@@ -302,7 +302,12 @@ func (view *file_tree_view) dir_replace(node *tview.TreeNode, filename string) {
 			title = strings.Replace(title, view.main.root, "", 1)
 		}
 		view.view.SetTitle(title)
-		root2 := tview.NewTreeNode(node.GetText())
+		// x := node.GetText(A)
+		title2 := filename
+		if len(title2)>len(view.rootdir){
+			title2 = strings.TrimPrefix(title2, view.rootdir)
+		}
+		root2 := tview.NewTreeNode(title2)
 		parent := tview.NewTreeNode("..")
 		parent.SetReference(filepath.Dir(filename))
 		root2.AddChild(parent)
