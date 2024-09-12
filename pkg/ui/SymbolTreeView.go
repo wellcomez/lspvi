@@ -162,16 +162,16 @@ func (m *TextFilter) compare(node, parent *tview.TreeNode) bool {
 }
 
 // OnSearch
-func (m *SymbolTreeView) OnSearch(key string) []int {
+func (m *SymbolTreeView) OnSearch(key string) []SearchPos {
 	m.searcheresult = &TextFilter{
 		key: key,
 	}
 	if m.view.GetRoot() != nil {
 		m.view.GetRoot().Walk(m.searcheresult.compare)
 	}
-	var ret []int
+	var ret []SearchPos
 	for i := range m.searcheresult.nodes {
-		ret = append(ret, i)
+		ret = append(ret, SearchPos{0, i})
 	}
 	return ret
 }

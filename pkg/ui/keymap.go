@@ -47,7 +47,7 @@ const (
 	next_window_down
 	next_window_up
 	file_in_file
-	file_in_file_vi_loop
+	file_in_file_vi_word
 	brack_match
 	arrow_up
 	arrow_down
@@ -175,9 +175,9 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		return cmdactor{id, "file in file", func() {
 			m.codeview.OnFindInfile(true, true)
 		}}
-	case file_in_file_vi_loop:
+	case file_in_file_vi_word:
 		return cmdactor{id, "file in file vi", func() {
-			m.codeview.OnFindInfile(false, false)
+			m.codeview.OnFindInfileWordOption(false, false, true)
 		}}
 	case brack_match:
 		{
@@ -207,8 +207,8 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case vi_right_word:
 		return cmdactor{id, "word right", func() { m.codeview.word_right() }}
 	case vi_copy_text:
-		return cmdactor{id, "Copy", func() { 
-			m.codeview.copyline(false) 
+		return cmdactor{id, "Copy", func() {
+			m.codeview.copyline(false)
 		}}
 	case vi_copy_line:
 		return cmdactor{id, "Copy", func() { m.codeview.copyline(true) }}
@@ -306,7 +306,7 @@ func (main *mainui) key_map_escape() []cmditem {
 	m := main
 	sss := []cmditem{
 		get_cmd_actor(m, file_in_file).esc_key(split("f")),
-		get_cmd_actor(m, file_in_file_vi_loop).esc_key(split("*")),
+		get_cmd_actor(m, file_in_file_vi_word).esc_key(split("*")),
 		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),
 		get_cmd_actor(m, vi_line_head).esc_key(split("0")),
 		get_cmd_actor(m, goto_callin).esc_key(split(chr_goto_callin)),

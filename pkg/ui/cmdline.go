@@ -332,14 +332,6 @@ func (v vi_find_handle) end() {
 func (v vi_find_handle) State() string {
 	return "find " + v.vi.vi.FindEnter
 }
-func (cmd *cmdline) search_next() {
-	vim := cmd.Vim
-	cmd.main.OnSearch(vim.vi.FindEnter, false, false)
-}
-func (cmd *cmdline) search_prev() {
-	vim := cmd.Vim
-	cmd.main.OnSearch(vim.vi.FindEnter, false, false)
-}
 
 // HanldeKey implements vim_mode_handle.
 func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
@@ -347,7 +339,7 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	vim := v.vi
 	if !cmd.input.HasFocus() {
 		if event.Rune() == 'n' {
-			cmd.main.OnSearch(vim.vi.FindEnter, false, false)
+			cmd.main.OnSearch(search_option{vim.vi.FindEnter, false, false, false})
 			return true
 		}
 		return false
@@ -356,7 +348,7 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	if shouldReturn {
 		txt := cmd.input.GetText()
 		if len(txt) > 0 {
-			cmd.main.OnSearch(txt, false, false)
+			cmd.main.OnSearch(search_option{txt, false, false, false})
 		} else {
 			v.vi.EnterEscape()
 		}
@@ -372,14 +364,14 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	} else if event.Key() == tcell.KeyEnter {
 		vim.vi.FindEnter = txt
 		history.add_search_txt(txt)
-		cmd.main.OnSearch(txt, false, false)
+		cmd.main.OnSearch(search_option{txt, false, false, false})
 		return true
 	}
 	if prev != nil {
 		txt := prev.cmdline()
 		if prev.Find {
 			cmd.input.SetText(txt)
-			cmd.main.OnSearch(txt, false, false)
+			cmd.main.OnSearch(search_option{txt, false, false, false})
 		} else {
 			cmd.Vim.EnterCommand()
 		}
@@ -387,14 +379,14 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	} else {
 		if len(vim.vi.FindEnter) > 0 {
 			if event.Rune() == 'n' {
-				cmd.main.OnSearch(vim.vi.FindEnter, false, false)
+				cmd.main.OnSearch(search_option{vim.vi.FindEnter, false, false, false})
 				return true
 			}
 		}
 		txt = txt + string(event.Rune())
 		cmd.input.SetText(txt)
 		history.add_search_txt(txt)
-		cmd.main.OnSearch(txt, false, false)
+		cmd.main.OnSearch(search_option{txt, false, false,false})
 		return true
 	}
 }

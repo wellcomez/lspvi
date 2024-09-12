@@ -4,9 +4,13 @@ import (
 	"fmt"
 )
 
+type SearchPos struct {
+	X, Y int
+}
+
 // GenericSearch struct
 type GenericSearch struct {
-	indexList    []int
+	indexList    []SearchPos
 	view         view_id
 	key          string
 	currentIndex int
@@ -15,7 +19,7 @@ type GenericSearch struct {
 // NewGenericSearch is a constructor function for GenericSearch
 func NewGenericSearch(view view_id, key string) *GenericSearch {
 	return &GenericSearch{
-		indexList:    make([]int, 0),
+		indexList:    make([]SearchPos, 0),
 		view:         view,
 		key:          key,
 		currentIndex: 0,
@@ -31,9 +35,9 @@ func (g GenericSearch) Changed(view view_id, key string) bool {
 	}
 	return false
 }
-func (gs *GenericSearch) GetPrev() int {
+func (gs *GenericSearch) GetPrev() SearchPos{
 	if len(gs.indexList) == 0 {
-		return -1
+		return SearchPos{-1,-1}
 	}
 	gs.currentIndex = gs.currentIndex - 1 + len(gs.indexList)
 	gs.currentIndex %= len(gs.indexList)
@@ -41,9 +45,9 @@ func (gs *GenericSearch) GetPrev() int {
 }
 
 // GetNext returns the next index in the indexList
-func (gs *GenericSearch) GetNext() int {
+func (gs *GenericSearch) GetNext() SearchPos{
 	if len(gs.indexList) == 0 {
-		return -1
+		return SearchPos{-1,-1}
 	}
 	gs.currentIndex++
 	gs.currentIndex %= len(gs.indexList)
@@ -51,15 +55,15 @@ func (gs *GenericSearch) GetNext() int {
 }
 
 // GetIndex returns the current index in the indexList
-func (gs *GenericSearch) GetIndex() int {
+func (gs *GenericSearch) GetIndex() SearchPos{
 	if len(gs.indexList) == 0 {
-		return -1
+		return SearchPos{-1,-1}
 	}
 	return gs.indexList[gs.currentIndex]
 }
 
 // Add adds an index to the indexList
-func (gs *GenericSearch) Add(index int) {
+func (gs *GenericSearch) Add(index SearchPos) {
 	gs.indexList = append(gs.indexList, index)
 }
 

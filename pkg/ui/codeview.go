@@ -146,13 +146,15 @@ func (code CodeContextMenu) menuitem() []context_menu_item {
 	return code.code.rightmenu_items
 }
 
-// type text_right_menu struct {
-// 	*contextmenu
-// 	select_range lsp.Range
-// 	text         string
-// }
-
+//	type text_right_menu struct {
+//		*contextmenu
+//		select_range lsp.Range
+//		text         string
+//	}
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
+	return code.OnFindInfileWordOption(fzf, noloop, false)
+}
+func (code *CodeView) OnFindInfileWordOption(fzf bool, noloop bool, whole bool) string {
 	if code.main == nil {
 		return ""
 	}
@@ -171,39 +173,58 @@ func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
 		}
 	}
 	code.main.prefocused = view_code
-	code.main.OnSearch(word, fzf, noloop)
+	code.main.OnSearch(search_option{word, fzf, noloop, whole})
 	return word
 }
 
-func (code *CodeView) OnSearch(txt string) []int {
-	var ret []int
+func (code *CodeView) OnSearch(txt string, whole bool) []SearchPos {
+	var ret []SearchPos
 	var lino = 0
 	txt = strings.ToLower(txt)
 	Buf := code.view.Buf
 	for ; lino < Buf.LinesNum(); lino++ {
 		s := Buf.Line(lino)
 		s = strings.ToLower(s)
-		index := strings.Index(s, txt)
-		if index >= 0 {
-			ret = append(ret, lino)
-		}
-	}
-	if code.view.HasFocus() {
-		Y := code.view.Cursor.Loc.Y
-		closeI := 0
-		for i := 0; i < len(ret); i++ {
-			if femto.Abs(ret[i]-Y) < femto.Abs(ret[closeI]-Y) {
-				closeI = i
+		offset := 0
+		for len(s) > 0 {
+			index := strings.Index(s, txt)
+			if index >= 0 {
+				add := true
+				if whole {
+					if index-1 >= 0 {
+						if femto.IsWordChar(string(s[index-1])) {
+							add = false
+						}
+					}
+					if add && index+1 < len(s)-1 {
+						if femto.IsWordChar(string(s[index+len(txt)])) {
+							add = false
+						}
+					}
+				}
+				if add {
+					ret = append(ret, SearchPos{offset + index, lino})
+				}
+			} else {
+				break
 			}
+			offset = offset + index + len(txt)
+			s = s[index+len(txt):]
 		}
-		ret2 := ret[closeI:]
-		ret1 := ret[0:closeI]
-		return append(ret2, ret1...)
 	}
-	return ret
-	// codeview.view.Buf.LineArray
-	// for _, v := range  {
+	// if code.view.HasFocus() {
+	// 	Y := code.view.Cursor.Loc.Y
+	// 	closeI := 0
+	// 	for i := 0; i < len(ret); i++ {
+	// 		if femto.Abs(ret[i]-Y) < femto.Abs(ret[closeI]-Y) {
+	// 			closeI = i
+	// 		}
+	// 	}
+	// 	ret2 := ret[closeI:]
+	// 	ret1 := ret[0:closeI]
+	// 	return append(ret2, ret1...)
 	// }
+	return ret
 }
 func NewCodeView(main *mainui) *CodeView {
 	// view := tview.NewTextView()
@@ -287,13 +308,13 @@ func update_selection_menu(ret *CodeView) {
 		}},
 		{item: create_menu_item("Search Selection"), handle: func() {
 			sss := menudata.previous_selection
-			main.OnSearch(sss.selected_text, true, true)
+			main.OnSearch(search_option{sss.selected_text, true, true, false})
 			main.ActiveTab(view_quickview, false)
 		}, hide: menudata.previous_selection.emtry()},
 		{item: create_menu_item("Search"), handle: func() {
 			sss := menudata.select_text
 			menudata.SelectInEditor(ret.view.Cursor)
-			main.OnSearch(sss, true, true)
+			main.OnSearch(search_option{sss, true, true, false})
 			main.ActiveTab(view_quickview, false)
 		}, hide: len(menudata.select_text) == 0},
 		{item: create_menu_item("Grep word"), handle: func() {
@@ -1180,7 +1201,19 @@ func (code *CodeView) Remvoebookmark() {
 	code.view.addbookmark(false, "")
 	code.main.bookmark.save()
 }
+func is_lsppos_ok(pos lsp.Position) bool {
+	if pos.Line < 0 {
+		return false
+	}
+	if pos.Character < 0 {
+		return false
+	}
+	return true
+}
 func (code *CodeView) goto_loation(loc lsp.Range) {
+	if !is_lsppos_ok(loc.Start) || !is_lsppos_ok(loc.End) {
+		return
+	}
 	x := 0
 	loc.Start.Line = min(code.view.Buf.LinesNum(), loc.Start.Line)
 	loc.End.Line = min(code.view.Buf.LinesNum(), loc.End.Line)
@@ -1249,21 +1282,6 @@ func (code *CodeView) gotoline(line int) {
 	})
 	Cur.Loc = Cur.CurSelection[0]
 	code.update_with_line_changed()
-
-	log.Println("loc", code.view.Cursor.Loc, code.view.Cursor.GetSelection())
-	// codeview.view.Cursor.CurSelection[0] = femto.Loc{
-	// 	X: 0,
-	// 	Y: line,
-	// }
-	// codeview.view.Cursor.CurSelection[0] = femto.Loc{
-	// 	X: RightX,
-	// 	Y: line,
-	// }
-	// root := codeview.view
-	// root.Cursor.Loc = femto.Loc{X: 0, Y: line}
-	// root.Cursor.SetSelectionStart(femto.Loc{X: 0, Y: line})
-	// text := root.Buf.Line(line)
-	// root.Cursor.SetSelectionEnd(femto.Loc{X: len(text), Y: line})
 }
 
 func (code *CodeView) change_topline_with_previousline(line int) {

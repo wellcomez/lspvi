@@ -242,7 +242,7 @@ func (wk symbolpicker) Updatequeryold(query string) {
 	wk.impl.gs = NewGenericSearch(view_outline_list, query)
 	ret := wk.impl.symview.OnSearch(query)
 	if len(ret) > 0 {
-		wk.impl.symview.movetonode(ret[0])
+		wk.impl.symview.movetonode(ret[0].Y)
 	}
 }
 func (wk symbolpicker) UpdateQuery(query string) {

@@ -921,7 +921,19 @@ func (main *mainui) Close() {
 	main.lspmgr.Close()
 	main.app.Stop()
 }
-func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
+
+type search_option struct {
+	txt    string
+	tofzf  bool
+	noloop bool
+	whole  bool
+}
+
+func (main *mainui) OnSearch(option search_option) {
+	txt := option.txt
+	tofzf := option.tofzf
+	noloop := option.noloop
+	whole := option.whole
 	if len(txt) == 0 {
 		prev := main.prefocused
 		switch prev {
@@ -949,8 +961,9 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 	prev := main.prefocused
 	if prev == view_code {
 		if changed {
-			gs.indexList = main.codeview.OnSearch(txt)
-			main.codeview.gotoline(gs.GetIndex())
+			gs.indexList = main.codeview.OnSearch(txt, whole)
+			pos := gs.GetIndex()
+			main.codeview.goto_loation(convert_search_pos_lsprange(pos,gs))
 			if tofzf {
 				locs := main.convert_to_fzfsearch(gs)
 				main.ActiveTab(view_quickview, false)
@@ -963,7 +976,8 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 				main.quickview.main.quickview.UpdateListView(data_search, data, lspcore.SymolSearchKey{Key: txt})
 			}
 		} else {
-			main.codeview.gotoline(gs.GetNext())
+			pos := gs.GetNext()
+			main.codeview.goto_loation(convert_search_pos_lsprange(pos, gs))
 		}
 		main.page.SetTitle(gs.String())
 	} else if prev == view_bookmark {
@@ -975,32 +989,38 @@ func (main *mainui) OnSearch(txt string, tofzf bool, noloop bool) {
 	} else if prev == view_outline_list {
 		if changed {
 			gs.indexList = main.symboltree.OnSearch(txt)
-			main.symboltree.movetonode(gs.GetIndex())
+			main.symboltree.movetonode(gs.GetIndex().Y)
 		} else {
-			main.symboltree.movetonode(gs.GetNext())
+			main.symboltree.movetonode(gs.GetNext().Y)
 		}
 	}
 }
 
 func (main *mainui) convert_to_fzfsearch(gs *GenericSearch) []lsp.Location {
 	var locs []lsp.Location
-	for _, linno := range gs.indexList {
+	for _, loc := range gs.indexList {
+		x := convert_search_pos_lsprange(loc, gs)
 		loc := lsp.Location{
 			URI: lsp.NewDocumentURI(main.codeview.filename),
-			Range: lsp.Range{
-				Start: lsp.Position{
-					Line:      linno,
-					Character: 0,
-				},
-				End: lsp.Position{
-					Line:      linno,
-					Character: 0,
-				},
-			},
+			Range: x,
 		}
 		locs = append(locs, loc)
 	}
 	return locs
+}
+
+func convert_search_pos_lsprange(loc SearchPos, gs *GenericSearch) lsp.Range {
+	x := lsp.Range{
+		Start: lsp.Position{
+			Line:      loc.Y,
+			Character: loc.X,
+		},
+		End: lsp.Position{
+			Line:      loc.Y,
+			Character: loc.X + len(gs.key),
+		},
+	}
+	return x
 }
 
 var leadkey = ' '
