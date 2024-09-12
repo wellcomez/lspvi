@@ -1179,9 +1179,13 @@ func (code *CodeView) change_theme() {
 			code.bgcolor = bg
 		}
 		log.Println(colorscheme)
-		code.view.SetColorscheme(colorscheme, func() {
+		code.view.SetColorscheme(colorscheme, func(ts *lspcore.TreeSitter) {
 			if code.main == nil {
 				return
+			} else {
+				code.main.symboltree.update(&lspcore.Symbol_file{
+					Class_object: ts.Outline,
+				})
 			}
 			code.main.app.Draw()
 		})

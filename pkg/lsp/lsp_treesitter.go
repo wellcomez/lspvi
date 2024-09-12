@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	// "strings"
@@ -45,7 +46,8 @@ type TreeSitter struct {
 	sourceCode []byte
 	// Symbols     []TreeSitterSymbol
 	HlLine  t_symbol_line
-	Outline []lsp.SymbolInformation
+	Outline []*Symbol
+	tsdef   ts_lang_def
 }
 
 func TreesitterCheckIsSourceFile(filename string) bool {
@@ -67,6 +69,7 @@ type ts_lang_def struct {
 	filedetect lsplang
 	tslang     *sitter.Language
 	def_ext    []string
+	cb         func(*TreeSitter)
 }
 
 func (ts ts_lang_def) new_treesitter(name string) *TreeSitter {
@@ -85,9 +88,13 @@ func TsPtn(
 		filedetect,
 		tslang,
 		[]string{},
+		nil,
 	}
 }
-
+func (s ts_lang_def) setcb(cb func(*TreeSitter)) ts_lang_def {
+	s.cb = cb
+	return s
+}
 func (s ts_lang_def) set_ext(file []string) ts_lang_def {
 	s.def_ext = append(s.def_ext, file...)
 	return s
@@ -137,6 +144,34 @@ func (l lsp_dummy) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 func (l lsp_dummy) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {
 	panic("unimplemented")
 }
+func markdown_parser(ts *TreeSitter) {
+	const head = "markup.heading"
+	for _, line := range ts.HlLine {
+		for _, s := range line {
+			if strings.Index(s.SymobName, head) == 0 {
+				ss := lsp.SymbolInformation{
+					Name: s.Code,
+					Kind: lsp.SymbolKindEnumMember,
+					Location: lsp.Location{
+						URI: lsp.NewDocumentURI(ts.filename),
+						Range: lsp.Range{
+							Start: lsp.Position{Line: int(s.Begin.Row), Character: int(s.Begin.Column)},
+							End:   lsp.Position{Line: int(s.End.Row), Character: int(s.End.Column)},
+						},
+					},
+				}
+				aa := Symbol{
+					SymInfo:   ss,
+					classname: s.Code,
+				}
+				ts.Outline = append(ts.Outline, &aa)
+			}
+		}
+	}
+	 sort.Slice(ts.Outline, func(i, j int) bool {
+		return ts.Outline[i].SymInfo.Location.Range.Start.Line < ts.Outline[j].SymInfo.Location.Range.Start.Line
+	})
+}
 
 var tree_sitter_lang_map = []ts_lang_def{
 	TsPtn("go", lsp_lang_go{}, ts_go.GetLanguage()),
@@ -146,13 +181,14 @@ var tree_sitter_lang_map = []ts_lang_def{
 	TsPtn(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
 	TsPtn(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}),
 	TsPtn(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}),
-	TsPtn(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()),
+	TsPtn(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setcb(markdown_parser),
 }
 
-func (t *TreeSitter) Init(cb func()) error {
+func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	for _, v := range tree_sitter_lang_map {
 		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 {
 			t.tsname = ts_name
+			t.tsdef = v
 			t.Loadfile(v.tslang, cb)
 			return nil
 		}
@@ -305,7 +341,7 @@ func NewTreeSitter(name string) *TreeSitter {
 
 const query_highlights = "highlights"
 
-func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func()) error {
+func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) error {
 	if err := ts._load_file(lang); err != nil {
 		log.Println("fail to load treesitter", err)
 		return err
@@ -320,11 +356,14 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func()) error {
 		if local_err != nil {
 			log.Println("fail to load locals", local_err)
 		} else {
-			symbols := get_ts_symbol(ret, ts)
-			ts.Outline = symbols
+			// symbols := get_ts_symbol(ret, ts)
+			// ts.Outline = symbols
+		}
+		if ts.tsdef.cb != nil {
+			ts.tsdef.cb(ts)
 		}
 		if cb != nil {
-			cb()
+			cb(ts)
 		}
 	}()
 	return nil
