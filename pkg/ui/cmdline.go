@@ -244,6 +244,7 @@ func (v command_history_record) cmdline() string {
 }
 func (v *command_history) add(item command_history_record) {
 	v.data = append(v.data, item)
+	v.index = len(v.data) - 1
 	buf, err := json.Marshal(v.data)
 	if err == nil {
 		err = os.WriteFile(v.filepath, buf, 0644)
@@ -256,20 +257,15 @@ func (v *command_history) prev() *command_history_record {
 	if len(v.data) == 0 {
 		return nil
 	}
-	v.index--
-	if v.index < 0 {
-		v.index = len(v.data) - 1
-	}
+	v.index = (v.index + len(v.data) - 1) % len(v.data)
 	return &v.data[v.index]
 }
 func (v *command_history) next() *command_history_record {
 	if len(v.data) == 0 {
 		return nil
 	}
-	v.index++
-	if v.index >= len(v.data) {
-		v.index = 0
-	}
+	v.index = (v.index + 1) % len(v.data)
+
 	return &v.data[v.index]
 }
 func (v *command_history) init() {
@@ -300,7 +296,7 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	if prev != nil {
 		cmd.input.SetText(prev.cmdline())
 		if prev.Find {
-			v.vi.EnterFind()
+			v.vi._enter_find_mode()
 		}
 		return true
 	}
@@ -698,6 +694,10 @@ func (v *Vim) _enter_find_mode() {
 }
 
 func (v *Vim) update_find_label() {
+	if v.app.searchcontext == nil {
+		v.app.cmdline.input.SetLabel("/")
+		return
+	}
 	if v.app.searchcontext.next_or_prev {
 		v.app.cmdline.input.SetLabel("/")
 	} else {
