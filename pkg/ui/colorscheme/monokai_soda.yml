@@ -1,7 +1,7 @@
 Data:
  - Group: "Comment"
-   foreground: "#72696a"
    italic: true
+   foreground: "#72696a"
 
  - Group: "Constant"
    foreground: "#78dce8"
@@ -10,12 +10,12 @@ Data:
    foreground: "#dfd561"
 
  - Group: "Function"
-   foreground: "#97e023"
    italic: true
+   foreground: "#97e023"
 
  - Group: "Keyword"
-   foreground: "#f3005f"
    italic: true
+   foreground: "#f3005f"
 
  - Group: "Type"
    foreground: "#78dce8"
@@ -36,8 +36,8 @@ Data:
    foreground: "#f6f6ec"
 
  - Group: "Function"
-   foreground: "#97e023"
    italic: true
+   foreground: "#97e023"
 
  - Group: "Statement"
    foreground: "#f3005f"
@@ -55,8 +55,8 @@ Data:
    foreground: "#f3005f"
 
  - Group: "Keyword"
-   foreground: "#f3005f"
    italic: true
+   foreground: "#f3005f"
 
  - Group: "Exception"
    foreground: "#f3005f"
@@ -65,8 +65,8 @@ Data:
    foreground: "#97e023"
 
  - Group: "Include"
-   foreground: "#78dce8"
    italic: true
+   foreground: "#78dce8"
 
  - Group: "Define"
    foreground: "#f3005f"
@@ -102,8 +102,8 @@ Data:
    foreground: "#f6f6ec"
 
  - Group: "SpecialComment"
-   foreground: "#72696a"
    italic: true
+   foreground: "#72696a"
 
  - Group: "Debug"
    foreground: "#fa8419"
@@ -136,12 +136,12 @@ Data:
    background: "#333842"
 
  - Group: "StatusLine"
-   foreground: "#b1b1b1"
    background: "#2e323c"
+   foreground: "#b1b1b1"
 
  - Group: "Normal"
-   foreground: "#f6f6ec"
    background: "#26292c"
+   foreground: "#f6f6ec"
 
  - Group: "DiagnosticError"
    foreground: "#ffc0b9"
@@ -183,42 +183,42 @@ Data:
    foreground: "#f6f6ec"
 
  - Group: "@function"
-   foreground: "#97e023"
    italic: true
+   foreground: "#97e023"
 
  - Group: "@function.method"
-   foreground: "#97e023"
    italic: true
+   foreground: "#97e023"
 
  - Group: "@function.call"
    foreground: "#f6f6ec"
 
  - Group: "@keyword"
-   foreground: "#f3005f"
    italic: true
+   foreground: "#f3005f"
 
  - Group: "@keyword.type"
-   foreground: "#f3005f"
    italic: true
+   foreground: "#f3005f"
 
  - Group: "@keyword.Conditional"
-   foreground: "#f3005f"
    italic: true
+   foreground: "#f3005f"
 
  - Group: "@keyword.function"
-   foreground: "#78dce8"
    italic: true
+   foreground: "#78dce8"
 
  - Group: "@keyword.return"
    foreground: "#f3005f"
 
  - Group: "@keyword.modifier"
-   foreground: "#f3005f"
    italic: true
+   foreground: "#f3005f"
 
  - Group: "@keyword.import"
-   foreground: "#f3005f"
    italic: true
+   foreground: "#f3005f"
 
  - Group: "@module"
    foreground: "#78dce8"
@@ -245,8 +245,8 @@ Data:
    foreground: "#9c64fe"
 
  - Group: "@Comment"
-   foreground: "#72696a"
    italic: true
+   foreground: "#72696a"
 
  - Group: "@Constant"
    foreground: "#78dce8"

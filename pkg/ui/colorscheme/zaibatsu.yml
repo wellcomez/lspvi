@@ -108,9 +108,9 @@ Data:
    foreground: "#878092"
 
  - Group: "Error"
+   foreground: "#d70000"
    reverse: true
    background: "#ffffff"
-   foreground: "#d70000"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -128,16 +128,16 @@ Data:
    background: "#362b49"
 
  - Group: "Visual"
-   foreground: "#e0024"
    background: "#5fd7ff"
+   foreground: "#e0024"
 
  - Group: "StatusLine"
-   foreground: "#e0024"
    background: "#ffffff"
+   foreground: "#e0024"
 
  - Group: "Normal"
-   foreground: "#ffffff"
    background: "#e0024"
+   foreground: "#ffffff"
 
  - Group: "DiagnosticError"
    foreground: "#ff0000"
@@ -152,31 +152,31 @@ Data:
    foreground: "#d3d3d3"
 
  - Group: "DiffAdd"
+   foreground: "#87ff00"
    reverse: true
    background: "#362b49"
-   foreground: "#87ff00"
 
  - Group: "DiffChange"
+   foreground: "#afafff"
    reverse: true
    background: "#362b49"
-   foreground: "#afafff"
 
  - Group: "DiffDelete"
+   foreground: "#ff5faf"
    reverse: true
    background: "#362b49"
-   foreground: "#ff5faf"
 
  - Group: "LspReferenceText"
-   foreground: "#e0024"
    background: "#5fd7ff"
+   foreground: "#e0024"
 
  - Group: "LspReferenceRead"
-   foreground: "#e0024"
    background: "#5fd7ff"
+   foreground: "#e0024"
 
  - Group: "LspReferenceWrite"
-   foreground: "#e0024"
    background: "#5fd7ff"
+   foreground: "#e0024"
 
  - Group: "@variable"
    foreground: "#87ffff"

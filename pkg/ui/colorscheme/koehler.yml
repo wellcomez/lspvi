@@ -115,18 +115,18 @@ Data:
    foreground: "#ffa500"
 
  - Group: "Underlined"
-   bold: true
-   foreground: "#add8e6"
    underline: true
+   foreground: "#add8e6"
+   bold: true
 
  - Group: "Ignore"
-   foreground: "#0"
    background: "#0"
+   foreground: "#0"
 
  - Group: "Error"
+   foreground: "#cd0000"
    reverse: true
    background: "#ffffff"
-   foreground: "#cd0000"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -148,13 +148,13 @@ Data:
    background: "#666666"
 
  - Group: "StatusLine"
+   foreground: "#ff"
    bold: true
    background: "#ffffff"
-   foreground: "#ff"
 
  - Group: "Normal"
-   foreground: "#ffffff"
    background: "#0"
+   foreground: "#ffffff"
 
  - Group: "DiagnosticError"
    foreground: "#ff0000"
@@ -169,16 +169,16 @@ Data:
    foreground: "#d3d3d3"
 
  - Group: "DiffAdd"
-   foreground: "#ffffff"
    background: "#5f875f"
+   foreground: "#ffffff"
 
  - Group: "DiffChange"
-   foreground: "#ffffff"
    background: "#5f87af"
+   foreground: "#ffffff"
 
  - Group: "DiffDelete"
-   foreground: "#ffffff"
    background: "#af5faf"
+   foreground: "#ffffff"
 
  - Group: "LspReferenceText"
    reverse: true

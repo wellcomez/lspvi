@@ -1,0 +1,249 @@
+Data:
+ - Group: "Comment"
+   foreground: "#5f5a60"
+
+ - Group: "Constant"
+   foreground: "#cda869"
+
+ - Group: "String"
+   foreground: "#8f9d6a"
+
+ - Group: "Function"
+   foreground: "#7587a6"
+
+ - Group: "Keyword"
+   foreground: "#9b859d"
+
+ - Group: "Type"
+   foreground: "#f9ee98"
+
+ - Group: "Character"
+   foreground: "#cf6a4c"
+
+ - Group: "Number"
+   foreground: "#cda869"
+
+ - Group: "Boolean"
+   foreground: "#cda869"
+
+ - Group: "Float"
+   foreground: "#cda869"
+
+ - Group: "Identifier"
+   foreground: "#cf6a4c"
+
+ - Group: "Function"
+   foreground: "#7587a6"
+
+ - Group: "Statement"
+   foreground: "#cf6a4c"
+
+ - Group: "Conditional"
+   foreground: "#9b859d"
+
+ - Group: "Repeat"
+   foreground: "#f9ee98"
+
+ - Group: "Label"
+   foreground: "#f9ee98"
+
+ - Group: "Operator"
+   foreground: "#9b859d"
+
+ - Group: "Keyword"
+   foreground: "#9b859d"
+
+ - Group: "Exception"
+   foreground: "#cf6a4c"
+
+ - Group: "PreProc"
+   foreground: "#f9ee98"
+
+ - Group: "Include"
+   foreground: "#7587a6"
+
+ - Group: "Define"
+   foreground: "#9b859d"
+
+ - Group: "Macro"
+   foreground: "#cf6a4c"
+
+ - Group: "PreCondit"
+   foreground: "#f9ee98"
+
+ - Group: "Type"
+   foreground: "#f9ee98"
+
+ - Group: "StorageClass"
+   foreground: "#f9ee98"
+
+ - Group: "Structure"
+   foreground: "#9b859d"
+
+ - Group: "Typedef"
+   foreground: "#f9ee98"
+
+ - Group: "Special"
+   foreground: "#afc4db"
+
+ - Group: "SpecialChar"
+   foreground: "#9b703f"
+
+ - Group: "Tag"
+   foreground: "#f9ee98"
+
+ - Group: "Delimiter"
+   foreground: "#9b703f"
+
+ - Group: "SpecialComment"
+   foreground: "#afc4db"
+
+ - Group: "Debug"
+   foreground: "#cf6a4c"
+
+ - Group: "Underlined"
+   foreground: "#cf6a4c"
+
+ - Group: "Ignore"
+   background: "#1e1e1e"
+   foreground: "#a7a7a7"
+
+ - Group: "Error"
+   background: "#1e1e1e"
+   foreground: "#cf6a4c"
+
+ - Group: "Added"
+   foreground: "#b3f6c0"
+
+ - Group: "Changed"
+   foreground: "#8cf8f7"
+
+ - Group: "Removed"
+   foreground: "#ffc0b9"
+
+ - Group: "CursorLine"
+   background: "#323537"
+
+ - Group: "CursorColumn"
+   background: "#323537"
+
+ - Group: "Visual"
+   background: "#464b50"
+
+ - Group: "StatusLine"
+   background: "#464b50"
+   foreground: "#a7a7a7"
+
+ - Group: "Normal"
+   background: "#1e1e1e"
+   foreground: "#a7a7a7"
+
+ - Group: "DiagnosticError"
+   foreground: "#cf6a4c"
+
+ - Group: "DiagnosticWarn"
+   foreground: "#9b859d"
+
+ - Group: "DiagnosticInfo"
+   foreground: "#7587a6"
+
+ - Group: "DiagnosticHint"
+   foreground: "#afc4db"
+
+ - Group: "DiffAdd"
+   background: "#1e1e1e"
+   foreground: "#8f9d6a"
+
+ - Group: "DiffChange"
+   background: "#1e1e1e"
+   foreground: "#5f5a60"
+
+ - Group: "DiffDelete"
+   background: "#1e1e1e"
+   foreground: "#cf6a4c"
+
+ - Group: "LspReferenceText"
+   underline: true
+   special: 8618372
+
+ - Group: "LspReferenceRead"
+   underline: true
+   special: 8618372
+
+ - Group: "LspReferenceWrite"
+   underline: true
+   special: 8618372
+
+ - Group: "@variable"
+   foreground: "#cf6a4c"
+
+ - Group: "@variable.member"
+   foreground: "#a7a7a7"
+
+ - Group: "@variable.parameter"
+   foreground: "#a7a7a7"
+
+ - Group: "@function"
+   foreground: "#7587a6"
+
+ - Group: "@function.method"
+   foreground: "#7587a6"
+
+ - Group: "@function.call"
+   foreground: "#7587a6"
+
+ - Group: "@keyword"
+   foreground: "#9b859d"
+
+ - Group: "@keyword.type"
+   foreground: "#9b859d"
+
+ - Group: "@keyword.Conditional"
+   foreground: "#9b859d"
+
+ - Group: "@keyword.function"
+   foreground: "#9b859d"
+
+ - Group: "@keyword.return"
+   foreground: "#9b859d"
+
+ - Group: "@keyword.modifier"
+   foreground: "#9b859d"
+
+ - Group: "@keyword.import"
+   foreground: "#7587a6"
+
+ - Group: "@module"
+   foreground: "#cf6a4c"
+
+ - Group: "@String"
+   foreground: "#8f9d6a"
+
+ - Group: "@type"
+   foreground: "#f9ee98"
+
+ - Group: "@type.definition"
+   foreground: "#f9ee98"
+
+ - Group: "@type.class"
+   foreground: "#f9ee98"
+
+ - Group: "@property"
+   foreground: "#a7a7a7"
+
+ - Group: "@Operator"
+   foreground: "#a7a7a7"
+
+ - Group: "@Boolean"
+   foreground: "#cda869"
+
+ - Group: "@Comment"
+   italic: true
+   foreground: "#5f5a60"
+
+ - Group: "@Constant"
+   foreground: "#cda869"
+
+ - Group: "@Constant.builtin"
+   foreground: "#cda869"
+

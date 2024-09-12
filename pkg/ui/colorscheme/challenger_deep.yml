@@ -102,16 +102,16 @@ Data:
    foreground: "#aaffe4"
 
  - Group: "Underlined"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "Ignore"
    foreground: "#1e1c31"
 
  - Group: "Error"
-   background: "#100e23"
    foreground: "#ff5458"
    bold: true
+   background: "#100e23"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -135,8 +135,8 @@ Data:
    background: "#565575"
 
  - Group: "Normal"
-   foreground: "#cbe3e7"
    background: "#1e1c31"
+   foreground: "#cbe3e7"
 
  - Group: "DiagnosticError"
    foreground: "#ffc0b9"

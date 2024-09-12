@@ -112,12 +112,12 @@ Data:
    underline: true
 
  - Group: "Ignore"
-   foreground: "#e0e2ea"
    background: "#14161b"
+   foreground: "#e0e2ea"
 
  - Group: "Error"
-   foreground: "#eef1f8"
    background: "#590008"
+   foreground: "#eef1f8"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -138,12 +138,12 @@ Data:
    background: "#4f5258"
 
  - Group: "StatusLine"
-   foreground: "#2c2e33"
    background: "#c4c6cd"
+   foreground: "#2c2e33"
 
  - Group: "Normal"
-   foreground: "#e0e2ea"
    background: "#14161b"
+   foreground: "#e0e2ea"
 
  - Group: "DiagnosticError"
    foreground: "#ffc0b9"
@@ -158,12 +158,12 @@ Data:
    foreground: "#a6dbff"
 
  - Group: "DiffAdd"
-   foreground: "#eef1f8"
    background: "#5523"
+   foreground: "#eef1f8"
 
  - Group: "DiffChange"
-   foreground: "#eef1f8"
    background: "#4f5258"
+   foreground: "#eef1f8"
 
  - Group: "DiffDelete"
    bold: true
