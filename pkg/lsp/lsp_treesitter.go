@@ -149,11 +149,11 @@ var tree_sitter_lang_map = []ts_lang_def{
 	TsPtn(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()),
 }
 
-func (t *TreeSitter) Init() error {
+func (t *TreeSitter) Init(cb func()) error {
 	for _, v := range tree_sitter_lang_map {
 		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 {
 			t.tsname = ts_name
-			t.Loadfile(v.tslang)
+			t.Loadfile(v.tslang, cb)
 			return nil
 		}
 	}
@@ -305,7 +305,7 @@ func NewTreeSitter(name string) *TreeSitter {
 
 const query_highlights = "highlights"
 
-func (ts *TreeSitter) Loadfile(lang *sitter.Language) error {
+func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func()) error {
 	if err := ts._load_file(lang); err != nil {
 		log.Println("fail to load treesitter", err)
 		return err
@@ -322,6 +322,9 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language) error {
 		} else {
 			symbols := get_ts_symbol(ret, ts)
 			ts.Outline = symbols
+		}
+		if cb != nil {
+			cb()
 		}
 	}()
 	return nil
