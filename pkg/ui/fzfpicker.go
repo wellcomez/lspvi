@@ -235,7 +235,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 			mouseDownY:     -1,
 		},
 	}
-	new_filewalk(main.root)
+	// new_filewalk(main.root)
 	return ret
 }
 
