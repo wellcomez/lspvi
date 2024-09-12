@@ -38,6 +38,40 @@ var Event = ""
 var Operator = "󰆕"
 var TypeParameter = ""
 
+var icons = map[int]string{
+	1: "󰈙 ",  //-- File
+	2: " ",  // -- Module
+	3: "󰌗 ",  // -- Namespace
+	4: " ",  // -- Package
+	5: Class, //-- Class
+	//5:   "󰌗 ", //-- Class
+	6: "󰆧 ", //-- Method
+	//6:  Method,
+	7:  " ", //-- Property
+	8:  " ", //-- Field
+	9:  " ", //-- Constructor
+	10: "󰕘 ", //-- Enum
+	//11: "󰕘 ", //-- Interface
+	11: Interface,
+	12: "󰊕 ", //-- Function
+	13: "󰆧 ", //-- Variable
+	14: "󰏿 ", //-- Constant
+	15: "󰀬 ", //-- String
+	16: "󰎠 ", //-- Number
+	17: "◩ ", //-- Boolean
+	18: "󰅪 ", //-- Array
+	19: "󰅩 ", //-- Object
+	20: "󰌋 ", //-- Key
+	21: "󰟢 ", //-- Null
+	22: " ", //-- EnumMember
+	//23:  "󰌗 ", //-- Struct
+	23:  Struct, //-- Struct
+	24:  " ",   //-- Event
+	25:  "󰆕 ",   //-- Operator
+	26:  "󰊄 ",   //-- TypeParameter
+	255: "󰉨 ",   //-- Macro
+}
+
 type Symbol struct {
 	SymInfo   lsp.SymbolInformation
 	Members   []Symbol
@@ -111,34 +145,10 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 }
 
 func (s Symbol) Icon() string {
-	switch s.SymInfo.Kind {
-	case lsp.SymbolKindMethod:
-		return Method
-	case lsp.SymbolKindField:
-		return Field
-	case lsp.SymbolKindClass:
-		return Class
-	case lsp.SymbolKindFunction:
-		return Function
-	case lsp.SymbolKindConstructor:
-		return Constructor
-	case lsp.SymbolKindInterface:
-		return Interface
-	case lsp.SymbolKindVariable:
-		return Variable
-	case lsp.SymbolKindConstant:
-		return Constant
-	case lsp.SymbolKindEnum:
-		return Enum
-	case lsp.SymbolKindEnumMember:
-		return EnumMember
-	case lsp.SymbolKindOperator:
-		return Operator
-	case lsp.SymbolKindTypeParameter:
-		return TypeParameter
-	default:
-		return ""
+	if v, ok := icons[int(s.SymInfo.Kind)]; ok {
+		return v
 	}
+	return ""
 }
 
 func (sym Symbol) SymbolListStrint() string {
@@ -316,7 +326,7 @@ func (c LangConfig) is_cmd_ok() bool {
 
 func NewLspWk(wk WorkSpace) *LspWorkspace {
 	buf, lsp_config_err := os.ReadFile(wk.ConfigFile)
-	var lsp_config LspConfig 
+	var lsp_config LspConfig
 	if lsp_config_err == nil {
 		var config ConfigLspPart
 		yaml.Unmarshal(buf, &config)
