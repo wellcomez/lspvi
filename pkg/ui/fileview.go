@@ -269,6 +269,7 @@ func (view *file_tree_view) node_selected(node *tview.TreeNode) {
 		} else {
 			view.openfile(filename)
 		}
+		view.view.SetCurrentNode(node)
 	}
 }
 func (view *file_tree_view) dir_expand_children(node *tview.TreeNode, filename string) {

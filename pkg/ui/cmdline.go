@@ -361,12 +361,12 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	run := event.Rune()
 	if run == '/' && !cmd.main.searchcontext.next_or_prev {
 		cmd.main.searchcontext.next_or_prev = true
-		cmd.input.SetLabel("/")
+		v.vi.update_find_label()
 		return true
 	}
 	if run == '?' && cmd.main.searchcontext.next_or_prev {
 		cmd.main.searchcontext.next_or_prev = false
-		cmd.input.SetLabel("?")
+		v.vi.update_find_label()
 		return true
 	}
 	if x == tcell.KeyUp {
@@ -620,7 +620,7 @@ func (v *Vim) MoveFocus() {
 func (v *Vim) EnterGrep(txt string) {
 	v._enter_find_mode()
 	v.vi.FindEnter = txt
-	v.app.cmdline.input.SetLabel("/")
+	v.update_find_label()
 	v.app.cmdline.input.SetText(txt)
 }
 func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
@@ -644,9 +644,15 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 			return true, nil
 		}
 	}
-	if event.Rune() == '/' {
-		if v.EnterFind() {
-			return true, nil
+	if event.Rune() == '/' || event.Rune() == '?' {
+		if !v.vi.Find {
+			if v.app.searchcontext == nil {
+				v.app.searchcontext = NewGenericSearch(view_code, "")
+			}
+			v.app.searchcontext.next_or_prev = (event.Rune() == '/')
+			if v.EnterFind() {
+				return true, nil
+			}
 		}
 	}
 	if event.Key() == tcell.KeyEscape {
@@ -688,7 +694,15 @@ func (v *Vim) _enter_find_mode() {
 		vi:   v,
 	}
 	v.vi_handle = a
-	v.app.cmdline.input.SetLabel("/")
+	v.update_find_label()
+}
+
+func (v *Vim) update_find_label() {
+	if v.app.searchcontext.next_or_prev {
+		v.app.cmdline.input.SetLabel("/")
+	} else {
+		v.app.cmdline.input.SetLabel("?")
+	}
 }
 
 // EnterLead jj

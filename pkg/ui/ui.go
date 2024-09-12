@@ -949,9 +949,11 @@ func (main *mainui) OnSearch(option search_option) {
 	if main.searchcontext == nil {
 		main.searchcontext = NewGenericSearch(main.prefocused, txt)
 	} else {
+		prev:=main.searchcontext.next_or_prev
 		changed = main.searchcontext.Changed(main.prefocused, txt) || noloop
 		if changed {
 			main.searchcontext = NewGenericSearch(main.prefocused, txt)
+			main.searchcontext.next_or_prev = prev
 		}
 		if tofzf || !noloop {
 			main.cmdline.Vim.EnterGrep(txt)
