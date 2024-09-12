@@ -278,7 +278,7 @@ const key_goto_first_line = "gg"
 const key_goto_last_line = "G"
 
 const key_picker_history = "hh"
-const key_picker_color = ""
+const key_picker_color = "C"
 const key_picker_ctrlp = "f"
 const key_picker_document_symbol = "o"
 const key_picker_qfh = "hq"

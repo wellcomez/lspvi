@@ -2,7 +2,7 @@ module zen108.com/lspvi
 
 go 1.21.3
 
-replace zen108.com/lspsrv => ./pkg/lspr
+//replace zen108.com/lspsrv => ./pkg/lspr
 
 replace github.com/pgavlin/femto => ./pkg/femto
 
