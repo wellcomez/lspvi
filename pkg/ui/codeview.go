@@ -1211,7 +1211,8 @@ func is_lsppos_ok(pos lsp.Position) bool {
 	return true
 }
 func (code *CodeView) goto_loation(loc lsp.Range) {
-	if !is_lsppos_ok(loc.Start) || !is_lsppos_ok(loc.End) {
+	shouldReturn := is_lsprange_ok(loc)
+	if shouldReturn {
 		return
 	}
 	x := 0
@@ -1237,6 +1238,13 @@ func (code *CodeView) goto_loation(loc lsp.Range) {
 	Cur.SetSelectionEnd(end)
 	Cur.Loc = end
 	code.update_with_line_changed()
+}
+
+func is_lsprange_ok(loc lsp.Range) bool {
+	if !is_lsppos_ok(loc.Start) || !is_lsppos_ok(loc.End) {
+		return true
+	}
+	return false
 }
 func (code *CodeView) gotoline(line int) {
 	if line == -1 {
