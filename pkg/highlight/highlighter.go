@@ -244,6 +244,9 @@ func AddColoreTheme(colore []string) {
 	}
 }
 func (h *Highlighter) highlightEmptyRegion(highlights LineMatch, start int, canMatchEnd bool, lineNum int, line []byte, statesOnly bool) LineMatch {
+	if h.Def==nil{
+		return highlights
+	}
 	lineLen := utf8.RuneCount(line)
 	if lineLen == 0 {
 		if canMatchEnd {
