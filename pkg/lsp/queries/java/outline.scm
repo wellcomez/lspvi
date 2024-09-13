@@ -3,7 +3,9 @@
 
 (method_declaration
   name: (identifier) @name) @definition.method
-
+(field_declaration
+  declarator: (variable_declarator
+    name: (identifier) @variable.member))
 (method_invocation
   name: (identifier) @name
   arguments: (argument_list) @reference.call)

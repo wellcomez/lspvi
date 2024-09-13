@@ -270,7 +270,7 @@ func java_outline(ts *TreeSitter) {
 				code := item.Code
 				Range := item.lsprange()
 				switch item.SymbolName {
-				case "definition.method", "definition.class","definition.interface":
+				case "definition.method", "definition.class", "definition.interface":
 					{
 						code = item.PositionInfo()
 						c := ts_to_symbol(item, ts)
@@ -287,7 +287,7 @@ func java_outline(ts *TreeSitter) {
 							c.Kind = lsp.SymbolKindMethod
 						case "struct_specifier":
 							c.Kind = lsp.SymbolKindStruct
-						case "class_specifier","class_declaration":
+						case "class_specifier", "class_declaration":
 							c.Kind = lsp.SymbolKindClass
 						case "function_definition", "function_declaration", "function_item":
 							c.Kind = lsp.SymbolKindFunction
@@ -302,6 +302,13 @@ func java_outline(ts *TreeSitter) {
 							v.Name = tss.Code
 							return true
 						})
+					}
+				case "variable.member":
+					{
+						c := ts_to_symbol(item, ts)
+						c.Kind = lsp.SymbolKindField
+						c.Name = item.Code
+						items = append(items, &c)
 					}
 				}
 				log.Printf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
