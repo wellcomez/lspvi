@@ -2,6 +2,7 @@ package lspcore
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -227,6 +228,9 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 }
 
 func (task *CallInTask) run() error {
+	if task.lsp==nil{
+		return errors.New("lsp is nil")
+	}
 	c1, err := task.lsp.PrepareCallHierarchy(task.Loc)
 	if err != nil {
 		return err
