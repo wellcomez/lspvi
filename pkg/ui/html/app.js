@@ -143,7 +143,7 @@ const term_init = (app) => {
         fontSize: fontSize,
         // fontFamily: '"Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
         // fontFamily: 'Hack, "Fira Code", monospace',
-        fontFamily: 'Hack Nerd Font'
+        fontFamily: 'HackNerdFontMono,monospace'
 
         // minimumContrastRatio: 1,
     });
