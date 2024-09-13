@@ -656,8 +656,8 @@ func (code *CodeView) tab_loc(pos femto.Loc) femto.Loc {
 	if tabw > 0 {
 		pos.X = pos.X - tabw
 	}
+	pos.X = min(pos.X, len(root.Buf.Line(pos.Y))-1)
 	pos.X = max(0, pos.X)
-
 	return pos
 }
 
