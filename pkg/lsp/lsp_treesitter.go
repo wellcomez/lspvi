@@ -67,14 +67,15 @@ var ts_name_javascript = "javascript"
 var ts_name_tsx = "tsx"
 
 type ts_lang_def struct {
-	name       string
-	filedetect lsplang
-	tslang     *sitter.Language
-	def_ext    []string
-	parser     func(*TreeSitter)
-	hl         *sitter.Query
-	local      *sitter.Query
-	outline    *sitter.Query
+	name            string
+	filedetect      lsplang
+	tslang          *sitter.Language
+	def_ext         []string
+	parser          func(*TreeSitter)
+	hl              *sitter.Query
+	local           *sitter.Query
+	outline         *sitter.Query
+	default_outline bool
 }
 
 const query_highlights = "highlights"
@@ -96,6 +97,7 @@ func new_tsdef(
 		nil,
 		nil,
 		nil,
+		true,
 	}
 	go func() {
 		ret.load_scm()
@@ -148,6 +150,10 @@ func (t *ts_lang_def) query(queryname string) (*sitter.Query, error) {
 		return nil, err
 	}
 }
+func (s *ts_lang_def) set_default_outline() *ts_lang_def {
+	s.default_outline = true
+	return s
+}
 func (s *ts_lang_def) setparser(parser func(*TreeSitter)) *ts_lang_def {
 	s.parser = parser
 	return s
@@ -184,7 +190,7 @@ func (l lsp_dummy) InitializeLsp(core *lspcore, wk WorkSpace) error {
 
 // IsMe implements lsplang.
 func (l lsp_dummy) IsMe(filename string) bool {
-	return false 
+	return false
 }
 
 // IsSource implements lsplang.
@@ -282,10 +288,10 @@ func rs_outline(ts *TreeSitter) {
 							c.Kind = lsp.SymbolKindStruct
 						case "class_specifier":
 							c.Kind = lsp.SymbolKindClass
-						case "function_definition","function_declaration","function_item":
+						case "function_definition", "function_declaration", "function_item":
 							c.Kind = lsp.SymbolKindFunction
 						default:
-							log.Printf("query_result:%s| symbol:%20s    | code:%20s",item.SymbolName,item.Symbol,item.Code)
+							log.Printf("query_result:%s| symbol:%20s    | code:%20s", item.SymbolName, item.Symbol, item.Code)
 						}
 						items = append(items, &c)
 					}
@@ -293,7 +299,7 @@ func rs_outline(ts *TreeSitter) {
 					{
 						foreach_check(items, Range, &item, func(v *lsp.SymbolInformation, tss *TreeSitterSymbol) bool {
 							switch item.Symbol {
-							case "fn","func":
+							case "fn", "func":
 								{
 									v.Kind = lsp.SymbolKindFunction
 									return true
@@ -385,16 +391,19 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(rs_outline),
 	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(bash_parser),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
-	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(rs_outline),
+	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(rs_outline).set_default_outline(),
 	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}).setparser(rs_outline),
 	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()).setparser(rs_outline),
 	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()).setparser(rs_outline),
-	new_tsdef(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
+	new_tsdef(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}).setparser(rs_outline).set_default_outline(),
 	new_tsdef(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}).setparser(rs_outline),
 	new_tsdef(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}).setparser(rs_outline),
 	new_tsdef(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setparser(rs_outline),
 }
 
+func (t *TreeSitter) DefaultOutline() bool {
+	return t.tsdef.default_outline
+}
 func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	if t.tsdef != nil {
 		go func() {
@@ -406,7 +415,7 @@ func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	}
 	for i := range tree_sitter_lang_map {
 		v := tree_sitter_lang_map[i]
-		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0{
+		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 {
 			t.tsdef = v
 			t.Loadfile(v.tslang, cb)
 			return nil
