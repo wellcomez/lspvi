@@ -221,6 +221,7 @@ func bash_parser(ts *TreeSitter) {
 	if len(ts.Outline) > 0 {
 		return
 	}
+	Outline := []*Symbol{}
 	if ts.tsdef.local != nil {
 		lines, err := ts.query_buf(ts.tsdef.local)
 		if err != nil {
@@ -228,13 +229,14 @@ func bash_parser(ts *TreeSitter) {
 		}
 		ss := get_ts_symbol(lines, ts)
 		for _, v := range ss {
-			ts.Outline = append(ts.Outline, &Symbol{
+			Outline = append(Outline, &Symbol{
 				SymInfo:   v,
 				Members:   []Symbol{},
 				classname: "",
 			})
 		}
 	}
+	ts.Outline = Outline
 	sort.Slice(ts.Outline, func(i, j int) bool {
 		return ts.Outline[i].SymInfo.Location.Range.Start.Line < ts.Outline[j].SymInfo.Location.Range.Start.Line
 	})
@@ -420,46 +422,69 @@ func (ts *TreeSitter) callback_to_ui(cb func(*TreeSitter)) {
 func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 	prefix := "local.definition."
 	symbols := []lsp.SymbolInformation{}
-	for i := range ret {
-		v := ret[i]
-		for i := 0; i < len(v); i++ {
-			s := v[i]
+	scopes := []lsp.Range{}
+	for lineno := range ret {
+		line := ret[lineno]
+		for i := 0; i < len(line); i++ {
+			s := line[i]
 			if strings.Index(s.SymobName, prefix) == 0 {
 				symboltype := strings.Replace(s.SymobName, prefix, "", 1)
-				switch symboltype {
-				case "type":
-					{
-						log.Println("outline", s.Code, symboltype)
-					}
-				case "method", "function", "namespace":
-					{
-						kind := map[string]lsp.SymbolKind{
-							"method": lsp.SymbolKindMethod,
-							"function": lsp.SymbolKindFunction,
-						}
-						log.Println("outline", s.Code, symboltype)
-						s := lsp.SymbolInformation{
-							Name: s.Code,
-							Kind: kind[symboltype],
-							Location: lsp.Location{
-								URI: lsp.NewDocumentURI(ts.filename),
-								Range: lsp.Range{
-									Start: lsp.Position{Line: int(s.Begin.Row), Character: int(s.Begin.Column)},
-									End:   lsp.Position{Line: int(s.End.Row), Character: int(s.End.Column)},
-								},
-							},
-						}
-						symbols = append(symbols, s)
-					}
-				case "var":
-					continue
-				default:
-					log.Println("unhandled symbol type:", symboltype)
+				symbol_kind := map[string]lsp.SymbolKind{
+					"method":      lsp.SymbolKindMethod,
+					"function":    lsp.SymbolKindFunction,
+					"namespace":   lsp.SymbolKindNamespace,
+					"var":         lsp.SymbolKindVariable,
+					"constructor": lsp.SymbolKindConstructor,
+					"type.class":  lsp.SymbolKindClass,
 				}
+				if kind, ok := symbol_kind[symboltype]; ok {
+					Range := s.lsprange()
+
+					log.Println("outline", s.Code, symboltype)
+					add := true
+					switch kind {
+					case lsp.SymbolKindVariable:
+						{
+							for _, v := range scopes {
+								if Range.Start.AfterOrEq(v.Start) && Range.End.BeforeOrEq(v.End) {
+									add = false
+									break
+								}
+							}
+						}
+					}
+					if !add {
+						log.Println("unhandled skip symboltype:", symboltype)
+						continue
+					}
+
+					s := lsp.SymbolInformation{
+						Name: s.Code,
+						Kind: kind,
+						Location: lsp.Location{
+							URI:   lsp.NewDocumentURI(ts.filename),
+							Range: Range,
+						},
+					}
+					symbols = append(symbols, s)
+				} else {
+					log.Println("unhandled symboltype:", symboltype)
+				}
+			} else if s.SymobName == "local.scope" {
+				log.Println("unhandled symbol name:", s.SymobName, s.Code)
+				scopes = append(scopes, s.lsprange())
 			}
 		}
 	}
 	return symbols
+}
+
+func (s TreeSitterSymbol) lsprange() lsp.Range {
+	x := lsp.Range{
+		Start: lsp.Position{Line: int(s.Begin.Row), Character: int(s.Begin.Column)},
+		End:   lsp.Position{Line: int(s.End.Row), Character: int(s.End.Column)},
+	}
+	return x
 }
 
 func (ts *TreeSitter) _load_file(lang *sitter.Language) error {
