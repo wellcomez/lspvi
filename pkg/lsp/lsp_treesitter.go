@@ -38,7 +38,7 @@ type Point struct {
 }
 type TreeSitterSymbol struct {
 	Begin, End Point
-	SymobName  string
+	SymbolName string
 	Code       string
 	Symbol     string
 }
@@ -199,7 +199,7 @@ func markdown_parser(ts *TreeSitter) {
 	const head = "markup.heading"
 	for _, line := range ts.HlLine {
 		for _, s := range line {
-			if strings.Index(s.SymobName, head) == 0 {
+			if strings.Index(s.SymbolName, head) == 0 {
 				ss := ts_to_symbol(s, ts)
 				aa := Symbol{
 					SymInfo:   ss,
@@ -228,6 +228,93 @@ func ts_to_symbol(s TreeSitterSymbol, ts *TreeSitter) lsp.SymbolInformation {
 	}
 	return ss
 }
+
+type outline_item struct {
+	sym Symbol
+}
+
+func rs_outline(ts *TreeSitter) {
+	if len(ts.Outline) > 0 {
+		return
+	}
+	items := []*outline_item{}
+	if ts.tsdef.outline != nil {
+		ret, err := ts.query_buf(ts.tsdef.outline)
+		if err != nil {
+			return
+		}
+		keys := []int{}
+		for i := range ret {
+			keys = append(keys, i)
+		}
+		sort.Ints(keys)
+		for _, lineno := range keys {
+			line, err := ret[lineno]
+			if !err {
+				continue
+			}
+			for _, item := range line {
+				if item.Symbol == "line_comment" {
+					continue
+				}
+				code := item.Code
+				Range := item.lsprange()
+				switch item.SymbolName {
+				case "item":
+					{
+						code = "..."
+						c := outline_item{Symbol{SymInfo: ts_to_symbol(item, ts)}}
+						items = append(items, &c)
+					}
+				case "context":
+					{
+						foreach_check(items, Range, &item, func(v *outline_item, tss *TreeSitterSymbol) bool {
+							switch item.Symbol {
+							case "fn":
+								{
+									v.sym.SymInfo.Kind = lsp.SymbolKindFunction
+									return true
+								}
+							default:
+							}
+							return false
+						})
+					}
+				case "name":
+					{
+						foreach_check(items, Range, &item, func(v *outline_item, tss *TreeSitterSymbol) bool {
+							v.sym.SymInfo.Name = tss.Code
+							return true
+						})
+					}
+				}
+				log.Println("-----", item.PositionInfo(), item.SymbolName, item.Symbol, code)
+			}
+		}
+	}
+	for _, v := range items {
+		ts.Outline = append(ts.Outline, &v.sym)
+	}
+
+}
+
+func foreach_check(items []*outline_item, Range lsp.Range, item *TreeSitterSymbol, check func(*outline_item, *TreeSitterSymbol) bool) {
+	for i := range items {
+		v := items[i]
+		r := v.sym.SymInfo.Location.Range
+		found := false
+		if Range.Start.AfterOrEq(r.Start) && Range.End.BeforeOrEq(r.End) {
+			if check(v, item) {
+				found = true
+				return
+			}
+
+		}
+		if found {
+			break
+		}
+	}
+}
 func bash_parser(ts *TreeSitter) {
 	if len(ts.Outline) > 0 {
 		return
@@ -254,7 +341,7 @@ func bash_parser(ts *TreeSitter) {
 }
 
 var tree_sitter_lang_map = []*ts_lang_def{
-	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(bash_parser),
+	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(bash_parser),
 	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(bash_parser),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
@@ -441,8 +528,8 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 		line := ret[lineno]
 		for i := 0; i < len(line); i++ {
 			s := line[i]
-			pos := fmt.Sprint(s.Begin.Row, ":", s.Begin.Column, s.End.Row, ":", s.End.Column)
-			if s.SymobName == "local.scope" {
+			pos := s.PositionInfo()
+			if s.SymbolName == "local.scope" {
 				if strings.Index(s.Symbol, "expression") > 0 {
 					continue
 				}
@@ -452,7 +539,7 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 						scopes = append(scopes, s)
 					}
 				default:
-					log.Println("=====================", s.SymobName, s.Symbol, pos)
+					log.Println("=====================", s.SymbolName, s.Symbol, pos)
 				}
 			}
 		}
@@ -463,8 +550,8 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 			s := line[i]
 			pos := fmt.Sprint(s.Begin.Row, ":", s.Begin.Column, s.End.Row, ":", s.End.Column)
 			Range := s.lsprange()
-			if strings.Index(s.SymobName, prefix) == 0 {
-				symboltype := strings.Replace(s.SymobName, prefix, "", 1)
+			if strings.Index(s.SymbolName, prefix) == 0 {
+				symboltype := strings.Replace(s.SymbolName, prefix, "", 1)
 				symbol_kind := map[string]lsp.SymbolKind{
 					"method":      lsp.SymbolKindMethod,
 					"function":    lsp.SymbolKindFunction,
@@ -501,7 +588,7 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 				} else {
 					log.Println("unhandled-symboltype:", symboltype, s.Code, pos, s.Symbol)
 				}
-			} else if s.SymobName == "local.scope" {
+			} else if s.SymbolName == "local.scope" {
 				continue
 			} else {
 				// add := newFunction(scopes, Range, true)
@@ -524,6 +611,11 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 		}
 	}
 	return symbols
+}
+
+func (s TreeSitterSymbol) PositionInfo() string {
+	pos := fmt.Sprint(s.Begin.Row, ":", s.Begin.Column, s.End.Row, ":", s.End.Column)
+	return pos
 }
 
 func newFunction(scopes []TreeSitterSymbol, Range lsp.Range, add bool) bool {
