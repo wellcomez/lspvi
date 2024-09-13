@@ -59,7 +59,8 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 		} else if len(ts.Outline) > 0 {
 			code.ts = ts
 			if ts.DefaultOutline() {
-				code.main.symboltree.upate_with_ts(ts)
+				lsp := code.main.symboltree.upate_with_ts(ts)
+				code.main.lspmgr.Current = lsp
 			} else {
 				code.main.OnSymbolistChanged(nil, nil)
 			}
