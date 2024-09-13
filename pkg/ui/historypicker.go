@@ -124,6 +124,12 @@ func new_color_picker(v *fzfmain) *color_picker {
 		log.Println(a)
 		ret.on_select(&a)
 	}
+	for i, v := range ret.impl.data {
+		if v.name == ret.impl.parent.main.codeview.theme {
+			ret.impl.list.SetCurrentItem(i)
+			break
+		}
+	}
 	return ret
 }
 

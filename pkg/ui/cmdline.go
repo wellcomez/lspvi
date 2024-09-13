@@ -70,6 +70,10 @@ func (cmd *cmdline) OnSet(args []string) bool {
 		return false
 	}
 	switch args[1] {
+	case "colorscheme":
+		{
+			cmd.main.open_colorescheme()
+		}
 	case "wrap":
 		{
 			global_config.Wrap = !global_config.Wrap
