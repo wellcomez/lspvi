@@ -98,16 +98,25 @@ func new_tsdef(
 		nil,
 	}
 	go func() {
-		if h, er := ret.query(query_highlights); er == nil {
-			ret.hl = h
-		}
-		if h, er := ret.query(query_locals); er == nil {
-			ret.local = h
-		}
-		if h, er := ret.query(query_outline); er == nil {
-			ret.outline = h
-		}
+		ret.load_scm()
 	}()
+	return ret
+}
+
+func (ret *ts_lang_def) load_scm() {
+	if h, er := ret.query(query_highlights); er == nil {
+		ret.hl = h
+	}
+	if h, er := ret.query(query_locals); er == nil {
+		ret.local = h
+	}
+	if h, er := ret.query(query_outline); er == nil {
+		ret.outline = h
+	}
+}
+func (tsdef *ts_lang_def) create_treesitter(file string) *TreeSitter {
+	ret := NewTreeSitter(file)
+	ret.tsdef = tsdef
 	return ret
 }
 func (t *ts_lang_def) create_query_buffer(lang string, queryname string) ([]byte, error) {
@@ -170,7 +179,7 @@ type lsp_dummy struct {
 
 // InitializeLsp implements lsplang.
 func (l lsp_dummy) InitializeLsp(core *lspcore, wk WorkSpace) error {
-	panic("unimplemented")
+	return nil
 }
 
 // IsMe implements lsplang.
@@ -180,17 +189,17 @@ func (l lsp_dummy) IsMe(filename string) bool {
 
 // IsSource implements lsplang.
 func (l lsp_dummy) IsSource(filename string) bool {
-	panic("unimplemented")
+	return false
 }
 
 // Launch_Lsp_Server implements lsplang.
 func (l lsp_dummy) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
-	panic("unimplemented")
+	return nil
 }
 
 // Resolve implements lsplang.
 func (l lsp_dummy) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {
-	panic("unimplemented")
+	return false
 }
 func markdown_parser(ts *TreeSitter) {
 	if len(ts.Outline) > 0 {
@@ -217,7 +226,7 @@ func markdown_parser(ts *TreeSitter) {
 func ts_to_symbol(s TreeSitterSymbol, ts *TreeSitter) lsp.SymbolInformation {
 	ss := lsp.SymbolInformation{
 		Name: s.Code,
-		Kind: lsp.SymbolKindEnumMember,
+		Kind: lsp.SymbolKindVariable,
 		Location: lsp.Location{
 			URI: lsp.NewDocumentURI(ts.filename),
 			Range: lsp.Range{
@@ -229,15 +238,11 @@ func ts_to_symbol(s TreeSitterSymbol, ts *TreeSitter) lsp.SymbolInformation {
 	return ss
 }
 
-type outline_item struct {
-	sym Symbol
-}
-
 func rs_outline(ts *TreeSitter) {
 	if len(ts.Outline) > 0 {
 		return
 	}
-	items := []*outline_item{}
+	items := []*lsp.SymbolInformation{}
 	if ts.tsdef.outline != nil {
 		ret, err := ts.query_buf(ts.tsdef.outline)
 		if err != nil {
@@ -262,18 +267,45 @@ func rs_outline(ts *TreeSitter) {
 				switch item.SymbolName {
 				case "item":
 					{
-						code = "..."
-						c := outline_item{Symbol{SymInfo: ts_to_symbol(item, ts)}}
+						code = item.PositionInfo()
+						c := ts_to_symbol(item, ts)
+						switch item.Symbol {
+						case "type_declaration":
+							c.Kind = lsp.SymbolKindClass
+						case "field_declaration":
+							c.Kind = lsp.SymbolKindField
+						case "enum_specifier":
+							c.Kind = lsp.SymbolKindEnum
+						case "method_declaration":
+							c.Kind = lsp.SymbolKindMethod
+						case "struct_specifier":
+							c.Kind = lsp.SymbolKindStruct
+						case "class_specifier":
+							c.Kind = lsp.SymbolKindClass
+						case "function_definition", "function_declaration", "function_item":
+							c.Kind = lsp.SymbolKindFunction
+						default:
+							log.Printf("--------|%20s|%20s|%20s|------------------", item.SymbolName, item.Symbol, item.Code)
+						}
 						items = append(items, &c)
 					}
 				case "context":
 					{
-						foreach_check(items, Range, &item, func(v *outline_item, tss *TreeSitterSymbol) bool {
+						foreach_check(items, Range, &item, func(v *lsp.SymbolInformation, tss *TreeSitterSymbol) bool {
 							switch item.Symbol {
-							case "fn":
+							case "fn", "func":
 								{
-									v.sym.SymInfo.Kind = lsp.SymbolKindFunction
+									v.Kind = lsp.SymbolKindFunction
 									return true
+								}
+							case "class":
+								{
+									v.Kind = lsp.SymbolKindClass
+									return true
+								}
+							case "field_declaration":
+								{
+									v.Kind = lsp.SymbolKindField
 								}
 							default:
 							}
@@ -282,38 +314,46 @@ func rs_outline(ts *TreeSitter) {
 					}
 				case "name":
 					{
-						foreach_check(items, Range, &item, func(v *outline_item, tss *TreeSitterSymbol) bool {
-							v.sym.SymInfo.Name = tss.Code
+						foreach_check(items, Range, &item, func(v *lsp.SymbolInformation, tss *TreeSitterSymbol) bool {
+							v.Name = tss.Code
 							return true
 						})
 					}
 				}
-				log.Println("-----", item.PositionInfo(), item.SymbolName, item.Symbol, code)
+				log.Printf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
 			}
 		}
 	}
+	var s = Symbol_file{lsp: lsp_base{core: &lspcore{lang: lsp_dummy{}}}}
+	document_symbol := []lsp.SymbolInformation{}
 	for _, v := range items {
-		ts.Outline = append(ts.Outline, &v.sym)
+		document_symbol = append(document_symbol, *v)
 	}
-
+	s.build_class_symbol(document_symbol, 0, nil)
+	ts.Outline = s.Class_object
 }
 
-func foreach_check(items []*outline_item, Range lsp.Range, item *TreeSitterSymbol, check func(*outline_item, *TreeSitterSymbol) bool) {
+func foreach_check(items []*lsp.SymbolInformation, Range lsp.Range, item *TreeSitterSymbol, check func(*lsp.SymbolInformation, *TreeSitterSymbol) bool) {
+	var matched *lsp.SymbolInformation
 	for i := range items {
 		v := items[i]
-		r := v.sym.SymInfo.Location.Range
-		found := false
-		if Range.Start.AfterOrEq(r.Start) && Range.End.BeforeOrEq(r.End) {
-			if check(v, item) {
-				found = true
-				return
+		r := v.Location.Range
+		if Range.Start.In(r) && Range.End.In(r) {
+			if matched == nil {
+				matched = v
+			} else {
+				prev_range := matched.Location.Range
+				new_range := v.Location.Range
+				if new_range.Start.In(prev_range) && new_range.End.In(prev_range) {
+					matched = v
+				}
 			}
-
-		}
-		if found {
-			break
 		}
 	}
+	if matched == nil {
+		return
+	}
+	check(matched, item)
 }
 func bash_parser(ts *TreeSitter) {
 	if len(ts.Outline) > 0 {
@@ -342,17 +382,17 @@ func bash_parser(ts *TreeSitter) {
 
 var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
-	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(bash_parser),
+	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(rs_outline),
 	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(bash_parser),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
-	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()),
-	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}),
+	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(rs_outline),
+	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}).setparser(rs_outline),
 	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()),
 	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()),
 	new_tsdef(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
 	new_tsdef(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}),
 	new_tsdef(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}),
-	new_tsdef(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setparser(markdown_parser),
+	new_tsdef(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setparser(rs_outline),
 }
 
 func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
@@ -364,8 +404,9 @@ func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 		}()
 		return nil
 	}
-	for _, v := range tree_sitter_lang_map {
-		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 && v.hl != nil {
+	for i := range tree_sitter_lang_map {
+		v := tree_sitter_lang_map[i]
+		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 {
 			t.tsdef = v
 			t.Loadfile(v.tslang, cb)
 			return nil
