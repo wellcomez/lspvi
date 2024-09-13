@@ -436,6 +436,26 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 		for i := 0; i < len(line); i++ {
 			s := line[i]
 			pos := fmt.Sprint(s.Begin.Row, ":", s.Begin.Column, s.End.Row, ":", s.End.Column)
+			if s.SymobName == "local.scope" {
+				if strings.Index(s.Symbol,"expression")>0{
+					continue
+				}
+				switch s.Symbol {
+				case "method_declaration", "function_definition","if_expression","function_item","closure_expression","block":
+					{
+						scopes = append(scopes, s)
+					}
+				default:
+					log.Println("=====================",s.SymobName,s.Symbol,pos)
+				}
+			}
+		}
+	}
+	for lineno := range ret {
+		line := ret[lineno]
+		for i := 0; i < len(line); i++ {
+			s := line[i]
+			pos := fmt.Sprint(s.Begin.Row, ":", s.Begin.Column, s.End.Row, ":", s.End.Column)
 			Range := s.lsprange()
 			if strings.Index(s.SymobName, prefix) == 0 {
 				symboltype := strings.Replace(s.SymobName, prefix, "", 1)
@@ -476,20 +496,22 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 					log.Println("unhandled-symboltype:", symboltype, s.Code, pos, s.Symbol)
 				}
 			} else if s.SymobName == "local.scope" {
-				log.Println("unhandled symbol-name:", s.SymobName, pos, s.Symbol)
-				scopes = append(scopes, s)
+				continue
 			} else {
 				add := newFunction(scopes, Range, true)
-				if add {
-					s := lsp.SymbolInformation{
-						Name: s.Code,
-						Kind: lsp.SymbolKindClass,
-						Location: lsp.Location{
-							URI:   lsp.NewDocumentURI(ts.filename),
-							Range: Range,
-						},
+				if s.Symbol != "word" {
+					if add {
+						s := lsp.SymbolInformation{
+							Name: s.Code,
+							Kind: lsp.SymbolKindClass,
+							Location: lsp.Location{
+								URI:   lsp.NewDocumentURI(ts.filename),
+								Range: Range,
+							},
+						}
+						symbols = append(symbols, s)
+						continue
 					}
-					symbols = append(symbols, s)
 				}
 				log.Println("unhandled symbol-name:", s.SymobName, s.Code, pos, s.Symbol)
 			}
@@ -501,10 +523,10 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 func newFunction(scopes []TreeSitterSymbol, Range lsp.Range, add bool) bool {
 	for _, v := range scopes {
 		if Range.Start.AfterOrEq(v.lsprange().Start) && Range.End.BeforeOrEq(v.lsprange().End) {
-			if v.Symbol == "method_declaration" {
-				add = false
-			}
-			break
+			// if v.Symbol == "method_declaration" || v.Symbol == "function_definition" {
+			// 	add = false
+			// }
+			return false
 		}
 	}
 	return add
