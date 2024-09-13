@@ -287,19 +287,6 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 		}
 		return true
 	}
-	var prev *command_history_record = nil
-	if event.Key() == tcell.KeyUp {
-		prev = cmd.history.prev()
-	} else if event.Key() == tcell.KeyDown {
-		prev = cmd.history.next()
-	}
-	if prev != nil {
-		cmd.input.SetText(prev.cmdline())
-		if prev.Find {
-			v.vi._enter_find_mode()
-		}
-		return true
-	}
 	txt := cmd.input.GetText()
 	if event.Key() == tcell.KeyEnter {
 		vim.set_entered(txt)
@@ -312,6 +299,35 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	txt = txt + string(event.Rune())
 	cmd.input.SetText(txt)
 	return true
+}
+
+func (vi *Vim) HandleVimHistory(event *tcell.EventKey) bool {
+	cmd := vi.app.cmdline
+	input := cmd.input
+	if input.HasFocus() {
+		switch event.Key() {
+		case tcell.KeyDown, tcell.KeyUp:
+			{
+
+				var prev *command_history_record = nil
+				if event.Key() == tcell.KeyUp {
+					prev = cmd.history.prev()
+				} else if event.Key() == tcell.KeyDown {
+					prev = cmd.history.next()
+				}
+				if prev != nil {
+					if vi.vi.Command {
+						vi.EnterCommand()
+					} else if vi.vi.Find {
+						vi._enter_find_mode()
+					}
+					input.SetText(prev.cmdline())
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (vim *Vim) set_entered(txt string) {
@@ -337,14 +353,6 @@ func (v vi_find_handle) State() string {
 // HanldeKey implements vim_mode_handle.
 func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	cmd := v.main.cmdline
-	// if !cmd.input.HasFocus() {
-	// 	if event.Rune() == 'n' {
-	// 		vim.set_entered(cmd.input.GetText())
-	// 		cmd.main.OnSearch(search_option{vim.vi.FindEnter, false, false, false})
-	// 		return true
-	// 	}
-	// 	return false
-	// }
 	shouldReturn := handle_backspace(event, cmd)
 	if shouldReturn {
 		if cmd.input.GetText() == "" {
@@ -353,54 +361,19 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		return true
 	}
 	txt := cmd.input.GetText()
-	var prev *command_history_record = nil
 	history := cmd.history
-	x := event.Key()
-	// run := event.Rune()
-	// if run == '/' && !cmd.main.searchcontext.next_or_prev {
-	// 	cmd.main.searchcontext.next_or_prev = true
-	// 	v.vi.update_find_label()
-	// 	return true
-	// }
-	// if run == '?' && cmd.main.searchcontext.next_or_prev {
-	// 	cmd.main.searchcontext.next_or_prev = false
-	// 	v.vi.update_find_label()
-	// 	return true
-	// }
-	if x == tcell.KeyUp {
-		prev = history.prev()
-	} else if event.Key() == tcell.KeyDown {
-		prev = history.next()
-	} else if event.Key() == tcell.KeyEnter {
+	if event.Key() == tcell.KeyEnter {
 		history.add_search_txt(txt)
 		v.vi.set_entered(txt)
 		v.vi.update_find_label()
 		cmd.input.SetText(txt)
-		// cmd.main.OnSearch(search_option{txt, false, false, false})
 		return true
 	}
-	if prev != nil {
-		txt := prev.cmdline()
-		if prev.Find {
-			cmd.input.SetText(txt)
-			cmd.main.OnSearch(search_option{txt, false, false, false})
-		} else {
-			cmd.Vim.EnterCommand()
-		}
-		return true
-	} else {
-		// if len(vim.vi.FindEnter) > 0 {
-		// 	if event.Rune() == 'n' {
-		// 		cmd.main.OnSearch(search_option{vim.vi.FindEnter, false, false, false})
-		// 		return true
-		// 	}
-		// }
-		txt = txt + string(event.Rune())
-		cmd.input.SetText(txt)
-		history.add_search_txt(txt)
-		cmd.main.OnSearch(search_option{txt, false, false, false})
-		return true
-	}
+	txt = txt + string(event.Rune())
+	cmd.input.SetText(txt)
+	history.add_search_txt(txt)
+	cmd.main.OnSearch(search_option{txt, false, false, false})
+	return true
 }
 
 func (history *command_history) add_search_txt(txt string) {
@@ -460,12 +433,6 @@ func (state *escapestate) end() {
 	state.keyseq = []string{}
 }
 
-func (l EscapeHandle) input_cb(word string) {
-	if l.state.init {
-		return
-	}
-	l.input.run(word)
-}
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	ts := l.state.keyseq
 	ch := string(event.Rune())
@@ -676,16 +643,14 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 		v.EnterEscape()
 		return true, nil
 	}
-	// if v.vi.Escape {
-	// 	v.ExitEnterEscape()
-	// }
-	//current_view := v.app.get_focus_view_id()
-	//if current_view == view_code || current_view == view_cmd
-	{
-		if v.vi_handle != nil {
+
+	if v.vi_handle != nil {
+		if !v.HandleVimHistory(event) {
 			if v.vi_handle.HanldeKey(event) {
 				return true, nil
 			}
+		} else {
+			return true, nil
 		}
 	}
 	return false, event
@@ -842,7 +807,6 @@ func (v *Vim) EnterEscape() {
 		main:    main,
 	}
 	esc.input = &inputdelay
-	// esc.input.cb = esc.input_cb
 	v.vi_handle = esc
 	v.app.SavePrevFocus()
 }
