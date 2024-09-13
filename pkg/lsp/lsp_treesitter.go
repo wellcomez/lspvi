@@ -16,6 +16,7 @@ import (
 	sitter "github.com/smacker/go-tree-sitter"
 	"github.com/tectiv3/go-lsp"
 
+	ts_bash "github.com/smacker/go-tree-sitter/bash"
 	ts_c "github.com/smacker/go-tree-sitter/c"
 	ts_cpp "github.com/smacker/go-tree-sitter/cpp"
 	ts_go "github.com/smacker/go-tree-sitter/golang"
@@ -66,11 +67,13 @@ type ts_lang_def struct {
 	filedetect lsplang
 	tslang     *sitter.Language
 	def_ext    []string
-	cb         func(*TreeSitter)
+	parser     func(*TreeSitter)
 	hl         *sitter.Query
+	local      *sitter.Query
 }
 
 const query_highlights = "highlights"
+const query_locals = "locals"
 
 func new_tsdef(
 	name string,
@@ -84,10 +87,14 @@ func new_tsdef(
 		[]string{},
 		nil,
 		nil,
+		nil,
 	}
 	go func() {
 		if h, er := ret.query(query_highlights); er == nil {
 			ret.hl = h
+		}
+		if h, er := ret.query(query_locals); er == nil {
+			ret.local = h
 		}
 	}()
 	return ret
@@ -121,8 +128,8 @@ func (t *ts_lang_def) query(queryname string) (*sitter.Query, error) {
 		return nil, err
 	}
 }
-func (s *ts_lang_def) setcb(cb func(*TreeSitter)) *ts_lang_def {
-	s.cb = cb
+func (s *ts_lang_def) setparser(parser func(*TreeSitter)) *ts_lang_def {
+	s.parser = parser
 	return s
 }
 func (s *ts_lang_def) set_ext(file []string) *ts_lang_def {
@@ -182,17 +189,7 @@ func markdown_parser(ts *TreeSitter) {
 	for _, line := range ts.HlLine {
 		for _, s := range line {
 			if strings.Index(s.SymobName, head) == 0 {
-				ss := lsp.SymbolInformation{
-					Name: s.Code,
-					Kind: lsp.SymbolKindEnumMember,
-					Location: lsp.Location{
-						URI: lsp.NewDocumentURI(ts.filename),
-						Range: lsp.Range{
-							Start: lsp.Position{Line: int(s.Begin.Row), Character: int(s.Begin.Column)},
-							End:   lsp.Position{Line: int(s.End.Row), Character: int(s.End.Column)},
-						},
-					},
-				}
+				ss := ts_to_symbol(s, ts)
 				aa := Symbol{
 					SymInfo:   ss,
 					classname: s.Code,
@@ -206,7 +203,45 @@ func markdown_parser(ts *TreeSitter) {
 	})
 }
 
+func ts_to_symbol(s TreeSitterSymbol, ts *TreeSitter) lsp.SymbolInformation {
+	ss := lsp.SymbolInformation{
+		Name: s.Code,
+		Kind: lsp.SymbolKindEnumMember,
+		Location: lsp.Location{
+			URI: lsp.NewDocumentURI(ts.filename),
+			Range: lsp.Range{
+				Start: lsp.Position{Line: int(s.Begin.Row), Character: int(s.Begin.Column)},
+				End:   lsp.Position{Line: int(s.End.Row), Character: int(s.End.Column)},
+			},
+		},
+	}
+	return ss
+}
+func bash_parser(ts *TreeSitter) {
+	if len(ts.Outline) > 0 {
+		return
+	}
+	if ts.tsdef.local != nil {
+		lines, err := ts.query_buf(ts.tsdef.local)
+		if err != nil {
+			return
+		}
+		ss := get_ts_symbol(lines, ts)
+		for _, v := range ss {
+			ts.Outline = append(ts.Outline, &Symbol{
+				SymInfo:   v,
+				Members:   []Symbol{},
+				classname: "",
+			})
+		}
+	}
+	sort.Slice(ts.Outline, func(i, j int) bool {
+		return ts.Outline[i].SymInfo.Location.Range.Start.Line < ts.Outline[j].SymInfo.Location.Range.Start.Line
+	})
+}
+
 var tree_sitter_lang_map = []*ts_lang_def{
+	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
 	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()),
 	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}),
 	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()),
@@ -214,7 +249,7 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
 	new_tsdef(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}),
 	new_tsdef(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}),
-	new_tsdef(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setcb(markdown_parser),
+	new_tsdef(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setparser(markdown_parser),
 }
 
 func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
@@ -374,8 +409,8 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 }
 
 func (ts *TreeSitter) callback_to_ui(cb func(*TreeSitter)) {
-	if ts.tsdef.cb != nil {
-		ts.tsdef.cb(ts)
+	if ts.tsdef.parser != nil {
+		ts.tsdef.parser(ts)
 	}
 	if cb != nil {
 		cb(ts)
@@ -400,6 +435,7 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 					{
 						kind := map[string]lsp.SymbolKind{
 							"method": lsp.SymbolKindMethod,
+							"function": lsp.SymbolKindFunction,
 						}
 						log.Println("outline", s.Code, symboltype)
 						s := lsp.SymbolInformation{
