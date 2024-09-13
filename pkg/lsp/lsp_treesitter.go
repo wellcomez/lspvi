@@ -47,7 +47,7 @@ type TreeSitter struct {
 	// Symbols     []TreeSitterSymbol
 	HlLine  t_symbol_line
 	Outline []*Symbol
-	tsdef   ts_lang_def
+	tsdef   *ts_lang_def
 }
 
 func TreesitterCheckIsSourceFile(filename string) bool {
@@ -75,12 +75,12 @@ type ts_lang_def struct {
 
 const query_highlights = "highlights"
 
-func TsPtn(
+func new_tsdef(
 	name string,
 	filedetect lsplang,
 	tslang *sitter.Language,
-) ts_lang_def {
-	ret := ts_lang_def{
+) *ts_lang_def {
+	ret := &ts_lang_def{
 		name,
 		filedetect,
 		tslang,
@@ -88,9 +88,11 @@ func TsPtn(
 		nil,
 		nil,
 	}
-	if h, er := ret.query(query_highlights); er == nil {
-		ret.hl = h
-	}
+	go func() {
+		if h, er := ret.query(query_highlights); er == nil {
+			ret.hl = h
+		}
+	}()
 	return ret
 }
 func (t *ts_lang_def) create_query_buffer(lang string, queryname string) ([]byte, error) {
@@ -105,7 +107,7 @@ func (t *ts_lang_def) create_query_buffer(lang string, queryname string) ([]byte
 	var merge_buf = []byte{}
 	if len(heris) > 0 {
 		for _, v := range heris {
-			if b, err := t.create_query_buffer(v,queryname); err == nil {
+			if b, err := t.create_query_buffer(v, queryname); err == nil {
 				merge_buf = append(merge_buf, b...)
 			}
 		}
@@ -122,11 +124,11 @@ func (t *ts_lang_def) query(queryname string) (*sitter.Query, error) {
 		return nil, err
 	}
 }
-func (s ts_lang_def) setcb(cb func(*TreeSitter)) ts_lang_def {
+func (s *ts_lang_def) setcb(cb func(*TreeSitter)) *ts_lang_def {
 	s.cb = cb
 	return s
 }
-func (s ts_lang_def) set_ext(file []string) ts_lang_def {
+func (s *ts_lang_def) set_ext(file []string) *ts_lang_def {
 	s.def_ext = append(s.def_ext, file...)
 	return s
 }
@@ -204,15 +206,15 @@ func markdown_parser(ts *TreeSitter) {
 	})
 }
 
-var tree_sitter_lang_map = []ts_lang_def{
-	TsPtn("go", lsp_lang_go{}, ts_go.GetLanguage()),
-	TsPtn("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}),
-	TsPtn("c", lsp_lang_cpp{}, ts_c.GetLanguage()),
-	TsPtn("python", lsp_lang_py{}, ts_py.GetLanguage()),
-	TsPtn(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
-	TsPtn(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}),
-	TsPtn(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}),
-	TsPtn(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setcb(markdown_parser),
+var tree_sitter_lang_map = []*ts_lang_def{
+	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()),
+	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}),
+	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()),
+	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()),
+	new_tsdef(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
+	new_tsdef(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}),
+	new_tsdef(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}),
+	new_tsdef(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setcb(markdown_parser),
 }
 
 func (t *TreeSitter) Init(cb func(*TreeSitter)) error {

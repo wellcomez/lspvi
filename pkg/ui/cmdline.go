@@ -129,13 +129,6 @@ func (cmd *cmdline) OnComand(commandinput string) bool {
 	return true
 }
 
-// func (cmd *cmdline) HandleKeyUnderEscape(event *tcell.EventKey) *tcell.EventKey {
-// 	if event.Rune() == 'f' {
-// 		cmd.main.OnGrep()
-// 	}
-// 	return nil
-// }
-
 func (cmd *cmdline) Keyhandle(event *tcell.EventKey) *tcell.EventKey {
 	yes, event := cmd.Vim.VimKeyModelMethod(event)
 	if yes {

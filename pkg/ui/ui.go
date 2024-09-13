@@ -335,11 +335,11 @@ func (m *mainui) Init() {
 	m.lspmgr.Handle = m
 }
 
-func (m mainui) OnCodeLineChange(x,y int) {
+func (m mainui) OnCodeLineChange(x, y int) {
 	if m.symboltree.Hide {
 		return
 	}
-	m.symboltree.OnCodeLineChange(x,y)
+	m.symboltree.OnCodeLineChange(x, y)
 }
 func (m *mainui) OnTabChanged(tab *TabButton) {
 	if tab.Name == "uml" {
@@ -932,7 +932,6 @@ type search_option struct {
 func (main *mainui) OnSearch(option search_option) {
 	search_on_ui(option, main)
 }
-
 
 var leadkey = ' '
 
