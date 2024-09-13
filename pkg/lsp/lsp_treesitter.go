@@ -129,7 +129,7 @@ func (t *ts_lang_def) create_query_buffer(lang string, queryname string) ([]byte
 	}
 	ss := string(buf)
 	heris := get_inherits(ss)
-	log.Println(t.name, "heri", queryname, heris)
+	// log.Println(t.name, "heri", queryname, heris)
 	var merge_buf = []byte{}
 	if len(heris) > 0 {
 		for _, v := range heris {
@@ -594,8 +594,8 @@ func (ts ts_lang_def) read_embbed(p string) ([]byte, error) {
 	if err == nil {
 		imp := &imp_copydata{}
 		var d = copydata{imp}
-		n, err := io.Copy(d, file)
-		log.Println(n)
+		_, err := io.Copy(d, file)
+		// log.Println(n)
 		if err != nil {
 			return []byte{}, err
 		} else {
