@@ -141,9 +141,10 @@ const term_init = (app) => {
         vt300Mouse: true,
         MouseEvent: true,
         fontSize: fontSize,
-        // fontFamily: '"Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
+        // fontFamily: 'SymbolsNerdFontMono "Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
         // fontFamily: 'Hack, "Fira Code", monospace',
-        fontFamily: 'HackNerdFontMono,monospace'
+        // fontFamily: 'HackNerdFontMono,monospace'
+        fontFamily:'SymbolsNerdFontMono,courier-new, courier, monospace'
 
         // minimumContrastRatio: 1,
     });
