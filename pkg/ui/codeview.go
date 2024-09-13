@@ -1015,6 +1015,7 @@ func text_loc_to_range(loc [2]femto.Loc) lsp.Range {
 func (code CodeView) String() string {
 	cursor := code.view.Cursor
 	X := max(cursor.X, cursor.GetVisualX())
+	vim_x_y := fmt.Sprintf("%4d:%2d", cursor.Y+1, X)
 	selected := code.get_selected_lines()
 	// if cursor.HasSelection() {
 	// 	sel = fmt.Sprintf(" sel:%d", len(cursor.GetSelection()))
@@ -1022,14 +1023,17 @@ func (code CodeView) String() string {
 	if !selected.emtry() {
 		n := len(selected.selected_text)
 		sel := selected.selected_text
-		len := min(5, n)
-		posfix := ""
+		const area_len = 20
+		len := min(area_len, n)
+		posfix := sel
 		if len < n {
-			posfix = "..." + sel[n-2:n-1]
+			posfix = sel[0:(len-3)/2] + "..." + sel[n-(len-3)/2:n]
+			return fmt.Sprintf("%-20s %d |%s", posfix, n, vim_x_y)
+		}else{
+			return fmt.Sprintf("%s %d |%s", posfix, n, vim_x_y)
 		}
-		return fmt.Sprintf("%d:%d %s%s %d", cursor.Y+1, X, sel[:len-1], posfix, n)
 	}
-	return fmt.Sprintf("%d:%d %s %d", cursor.Y+1, X, "", 0)
+	return vim_x_y
 }
 
 func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
@@ -1141,7 +1145,6 @@ func (code *CodeView) config_wrap(filename string) {
 		code.view.Buf.Settings["softwrap"] = false
 	}
 }
-
 
 func (code *CodeView) change_theme() {
 	var colorscheme femto.Colorscheme

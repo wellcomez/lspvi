@@ -804,7 +804,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
 		}
-		titlename := fmt.Sprintf("%s",main.codeview.filename)
+		titlename := fmt.Sprintf("%s ",main.codeview.filename)
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {
