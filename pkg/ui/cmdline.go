@@ -290,8 +290,8 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	txt := cmd.input.GetText()
 	if event.Key() == tcell.KeyEnter {
 		vim.set_entered(txt)
-		if cmd.OnComand(vim.vi.FindEnter) {
-			cmd.history.add(command_history_record{Cmd: vim.vi.FindEnter})
+		if cmd.OnComand(txt) {
+			cmd.history.add_if_need(command_history_record{txt, false})
 			cmd.Vim.EnterEscape()
 		}
 		return true
@@ -316,9 +316,9 @@ func (vi *Vim) HandleVimHistory(event *tcell.EventKey) bool {
 					prev = cmd.history.next()
 				}
 				if prev != nil {
-					if vi.vi.Command {
+					if !prev.Find {
 						vi.EnterCommand()
-					} else if vi.vi.Find {
+					} else {
 						vi._enter_find_mode()
 					}
 					input.SetText(prev.cmdline())
@@ -362,8 +362,9 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	txt := cmd.input.GetText()
 	history := cmd.history
+	c := command_history_record{txt, true}
 	if event.Key() == tcell.KeyEnter {
-		history.add_search_txt(txt)
+		history.add_if_need(c)
 		v.vi.set_entered(txt)
 		v.vi.update_find_label()
 		cmd.input.SetText(txt)
@@ -371,20 +372,24 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	txt = txt + string(event.Rune())
 	cmd.input.SetText(txt)
-	history.add_search_txt(txt)
+	history.add_if_need(c)
 	cmd.main.OnSearch(search_option{txt, false, false, false})
 	return true
 }
 
-func (history *command_history) add_search_txt(txt string) {
-	if history.need_add_cmd_history(txt) {
-		history.add(command_history_record{Cmd: txt, Find: true})
+func (history *command_history) add_if_need(c command_history_record) {
+	if history.need_add_cmd_history(c) {
+		history.add(c)
 	}
 }
 
-func (history *command_history) need_add_cmd_history(txt string) bool {
-	added := len(history.data) > 0 && history.data[len(history.data)-1].cmdline() == txt
-	return !added
+func (history *command_history) need_add_cmd_history(txt command_history_record) bool {
+	if len(history.data) > 0 {
+		if history.data[len(history.data)-1] == txt {
+			return false
+		}
+	}
+	return true
 }
 
 func handle_backspace(event *tcell.EventKey, cmd *cmdline) bool {
