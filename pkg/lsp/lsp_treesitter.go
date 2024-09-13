@@ -184,7 +184,7 @@ func (l lsp_dummy) InitializeLsp(core *lspcore, wk WorkSpace) error {
 
 // IsMe implements lsplang.
 func (l lsp_dummy) IsMe(filename string) bool {
-	return false
+	return false 
 }
 
 // IsSource implements lsplang.
@@ -282,10 +282,10 @@ func rs_outline(ts *TreeSitter) {
 							c.Kind = lsp.SymbolKindStruct
 						case "class_specifier":
 							c.Kind = lsp.SymbolKindClass
-						case "function_definition", "function_declaration", "function_item":
+						case "function_definition","function_declaration","function_item":
 							c.Kind = lsp.SymbolKindFunction
 						default:
-							log.Printf("--------|%20s|%20s|%20s|------------------", item.SymbolName, item.Symbol, item.Code)
+							log.Printf("query_result:%s| symbol:%20s    | code:%20s",item.SymbolName,item.Symbol,item.Code)
 						}
 						items = append(items, &c)
 					}
@@ -293,7 +293,7 @@ func rs_outline(ts *TreeSitter) {
 					{
 						foreach_check(items, Range, &item, func(v *lsp.SymbolInformation, tss *TreeSitterSymbol) bool {
 							switch item.Symbol {
-							case "fn", "func":
+							case "fn","func":
 								{
 									v.Kind = lsp.SymbolKindFunction
 									return true
@@ -387,11 +387,11 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
 	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(rs_outline),
 	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}).setparser(rs_outline),
-	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()),
-	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()),
+	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()).setparser(rs_outline),
+	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()).setparser(rs_outline),
 	new_tsdef(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}),
-	new_tsdef(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}),
-	new_tsdef(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}),
+	new_tsdef(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}).setparser(rs_outline),
+	new_tsdef(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}).setparser(rs_outline),
 	new_tsdef(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setparser(rs_outline),
 }
 
@@ -406,7 +406,7 @@ func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	}
 	for i := range tree_sitter_lang_map {
 		v := tree_sitter_lang_map[i]
-		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 {
+		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0{
 			t.tsdef = v
 			t.Loadfile(v.tslang, cb)
 			return nil

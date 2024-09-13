@@ -58,8 +58,8 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 			return
 		} else if len(ts.Outline) > 0 {
 			code.ts =ts
-			code.main.symboltree.upate_with_ts(ts)
-			// code.main.OnSymbolistChanged(nil,nil)
+			// code.main.symboltree.upate_with_ts(ts)
+			code.main.OnSymbolistChanged(nil,nil)
 		}
 		code.main.app.Draw()
 	})
