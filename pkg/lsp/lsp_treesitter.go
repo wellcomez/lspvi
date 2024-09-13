@@ -463,14 +463,14 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 					"method":      lsp.SymbolKindMethod,
 					"function":    lsp.SymbolKindFunction,
 					"namespace":   lsp.SymbolKindNamespace,
-					"field":       lsp.SymbolKindMethod,
+					"field":       lsp.SymbolKindVariable,
 					"var":         lsp.SymbolKindVariable,
 					"constructor": lsp.SymbolKindConstructor,
 					"type.class":  lsp.SymbolKindClass,
 					"type":        lsp.SymbolKindClass,
 				}
 				if kind, ok := symbol_kind[symboltype]; ok {
-					log.Println("outline", s.Code, symboltype)
+					log.Println("outline", s.Code, symboltype,pos)
 					add := true
 					switch kind {
 					case lsp.SymbolKindVariable:
@@ -498,22 +498,22 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 			} else if s.SymobName == "local.scope" {
 				continue
 			} else {
-				add := newFunction(scopes, Range, true)
-				if s.Symbol != "word" {
-					if add {
-						s := lsp.SymbolInformation{
-							Name: s.Code,
-							Kind: lsp.SymbolKindClass,
-							Location: lsp.Location{
-								URI:   lsp.NewDocumentURI(ts.filename),
-								Range: Range,
-							},
-						}
-						symbols = append(symbols, s)
-						continue
-					}
-				}
-				log.Println("unhandled symbol-name:", s.SymobName, s.Code, pos, s.Symbol)
+				// add := newFunction(scopes, Range, true)
+				// if s.Symbol != "word" {
+				// 	if add {
+				// 		s := lsp.SymbolInformation{
+				// 			Name: s.Code,
+				// 			Kind: lsp.SymbolKindClass,
+				// 			Location: lsp.Location{
+				// 				URI:   lsp.NewDocumentURI(ts.filename),
+				// 				Range: Range,
+				// 			},
+				// 		}
+				// 		symbols = append(symbols, s)
+				// 		continue
+				// 	}
+				// }
+				// log.Println("unhandled symbol-name:", s.SymobName, s.Code, pos, s.Symbol)
 			}
 		}
 	}
