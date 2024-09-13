@@ -14,11 +14,12 @@ import (
 
 type cmdline struct {
 	*view_link
-	main    *mainui
-	input   *tview.InputField
-	Vim     *Vim
-	history *command_history
-	cmds    []cmd_processor
+	main            *mainui
+	input           *tview.InputField
+	Vim             *Vim
+	command_history *command_history
+	find_history    *command_history
+	cmds            []cmd_processor
 }
 
 func new_cmdline(main *mainui) *cmdline {
@@ -27,12 +28,13 @@ func new_cmdline(main *mainui) *cmdline {
 			id: view_cmd,
 			up: view_quickview,
 		},
-		main:    main,
-		input:   tview.NewInputField(),
-		history: &command_history{filepath: lspviroot.cmdhistory},
-		// find_history: &command_history{filepath: lspviroot.search_cmd_history},
+		main:            main,
+		input:           tview.NewInputField(),
+		command_history: &command_history{filepath: lspviroot.cmdhistory},
+		find_history:    &command_history{filepath: lspviroot.search_cmd_history},
 	}
-	code.history.init()
+	code.command_history.init()
+	code.find_history.init()
 	code.input.SetBorder(true)
 	input := code.input
 	input.SetMouseCapture(code.handle_mouse)
@@ -291,7 +293,7 @@ func (v vi_command_mode_handle) HanldeKey(event *tcell.EventKey) bool {
 	if event.Key() == tcell.KeyEnter {
 		vim.set_entered(txt)
 		if cmd.OnComand(txt) {
-			cmd.history.add_if_need(command_history_record{txt, false})
+			cmd.command_history.add_if_need(command_history_record{txt, false})
 			cmd.Vim.EnterEscape()
 		}
 		return true
@@ -308,12 +310,15 @@ func (vi *Vim) HandleVimHistory(event *tcell.EventKey) bool {
 		switch event.Key() {
 		case tcell.KeyDown, tcell.KeyUp:
 			{
-
+				history := cmd.command_history
+				if vi.vi.Find {
+					history = cmd.find_history
+				}
 				var prev *command_history_record = nil
 				if event.Key() == tcell.KeyUp {
-					prev = cmd.history.prev()
+					prev = history.prev()
 				} else if event.Key() == tcell.KeyDown {
-					prev = cmd.history.next()
+					prev = history.next()
 				}
 				if prev != nil {
 					if !prev.Find {
@@ -361,7 +366,7 @@ func (v vi_find_handle) HanldeKey(event *tcell.EventKey) bool {
 		return true
 	}
 	txt := cmd.input.GetText()
-	history := cmd.history
+	history := cmd.find_history
 	c := command_history_record{txt, true}
 	if event.Key() == tcell.KeyEnter {
 		history.add_if_need(c)
