@@ -38,16 +38,13 @@ type TreeSitterSymbol struct {
 	Code       string
 }
 type TreeSitter struct {
-	filename string
-	parser   *sitter.Parser
-	tree     *sitter.Tree
-	// tsname     string
-	// lang       *sitter.Language
+	filename   string
+	parser     *sitter.Parser
+	tree       *sitter.Tree
 	sourceCode []byte
-	// Symbols     []TreeSitterSymbol
-	HlLine  t_symbol_line
-	Outline []*Symbol
-	tsdef   *ts_lang_def
+	HlLine     t_symbol_line
+	Outline    []*Symbol
+	tsdef      *ts_lang_def
 }
 
 func TreesitterCheckIsSourceFile(filename string) bool {
@@ -218,6 +215,14 @@ var tree_sitter_lang_map = []*ts_lang_def{
 }
 
 func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
+	if t.tsdef != nil {
+		go func() {
+			if t.HlLine != nil {
+				t.callback_to_ui(cb)
+			}
+		}()
+		return nil
+	}
 	for _, v := range tree_sitter_lang_map {
 		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 && v.hl != nil {
 			t.tsdef = v
@@ -326,6 +331,20 @@ func (ts ts_lang_def) read_embbed(p string) ([]byte, error) {
 	}
 	return []byte{}, err
 }
+
+var loaded_files = make(map[string]*TreeSitter)
+
+func GetNewTreeSitter(name string) *TreeSitter {
+	if len(name) == 0 {
+		return nil
+	}
+	if ts, ok := loaded_files[name]; ok {
+		return ts
+	}
+	v := NewTreeSitter(name)
+	loaded_files[name] = v
+	return v
+}
 func NewTreeSitter(name string) *TreeSitter {
 	ret := &TreeSitter{
 		parser:   sitter.NewParser(),
@@ -346,21 +365,18 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 		if hlerr != nil {
 			log.Println("fail to load highlights", hlerr)
 		}
-		// ret, local_err := ts.query("locals")
-		// if local_err != nil {
-		// 	log.Println("fail to load locals", local_err)
-		// } else {
-		// 	// symbols := get_ts_symbol(ret, ts)
-		// 	// ts.Outline = symbols
-		// }
-		if ts.tsdef.cb != nil {
-			ts.tsdef.cb(ts)
-		}
-		if cb != nil {
-			cb(ts)
-		}
+		ts.callback_to_ui(cb)
 	}()
 	return nil
+}
+
+func (ts *TreeSitter) callback_to_ui(cb func(*TreeSitter)) {
+	if ts.tsdef.cb != nil {
+		ts.tsdef.cb(ts)
+	}
+	if cb != nil {
+		cb(ts)
+	}
 }
 
 func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
