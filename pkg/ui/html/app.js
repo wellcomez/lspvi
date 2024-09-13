@@ -172,7 +172,7 @@ const term_init = (app) => {
     })
     old = ""
     term.open(document.getElementById('terminal'));
-    LoadLigaturesAddon();
+    // LoadLigaturesAddon();
     let f = new fullscreen_check(term)
     f.resize(false)
     fit.fit()
