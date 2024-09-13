@@ -57,15 +57,11 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 		if code.main == nil {
 			return
 		} else if len(ts.Outline) > 0 {
-			lspmgr := code.main.lspmgr
-			if lspmgr.Current == nil || !lspmgr.Current.HasLsp() {
-				lspmgr.Current = &lspcore.Symbol_file{
-					Class_object: ts.Outline,
-				}
-				code.main.symboltree.update(lspmgr.Current)
-			}
+			code.ts =ts
+			code.main.OnSymbolistChanged(nil,nil)
 		}
 		code.main.app.Draw()
 	})
 	return false
 }
+

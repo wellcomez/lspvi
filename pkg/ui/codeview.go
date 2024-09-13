@@ -62,6 +62,7 @@ type CodeView struct {
 	not_preview          bool
 	bgcolor              tcell.Color
 	colorscheme          *symbol_colortheme
+	ts                   *lspcore.TreeSitter
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -1029,7 +1030,7 @@ func (code CodeView) String() string {
 		if len < n {
 			posfix = sel[0:(len-3)/2] + "..." + sel[n-(len-3)/2:n]
 			return fmt.Sprintf("%-20s %d |%s", posfix, n, vim_x_y)
-		}else{
+		} else {
 			return fmt.Sprintf("%s %d |%s", posfix, n, vim_x_y)
 		}
 	}
@@ -1126,7 +1127,7 @@ func (code *CodeView) is_softwrap() bool {
 	return code.view.Buf.Settings["softwrap"] == true
 }
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
-
+	code.ts = nil
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.OpenBuffer(buffer)
 	code.config_wrap(filename)

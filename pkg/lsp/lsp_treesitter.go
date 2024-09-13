@@ -45,7 +45,6 @@ type TreeSitter struct {
 	HlLine     t_symbol_line
 	Outline    []*Symbol
 	tsdef      *ts_lang_def
-	inited     bool
 }
 
 func TreesitterCheckIsSourceFile(filename string) bool {
@@ -176,7 +175,7 @@ func (l lsp_dummy) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool
 	panic("unimplemented")
 }
 func markdown_parser(ts *TreeSitter) {
-	if ts.inited {
+	if len(ts.Outline) > 0 {
 		return
 	}
 	const head = "markup.heading"
@@ -353,7 +352,6 @@ func NewTreeSitter(name string) *TreeSitter {
 	ret := &TreeSitter{
 		parser:   sitter.NewParser(),
 		filename: name,
-		inited:   false,
 	}
 	ret.HlLine = make(map[int][]TreeSitterSymbol)
 	return ret
@@ -371,7 +369,6 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 			log.Println("fail to load highlights", hlerr)
 		}
 		ts.callback_to_ui(cb)
-		ts.inited = true
 	}()
 	return nil
 }

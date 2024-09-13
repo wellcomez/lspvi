@@ -317,13 +317,20 @@ func (m *mainui) gotoline(loc lsp.Location) {
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
-	if file.Filename != m.codeview.filename {
-		return
+	if file != nil {
+		if file.Filename != m.codeview.filename {
+			return
+		}
 	}
 	if err != nil {
 		m.logerr(err)
 	}
 	m.symboltree.update(file)
+	if file == nil || !file.HasLsp() {
+		if m.codeview.ts != nil {
+			m.symboltree.upate_with_ts(m.codeview.ts)
+		}
+	}
 }
 
 func (m *mainui) logerr(err error) {
@@ -428,7 +435,7 @@ func (m *mainui) async_open(file string) {
 		})
 	} else {
 		m.app.QueueUpdate(func() {
-			m.symboltree.update(symbolfile)
+			m.OnSymbolistChanged(symbolfile, nil)
 			m.app.ForceDraw()
 		})
 	}
@@ -804,7 +811,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
 		}
-		titlename := fmt.Sprintf("%s ",main.codeview.filename)
+		titlename := fmt.Sprintf("%s ", main.codeview.filename)
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {

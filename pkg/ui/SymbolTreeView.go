@@ -487,3 +487,10 @@ func add_symbol_node_color(query *symbol_colortheme, c *lspcore.Symbol, cc *tvie
 		}
 	}
 }
+func (symboltree *SymbolTreeView) upate_with_ts(ts *lspcore.TreeSitter) *lspcore.Symbol_file {
+	Current := &lspcore.Symbol_file{
+		Class_object: ts.Outline,
+	}
+	symboltree.update(Current)
+	return Current
+}
