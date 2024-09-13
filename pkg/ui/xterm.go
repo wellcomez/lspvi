@@ -69,6 +69,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		var w init_call
 		err = json.Unmarshal(message, &w)
 		if err == nil {
+			log.Println("received call message", w.Call)
 			switch w.Call {
 			case "init":
 				{
@@ -128,6 +129,20 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						}
 						// ptystdio.File.Write([]byte(key.Data))
 						continue
+					}
+				}
+			case "zoom":
+				{
+					var file Ws_font_size
+					err = json.Unmarshal(message, &file)
+					log.Println("zoom called", file, err)
+					if err == nil {
+						if buf, err := msgpack.Marshal(Ws_font_size{
+							Zoom: file.Zoom,
+							Call: "zoom",
+						}); err == nil {
+							sss.imp.write_ws(buf)
+						}
 					}
 				}
 			case "openfile":

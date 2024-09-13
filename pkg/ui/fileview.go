@@ -174,6 +174,10 @@ func menu_copy_path(ret *file_tree_view, hide bool) context_menu_item {
 	return external_open
 }
 
+type Ws_font_size struct {
+	Call string
+	Zoom bool
+}
 type Ws_open_file struct {
 	Call     string
 	Filename string
@@ -206,7 +210,13 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 	}
 	return external_open
 }
-
+func set_browser_font(zoom bool, ws string) {
+	if buf, err := json.Marshal(&Ws_font_size{Zoom: zoom, Call: "zoom"}); err == nil {
+		SendWsData(buf, ws)
+	} else {
+		log.Println("zoom", zoom, err)
+	}
+}
 func open_in_web(filename, ws string) {
 	buf, err := os.ReadFile(filename)
 	if err == nil {
@@ -305,7 +315,7 @@ func (view *file_tree_view) dir_replace(node *tview.TreeNode, filename string) {
 		view.view.SetTitle(title)
 		// x := node.GetText(A)
 		title2 := filename
-		if len(title2)>len(view.rootdir){
+		if len(title2) > len(view.rootdir) {
 			title2 = strings.TrimPrefix(title2, view.rootdir)
 		}
 		root2 := tview.NewTreeNode(title2)

@@ -124,7 +124,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		cursor.Loc = code.tab_loc(pos)
 		cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		right_menu_data.rightmenu_loc = cursor.CurSelection[0]
-		log.Println("before", cursor.CurSelection)
+		// log.Println("before", cursor.CurSelection)
 		loc := SelectWord(root.View, cursor)
 		_, s := get_codeview_text_loc(root.View, loc.CurSelection[0], loc.CurSelection[1])
 		menu.code.right_menu_data.select_text = s
@@ -347,6 +347,14 @@ func update_selection_menu(ret *CodeView) {
 		{item: create_menu_item(toggle_outline), handle: func() {
 			main.toggle_view(view_outline_list)
 		}},
+		{item: create_menu_item("-"), handle: func() {
+		}, hide: !main.tty},
+		{item: create_menu_item("Zoom-in Browser"), handle: func() {
+			main.ZoomWeb(false)
+		}, hide: !main.tty},
+		{item: create_menu_item("Zoom-out Browser"), handle: func() {
+			main.ZoomWeb(true)
+		}, hide: !main.tty},
 	}
 	ret.rightmenu_items = addjust_menu_width(items)
 }

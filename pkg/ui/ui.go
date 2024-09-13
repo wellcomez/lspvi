@@ -372,6 +372,10 @@ func (m *mainui) open_wks_query() {
 	m.layout.dialog.open_wks_query(m.lspmgr.Current)
 }
 
+func (m *mainui) ZoomWeb(zoom bool) {
+	set_browser_font(zoom, m.ws)
+}
+
 // OpenFile
 // OpenFile
 func (m *mainui) OpenFile(file string, loc *lsp.Location) {
@@ -1042,7 +1046,7 @@ func (vl *view_link) next_view(t direction) view_id {
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// eventname := event.Name()
 	// log.Println("main ui recieved ",
-		// main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
+	// main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
 	//Ctrl+O
 	if main.layout.dialog.Visible {
 		main.layout.dialog.handle_key(event)

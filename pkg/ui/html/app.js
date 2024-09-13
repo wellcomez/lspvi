@@ -126,6 +126,8 @@ const term_init = (app) => {
         e.preventDefault();
         e.stopPropagation();
     };
+    var fontSize = get_font_size();
+    set_font_size(fontSize)
     var term = new Terminal({
         allowProposedApi: true,
         cursorStyle: 'bar',  // 默认为块状光标
@@ -138,7 +140,8 @@ const term_init = (app) => {
         x10Mouse: true,
         vt300Mouse: true,
         MouseEvent: true,
-        // fontFamily: '"Cascadia Code","Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
+        fontSize: fontSize,
+        fontFamily: '"Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
         // minimumContrastRatio: 1,
     });
     var wl = new WebglAddon.WebglAddon()
@@ -215,7 +218,18 @@ socket_int = (term, app) => {
             if (Call == "term") {
                 term.write(Output)
             }
-            else if (Call == "openfile") {
+            else if (Call == "zoom") {
+                var { Zoom } = data
+                let fontsize = get_font_size()
+                if (Zoom) {
+                    fontsize++
+                } else {
+                    fontsize--
+                }
+                set_font_size(fontsize)
+                window.location.reload()
+                console.log("zoom", Zoom)
+            } else if (Call == "openfile") {
                 console.log("openfile",
                     data.Filename)
                 let ext = getFileExtension(data.Filename)
@@ -255,3 +269,13 @@ main = () => {
     socket_int(term, app)
 }
 main()
+function set_font_size(fontSize) {
+    window.localStorage.setItem("fontsize", fontSize);
+}
+function get_font_size() {
+    var fontSize = window.localStorage.getItem("fontsize");
+    if (fontSize == undefined||fontSize=="undefined") {
+        fontSize = 12;
+    }
+    return fontSize;
+}

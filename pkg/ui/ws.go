@@ -20,5 +20,9 @@ func SendWsData(t []byte, ws string) {
 	}
 	// defer c.Close()
 	err := con.WriteMessage(websocket.TextMessage, t)
-	log.Println("ws errr", err)
+	if err != nil {
+		log.Println("WebSocket发送消息失败:", err)
+	}else{
+		log.Println("send to ",ws,len(t))
+	}
 }
