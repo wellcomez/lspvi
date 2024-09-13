@@ -20,11 +20,14 @@ import (
 	ts_c "github.com/smacker/go-tree-sitter/c"
 	ts_cpp "github.com/smacker/go-tree-sitter/cpp"
 	ts_go "github.com/smacker/go-tree-sitter/golang"
+	ts_java "github.com/smacker/go-tree-sitter/java"
 	ts_js "github.com/smacker/go-tree-sitter/javascript"
 	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
 	ts_py "github.com/smacker/go-tree-sitter/python"
+	ts_rust "github.com/smacker/go-tree-sitter/rust"
 	ts_tsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 	ts_ts "github.com/smacker/go-tree-sitter/typescript/typescript"
+	ts_yaml "github.com/smacker/go-tree-sitter/yaml"
 	//"github.com/smacker/go-tree-sitter/markdown"
 )
 
@@ -74,7 +77,7 @@ type ts_lang_def struct {
 
 const query_highlights = "highlights"
 const query_locals = "locals"
-
+// const query_textobjects = "textobjects"
 func new_tsdef(
 	name string,
 	filedetect lsplang,
@@ -243,6 +246,9 @@ func bash_parser(ts *TreeSitter) {
 }
 
 var tree_sitter_lang_map = []*ts_lang_def{
+	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(bash_parser),
+	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(bash_parser),
+	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(bash_parser),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
 	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()),
 	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}),
