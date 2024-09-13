@@ -40,6 +40,7 @@ type TreeSitterSymbol struct {
 	Begin, End Point
 	SymobName  string
 	Code       string
+	Symbol     string
 }
 type TreeSitter struct {
 	filename   string
@@ -77,6 +78,7 @@ type ts_lang_def struct {
 
 const query_highlights = "highlights"
 const query_locals = "locals"
+
 // const query_textobjects = "textobjects"
 func new_tsdef(
 	name string,
@@ -309,7 +311,7 @@ func (t *TreeSitter) query_buf(q *sitter.Query) (t_symbol_line, error) {
 			name := c.Node.Content(t.sourceCode)
 
 			hlname := captureName
-			s := TreeSitterSymbol{Point(start), Point(end), hlname, name}
+			s := TreeSitterSymbol{Point(start), Point(end), hlname, name, t.tsdef.tslang.SymbolName(c.Node.Symbol())}
 
 			row := int(s.Begin.Row)
 			if _, ok := SymbolsLine[row]; !ok {
@@ -428,39 +430,36 @@ func (ts *TreeSitter) callback_to_ui(cb func(*TreeSitter)) {
 func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 	prefix := "local.definition."
 	symbols := []lsp.SymbolInformation{}
-	scopes := []lsp.Range{}
+	scopes := []TreeSitterSymbol{}
 	for lineno := range ret {
 		line := ret[lineno]
 		for i := 0; i < len(line); i++ {
 			s := line[i]
+			pos := fmt.Sprint(s.Begin.Row, ":", s.Begin.Column, s.End.Row, ":", s.End.Column)
+			Range := s.lsprange()
 			if strings.Index(s.SymobName, prefix) == 0 {
 				symboltype := strings.Replace(s.SymobName, prefix, "", 1)
 				symbol_kind := map[string]lsp.SymbolKind{
 					"method":      lsp.SymbolKindMethod,
 					"function":    lsp.SymbolKindFunction,
 					"namespace":   lsp.SymbolKindNamespace,
+					"field":       lsp.SymbolKindMethod,
 					"var":         lsp.SymbolKindVariable,
 					"constructor": lsp.SymbolKindConstructor,
 					"type.class":  lsp.SymbolKindClass,
+					"type":        lsp.SymbolKindClass,
 				}
 				if kind, ok := symbol_kind[symboltype]; ok {
-					Range := s.lsprange()
-
 					log.Println("outline", s.Code, symboltype)
 					add := true
 					switch kind {
 					case lsp.SymbolKindVariable:
 						{
-							for _, v := range scopes {
-								if Range.Start.AfterOrEq(v.Start) && Range.End.BeforeOrEq(v.End) {
-									add = false
-									break
-								}
-							}
+							add = newFunction(scopes, Range, add)
 						}
 					}
 					if !add {
-						log.Println("unhandled skip symboltype:", symboltype)
+						log.Println("unhandled skip symboltype:", symboltype, s.Code, pos, s.Symbol)
 						continue
 					}
 
@@ -474,15 +473,41 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 					}
 					symbols = append(symbols, s)
 				} else {
-					log.Println("unhandled symboltype:", symboltype)
+					log.Println("unhandled-symboltype:", symboltype, s.Code, pos, s.Symbol)
 				}
 			} else if s.SymobName == "local.scope" {
-				log.Println("unhandled symbol name:", s.SymobName, s.Code)
-				scopes = append(scopes, s.lsprange())
+				log.Println("unhandled symbol-name:", s.SymobName, pos, s.Symbol)
+				scopes = append(scopes, s)
+			} else {
+				add := newFunction(scopes, Range, true)
+				if add {
+					s := lsp.SymbolInformation{
+						Name: s.Code,
+						Kind: lsp.SymbolKindClass,
+						Location: lsp.Location{
+							URI:   lsp.NewDocumentURI(ts.filename),
+							Range: Range,
+						},
+					}
+					symbols = append(symbols, s)
+				}
+				log.Println("unhandled symbol-name:", s.SymobName, s.Code, pos, s.Symbol)
 			}
 		}
 	}
 	return symbols
+}
+
+func newFunction(scopes []TreeSitterSymbol, Range lsp.Range, add bool) bool {
+	for _, v := range scopes {
+		if Range.Start.AfterOrEq(v.lsprange().Start) && Range.End.BeforeOrEq(v.lsprange().End) {
+			if v.Symbol == "method_declaration" {
+				add = false
+			}
+			break
+		}
+	}
+	return add
 }
 
 func (s TreeSitterSymbol) lsprange() lsp.Range {
