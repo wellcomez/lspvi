@@ -243,7 +243,79 @@ func ts_to_symbol(s TreeSitterSymbol, ts *TreeSitter) lsp.SymbolInformation {
 	}
 	return ss
 }
-
+func java_outline(ts *TreeSitter) {
+	if len(ts.Outline) > 0 {
+		return
+	}
+	items := []*lsp.SymbolInformation{}
+	if ts.tsdef.outline != nil {
+		ret, err := ts.query_buf(ts.tsdef.outline)
+		if err != nil {
+			return
+		}
+		keys := []int{}
+		for i := range ret {
+			keys = append(keys, i)
+		}
+		sort.Ints(keys)
+		for _, lineno := range keys {
+			line, err := ret[lineno]
+			if !err {
+				continue
+			}
+			for _, item := range line {
+				if item.Symbol == "line_comment" {
+					continue
+				}
+				code := item.Code
+				Range := item.lsprange()
+				switch item.SymbolName {
+				case "definition.method", "definition.class","definition.interface":
+					{
+						code = item.PositionInfo()
+						c := ts_to_symbol(item, ts)
+						switch item.Symbol {
+						case "interface_declaration":
+							c.Kind = lsp.SymbolKindInterface
+						case "type_declaration":
+							c.Kind = lsp.SymbolKindClass
+						case "field_declaration":
+							c.Kind = lsp.SymbolKindField
+						case "enum_specifier":
+							c.Kind = lsp.SymbolKindEnum
+						case "method_declaration":
+							c.Kind = lsp.SymbolKindMethod
+						case "struct_specifier":
+							c.Kind = lsp.SymbolKindStruct
+						case "class_specifier","class_declaration":
+							c.Kind = lsp.SymbolKindClass
+						case "function_definition", "function_declaration", "function_item":
+							c.Kind = lsp.SymbolKindFunction
+						default:
+							log.Printf("query_result:%s| symbol:%20s    | code:%20s", item.SymbolName, item.Symbol, item.Code)
+						}
+						items = append(items, &c)
+					}
+				case "name":
+					{
+						foreach_check(items, Range, &item, func(v *lsp.SymbolInformation, tss *TreeSitterSymbol) bool {
+							v.Name = tss.Code
+							return true
+						})
+					}
+				}
+				log.Printf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
+			}
+		}
+	}
+	var s = Symbol_file{lsp: lsp_base{core: &lspcore{lang: lsp_dummy{}}}}
+	document_symbol := []lsp.SymbolInformation{}
+	for _, v := range items {
+		document_symbol = append(document_symbol, *v)
+	}
+	s.build_class_symbol(document_symbol, 0, nil)
+	ts.Outline = s.Class_object
+}
 func rs_outline(ts *TreeSitter) {
 	if len(ts.Outline) > 0 {
 		return
@@ -276,6 +348,8 @@ func rs_outline(ts *TreeSitter) {
 						code = item.PositionInfo()
 						c := ts_to_symbol(item, ts)
 						switch item.Symbol {
+						case "interface_declaration":
+							c.Kind = lsp.SymbolKindInterface
 						case "type_declaration":
 							c.Kind = lsp.SymbolKindClass
 						case "field_declaration":
@@ -389,7 +463,7 @@ func bash_parser(ts *TreeSitter) {
 var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(rs_outline),
-	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(bash_parser),
+	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(java_outline),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
 	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(rs_outline).set_default_outline(),
 	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}).setparser(rs_outline),

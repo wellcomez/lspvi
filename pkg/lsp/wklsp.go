@@ -159,7 +159,7 @@ func (sym Symbol) Is_class() bool {
 }
 
 func is_class(kind lsp.SymbolKind) bool {
-	return kind == lsp.SymbolKindClass || kind == lsp.SymbolKindStruct
+	return kind == lsp.SymbolKindClass || kind == lsp.SymbolKindStruct || kind == lsp.SymbolKindInterface
 }
 func is_memeber(kind lsp.SymbolKind) bool {
 	return kind == lsp.SymbolKindMethod || kind == lsp.SymbolKindField || kind == lsp.SymbolKindConstructor
