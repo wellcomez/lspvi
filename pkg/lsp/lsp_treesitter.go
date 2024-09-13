@@ -74,10 +74,12 @@ type ts_lang_def struct {
 	parser     func(*TreeSitter)
 	hl         *sitter.Query
 	local      *sitter.Query
+	outline    *sitter.Query
 }
 
 const query_highlights = "highlights"
 const query_locals = "locals"
+const query_outline = "outline"
 
 // const query_textobjects = "textobjects"
 func new_tsdef(
@@ -93,6 +95,7 @@ func new_tsdef(
 		nil,
 		nil,
 		nil,
+		nil,
 	}
 	go func() {
 		if h, er := ret.query(query_highlights); er == nil {
@@ -100,6 +103,9 @@ func new_tsdef(
 		}
 		if h, er := ret.query(query_locals); er == nil {
 			ret.local = h
+		}
+		if h, er := ret.query(query_outline); er == nil {
+			ret.outline = h
 		}
 	}()
 	return ret
@@ -437,16 +443,16 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 			s := line[i]
 			pos := fmt.Sprint(s.Begin.Row, ":", s.Begin.Column, s.End.Row, ":", s.End.Column)
 			if s.SymobName == "local.scope" {
-				if strings.Index(s.Symbol,"expression")>0{
+				if strings.Index(s.Symbol, "expression") > 0 {
 					continue
 				}
 				switch s.Symbol {
-				case "method_declaration", "function_definition","if_expression","function_item","closure_expression","block":
+				case "method_declaration", "function_definition", "if_expression", "function_item", "closure_expression", "block":
 					{
 						scopes = append(scopes, s)
 					}
 				default:
-					log.Println("=====================",s.SymobName,s.Symbol,pos)
+					log.Println("=====================", s.SymobName, s.Symbol, pos)
 				}
 			}
 		}
@@ -463,14 +469,14 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 					"method":      lsp.SymbolKindMethod,
 					"function":    lsp.SymbolKindFunction,
 					"namespace":   lsp.SymbolKindNamespace,
-					"field":       lsp.SymbolKindVariable,
+					"field":       lsp.SymbolKindField,
 					"var":         lsp.SymbolKindVariable,
 					"constructor": lsp.SymbolKindConstructor,
 					"type.class":  lsp.SymbolKindClass,
 					"type":        lsp.SymbolKindClass,
 				}
 				if kind, ok := symbol_kind[symboltype]; ok {
-					log.Println("outline", s.Code, symboltype,pos)
+					log.Println("outline", s.Code, symboltype, pos)
 					add := true
 					switch kind {
 					case lsp.SymbolKindVariable:
