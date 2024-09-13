@@ -310,8 +310,9 @@ func java_outline(ts *TreeSitter) {
 						c.Name = item.Code
 						items = append(items, &c)
 					}
+				default:
+					log.Printf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
 				}
-				log.Printf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
 			}
 		}
 	}
@@ -352,7 +353,6 @@ func rs_outline(ts *TreeSitter) {
 				switch item.SymbolName {
 				case "item":
 					{
-						code = item.PositionInfo()
 						c := ts_to_symbol(item, ts)
 						switch item.Symbol {
 						case "interface_declaration":
@@ -406,8 +406,9 @@ func rs_outline(ts *TreeSitter) {
 							return true
 						})
 					}
+				default:
+					log.Printf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
 				}
-				log.Printf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
 			}
 		}
 	}

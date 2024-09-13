@@ -488,7 +488,7 @@ func get_codeview_text_loc(view *femto.View, b femto.Loc, e femto.Loc) (int, str
 	lines := []string{}
 	line := view.Buf.Line(b.Y)
 	if len(line) < b.X {
-		log.Printf("line %s b.X=%d error b:(%d,%d) e:(%d,%d)", line, b.X, b.X, b.Y, e.X, e.Y)
+		// log.Printf("line %s b.X=%d error b:(%d,%d) e:(%d,%d)", line, b.X, b.X, b.Y, e.X, e.Y)
 
 	} else {
 		if b.Y == e.Y {
@@ -510,7 +510,7 @@ func get_codeview_text_loc(view *femto.View, b femto.Loc, e femto.Loc) (int, str
 	if b.Y != e.Y {
 		line = view.Buf.Line(e.Y)
 		if len(line) < e.X {
-			log.Printf("line %s e.X=%d error b:(%d,%d) e:(%d,%d)", line, e.X, b.X, b.Y, e.X, e.Y)
+			// log.Printf("line %s e.X=%d error b:(%d,%d) e:(%d,%d)", line, e.X, b.X, b.Y, e.X, e.Y)
 		} else {
 			line = line[:e.X]
 		}
