@@ -141,7 +141,10 @@ const term_init = (app) => {
         vt300Mouse: true,
         MouseEvent: true,
         fontSize: fontSize,
-        fontFamily: '"Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
+        // fontFamily: '"Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
+        // fontFamily: 'Hack, "Fira Code", monospace',
+        fontFamily: 'Hack Nerd Font'
+
         // minimumContrastRatio: 1,
     });
     var wl = new WebglAddon.WebglAddon()
