@@ -442,15 +442,14 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		bottom := root.Bottomline()
 		if root.bookmark != nil {
 			for _, v := range root.bookmark.LineMark {
-				if v.Line > root.Topline && v.Line < bottom {
-					b = append(b, v.Line-root.Topline)
+				line := v.Line - 1
+				if line >= root.Topline && line <= bottom {
+					b = append(b, line)
 				}
 			}
-			for _, by := range b {
-				posx := x
-				posy := by + topY - 1
-				posx, posy = root.VirtualLine(posy, posx)
-				screen.SetContent(posx, posy, 'B', nil, style.Foreground(tcell.ColorGreenYellow).Background(root.GetBackgroundColor()))
+			for _, line := range b {
+				by := root.GetLineNoFormDraw(line) - root.Topline
+				screen.SetContent(x, by+topY, 'B', nil, style.Foreground(tcell.ColorGreenYellow).Background(root.GetBackgroundColor()))
 			}
 		}
 		return root.GetInnerRect()
