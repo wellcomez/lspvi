@@ -42,6 +42,12 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 	}
 	code.view.Buf.SetTreesitter(code.tree_sitter)
 	code.view.SetColorscheme(mgr.colorscheme)
+	go func() {
+		if GlobalApp != nil {
+			GlobalApp.QueueUpdateDraw(func() {
+			})
+		}
+	}()
 	return false
 }
 

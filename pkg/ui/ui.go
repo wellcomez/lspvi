@@ -545,6 +545,7 @@ func (main *mainui) update_log_view(s string) {
 }
 
 var apparg Arguments
+var GlobalApp *tview.Application
 
 func MainUI(arg *Arguments) {
 	apparg = *arg
@@ -603,8 +604,9 @@ func MainUI(arg *Arguments) {
 	main.cmdline = new_cmdline(main)
 	var logfile, _ = os.OpenFile(lspviroot.logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
-	app := tview.NewApplication()
-	main.app = app
+	GlobalApp = tview.NewApplication()
+	app:=GlobalApp
+	main.app = GlobalApp
 
 	editor_area := create_edit_area(main)
 	console_layout, tab_area := create_console_area(main)
