@@ -46,13 +46,35 @@
             z-index: 2;
         }
 
+        .md::-webkit-scrollbar {
+            width: 12px;
+            /* 滚动条宽度 */
+        }
+
+        .md::-webkit-scrollbar-track {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .md::-webkit-scrollbar-thumb {
+            background-color: darkgrey;
+            border-radius: 6px;
+        }
+
         .md {
+            border: 1px solid #ccc;
+            /* 边框，为了视觉上的区分 */
+
+            overflow-y: auto;
+            /* 当内容超出div高度时显示垂直滚动条 */
             position: absolute;
             /* display: flex; */
             top: 5%;
             right: 5%;
             left: 5%;
             background-color: whitesmoke;
+            padding: 20px;
+            height: 600px;
+            overflow: hidden;
             /* height: 80%; */
             /* padding: 20px; */
             /* justify-content: center; */
@@ -64,8 +86,7 @@
         <div class="image-div" v-if="isVisible">
             <img style="max-width: 100%;" :src="imageurl" />
         </div>
-        <div v-if="isVisibleMd">
-            <div class="md" ></div>
+        <div class="md" v-if="isVisibleMd">
         </div>
     </div>
     <div id="terminal"></div>

@@ -105,10 +105,27 @@ md_init = () => {
             return '<pre><code class="hljs">' + mdIt.utils.escapeHtml(str) + '</code></pre>';
         }
     })
-    return mdIt
+    class md {
+        constructor() {
+            this.md = mdIt
+        }
+        on_wheel = (evt) => {
+            let div = document.getElementsByClassName("md")[0]
+            let top = div.scrollTop + evt.deltaY
+            div.scroll(div.scrollLeft, top)
+        }
+        render = (url) => {
+            axios.get(url, { responseType: "text" }).then((resp) => {
+                let ss = this.md.render(resp.data)
+                let div = document.getElementsByClassName("md")[0]
+                div.innerHTML = ss
+            });
+        }
+    }
+    return new md()
 }
 app_init = () => {
-
+    var md = md_init()
     let app = new Vue({
         el: '#app',
         data: {
@@ -122,7 +139,10 @@ app_init = () => {
                 this.set_visible({})
             },
             on_wheel(evt) {
-                // return this.isVisible == true
+                if (this.isVisibleMd) {
+                    md.on_wheel(evt)
+                    return true
+                }
             },
             set_visible(a) {
                 var { isVisibleMd, isVisible } = a
@@ -136,15 +156,10 @@ app_init = () => {
             popmd(image) {
                 let u = image
                 app.set_visible({ isVisibleMd: true })
-                axios.get(u, { responseType: "text" }).then((resp) => {
-                    let ss = md.render(resp.data)
-                    let div = document.getElementsByClassName("md")[0]
-                    div.innerHTML=ss
-                }); 
+                md.render(u)
             }
         }
     })
-    var md = md_init()
     document.addEventListener("click", function () {
         app.onhide()
     })
