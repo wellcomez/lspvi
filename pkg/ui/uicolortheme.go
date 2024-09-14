@@ -7,7 +7,7 @@ import (
 	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	lspcore "zen108.com/lspvi/pkg/lsp"
+	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type symbol_colortheme struct {
@@ -35,37 +35,48 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 	if n, ok := mgr.colorscheme["normal"]; ok {
 		mgr.colorscheme["default"] = n
 		_, bg, _ := n.Decompose()
-		main := mgr.main
-		if main != nil {
-			for _, v := range all_view_list {
-				v.to_box(main).SetBackgroundColor(bg)
-			}
-			tview.Styles.PrimitiveBackgroundColor = bg
-			main.layout.console.SetBackgroundColor(bg)
-			main.page.SetBackgroundColor(bg)
-			main.layout.editor_area.SetBackgroundColor(bg)
-			main.layout.tab_area.SetBackgroundColor(bg)
-			main.statusbar.SetBackgroundColor(bg)
-			main.console_index_list.SetBackgroundColor(bg)
-			main.layout.dialog.Frame.SetBackgroundColor(bg)
-			main.symboltree.update(main.lspmgr.Current)
+		if mgr.main != nil {
+			mgr.main.set_widget_theme(bg)
 		}
 		code.bgcolor = bg
 	}
-
-	code.view.SetColorscheme(mgr.colorscheme, func(ts *lspcore.TreeSitter) {
-		if code.main == nil {
-			return
-		} else if len(ts.Outline) > 0 {
-			code.ts = ts
-			if ts.DefaultOutline() {
-				lsp := code.main.symboltree.upate_with_ts(ts)
-				code.main.lspmgr.Current = lsp
-			} else {
-				code.main.OnSymbolistChanged(nil, nil)
-			}
+	code.view.Buf.SetTreesitter(code.tree_sitter)
+	code.view.SetColorscheme(mgr.colorscheme)
+	go func() {
+		if GlobalApp != nil {
+			GlobalApp.QueueUpdateDraw(func() {
+			})
 		}
-		code.main.app.Draw()
-	})
+	}()
 	return false
 }
+
+func (main *mainui) set_widget_theme(bg tcell.Color) {
+	for _, v := range all_view_list {
+		v.to_box(main).SetBackgroundColor(bg)
+	}
+	tview.Styles.PrimitiveBackgroundColor = bg
+	main.layout.console.SetBackgroundColor(bg)
+	main.page.SetBackgroundColor(bg)
+	main.layout.editor_area.SetBackgroundColor(bg)
+	main.layout.tab_area.SetBackgroundColor(bg)
+	main.statusbar.SetBackgroundColor(bg)
+	main.console_index_list.SetBackgroundColor(bg)
+	main.layout.dialog.Frame.SetBackgroundColor(bg)
+	main.symboltree.update(main.lspmgr.Current)
+}
+
+// func (code *CodeView)update_with_ts_inited(ts *lspcore.TreeSitter) {
+// 	if code.main == nil {
+// 		return
+// 	} else if len(ts.Outline) > 0 {
+// 		code.ts = ts
+// 		if ts.DefaultOutline() {
+// 			lsp := code.main.symboltree.upate_with_ts(ts)
+// 			code.main.lspmgr.Current = lsp
+// 		} else {
+// 			code.main.OnSymbolistChanged(nil, nil)
+// 		}
+// 	}
+// 	code.main.app.Draw()
+// }

@@ -314,6 +314,7 @@ func (fzf *fzf_on_listview) refresh_list() {
 			}
 		})
 	}
+	fzf.listview.SetCurrentItem(0)
 }
 
 func (log *logview) update_log_view(s string) {

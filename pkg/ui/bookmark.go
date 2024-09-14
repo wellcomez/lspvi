@@ -16,7 +16,7 @@ type bookmark_changed interface {
 	onsave()
 }
 type LineMark struct {
-	Line    int
+	Line    int //linenumber not buffindex begin with 1
 	Text    string
 	Comment string
 }

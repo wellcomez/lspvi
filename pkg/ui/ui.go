@@ -381,11 +381,16 @@ func (m *mainui) ZoomWeb(zoom bool) {
 func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	if m.tty {
 		ext := filepath.Ext(file)
+		open_in_image_set := []string{".png", ".md"}
 		image := []string{".png"}
-		for _, v := range image {
+		for _, v := range open_in_image_set {
 			if v == ext {
 				open_in_web(file, m.ws)
-				return
+				for _, shouldret := range image {
+					if shouldret == ext {
+						return
+					}
+				}
 			}
 		}
 
@@ -422,6 +427,7 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
 	m.codeview.Load(file)
+
 	if loc != nil {
 		lins := m.codeview.view.Buf.LinesNum()
 		loc.Range.Start.Line = min(lins-1, loc.Range.Start.Line)
@@ -544,6 +550,7 @@ func (main *mainui) update_log_view(s string) {
 }
 
 var apparg Arguments
+var GlobalApp *tview.Application
 
 func MainUI(arg *Arguments) {
 	apparg = *arg
@@ -602,8 +609,9 @@ func MainUI(arg *Arguments) {
 	main.cmdline = new_cmdline(main)
 	var logfile, _ = os.OpenFile(lspviroot.logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
-	app := tview.NewApplication()
-	main.app = app
+	GlobalApp = tview.NewApplication()
+	app := GlobalApp
+	main.app = GlobalApp
 
 	editor_area := create_edit_area(main)
 	console_layout, tab_area := create_console_area(main)

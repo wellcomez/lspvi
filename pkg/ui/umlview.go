@@ -64,7 +64,12 @@ func (v *umlview) openfile(name string) {
 	}
 
 	v.preview.Clear()
-	if ext == ".png" {
+	if ext == ".md" {
+		if v.main.tty {
+			open_in_web(name, v.main.ws)
+			return
+		}
+	} else if ext == ".png" {
 		if v.main.tty {
 			open_in_web(name, v.main.ws)
 			return

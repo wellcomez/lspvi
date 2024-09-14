@@ -1,7 +1,6 @@
 package mainui
 
 import (
-	"embed"
 	"errors"
 	"fmt"
 	"log"
@@ -17,6 +16,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/treesittertheme"
 	// "github.com/gdamore/tcell"
 )
 
@@ -50,6 +50,7 @@ func (data right_menu_data) SelectInEditor(c *femto.Cursor) {
 type CodeView struct {
 	*view_link
 	filename             string
+	tree_sitter          *lspcore.TreeSitter
 	view                 *codetextview
 	theme                string
 	main                 *mainui
@@ -110,11 +111,11 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	yOffset := code.yOfffset()
 	xOffset := code.xOffset()
 	// offsetx:=3
-	pos := femto.Loc{
+	pos := mouse_event_pos{
 		Y: posY + root.Topline - yOffset,
 		X: posX - int(xOffset),
 	}
-	pos = avoid_position_overflow(root, pos)
+	// pos = avoid_position_overflow(root, pos)
 
 	if action == tview.MouseRightClick {
 		selected := code.get_selected_lines()
@@ -441,12 +442,14 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		bottom := root.Bottomline()
 		if root.bookmark != nil {
 			for _, v := range root.bookmark.LineMark {
-				if v.Line > root.Topline && v.Line < bottom {
-					b = append(b, v.Line-root.Topline)
+				line := v.Line - 1
+				if line >= root.Topline && line <= bottom {
+					b = append(b, line)
 				}
 			}
-			for _, by := range b {
-				screen.SetContent(x, by+topY-1, 'B', nil, style.Foreground(tcell.ColorGreenYellow).Background(root.GetBackgroundColor()))
+			for _, line := range b {
+				by := root.GetLineNoFormDraw(line) - root.Topline
+				screen.SetContent(x, by+topY, 'B', nil, style.Foreground(tcell.ColorGreenYellow).Background(root.GetBackgroundColor()))
 			}
 		}
 		return root.GetInnerRect()
@@ -541,6 +544,11 @@ func (code *CodeView) handle_mouse(action tview.MouseAction, event *tcell.EventM
 	// log.Println("action", action, "x:", x, "y:", y, "loc1:", loc1, "loc2:", loc2)
 	return a, b
 }
+
+type mouse_event_pos struct {
+	X, Y int
+}
+
 func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if code.main == nil {
 		return action, event
@@ -557,76 +565,79 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	yOffset := code.yOfffset()
 	xOffset := code.xOffset()
 	// offsetx:=3
-	pos := femto.Loc{
+	pos := mouse_event_pos{
 		Y: posY + root.Topline - yOffset,
 		X: posX - int(xOffset),
 	}
-	pos = avoid_position_overflow(root, pos)
+	// pos = avoid_position_overflow(root, pos)
 
 	if !InRect(event, root) {
 		return action, event
 	}
+	switch action {
 
-	if action == tview.MouseLeftDoubleClick {
-		root.Cursor.Loc = code.tab_loc(pos)
-		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
-		root.Cursor.SelectWord()
-		code.main.codeview.action_goto_define()
-		return tview.MouseConsumed, nil
-	}
-	if action == tview.MouseLeftDown || action == tview.MouseRightClick {
-		code.main.set_viewid_focus(view_code)
-		code.mouse_select_area = true
-		//log.Print(x1, y1, x2, y2, "down")
-		pos = code.tab_loc(pos)
-		code.view.Cursor.SetSelectionStart(pos)
-		code.view.Cursor.SetSelectionEnd(pos)
-		return tview.MouseConsumed, nil
-	}
-	if action == tview.MouseMove {
-		if code.mouse_select_area {
-			pos = code.tab_loc(pos)
+	case tview.MouseLeftDoubleClick:
+		{
+			root.Cursor.Loc = code.tab_loc(pos)
+			root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
+			root.Cursor.SelectWord()
+			code.main.codeview.action_goto_define()
+		}
+	case tview.MouseLeftDown, tview.MouseRightClick:
+		{
+			code.main.set_viewid_focus(view_code)
+			code.mouse_select_area = true
+			//log.Print(x1, y1, x2, y2, "down")
+			pos := code.tab_loc(pos)
+			code.view.Cursor.SetSelectionStart(pos)
 			code.view.Cursor.SetSelectionEnd(pos)
 		}
-		return tview.MouseConsumed, nil
-	}
-	if action == tview.MouseLeftUp {
-		if code.mouse_select_area {
-			code.view.Cursor.SetSelectionEnd(code.tab_loc(pos))
+	case tview.MouseMove:
+		{
+			if code.mouse_select_area {
+				pos := code.tab_loc(pos)
+				code.view.Cursor.SetSelectionEnd(pos)
+			}
+		}
+	case tview.MouseLeftUp:
+		{
+			if code.mouse_select_area {
+				code.view.Cursor.SetSelectionEnd(code.tab_loc(pos))
+				code.mouse_select_area = false
+			}
+		}
+	case tview.MouseLeftClick:
+		{
+			code.main.set_viewid_focus(view_code)
 			code.mouse_select_area = false
+			root.Cursor.Loc = code.tab_loc(pos)
+			root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
+			root.Cursor.SetSelectionEnd(femto.Loc{X: pos.X, Y: pos.Y})
+			code.update_with_line_changed()
 		}
-		//log.Print(x1, y1, x2, y2, "up")
-		return tview.MouseConsumed, nil
-	}
-	if action == tview.MouseLeftClick {
-		code.main.set_viewid_focus(view_code)
-		code.mouse_select_area = false
-		root.Cursor.Loc = code.tab_loc(pos)
-		root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
-		root.Cursor.SetSelectionEnd(femto.Loc{X: pos.X, Y: pos.Y})
-		code.update_with_line_changed()
-		return tview.MouseConsumed, nil
-	}
-	if action == 14 || action == 13 {
-		code.mouse_select_area = false
-		gap := 1
-		// posY=root.Cursor.Y
-		if action == 14 {
-			// posY = posY + gap
-			root.ScrollDown(gap)
-		} else {
-			// posY = posY - gap
-			root.ScrollUp(gap)
+	case 14, 13:
+		{
+			code.mouse_select_area = false
+			gap := 1
+			// posY=root.Cursor.Y
+			if action == 14 {
+				// posY = posY + gap
+				root.ScrollDown(gap)
+			} else {
+				// posY = posY - gap
+				root.ScrollUp(gap)
+			}
+			// posX = posX - int(xOffset)
+			// root.Cursor.Loc = tab_loc(root, femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))})
+			// log.Println(root.Cursor.Loc)
+			// root.SelectLine()
+			// code.update_with_line_changed()
+			code.LineNumberUnderMouse = root.Cursor.Loc.Y - root.Topline
 		}
-		// posX = posX - int(xOffset)
-		// root.Cursor.Loc = tab_loc(root, femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))})
-		// log.Println(root.Cursor.Loc)
-		// root.SelectLine()
-		// code.update_with_line_changed()
-		code.LineNumberUnderMouse = root.Cursor.Loc.Y - root.Topline
-		return tview.MouseConsumed, nil
+	default:
+		return action, event
 	}
-	return action, event
+	return tview.MouseConsumed, nil
 }
 
 func (code *CodeView) get_click_line_inview(event *tcell.EventMouse) {
@@ -652,7 +663,7 @@ func avoid_position_overflow(root *codetextview, pos femto.Loc) femto.Loc {
 	pos.Y = min(root.Buf.LinesNum()-1, pos.Y)
 	return pos
 }
-func (code *CodeView) tab_loc(pos femto.Loc) femto.Loc {
+func (code *CodeView) tab_loc(pos mouse_event_pos) femto.Loc {
 	root := code.view
 	if code.is_softwrap() {
 		x, lineY := code.view.VirtualLine(pos.Y, pos.X)
@@ -666,7 +677,7 @@ func (code *CodeView) tab_loc(pos femto.Loc) femto.Loc {
 	}
 	pos.X = min(pos.X, len(root.Buf.Line(pos.Y))-1)
 	pos.X = max(0, pos.X)
-	return pos
+	return femto.Loc{X: pos.X, Y: pos.Y}
 }
 
 func (code *CodeView) yOfffset() int {
@@ -1101,6 +1112,21 @@ func (code *CodeView) Load(filename string) error {
 	// "monokai"A
 	b := code.view.Buf
 	b.Settings["syntax"] = false
+	code.tree_sitter = lspcore.GetNewTreeSitter(filename)
+	code.tree_sitter.Init(func(ts *lspcore.TreeSitter) {
+		code.change_theme()
+		if code.main != nil {
+			if len(ts.Outline) > 0 {
+				code.ts = ts
+				if ts.DefaultOutline() {
+					lsp := code.main.symboltree.upate_with_ts(ts)
+					code.main.lspmgr.Current = lsp
+				} else {
+					code.main.OnSymbolistChanged(nil, nil)
+				}
+			}
+		}
+	})
 	code.LoadBuffer(data, filename)
 	code.view.Cursor.Loc.X = 0
 	code.view.Cursor.Loc.Y = 0
@@ -1117,9 +1143,6 @@ func (code *CodeView) Load(filename string) error {
 	code.update_with_line_changed()
 	return nil
 }
-
-//go:embed  colorscheme/output
-var TreesitterSchemeLoader embed.FS
 
 func (code *CodeView) change_appearance() {
 	code.config_wrap(code.filename)
@@ -1164,8 +1187,8 @@ func (code *CodeView) change_theme() {
 
 		}
 	}
-	path := filepath.Join("colorscheme", "output", code.theme+".micro")
-	buf, err := TreesitterSchemeLoader.ReadFile(path)
+	theme := code.theme
+	buf, err := treesittertheme.LoadTreesitterTheme(theme)
 
 	if err == nil {
 		micro_buffer = append(micro_buffer, buf...)
@@ -1176,10 +1199,12 @@ func (code *CodeView) change_theme() {
 			colorscheme,
 			code.main,
 		}
-		// log.Println(colorscheme)
+		if code.main != nil {
+		}
 		code.colorscheme.update_controller_theme(code)
 	}
 }
+
 func (code *CodeView) save_selection(s string) {
 }
 func (code *CodeView) bookmark() {
