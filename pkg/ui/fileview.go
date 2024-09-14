@@ -1,7 +1,6 @@
 package mainui
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
@@ -173,20 +172,6 @@ func menu_copy_path(ret *file_tree_view, hide bool) context_menu_item {
 	return external_open
 }
 
-type Ws_on_selection struct {
-	Call           string
-	SelectedString string
-}
-type Ws_font_size struct {
-	Call string
-	Zoom bool
-}
-type Ws_open_file struct {
-	Call     string
-	Filename string
-	Buf      []byte
-}
-
 func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 	external_open := context_menu_item{
 		item: create_menu_item("External open "),
@@ -214,34 +199,7 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 	return external_open
 }
 
-const call_on_copy = "onselected"
 
-func set_browser_selection(s string, ws string) {
-	if buf, err := json.Marshal(&Ws_on_selection{SelectedString: s, Call: call_on_copy}); err == nil {
-		SendWsData(buf, ws)
-	} else {
-		log.Println("selected", len(s), err)
-	}
-}
-func set_browser_font(zoom bool, ws string) {
-	if buf, err := json.Marshal(&Ws_font_size{Zoom: zoom, Call: "zoom"}); err == nil {
-		SendWsData(buf, ws)
-	} else {
-		log.Println("zoom", zoom, err)
-	}
-}
-func open_in_web(filename, ws string) {
-	buf, err := os.ReadFile(filename)
-	if err == nil {
-		buf, err = json.Marshal(&Ws_open_file{Filename: filename, Call: "openfile", Buf: buf})
-		if err == nil {
-			SendWsData(buf, ws)
-		}
-	}
-	if err != nil {
-		log.Println("openfile", filename, err)
-	}
-}
 func CheckIfDir(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
