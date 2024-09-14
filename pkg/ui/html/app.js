@@ -223,7 +223,7 @@ const term_init = (app) => {
         ws_sendTextData({ call, data, rows, cols })
     })
     term.attachCustomKeyEventHandler(ev => {
-        console.log(ev)
+        // console.log(ev)
         return true;
     })
     term.attachCustomWheelEventHandler(ev => {
@@ -233,6 +233,10 @@ const term_init = (app) => {
         console.log(ev)
         return true;
     })
+    // term.onSelectionChange(() => {
+    //     let word = term.getSelection()
+    //     console.error("word:", word)
+    // })
     old = ""
     term.open(document.getElementById('terminal'));
     // LoadLigaturesAddon();
@@ -253,7 +257,8 @@ const term_init = (app) => {
 }
 socket_int = (term, app) => {
     let localhost = window.location.host
-    var socket = new WebSocket('ws://' + localhost + '/ws');
+    let wsproto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    var socket = new WebSocket(wsproto + '://' + localhost + '/ws');
     const sendTextData = (data) => {
         if (socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(data));
@@ -276,7 +281,19 @@ socket_int = (term, app) => {
         sendTextData({ call, cols, rows, host })
     };
 
+    var clipboard = new ClipboardJS('.btn');
 
+    clipboard.on('success', function (e) {
+        // console.info('Action:', e.action);
+        // console.info('Text:', e.text);
+        // console.info('Trigger:', e.trigger);
+        e.clearSelection();
+    });
+
+    clipboard.on('error', function (e) {
+        console.error('Action:', e.action);
+        console.error('Trigger:', e.trigger);
+    });
     socket.binaryType = "blob";
     socket.onmessage = function incoming(evt) {
         const handleMessage = (data) => {
@@ -306,20 +323,11 @@ socket_int = (term, app) => {
                     app.popmd(data.Filename)
                 }
             } else if (call_on_copy == Call) {
-                var copybtn = document.getElementById("copybtn")
                 let text = data.SelectedString
-                copybtn.addEventListener("click", () => {
-                    navigator.clipboard.writeText(text)
-                        .then(() => {
-                            console.log('文本已复制到剪贴板');
-                            alert('文本已复制到剪贴板');
-                        })
-                        .catch((err) => {
-                            console.error('无法复制文本: ', err);
-                            alert('无法复制文本，请检查是否支持此功能');
-                        });
-                })
-                console.log(data.SelectedString)
+                var txt = document.getElementById("bar")
+                txt.innerText = text
+                var btn= document.getElementById("clip")
+                btn.click()
             }
             // console.log("Received: ", event.data);
         }

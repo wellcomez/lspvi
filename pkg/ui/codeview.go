@@ -337,7 +337,7 @@ func update_selection_menu(ret *CodeView) {
 			if selected.emtry() {
 				data = menudata.select_text
 			}
-			ret.main.WriteAll(data)
+			ret.main.CopyToClipboard(data)
 
 		}, hide: menudata.previous_selection.emtry()},
 		{item: create_menu_item("-"), handle: func() {
@@ -841,9 +841,10 @@ func (code *CodeView) word_left() {
 	}
 	code.update_with_line_changed()
 }
-func (m *mainui) WriteAll(s string) {
+func (m *mainui) CopyToClipboard(s string) {
 	if m.tty {
 		set_browser_selection(s, m.ws)
+		return
 	}
 	clipboard.WriteAll(s)
 }
@@ -852,11 +853,11 @@ func (code *CodeView) copyline(line bool) {
 	if !cmd.Vim.vi.VMap {
 		if line {
 			s := code.view.Buf.Line(int(code.view.Cursor.Loc.Y))
-			code.main.WriteAll(s)
+			code.main.CopyToClipboard(s)
 		}
 	} else {
 		s := code.view.Cursor.GetSelection()
-		code.main.WriteAll(s)
+		code.main.CopyToClipboard(s)
 		cmd.Vim.EnterEscape()
 	}
 }

@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"crypto/tls"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -21,6 +22,7 @@ import (
 	"zen108.com/lspvi/pkg/pty"
 )
 
+var use_https = false
 var start_process func(int, string)
 var wk *workdir
 var httpport = 0
@@ -78,7 +80,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 					}
 					if start_process == nil {
 						if ptystdio == nil {
-							newFunction1(w.Host)
+							url := "ws://" + w.Host + "/ws"
+							if use_https {
+								url = "wss://" + w.Host + "/ws"
+							}
+							newFunction1(url)
 							var i = 0
 							for {
 								if ptystdio == nil {
@@ -144,7 +150,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						}
 					}
 				}
-			case "zoom":
+			case call_zoom:
 				{
 					var file Ws_font_size
 					err = json.Unmarshal(message, &file)
@@ -158,7 +164,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						}
 					}
 				}
-			case "openfile":
+			case call_openfile:
 				{
 					var file Ws_open_file
 					err = json.Unmarshal(message, &file)
@@ -266,6 +272,42 @@ var srv http.Server
 
 func StartServer(root string, port int) {
 	r := NewRouter(root)
+	cert := NewCert()
+	if cert != nil {
+		if cert.Getcert() == nil {
+			use_https = true
+		}
+	}
+	if use_https {
+		for i := port; i < 30000; i++ {
+
+			tlsConfig := &tls.Config{}
+
+			// 加载证书
+			creds, err := tls.LoadX509KeyPair(cert.servercrt, cert.serverkey)
+			if err != nil {
+				log.Fatalf("Failed to load X509 key pair: %v", err)
+				break
+			}
+			tlsConfig.Certificates = []tls.Certificate{creds}
+
+			// 创建 HTTPS 服务器
+			for i := port; i < 30000; i++ {
+				x := fmt.Sprintf(":%d", i)
+				httpport = port
+				if start_process != nil {
+					start_process(i, "")
+				}
+				// 启动 HTTPS 服务器
+				log.Println("Starting HTTPS server on ", x)
+				err = http.ListenAndServeTLS(x, cert.servercrt, cert.serverkey, r)
+				if err != nil {
+					log.Printf("Failed to start HTTPS server: %v", err)
+					continue
+				}
+			}
+		}
+	}
 	for i := port; i < 30000; i++ {
 		// fmt.Printf("Server listening on http://localhost:%d\n", i)
 		fmt.Println(i, "Check")

@@ -456,6 +456,7 @@ type Arguments struct {
 	Root string
 	Ws   string
 	Tty  bool
+	Cert string
 }
 
 func (m *mainui) open_file(file string) {
