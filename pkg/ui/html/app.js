@@ -233,10 +233,10 @@ const term_init = (app) => {
         console.log(ev)
         return true;
     })
-    term.onSelectionChange(() => {
-        let word = term.getSelection()
-        console.error("word:", word)
-    })
+    // term.onSelectionChange(() => {
+    //     let word = term.getSelection()
+    //     console.error("word:", word)
+    // })
     old = ""
     term.open(document.getElementById('terminal'));
     // LoadLigaturesAddon();
