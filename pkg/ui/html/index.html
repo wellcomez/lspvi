@@ -16,7 +16,7 @@
         href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/go.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
 </head>
 <style>
     /* @font-face {
@@ -88,8 +88,12 @@
             height: 32px;
         }
     </style>
-    <div class="menu"><button class="menu-widget" id="copybtn">copy</button></div>
+
     <div id="app">
+        <textarea id="bar">Mussum ipsum cacilds...</textarea>
+        <button class="btn" data-clipboard-action="cut" data-clipboard-target="#bar">
+            Cut to clipboard
+        </button>
         <div class="image-div" v-if="isVisible">
             <img style="max-width: 100%;" :src="imageurl" />
         </div>

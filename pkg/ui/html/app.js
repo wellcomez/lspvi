@@ -277,7 +277,19 @@ socket_int = (term, app) => {
         sendTextData({ call, cols, rows, host })
     };
 
+    var clipboard = new ClipboardJS('.btn');
 
+    clipboard.on('success', function (e) {
+        // console.info('Action:', e.action);
+        // console.info('Text:', e.text);
+        // console.info('Trigger:', e.trigger);
+        // e.clearSelection();
+    });
+
+    clipboard.on('error', function (e) {
+        console.error('Action:', e.action);
+        console.error('Trigger:', e.trigger);
+    });
     socket.binaryType = "blob";
     socket.onmessage = function incoming(evt) {
         const handleMessage = (data) => {
@@ -307,18 +319,9 @@ socket_int = (term, app) => {
                     app.popmd(data.Filename)
                 }
             } else if (call_on_copy == Call) {
-                var copybtn = document.getElementById("copybtn")
                 let text = data.SelectedString
-                copybtn.addEventListener("click", () => {
-                    navigator.clipboard.writeText(text)
-                        .then(() => {
-                            console.log('文本已复制到剪贴板');
-                        })
-                        .catch((err) => {
-                            console.error('无法复制文本: ', err);
-                        });
-                })
-                // console.log(data.SelectedString)
+                var txt= document.getElementById("bar")
+                txt.innerText = text
             }
             // console.log("Received: ", event.data);
         }
