@@ -8,6 +8,9 @@ function getFileExtension(filename) {
 function is_image(ext) {
     return ["jpg", "png", "gif", "jpeg", "bmp"].includes(ext)
 }
+function is_md(ext) {
+    return ["md"].includes(ext)
+}
 let rows = 50
 let cols = 80
 const MINIMUM_COLS = 2;
@@ -81,27 +84,67 @@ class fullscreen_check {
         return geometry;
     }
 }
+md_init = () => {
+    const mdIt = markdownit({
+        highlight: function (str, lang) {
+            if (lang == "plantuml") {
+                return "<div class=\"plantuml\">" +
+                    mdIt.render(str) +
+                    "</div>"
+            }
+            if (lang && hljs.getLanguage(lang)) {
+                try {
+                    return '<pre><code class="hljs">' +
+                        lang +
+                        "<br>" +
+                        "<br>"
+                        + hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+                        '</code></pre>';
+                } catch (__) { }
+            }
+            return '<pre><code class="hljs">' + mdIt.utils.escapeHtml(str) + '</code></pre>';
+        }
+    })
+    return mdIt
+}
 app_init = () => {
+
     let app = new Vue({
         el: '#app',
         data: {
             message: 'Hello Vue!',
             isVisible: false,
+            isVisibleMd: false,
             imageurl: "",
         },
         methods: {
             onhide() {
-                this.isVisible = false
+                this.set_visible({})
             },
             on_wheel(evt) {
-                return this.isVisible == true
+                // return this.isVisible == true
+            },
+            set_visible(a) {
+                var { isVisibleMd, isVisible } = a
+                this.isVisible = isVisible
+                this.isVisibleMd = isVisibleMd
             },
             popimage(image) {
-                this.isVisible = true
+                this.set_visible({ isVisible: true })
                 this.imageurl = image
+            },
+            popmd(image) {
+                let u = image
+                app.set_visible({ isVisibleMd: true })
+                axios.get(u, { responseType: "text" }).then((resp) => {
+                    let ss = md.render(resp.data)
+                    let div = document.getElementsByClassName("md")[0]
+                    div.innerHTML=ss
+                }); 
             }
         }
     })
+    var md = md_init()
     document.addEventListener("click", function () {
         app.onhide()
     })
@@ -144,7 +187,7 @@ const term_init = (app) => {
         // fontFamily: 'SymbolsNerdFontMono "Fira Code", courier-new, courier, monospace, "Powerline Extra Symbols"',
         // fontFamily: 'Hack, "Fira Code", monospace',
         // fontFamily: 'HackNerdFontMono,monospace'
-        fontFamily:'SymbolsNerdFontMono,courier-new, courier, monospace'
+        fontFamily: 'SymbolsNerdFontMono,courier-new, courier, monospace'
 
         // minimumContrastRatio: 1,
     });
@@ -239,6 +282,8 @@ socket_int = (term, app) => {
                 let ext = getFileExtension(data.Filename)
                 if (is_image(ext)) {
                     app.popimage(data.Filename)
+                } else if (is_md(ext)) {
+                    app.popmd(data.Filename)
                 }
             }
             // console.log("Received: ", event.data);
@@ -278,7 +323,7 @@ function set_font_size(fontSize) {
 }
 function get_font_size() {
     var fontSize = window.localStorage.getItem("fontsize");
-    if (fontSize == undefined||fontSize=="undefined") {
+    if (fontSize == undefined || fontSize == "undefined") {
         fontSize = 12;
     }
     return fontSize;

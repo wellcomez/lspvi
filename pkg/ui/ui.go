@@ -381,11 +381,16 @@ func (m *mainui) ZoomWeb(zoom bool) {
 func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 	if m.tty {
 		ext := filepath.Ext(file)
+		open_in_image_set := []string{".png", ".md"}
 		image := []string{".png"}
-		for _, v := range image {
+		for _, v := range open_in_image_set {
 			if v == ext {
 				open_in_web(file, m.ws)
-				return
+				for _, shouldret := range image {
+					if shouldret == ext {
+						return
+					}
+				}
 			}
 		}
 
@@ -605,7 +610,7 @@ func MainUI(arg *Arguments) {
 	var logfile, _ = os.OpenFile(lspviroot.logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
 	GlobalApp = tview.NewApplication()
-	app:=GlobalApp
+	app := GlobalApp
 	main.app = GlobalApp
 
 	editor_area := create_edit_area(main)

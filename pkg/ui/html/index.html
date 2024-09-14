@@ -12,6 +12,11 @@
     <!-- <script src="https://cdn.jsdelivr.net/npm/xterm-addon-image@0.5.0/lib/xterm-addon-image.min.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/msgpack5@6.0.2/dist/msgpack5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/go.min.js"></script>
+
 </head>
 <style>
     /* @font-face {
@@ -38,7 +43,20 @@
             border-color: red;
             justify-content: center;
             align-items: center;
-            /* max-width: 90%; */
+            z-index: 2;
+        }
+
+        .md {
+            position: absolute;
+            /* display: flex; */
+            top: 5%;
+            right: 5%;
+            left: 5%;
+            background-color: whitesmoke;
+            /* height: 80%; */
+            /* padding: 20px; */
+            /* justify-content: center; */
+            /* align-items: center; */
             z-index: 2;
         }
     </style>
@@ -46,7 +64,11 @@
         <div class="image-div" v-if="isVisible">
             <img style="max-width: 100%;" :src="imageurl" />
         </div>
-        <div id="terminal"></div>
+        <div v-if="isVisibleMd">
+            <div class="md" ></div>
+        </div>
+    </div>
+    <div id="terminal"></div>
     </div>
     <script src="/static/app.js" lang="javascript"></script>
 </body>
