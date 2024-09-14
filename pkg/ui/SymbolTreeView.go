@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-
-	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
@@ -312,11 +310,11 @@ func (c *SymbolTreeView) handle_commnad(cmd command_id) {
 			switch cmd {
 			case copy_path:
 				{
-					clipboard.WriteAll(fmt.Sprintf("%s:%d", sym.Location.URI.AsPath().String(), sym.Location.Range.Start.Line))
+					c.main.WriteAll(fmt.Sprintf("%s:%d", sym.Location.URI.AsPath().String(), sym.Location.Range.Start.Line))
 				}
 			case copy_data:
 				{
-					clipboard.WriteAll(sym.Name)
+					c.main.WriteAll(sym.Name)
 				}
 			case goto_decl:
 				{

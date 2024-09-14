@@ -131,6 +131,19 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						continue
 					}
 				}
+			case call_on_copy:
+				{
+					var file Ws_on_selection
+					err = json.Unmarshal(message, &file)
+					if err == nil {
+						if buf, err := msgpack.Marshal(Ws_on_selection{
+							SelectedString: file.SelectedString,
+							Call:           w.Call,
+						}); err == nil {
+							sss.imp.write_ws(buf)
+						}
+					}
+				}
 			case "zoom":
 				{
 					var file Ws_font_size

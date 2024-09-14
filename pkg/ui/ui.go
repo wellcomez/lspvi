@@ -371,7 +371,6 @@ func (m *mainui) open_qfh_query() {
 func (m *mainui) open_wks_query() {
 	m.layout.dialog.open_wks_query(m.lspmgr.Current)
 }
-
 func (m *mainui) ZoomWeb(zoom bool) {
 	set_browser_font(zoom, m.ws)
 }

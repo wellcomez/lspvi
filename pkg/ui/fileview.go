@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
@@ -166,7 +165,7 @@ func menu_copy_path(ret *file_tree_view, hide bool) context_menu_item {
 			value := node.GetReference()
 			if value != nil {
 				filename := value.(string)
-				clipboard.WriteAll(filename)
+				ret.main.WriteAll(filename)
 			}
 		},
 		hide: hide,
@@ -174,6 +173,10 @@ func menu_copy_path(ret *file_tree_view, hide bool) context_menu_item {
 	return external_open
 }
 
+type Ws_on_selection struct {
+	Call           string
+	SelectedString string
+}
 type Ws_font_size struct {
 	Call string
 	Zoom bool
@@ -209,6 +212,16 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 		hide: hide,
 	}
 	return external_open
+}
+
+const call_on_copy = "onselected"
+
+func set_browser_selection(s string, ws string) {
+	if buf, err := json.Marshal(&Ws_on_selection{SelectedString: s, Call: call_on_copy}); err == nil {
+		SendWsData(buf, ws)
+	} else {
+		log.Println("selected", len(s), err)
+	}
 }
 func set_browser_font(zoom bool, ws string) {
 	if buf, err := json.Marshal(&Ws_font_size{Zoom: zoom, Call: "zoom"}); err == nil {
