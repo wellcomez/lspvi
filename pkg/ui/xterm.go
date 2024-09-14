@@ -150,7 +150,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						}
 					}
 				}
-			case "zoom":
+			case call_zoom:
 				{
 					var file Ws_font_size
 					err = json.Unmarshal(message, &file)
@@ -164,7 +164,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						}
 					}
 				}
-			case "openfile":
+			case call_openfile:
 				{
 					var file Ws_open_file
 					err = json.Unmarshal(message, &file)

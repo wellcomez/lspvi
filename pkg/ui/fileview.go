@@ -164,7 +164,7 @@ func menu_copy_path(ret *file_tree_view, hide bool) context_menu_item {
 			value := node.GetReference()
 			if value != nil {
 				filename := value.(string)
-				ret.main.WriteAll(filename)
+				ret.main.CopyToClipboard(filename)
 			}
 		},
 		hide: hide,
@@ -198,7 +198,6 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 	}
 	return external_open
 }
-
 
 func CheckIfDir(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)
