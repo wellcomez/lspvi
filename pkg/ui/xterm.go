@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"crypto/tls"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -266,6 +267,46 @@ var srv http.Server
 
 func StartServer(root string, port int) {
 	r := NewRouter(root)
+	use_https := false
+	cert := NewCert()
+	if cert != nil {
+		if cert.Getcert() == nil {
+			use_https = true
+		}
+	}
+	if use_https {
+		for i := port; i < 30000; i++ {
+
+			tlsConfig := &tls.Config{}
+
+			// 加载证书
+			creds, err := tls.LoadX509KeyPair(cert.servercrt, cert.serverkey)
+			if err != nil {
+				log.Fatalf("Failed to load X509 key pair: %v", err)
+				break
+			}
+			tlsConfig.Certificates = []tls.Certificate{creds}
+
+			// 创建 HTTPS 服务器
+			for i := port; i < 30000; i++ {
+				x := fmt.Sprintf(":%d", i)
+				server := &http.Server{
+					Addr:      x, // 或者使用其他端口
+					TLSConfig: tlsConfig,
+				}
+				httpport = port
+				if start_process != nil {
+					start_process(i, "")
+				}
+				// 启动 HTTPS 服务器
+				log.Println("Starting HTTPS server on ", x)
+				err = server.ListenAndServeTLS("", "")
+				if err != nil {
+					log.Fatalf("Failed to start HTTPS server: %v", err)
+				}
+			}
+		}
+	}
 	for i := port; i < 30000; i++ {
 		// fmt.Printf("Server listening on http://localhost:%d\n", i)
 		fmt.Println(i, "Check")
