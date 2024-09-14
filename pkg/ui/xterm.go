@@ -107,7 +107,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 					}
 					sss.imp.ws = conn
 					if len(sss.imp.unsend) > 0 {
-						sss.imp._send(sss.imp.unsend)
+						sss.imp.send_term_stdout(sss.imp.unsend)
 						sss.imp.unsend = []byte{}
 					}
 					go func() {
@@ -339,7 +339,7 @@ type ptyout_impl struct {
 
 func (imp *ptyout_impl) send(s []byte) {
 	if len(imp.prev) != len(s) {
-		imp._send(s)
+		imp.send_term_stdout(s)
 	}
 }
 
@@ -358,7 +358,7 @@ type buffer_to_send struct {
 
 var ws_buffer_chan = make(chan buffer_to_send)
 
-func (imp *ptyout_impl) _send(s []byte) bool {
+func (imp *ptyout_impl) send_term_stdout(s []byte) bool {
 	log.Println("_send", len(s))
 	// log.Println("_send", len(s), string(s))
 	// printf("\033[5;10HHello, World!\n"); // 将光标移动到第5行第10列，然后打印 "Hello, World!"
@@ -422,6 +422,7 @@ func newFunction1(host string) {
 		argnew = append(argnew, "-ws", host)
 		ptystdio = pty.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
-		os.Exit(-1)
+		sss.imp.send_term_stdout([]byte("F5#"))
+		// os.Exit(-1)
 	}()
 }
