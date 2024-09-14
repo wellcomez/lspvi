@@ -143,6 +143,9 @@ app_init = () => {
                     md.on_wheel(evt)
                     return true
                 }
+                else if (this.isVisible) {
+                    return true
+                }
             },
             set_visible(a) {
                 var { isVisibleMd, isVisible } = a
