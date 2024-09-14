@@ -212,12 +212,22 @@ func NewRouter(root string) *mux.Router {
 	r.HandleFunc("/static/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		read_embbed(r, w)
 	})
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		sss.imp.ws = nil
-		if start_process == nil {
-			ptystdio = nil
+	r.HandleFunc("/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if path == "/" {
+			sss.imp.ws = nil
+			if start_process == nil {
+				ptystdio = nil
+			}
+			read_embbed(r, w)
+		} else {
+			var root = project_root
+			if len(root) == 0 {
+				root, _ = filepath.Abs(".")
+			}
+			buf, _ := os.ReadFile(filepath.Join(root, path))
+			w.Write(buf)
 		}
-		read_embbed(r, w)
 	}).Methods("GET")
 	return r
 }
@@ -334,9 +344,11 @@ func (p ptyout) Write(s []byte) (n int, err error) {
 }
 
 var argnew []string
+var project_root string
 
 // main
-func StartWebUI(cb func(int, string)) {
+func StartWebUI(arg Arguments, cb func(int, string)) {
+	project_root = arg.Root
 	start_process = cb
 	argnew = []string{os.Args[0], "-tty"}
 

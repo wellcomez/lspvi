@@ -588,7 +588,7 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{}
 	prj.Load(arg, main)
-	go StartWebUI(func(port int, url string) {
+	go StartWebUI(*arg, func(port int, url string) {
 		if len(url) > 0 {
 			main.ws = url
 			main.tty = true

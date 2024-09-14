@@ -6,10 +6,12 @@ import (
 	// pty "zen108.com/lspvi/pkg/pty"
 	mainui "zen108.com/lspvi/pkg/ui"
 )
-type arg struct{
+
+type arg struct {
 	count int
-	ws string
+	ws    string
 }
+
 func main() {
 	gui := flag.Bool("gui", false, "guimain")
 	ws := flag.String("ws", "", "guimain")
@@ -17,15 +19,16 @@ func main() {
 	root := flag.String("root", "", "root-dir")
 	file := flag.String("file", "", "source file")
 	flag.Parse()
-	if *gui {
-		mainui.StartWebUI(nil)
-		return
-	} 	
 	var arg = &mainui.Arguments{
 		Root: *root,
 		File: *file,
 		Tty:  *tty,
 		Ws:   *ws,
 	}
+	if *gui {
+		mainui.StartWebUI(*arg,nil)
+		return
+	}
+
 	mainui.MainUI(arg)
 }
