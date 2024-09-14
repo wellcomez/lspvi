@@ -3,7 +3,6 @@ package mainui
 import (
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -13,6 +12,7 @@ import (
 	// fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/treesittertheme"
 )
 
 func (pk *history_picker) grid(input *tview.InputField) *tview.Grid {
@@ -47,7 +47,7 @@ func (pk history_picker) close() {
 
 type color_theme_file struct {
 	treesitter bool
-	filename   string
+	// filename   string
 	name       string
 }
 type color_pick_impl struct {
@@ -91,15 +91,13 @@ func new_color_picker(v *fzfmain) *color_picker {
 		[]color_theme_file{},
 	}
 	ret := &color_picker{impl: impl}
-	dir := "colorscheme/output"
-	dirs, err := TreesitterSchemeLoader.ReadDir(dir)
+	dirs, err := treesittertheme.GetTheme()
 	if err == nil {
 		for i := range dirs {
 			d := dirs[i]
 			a := color_theme_file{
-				false,
-				filepath.Join(dir, d.Name()),
-				d.Name()}
+				treesitter: true,
+				name:       d}
 			a.name = a.name[:strings.Index(a.name, ".")]
 			ret.impl.data = append(ret.impl.data, a)
 			impl.list.AddItem(fmt.Sprintf("%-30s *ts", a.name), "", func() {

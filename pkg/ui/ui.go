@@ -422,6 +422,7 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
 	m.codeview.Load(file)
+
 	if loc != nil {
 		lins := m.codeview.view.Buf.LinesNum()
 		loc.Range.Start.Line = min(lins-1, loc.Range.Start.Line)
