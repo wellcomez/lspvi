@@ -844,6 +844,7 @@ func (code *CodeView) word_left() {
 func (m *mainui) CopyToClipboard(s string) {
 	if m.tty {
 		set_browser_selection(s, m.ws)
+		return
 	}
 	clipboard.WriteAll(s)
 }

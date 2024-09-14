@@ -223,7 +223,7 @@ const term_init = (app) => {
         ws_sendTextData({ call, data, rows, cols })
     })
     term.attachCustomKeyEventHandler(ev => {
-        console.log(ev)
+        // console.log(ev)
         return true;
     })
     term.attachCustomWheelEventHandler(ev => {
@@ -232,6 +232,10 @@ const term_init = (app) => {
         }
         console.log(ev)
         return true;
+    })
+    term.onSelectionChange(() => {
+        let word = term.getSelection()
+        console.error("word:", word)
     })
     old = ""
     term.open(document.getElementById('terminal'));
@@ -283,7 +287,7 @@ socket_int = (term, app) => {
         // console.info('Action:', e.action);
         // console.info('Text:', e.text);
         // console.info('Trigger:', e.trigger);
-        // e.clearSelection();
+        e.clearSelection();
     });
 
     clipboard.on('error', function (e) {
@@ -320,8 +324,10 @@ socket_int = (term, app) => {
                 }
             } else if (call_on_copy == Call) {
                 let text = data.SelectedString
-                var txt= document.getElementById("bar")
+                var txt = document.getElementById("bar")
                 txt.innerText = text
+                var btn= document.getElementById("clip")
+                btn.click()
             }
             // console.log("Received: ", event.data);
         }

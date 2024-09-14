@@ -87,13 +87,20 @@
             padding-right: 10px;
             height: 32px;
         }
+
+        #clipdiv {
+            position: absolute;
+            z-index: 0;
+        }
     </style>
 
     <div id="app">
-        <textarea id="bar">Mussum ipsum cacilds...</textarea>
-        <button class="btn" data-clipboard-action="cut" data-clipboard-target="#bar">
-            Cut to clipboard
-        </button>
+        <div id="clipdiv">
+            <textarea id="bar">Mussum ipsum cacilds...</textarea>
+            <button class="btn" id="clip" data-clipboard-action="cut" data-clipboard-target="#bar">
+                Cut to clipboard
+            </button>
+        </div>
         <div class="image-div" v-if="isVisible">
             <img style="max-width: 100%;" :src="imageurl" />
         </div>
