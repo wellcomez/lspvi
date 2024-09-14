@@ -253,7 +253,8 @@ const term_init = (app) => {
 }
 socket_int = (term, app) => {
     let localhost = window.location.host
-    var socket = new WebSocket('ws://' + localhost + '/ws');
+    let wsproto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    var socket = new WebSocket(wsproto + '://' + localhost + '/ws');
     const sendTextData = (data) => {
         if (socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(data));
@@ -312,14 +313,12 @@ socket_int = (term, app) => {
                     navigator.clipboard.writeText(text)
                         .then(() => {
                             console.log('文本已复制到剪贴板');
-                            alert('文本已复制到剪贴板');
                         })
                         .catch((err) => {
                             console.error('无法复制文本: ', err);
-                            alert('无法复制文本，请检查是否支持此功能');
                         });
                 })
-                console.log(data.SelectedString)
+                // console.log(data.SelectedString)
             }
             // console.log("Received: ", event.data);
         }

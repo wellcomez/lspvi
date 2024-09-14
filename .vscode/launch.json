@@ -54,6 +54,10 @@
             "console": "externalTerminal",
             "args": [
                 "-gui",
+                // "-tty",
+                // "-ws","wss://192.168.2.16:13000/ws"
+                // "127.0.0.1:8080",
+                // "-gui",
                 // "-root",
                 // "/home/z/dev/usb/samsumg/gadgetd"
                 // "/Users/jialaizhu/dev/lspgo",

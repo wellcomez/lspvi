@@ -2,7 +2,6 @@ package mainui
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,18 +24,17 @@ func NewCert() *Cert {
 	return c
 }
 func (c *Cert) Getcert() error {
+	yes := false
 	if _, err := os.Stat(c.serverkey); err != nil {
-
-		err := generatePrivateKey(c.serverkey)
-		if err != nil {
-			log.Fatalf("Failed to generate private key: %v", err)
-			return err
-		}
+		yes = true
 	}
 	if _, err := os.Stat(c.servercrt); err != nil {
-		err = generateSelfSignedCert(c.servercrt, c.serverkey)
+		yes = true
+	}
+	if yes {
+		cmd := exec.Command("openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", c.serverkey, "-out", c.servercrt, "-days", "365", "-subj", "/CN=localhost")
+		err := cmd.Run()
 		if err != nil {
-			log.Fatalf("Failed to generate self-signed certificate: %v", err)
 			return err
 		}
 	}
@@ -55,7 +53,7 @@ func generatePrivateKey(keyFile string) error {
 
 // generateSelfSignedCert 生成一个自签名证书
 func generateSelfSignedCert(certFile, keyFile string) error {
-	cmd := exec.Command("openssl", "req", "-x509", "-new", "-nodes", "-key", keyFile, "-sha256", "-days", "3650", "-out", certFile, "-subj", "/C=CN/ST=Beijing/L=Beijing/O=Example Inc./CN=localhost")
+	cmd := exec.Command("openssl", "req", "-x509", "-new", "-nodes", "-key", keyFile, "-sha256", "-days", "3650", "-out", certFile, "-subj", "/C=CN/ST=Beijing/L=Beijing/O=Example Inc./CN=192.168.2.16")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("error generating self-signed certificate: %v, output: %s", err, out)

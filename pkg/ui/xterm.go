@@ -22,6 +22,7 @@ import (
 	"zen108.com/lspvi/pkg/pty"
 )
 
+var use_https = false
 var start_process func(int, string)
 var wk *workdir
 var httpport = 0
@@ -79,7 +80,11 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 					}
 					if start_process == nil {
 						if ptystdio == nil {
-							newFunction1(w.Host)
+							url := "ws://" + w.Host + "/ws"
+							if use_https {
+								url = "wss://" + w.Host + "/ws"
+							}
+							newFunction1(url)
 							var i = 0
 							for {
 								if ptystdio == nil {
@@ -267,7 +272,6 @@ var srv http.Server
 
 func StartServer(root string, port int) {
 	r := NewRouter(root)
-	use_https := false
 	cert := NewCert()
 	if cert != nil {
 		if cert.Getcert() == nil {
@@ -290,19 +294,16 @@ func StartServer(root string, port int) {
 			// 创建 HTTPS 服务器
 			for i := port; i < 30000; i++ {
 				x := fmt.Sprintf(":%d", i)
-				server := &http.Server{
-					Addr:      x, // 或者使用其他端口
-					TLSConfig: tlsConfig,
-				}
 				httpport = port
 				if start_process != nil {
 					start_process(i, "")
 				}
 				// 启动 HTTPS 服务器
 				log.Println("Starting HTTPS server on ", x)
-				err = server.ListenAndServeTLS("", "")
+				err = http.ListenAndServeTLS(x, cert.servercrt, cert.serverkey, r)
 				if err != nil {
-					log.Fatalf("Failed to start HTTPS server: %v", err)
+					log.Printf("Failed to start HTTPS server: %v", err)
+					continue
 				}
 			}
 		}
