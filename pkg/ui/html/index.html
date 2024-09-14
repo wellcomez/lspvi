@@ -81,7 +81,14 @@
             /* align-items: center; */
             z-index: 2;
         }
+
+        .menu-widget {
+            padding-left: 10px;
+            padding-right: 10px;
+            height: 32px;
+        }
     </style>
+    <div class="menu"><button class="menu-widget" id="copybtn">copy</button></div>
     <div id="app">
         <div class="image-div" v-if="isVisible">
             <img style="max-width: 100%;" :src="imageurl" />

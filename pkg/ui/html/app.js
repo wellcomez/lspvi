@@ -13,6 +13,8 @@ function is_md(ext) {
 }
 let rows = 50
 let cols = 80
+
+const call_on_copy = "onselected"
 const MINIMUM_COLS = 2;
 const MINIMUM_ROWS = 1;
 var ws_sendTextData
@@ -303,6 +305,21 @@ socket_int = (term, app) => {
                 } else if (is_md(ext)) {
                     app.popmd(data.Filename)
                 }
+            } else if (call_on_copy == Call) {
+                var copybtn = document.getElementById("copybtn")
+                let text = data.SelectedString
+                copybtn.addEventListener("click", () => {
+                    navigator.clipboard.writeText(text)
+                        .then(() => {
+                            console.log('文本已复制到剪贴板');
+                            alert('文本已复制到剪贴板');
+                        })
+                        .catch((err) => {
+                            console.error('无法复制文本: ', err);
+                            alert('无法复制文本，请检查是否支持此功能');
+                        });
+                })
+                console.log(data.SelectedString)
             }
             // console.log("Received: ", event.data);
         }
