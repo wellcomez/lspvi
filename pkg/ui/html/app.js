@@ -187,25 +187,70 @@ class RemoteTermStatus {
     constructor() {
     }
 }
+class RemoteConn{
+    constructor(socket) {
+        this.socket = socket
+    }
+}
 class LocalTerm {
     constructor(term) {
         this.term = term
-        this.prompt = "bash#"
+        this.prompt = "bash# "
         this.term.clear()
         this.newline();
+        this.local_cmd_matcher = [(cmd)=>{
+            if (cmd.indexOf("lspvi")){
+
+            }
+        }]
+        this.local_cmd_matcher.forEach(element => {
+            element.bind(this)
+        });
     }
     newline() {
         this.term.write(this.prompt);
     }
+    // Assuming you have an xterm.js instance created as 'terminal'
 
+    getCurrentLineText = () => {
+        // Get the cursor position
+        const cursorY = this.term.buffer.active.cursorY;
+
+        // Get the text of the current line
+        const lineText = this.term.buffer.active.getLine(cursorY).translateToString().trim();
+
+        return lineText;
+    };
+
+    // Usage example
+    handleCommand(cmdline) {
+        let args = cmdline
+        let matched = false;
+        this.local_cmd_matcher.forEach(element => {
+            if (matched) return;
+            if (element(cmdline)) {
+                matched = true;
+                return;
+            }
+        });
+        return false;
+    }
     ondata(data) {
         const { term } = this
+        const currentBuffer = term.buffer.active;
         if (data == '\r') {
             this.term.write('\r\n')
+            let line = this.getCurrentLineText()
+            if (line.indexOf(this.prompt) == 0) {
+                if (this.handleCommand(line.substring(this.prompt.length))) {
+                    
+                    return
+                }
+
+            }
             this.newline()
             return
         } else if (data === '\x7F') { // Delete key or similar
-            const currentBuffer = term.buffer.active;
             if (currentBuffer.cursorX > this.prompt.length) {
                 term.write('\x08'); // Backspace
                 term.write(' ');    // Replace with space
@@ -327,7 +372,8 @@ const socket_int = (term_obj, app) => {
     let wsproto = window.location.protocol === 'https:' ? 'wss' : 'ws'
     var socket = new WebSocket(wsproto + '://' + localhost + '/ws');
     var appstatus = new RemoteTermStatus()
-
+    var conn =new RemoteConn(socket)
+    term_obj.conn = conn;
     const sendTextData = (data) => {
         if (socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(data));
