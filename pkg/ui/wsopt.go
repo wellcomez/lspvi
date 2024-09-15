@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type Ws_on_selection struct {
@@ -19,10 +21,34 @@ type Ws_open_file struct {
 	Filename string
 	Buf      []byte
 }
+type wsresp struct {
+	imp *ptyout_impl
+}
+
+func (resp wsresp) write(buf []byte) error {
+	return resp.imp.write_ws(buf)
+}
+
+type Ws_term_command struct {
+	wsresp
+	Call    string
+	Command string
+}
+
+func (cmd Ws_term_command) resp() error {
+	cmd.Call = call_term_command
+	if buf, er := msgpack.Marshal(cmd); er == nil {
+		return cmd.write(buf)
+	} else {
+		return er
+	}
+
+}
 
 const call_zoom = "zoom"
+const call_term_command = "call_term_command"
 const call_on_copy = "onselected"
-
+const call_term_stdout = "term"
 const call_openfile = "openfile"
 
 func set_browser_selection(s string, ws string) {

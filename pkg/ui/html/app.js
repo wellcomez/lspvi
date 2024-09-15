@@ -14,7 +14,12 @@ function is_md(ext) {
 let rows = 50
 let cols = 80
 
+const call_zoom = "zoom"
+const call_term_command = "call_term_command"
 const call_on_copy = "onselected"
+const call_term_stdout = "term"
+const call_openfile = "openfile"
+
 const MINIMUM_COLS = 2;
 const MINIMUM_ROWS = 1;
 var ws_sendTextData
@@ -178,7 +183,52 @@ app_init = () => {
     }
     return app
 }
-const term_init = (app) => {
+class RemoteTermStatus {
+    constructor() {
+    }
+}
+class LocalTerm {
+    constructor(term) {
+        this.term = term
+        this.prompt = "bash#"
+        this.term.clear()
+        this.newline();
+    }
+    newline() {
+        this.term.write(this.prompt);
+    }
+
+    ondata(data) {
+        const { term } = this
+        if (data == '\r') {
+            this.term.write('\r\n')
+            this.newline()
+            return
+        } else if (data === '\x7F') { // Delete key or similar
+            const currentBuffer = term.buffer.active;
+            if (currentBuffer.cursorX > this.prompt.length) {
+                term.write('\x08'); // Backspace
+                term.write(' ');    // Replace with space
+                term.write('\x08'); // Backspace again to move cursor back
+            }
+        }
+        this.term.write(data)
+    }
+}
+class Term {
+    constructor(term) { this.term = term; this.status = {} }
+    on_remote_stop() {
+        let stop = true
+        this.status = { stop }
+        this.Local = new LocalTerm(this.term)
+    }
+    on_remote_inited() {
+        let init = true
+        this.status = { init }
+
+    }
+}
+const term_init = (app, on_term_command) => {
     window.addEventListener("contextmenu", function (e) {
         e.preventDefault();
     })
@@ -211,6 +261,7 @@ const term_init = (app) => {
 
         // minimumContrastRatio: 1,
     });
+    var ret = new Term(term)
     var wl = new WebglAddon.WebglAddon()
     term.loadAddon(wl)
     var fit = new FitAddon.FitAddon()
@@ -218,12 +269,26 @@ const term_init = (app) => {
     // const imageAddon = new ImageAddon.ImageAddon(customSettings);
     // terminal.loadAddon(imageAddon);
     term.onData(function (data) {
-        let call = "key"
-        let rows = term.rows, cols = term.cols
-        ws_sendTextData({ call, data, rows, cols })
+        if (ret.status.stop) {
+            ret.Local.ondata(data)
+        } else {
+            let call = "key"
+            let rows = term.rows, cols = term.cols
+            ws_sendTextData({ call, data, rows, cols })
+        }
     })
     term.attachCustomKeyEventHandler(ev => {
         // console.log(ev)
+        if (ret && ret.Local) {
+            // if (ev.code == "Backspace") {
+            //     // term.write('\x7f')
+            //     ev.preventDefault(); // 阻止默认行为
+            //     // term.write('\b \b')
+            //     term.write('\x08'); // Backspace
+            //     return false;
+            // }
+            return true
+        }
         return true;
     })
     term.attachCustomWheelEventHandler(ev => {
@@ -244,21 +309,25 @@ const term_init = (app) => {
     f.resize(false)
     fit.fit()
     term.focus()
-    return term
+    return ret
 
-    function LoadLigaturesAddon() {
-        try {
-            const newLocal = new LigaturesAddon.LigaturesAddon();
-            term.loadAddon(newLocal);
-        } catch (error) {
-            console.error(error);
-        }
-    }
+    // function LoadLigaturesAddon() {
+    //     try {
+    //         const newLocal = new LigaturesAddon.LigaturesAddon();
+    //         term.loadAddon(newLocal);
+    //     } catch (error) {
+    //         console.error(error);
+    //     }
+    // }
 }
-socket_int = (term, app) => {
+
+const socket_int = (term_obj, app) => {
+    let { term } = term_obj
     let localhost = window.location.host
     let wsproto = window.location.protocol === 'https:' ? 'wss' : 'ws'
     var socket = new WebSocket(wsproto + '://' + localhost + '/ws');
+    var appstatus = new RemoteTermStatus()
+
     const sendTextData = (data) => {
         if (socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(data));
@@ -275,7 +344,7 @@ socket_int = (term, app) => {
     }
     socket.onopen = function (event) {
         console.log("Connection opened");
-        call = "init"
+        let call = "init"
         let rows = term.rows, cols = term.cols
         let host = window.location.host
         sendTextData({ call, cols, rows, host })
@@ -299,10 +368,10 @@ socket_int = (term, app) => {
         const handleMessage = (data) => {
             // 处理解码后的数据
             var { Call, Output } = data
-            if (Call == "term") {
+            if (Call == call_term_stdout) {
                 term.write(Output)
             }
-            else if (Call == "zoom") {
+            else if (Call == call_zoom) {
                 var { Zoom } = data
                 let fontsize = get_font_size()
                 if (Zoom) {
@@ -313,7 +382,7 @@ socket_int = (term, app) => {
                 set_font_size(fontsize)
                 window.location.reload()
                 console.log("zoom", Zoom)
-            } else if (Call == "openfile") {
+            } else if (Call == call_openfile) {
                 console.log("openfile",
                     data.Filename)
                 let ext = getFileExtension(data.Filename)
@@ -326,8 +395,17 @@ socket_int = (term, app) => {
                 let text = data.SelectedString
                 var txt = document.getElementById("bar")
                 txt.innerText = text
-                var btn= document.getElementById("clip")
+                var btn = document.getElementById("clip")
                 btn.click()
+            } else if (Call == call_term_command) {
+                switch (data.Command) {
+                    case "quit":
+                        appstatus.quit = true
+                        term_obj.on_remote_stop()
+                        break
+                    default:
+                        return
+                }
             }
             // console.log("Received: ", event.data);
         }
@@ -355,9 +433,11 @@ socket_int = (term, app) => {
         resizecall()
     })
 }
-main = () => {
+const main = () => {
     var app = app_init()
-    var term = term_init(app)
+    var term = term_init(app, (command) => {
+
+    })
     socket_int(term, app)
 }
 main()

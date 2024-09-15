@@ -9,7 +9,13 @@ import (
 func TestMatch(t *testing.T) {
 	MainText := "/build/compute_build_timestamp.py"
 	Key := "p"
-	keys := strings.Split(Key, " ")
+	var keys =[]colorkey{}
+	for _,r:= range strings.Split(Key, " "){
+		keys=append(keys,colorkey{
+			str:r,
+		})
+	}
+
 	Positions := find_key(MainText, keys, 0)
 	for _, v := range Positions {
 		a := MainText[v.begin : v.begin+v.width]

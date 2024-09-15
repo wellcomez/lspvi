@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package main
 
 import (
@@ -14,7 +17,6 @@ import (
 
 	"golang.org/x/sys/unix"
 	"golang.org/x/term"
-
 )
 
 type read struct {
@@ -63,6 +65,7 @@ func (r *LightRenderer) initPlatform() (err error) {
 	r.origState, err = term.MakeRaw(r.fd())
 	return err
 }
+
 // TtyIn returns terminal device to read user input
 func TtyIn() (*os.File, error) {
 	return openTtyIn()
@@ -87,9 +90,9 @@ func openTty(mode int) (*os.File, error) {
 }
 
 type LightRenderer struct {
-	ttyin  *os.File
-	ttyout *os.File
-	origState     *term.State
+	ttyin     *os.File
+	ttyout    *os.File
+	origState *term.State
 }
 type TermSize struct {
 	Lines    int
@@ -187,9 +190,9 @@ func ptyOpen() (master *os.File, slave *os.File, err error) {
 		ttyin:  ttyin,
 		ttyout: ttyout,
 	}
-	err=h.initPlatform()
-	if err!=nil{
-		fmt.Println("initPlatform",err)
+	err = h.initPlatform()
+	if err != nil {
+		fmt.Println("initPlatform", err)
 	}
 	fmt.Println(h.Size())
 
@@ -211,4 +214,3 @@ func ptyOpen() (master *os.File, slave *os.File, err error) {
 	// fmt.Println(s)
 	return
 }
-

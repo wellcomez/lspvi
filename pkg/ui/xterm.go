@@ -259,6 +259,17 @@ func read_embbed(r *http.Request, w http.ResponseWriter) {
 	if s, ok := strings.CutPrefix(file, "/static/"); ok {
 		file = s
 	}
+	if devroot, err := filepath.Abs("."); err == nil {
+		var file_under_dev = filepath.Join(devroot,"pkg","ui","html", file)
+		if _, err := os.Stat(file_under_dev); err == nil {
+			buf, err := os.ReadFile(file_under_dev)
+			if err == nil {
+				w.Write(buf)
+				return
+			}
+		}
+
+	}
 	p := filepath.Join("html", file)
 	buf, err := uiFS.Open(p)
 	if err != nil {
@@ -365,7 +376,7 @@ func (imp *ptyout_impl) send_term_stdout(s []byte) bool {
 	// newFunction2(s)
 	data := ptyout_data{
 		Output: s,
-		Call:   "term",
+		Call:   call_term_stdout,
 	}
 	buf, err := msgpack.Marshal(data)
 	if imp.ws == nil {
@@ -389,12 +400,6 @@ var uiFS embed.FS
 // Write implements pty.ptyio.
 func (p ptyout) Write(s []byte) (n int, err error) {
 	p.imp.send(s)
-	// fmt.Println("xxx",len(s),string(s))
-	// p.imp.output += string(s)
-	// if need {
-	// 	wg.Done()
-	// 	need = false
-	// }
 	return len(s), nil
 }
 
@@ -422,7 +427,8 @@ func newFunction1(host string) {
 		argnew = append(argnew, "-ws", host)
 		ptystdio = pty.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
-		sss.imp.send_term_stdout([]byte("F5#"))
+		// sss.imp.send_term_stdout([]byte("F5#"))
+		Ws_term_command{Command: "quit", wsresp: wsresp{imp: sss.imp}}.resp()
 		// os.Exit(-1)
 	}()
 }
