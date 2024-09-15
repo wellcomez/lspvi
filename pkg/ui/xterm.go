@@ -22,6 +22,9 @@ import (
 	"zen108.com/lspvi/pkg/pty"
 )
 
+const client_cmd_resize = "resize"
+const client_cmd_init = "init"
+
 var use_https = false
 var start_process func(int, string)
 var wk *workdir
@@ -31,10 +34,11 @@ var wg sync.WaitGroup
 var ptystdio *pty.Pty = nil
 
 type init_call struct {
-	Call string `json:"call"`
-	Cols uint16 `json:"cols"`
-	Rows uint16 `json:"rows"`
-	Host string `json:"host"`
+	Call    string `json:"call"`
+	Cols    uint16 `json:"cols"`
+	Rows    uint16 `json:"rows"`
+	Host    string `json:"host"`
+	Cmdline string `json:"cmdline"`
 }
 type keydata struct {
 	Call string `json:"call"`
@@ -73,7 +77,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			log.Println("received call message", w.Call)
 			switch w.Call {
-			case "init":
+			case client_cmd_init:
 				{
 					if start_process != nil {
 						start_process(httpport, w.Host)
@@ -121,7 +125,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 						}
 					}()
 				}
-			case "resize":
+			case client_cmd_resize:
 				{
 					if ptystdio == nil {
 						return
@@ -234,10 +238,7 @@ func NewRouter(root string) *mux.Router {
 	r.HandleFunc("/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if path == "/" {
-			sss.imp.ws = nil
-			if start_process == nil {
-				ptystdio = nil
-			}
+			reset_lsp_backend()
 			read_embbed(r, w)
 		} else {
 			var root = project_root
@@ -251,6 +252,13 @@ func NewRouter(root string) *mux.Router {
 	return r
 }
 
+func reset_lsp_backend() {
+	sss.imp.ws = nil
+	if start_process == nil {
+		ptystdio = nil
+	}
+}
+
 func read_embbed(r *http.Request, w http.ResponseWriter) {
 	file := r.URL.Path
 	if file == "/" {
@@ -260,7 +268,7 @@ func read_embbed(r *http.Request, w http.ResponseWriter) {
 		file = s
 	}
 	if devroot, err := filepath.Abs("."); err == nil {
-		var file_under_dev = filepath.Join(devroot,"pkg","ui","html", file)
+		var file_under_dev = filepath.Join(devroot, "pkg", "ui", "html", file)
 		if _, err := os.Stat(file_under_dev); err == nil {
 			buf, err := os.ReadFile(file_under_dev)
 			if err == nil {
@@ -428,7 +436,9 @@ func newFunction1(host string) {
 		ptystdio = pty.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
 		// sss.imp.send_term_stdout([]byte("F5#"))
-		Ws_term_command{Command: "quit", wsresp: wsresp{imp: sss.imp}}.resp()
+		ptystdio = nil
+		impl :=sss.imp
+		Ws_term_command{Command: "quit", wsresp: wsresp{imp: impl}}.resp()
 		// os.Exit(-1)
 	}()
 }

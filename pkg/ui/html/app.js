@@ -187,25 +187,26 @@ class RemoteTermStatus {
     constructor() {
     }
 }
-class RemoteConn{
+class RemoteConn {
     constructor(socket) {
         this.socket = socket
     }
 }
 class LocalTerm {
-    constructor(term) {
+    constructor(term, conn) {
         this.term = term
+        this.conn = conn
         this.prompt = "bash# "
         this.term.clear()
         this.newline();
-        this.local_cmd_matcher = [(cmd)=>{
-            if (cmd.indexOf("lspvi")){
-
+        let lsp = (cmd) => {
+            if (cmd.indexOf("lspvi") == 0) {
+                this.conn.start_lspvi(cmd)
+                return true
             }
-        }]
-        this.local_cmd_matcher.forEach(element => {
-            element.bind(this)
-        });
+        }
+        lsp = lsp.bind(this)
+        this.local_cmd_matcher = [lsp]
     }
     newline() {
         this.term.write(this.prompt);
@@ -239,15 +240,15 @@ class LocalTerm {
         const { term } = this
         const currentBuffer = term.buffer.active;
         if (data == '\r') {
-            this.term.write('\r\n')
             let line = this.getCurrentLineText()
             if (line.indexOf(this.prompt) == 0) {
                 if (this.handleCommand(line.substring(this.prompt.length))) {
-                    
+
                     return
                 }
 
             }
+            this.term.write('\r\n')
             this.newline()
             return
         } else if (data === '\x7F') { // Delete key or similar
@@ -265,7 +266,7 @@ class Term {
     on_remote_stop() {
         let stop = true
         this.status = { stop }
-        this.Local = new LocalTerm(this.term)
+        this.Local = new LocalTerm(this.term, this.conn)
     }
     on_remote_inited() {
         let init = true
@@ -372,7 +373,7 @@ const socket_int = (term_obj, app) => {
     let wsproto = window.location.protocol === 'https:' ? 'wss' : 'ws'
     var socket = new WebSocket(wsproto + '://' + localhost + '/ws');
     var appstatus = new RemoteTermStatus()
-    var conn =new RemoteConn(socket)
+    var conn = new RemoteConn(socket)
     term_obj.conn = conn;
     const sendTextData = (data) => {
         if (socket.readyState === WebSocket.OPEN) {
@@ -389,11 +390,7 @@ const socket_int = (term_obj, app) => {
         sendTextData({ call, cols, rows })
     }
     socket.onopen = function (event) {
-        console.log("Connection opened");
-        let call = "init"
-        let rows = term.rows, cols = term.cols
-        let host = window.location.host
-        sendTextData({ call, cols, rows, host })
+        start_lspvi();
     };
 
     var clipboard = new ClipboardJS('.btn');
@@ -478,6 +475,17 @@ const socket_int = (term_obj, app) => {
         console.log("event resize", size)
         resizecall()
     })
+
+    function start_lspvi(cmdline) {
+        console.log("Connection opened");
+        let call = "init";
+        let rows = term.rows, cols = term.cols;
+        let host = window.location.host;
+        term_obj.Local = undefined
+        term_obj.status = {}
+        sendTextData({ call, cols, rows, host, cmdline });
+    }
+    conn.start_lspvi = start_lspvi.bind(conn)
 }
 const main = () => {
     var app = app_init()
