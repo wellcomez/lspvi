@@ -58,6 +58,49 @@ var upgrader = websocket.Upgrader{
 }
 var is_chan_start = false
 
+type xterm_request struct {
+}
+type lspvi_command_forwards struct {
+}
+
+func (term lspvi_command_forwards) process(method string, message []byte) bool {
+	switch method {
+	case call_on_copy:
+		{
+			Forward[Ws_on_selection](sss.imp, message)
+		}
+	case call_zoom:
+		{
+			Forward[Ws_font_size](sss.imp, message)
+		}
+	case call_openfile:
+		{
+			var file Ws_open_file
+			err := json.Unmarshal(message, &file)
+			if err == nil && wk != nil {
+				name := filepath.Base(file.Filename)
+				x := "__" + name
+				tempfile := filepath.Join(wk.temp, x)
+				err := os.WriteFile(tempfile, file.Buf, 0666)
+				if err != nil {
+					fmt.Println(err)
+				} else {
+					buf, err := msgpack.Marshal(Ws_open_file{
+						Filename: filepath.Join("/temp", x),
+						Call:     "openfile",
+					})
+					if err == nil {
+						sss.imp.write_ws(buf)
+					}
+				}
+			}
+
+		}
+	default:
+		return false
+	}
+	return true
+}
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -65,7 +108,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
-
+	var xterm *xterm_request
 	for {
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
@@ -83,59 +126,42 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				}
 			case client_cmd_init:
 				{
-					handle_xterm_init(w, conn)
+					xterm = new_xterm_init(w, conn)
 				}
-			case client_cmd_resize:
-				{
-					handle_xterm_resize(message)
-				}
-			case call_on_copy:
-				{
-					Forward[Ws_on_selection](sss.imp, message)
-				}
-			case call_zoom:
-				{
-					Forward[Ws_font_size](sss.imp, message)
-				}
-			case call_openfile:
-				{
-					var file Ws_open_file
-					err = json.Unmarshal(message, &file)
-					if err == nil && wk != nil {
-						name := filepath.Base(file.Filename)
-						x := "__" + name
-						tempfile := filepath.Join(wk.temp, x)
-						err := os.WriteFile(tempfile, file.Buf, 0666)
-						if err != nil {
-							fmt.Println(err)
-						} else {
-							buf, err := msgpack.Marshal(Ws_open_file{
-								Filename: filepath.Join("/temp", x),
-								Call:     "openfile",
-							})
-							if err == nil {
-								sss.imp.write_ws(buf)
-							}
-						}
-					}
 
-				}
-			case "key":
-				{
-					handle_xterm_input(message)
-				}
 			default:
-				fmt.Println("unknown call", w.Call)
+				method := w.Call
+				if xterm != nil {
+					xterm.process(method, message)
+				} else {
+					forward := lspvi_command_forwards{}
+					if !forward.process(method, message) {
+						fmt.Println("unknown call", w.Call)
+					}
+				}
 			}
 			continue
 		}
 	}
 }
 
-func Forward[T any](imp *ptyout_impl ,message []byte) error {
+func (term xterm_request) process(method string, message []byte) {
+	switch method {
+	case "key":
+		{
+			term.handle_xterm_input(message)
+		}
+	case client_cmd_resize:
+		{
+			term.handle_xterm_resize(message)
+		}
+
+	}
+}
+
+func Forward[T any](imp *ptyout_impl, message []byte) error {
 	var file T
-	var err error
-	err = json.Unmarshal(message, &file)
+	err := json.Unmarshal(message, &file)
 	if err == nil {
 		if buf, err := msgpack.Marshal(file); err == nil {
 			return imp.write_ws(buf)
@@ -158,7 +184,7 @@ func handle_lspvi_on_copy(message []byte, w init_call) {
 	}
 }
 
-func handle_xterm_input(message []byte) {
+func (xterm_request) handle_xterm_input(message []byte) {
 	if ptystdio == nil {
 		return
 	}
@@ -172,7 +198,7 @@ func handle_xterm_input(message []byte) {
 	}
 }
 
-func handle_xterm_resize(message []byte) {
+func (xterm_request) handle_xterm_resize(message []byte) {
 	if ptystdio == nil {
 		return
 	}
@@ -186,7 +212,7 @@ func handle_xterm_resize(message []byte) {
 	}
 }
 
-func handle_xterm_init(w init_call, conn *websocket.Conn) {
+func new_xterm_init(w init_call, conn *websocket.Conn) *xterm_request {
 	if start_process != nil {
 		start_process(httpport, w.Host)
 	}
@@ -232,6 +258,7 @@ func handle_xterm_init(w init_call, conn *websocket.Conn) {
 			sss.imp.ws.WriteMessage(websocket.BinaryMessage, data.Buf)
 		}
 	}()
+	return &xterm_request{}
 }
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()
