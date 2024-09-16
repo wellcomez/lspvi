@@ -83,94 +83,19 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				}
 			case client_cmd_init:
 				{
-					if start_process != nil {
-						start_process(httpport, w.Host)
-					}
-					if start_process == nil {
-						if ptystdio == nil {
-							url := "ws://" + w.Host + "/ws"
-							if use_https {
-								url = "wss://" + w.Host + "/ws"
-							}
-							create_lspvi_backend(url)
-							var i = 0
-							for {
-								if ptystdio == nil {
-									time.Sleep(time.Millisecond * 10)
-									i++
-									if i > 100 {
-										os.Exit(1)
-									}
-								} else {
-									break
-								}
-							}
-						} else {
-							ptystdio.File.Write([]byte{27})
-							ptystdio.File.Write([]byte{12})
-						}
-						if w.Cols != 0 && w.Rows != 0 {
-							ptystdio.UpdateSize(w.Rows, w.Cols)
-						}
-					}
-					sss.imp.ws = conn
-					if len(sss.imp.unsend) > 0 {
-						sss.imp.send_term_stdout(sss.imp.unsend)
-						sss.imp.unsend = []byte{}
-					}
-					go func() {
-						if is_chan_start {
-							return
-						}
-						is_chan_start = true
-						for {
-							data := <-ws_buffer_chan
-							sss.imp.ws.WriteMessage(websocket.BinaryMessage, data.Buf)
-						}
-					}()
+					handle_xterm_init(w, conn)
 				}
 			case client_cmd_resize:
 				{
-					if ptystdio == nil {
-						return
-					}
-					var res resize
-					err = json.Unmarshal(message, &res)
-
-					if err == nil {
-						if res.Rows != ptystdio.Rows || res.Cols != ptystdio.Cols {
-							ptystdio.UpdateSize(res.Rows, res.Cols)
-						}
-						// ptystdio.File.Write([]byte(key.Data))
-						continue
-					}
+					handle_xterm_resize(message)
 				}
 			case call_on_copy:
 				{
-					var file Ws_on_selection
-					err = json.Unmarshal(message, &file)
-					if err == nil {
-						if buf, err := msgpack.Marshal(Ws_on_selection{
-							SelectedString: file.SelectedString,
-							Call:           w.Call,
-						}); err == nil {
-							sss.imp.write_ws(buf)
-						}
-					}
+					Forward[Ws_on_selection](sss.imp, message)
 				}
 			case call_zoom:
 				{
-					var file Ws_font_size
-					err = json.Unmarshal(message, &file)
-					log.Println("zoom called", file, err)
-					if err == nil {
-						if buf, err := msgpack.Marshal(Ws_font_size{
-							Zoom: file.Zoom,
-							Call: "zoom",
-						}); err == nil {
-							sss.imp.write_ws(buf)
-						}
-					}
+					Forward[Ws_font_size](sss.imp, message)
 				}
 			case call_openfile:
 				{
@@ -197,18 +122,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				}
 			case "key":
 				{
-					if ptystdio == nil {
-						return
-					}
-					var key keydata
-					err = json.Unmarshal(message, &key)
-					if err == nil {
-						if key.Cols != 0 && key.Rows != 0 {
-							ptystdio.UpdateSize(key.Rows, key.Cols)
-						}
-						ptystdio.File.Write([]byte(key.Data))
-						continue
-					}
+					handle_xterm_input(message)
 				}
 			default:
 				fmt.Println("unknown call", w.Call)
@@ -216,6 +130,108 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 	}
+}
+
+func Forward[T any](imp *ptyout_impl ,message []byte) error {
+	var file T
+	var err error
+	err = json.Unmarshal(message, &file)
+	if err == nil {
+		if buf, err := msgpack.Marshal(file); err == nil {
+			return imp.write_ws(buf)
+		}
+	}
+	return err
+}
+
+func handle_lspvi_on_copy(message []byte, w init_call) {
+	var err error
+	var file Ws_on_selection
+	err = json.Unmarshal(message, &file)
+	if err == nil {
+		if buf, err := msgpack.Marshal(Ws_on_selection{
+			SelectedString: file.SelectedString,
+			Call:           w.Call,
+		}); err == nil {
+			sss.imp.write_ws(buf)
+		}
+	}
+}
+
+func handle_xterm_input(message []byte) {
+	if ptystdio == nil {
+		return
+	}
+	var key keydata
+	err := json.Unmarshal(message, &key)
+	if err == nil {
+		if key.Cols != 0 && key.Rows != 0 {
+			ptystdio.UpdateSize(key.Rows, key.Cols)
+		}
+		ptystdio.File.Write([]byte(key.Data))
+	}
+}
+
+func handle_xterm_resize(message []byte) {
+	if ptystdio == nil {
+		return
+	}
+	var res resize
+	err := json.Unmarshal(message, &res)
+
+	if err == nil {
+		if res.Rows != ptystdio.Rows || res.Cols != ptystdio.Cols {
+			ptystdio.UpdateSize(res.Rows, res.Cols)
+		}
+	}
+}
+
+func handle_xterm_init(w init_call, conn *websocket.Conn) {
+	if start_process != nil {
+		start_process(httpport, w.Host)
+	}
+	if start_process == nil {
+		if ptystdio == nil {
+			url := "ws://" + w.Host + "/ws"
+			if use_https {
+				url = "wss://" + w.Host + "/ws"
+			}
+			create_lspvi_backend(url)
+			var i = 0
+			for {
+				if ptystdio == nil {
+					time.Sleep(time.Millisecond * 10)
+					i++
+					if i > 100 {
+						os.Exit(1)
+					}
+				} else {
+					break
+				}
+			}
+		} else {
+			ptystdio.File.Write([]byte{27})
+			ptystdio.File.Write([]byte{12})
+		}
+		if w.Cols != 0 && w.Rows != 0 {
+			ptystdio.UpdateSize(w.Rows, w.Cols)
+		}
+	}
+	sss.imp.ws = conn
+	if len(sss.imp.unsend) > 0 {
+		sss.imp.send_term_stdout(sss.imp.unsend)
+		sss.imp.unsend = []byte{}
+	}
+	go func() {
+		if is_chan_start {
+			return
+		}
+		is_chan_start = true
+		for {
+			data := <-ws_buffer_chan
+			sss.imp.ws.WriteMessage(websocket.BinaryMessage, data.Buf)
+		}
+	}()
 }
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()

@@ -136,7 +136,7 @@ func (proxy *ws_to_xterm_proxy) Open() {
 					log.Println("WebSocket proxy connection close")
 					return
 				}
-				log.Println("WebSocket proxy connection read error: ", err)
+				log.Println("WebSocket proxy connection read e:", err)
 				continue
 			}
 			switch msg_type {
