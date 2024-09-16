@@ -588,15 +588,23 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{}
 	prj.Load(arg, main)
-	go StartWebUI(*arg, func(port int, url string) {
-		if len(url) > 0 {
-			main.ws = url
-			main.tty = true
-		}
-		if port > 0 {
-			httport = port
-		}
-	})
+	if arg.Ws != "" {
+		main.ws = arg.Ws
+		main.tty = true
+		var proxy=&ws_to_xterm_proxy{address: arg.Ws}
+		proxy.Open()
+		
+	} else {
+		go StartWebUI(*arg, func(port int, url string) {
+			if len(url) > 0 {
+				main.ws = url
+				main.tty = true
+			}
+			if port > 0 {
+				httport = port
+			}
+		})
+	}
 	// main.bookmark.load()
 	// handle.main = main
 	// if !filepath.IsAbs(root) {

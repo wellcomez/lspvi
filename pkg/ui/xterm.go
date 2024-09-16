@@ -77,6 +77,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			log.Println("received call message", w.Call)
 			switch w.Call {
+			case call_lspvi_start:
+				{
+
+				}
 			case client_cmd_init:
 				{
 					if start_process != nil {
@@ -88,7 +92,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 							if use_https {
 								url = "wss://" + w.Host + "/ws"
 							}
-							newFunction1(url)
+							create_lspvi_backend(url)
 							var i = 0
 							for {
 								if ptystdio == nil {
@@ -430,14 +434,14 @@ func StartWebUI(arg Arguments, cb func(int, string)) {
 	StartServer(filepath.Dir(os.Args[0]), 13000)
 }
 
-func newFunction1(host string) {
+func create_lspvi_backend(host string) {
 	go func() {
 		argnew = append(argnew, "-ws", host)
 		ptystdio = pty.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
 		// sss.imp.send_term_stdout([]byte("F5#"))
 		ptystdio = nil
-		impl :=sss.imp
+		impl := sss.imp
 		Ws_term_command{Command: "quit", wsresp: wsresp{imp: impl}}.resp()
 		// os.Exit(-1)
 	}()
