@@ -596,6 +596,7 @@ func MainUI(arg *Arguments) {
 		start_lspvi_proxy(arg, true)
 
 	} else {
+		start_lspvi_proxy(arg, false)
 		go StartWebUI(*arg, func(port int, url string) {
 			if len(url) > 0 {
 				main.ws = url

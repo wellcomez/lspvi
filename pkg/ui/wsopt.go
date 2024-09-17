@@ -105,7 +105,7 @@ func start_lspvi_proxy(arg *Arguments, listen bool) {
 func (p *ws_to_xterm_proxy) Request(t []byte) error {
 	return p.con.WriteMessage(websocket.TextMessage, t)
 }
-func (proxy *ws_to_xterm_proxy) Open(listen bool) {
+func (proxy *ws_to_xterm_proxy) Open(listen bool) error {
 	ws := proxy.address
 	// url := "ws://localhost:8080/ws"
 	dial := websocket.DefaultDialer
@@ -119,7 +119,7 @@ func (proxy *ws_to_xterm_proxy) Open(listen bool) {
 	con, _, err := dial.Dial(ws, nil)
 	if err != nil {
 		log.Printf("WebSocket连接失败:%v", err)
-		return
+		return err
 	}
 	proxy.con = con
 	if listen {
@@ -161,6 +161,8 @@ func (proxy *ws_to_xterm_proxy) Open(listen bool) {
 			}()
 		} else {
 			log.Println("SendJsonMessage", err)
+			return err
 		}
 	}
+	return nil
 }
