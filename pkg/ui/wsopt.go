@@ -55,21 +55,11 @@ const call_term_stdout = "term"
 const call_openfile = "openfile"
 const xterm_request_forward_refresh = "xterm_request_forward_refresh"
 const lspvi_backend_start = "xterm_lspvi_start"
+type xterm_forward_cmd_refresh struct {
+	Call string
+}
 
-func SendJsonMessage[T any](ws *websocket.Conn, data T) error {
-	buf, err := json.Marshal(data)
-	if err == nil {
-		return ws.WriteMessage(websocket.TextMessage, buf)
-	}
-	return err
-}
-func SendMsgPackMessage[T any](ws *websocket.Conn, data T) error {
-	buf, err := msgpack.Marshal(data)
-	if err == nil {
-		return ws.WriteMessage(websocket.TextMessage, buf)
-	}
-	return err
-}
+
 
 type xterm_forward_cmd struct {
 	Call string

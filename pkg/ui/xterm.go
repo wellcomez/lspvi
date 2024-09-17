@@ -62,20 +62,29 @@ type xterm_request struct {
 }
 type lspvi_backend struct {
 	forward lspvi_command_forward
+	ws      *websocket.Conn
 }
 
-func (term lspvi_backend) process(method string, message []byte) bool {
+func (term *lspvi_backend) process(method string, message []byte) bool {
 	if term.forward.process(method, message) {
 		return true
 	}
 	switch method {
 	case xterm_request_forward_refresh:
 		{
+			ForwardFromXterm[xterm_forward_cmd_refresh](message, term)
 		}
 	default:
 		return false
 	}
 	return true
+}
+
+func ForwardFromXterm[T any](message []byte, term *lspvi_backend) {
+	var a T
+	if err := json.Unmarshal(message, &a); err == nil {
+		SendJsonMessage(term.ws, a)
+	}
 }
 
 type lspvi_command_forward struct {
@@ -85,11 +94,11 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 	switch method {
 	case call_on_copy:
 		{
-			Forward[Ws_on_selection](sss.imp, message)
+			ForwardFromLspvi[Ws_on_selection](sss.imp, message)
 		}
 	case call_zoom:
 		{
-			Forward[Ws_font_size](sss.imp, message)
+			ForwardFromLspvi[Ws_font_size](sss.imp, message)
 		}
 	case call_openfile:
 		{
@@ -141,7 +150,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			switch w.Call {
 			case lspvi_backend_start:
 				{
-					_lspvi_backend = &lspvi_backend{}
+					_lspvi_backend = &lspvi_backend{ws: conn}
 				}
 			case xterm_init:
 				{
@@ -174,7 +183,7 @@ func (term xterm_request) process(method string, message []byte) {
 	}
 }
 
-func Forward[T any](imp *ptyout_impl, message []byte) error {
+func ForwardFromLspvi[T any](imp *ptyout_impl, message []byte) error {
 	var file T
 	err := json.Unmarshal(message, &file)
 	if err == nil {
