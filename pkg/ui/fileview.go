@@ -185,8 +185,8 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 					return
 				}
 				log.Println("external open tty=", ret.main.tty)
-				if ret.main.tty {
-					open_in_web(filename, ret.main.ws)
+				if proxy != nil {
+					proxy.open_in_web(filename)
 				} else {
 					if !yes {
 						openfile(filename)

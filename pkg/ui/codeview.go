@@ -842,8 +842,8 @@ func (code *CodeView) word_left() {
 	code.update_with_line_changed()
 }
 func (m *mainui) CopyToClipboard(s string) {
-	if m.tty {
-		set_browser_selection(s, m.ws)
+	if proxy != nil {
+		proxy.set_browser_selection(s)
 		return
 	}
 	clipboard.WriteAll(s)

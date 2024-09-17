@@ -65,13 +65,13 @@ func (v *umlview) openfile(name string) {
 
 	v.preview.Clear()
 	if ext == ".md" {
-		if v.main.tty {
-			open_in_web(name, v.main.ws)
+		if proxy != nil {
+			proxy.open_in_web(name)
 			return
 		}
 	} else if ext == ".png" {
-		if v.main.tty {
-			open_in_web(name, v.main.ws)
+		if proxy != nil {
+			proxy.open_in_web(name)
 			return
 		}
 		image := tview.NewImage()

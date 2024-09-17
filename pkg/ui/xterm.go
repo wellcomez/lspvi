@@ -61,11 +61,11 @@ var is_chan_start = false
 type xterm_request struct {
 }
 type lspvi_backend struct {
-	 forward lspvi_command_forwards 
+	forward lspvi_command_forward
 }
 
 func (term lspvi_backend) process(method string, message []byte) bool {
-	if term.forward.process(method, message){
+	if term.forward.process(method, message) {
 		return true
 	}
 	switch method {
@@ -78,10 +78,10 @@ func (term lspvi_backend) process(method string, message []byte) bool {
 	return true
 }
 
-type lspvi_command_forwards struct {
+type lspvi_command_forward struct {
 }
 
-func (term lspvi_command_forwards) process(method string, message []byte) bool {
+func (term lspvi_command_forward) process(method string, message []byte) bool {
 	switch method {
 	case call_on_copy:
 		{
@@ -500,7 +500,7 @@ func create_lspvi_backend(host string) {
 		// sss.imp.send_term_stdout([]byte("F5#"))
 		ptystdio = nil
 		impl := sss.imp
-		Ws_term_command{Command: "quit", wsresp: wsresp{imp: impl}}.resp()
+		Ws_term_command{Command: "quit", wsresp: wsresp{imp: impl}}.sendmsgpack()
 		// os.Exit(-1)
 	}()
 }

@@ -372,7 +372,9 @@ func (m *mainui) open_wks_query() {
 	m.layout.dialog.open_wks_query(m.lspmgr.Current)
 }
 func (m *mainui) ZoomWeb(zoom bool) {
-	set_browser_font(zoom, m.ws)
+	if proxy != nil {
+		proxy.set_browser_font(zoom)
+	}
 }
 
 // OpenFile
@@ -383,8 +385,8 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 		open_in_image_set := []string{".png", ".md"}
 		image := []string{".png"}
 		for _, v := range open_in_image_set {
-			if v == ext {
-				open_in_web(file, m.ws)
+			if v == ext && proxy != nil {
+				proxy.open_in_web(file)
 				for _, shouldret := range image {
 					if shouldret == ext {
 						return
@@ -591,9 +593,8 @@ func MainUI(arg *Arguments) {
 	if arg.Ws != "" {
 		main.ws = arg.Ws
 		main.tty = true
-		var proxy=&ws_to_xterm_proxy{address: arg.Ws}
-		proxy.Open()
-		
+		start_lspvi_proxy(arg, true)
+
 	} else {
 		go StartWebUI(*arg, func(port int, url string) {
 			if len(url) > 0 {
