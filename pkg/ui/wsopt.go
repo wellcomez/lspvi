@@ -37,24 +37,16 @@ type Ws_term_command struct {
 	Call    string
 	Command string
 }
-type Ws_call_lspvi_start struct {
-	ws      *websocket.Conn
-	Call    string
-	Command string
-}
 
-func (cmd Ws_call_lspvi_start) Request(proxy *ws_to_xterm_proxy) error {
-	cmd.Call = call_lspvi_start
-	return newFunction2[Ws_call_lspvi_start](proxy, cmd)
-}
+// type Ws_call_lspvi_start struct {
+// 	Call    string
+// 	Command string
+// }
 
-func newFunction2[T any](proxy *ws_to_xterm_proxy, data T) error {
-	if buf, er := msgpack.Marshal(data); er == nil {
-		return proxy.Request(buf)
-	} else {
-		return er
-	}
-}
+// func (cmd Ws_call_lspvi_start) Request(proxy *ws_to_xterm_proxy) error {
+// 	cmd.Call = call_lspvi_start
+// 	return SendMsgPackMessage[Ws_call_lspvi_start](proxy.con, cmd)
+// }
 
 func (cmd Ws_term_command) resp() error {
 	cmd.Call = call_term_command
@@ -71,7 +63,27 @@ const call_term_command = "call_term_command"
 const call_on_copy = "onselected"
 const call_term_stdout = "term"
 const call_openfile = "openfile"
-const call_lspvi_start = "lspvi_start"
+const xterm_request_forward_refresh = "xterm_request_forward_refresh"
+const lspvi_backend_start = "xterm_lspvi_start"
+
+func SendJsonMessage[T any](ws *websocket.Conn, data T) error {
+	buf, err := json.Marshal(data)
+	if err == nil {
+		return ws.WriteMessage(websocket.TextMessage, buf)
+	}
+	return err
+}
+func SendMsgPackMessage[T any](ws *websocket.Conn, data T) error {
+	buf, err := msgpack.Marshal(data)
+	if err == nil {
+		return ws.WriteMessage(websocket.TextMessage, buf)
+	}
+	return err
+}
+
+type xterm_forward_cmd struct {
+	Call string
+}
 
 func set_browser_selection(s string, ws string) {
 	if buf, err := json.Marshal(&Ws_on_selection{SelectedString: s, Call: call_on_copy}); err == nil {
@@ -128,24 +140,43 @@ func (proxy *ws_to_xterm_proxy) Open() {
 		}
 	}
 	proxy.con = con
-	go func() {
-		for {
-			msg_type, message, err := proxy.con.ReadMessage()
-			if err != nil {
-				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-					log.Println("WebSocket proxy connection close")
-					return
+	if err := SendJsonMessage(con, xterm_forward_cmd{Call: lspvi_backend_start}); err == nil {
+
+		go func() {
+			for {
+				msg_type, message, err := proxy.con.ReadMessage()
+				if err != nil {
+					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+						log.Println("WebSocket proxy connection close")
+						return
+					}
+					log.Println("WebSocket proxy connection read e:", err)
+					continue
 				}
-				log.Println("WebSocket proxy connection read e:", err)
-				continue
+				switch msg_type {
+				case websocket.TextMessage:
+					{
+						var w init_call
+						err = json.Unmarshal(message, &w)
+						if err == nil {
+							switch w.Call {
+							case xterm_request_forward_refresh:
+								{
+
+								}
+							}
+						} else {
+							log.Println("recv", err, "msg len=", len(message))
+						}
+
+					}
+				case websocket.BinaryMessage:
+					log.Println("recv binary message", len(message))
+				}
 			}
-			switch msg_type {
-			case websocket.TextMessage:
-				log.Println("recv", len(message))
-			case websocket.BinaryMessage:
-				log.Println("recv", len(message))
-			}
-		}
-	}()
-	Ws_call_lspvi_start{}.Request(proxy)
+		}()
+	} else {
+		log.Println("SendJsonMessage", err)
+	}
+	// Ws_call_lspvi_start{}.Request(proxy)
 }

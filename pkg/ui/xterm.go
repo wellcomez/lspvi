@@ -23,7 +23,7 @@ import (
 )
 
 const client_cmd_resize = "resize"
-const client_cmd_init = "init"
+const xterm_init = "init"
 
 var use_https = false
 var start_process func(int, string)
@@ -60,6 +60,24 @@ var is_chan_start = false
 
 type xterm_request struct {
 }
+type lspvi_backend struct {
+	 forward lspvi_command_forwards 
+}
+
+func (term lspvi_backend) process(method string, message []byte) bool {
+	if term.forward.process(method, message){
+		return true
+	}
+	switch method {
+	case xterm_request_forward_refresh:
+		{
+		}
+	default:
+		return false
+	}
+	return true
+}
+
 type lspvi_command_forwards struct {
 }
 
@@ -109,6 +127,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 	var xterm *xterm_request
+	var _lspvi_backend *lspvi_backend
 	for {
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
@@ -120,24 +139,20 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			log.Println("received call message", w.Call)
 			switch w.Call {
-			case call_lspvi_start:
+			case lspvi_backend_start:
 				{
-
+					_lspvi_backend = &lspvi_backend{}
 				}
-			case client_cmd_init:
+			case xterm_init:
 				{
 					xterm = new_xterm_init(w, conn)
 				}
-
 			default:
 				method := w.Call
 				if xterm != nil {
 					xterm.process(method, message)
-				} else {
-					forward := lspvi_command_forwards{}
-					if !forward.process(method, message) {
-						fmt.Println("unknown call", w.Call)
-					}
+				} else if _lspvi_backend != nil {
+					_lspvi_backend.process(method, message)
 				}
 			}
 			continue
