@@ -141,9 +141,13 @@ func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
 
 	// default_primarytext_color = fg
 	// default_backgroudColor = bg
-	input := main.cmdline.input
-	input.SetBackgroundColor(bg)
-	input.SetFieldTextColor(fg)
+	inputs := []*tview.InputField{main.cmdline.input, main.layout.dialog.input}
+	for _, input := range inputs {
+		input.SetFieldBackgroundColor(bg)
+		input.SetFieldTextColor(fg)
+		input.SetBackgroundColor(bg)
+		input.SetFieldTextColor(fg)
+	}
 	main.fileexplorer.ChangeDir(main.fileexplorer.rootdir)
 }
 
