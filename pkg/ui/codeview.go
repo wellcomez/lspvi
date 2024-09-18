@@ -21,8 +21,9 @@ import (
 
 type codetextview struct {
 	*femto.View
-	bookmark bookmarkfile
-	filename string
+	bookmark   bookmarkfile
+	linechange bookmarkfile
+	filename   string
 }
 type editor_selection struct {
 	selected_text string
@@ -435,24 +436,16 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 	root := &codetextview{
 		femto.NewView(buffer),
 		bookmarkfile{},
+		bookmarkfile{},
 		"",
 	}
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		style := tcell.StyleDefault
-		b := []int{}
 		_, topY, _, _ := root.GetInnerRect()
 		bottom := root.Bottomline()
-		for _, v := range root.bookmark.LineMark {
-			line := v.Line - 1
-			if line >= root.Topline && line <= bottom {
-				b = append(b, line)
-			}
-			for _, line := range b {
-				by := root.GetLineNoFormDraw(line) - root.Topline
-				screen.SetContent(x, by+topY, 'B', nil,
-					style.Foreground(global_theme.search_highlight_color()).Background(root.GetBackgroundColor()))
-			}
-		}
+		mark := root.bookmark
+		newFunction1(mark, 'B', root, bottom, screen, x, topY, style)
+		newFunction1(root.linechange, '*', root, bottom, screen, x, topY, style)
 		return root.GetInnerRect()
 	})
 	// root.Buf.Settings["scrollbar"] = true
@@ -460,6 +453,21 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 	// root.addbookmark(1, true)
 	// root.addbookmark(20, true)
 	return root
+}
+
+func newFunction1(mark bookmarkfile, ch rune, root *codetextview, bottom int, screen tcell.Screen, x int, topY int, style tcell.Style) {
+	b := []int{}
+	for _, v := range mark.LineMark {
+		line := v.Line - 1
+		if line >= root.Topline && line <= bottom {
+			b = append(b, line)
+		}
+		for _, line := range b {
+			by := root.GetLineNoFormDraw(line) - root.Topline
+			screen.SetContent(x, by+topY, ch, nil,
+				style.Foreground(global_theme.search_highlight_color()).Background(root.GetBackgroundColor()))
+		}
+	}
 }
 func (view *codetextview) has_bookmark() bool {
 	var line = view.Cursor.Loc.Y + 1
@@ -730,20 +738,28 @@ func new_linechange_checker(code *CodeView) linechange_checker {
 	return linechange_checker{lineno: lineno, next: next, cur: cur}
 }
 
-func (check *linechange_checker) after(code *CodeView) {
+func (check *linechange_checker) after(code *CodeView) int {
 	after_lineno := code.view.Cursor.Loc.Y
 	next := check.next
 	lineno := check.lineno
 	after_cur := get_line_content(after_lineno, code)
 	if after_lineno+1 == lineno {
 		code.view.bookmark.after_line_changed(lineno, false)
+		code.view.linechange.Add(lineno, "", "", true)
+		return lineno
 	} else if after_lineno == lineno {
 		if after_cur == next {
 			code.view.bookmark.after_line_changed(lineno+1, false)
+		} else if after_cur != check.cur {
+			code.view.linechange.Add(lineno, "", "", true)
+			return lineno
 		}
 	} else if after_lineno == lineno+1 {
 		code.view.bookmark.after_line_changed(lineno+1, true)
+		code.view.linechange.Add(after_lineno, "", "", true)
+		return after_lineno
 	}
+	return -1
 }
 
 func get_line_content(line int, code *CodeView) string {
