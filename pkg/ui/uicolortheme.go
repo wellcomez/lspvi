@@ -13,6 +13,7 @@ import (
 )
 
 var console_board_color = tcell.ColorGreen
+
 // var focused_border_color = tcell.ColorGreenYellow
 
 type symbol_colortheme struct {
@@ -103,11 +104,13 @@ func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
 	main.layout.console.SetBackgroundColor(bg)
 	main.page.SetBackgroundColor(bg)
 
-	main.symboltree.view.SetGraphicsColor(fg)
-	main.fileexplorer.view.SetGraphicsColor(fg)
+	trees := []*tview.TreeView{main.symboltree.view, main.fileexplorer.view, main.callinview.view, main.uml.file.view}
+	for _, v := range trees {
+		v.SetGraphicsColor(fg)
+	}
+
 	main.page.SetBorderColor(fg)
 
-	main.uml.file.view.SetGraphicsColor(fg)
 	main.uml.file.view.SetBackgroundColor(bg)
 
 	main.console_index_list.SetBackgroundColor(bg)
@@ -143,21 +146,22 @@ func (coloretheme *symbol_colortheme) __update_default_color(bg tcell.Color, fg 
 	tview.Styles.InverseTextColor = bg
 }
 
-// func (code *CodeView)update_with_ts_inited(ts *lspcore.TreeSitter) {
-// 	if code.main == nil {
-// 		return
-// 	} else if len(ts.Outline) > 0 {
-// 		code.ts = ts
-// 		if ts.DefaultOutline() {
-// 			lsp := code.main.symboltree.upate_with_ts(ts)
-// 			code.main.lspmgr.Current = lsp
-// 		} else {
-// 			code.main.OnSymbolistChanged(nil, nil)
-// 		}
-// 	}
-// 	code.main.app.Draw()
-// }
+//	func (code *CodeView)update_with_ts_inited(ts *lspcore.TreeSitter) {
+//		if code.main == nil {
+//			return
+//		} else if len(ts.Outline) > 0 {
+//			code.ts = ts
+//			if ts.DefaultOutline() {
+//				lsp := code.main.symboltree.upate_with_ts(ts)
+//				code.main.lspmgr.Current = lsp
+//			} else {
+//				code.main.OnSymbolistChanged(nil, nil)
+//			}
+//		}
+//		code.main.app.Draw()
+//	}
 var global_theme *symbol_colortheme
+
 func new_ui_theme(theme string, main *mainui) *symbol_colortheme {
 	var uicolorscheme *symbol_colortheme
 	var colorscheme femto.Colorscheme
