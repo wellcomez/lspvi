@@ -24,6 +24,19 @@ type bookmarkfile struct {
 	Name     string
 	LineMark []LineMark
 }
+func (b *bookmarkfile)after_line_changed(line int ,add bool){
+	for i := range b.LineMark  {
+		if i<=line{
+			continue
+		}
+		var s = &b.LineMark[i]	
+		if add{
+			s.Line--
+		}else{
+			s.Line++
+		}
+	}
+}
 type proj_bookmark struct {
 	Bookmark []bookmarkfile
 	path     string
