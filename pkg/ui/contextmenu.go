@@ -142,7 +142,7 @@ func (t *contextmenu) set_items(items []context_menu_item) int {
 		cmdlist: command_list,
 		main:    t.main,
 	}
-	t.table.Clear()
+	t.new_list()
 	ret := 0
 	menu_items := t.menu_text()
 	for _, s := range menu_items {
@@ -168,10 +168,16 @@ func new_contextmenu(m *mainui) *contextmenu {
 		cmdlist: command_list,
 		main:    m,
 	}
+
+	t.new_list()
+	return &t
+}
+
+func (t *contextmenu) new_list() {
+	t.table = tview.NewList()
 	t.table.ShowSecondaryText(false)
 	t.table.SetBorder(true)
 	t.table.SetTitle("menu")
-	return &t
 }
 func (v *contextmenu) Draw(screen tcell.Screen) {
 	if !v.visible {
