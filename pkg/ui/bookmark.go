@@ -29,7 +29,10 @@ func (b *bookmarkfile) after_line_changed(line int, add bool) {
 	lines := b.LineMark
 	for i := range lines {
 		var s = lines[i]
-		if s.Line > line {
+		if s.Line == line {
+			b.Add(s.Line, s.Comment, s.Text, false)
+			continue
+		} else if s.Line > line {
 			b.Add(s.Line, s.Comment, s.Text, false)
 			if add {
 				s.Line++

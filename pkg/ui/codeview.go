@@ -729,7 +729,9 @@ func (check *linechange_checker) after(code *CodeView) {
 	next := check.next
 	lineno := check.lineno
 	after_cur := get_line_content(after_lineno, code)
-	if next == after_cur {
+	if after_lineno+1 == lineno {
+		code.view.bookmark.after_line_changed(lineno, false)
+	} else if after_lineno == lineno {
 		if after_cur == next {
 			code.view.bookmark.after_line_changed(lineno+1, false)
 		}
