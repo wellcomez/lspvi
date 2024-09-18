@@ -22,7 +22,7 @@ import (
 
 type codetextview struct {
 	*femto.View
-	bookmark *bookmarkfile
+	bookmark bookmarkfile
 	filename string
 }
 type editor_selection struct {
@@ -435,7 +435,7 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 
 	root := &codetextview{
 		femto.NewView(buffer),
-		nil,
+		bookmarkfile{},
 		"",
 	}
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
@@ -443,12 +443,10 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		b := []int{}
 		_, topY, _, _ := root.GetInnerRect()
 		bottom := root.Bottomline()
-		if root.bookmark != nil {
-			for _, v := range root.bookmark.LineMark {
-				line := v.Line - 1
-				if line >= root.Topline && line <= bottom {
-					b = append(b, line)
-				}
+		for _, v := range root.bookmark.LineMark {
+			line := v.Line - 1
+			if line >= root.Topline && line <= bottom {
+				b = append(b, line)
 			}
 			for _, line := range b {
 				by := root.GetLineNoFormDraw(line) - root.Topline
@@ -471,9 +469,6 @@ func (view *codetextview) has_bookmark() bool {
 	return false
 }
 func (view *codetextview) addbookmark(add bool, comment string) {
-	if view.bookmark == nil {
-		return
-	}
 	var line = view.Cursor.Loc.Y + 1
 	view.bookmark.Add(line, comment, view.Buf.Line(line-1), add)
 }
@@ -897,7 +892,7 @@ func (m *mainui) CopyToClipboard(s string) {
 func (code *CodeView) Save() error {
 	view := code.view
 	data := view.Buf.SaveString(false)
-	code.main.bookmark.save()
+	code.main.bookmark.udpate(&code.view.bookmark)
 	return os.WriteFile(code.filename, []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
@@ -1198,7 +1193,7 @@ func (code *CodeView) Load(filename string) error {
 	code.view.Cursor.Loc.Y = 0
 	code.filename = filename
 	if code.main != nil {
-		code.view.bookmark = code.main.bookmark.GetFileBookmark(filename)
+		code.view.bookmark = *code.main.bookmark.GetFileBookmark(filename)
 	}
 	name := filename
 	if code.main != nil {

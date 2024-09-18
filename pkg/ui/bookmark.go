@@ -72,6 +72,15 @@ func (prj *proj_bookmark) delete(a ref_line) error {
 	}
 	return nil
 }
+func (prj *proj_bookmark) udpate(bk *bookmarkfile) {
+	for i := range prj.Bookmark {
+		if prj.Bookmark[i].Name == bk.Name {
+			prj.Bookmark[i] = *bk
+			break
+		}
+	}
+	prj.save()
+}
 func (prj *proj_bookmark) save() error {
 	buf, err := json.Marshal(prj)
 	if err != nil {
