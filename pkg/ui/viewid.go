@@ -134,7 +134,7 @@ func view_id_init(m *mainui) {
 				{
 					box.SetFocusFunc(func() {
 						change_after_focused(box, m)
-						m.page.SetBorderColor(focused_border_color)
+						m.page.SetBorderColor(global_theme.search_highlight_color())
 					})
 				}
 			default:
@@ -166,7 +166,7 @@ func view_id_init(m *mainui) {
 }
 
 func change_after_focused(box *tview.Box, m *mainui) {
-	box.SetBorderColor(focused_border_color)
+	box.SetBorderColor(global_theme.search_highlight_color())
 	vid := m.get_focus_view_id()
 	switch vid {
 	case view_code, view_cmd:

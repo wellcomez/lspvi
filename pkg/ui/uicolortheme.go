@@ -13,7 +13,7 @@ import (
 )
 
 var console_board_color = tcell.ColorGreen
-var focused_border_color = tcell.ColorGreenYellow
+// var focused_border_color = tcell.ColorGreenYellow
 
 type symbol_colortheme struct {
 	colorscheme femto.Colorscheme
@@ -70,6 +70,13 @@ func (mgr *symbol_colortheme) get_default_style() *tcell.Style {
 }
 func (mgr *symbol_colortheme) CursorLine() *tcell.Style {
 	return mgr.newMethod("cursorline")
+}
+func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
+	if color := mgr.newMethod("function"); color != nil {
+		a, _, _ := color.Decompose()
+		return a
+	}
+	return tcell.ColorYellow
 }
 
 func (mgr *symbol_colortheme) newMethod(name string) *tcell.Style {
@@ -150,7 +157,7 @@ func (coloretheme *symbol_colortheme) __update_default_color(bg tcell.Color, fg 
 // 	}
 // 	code.main.app.Draw()
 // }
-
+var global_theme *symbol_colortheme
 func new_ui_theme(theme string, main *mainui) *symbol_colortheme {
 	var uicolorscheme *symbol_colortheme
 	var colorscheme femto.Colorscheme

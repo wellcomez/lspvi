@@ -449,7 +449,8 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 			}
 			for _, line := range b {
 				by := root.GetLineNoFormDraw(line) - root.Topline
-				screen.SetContent(x, by+topY, 'B', nil, style.Foreground(tcell.ColorGreenYellow).Background(root.GetBackgroundColor()))
+				screen.SetContent(x, by+topY, 'B', nil,
+					style.Foreground(global_theme.search_highlight_color()).Background(root.GetBackgroundColor()))
 			}
 		}
 		return root.GetInnerRect()
@@ -1254,6 +1255,7 @@ func (code *CodeView) change_theme() {
 	main := code.main
 	theme := code.theme
 	uicolorscheme := new_ui_theme(theme, main)
+	global_theme = uicolorscheme
 	code.colorscheme = uicolorscheme
 	code.colorscheme.update_controller_theme(code)
 }

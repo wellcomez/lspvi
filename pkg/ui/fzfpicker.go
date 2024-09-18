@@ -162,7 +162,7 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
 	v.Frame.SetBorder(true)
 	v.input.SetLabel(">")
-	UpdateTitleAndColor(v.Frame.Box,sym.name())
+	UpdateTitleAndColor(v.Frame.Box, sym.name())
 	v.app.SetFocus(v.input)
 	v.Visible = true
 	v.currentpicker = sym
@@ -223,7 +223,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 	frame := tview.NewFrame(tview.NewBox())
 	frame.SetBorder(true)
 	frame.SetBorderPadding(0, 0, 0, 0)
-	frame.SetBorderColor(focused_border_color)
+	frame.SetBorderColor(global_theme.search_highlight_color())
 	ret := &fzfmain{
 		Frame: frame,
 		input: input,

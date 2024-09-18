@@ -196,14 +196,15 @@ func (view *callinview) update_node_color() {
 	}
 	view.view.GetRoot().Walk(func(n, parent *tview.TreeNode) bool {
 		if n != node {
+			x := view.main.codeview.colorscheme
 			if len(view.cmd_search_key) > 0 {
 				if strings.Contains(n.GetText(), view.cmd_search_key) {
-					n.SetColor(tcell.ColorYellow)
+					n.SetColor(x.search_highlight_color())
 					return true
 				}
 			}
 			if n.GetText() == text {
-				n.SetColor(tcell.ColorGreenYellow)
+				n.SetColor(x.search_highlight_color())
 			} else {
 				n.SetColor(tview.Styles.PrimaryTextColor)
 			}

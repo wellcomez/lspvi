@@ -594,8 +594,9 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{}
 	prj.Load(arg, main)
-	
-	new_ui_theme(global_config.Colorscheme,main).update_default_color()
+
+	global_theme = new_ui_theme(global_config.Colorscheme, main)
+	global_theme.update_default_color()
 
 	if arg.Ws != "" {
 		main.ws = arg.Ws

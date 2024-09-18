@@ -25,7 +25,7 @@ func (l *customlist) Clear() *customlist {
 	return l
 }
 func new_customlist(two bool) *customlist {
-	ret := &customlist{default_color: tcell.ColorGreenYellow}
+	ret := &customlist{default_color: global_theme.search_highlight_color()}
 	ret.List = tview.NewList()
 	ret.ShowSecondaryText(two)
 	ret.hlitems = []*hlItem{}
@@ -52,7 +52,7 @@ func find_key_fuzzy2(s string, colore_keys []colorkey, offset int) []keypattern 
 		}
 		idx := strings.Index(strings.ToLower(s), v)
 		if idx >= 0 {
-			pth := keypattern{begin: idx + offset, width: len(v), color: tcell.ColorGreenYellow}
+			pth := keypattern{begin: idx + offset, width: len(v), color: global_theme.search_highlight_color()}
 			a := []keypattern{pth}
 			subret := find_key_fuzzy2(s[idx+len(v):], colore_keys[len(v):], pth.width+idx+offset)
 			return append(a, subret...)
