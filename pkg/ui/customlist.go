@@ -90,7 +90,7 @@ func (l *customlist) remove_hl_flag(ss string, key string) ([]colorkey, string) 
 			e := strings.Index(s[b+1:], key)
 			if e > 0 {
 				key := l.NewDefaultColorKey(s[b+2 : b+e+1])
-				key.color = tcell.ColorYellow
+				key.color =global_theme.search_highlight_color() 
 				keys = append(keys, key)
 				s = s[b+e+3:]
 			} else {

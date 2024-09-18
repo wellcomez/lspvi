@@ -959,7 +959,11 @@ func create_edit_area(main *mainui) *flex_area {
 }
 
 func (main *mainui) reload_index_list() {
-	main.console_index_list.Load()
+	go func() {
+		main.app.QueueUpdateDraw(func() {
+			main.console_index_list.Load()
+		})
+	}()
 }
 
 func (main *mainui) Close() {
