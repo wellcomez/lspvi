@@ -94,8 +94,7 @@ type console_pages struct {
 }
 
 func (console *console_pages) update_title(s string) {
-	console.SetTitle(s)
-	console.SetTitleColor(tview.Styles.TitleColor)
+	UpdateTitleAndColor(console.Box, s)
 }
 func new_console_pages() *console_pages {
 	return &console_pages{
@@ -595,6 +594,9 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{}
 	prj.Load(arg, main)
+	
+	new_ui_theme(global_config.Colorscheme,main).update_default_color()
+
 	if arg.Ws != "" {
 		main.ws = arg.Ws
 		main.tty = true
@@ -695,8 +697,7 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(main)
 	main.quickview.RestoreLast()
-	main_layout.SetTitle(main.codeview.filename)
-	main_layout.SetTitleColor(tview.Styles.PrimaryTextColor)
+	UpdateTitleAndColor(main_layout.Box, main.codeview.filename)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
@@ -851,8 +852,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {
-					main.layout.mainlayout.SetTitle(viewname)
-					main.layout.mainlayout.SetTitleColor(tview.Styles.TitleColor)
+					UpdateTitleAndColor(main.layout.mainlayout.Box, viewname)
 				})
 			}(titlename)
 		}

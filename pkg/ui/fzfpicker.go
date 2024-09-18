@@ -162,8 +162,7 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
 	v.Frame.SetBorder(true)
 	v.input.SetLabel(">")
-	v.Frame.SetTitle(sym.name())
-	v.Frame.SetTitleColor(tview.Styles.TitleColor)
+	UpdateTitleAndColor(v.Frame.Box,sym.name())
 	v.app.SetFocus(v.input)
 	v.Visible = true
 	v.currentpicker = sym

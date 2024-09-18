@@ -282,8 +282,7 @@ func (view *file_tree_view) dir_replace(node *tview.TreeNode, filename string) {
 		if len(title) > len(view.main.root) {
 			title = strings.Replace(title, view.main.root, "", 1)
 		}
-		view.view.SetTitle(title)
-		view.view.SetTitleColor(tview.Styles.TitleColor)
+		UpdateTitleAndColor(view.view.Box, title)
 		// x := node.GetText(A)
 		title2 := filename
 		if len(title2) > len(view.rootdir) {

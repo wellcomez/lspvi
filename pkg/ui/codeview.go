@@ -16,7 +16,6 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
-	"zen108.com/lspvi/pkg/treesittertheme"
 	// "github.com/gdamore/tcell"
 )
 
@@ -399,7 +398,7 @@ func qf_grep_word(main *mainui, rightmenu_select_text string) {
 					for _, s := range buf {
 						add++
 						main.quickview.AddResult(end, data_grep_word, s, key)
-						main.page.SetTitle(main.quickview.String())
+						main.page.update_title(main.quickview.String())
 					}
 					buf = []ref_with_caller{}
 					coping = false
@@ -667,6 +666,8 @@ func (code *CodeView) tab_loc(pos mouse_event_pos) femto.Loc {
 		x, lineY := code.view.VirtualLine(pos.Y, pos.X)
 		pos.Y = lineY
 		pos.X = x
+	} else {
+		pos.Y = min(root.Buf.LinesNum(), pos.Y)
 	}
 	LastVisualX := GetVisualX(root, pos.Y, pos.X)
 	tabw := LastVisualX - pos.X
@@ -1165,6 +1166,12 @@ func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
 	}
 	return r, nil
 }
+
+func UpdateTitleAndColor(b *tview.Box, title string) {
+	b.SetTitle(title)
+	b.SetTitleColor(tview.Styles.TitleColor)
+}
+
 func (code *CodeView) Load(filename string) error {
 	if filename == code.filename {
 		return nil
@@ -1204,7 +1211,7 @@ func (code *CodeView) Load(filename string) error {
 		name = strings.ReplaceAll(filename, code.main.root, "")
 	}
 	name = strings.TrimLeft(name, "/")
-	code.view.SetTitle(name)
+	UpdateTitleAndColor(code.view.Box, name)
 	code.update_with_line_changed()
 	return nil
 }
@@ -1244,30 +1251,11 @@ func (code *CodeView) config_wrap(filename string) {
 }
 
 func (code *CodeView) change_theme() {
-	var colorscheme femto.Colorscheme
-	micro_buffer := []byte{}
-	if monokai := runtime.Files.FindFile(femto.RTColorscheme, code.theme); monokai != nil {
-		if data, err := monokai.Data(); err == nil {
-			micro_buffer = data
-
-		}
-	}
+	main := code.main
 	theme := code.theme
-	buf, err := treesittertheme.LoadTreesitterTheme(theme)
-
-	if err == nil {
-		micro_buffer = append(micro_buffer, buf...)
-	}
-	if len(micro_buffer) > 0 {
-		colorscheme = femto.ParseColorscheme(string(micro_buffer))
-		code.colorscheme = &symbol_colortheme{
-			colorscheme,
-			code.main,
-		}
-		if code.main != nil {
-		}
-		code.colorscheme.update_controller_theme(code)
-	}
+	uicolorscheme := new_ui_theme(theme, main)
+	code.colorscheme = uicolorscheme
+	code.colorscheme.update_controller_theme(code)
 }
 
 func (code *CodeView) save_selection(s string) {

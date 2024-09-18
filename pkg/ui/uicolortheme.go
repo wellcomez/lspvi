@@ -5,8 +5,10 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
+	"github.com/pgavlin/femto/runtime"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/treesittertheme"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -34,14 +36,19 @@ func (mgr *symbol_colortheme) get_color_style(kind lsp.SymbolKind) (tcell.Style,
 	return tcell.StyleDefault, errors.New("not found")
 }
 func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
-
-	if n, ok := mgr.colorscheme["normal"]; ok {
-		mgr.colorscheme["default"] = n
-		fg, bg, _ := n.Decompose()
+	mgr.update_default_color()
+	// fg, bg, _ := n.Decompose()
+	if style := mgr.get_default_style(); style != nil {
+		fg, bg, _ := style.Decompose()
 		if mgr.main != nil {
 			mgr.main.set_widget_theme(fg, bg)
 		}
-		code.bgcolor = bg
+		if code != nil {
+			code.bgcolor = bg
+		}
+	}
+	if code == nil {
+		return false
 	}
 	code.view.Buf.SetTreesitter(code.tree_sitter)
 	code.view.SetColorscheme(mgr.colorscheme)
@@ -52,6 +59,14 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 		}
 	}()
 	return false
+}
+
+func (mgr *symbol_colortheme) get_default_style() *tcell.Style {
+	if n, ok := mgr.colorscheme["normal"]; ok {
+		mgr.colorscheme["default"] = n
+		return &n
+	}
+	return nil
 }
 func (mgr *symbol_colortheme) CursorLine() *tcell.Style {
 	return mgr.newMethod("cursorline")
@@ -68,23 +83,16 @@ func (mgr *symbol_colortheme) StatusLine() *tcell.Style {
 }
 
 func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
-	var colorscheme=main.codeview.colorscheme
-	if color:=colorscheme.StatusLine();color!=nil{
-		f,b,_:=color.Decompose()
+	var colorscheme = main.codeview.colorscheme
+	if color := colorscheme.StatusLine(); color != nil {
+		f, b, _ := color.Decompose()
 		main.statusbar.SetBackgroundColor(b)
 		main.statusbar.SetTextColor(f)
 	}
-	tview.Styles.PrimitiveBackgroundColor = bg
-	tview.Styles.PrimaryTextColor = fg
-	tview.Styles.BorderColor = fg
-	tview.Styles.TitleColor = fg
-	tview.Styles.InverseTextColor = bg
-
 	for _, v := range all_view_list {
 		v.to_box(main).SetBackgroundColor(bg)
 	}
 
-	tview.Styles.PrimitiveBackgroundColor = bg
 	main.layout.console.SetBackgroundColor(bg)
 	main.page.SetBackgroundColor(bg)
 
@@ -113,6 +121,21 @@ func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
 	main.fileexplorer.ChangeDir(main.fileexplorer.rootdir)
 }
 
+func (coloretheme *symbol_colortheme) update_default_color() {
+	if style := coloretheme.get_default_style(); style != nil {
+		fg, bg, _ := style.Decompose()
+		coloretheme.__update_default_color(bg, fg)
+	}
+}
+func (coloretheme *symbol_colortheme) __update_default_color(bg tcell.Color, fg tcell.Color) {
+
+	tview.Styles.PrimitiveBackgroundColor = bg
+	tview.Styles.PrimaryTextColor = fg
+	tview.Styles.BorderColor = fg
+	tview.Styles.TitleColor = fg
+	tview.Styles.InverseTextColor = bg
+}
+
 // func (code *CodeView)update_with_ts_inited(ts *lspcore.TreeSitter) {
 // 	if code.main == nil {
 // 		return
@@ -127,3 +150,28 @@ func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
 // 	}
 // 	code.main.app.Draw()
 // }
+
+func new_ui_theme(theme string, main *mainui) *symbol_colortheme {
+	var uicolorscheme *symbol_colortheme
+	var colorscheme femto.Colorscheme
+	micro_buffer := []byte{}
+	if monokai := runtime.Files.FindFile(femto.RTColorscheme, theme); monokai != nil {
+		if data, err := monokai.Data(); err == nil {
+			micro_buffer = data
+
+		}
+	}
+	buf, err := treesittertheme.LoadTreesitterTheme(theme)
+
+	if err == nil {
+		micro_buffer = append(micro_buffer, buf...)
+	}
+	if len(micro_buffer) > 0 {
+		colorscheme = femto.ParseColorscheme(string(micro_buffer))
+		uicolorscheme = &symbol_colortheme{
+			colorscheme,
+			main,
+		}
+	}
+	return uicolorscheme
+}

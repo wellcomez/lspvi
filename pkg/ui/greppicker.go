@@ -156,8 +156,7 @@ func (grepx *livewgreppicker) update_title() {
 }
 
 func (parent *fzfmain) update_dialog_title(s string) {
-	parent.Frame.SetTitle(s)
-	parent.Frame.SetTitleColor(tview.Styles.PrimaryTextColor)
+	UpdateTitleAndColor(parent.Frame.Box,s)
 }
 func (grepx *livewgreppicker) grep_to_list() {
 	grep := grepx.impl

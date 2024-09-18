@@ -3,7 +3,6 @@ package mainui
 import (
 	"fmt"
 
-	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
@@ -168,8 +167,7 @@ func search_on_ui(option search_option, main *mainui) {
 				}
 				main.codeview.goto_loation(convert_search_pos_lsprange(pos, gs))
 			}
-			main.page.SetTitle(gs.String())
-			main.page.SetTitleColor(tview.Styles.TitleColor)
+			main.page.update_title(gs.String())
 		}
 	}
 }
