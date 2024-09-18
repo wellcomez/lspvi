@@ -42,7 +42,7 @@ func new_cmdline(main *mainui) *cmdline {
 	input.SetInputCapture(code.Keyhandle)
 	code.Vim = NewVim(main)
 	code.cmds = []cmd_processor{
-		cmd_processor{[]string{"cn", "cp"}, "next/prev quick fix", func(s []string) {
+		{[]string{"cn", "cp"}, "next/prev quick fix", func(s []string) {
 			command := s[0]
 			if command != "cn" {
 				get_cmd_actor(main, vi_quick_prev).handle()
@@ -50,16 +50,19 @@ func new_cmdline(main *mainui) *cmdline {
 				get_cmd_actor(main, vi_quick_next).handle()
 			}
 		}},
-		cmd_processor{[]string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string) {
+		{[]string{"w"}, "save", func(s []string) {
+			main.codeview.Save()
+		}},
+		{[]string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string) {
 			main.Close()
 		}},
-		cmd_processor{[]string{"h", "help"}, "help", func(s []string) {
+		{[]string{"h", "help"}, "help", func(s []string) {
 			main.helpkey(true)
 		}},
-		cmd_processor{[]string{"search", "grep"}, "search", func(args []string) {
+		{[]string{"search", "grep"}, "search", func(args []string) {
 			code.OnSearchCommand(args)
 		}},
-		cmd_processor{[]string{"set"}, "set", func(args []string) {
+		{[]string{"set"}, "set", func(args []string) {
 			code.OnSet(args)
 		}},
 	}
