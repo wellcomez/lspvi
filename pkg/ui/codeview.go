@@ -704,6 +704,9 @@ func (code *CodeView) xOffset() int64 {
 // }
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
+	lineno := code.view.Cursor.Loc.Y
+	// prev := get_line_content(lineno, code)
+	next := get_line_content(lineno+1, code)
 	if code.insert {
 		if h, ok := code.key_map[event.Key()]; ok {
 			h(code)
@@ -713,7 +716,24 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	} else {
 		code.handle_key_impl(event)
 	}
+	after_lineno := code.view.Cursor.Loc.Y
+	// go func() {
+	after_cur := get_line_content(after_lineno, code)
+	if after_cur == next {
+		code.view.bookmark.after_line_changed(lineno+1, false)
+	} else if after_lineno == lineno+1 {
+		code.view.bookmark.after_line_changed(lineno+1, true)
+	}
+	// }()
 	return nil
+}
+
+func get_line_content(line int, code *CodeView) string {
+	line_prev := ""
+	if line < code.view.Buf.LinesNum()-1 && line > 0 && code.view.Buf.LinesNum() > 0 {
+		line_prev = code.view.Buf.Line(line)
+	}
+	return line_prev
 }
 func (code *CodeView) run_command(cmdlist []cmditem, key string) bool {
 	for _, v := range cmdlist {
@@ -862,6 +882,7 @@ func (m *mainui) CopyToClipboard(s string) {
 func (code *CodeView) Save() error {
 	view := code.view
 	data := view.Buf.SaveString(false)
+	code.main.bookmark.save()
 	return os.WriteFile(code.filename, []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
