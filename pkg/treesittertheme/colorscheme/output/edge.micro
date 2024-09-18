@@ -1,3 +1,4 @@
+color-link linenr "#535C6A,#2C2E34"
 color-link comment "#758094,#2C2E34"
 color-link constant "#DEB974,#2C2E34"
 color-link string "#A0C980,#2C2E34"

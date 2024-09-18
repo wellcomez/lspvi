@@ -1,4 +1,7 @@
 Data:
+ - Group: "LineNr"
+   foreground: "#5f5f87"
+
  - Group: "Comment"
    foreground: "#af87d7"
 
@@ -102,17 +105,17 @@ Data:
    foreground: "#5fafaf"
 
  - Group: "Underlined"
-   underline: true
    foreground: "#dadada"
+   underline: true
 
  - Group: "Ignore"
    foreground: "#dadada"
 
  - Group: "Error"
-   bold: true
-   reverse: true
    background: "#0"
+   bold: true
    foreground: "#ff5f5f"
+   reverse: true
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -130,14 +133,14 @@ Data:
    background: "#363841"
 
  - Group: "Visual"
+   background: "#0"
    foreground: "#ffaf00"
    reverse: true
-   background: "#0"
 
  - Group: "StatusLine"
-   bold: true
    background: "#d7d7ff"
    foreground: "#0"
+   bold: true
 
  - Group: "Normal"
    foreground: "#dadada"
@@ -156,34 +159,34 @@ Data:
    foreground: "#d3d3d3"
 
  - Group: "DiffAdd"
+   background: "#0"
    foreground: "#af5f"
    reverse: true
-   background: "#0"
 
  - Group: "DiffChange"
+   background: "#0"
    foreground: "#87afff"
    reverse: true
-   background: "#0"
 
  - Group: "DiffDelete"
+   background: "#0"
    foreground: "#d7005f"
    reverse: true
-   background: "#0"
 
  - Group: "LspReferenceText"
+   background: "#0"
    foreground: "#ffaf00"
    reverse: true
-   background: "#0"
 
  - Group: "LspReferenceRead"
+   background: "#0"
    foreground: "#ffaf00"
    reverse: true
-   background: "#0"
 
  - Group: "LspReferenceWrite"
+   background: "#0"
    foreground: "#ffaf00"
    reverse: true
-   background: "#0"
 
  - Group: "@variable"
    foreground: "#87d75f"
@@ -194,8 +197,8 @@ Data:
  - Group: "@variable.parameter"
    foreground: "#87d75f"
 
- - Group: "@variable.parameter"
-   foreground: "#87d75f"
+ - Group: "@variable.parameter.builtin"
+   foreground: "#5fafaf"
 
  - Group: "@variable.member"
    foreground: "#87d75f"
@@ -233,7 +236,7 @@ Data:
  - Group: "@function.method"
    foreground: "#87d75f"
 
- - Group: "@function.method"
+ - Group: "@function.method.call"
    foreground: "#87d75f"
 
  - Group: "@constructor"
@@ -329,13 +332,14 @@ Data:
  - Group: "@string.special"
    foreground: "#5fafaf"
 
- - Group: "@string.special"
+ - Group: "@string.special.symbol"
    foreground: "#5fafaf"
 
- - Group: "@string.special"
-   foreground: "#5fafaf"
+ - Group: "@string.special.url"
+   foreground: "#dadada"
+   underline: true
 
- - Group: "@string.special"
+ - Group: "@string.special.path"
    foreground: "#5fafaf"
 
  - Group: "@character"
@@ -363,28 +367,28 @@ Data:
    strikethrough: true
 
  - Group: "@markup.underline"
-   underline: true
    foreground: "#dadada"
+   underline: true
 
  - Group: "@markup.heading"
    true: 6
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.1"
    true: 6
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.2"
    true: 6
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.3"
    true: 6
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.4"
    true: 6
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.5"
    true: 6
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.6"
    true: 6
 
  - Group: "@markup.quote"
@@ -396,24 +400,25 @@ Data:
  - Group: "@markup.link"
    foreground: "#87d75f"
 
- - Group: "@markup.link"
+ - Group: "@markup.link.label"
    foreground: "#87d75f"
 
- - Group: "@markup.link"
-   foreground: "#87d75f"
+ - Group: "@markup.link.url"
+   foreground: "#dadada"
+   underline: true
 
  - Group: "@markup.raw"
    foreground: "#af87d7"
 
- - Group: "@markup.raw"
+ - Group: "@markup.raw.block"
    foreground: "#af87d7"
 
  - Group: "@markup.list"
    foreground: "#5fafaf"
 
- - Group: "@markup.list"
+ - Group: "@markup.list.checked"
    foreground: "#5fafaf"
 
- - Group: "@markup.list"
+ - Group: "@markup.list.unchecked"
    foreground: "#5fafaf"
 

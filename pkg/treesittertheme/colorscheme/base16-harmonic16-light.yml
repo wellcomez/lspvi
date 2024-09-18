@@ -1,4 +1,8 @@
 Data:
+ - Group: "LineNr"
+   foreground: "#627e99"
+   background: "#f7f9fb"
+
  - Group: "Comment"
    foreground: "#aabcce"
 
@@ -163,29 +167,29 @@ Data:
    background: "#f7f9fb"
 
  - Group: "LspReferenceText"
-   underline: true
    special: 6454937
+   underline: true
 
  - Group: "LspReferenceRead"
-   underline: true
    special: 6454937
+   underline: true
 
  - Group: "LspReferenceWrite"
-   underline: true
    special: 6454937
+   underline: true
 
  - Group: "@variable"
    foreground: "#bf8b56"
 
  - Group: "@variable.builtin"
-   foreground: "#bf8b56"
    italic: true
+   foreground: "#bf8b56"
 
  - Group: "@variable.parameter"
    foreground: "#405c79"
 
- - Group: "@variable.parameter"
-   foreground: "#405c79"
+ - Group: "@variable.parameter.builtin"
+   foreground: "#568bbf"
 
  - Group: "@variable.member"
    foreground: "#405c79"
@@ -212,8 +216,8 @@ Data:
    foreground: "#8b56bf"
 
  - Group: "@function.builtin"
-   foreground: "#8b56bf"
    italic: true
+   foreground: "#8b56bf"
 
  - Group: "@function.call"
    foreground: "#8b56bf"
@@ -224,7 +228,7 @@ Data:
  - Group: "@function.method"
    foreground: "#8b56bf"
 
- - Group: "@function.method"
+ - Group: "@function.method.call"
    foreground: "#8b56bf"
 
  - Group: "@constructor"
@@ -240,8 +244,8 @@ Data:
    foreground: "#8bbf56"
 
  - Group: "@type.builtin"
-   foreground: "#8bbf56"
    italic: true
+   foreground: "#8bbf56"
 
  - Group: "@type.definition"
    foreground: "#8bbf56"
@@ -259,8 +263,8 @@ Data:
    foreground: "#405c79"
 
  - Group: "@Comment"
-   foreground: "#aabcce"
    italic: true
+   foreground: "#aabcce"
 
  - Group: "@keyword"
    foreground: "#bf568b"
@@ -322,13 +326,14 @@ Data:
  - Group: "@string.special"
    foreground: "#bf5656"
 
- - Group: "@string.special"
-   foreground: "#bf5656"
+ - Group: "@string.special.symbol"
+   foreground: "#56bf8b"
 
- - Group: "@string.special"
-   foreground: "#bf5656"
+ - Group: "@string.special.url"
+   foreground: "#bfbf56"
+   underline: true
 
- - Group: "@string.special"
+ - Group: "@string.special.path"
    foreground: "#bf5656"
 
  - Group: "@character"
@@ -361,22 +366,22 @@ Data:
  - Group: "@markup.heading"
    foreground: "#8b56bf"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.1"
    foreground: "#8b56bf"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.2"
    foreground: "#8b56bf"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.3"
    foreground: "#8b56bf"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.4"
    foreground: "#8b56bf"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.5"
    foreground: "#8b56bf"
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.6"
    foreground: "#8b56bf"
 
  - Group: "@markup.quote"
@@ -388,24 +393,25 @@ Data:
  - Group: "@markup.link"
    foreground: "#405c79"
 
- - Group: "@markup.link"
-   foreground: "#405c79"
+ - Group: "@markup.link.label"
+   foreground: "#bf5656"
 
- - Group: "@markup.link"
-   foreground: "#405c79"
+ - Group: "@markup.link.url"
+   foreground: "#bfbf56"
+   underline: true
 
  - Group: "@markup.raw"
    foreground: "#bfbf56"
 
- - Group: "@markup.raw"
+ - Group: "@markup.raw.block"
    foreground: "#bfbf56"
 
  - Group: "@markup.list"
    foreground: "#bf5656"
 
- - Group: "@markup.list"
+ - Group: "@markup.list.checked"
    foreground: "#bf5656"
 
- - Group: "@markup.list"
+ - Group: "@markup.list.unchecked"
    foreground: "#bf5656"
 

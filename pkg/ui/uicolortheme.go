@@ -78,6 +78,10 @@ func (mgr *symbol_colortheme) CursorLine() *tcell.Style {
 		// 	mgr.colorscheme["selection"] = *ret
 		// }
 	}
+	if ret := mgr.newMethod("visual"); ret != nil {
+		mgr.colorscheme["selection"] = *ret
+
+	}
 	return ret
 
 }

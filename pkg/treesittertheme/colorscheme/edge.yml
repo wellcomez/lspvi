@@ -1,4 +1,7 @@
 Data:
+ - Group: "LineNr"
+   foreground: "#535c6a"
+
  - Group: "Comment"
    italic: true
    foreground: "#758094"
@@ -131,12 +134,12 @@ Data:
    background: "#3b3e48"
 
  - Group: "StatusLine"
-   background: "#363944"
    foreground: "#c5cdd9"
+   background: "#363944"
 
  - Group: "Normal"
-   background: "#2c2e34"
    foreground: "#c5cdd9"
+   background: "#2c2e34"
 
  - Group: "DiagnosticError"
    foreground: "#ec7279"
@@ -390,8 +393,8 @@ Data:
    foreground: "#deb974"
 
  - Group: "@markup.link.url"
-   underline: true
    foreground: "#a0c980"
+   underline: true
 
  - Group: "@markup.raw"
    foreground: "#a0c980"

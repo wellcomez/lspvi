@@ -1,4 +1,8 @@
 Data:
+ - Group: "LineNr"
+   foreground: "#72696a"
+   background: "#2c2525"
+
  - Group: "Comment"
    italic: true
    foreground: "#8c8384"
@@ -136,12 +140,12 @@ Data:
    background: "#5b5353"
 
  - Group: "StatusLine"
-   background: "#403838"
    foreground: "#c3b7b8"
+   background: "#403838"
 
  - Group: "Normal"
-   background: "#2c2525"
    foreground: "#fff1f3"
+   background: "#2c2525"
 
  - Group: "DiagnosticError"
    foreground: "#ffc0b9"

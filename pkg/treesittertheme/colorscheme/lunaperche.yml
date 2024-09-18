@@ -1,4 +1,7 @@
 Data:
+ - Group: "LineNr"
+   foreground: "#585858"
+
  - Group: "Comment"
    foreground: "#5fafff"
 
@@ -12,8 +15,8 @@ Data:
    true: 6
 
  - Group: "Keyword"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "Type"
    foreground: "#5fd75f"
@@ -37,32 +40,32 @@ Data:
    true: 6
 
  - Group: "Statement"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "Conditional"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "Repeat"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "Label"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "Operator"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "Keyword"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "Exception"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "PreProc"
    foreground: "#5fd7d7"
@@ -139,10 +142,10 @@ Data:
    background: "#5f87"
 
  - Group: "StatusLine"
-   bold: true
-   reverse: true
    background: "#0"
+   bold: true
    foreground: "#c6c6c6"
+   reverse: true
 
  - Group: "Normal"
    foreground: "#c6c6c6"
@@ -192,8 +195,8 @@ Data:
  - Group: "@variable.parameter"
    true: 6
 
- - Group: "@variable.parameter"
-   true: 6
+ - Group: "@variable.parameter.builtin"
+   foreground: "#5fafaf"
 
  - Group: "@variable.member"
    true: 6
@@ -214,8 +217,8 @@ Data:
    foreground: "#5fafaf"
 
  - Group: "@label"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@function"
    true: 6
@@ -232,15 +235,15 @@ Data:
  - Group: "@function.method"
    true: 6
 
- - Group: "@function.method"
+ - Group: "@function.method.call"
    true: 6
 
  - Group: "@constructor"
    foreground: "#5fafaf"
 
  - Group: "@operator"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@String"
    foreground: "#ffd787"
@@ -270,20 +273,20 @@ Data:
    foreground: "#5fafff"
 
  - Group: "@keyword"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.coroutine"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.function"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.operator"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.import"
    foreground: "#5fd7d7"
@@ -292,31 +295,31 @@ Data:
    foreground: "#5fd75f"
 
  - Group: "@keyword.modifier"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.repeat"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.return"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.debug"
    foreground: "#5fafaf"
 
  - Group: "@keyword.exception"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.conditional"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.conditional.ternary"
-   bold: true
    foreground: "#e4e4e4"
+   bold: true
 
  - Group: "@keyword.directive"
    foreground: "#5fd7d7"
@@ -339,13 +342,13 @@ Data:
  - Group: "@string.special"
    foreground: "#5fafaf"
 
- - Group: "@string.special"
+ - Group: "@string.special.symbol"
    foreground: "#5fafaf"
 
- - Group: "@string.special"
-   foreground: "#5fafaf"
+ - Group: "@string.special.url"
+   underline: true
 
- - Group: "@string.special"
+ - Group: "@string.special.path"
    foreground: "#5fafaf"
 
  - Group: "@character"
@@ -378,22 +381,22 @@ Data:
  - Group: "@markup.heading"
    bold: true
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.1"
    bold: true
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.2"
    bold: true
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.3"
    bold: true
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.4"
    bold: true
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.5"
    bold: true
 
- - Group: "@markup.heading"
+ - Group: "@markup.heading.6"
    bold: true
 
  - Group: "@markup.quote"
@@ -405,24 +408,24 @@ Data:
  - Group: "@markup.link"
    true: 6
 
- - Group: "@markup.link"
+ - Group: "@markup.link.label"
    true: 6
 
- - Group: "@markup.link"
-   true: 6
+ - Group: "@markup.link.url"
+   underline: true
 
  - Group: "@markup.raw"
    foreground: "#5fafff"
 
- - Group: "@markup.raw"
+ - Group: "@markup.raw.block"
    foreground: "#5fafff"
 
  - Group: "@markup.list"
    foreground: "#5fafaf"
 
- - Group: "@markup.list"
+ - Group: "@markup.list.checked"
    foreground: "#5fafaf"
 
- - Group: "@markup.list"
+ - Group: "@markup.list.unchecked"
    foreground: "#5fafaf"
 

@@ -1,4 +1,8 @@
 Data:
+ - Group: "LineNr"
+   foreground: "#9c9491"
+   background: "#1b1918"
+
  - Group: "Comment"
    foreground: "#766e6b"
 
@@ -105,12 +109,12 @@ Data:
    foreground: "#f22c40"
 
  - Group: "Ignore"
-   background: "#1b1918"
    foreground: "#a8a19f"
+   background: "#1b1918"
 
  - Group: "Error"
-   background: "#1b1918"
    foreground: "#f22c40"
+   background: "#1b1918"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -131,12 +135,12 @@ Data:
    background: "#68615e"
 
  - Group: "StatusLine"
-   background: "#68615e"
    foreground: "#a8a19f"
+   background: "#68615e"
 
  - Group: "Normal"
-   background: "#1b1918"
    foreground: "#a8a19f"
+   background: "#1b1918"
 
  - Group: "DiagnosticError"
    foreground: "#f22c40"
@@ -151,28 +155,28 @@ Data:
    foreground: "#3d97b8"
 
  - Group: "DiffAdd"
-   background: "#1b1918"
    foreground: "#7b9726"
+   background: "#1b1918"
 
  - Group: "DiffChange"
-   background: "#1b1918"
    foreground: "#766e6b"
+   background: "#1b1918"
 
  - Group: "DiffDelete"
-   background: "#1b1918"
    foreground: "#f22c40"
+   background: "#1b1918"
 
  - Group: "LspReferenceText"
-   underline: true
    special: 10261649
+   underline: true
 
  - Group: "LspReferenceRead"
-   underline: true
    special: 10261649
+   underline: true
 
  - Group: "LspReferenceWrite"
-   underline: true
    special: 10261649
+   underline: true
 
  - Group: "@variable"
    foreground: "#f22c40"
@@ -326,8 +330,8 @@ Data:
    foreground: "#7b9726"
 
  - Group: "@string.special.url"
-   underline: true
    foreground: "#df5320"
+   underline: true
 
  - Group: "@string.special.path"
    foreground: "#c33ff3"
@@ -393,8 +397,8 @@ Data:
    foreground: "#c33ff3"
 
  - Group: "@markup.link.url"
-   underline: true
    foreground: "#df5320"
+   underline: true
 
  - Group: "@markup.raw"
    foreground: "#df5320"

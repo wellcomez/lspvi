@@ -1,4 +1,8 @@
 Data:
+ - Group: "LineNr"
+   foreground: "#6f527e"
+   background: "#211c2f"
+
  - Group: "Comment"
    foreground: "#6189bb"
 
@@ -18,8 +22,8 @@ Data:
    foreground: "#67d5b5"
 
  - Group: "Character"
-   background: "#211c2f"
    foreground: "#be9af7"
+   background: "#211c2f"
 
  - Group: "Number"
    foreground: "#fd9720"
@@ -40,8 +44,8 @@ Data:
    foreground: "#f92772"
 
  - Group: "Conditional"
-   background: "#211c2f"
    foreground: "#99c794"
+   background: "#211c2f"
 
  - Group: "Repeat"
    foreground: "#ff7273"
@@ -62,19 +66,19 @@ Data:
    foreground: "#ee82ee"
 
  - Group: "Include"
-   background: "#211c2f"
    foreground: "#d57cd5"
+   background: "#211c2f"
 
  - Group: "Define"
    foreground: "#ff5874"
 
  - Group: "Macro"
-   background: "#211c2f"
    foreground: "#c33c4a"
+   background: "#211c2f"
 
  - Group: "PreCondit"
-   background: "#211c2f"
    foreground: "#d7ffaf"
+   background: "#211c2f"
 
  - Group: "Type"
    foreground: "#67d5b5"
@@ -86,42 +90,42 @@ Data:
    foreground: "#a1efe4"
 
  - Group: "Typedef"
-   background: "#211c2f"
    foreground: "#66d9ef"
+   background: "#211c2f"
 
  - Group: "Special"
-   background: "#211c2f"
    foreground: "#ff6347"
+   background: "#211c2f"
 
  - Group: "SpecialChar"
-   background: "#211c2f"
    foreground: "#f92772"
+   background: "#211c2f"
 
  - Group: "Tag"
-   background: "#211c2f"
    foreground: "#addb67"
+   background: "#211c2f"
 
  - Group: "Delimiter"
    foreground: "#e0e2ea"
 
  - Group: "SpecialComment"
-   background: "#211c2f"
    foreground: "#ff6347"
+   background: "#211c2f"
 
  - Group: "Debug"
-   background: "#211c2f"
    foreground: "#ff6347"
+   background: "#211c2f"
 
  - Group: "Underlined"
    underline: true
 
  - Group: "Ignore"
-   background: "#211c2f"
    foreground: "#ddd0f4"
+   background: "#211c2f"
 
  - Group: "Error"
-   background: "#590008"
    foreground: "#eef1f8"
+   background: "#590008"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -142,12 +146,12 @@ Data:
    background: "#3f4060"
 
  - Group: "StatusLine"
-   background: "#3a3754"
    foreground: "#ddd0f4"
+   background: "#3a3754"
 
  - Group: "Normal"
-   background: "#211c2f"
    foreground: "#ddd0f4"
+   background: "#211c2f"
 
  - Group: "DiagnosticError"
    foreground: "#ffc0b9"
@@ -162,16 +166,16 @@ Data:
    foreground: "#a6dbff"
 
  - Group: "DiffAdd"
-   background: "#123314"
    foreground: "#99c794"
+   background: "#123314"
 
  - Group: "DiffChange"
-   background: "#282e39"
    foreground: "#fbfcbf"
+   background: "#282e39"
 
  - Group: "DiffDelete"
-   background: "#282e39"
    foreground: "#637077"
+   background: "#282e39"
 
  - Group: "LspReferenceText"
    background: "#3f4060"
@@ -192,8 +196,8 @@ Data:
    foreground: "#e7c3fb"
 
  - Group: "@variable.parameter.builtin"
-   background: "#211c2f"
    foreground: "#ff6347"
+   background: "#211c2f"
 
  - Group: "@variable.member"
    foreground: "#e7c3fb"
@@ -211,8 +215,8 @@ Data:
    foreground: "#a1efe4"
 
  - Group: "@module.builtin"
-   background: "#211c2f"
    foreground: "#ff6347"
+   background: "#211c2f"
 
  - Group: "@label"
    foreground: "#1aad16"
@@ -251,8 +255,8 @@ Data:
    foreground: "#ffce51"
 
  - Group: "@type.definition"
-   background: "#211c2f"
    foreground: "#66d9ef"
+   background: "#211c2f"
 
  - Group: "@type.class"
    foreground: "#67d5b5"
@@ -261,8 +265,8 @@ Data:
    foreground: "#7fdbca"
 
  - Group: "@attribute.builtin"
-   background: "#211c2f"
    foreground: "#ff6347"
+   background: "#211c2f"
 
  - Group: "@property"
    foreground: "#9e71cf"
@@ -343,8 +347,8 @@ Data:
    foreground: "#ffce51"
 
  - Group: "@character.special"
-   background: "#211c2f"
    foreground: "#f92772"
+   background: "#211c2f"
 
  - Group: "@boolean"
    foreground: "#ff435b"
@@ -392,15 +396,15 @@ Data:
    true: 6
 
  - Group: "@markup.math"
-   background: "#211c2f"
    foreground: "#ff6347"
+   background: "#211c2f"
 
  - Group: "@markup.link"
    underline: true
 
  - Group: "@markup.link.label"
-   background: "#211c2f"
    foreground: "#f92772"
+   background: "#211c2f"
 
  - Group: "@markup.link.url"
    underline: true

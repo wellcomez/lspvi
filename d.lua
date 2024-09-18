@@ -1,6 +1,7 @@
 -- Define highlight groups and output file path
 ---@type
 local highlight_groups = {
+  "LineNr",
   "Comment", -- "Variable",
   "Constant", "String", "Function", "Keyword", "Type", "Character", "Number", "Boolean", "Float", "Identifier",
   "Function", "Statement", "Conditional", "Repeat", "Label", "Operator", "Keyword", "Exception",
