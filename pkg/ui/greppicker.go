@@ -152,7 +152,12 @@ func (grepx *livewgreppicker) update_title() {
 		index = index + 1
 	}
 	s := fmt.Sprintf("Grep %s %d/%d", grepx.grep_list_view.Key, index, x)
-	grepx.parent.Frame.SetTitle(s)
+	grepx.parent.update_dialog_title( s)
+}
+
+func (parent *fzfmain) update_dialog_title(s string) {
+	parent.Frame.SetTitle(s)
+	parent.Frame.SetTitleColor(tview.Styles.PrimaryTextColor)
 }
 func (grepx *livewgreppicker) grep_to_list() {
 	grep := grepx.impl

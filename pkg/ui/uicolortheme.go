@@ -103,6 +103,8 @@ func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
 	main.layout.dialog.Frame.SetBackgroundColor(bg)
 	main.symboltree.update(main.lspmgr.Current)
 
+	main.page.SetTitleColor(fg)
+
 	// default_primarytext_color = fg
 	// default_backgroudColor = bg
 	input := main.cmdline.input

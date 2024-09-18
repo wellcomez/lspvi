@@ -128,7 +128,7 @@ func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bo
 	if qf == nil {
 		x := sym.grid(v.input)
 		v.create_dialog_content(x, sym)
-		v.Frame.SetTitle(fmt.Sprintf("grep %s", word))
+		v.update_dialog_title(fmt.Sprintf("grep %s", word))
 	}
 	sym.livewgreppicker.UpdateQuery(word)
 	return sym
@@ -163,6 +163,7 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame.SetBorder(true)
 	v.input.SetLabel(">")
 	v.Frame.SetTitle(sym.name())
+	v.Frame.SetTitleColor(tview.Styles.TitleColor)
 	v.app.SetFocus(v.input)
 	v.Visible = true
 	v.currentpicker = sym

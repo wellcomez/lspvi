@@ -17,7 +17,7 @@ import (
 )
 
 func (grepx *prev_picker_impl) update_title(s string) {
-	grepx.parent.Frame.SetTitle(s)
+	grepx.parent.update_dialog_title(s)
 }
 func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.Flex {
 	code := impl.codeprev.view

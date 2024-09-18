@@ -30,6 +30,7 @@ func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
 	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line)
 	pk.frame.SetTitle(title)
+	pk.frame.SetTitleColor(tview.Styles.TitleColor)
 	pk.codeprev.Load(loc.URI.AsPath().String())
 	pk.codeprev.gotoline(loc.Range.Start.Line)
 }

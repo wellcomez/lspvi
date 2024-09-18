@@ -93,6 +93,10 @@ type console_pages struct {
 	*view_link
 }
 
+func (console *console_pages) update_title(s string) {
+	console.SetTitle(s)
+	console.SetTitleColor(tview.Styles.TitleColor)
+}
 func new_console_pages() *console_pages {
 	return &console_pages{
 		tview.NewPages(),
@@ -176,7 +180,7 @@ func (m *mainui) UpdatePageTitle() {
 		case view_callin.getname():
 		case view_uml.getname():
 		case view_log.getname():
-			m.page.SetTitle(name)
+			m.page.update_title(name)
 		default:
 			return
 		}
@@ -206,7 +210,8 @@ func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.L
 				return
 			}
 			m.quickview.OnLspRefenceChanged(refs, data_refs, ranges)
-			m.page.SetTitle(m.quickview.String())
+			s := m.quickview.String()
+			m.page.update_title(s)
 		})
 	}()
 
@@ -296,9 +301,9 @@ func (m *mainui) ActiveTab(id view_id, focused bool) {
 	}
 	switch id {
 	case view_quickview:
-		m.page.SetTitle(m.quickview.String())
+		m.page.update_title(m.quickview.String())
 	default:
-		m.page.SetTitle(id.getname())
+		m.page.update_title(id.getname())
 	}
 }
 
@@ -691,6 +696,7 @@ func MainUI(arg *Arguments) {
 	view_id_init(main)
 	main.quickview.RestoreLast()
 	main_layout.SetTitle(main.codeview.filename)
+	main_layout.SetTitleColor(tview.Styles.PrimaryTextColor)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
@@ -846,6 +852,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {
 					main.layout.mainlayout.SetTitle(viewname)
+					main.layout.mainlayout.SetTitleColor(tview.Styles.TitleColor)
 				})
 			}(titlename)
 		}

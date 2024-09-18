@@ -333,6 +333,7 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 
 func update_list_view(list *customlist, t querytask, v *fzfmain) {
 	list.SetTitle(fmt.Sprintf("Files %d/%d", t.match_count, t.count))
+	list.SetTitleColor(tview.Styles.PrimaryTextColor)
 	if t.update_count {
 		return
 	}
