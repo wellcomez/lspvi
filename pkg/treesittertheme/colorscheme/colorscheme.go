@@ -23,7 +23,7 @@ type File struct {
 
 func main() {
 	// Sample YAML data as a string
-	x := "/home/z/dev/lsp/goui/pkg/ui/colorscheme/"
+	x := "/home/z/dev/lsp/goui/pkg/treesittertheme/colorscheme/"
 	dirs, err := os.ReadDir(x)
 	if err != nil {
 		return
@@ -77,11 +77,15 @@ func main() {
 			}
 		}
 		bg = strings.ToUpper(bg)
-		if len(bg)< 7 {
+		if len(bg) < 7 {
 			continue
 		}
 		for _, v := range data.Data {
-			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), strings.ToUpper(v.Foreground), bg)
+			b := bg
+			if len(v.Background) > 0 {
+				b = v.Background
+			}
+			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), strings.ToUpper(v.Foreground), strings.ToUpper(b))
 			ret = append(ret, s)
 		}
 		sss := strings.Join(ret, "\n")

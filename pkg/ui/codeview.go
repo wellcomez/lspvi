@@ -456,6 +456,7 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		return root.GetInnerRect()
 	})
 	root.Buf.Settings["scrollbar"] = true
+	root.Buf.Settings["cursorline"] = true
 	// root.addbookmark(1, true)
 	// root.addbookmark(20, true)
 	return root
@@ -1187,7 +1188,7 @@ func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
 	return r, nil
 }
 
-func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box{
+func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	b.SetTitle(title)
 	b.SetTitleColor(tview.Styles.TitleColor)
 	return b
