@@ -444,10 +444,13 @@ func (state *escapestate) end() {
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
-	for _, cmd := range l.input.cmdlist {
-		if cmd.key.Type == cmd_key_tcell_key && cmd.key.tcell_key == event.Key() {
-			cmd.cmd.handle()
-			return true
+	viewid := l.main.get_focus_view_id()
+	if viewid == view_code {
+		for _, cmd := range l.input.cmdlist {
+			if cmd.key.Type == cmd_key_tcell_key && cmd.key.tcell_key == event.Key() {
+				cmd.cmd.handle()
+				return true
+			}
 		}
 	}
 	ts := l.state.keyseq
@@ -483,7 +486,6 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	}
 	l.state.keyseq = append(ts, string(ch))
 	cmdname := strings.Join(l.state.keyseq, "")
-	viewid := l.main.get_focus_view_id()
 	if viewid == view_code {
 		l.input.delay_cmd_cb = func() {
 			l.end()
