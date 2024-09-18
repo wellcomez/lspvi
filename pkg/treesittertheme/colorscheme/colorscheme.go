@@ -85,7 +85,13 @@ func main() {
 			if len(v.Background) > 0 {
 				b = v.Background
 			}
-			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), strings.ToUpper(v.Foreground), strings.ToUpper(b))
+
+			Foreground := v.Foreground
+			if strings.ToLower(v.Group) == "cursorline" {
+				Foreground = b
+				b = ""
+			}
+			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), strings.ToUpper(Foreground), strings.ToUpper(b))
 			ret = append(ret, s)
 		}
 		sss := strings.Join(ret, "\n")

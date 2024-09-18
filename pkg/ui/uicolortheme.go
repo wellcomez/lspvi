@@ -74,6 +74,9 @@ func (mgr *symbol_colortheme) CursorLine() *tcell.Style {
 	ret := mgr.newMethod("cursorline")
 	if ret != nil {
 		mgr.colorscheme["cursor-line"] = *ret
+		// if _, ok := mgr.colorscheme["selection"]; !ok {
+		// 	mgr.colorscheme["selection"] = *ret
+		// }
 	}
 	return ret
 

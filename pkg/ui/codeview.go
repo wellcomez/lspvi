@@ -455,8 +455,8 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		}
 		return root.GetInnerRect()
 	})
-	root.Buf.Settings["scrollbar"] = true
-	root.Buf.Settings["cursorline"] = true
+	// root.Buf.Settings["scrollbar"] = true
+	// root.Buf.Settings["cursorline"] = true
 	// root.addbookmark(1, true)
 	// root.addbookmark(20, true)
 	return root
