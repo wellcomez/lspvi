@@ -53,8 +53,27 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 	}()
 	return false
 }
+func (mgr *symbol_colortheme) CursorLine() *tcell.Style {
+	return mgr.newMethod("cursorline")
+}
+
+func (mgr *symbol_colortheme) newMethod(name string) *tcell.Style {
+	if n, ok := mgr.colorscheme[name]; ok {
+		return &n
+	}
+	return nil
+}
+func (mgr *symbol_colortheme) StatusLine() *tcell.Style {
+	return mgr.newMethod("statusline")
+}
 
 func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
+	var colorscheme=main.codeview.colorscheme
+	if color:=colorscheme.StatusLine();color!=nil{
+		f,b,_:=color.Decompose()
+		main.statusbar.SetBackgroundColor(b)
+		main.statusbar.SetTextColor(f)
+	}
 	tview.Styles.PrimitiveBackgroundColor = bg
 	tview.Styles.PrimaryTextColor = fg
 	tview.Styles.BorderColor = fg

@@ -677,58 +677,10 @@ func MainUI(arg *Arguments) {
 
 	resizer := []editor_mouse_resize{*console_area_resizer, *edit_area_resizer, *main_layout_resizer}
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
-		content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
-		if content_menu_action == tview.MouseConsumed {
-			return nil, tview.MouseConsumed
-		}
-		if main.right_context_menu.visible {
-			return nil, tview.MouseConsumed
-		}
-		if main.layout.spacemenu.visible {
-			spacemenu := main.layout.spacemenu
-			action, event := spacemenu.handle_mouse(action, event)
-			if action == tview.MouseConsumed {
-				return event, action
-			}
-			if !InRect(event, mainmenu) {
-				if action != tview.MouseMove {
-					spacemenu.closemenu()
-				}
-				return nil, tview.MouseConsumed
-			}
-		}
-
-		if main.layout.dialog.Visible {
-			if !InRect(event, main.layout.dialog.Frame) {
-				if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
-					main.layout.dialog.hide()
-				}
-			} else {
-				main.layout.dialog.MouseHanlde(event, action)
-			}
-			return nil, tview.MouseConsumed
-		}
-		for _, v := range resizer {
-			if v.checkdrag(action, event) == tview.MouseConsumed {
-				return nil, tview.MouseConsumed
-			}
-		}
-		return event, action
+		return handle_mouse_event(main, action, event, mainmenu, resizer)
 	})
 	app.SetAfterDrawFunc(func(screen tcell.Screen) {
-		if main.right_context_menu.visible {
-			main.right_context_menu.Draw(screen)
-		}
-		main.layout.spacemenu.Draw(screen)
-		if main.layout.dialog.Visible {
-			main.layout.dialog.Draw(screen)
-		} else {
-			if main.get_focus_view_id() == view_quickview {
-				l, t, w, _ := main.layout.console.GetRect()
-				_, _, _, h := main.quickview.view.GetRect()
-				main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
-			}
-		}
+		handle_draw_after(main, screen)
 		// if main.codeview.rightmenu.visible {
 		// 	main.codeview.rightmenu.Draw(screen)
 		// }
@@ -742,6 +694,62 @@ func MainUI(arg *Arguments) {
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
+}
+
+func handle_draw_after(main *mainui, screen tcell.Screen) {
+	if main.right_context_menu.visible {
+		main.right_context_menu.Draw(screen)
+	}
+	main.layout.spacemenu.Draw(screen)
+	if main.layout.dialog.Visible {
+		main.layout.dialog.Draw(screen)
+	} else {
+		if main.get_focus_view_id() == view_quickview {
+			l, t, w, _ := main.layout.console.GetRect()
+			_, _, _, h := main.quickview.view.GetRect()
+			main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
+		}
+	}
+}
+
+func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
+	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
+	if content_menu_action == tview.MouseConsumed {
+		return nil, tview.MouseConsumed
+	}
+	if main.right_context_menu.visible {
+		return nil, tview.MouseConsumed
+	}
+	if main.layout.spacemenu.visible {
+		spacemenu := main.layout.spacemenu
+		action, event := spacemenu.handle_mouse(action, event)
+		if action == tview.MouseConsumed {
+			return event, action
+		}
+		if !InRect(event, mainmenu) {
+			if action != tview.MouseMove {
+				spacemenu.closemenu()
+			}
+			return nil, tview.MouseConsumed
+		}
+	}
+
+	if main.layout.dialog.Visible {
+		if !InRect(event, main.layout.dialog.Frame) {
+			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
+				main.layout.dialog.hide()
+			}
+		} else {
+			main.layout.dialog.MouseHanlde(event, action)
+		}
+		return nil, tview.MouseConsumed
+	}
+	for _, v := range resizer {
+		if v.checkdrag(action, event) == tview.MouseConsumed {
+			return nil, tview.MouseConsumed
+		}
+	}
+	return event, action
 }
 
 func load_from_history(main *mainui) {
