@@ -72,10 +72,20 @@ func (proxy *back_to_xterm) Open(listen bool) error {
 							var w init_call
 							err = json.Unmarshal(message, &w)
 							if err == nil {
+								log.Printf("forward call %s", w.Call)
 								switch w.Call {
 								case forward_call_refresh:
 									{
 
+									}
+								case call_paste_data:
+									{
+										var data xterm_forward_cmd_paste
+										if err := json.Unmarshal(message, &data); err == nil {
+											log.Println(data.Call, data.Data)
+											paste := GlobalApp.GetFocus().PasteHandler()
+											paste(data.Data, nil)
+										}
 									}
 								}
 							} else {
