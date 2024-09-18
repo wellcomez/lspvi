@@ -134,7 +134,7 @@ func view_id_init(m *mainui) {
 				{
 					box.SetFocusFunc(func() {
 						change_after_focused(box, m)
-						m.page.SetBorderColor(tcell.ColorGreenYellow)
+						m.page.SetBorderColor(focused_border_color)
 					})
 				}
 			default:
@@ -149,14 +149,14 @@ func view_id_init(m *mainui) {
 			case view_quickview, view_callin, view_uml, view_log:
 				{
 					box.SetBlurFunc(func() {
-						box.SetBorderColor(tcell.ColorWhite)
-						m.page.SetBorderColor(tcell.ColorGreen)
+						box.SetBorderColor(tview.Styles.BorderColor)
+						m.page.SetBorderColor(tview.Styles.BorderColor)
 					})
 				}
 			default:
 				{
 					box.SetBlurFunc(func() {
-						box.SetBorderColor(tcell.ColorWhite)
+						box.SetBorderColor(tview.Styles.BorderColor)
 					})
 				}
 			}
@@ -166,7 +166,7 @@ func view_id_init(m *mainui) {
 }
 
 func change_after_focused(box *tview.Box, m *mainui) {
-	box.SetBorderColor(tcell.ColorGreenYellow)
+	box.SetBorderColor(focused_border_color)
 	vid := m.get_focus_view_id()
 	switch vid {
 	case view_code, view_cmd:

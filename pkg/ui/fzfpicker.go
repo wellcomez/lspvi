@@ -219,11 +219,11 @@ func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 
 func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 	input := tview.NewInputField()
-	input.SetFieldBackgroundColor(tcell.ColorBlack)
+	input.SetFieldBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
 	frame := tview.NewFrame(tview.NewBox())
 	frame.SetBorder(true)
 	frame.SetBorderPadding(0, 0, 0, 0)
-	frame.SetBorderColor(tcell.ColorGreenYellow)
+	frame.SetBorderColor(focused_border_color)
 	ret := &fzfmain{
 		Frame: frame,
 		input: input,

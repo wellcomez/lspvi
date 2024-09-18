@@ -205,7 +205,7 @@ func (view *callinview) update_node_color() {
 			if n.GetText() == text {
 				n.SetColor(tcell.ColorGreenYellow)
 			} else {
-				n.SetColor(tcell.ColorWhite)
+				n.SetColor(tview.Styles.PrimaryTextColor)
 			}
 		}
 		return true
