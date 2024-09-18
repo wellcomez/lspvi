@@ -1076,8 +1076,9 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	for _, v := range main.global_key_map() {
 		if v.key.matched_event(*event) {
-			v.cmd.handle()
-			return nil
+			if v.cmd.handle() {
+				return nil
+			}
 		}
 	}
 	if main.console_index_list.HasFocus() {

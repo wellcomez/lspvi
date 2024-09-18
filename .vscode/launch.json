@@ -47,7 +47,7 @@
             "args": [
                 // "-gui",
                 // "-tty",
-                "-ws","wss://localhost:13000/ws"
+                // "-ws","wss://localhost:13000/ws"
                 // "127.0.0.1:8080",
                 // "-gui",
                 // "-root",

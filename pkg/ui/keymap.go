@@ -63,6 +63,7 @@ const (
 	vi_line_head
 	open_picker_help
 	handle_ctrl_c
+	handle_ctrl_v
 	cmd_quit
 )
 
@@ -339,6 +340,15 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			m.codeview.word_right()
 			return true
 		}}
+	case handle_ctrl_c:
+		return cmdactor{id, "ctrl-c copy", func() bool {
+			m.codeview.copyline(false)
+			return true
+		}}
+	case handle_ctrl_v:
+		return cmdactor{id, "ctrl-v paste", func() bool {
+			return true
+		}}
 	case open_picker_help:
 		return cmdactor{id, "help", func() bool {
 			m.layout.dialog.OpenKeymapFzf()
@@ -476,7 +486,8 @@ func (main *mainui) key_map_leader() []cmditem {
 }
 func (m *mainui) global_key_map() []cmditem {
 	return []cmditem{
-		get_cmd_actor(m, handle_ctrl_c).enven_name_key("Ctrl+c"),
+		get_cmd_actor(m, handle_ctrl_c).tcell_key(tcell.KeyCtrlC),
+		get_cmd_actor(m, handle_ctrl_v).tcell_key(tcell.KeyCtrlV),
 		get_cmd_actor(m, goto_back).enven_name_key("Ctrl+O"),
 		get_cmd_actor(m, goto_forward).enven_name_key("Rune[O]"),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
