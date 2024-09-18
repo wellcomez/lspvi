@@ -15,7 +15,6 @@ let rows = 50
 let cols = 80
 
 const call_key = "key"
-const call_term_command = "call_term_command"
 const call_term_stdout = "term"
 const forward_call_refresh = "forward_call_refresh"
 const lspvi_backend_start = "xterm_lspvi_start"
@@ -23,6 +22,8 @@ const lspvi_backend_start = "xterm_lspvi_start"
 const backend_on_zoom = "zoom"
 const backend_on_copy = "onselected"
 const backend_on_openfile = "openfile"
+const backend_on_command = "call_term_command"
+// const backend_on_command = "call_term_command"
 
 
 
@@ -418,24 +419,12 @@ const socket_int = (term_obj, app) => {
         const handleMessage = (data) => {
             // 处理解码后的数据
             var { Call, Output } = data
-            if (handle_backend_command(Call, data)){
+            if (handle_backend_command(Call, data)) {
                 return
             }
             if (Call == call_term_stdout) {
                 term.write(Output)
-            }
-
-            if (Call == call_term_command) {
-                switch (data.Command) {
-                    case "quit":
-                        appstatus.quit = true
-                        term_obj.on_remote_stop()
-                        break
-                    default:
-                        return
-                }
-            }
-            // console.log("Received: ", event.data);
+            }            // console.log("Received: ", event.data);
         }
         try {
             var reader = new FileReader();
@@ -476,7 +465,16 @@ const socket_int = (term_obj, app) => {
                 txt.innerText = text;
                 var btn = document.getElementById("clip");
                 btn.click();
-            }else{
+            } else if (Call == backend_on_command) {
+                switch (data.Command) {
+                    case "quit":
+                        appstatus.quit = true
+                        term_obj.on_remote_stop()
+                        break
+                    default:
+                        return
+                }
+            } else {
                 return false
             }
             return true

@@ -452,7 +452,7 @@ func (imp *ptyout_impl) send_term_stdout(s []byte) bool {
 	// newFunction2(s)
 	data := ptyout_data{
 		Output: s,
-		Call:   client_term_stdout,
+		Call:   call_term_stdout,
 	}
 	buf, err := msgpack.Marshal(data)
 	if imp.ws == nil {
@@ -507,6 +507,5 @@ func create_lspvi_backend(host string) {
 		ptystdio = nil
 		impl := sss.imp
 		Ws_term_command{Command: "quit", wsresp: wsresp{imp: impl}}.sendmsgpack()
-		// os.Exit(-1)
 	}()
 }

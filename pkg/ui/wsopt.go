@@ -32,7 +32,7 @@ type Ws_term_command struct {
 }
 
 func (cmd Ws_term_command) sendmsgpack() error {
-	cmd.Call = call_term_command
+	cmd.Call = backend_on_command
 	if buf, er := msgpack.Marshal(cmd); er == nil {
 		return cmd.write(buf)
 	} else {
@@ -42,7 +42,6 @@ func (cmd Ws_term_command) sendmsgpack() error {
 }
 
 const call_key = "key"
-const call_term_command = "call_term_command"
 const call_term_stdout = "term"
 const call_xterm_init = "init"
 const call_resize = "resize"
@@ -50,6 +49,7 @@ const call_resize = "resize"
 const forward_call_refresh = "forward_call_refresh"
 const lspvi_backend_start = "xterm_lspvi_start"
 
+const backend_on_command = "call_term_command"
 const backend_on_zoom = "zoom"
 const backend_on_copy = "onselected"
 const backend_on_openfile = "openfile"
