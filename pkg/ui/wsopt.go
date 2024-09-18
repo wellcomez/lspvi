@@ -44,6 +44,9 @@ func (cmd Ws_term_command) sendmsgpack() error {
 const call_key = "key"
 const call_term_command = "call_term_command"
 const call_term_stdout = "term"
+const call_xterm_init = "init"
+const call_resize = "resize"
+
 const forward_call_refresh = "forward_call_refresh"
 const lspvi_backend_start = "xterm_lspvi_start"
 
@@ -58,4 +61,3 @@ type xterm_forward_cmd_refresh struct {
 type xterm_forward_cmd struct {
 	Call string
 }
-

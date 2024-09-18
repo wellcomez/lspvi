@@ -22,9 +22,6 @@ import (
 	"zen108.com/lspvi/pkg/pty"
 )
 
-const client_cmd_resize = "resize"
-const xterm_init = "init"
-
 var use_https = false
 var start_process func(int, string)
 var wk *workdir
@@ -152,7 +149,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 				{
 					_lspvi_backend = &lspvi_backend{ws: conn}
 				}
-			case xterm_init:
+			case call_xterm_init:
 				{
 					xterm = new_xterm_init(w, conn)
 				}
@@ -175,7 +172,7 @@ func (term xterm_request) process(method string, message []byte) {
 		{
 			term.handle_xterm_input(message)
 		}
-	case client_cmd_resize:
+	case call_resize:
 		{
 			term.handle_xterm_resize(message)
 		}
@@ -455,7 +452,7 @@ func (imp *ptyout_impl) send_term_stdout(s []byte) bool {
 	// newFunction2(s)
 	data := ptyout_data{
 		Output: s,
-		Call:   call_term_stdout,
+		Call:   client_term_stdout,
 	}
 	buf, err := msgpack.Marshal(data)
 	if imp.ws == nil {
