@@ -322,7 +322,9 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case vi_del_line:
 		return cmdactor{id, "Delete", func() bool {
+			checker:=new_linechange_checker(m.codeview)
 			m.codeview.deleteline()
+			checker.after(m.codeview)
 			return true
 		}}
 

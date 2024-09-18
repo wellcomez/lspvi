@@ -696,17 +696,20 @@ func (code *CodeView) xOffset() int64 {
 	return x
 }
 
-// func (code *CodeView) lineNumWidth() int64 {
-// 	v := reflect.ValueOf(code.view).Elem()
-// 	field := v.FieldByName("lineNumOffset")
-// 	x := field.Int()
-// 	return x
-// }
+//	func (code *CodeView) lineNumWidth() int64 {
+//		v := reflect.ValueOf(code.view).Elem()
+//		field := v.FieldByName("lineNumOffset")
+//		x := field.Int()
+//		return x
+//	}
+type linechange_checker struct {
+	lineno int
+	next   string
+}
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
-	lineno := code.view.Cursor.Loc.Y
 	// prev := get_line_content(lineno, code)
-	next := get_line_content(lineno+1, code)
+	var status1 = new_linechange_checker(code)
 	if code.insert {
 		if h, ok := code.key_map[event.Key()]; ok {
 			h(code)
@@ -716,16 +719,28 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	} else {
 		code.handle_key_impl(event)
 	}
+	status1.after(code)
+	return nil
+}
+
+func new_linechange_checker(code *CodeView) linechange_checker {
+	lineno := code.view.Cursor.Loc.Y
+	next := get_line_content(lineno+1, code)
+	return linechange_checker{lineno: lineno, next: next}
+}
+
+func (check *linechange_checker) after(code *CodeView) {
 	after_lineno := code.view.Cursor.Loc.Y
-	// go func() {
+	next := check.next
+	lineno := check.lineno
 	after_cur := get_line_content(after_lineno, code)
-	if after_cur == next {
-		code.view.bookmark.after_line_changed(lineno+1, false)
+	if next == after_cur {
+		if after_cur == next {
+			code.view.bookmark.after_line_changed(lineno+1, false)
+		}
 	} else if after_lineno == lineno+1 {
 		code.view.bookmark.after_line_changed(lineno+1, true)
 	}
-	// }()
-	return nil
 }
 
 func get_line_content(line int, code *CodeView) string {

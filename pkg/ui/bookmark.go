@@ -26,8 +26,9 @@ type bookmarkfile struct {
 }
 
 func (b *bookmarkfile) after_line_changed(line int, add bool) {
-	for i := range b.LineMark {
-		var s = &b.LineMark[i]
+	lines := b.LineMark
+	for i := range lines {
+		var s = lines[i]
 		if s.Line > line {
 			b.Add(s.Line, s.Comment, s.Text, false)
 			if add {
