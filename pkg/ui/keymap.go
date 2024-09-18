@@ -466,6 +466,7 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, vi_left_word).esc_key([]string{"b"}),
 		get_cmd_actor(m, vi_copy_line).esc_key(split("yy")),
 		get_cmd_actor(m, vi_copy_text).esc_key(split("y")),
+		get_cmd_actor(m, vi_del_line).esc_key(split("dd")),
 		get_cmd_actor(m, vi_undo).esc_key(split("u")),
 		get_cmd_actor(main, goto_define).esc_key(split(key_goto_define)),
 		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),

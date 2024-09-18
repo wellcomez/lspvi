@@ -64,17 +64,14 @@ type CodeView struct {
 	bgcolor              tcell.Color
 	colorscheme          *symbol_colortheme
 	ts                   *lspcore.TreeSitter
+	insert               bool
 }
 type CodeContextMenu struct {
 	code *CodeView
 }
 
 func (code *CodeView) InsertMode(yes bool) {
-	if yes {
-		code.view.SetInputCapture(nil)
-	} else {
-		code.view.SetInputCapture(code.handle_key)
-	}
+	code.insert = yes
 }
 func SelectWord(view *femto.View, c femto.Cursor) femto.Cursor {
 	if len(view.Buf.Line(c.Y)) == 0 {
@@ -434,7 +431,6 @@ func addjust_menu_width(items []context_menu_item) []context_menu_item {
 	}
 	return leftitems
 }
-
 func new_codetext_view(buffer *femto.Buffer) *codetextview {
 
 	root := &codetextview{
@@ -708,7 +704,15 @@ func (code *CodeView) xOffset() int64 {
 // }
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
-	code.handle_key_impl(event)
+	if code.insert {
+		if h, ok := code.key_map[event.Key()]; ok {
+			h(code)
+			return nil
+		}
+		code.view.HandleEvent(event)
+	} else {
+		code.handle_key_impl(event)
+	}
 	return nil
 }
 func (code *CodeView) run_command(cmdlist []cmditem, key string) bool {

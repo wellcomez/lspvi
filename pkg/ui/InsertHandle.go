@@ -9,7 +9,7 @@ type InsertHandle struct {
 
 // HanldeKey implements vim_mode_handle.
 func (i InsertHandle) HanldeKey(event *tcell.EventKey) bool {
-	i.codeview.view.InputHandler()(event, nil)
+	i.codeview.handle_key(event)
 	return true
 }
 
