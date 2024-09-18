@@ -47,61 +47,65 @@ func (proxy *backend_of_xterm) Open(listen bool) error {
 	}
 	con, _, err := dial.Dial(ws, nil)
 	if err != nil {
-		log.Printf("WebSocket连接失败:%v", err)
+		log.Printf("WebSocket error :%v", err)
 		return err
 	}
 	proxy.con = con
 	if listen {
+		proxy.start_listen_xterm_comand(con)
+	}
+	return nil
+}
 
-		if err := SendJsonMessage(con, xterm_forward_cmd{Call: lspvi_backend_start}); err == nil {
+func (proxy *backend_of_xterm) start_listen_xterm_comand(con *websocket.Conn)  error {
+	if err := SendJsonMessage(con, xterm_forward_cmd{Call: lspvi_backend_start}); err == nil {
 
-			go func() {
-				for {
-					msg_type, message, err := proxy.con.ReadMessage()
-					if err != nil {
-						if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-							log.Println("WebSocket proxy connection close")
-							return
-						}
-						log.Println("WebSocket proxy connection read e:", err)
-						continue
+		go func()bool {
+			for {
+				msg_type, message, err := proxy.con.ReadMessage()
+				if err != nil {
+					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+						log.Println("WebSocket proxy connection close")
+						return  true
 					}
-					switch msg_type {
-					case websocket.TextMessage:
-						{
-							var w init_call
-							err = json.Unmarshal(message, &w)
-							if err == nil {
-								log.Printf("forward call %s", w.Call)
-								switch w.Call {
-								case forward_call_refresh:
-									{
+					log.Println("WebSocket proxy connection read e:", err)
+					continue
+				}
+				switch msg_type {
+				case websocket.TextMessage:
+					{
+						var w init_call
+						err = json.Unmarshal(message, &w)
+						if err == nil {
+							log.Printf("forward call %s", w.Call)
+							switch w.Call {
+							case forward_call_refresh:
+								{
 
-									}
-								case call_paste_data:
-									{
-										var data xterm_forward_cmd_paste
-										if err := json.Unmarshal(message, &data); err == nil {
-											log.Println(data.Call, data.Data)
-											paste := GlobalApp.GetFocus().PasteHandler()
-											paste(data.Data, nil)
-										}
+								}
+							case call_paste_data:
+								{
+									var data xterm_forward_cmd_paste
+									if err := json.Unmarshal(message, &data); err == nil {
+										log.Println(data.Call, data.Data)
+										paste := GlobalApp.GetFocus().PasteHandler()
+										paste(data.Data, nil)
 									}
 								}
-							} else {
-								log.Println("recv", err, "msg len=", len(message))
 							}
-
+						} else {
+							log.Println("recv", err, "msg len=", len(message))
 						}
-					case websocket.BinaryMessage:
-						log.Println("recv binary message", len(message))
+
 					}
+				case websocket.BinaryMessage:
+					log.Println("recv binary message", len(message))
 				}
-			}()
-		} else {
-			log.Println("SendJsonMessage", err)
-			return err
-		}
+			}
+		}()
+	} else {
+		log.Println("SendJsonMessage", err)
+		return err
 	}
 	return nil
 }
