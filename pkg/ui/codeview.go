@@ -69,6 +69,13 @@ type CodeContextMenu struct {
 	code *CodeView
 }
 
+func (code *CodeView) InsertMode(yes bool) {
+	if yes {
+		code.view.SetInputCapture(nil)
+	} else {
+		code.view.SetInputCapture(code.handle_key)
+	}
+}
 func SelectWord(view *femto.View, c femto.Cursor) femto.Cursor {
 	if len(view.Buf.Line(c.Y)) == 0 {
 		return c
@@ -265,8 +272,8 @@ func NewCodeView(main *mainui) *CodeView {
 	// root.SetColorscheme(colorscheme)
 
 	root.SetMouseCapture(ret.handle_mouse)
-	root.SetInputCapture(ret.handle_key)
 	ret.view = root
+	ret.InsertMode(false)
 	return &ret
 }
 
@@ -847,6 +854,11 @@ func (m *mainui) CopyToClipboard(s string) {
 		return
 	}
 	clipboard.WriteAll(s)
+}
+func (code *CodeView) Save() error {
+	view := code.view
+	data := view.Buf.SaveString(false)
+	return os.WriteFile(code.filename, []byte(data), 0644)
 }
 func (code *CodeView) copyline(line bool) {
 	cmd := code.main.cmdline
