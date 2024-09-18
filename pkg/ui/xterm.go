@@ -258,7 +258,7 @@ func new_xterm_init(w init_call, conn *websocket.Conn) *xterm_request {
 			if use_https {
 				url = "wss://" + w.Host + "/ws"
 			}
-			create_lspvi_backend(url)
+			create_lspvi_backend(url, w.Cmdline)
 			var i = 0
 			for {
 				if ptystdio == nil {
@@ -513,9 +513,16 @@ func StartWebUI(arg Arguments, cb func(int, string)) {
 	StartServer(filepath.Dir(os.Args[0]), 13000)
 }
 
-func create_lspvi_backend(host string) {
+func create_lspvi_backend(host string, cmdline string) {
 	go func() {
-		argnew = append(argnew, "-ws", host)
+		if len(cmdline) > 0 {
+			argnew = []string{argnew[0]}
+			args := strings.Split(cmdline, " ")
+			argnew = append(argnew, "-ws", host)
+			argnew = append(argnew, args...)
+		} else {
+			argnew = append(argnew, "-ws", host)
+		}
 		ptystdio = pty.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
 		// sss.imp.send_term_stdout([]byte("F5#"))

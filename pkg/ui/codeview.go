@@ -700,6 +700,7 @@ func (code *CodeView) xOffset() int64 {
 type linechange_checker struct {
 	lineno int
 	next   string
+	cur    string
 }
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
@@ -721,7 +722,8 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 func new_linechange_checker(code *CodeView) linechange_checker {
 	lineno := code.view.Cursor.Loc.Y
 	next := get_line_content(lineno+1, code)
-	return linechange_checker{lineno: lineno, next: next}
+	cur := get_line_content(lineno, code)
+	return linechange_checker{lineno: lineno, next: next, cur: cur}
 }
 
 func (check *linechange_checker) after(code *CodeView) {
