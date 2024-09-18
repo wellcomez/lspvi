@@ -829,6 +829,11 @@ func (main *mainui) create_menu_bar(tab_area *tview.Flex) *tview.Button {
 
 	tab_area.AddItem(mainmenu, 10, 0, false)
 
+	main.create_space_menu(mainmenu)
+	return mainmenu
+}
+
+func (main *mainui) create_space_menu(mainmenu *tview.Button) {
 	spacemenu := new_spacemenu(main)
 	spacemenu.menustate = func(s *space_menu) {
 		if s.visible {
@@ -838,7 +843,6 @@ func (main *mainui) create_menu_bar(tab_area *tview.Flex) *tview.Button {
 		}
 	}
 	main.layout.spacemenu = spacemenu
-	return mainmenu
 }
 
 func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {

@@ -236,7 +236,6 @@ func init_space_menu_item(m *mainui) []space_menu_item {
 }
 func new_spacemenu(m *mainui) *space_menu {
 	t := space_menu{
-		table:   tview.NewList(),
 		main:    m,
 		visible: false,
 	}
@@ -253,16 +252,23 @@ func new_spacemenu(m *mainui) *space_menu {
 		cmdlist: command_list,
 		main:    m,
 	}
+	t.impl = impl
+	t.load_spacemenu()
+	return &t
+}
+
+func (t *space_menu) load_spacemenu() {
+	t.table = tview.NewList()
+	t.table.Clear()
+	impl := t.impl
 	for _, v := range impl.items {
 		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
 		t.table.AddItem(s, "", 0, func() {
 		})
 	}
-	t.impl = impl
 	t.table.ShowSecondaryText(false)
 	t.table.SetBorder(true)
 	t.table.SetTitle("menu")
-	return &t
 }
 func (menu *space_menu) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if !InRect(event, menu.table) {

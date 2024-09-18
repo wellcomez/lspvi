@@ -135,6 +135,9 @@ func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
 	main.symboltree.update(main.lspmgr.Current)
 
 	main.page.SetTitleColor(fg)
+	main.layout.spacemenu.table.SetBackgroundColor(bg)
+	main.layout.spacemenu.load_spacemenu()
+	main.right_context_menu.table.SetBackgroundColor(bg)
 
 	// default_primarytext_color = fg
 	// default_backgroudColor = bg
