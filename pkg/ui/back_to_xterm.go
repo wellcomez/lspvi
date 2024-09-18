@@ -10,14 +10,14 @@ import (
 	"strings"
 )
 
-func (proxy *back_to_xterm) set_browser_selection(s string) {
+func (proxy *backend_of_xterm) set_browser_selection(s string) {
 	SendJsonMessage[Ws_on_selection](proxy.con,
 		Ws_on_selection{SelectedString: s, Call: backend_on_copy})
 }
-func (proxy *back_to_xterm) set_browser_font(zoom bool) {
+func (proxy *backend_of_xterm) set_browser_font(zoom bool) {
 	SendJsonMessage[Ws_font_size](proxy.con, Ws_font_size{Zoom: zoom, Call: backend_on_zoom})
 }
-func (proxy *back_to_xterm) open_in_web(filename string) {
+func (proxy *backend_of_xterm) open_in_web(filename string) {
 	buf, err := os.ReadFile(filename)
 	if err == nil {
 		SendJsonMessage[Ws_open_file](proxy.con, Ws_open_file{Filename: filename, Call: backend_on_openfile, Buf: buf})
@@ -26,15 +26,15 @@ func (proxy *back_to_xterm) open_in_web(filename string) {
 	}
 }
 
-type back_to_xterm struct {
+type backend_of_xterm struct {
 	address string
 	con     *websocket.Conn
 }
 
-func (p *back_to_xterm) Request(t []byte) error {
+func (p *backend_of_xterm) Request(t []byte) error {
 	return p.con.WriteMessage(websocket.TextMessage, t)
 }
-func (proxy *back_to_xterm) Open(listen bool) error {
+func (proxy *backend_of_xterm) Open(listen bool) error {
 	ws := proxy.address
 	// url := "ws://localhost:8080/ws"
 	dial := websocket.DefaultDialer
@@ -106,10 +106,10 @@ func (proxy *back_to_xterm) Open(listen bool) error {
 	return nil
 }
 
-var proxy *back_to_xterm
+var proxy *backend_of_xterm
 
 func start_lspvi_proxy(arg *Arguments, listen bool) {
-	var p = &back_to_xterm{address: arg.Ws}
+	var p = &backend_of_xterm{address: arg.Ws}
 	if err := p.Open(listen); err == nil {
 		proxy = p
 	} else {
