@@ -45,6 +45,8 @@ const (
 	vi_save
 	vi_copy_line
 	vi_del_line
+	vi_pageup
+	vi_pagedown
 	copy_path
 	next_window_left
 	next_window_right
@@ -315,6 +317,16 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			m.codeview.Save()
 			return true
 		}}
+	case vi_pagedown:
+		return cmdactor{id, "PageUp", func() bool {
+			m.codeview.action_page_down(true)
+			return true
+		}}
+	case vi_pageup:
+		return cmdactor{id, "PageUp", func() bool {
+			m.codeview.action_page_down(false)
+			return true
+		}}
 	case vi_copy_text:
 		return cmdactor{id, "Copy", func() bool {
 			m.codeview.copyline(false)
@@ -322,7 +334,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case vi_del_line:
 		return cmdactor{id, "Delete", func() bool {
-			checker:=new_linechange_checker(m.codeview)
+			checker := new_linechange_checker(m.codeview)
 			m.codeview.deleteline()
 			checker.after(m.codeview)
 			return true
@@ -467,6 +479,8 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, vi_right_word).esc_key([]string{"e"}),
 		get_cmd_actor(m, vi_left_word).esc_key([]string{"b"}),
 		get_cmd_actor(m, vi_copy_line).esc_key(split("yy")),
+		get_cmd_actor(m, vi_pagedown).tcell_key(tcell.KeyCtrlD),
+		get_cmd_actor(m, vi_pageup).tcell_key(tcell.KeyCtrlU),
 		get_cmd_actor(m, vi_copy_text).esc_key(split("y")),
 		get_cmd_actor(m, vi_del_line).esc_key(split("dd")),
 		get_cmd_actor(m, vi_undo).esc_key(split("u")),

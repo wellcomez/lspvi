@@ -956,6 +956,24 @@ func (*CodeView) key_map_arrow() map[tcell.Key]func(code *CodeView) {
 func (code *CodeView) action_key_down() {
 	code.move_up_down(false)
 }
+func (code *CodeView) action_page_down(down bool) {
+	Loc := code.view.Buf.Cursor.Loc
+	Cur := code.view.Buf.Cursor
+
+	if down {
+		code.view.PageDown()
+	} else {
+		code.view.PageUp()
+	}
+	view := code.view
+	Loc.Y = view.Topline + 4
+	if Loc.X > len(code.view.Buf.Line(Loc.Y)) {
+		Loc.X = 0
+	}
+	Cur.SetSelectionStart(Loc)
+	Cur.SetSelectionEnd(Loc)
+	// code.update_with_line_changed()
+}
 
 func (code *CodeView) action_key_up() {
 	code.move_up_down(true)

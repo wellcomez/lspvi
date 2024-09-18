@@ -444,6 +444,12 @@ func (state *escapestate) end() {
 }
 
 func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
+	for _, cmd := range l.input.cmdlist {
+		if cmd.key.Type == cmd_key_tcell_key && cmd.key.tcell_key == event.Key() {
+			cmd.cmd.handle()
+			return true
+		}
+	}
 	ts := l.state.keyseq
 	ch := string(event.Rune())
 	if len(l.main.cmdline.Vim.vi.FindEnter) > 0 {
