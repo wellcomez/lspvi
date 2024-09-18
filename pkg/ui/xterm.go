@@ -56,6 +56,7 @@ var upgrader = websocket.Upgrader{
 var is_chan_start = false
 
 type xterm_request struct {
+	backend *lspvi_backend
 }
 type lspvi_backend struct {
 	forward lspvi_command_forward
@@ -125,6 +126,9 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 	}
 	return true
 }
+
+var g_xterm *xterm_request
+
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -143,18 +147,26 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		var w init_call
 		err = json.Unmarshal(message, &w)
 		if err == nil {
+			method := w.Call
 			log.Println("received call message", w.Call)
 			switch w.Call {
+			case call_key:
+				{
+					if xterm != nil {
+						xterm.process(method, message)
+					}
+				}
 			case lspvi_backend_start:
 				{
 					_lspvi_backend = &lspvi_backend{ws: conn}
+					g_xterm.backend = _lspvi_backend
 				}
 			case call_xterm_init:
 				{
 					xterm = new_xterm_init(w, conn)
+					g_xterm = xterm
 				}
 			default:
-				method := w.Call
 				if xterm != nil {
 					xterm.process(method, message)
 				} else if _lspvi_backend != nil {
@@ -166,17 +178,20 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (term xterm_request) process(method string, message []byte) {
+func (srv xterm_request) process(method string, message []byte) {
 	switch method {
 	case call_key:
 		{
-			term.handle_xterm_input(message)
+			srv.handle_xterm_input(message)
 		}
 	case call_resize:
 		{
-			term.handle_xterm_resize(message)
+			srv.handle_xterm_resize(message)
 		}
-
+	case call_paste_data:
+		{
+			ForwardFromXterm[xterm_forward_cmd_paste](message, srv.backend)
+		}
 	}
 }
 

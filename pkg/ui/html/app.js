@@ -16,13 +16,17 @@ let cols = 80
 
 const call_key = "key"
 const call_term_stdout = "term"
+const call_xterm_init = "init"
+const call_resize = "resize"
+const call_paste_data = "call_paste_data"
+
 const forward_call_refresh = "forward_call_refresh"
 const lspvi_backend_start = "xterm_lspvi_start"
 
+const backend_on_command = "call_term_command"
 const backend_on_zoom = "zoom"
 const backend_on_copy = "onselected"
 const backend_on_openfile = "openfile"
-const backend_on_command = "call_term_command"
 // const backend_on_command = "call_term_command"
 
 
@@ -140,7 +144,7 @@ md_init = () => {
     return new md()
 }
 app_init = () => {
-    var md = md_init()
+    let md = md_init()
     let app = new Vue({
         el: '#app',
         data: {
@@ -163,7 +167,7 @@ app_init = () => {
                 }
             },
             set_visible(a) {
-                var { isVisibleMd, isVisible } = a
+                let { isVisibleMd, isVisible } = a
                 this.isVisible = isVisible
                 this.isVisibleMd = isVisibleMd
             },
@@ -281,6 +285,12 @@ class Term {
         this.status = { init }
 
     }
+    on_paste() {
+        if (this.clipdata != undefined) {
+            this.paste_text(this.clipdata)
+        }
+        return true
+    }
 }
 const term_init = (app, on_term_command) => {
     window.addEventListener("contextmenu", function (e) {
@@ -289,13 +299,13 @@ const term_init = (app, on_term_command) => {
     document.onkeydown = function (e) {
         e = e || window.event;//Get event
         if (!e.ctrlKey) return;
-        var code = e.which || e.keyCode;//Get key code
+        let code = e.which || e.keyCode;//Get key code
         e.preventDefault();
         e.stopPropagation();
     };
-    var fontSize = get_font_size();
+    let fontSize = get_font_size();
     set_font_size(fontSize)
-    var term = new Terminal({
+    let term = new Terminal({
         allowProposedApi: true,
         cursorStyle: 'bar',  // 默认为块状光标
         allowTransparency: true,
@@ -315,16 +325,16 @@ const term_init = (app, on_term_command) => {
 
         // minimumContrastRatio: 1,
     });
-    var ret = new Term(term)
-    var wl = new WebglAddon.WebglAddon()
+    let termobj = new Term(term)
+    let wl = new WebglAddon.WebglAddon()
     term.loadAddon(wl)
-    var fit = new FitAddon.FitAddon()
+    let fit = new FitAddon.FitAddon()
     term.loadAddon(fit);
     // const imageAddon = new ImageAddon.ImageAddon(customSettings);
     // terminal.loadAddon(imageAddon);
     term.onData(function (data) {
-        if (ret.status.stop) {
-            ret.Local.ondata(data)
+        if (termobj.status.stop) {
+            termobj.Local.ondata(data)
         } else {
             let call = call_key
             let rows = term.rows, cols = term.cols
@@ -332,8 +342,8 @@ const term_init = (app, on_term_command) => {
         }
     })
     const handle_key = ev => {
-        console.log(ev)
-        if (ret && ret.Local) {
+        // console.log(ev)
+        if (termobj && termobj.Local) {
             // if (ev.code == "Backspace") {
             //     // term.write('\x7f')
             //     ev.preventDefault(); // 阻止默认行为
@@ -344,6 +354,9 @@ const term_init = (app, on_term_command) => {
             return true;
         }
         if (ev.key == "v" && ev.ctrlKey) {
+            if (termobj.on_paste()) {
+                return false;
+            }
         }
         return true;
     };
@@ -367,7 +380,7 @@ const term_init = (app, on_term_command) => {
     f.resize(false)
     fit.fit()
     term.focus()
-    return ret
+    return termobj
 
     // function LoadLigaturesAddon() {
     //     try {
@@ -383,9 +396,9 @@ const socket_int = (term_obj, app) => {
     let { term } = term_obj
     let localhost = window.location.host
     let wsproto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    var socket = new WebSocket(wsproto + '://' + localhost + '/ws');
-    var appstatus = new RemoteTermStatus()
-    var conn = new RemoteConn(socket)
+    let socket = new WebSocket(wsproto + '://' + localhost + '/ws');
+    let appstatus = new RemoteTermStatus()
+    let conn = new RemoteConn(socket)
     term_obj.conn = conn;
     const sendTextData = (data) => {
         if (socket.readyState === WebSocket.OPEN) {
@@ -397,15 +410,23 @@ const socket_int = (term_obj, app) => {
     }
     ws_sendTextData = sendTextData
     const resizecall = () => {
-        let call = "resize"
+        let call = call_resize
         let rows = term.rows, cols = term.cols
         sendTextData({ call, cols, rows })
     }
+    const paste_text = (data) => {
+        let call = call_paste_data
+        sendTextData({ call, data })
+    }
+    term_obj.paste_text = paste_text.bind(term_obj)
+
+
+
     socket.onopen = function (event) {
         start_lspvi();
     };
 
-    var clipboard = new ClipboardJS('.btn');
+    let clipboard = new ClipboardJS('.btn');
 
     clipboard.on('success', function (e) {
         // console.info('Action:', e.action);
@@ -421,16 +442,17 @@ const socket_int = (term_obj, app) => {
     socket.binaryType = "blob";
     socket.onmessage = function incoming(evt) {
         const handleMessage = (data) => {
-            var { Call, Output } = data
-            if (handle_backend_command(Call, data)) {
-                return
-            }
+            let { Call, Output } = data
             if (Call == call_term_stdout) {
                 term.write(Output)
             }
+            if (handle_backend_command(Call, data)) {
+                return
+            }
+
         }
         try {
-            var reader = new FileReader();
+            let reader = new FileReader();
             reader.readAsArrayBuffer(evt.data);
             reader.addEventListener("loadend", function (e) {
                 const buffer = new Uint8Array(e.target.result);  // arraybuffer object
@@ -447,7 +469,7 @@ const socket_int = (term_obj, app) => {
             } else if (Call == backend_on_openfile) {
                 handle_command_openfile(data);
             } else if (backend_on_copy == Call) {
-                handle_copy_data(data);
+                term_obj.clipdata = handle_copy_data(data);
             } else if (Call == backend_on_command) {
                 return handle_user_command(data);
             } else {
@@ -455,6 +477,7 @@ const socket_int = (term_obj, app) => {
             }
             return true
         }
+
 
         function handle_user_command(data) {
             switch (data.Command) {
@@ -469,10 +492,11 @@ const socket_int = (term_obj, app) => {
 
         function handle_copy_data(data) {
             let text = data.SelectedString;
-            var txt = document.getElementById("bar");
+            let txt = document.getElementById("bar");
             txt.innerText = text;
-            var btn = document.getElementById("clip");
+            let btn = document.getElementById("clip");
             btn.click();
+            return text
         }
 
         function handle_command_openfile(data) {
@@ -487,7 +511,7 @@ const socket_int = (term_obj, app) => {
         }
 
         function handle_command_zoom(data) {
-            var { Zoom } = data;
+            let { Zoom } = data;
             let fontsize = get_font_size();
             if (Zoom) {
                 fontsize++;
@@ -513,7 +537,7 @@ const socket_int = (term_obj, app) => {
 
     function start_lspvi(cmdline) {
         console.log("Connection opened");
-        let call = "init";
+        let call = call_xterm_init;
         let rows = term.rows, cols = term.cols;
         let host = window.location.host;
         term_obj.Local = undefined
@@ -523,8 +547,8 @@ const socket_int = (term_obj, app) => {
     conn.start_lspvi = start_lspvi.bind(conn)
 }
 const main = () => {
-    var app = app_init()
-    var term = term_init(app, (command) => {
+    let app = app_init()
+    let term = term_init(app, (command) => {
 
     })
     socket_int(term, app)
@@ -534,7 +558,7 @@ function set_font_size(fontSize) {
     window.localStorage.setItem("fontsize", fontSize);
 }
 function get_font_size() {
-    var fontSize = window.localStorage.getItem("fontsize");
+    let fontSize = window.localStorage.getItem("fontsize");
     if (fontSize == undefined || fontSize == "undefined") {
         fontSize = 12;
     }
