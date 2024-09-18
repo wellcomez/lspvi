@@ -1,39 +1,41 @@
 package mainui
 
 import (
-	"crypto/tls"
-	"log"
-	"strings"
+	"encoding/json"
 
 	"github.com/gorilla/websocket"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
-var con *websocket.Conn
+// "log"
 
-func SendWsData(t []byte, ws string) {
-	// url := "ws://localhost:8080/ws"
-	if con == nil {
-		// url := "ws://" + ws + "/ws"
-		url := ws
-		dial := websocket.DefaultDialer
-		if strings.Index(ws, "wss://") == 0 {
-			dial = &websocket.Dialer{
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true, // Skips certificate verification
-				},
-			}
-		}
-		c, _, err := dial.Dial(url, nil)
-		con = c
-		if err != nil {
-			log.Printf("WebSocket连接失败:", err)
-			return
-		}
+// "github.com/gorilla/websocket"
+
+// func (lspcon *lsp_ws_conn) SendWsData(t []byte, ws string) {
+// 	// url := "ws://localhost:8080/ws"
+// 	// url := "ws://" + ws + "/ws"
+// 	// Skips certificate verification
+// 	con := lspcon.con
+// 	err := con.WriteMessage(websocket.TextMessage, t)
+// 	if err != nil {
+// 		log.Println("WebSocket发送消息失败:", err)
+// 	} else {
+// 		log.Println("send to ", ws, len(t))
+// 	}
+// }
+
+func SendJsonMessage[T any](ws *websocket.Conn, data T) error {
+	buf, err := json.Marshal(data)
+	if err == nil {
+		return ws.WriteMessage(websocket.TextMessage, buf)
 	}
-	err := con.WriteMessage(websocket.TextMessage, t)
-	if err != nil {
-		log.Println("WebSocket发送消息失败:", err)
-	} else {
-		log.Println("send to ", ws, len(t))
+	return err
+}
+
+func SendMsgPackMessage[T any](ws *websocket.Conn, data T) error {
+	buf, err := msgpack.Marshal(data)
+	if err == nil {
+		return ws.WriteMessage(websocket.TextMessage, buf)
 	}
+	return err
 }

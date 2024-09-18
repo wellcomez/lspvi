@@ -684,6 +684,7 @@ func (v *Vim) _enter_find_mode() {
 	}
 	v.vi_handle = a
 	v.update_find_label()
+	v.update_editor_mode()
 }
 
 func (v *Vim) update_find_label() {
@@ -721,16 +722,22 @@ func (v *Vim) EnterLead() bool {
 		lead.state.input = input
 		v.vi_handle = lead
 		v.app.layout.spacemenu.visible = true
+		v.update_editor_mode()
 		return true
 	} else {
 		return false
 	}
+}
+func (v *Vim) update_editor_mode() {
+	v.app.codeview.InsertMode(v.vi.Insert)
 }
 
 // EnterInsert enters insert mode.
 func (v *Vim) EnterInsert() bool {
 	if v.vi.Escape {
 		v.vi = vimstate{Insert: true}
+		v.vi_handle = InsertHandle{main: v.app, codeview: v.app.codeview}
+		v.update_editor_mode()
 		return true
 	} else {
 		return false
@@ -740,6 +747,7 @@ func (v *Vim) EnterInsert() bool {
 func (v *Vim) ExitEnterEscape() {
 	v.vi = vimstate{}
 	v.vi_handle = nil
+	v.update_editor_mode()
 }
 
 type ctrlw_impl struct {
@@ -787,6 +795,7 @@ func (v *Vim) EnterCtrlW() bool {
 		prev_handle: v.vi_handle,
 	}}
 	v.vi_handle = vi_handle
+	v.update_editor_mode()
 	return true
 }
 func (v *Vim) EnterVmap() {
@@ -815,6 +824,7 @@ func (v *Vim) EnterEscape() {
 	}
 	esc.input = &inputdelay
 	v.vi_handle = esc
+	v.update_editor_mode()
 	v.app.SavePrevFocus()
 }
 
@@ -829,6 +839,7 @@ func (v *Vim) EnterCommand() bool {
 			main: v.app,
 			vi:   v,
 		}
+		v.update_editor_mode()
 		return true
 	}
 	return false

@@ -69,6 +69,13 @@ type CodeContextMenu struct {
 	code *CodeView
 }
 
+func (code *CodeView) InsertMode(yes bool) {
+	if yes {
+		code.view.SetInputCapture(nil)
+	} else {
+		code.view.SetInputCapture(code.handle_key)
+	}
+}
 func SelectWord(view *femto.View, c femto.Cursor) femto.Cursor {
 	if len(view.Buf.Line(c.Y)) == 0 {
 		return c
@@ -265,8 +272,8 @@ func NewCodeView(main *mainui) *CodeView {
 	// root.SetColorscheme(colorscheme)
 
 	root.SetMouseCapture(ret.handle_mouse)
-	root.SetInputCapture(ret.handle_key)
 	ret.view = root
+	ret.InsertMode(false)
 	return &ret
 }
 
@@ -842,11 +849,16 @@ func (code *CodeView) word_left() {
 	code.update_with_line_changed()
 }
 func (m *mainui) CopyToClipboard(s string) {
-	if m.tty {
-		set_browser_selection(s, m.ws)
+	if proxy != nil {
+		proxy.set_browser_selection(s)
 		return
 	}
 	clipboard.WriteAll(s)
+}
+func (code *CodeView) Save() error {
+	view := code.view
+	data := view.Buf.SaveString(false)
+	return os.WriteFile(code.filename, []byte(data), 0644)
 }
 func (code *CodeView) copyline(line bool) {
 	cmd := code.main.cmdline
@@ -854,12 +866,12 @@ func (code *CodeView) copyline(line bool) {
 		if line {
 			s := code.view.Buf.Line(int(code.view.Cursor.Loc.Y))
 			code.main.CopyToClipboard(s)
+			return
 		}
-	} else {
-		s := code.view.Cursor.GetSelection()
-		code.main.CopyToClipboard(s)
-		cmd.Vim.EnterEscape()
 	}
+	s := code.view.Cursor.GetSelection()
+	code.main.CopyToClipboard(s)
+	cmd.Vim.EnterEscape()
 }
 func (code *CodeView) word_right() {
 	Cur := code.view.Cursor

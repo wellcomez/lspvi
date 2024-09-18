@@ -372,7 +372,9 @@ func (m *mainui) open_wks_query() {
 	m.layout.dialog.open_wks_query(m.lspmgr.Current)
 }
 func (m *mainui) ZoomWeb(zoom bool) {
-	set_browser_font(zoom, m.ws)
+	if proxy != nil {
+		proxy.set_browser_font(zoom)
+	}
 }
 
 // OpenFile
@@ -383,8 +385,8 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 		open_in_image_set := []string{".png", ".md"}
 		image := []string{".png"}
 		for _, v := range open_in_image_set {
-			if v == ext {
-				open_in_web(file, m.ws)
+			if v == ext && proxy != nil {
+				proxy.open_in_web(file)
 				for _, shouldret := range image {
 					if shouldret == ext {
 						return
@@ -588,15 +590,23 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{}
 	prj.Load(arg, main)
-	go StartWebUI(*arg, func(port int, url string) {
-		if len(url) > 0 {
-			main.ws = url
-			main.tty = true
-		}
-		if port > 0 {
-			httport = port
-		}
-	})
+	if arg.Ws != "" {
+		main.ws = arg.Ws
+		main.tty = true
+		start_lspvi_proxy(arg, true)
+
+	} else {
+		go StartWebUI(*arg, func(port int, url string) {
+			if len(url) > 0 {
+				main.ws = url
+				main.tty = true
+			}
+			if port > 0 {
+				httport = port
+			}
+			start_lspvi_proxy(arg, false)
+		})
+	}
 	// main.bookmark.load()
 	// handle.main = main
 	// if !filepath.IsAbs(root) {
@@ -1066,8 +1076,9 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	for _, v := range main.global_key_map() {
 		if v.key.matched_event(*event) {
-			v.cmd.handle()
-			return nil
+			if v.cmd.handle() {
+				return nil
+			}
 		}
 	}
 	if main.console_index_list.HasFocus() {

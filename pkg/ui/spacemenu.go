@@ -25,7 +25,7 @@ type cmditem struct {
 type cmdactor struct {
 	id     command_id
 	desc   string
-	handle func()
+	handle func() bool
 }
 
 func (key cmdkey) matched_event(s tcell.EventKey) bool {
@@ -149,7 +149,7 @@ func (cmd cmdkey) string() string {
 
 type space_menu_item struct {
 	item   cmditem
-	handle func()
+	handle func() bool
 }
 
 func (v *space_menu) handle_key(event *tcell.EventKey) *tcell.EventKey {

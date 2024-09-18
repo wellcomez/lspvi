@@ -14,7 +14,24 @@ function is_md(ext) {
 let rows = 50
 let cols = 80
 
-const call_on_copy = "onselected"
+const call_key = "key"
+const call_term_stdout = "term"
+const call_xterm_init = "init"
+const call_resize = "resize"
+const call_paste_data = "call_paste_data"
+
+const forward_call_refresh = "forward_call_refresh"
+const lspvi_backend_start = "xterm_lspvi_start"
+
+const backend_on_command = "call_term_command"
+const backend_on_zoom = "zoom"
+const backend_on_copy = "onselected"
+const backend_on_openfile = "openfile"
+// const backend_on_command = "call_term_command"
+
+
+
+
 const MINIMUM_COLS = 2;
 const MINIMUM_ROWS = 1;
 var ws_sendTextData
@@ -127,7 +144,7 @@ md_init = () => {
     return new md()
 }
 app_init = () => {
-    var md = md_init()
+    let md = md_init()
     let app = new Vue({
         el: '#app',
         data: {
@@ -150,7 +167,7 @@ app_init = () => {
                 }
             },
             set_visible(a) {
-                var { isVisibleMd, isVisible } = a
+                let { isVisibleMd, isVisible } = a
                 this.isVisible = isVisible
                 this.isVisibleMd = isVisibleMd
             },
@@ -178,20 +195,117 @@ app_init = () => {
     }
     return app
 }
-const term_init = (app) => {
+class RemoteTermStatus {
+    constructor() {
+    }
+}
+class RemoteConn {
+    constructor(socket) {
+        this.socket = socket
+    }
+}
+class LocalTerm {
+    constructor(term, conn) {
+        this.term = term
+        this.conn = conn
+        this.prompt = "bash# "
+        this.term.clear()
+        this.newline();
+        let lsp = (cmd) => {
+            if (cmd.indexOf("lspvi") == 0) {
+                this.conn.start_lspvi(cmd)
+                return true
+            }
+        }
+        lsp = lsp.bind(this)
+        this.local_cmd_matcher = [lsp]
+    }
+    newline() {
+        this.term.write(this.prompt);
+    }
+    // Assuming you have an xterm.js instance created as 'terminal'
+
+    getCurrentLineText = () => {
+        // Get the cursor position
+        const cursorY = this.term.buffer.active.cursorY;
+
+        // Get the text of the current line
+        const lineText = this.term.buffer.active.getLine(cursorY).translateToString().trim();
+
+        return lineText;
+    };
+
+    // Usage example
+    handleCommand(cmdline) {
+        let args = cmdline
+        let matched = false;
+        this.local_cmd_matcher.forEach(element => {
+            if (matched) return;
+            if (element(cmdline)) {
+                matched = true;
+                return;
+            }
+        });
+        return false;
+    }
+    ondata(data) {
+        const { term } = this
+        const currentBuffer = term.buffer.active;
+        if (data == '\r') {
+            let line = this.getCurrentLineText()
+            if (line.indexOf(this.prompt) == 0) {
+                if (this.handleCommand(line.substring(this.prompt.length))) {
+
+                    return
+                }
+
+            }
+            this.term.write('\r\n')
+            this.newline()
+            return
+        } else if (data === '\x7F') { // Delete key or similar
+            if (currentBuffer.cursorX > this.prompt.length) {
+                term.write('\x08'); // Backspace
+                term.write(' ');    // Replace with space
+                term.write('\x08'); // Backspace again to move cursor back
+            }
+        }
+        this.term.write(data)
+    }
+}
+class Term {
+    constructor(term) { this.term = term; this.status = {} }
+    on_remote_stop() {
+        let stop = true
+        this.status = { stop }
+        this.Local = new LocalTerm(this.term, this.conn)
+    }
+    on_remote_inited() {
+        let init = true
+        this.status = { init }
+
+    }
+    on_paste() {
+        if (this.clipdata != undefined) {
+            this.paste_text(this.clipdata)
+        }
+        return true
+    }
+}
+const term_init = (app, on_term_command) => {
     window.addEventListener("contextmenu", function (e) {
         e.preventDefault();
     })
     document.onkeydown = function (e) {
         e = e || window.event;//Get event
         if (!e.ctrlKey) return;
-        var code = e.which || e.keyCode;//Get key code
+        let code = e.which || e.keyCode;//Get key code
         e.preventDefault();
         e.stopPropagation();
     };
-    var fontSize = get_font_size();
+    let fontSize = get_font_size();
     set_font_size(fontSize)
-    var term = new Terminal({
+    let term = new Terminal({
         allowProposedApi: true,
         cursorStyle: 'bar',  // 默认为块状光标
         allowTransparency: true,
@@ -211,28 +325,50 @@ const term_init = (app) => {
 
         // minimumContrastRatio: 1,
     });
-    var wl = new WebglAddon.WebglAddon()
+    let termobj = new Term(term)
+    let wl = new WebglAddon.WebglAddon()
     term.loadAddon(wl)
-    var fit = new FitAddon.FitAddon()
+    let fit = new FitAddon.FitAddon()
     term.loadAddon(fit);
     // const imageAddon = new ImageAddon.ImageAddon(customSettings);
     // terminal.loadAddon(imageAddon);
     term.onData(function (data) {
-        let call = "key"
-        let rows = term.rows, cols = term.cols
-        ws_sendTextData({ call, data, rows, cols })
-    })
-    term.attachCustomKeyEventHandler(ev => {
-        // console.log(ev)
-        return true;
-    })
-    term.attachCustomWheelEventHandler(ev => {
-        if (app && app.on_wheel(ev)) {
-            return false
+        if (termobj.status.stop) {
+            termobj.Local.ondata(data)
+        } else {
+            let call = call_key
+            let rows = term.rows, cols = term.cols
+            ws_sendTextData({ call, data, rows, cols })
         }
-        console.log(ev)
-        return true;
     })
+    const handle_key = ev => {
+        // console.log(ev)
+        if (termobj && termobj.Local) {
+            // if (ev.code == "Backspace") {
+            //     // term.write('\x7f')
+            //     ev.preventDefault(); // 阻止默认行为
+            //     // term.write('\b \b')
+            //     term.write('\x08'); // Backspace
+            //     return false;
+            // }
+            return true;
+        }
+        if (ev.key == "v" && ev.ctrlKey) {
+            if (termobj.on_paste()) {
+                return false;
+            }
+        }
+        return true;
+    };
+    term.attachCustomKeyEventHandler(handle_key)
+    const handle_wheel = ev => {
+        if (app && app.on_wheel(ev)) {
+            return false;
+        }
+        console.log(ev);
+        return true;
+    };
+    term.attachCustomWheelEventHandler(handle_wheel)
     // term.onSelectionChange(() => {
     //     let word = term.getSelection()
     //     console.error("word:", word)
@@ -244,21 +380,26 @@ const term_init = (app) => {
     f.resize(false)
     fit.fit()
     term.focus()
-    return term
+    return termobj
 
-    function LoadLigaturesAddon() {
-        try {
-            const newLocal = new LigaturesAddon.LigaturesAddon();
-            term.loadAddon(newLocal);
-        } catch (error) {
-            console.error(error);
-        }
-    }
+    // function LoadLigaturesAddon() {
+    //     try {
+    //         const newLocal = new LigaturesAddon.LigaturesAddon();
+    //         term.loadAddon(newLocal);
+    //     } catch (error) {
+    //         console.error(error);
+    //     }
+    // }
 }
-socket_int = (term, app) => {
+
+const socket_int = (term_obj, app) => {
+    let { term } = term_obj
     let localhost = window.location.host
     let wsproto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    var socket = new WebSocket(wsproto + '://' + localhost + '/ws');
+    let socket = new WebSocket(wsproto + '://' + localhost + '/ws');
+    let appstatus = new RemoteTermStatus()
+    let conn = new RemoteConn(socket)
+    term_obj.conn = conn;
     const sendTextData = (data) => {
         if (socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(data));
@@ -269,19 +410,23 @@ socket_int = (term, app) => {
     }
     ws_sendTextData = sendTextData
     const resizecall = () => {
-        let call = "resize"
+        let call = call_resize
         let rows = term.rows, cols = term.cols
         sendTextData({ call, cols, rows })
     }
+    const paste_text = (data) => {
+        let call = call_paste_data
+        sendTextData({ call, data })
+    }
+    term_obj.paste_text = paste_text.bind(term_obj)
+
+
+
     socket.onopen = function (event) {
-        console.log("Connection opened");
-        call = "init"
-        let rows = term.rows, cols = term.cols
-        let host = window.location.host
-        sendTextData({ call, cols, rows, host })
+        start_lspvi();
     };
 
-    var clipboard = new ClipboardJS('.btn');
+    let clipboard = new ClipboardJS('.btn');
 
     clipboard.on('success', function (e) {
         // console.info('Action:', e.action);
@@ -297,42 +442,17 @@ socket_int = (term, app) => {
     socket.binaryType = "blob";
     socket.onmessage = function incoming(evt) {
         const handleMessage = (data) => {
-            // 处理解码后的数据
-            var { Call, Output } = data
-            if (Call == "term") {
+            let { Call, Output } = data
+            if (Call == call_term_stdout) {
                 term.write(Output)
             }
-            else if (Call == "zoom") {
-                var { Zoom } = data
-                let fontsize = get_font_size()
-                if (Zoom) {
-                    fontsize++
-                } else {
-                    fontsize--
-                }
-                set_font_size(fontsize)
-                window.location.reload()
-                console.log("zoom", Zoom)
-            } else if (Call == "openfile") {
-                console.log("openfile",
-                    data.Filename)
-                let ext = getFileExtension(data.Filename)
-                if (is_image(ext)) {
-                    app.popimage(data.Filename)
-                } else if (is_md(ext)) {
-                    app.popmd(data.Filename)
-                }
-            } else if (call_on_copy == Call) {
-                let text = data.SelectedString
-                var txt = document.getElementById("bar")
-                txt.innerText = text
-                var btn= document.getElementById("clip")
-                btn.click()
+            if (handle_backend_command(Call, data)) {
+                return
             }
-            // console.log("Received: ", event.data);
+
         }
         try {
-            var reader = new FileReader();
+            let reader = new FileReader();
             reader.readAsArrayBuffer(evt.data);
             reader.addEventListener("loadend", function (e) {
                 const buffer = new Uint8Array(e.target.result);  // arraybuffer object
@@ -341,6 +461,66 @@ socket_int = (term, app) => {
             });
         } catch (error) {
             console.error('Failed to decode data:', error);
+        }
+
+        function handle_backend_command(Call, data) {
+            if (Call == backend_on_zoom) {
+                handle_command_zoom(data);
+            } else if (Call == backend_on_openfile) {
+                handle_command_openfile(data);
+            } else if (backend_on_copy == Call) {
+                term_obj.clipdata = handle_copy_data(data);
+            } else if (Call == backend_on_command) {
+                return handle_user_command(data);
+            } else {
+                return false
+            }
+            return true
+        }
+
+
+        function handle_user_command(data) {
+            switch (data.Command) {
+                case "quit":
+                    appstatus.quit = true;
+                    term_obj.on_remote_stop();
+                    break;
+                default:
+                    return;
+            }
+        }
+
+        function handle_copy_data(data) {
+            let text = data.SelectedString;
+            let txt = document.getElementById("bar");
+            txt.innerText = text;
+            let btn = document.getElementById("clip");
+            btn.click();
+            return text
+        }
+
+        function handle_command_openfile(data) {
+            console.log("openfile",
+                data.Filename);
+            let ext = getFileExtension(data.Filename);
+            if (is_image(ext)) {
+                app.popimage(data.Filename);
+            } else if (is_md(ext)) {
+                app.popmd(data.Filename);
+            }
+        }
+
+        function handle_command_zoom(data) {
+            let { Zoom } = data;
+            let fontsize = get_font_size();
+            if (Zoom) {
+                fontsize++;
+            } else {
+                fontsize--;
+            }
+            set_font_size(fontsize);
+            window.location.reload();
+            console.log("zoom", Zoom);
         }
     };
     socket.onclose = function (event) {
@@ -354,10 +534,23 @@ socket_int = (term, app) => {
         console.log("event resize", size)
         resizecall()
     })
+
+    function start_lspvi(cmdline) {
+        console.log("Connection opened");
+        let call = call_xterm_init;
+        let rows = term.rows, cols = term.cols;
+        let host = window.location.host;
+        term_obj.Local = undefined
+        term_obj.status = {}
+        sendTextData({ call, cols, rows, host, cmdline });
+    }
+    conn.start_lspvi = start_lspvi.bind(conn)
 }
-main = () => {
-    var app = app_init()
-    var term = term_init(app)
+const main = () => {
+    let app = app_init()
+    let term = term_init(app, (command) => {
+
+    })
     socket_int(term, app)
 }
 main()
@@ -365,7 +558,7 @@ function set_font_size(fontSize) {
     window.localStorage.setItem("fontsize", fontSize);
 }
 function get_font_size() {
-    var fontSize = window.localStorage.getItem("fontsize");
+    let fontSize = window.localStorage.getItem("fontsize");
     if (fontSize == undefined || fontSize == "undefined") {
         fontSize = 12;
     }
