@@ -44,6 +44,7 @@ const (
 	vi_undo
 	vi_save
 	vi_copy_line
+	vi_del_line
 	copy_path
 	next_window_left
 	next_window_right
@@ -306,6 +307,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case vi_undo:
 		return cmdactor{id, "Undo", func() bool {
 			// m.codeview.copyline(false)
+			m.codeview.Undo()
 			return true
 		}}
 	case vi_save:
@@ -318,6 +320,12 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			m.codeview.copyline(false)
 			return true
 		}}
+	case vi_del_line:
+		return cmdactor{id, "Delete", func() bool {
+			m.codeview.deleteline()
+			return true
+		}}
+
 	case vi_copy_line:
 		return cmdactor{id, "Copy", func() bool {
 			m.codeview.copyline(true)

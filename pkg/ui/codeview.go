@@ -860,6 +860,13 @@ func (code *CodeView) Save() error {
 	data := view.Buf.SaveString(false)
 	return os.WriteFile(code.filename, []byte(data), 0644)
 }
+func (code *CodeView) Undo() {
+	code.view.Undo()
+}
+func (code *CodeView) deleteline() {
+	code.view.CutLine()
+}
+
 func (code *CodeView) copyline(line bool) {
 	cmd := code.main.cmdline
 	if !cmd.Vim.vi.VMap {
