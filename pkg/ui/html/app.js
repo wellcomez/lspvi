@@ -14,11 +14,18 @@ function is_md(ext) {
 let rows = 50
 let cols = 80
 
-const call_zoom = "zoom"
+const call_key = "key"
 const call_term_command = "call_term_command"
-const call_on_copy = "onselected"
 const call_term_stdout = "term"
-const call_openfile = "openfile"
+const forward_call_refresh = "forward_call_refresh"
+const lspvi_backend_start = "xterm_lspvi_start"
+
+const backend_on_zoom = "zoom"
+const backend_on_copy = "onselected"
+const backend_on_openfile = "openfile"
+
+
+
 
 const MINIMUM_COLS = 2;
 const MINIMUM_ROWS = 1;
@@ -318,7 +325,7 @@ const term_init = (app, on_term_command) => {
         if (ret.status.stop) {
             ret.Local.ondata(data)
         } else {
-            let call = "key"
+            let call = call_key
             let rows = term.rows, cols = term.cols
             ws_sendTextData({ call, data, rows, cols })
         }
@@ -411,36 +418,14 @@ const socket_int = (term_obj, app) => {
         const handleMessage = (data) => {
             // 处理解码后的数据
             var { Call, Output } = data
+            if (handle_backend_command(Call, data)){
+                return
+            }
             if (Call == call_term_stdout) {
                 term.write(Output)
             }
-            else if (Call == call_zoom) {
-                var { Zoom } = data
-                let fontsize = get_font_size()
-                if (Zoom) {
-                    fontsize++
-                } else {
-                    fontsize--
-                }
-                set_font_size(fontsize)
-                window.location.reload()
-                console.log("zoom", Zoom)
-            } else if (Call == call_openfile) {
-                console.log("openfile",
-                    data.Filename)
-                let ext = getFileExtension(data.Filename)
-                if (is_image(ext)) {
-                    app.popimage(data.Filename)
-                } else if (is_md(ext)) {
-                    app.popmd(data.Filename)
-                }
-            } else if (call_on_copy == Call) {
-                let text = data.SelectedString
-                var txt = document.getElementById("bar")
-                txt.innerText = text
-                var btn = document.getElementById("clip")
-                btn.click()
-            } else if (Call == call_term_command) {
+
+            if (Call == call_term_command) {
                 switch (data.Command) {
                     case "quit":
                         appstatus.quit = true
@@ -462,6 +447,39 @@ const socket_int = (term_obj, app) => {
             });
         } catch (error) {
             console.error('Failed to decode data:', error);
+        }
+
+        function handle_backend_command(Call, data) {
+            if (Call == backend_on_copy) {
+                var { Zoom } = data;
+                let fontsize = get_font_size();
+                if (Zoom) {
+                    fontsize++;
+                } else {
+                    fontsize--;
+                }
+                set_font_size(fontsize);
+                window.location.reload();
+                console.log("zoom", Zoom);
+            } else if (Call == backend_on_openfile) {
+                console.log("openfile",
+                    data.Filename);
+                let ext = getFileExtension(data.Filename);
+                if (is_image(ext)) {
+                    app.popimage(data.Filename);
+                } else if (is_md(ext)) {
+                    app.popmd(data.Filename);
+                }
+            } else if (backend_on_copy == Call) {
+                let text = data.SelectedString;
+                var txt = document.getElementById("bar");
+                txt.innerText = text;
+                var btn = document.getElementById("clip");
+                btn.click();
+            }else{
+                return false
+            }
+            return true
         }
     };
     socket.onclose = function (event) {

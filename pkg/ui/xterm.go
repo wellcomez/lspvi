@@ -70,7 +70,7 @@ func (term *lspvi_backend) process(method string, message []byte) bool {
 		return true
 	}
 	switch method {
-	case xterm_request_forward_refresh:
+	case forward_call_refresh:
 		{
 			ForwardFromXterm[xterm_forward_cmd_refresh](message, term)
 		}
@@ -92,15 +92,15 @@ type lspvi_command_forward struct {
 
 func (term lspvi_command_forward) process(method string, message []byte) bool {
 	switch method {
-	case call_on_copy:
+	case backend_on_copy:
 		{
 			ForwardFromLspvi[Ws_on_selection](sss.imp, message)
 		}
-	case call_zoom:
+	case backend_on_zoom:
 		{
 			ForwardFromLspvi[Ws_font_size](sss.imp, message)
 		}
-	case call_openfile:
+	case backend_on_openfile:
 		{
 			var file Ws_open_file
 			err := json.Unmarshal(message, &file)
@@ -171,7 +171,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 func (term xterm_request) process(method string, message []byte) {
 	switch method {
-	case "key":
+	case call_key:
 		{
 			term.handle_xterm_input(message)
 		}
