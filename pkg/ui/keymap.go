@@ -62,6 +62,7 @@ const (
 	vi_search_mode
 	vi_line_head
 	open_picker_help
+	handle_ctrl_c
 	cmd_quit
 )
 
@@ -73,118 +74,188 @@ func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_ite
 func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	switch id {
 	case zoomout:
-		return cmdactor{id, "zoom out", func() { m.zoom(false) }}
+		return cmdactor{id, "zoom out", func() bool {
+			m.zoom(false)
+			return true
+		}}
 	case zoomin:
-		return cmdactor{id, "zoom in", func() { m.zoom(true) }}
+		return cmdactor{id, "zoom in", func() bool {
+			m.zoom(true)
+			return true
+		}}
 	case cmd_quit:
-		return cmdactor{id, "Quit", m.quit}
+		return cmdactor{id, "Quit", func() bool {
+			m.quit()
+			return true
+		}}
 	case open_picker_qfh:
-		return cmdactor{id, "quickfix history", m.open_qfh_query}
+		return cmdactor{id, "quickfix history", func() bool {
+			m.open_qfh_query()
+			return true
+		}}
 	case open_picker_wkq:
-		return cmdactor{id, "query workspace symbol", m.open_wks_query}
+		return cmdactor{id, "query workspace symbol", func() bool {
+			m.open_wks_query()
+			return true
+		}}
 	case open_picker_document_symbol:
-		return cmdactor{id, "open symbol", m.open_document_symbol_picker}
+		return cmdactor{id, "open symbol", func() bool {
+
+			m.open_document_symbol_picker()
+			return true
+		}}
 	case open_picker_colorscheme:
-		return cmdactor{id, "colorscheme", m.open_colorescheme}
+		return cmdactor{id, "colorscheme", func() bool {
+			m.open_colorescheme()
+			return true
+		}}
 	case open_picker_workspace:
-		return cmdactor{id, "workspace", func() {
+		return cmdactor{id, "workspace", func() bool {
 			m.layout.dialog.OpenWorkspaceFzf()
+			return true
 		}}
 	case open_picker_refs:
-		return cmdactor{id, "reference", m.open_picker_refs}
+		return cmdactor{id, "reference", func() bool {
+			m.open_picker_refs()
+			return true
+		}}
 	case open_picker_bookmark:
-		return cmdactor{id, "bookmark", m.open_picker_bookmark}
+		return cmdactor{id, "bookmark", func() bool {
+			m.open_picker_bookmark()
+			return true
+		}}
 	case open_picker_livegrep:
-		return cmdactor{id, "live grep", m.open_picker_livegrep}
+		return cmdactor{id, "live grep", func() bool {
+			m.open_picker_livegrep()
+			return true
+		}}
 	case open_picker_history:
-		return cmdactor{id, "history", m.open_picker_history}
+		return cmdactor{id, "history", func() bool {
+			m.open_picker_history()
+			return true
+		}}
 	case open_picker_grep_word:
-		return cmdactor{id, "grep word", func() { m.codeview.action_grep_word(true) }}
+		return cmdactor{id, "grep word", func() bool {
+			m.codeview.action_grep_word(true)
+			return true
+		}}
 	case open_picker_global_search:
-		return cmdactor{id, "Search in files", func() { m.codeview.action_grep_word(false) }}
+		return cmdactor{id, "Search in files", func() bool {
+			m.codeview.action_grep_word(false)
+			return true
+		}}
 	case open_picker_ctrlp:
-		return cmdactor{id, "picker file", m.open_picker_ctrlp}
+		return cmdactor{id, "picker file", func() bool {
+			m.open_picker_ctrlp()
+			return true
+		}}
 	case bookmark_it:
-		return cmdactor{id, "Bookmark", func() {
+		return cmdactor{id, "Bookmark", func() bool {
 			if m.codeview != nil {
 				m.codeview.bookmark()
 			}
+			return true
 		}}
 	case goto_back:
 		{
-			return cmdactor{id, "back", func() {
+			return cmdactor{id, "back", func() bool {
 				m.GoBack()
+				return true
 			}}
 		}
 	case goto_tab:
 		{
-			return cmdactor{id, "tab", func() {
+			return cmdactor{id, "tab", func() bool {
 				m.switch_tab_view()
+				return true
 			}}
 		}
 	case goto_forward:
 		{
-			return cmdactor{id, "forward", func() {
+			return cmdactor{id, "forward", func() bool {
 				m.GoForward()
+				return true
 			}}
 		}
 	case goto_first_line:
-		return cmdactor{id, "goto first line", func() {
+		return cmdactor{id, "goto first line", func() bool {
 			m.codeview.gotoline(0)
+			return true
 		}}
 	case goto_to_fileview:
 		{
-			return cmdactor{id, "goto file explorer", func() {
+			return cmdactor{id, "goto file explorer", func() bool {
 				dir := filepath.Dir(m.codeview.filename)
 				if view_file.to_view_link(m).Hide {
 					m.toggle_view(view_file)
 				}
 				m.fileexplorer.ChangeDir(dir)
 				m.fileexplorer.FocusFile(m.codeview.filename)
+				return true
 			}}
 		}
 	case goto_last_line:
-		return cmdactor{id, "goto first line", func() {
+		return cmdactor{id, "goto first line", func() bool {
 			m.codeview.gotoline(-1)
+			return true
 		}}
 	case goto_define:
-		return cmdactor{id, "goto define", func() { m.codeview.action_goto_define() }}
+		return cmdactor{id, "goto define", func() bool {
+			m.codeview.action_goto_define()
+			return true
+		}}
 	case goto_refer:
-		return cmdactor{id, "goto refer", func() { m.codeview.action_get_refer() }}
+		return cmdactor{id, "goto refer", func() bool {
+			m.codeview.action_get_refer()
+			return true
+		}}
 	case goto_callin:
-		return cmdactor{id, "goto callin", func() { m.codeview.key_call_in() }}
+		return cmdactor{id, "goto callin", func() bool {
+			m.codeview.key_call_in()
+			return true
+		}}
 	case goto_decl:
-		return cmdactor{id, "goto decl", func() { m.codeview.action_goto_declaration() }}
+		return cmdactor{id, "goto decl", func() bool {
+			m.codeview.action_goto_declaration()
+			return true
+		}}
 	case next_window_down:
-		return cmdactor{id, "next window down", func() {
+		return cmdactor{id, "next window down", func() bool {
 			m.move_to_window(move_down)
+			return true
 		}}
 	case next_window_left:
-		return cmdactor{id, "next window left", func() {
+		return cmdactor{id, "next window left", func() bool {
 			m.move_to_window(move_left)
+			return true
+
 		}}
 	case next_window_right:
-		return cmdactor{id, "next window right", func() {
+		return cmdactor{id, "next window right", func() bool {
 			m.move_to_window(move_right)
+			return true
 		}}
 	case next_window_up:
-		return cmdactor{id, "next window up", func() {
+		return cmdactor{id, "next window up", func() bool {
 			m.move_to_window(move_up)
+			return true
 		}}
 	case file_in_file:
-		return cmdactor{id, "file in file", func() {
+		return cmdactor{id, "file in file", func() bool {
 			w := m.codeview.OnFindInfile(true, true)
 			m.cmdline.set_escape_search_mode(w)
+			return true
 		}}
 	case file_in_file_vi_word:
-		return cmdactor{id, "file in file vi", func() {
+		return cmdactor{id, "file in file vi", func() bool {
 			word := m.codeview.OnFindInfileWordOption(false, false, true)
 			cmdline := m.cmdline
 			cmdline.set_escape_search_mode(word)
+			return true
 		}}
 	case brack_match:
 		{
-			return cmdactor{id, "match", func() {
+			return cmdactor{id, "match", func() bool {
 				if m.cmdline.Vim.vi.VMap {
 					begin := m.codeview.view.Cursor.Loc
 					m.codeview.view.JumpToMatchingBrace()
@@ -195,55 +266,83 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 				} else {
 					m.codeview.view.JumpToMatchingBrace()
 				}
+				return true
 			}}
 		}
 	case arrow_up:
-		return cmdactor{id, "up", func() { m.codeview.action_key_up() }}
+		return cmdactor{id, "up", func() bool {
+			m.codeview.action_key_up()
+			return true
+		}}
 	case arrow_down:
-		return cmdactor{id, "down", func() { m.codeview.action_key_down() }}
+		return cmdactor{id, "down", func() bool {
+			m.codeview.action_key_down()
+			return true
+		}}
 	case vi_left, arrow_left:
-		return cmdactor{id, "left", func() { m.codeview.key_left() }}
+		return cmdactor{id, "left", func() bool {
+			m.codeview.key_left()
+			return true
+		}}
 	case vi_right, arrow_right:
-		return cmdactor{id, "right", func() { m.codeview.key_right() }}
+		return cmdactor{id, "right", func() bool {
+			m.codeview.key_right()
+			return true
+		}}
 	case vi_left_word:
-		return cmdactor{id, "word left", func() { m.codeview.word_left() }}
+		return cmdactor{id, "word left", func() bool {
+			m.codeview.word_left()
+			return true
+		}}
 	case vi_right_word:
-		return cmdactor{id, "word right", func() { m.codeview.word_right() }}
+		return cmdactor{id, "word right", func() bool {
+			m.codeview.word_right()
+			return true
+		}}
 	case vi_copy_text:
-		return cmdactor{id, "Copy", func() {
+		return cmdactor{id, "Copy", func() bool {
 			m.codeview.copyline(false)
+			return true
 		}}
 	case vi_copy_line:
-		return cmdactor{id, "Copy", func() { m.codeview.copyline(true) }}
+		return cmdactor{id, "Copy", func() bool {
+			m.codeview.copyline(true)
+			return true
+		}}
 	case vi_line_head:
-		return cmdactor{id, "goto line head", func() {
+		return cmdactor{id, "goto line head", func() bool {
 			code := m.codeview
 			Cur := code.view.Cursor
 			Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
+			return true
 		}}
 	case vi_quick_prev:
 		{
-			return cmdactor{id, "prev", func() {
+			return cmdactor{id, "prev", func() bool {
 				m.quickview.go_prev()
+				return true
 			}}
 		}
 	case vi_quick_next:
 		{
-			return cmdactor{id, "quick_next", func() {
+			return cmdactor{id, "quick_next", func() bool {
 				m.quickview.go_next()
+				return true
 			}}
 		}
 	case vi_search_mode:
-		return cmdactor{id, "search mode", func() {
+		return cmdactor{id, "search mode", func() bool {
 			code := m.codeview
 			vim := code.main.cmdline.Vim
 			vim.EnterEscape()
 			vim.EnterFind()
 			m.codeview.word_right()
+			return true
 		}}
 	case open_picker_help:
-		return cmdactor{id, "help", func() {
+		return cmdactor{id, "help", func() bool {
 			m.layout.dialog.OpenKeymapFzf()
+			return true
 		}}
 	default:
 		return cmdactor{id,
@@ -377,6 +476,7 @@ func (main *mainui) key_map_leader() []cmditem {
 }
 func (m *mainui) global_key_map() []cmditem {
 	return []cmditem{
+		get_cmd_actor(m, handle_ctrl_c).enven_name_key("Ctrl+c"),
 		get_cmd_actor(m, goto_back).enven_name_key("Ctrl+O"),
 		get_cmd_actor(m, goto_forward).enven_name_key("Rune[O]"),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),

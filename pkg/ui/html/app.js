@@ -417,14 +417,13 @@ const socket_int = (term_obj, app) => {
     socket.binaryType = "blob";
     socket.onmessage = function incoming(evt) {
         const handleMessage = (data) => {
-            // 处理解码后的数据
             var { Call, Output } = data
             if (handle_backend_command(Call, data)) {
                 return
             }
             if (Call == call_term_stdout) {
                 term.write(Output)
-            }            // console.log("Received: ", event.data);
+            }
         }
         try {
             var reader = new FileReader();
