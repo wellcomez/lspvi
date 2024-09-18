@@ -12,7 +12,7 @@ import (
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-var console_board_color = tcell.ColorGreen
+// var console_board_color = tcell.ColorGreen
 
 // var focused_border_color = tcell.ColorGreenYellow
 

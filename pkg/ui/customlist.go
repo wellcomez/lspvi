@@ -90,7 +90,7 @@ func (l *customlist) remove_hl_flag(ss string, key string) ([]colorkey, string) 
 			e := strings.Index(s[b+1:], key)
 			if e > 0 {
 				key := l.NewDefaultColorKey(s[b+2 : b+e+1])
-				key.color =global_theme.search_highlight_color() 
+				key.color = global_theme.search_highlight_color()
 				keys = append(keys, key)
 				s = s[b+e+3:]
 			} else {
@@ -141,12 +141,12 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	offset_x, y, _, height := l.GetInnerRect()
 
 	bottomLimit := y + height
-
+	select_color := global_theme.search_highlight_color()
 	selected_style := tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor)
-	selected_stylehl := tcell.StyleDefault.Foreground(tcell.ColorGreen).Background(tview.Styles.PrimaryTextColor)
+	selected_stylehl := tcell.StyleDefault.Foreground(select_color).Background(tview.Styles.PrimaryTextColor)
 
 	style := tcell.StyleDefault.Foreground(tview.Styles.PrimaryTextColor).Background(tview.Styles.PrimitiveBackgroundColor)
-	stylehl := tcell.StyleDefault.Foreground(tcell.ColorGreen).Background(tview.Styles.PrimitiveBackgroundColor)
+	stylehl := tcell.StyleDefault.Foreground(select_color).Background(tview.Styles.PrimitiveBackgroundColor)
 
 	itemoffset, _ := l.GetOffset()
 	keys := []colorkey{}
