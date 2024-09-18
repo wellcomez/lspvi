@@ -97,7 +97,12 @@ func (proxy *back_to_xterm) Open(listen bool) error {
 }
 
 var proxy *back_to_xterm
+
 func start_lspvi_proxy(arg *Arguments, listen bool) {
-	proxy = &back_to_xterm{address: arg.Ws}
-	proxy.Open(listen)
+	var p = &back_to_xterm{address: arg.Ws}
+	if err := p.Open(listen); err == nil {
+		proxy = p
+	} else {
+		log.Println("start lspvi proxy failed", err)
+	}
 }

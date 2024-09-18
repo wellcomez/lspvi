@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -343,6 +344,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case handle_ctrl_c:
 		return cmdactor{id, "ctrl-c copy", func() bool {
 			m.codeview.copyline(false)
+			log.Printf("copy to clipboard")
 			return true
 		}}
 	case handle_ctrl_v:

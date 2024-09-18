@@ -331,8 +331,8 @@ const term_init = (app, on_term_command) => {
             ws_sendTextData({ call, data, rows, cols })
         }
     })
-    term.attachCustomKeyEventHandler(ev => {
-        // console.log(ev)
+    const handle_key = ev => {
+        console.log(ev)
         if (ret && ret.Local) {
             // if (ev.code == "Backspace") {
             //     // term.write('\x7f')
@@ -341,17 +341,21 @@ const term_init = (app, on_term_command) => {
             //     term.write('\x08'); // Backspace
             //     return false;
             // }
-            return true
+            return true;
+        }
+        if (ev.key == "v" && ev.ctrlKey) {
         }
         return true;
-    })
-    term.attachCustomWheelEventHandler(ev => {
+    };
+    term.attachCustomKeyEventHandler(handle_key)
+    const handle_wheel = ev => {
         if (app && app.on_wheel(ev)) {
-            return false
+            return false;
         }
-        console.log(ev)
+        console.log(ev);
         return true;
-    })
+    };
+    term.attachCustomWheelEventHandler(handle_wheel)
     // term.onSelectionChange(() => {
     //     let word = term.getSelection()
     //     console.error("word:", word)
@@ -438,45 +442,61 @@ const socket_int = (term_obj, app) => {
         }
 
         function handle_backend_command(Call, data) {
-            if (Call == backend_on_copy) {
-                var { Zoom } = data;
-                let fontsize = get_font_size();
-                if (Zoom) {
-                    fontsize++;
-                } else {
-                    fontsize--;
-                }
-                set_font_size(fontsize);
-                window.location.reload();
-                console.log("zoom", Zoom);
+            if (Call == backend_on_zoom) {
+                handle_command_zoom(data);
             } else if (Call == backend_on_openfile) {
-                console.log("openfile",
-                    data.Filename);
-                let ext = getFileExtension(data.Filename);
-                if (is_image(ext)) {
-                    app.popimage(data.Filename);
-                } else if (is_md(ext)) {
-                    app.popmd(data.Filename);
-                }
+                handle_command_openfile(data);
             } else if (backend_on_copy == Call) {
-                let text = data.SelectedString;
-                var txt = document.getElementById("bar");
-                txt.innerText = text;
-                var btn = document.getElementById("clip");
-                btn.click();
+                handle_copy_data(data);
             } else if (Call == backend_on_command) {
-                switch (data.Command) {
-                    case "quit":
-                        appstatus.quit = true
-                        term_obj.on_remote_stop()
-                        break
-                    default:
-                        return
-                }
+                return handle_user_command(data);
             } else {
                 return false
             }
             return true
+        }
+
+        function handle_user_command(data) {
+            switch (data.Command) {
+                case "quit":
+                    appstatus.quit = true;
+                    term_obj.on_remote_stop();
+                    break;
+                default:
+                    return;
+            }
+        }
+
+        function handle_copy_data(data) {
+            let text = data.SelectedString;
+            var txt = document.getElementById("bar");
+            txt.innerText = text;
+            var btn = document.getElementById("clip");
+            btn.click();
+        }
+
+        function handle_command_openfile(data) {
+            console.log("openfile",
+                data.Filename);
+            let ext = getFileExtension(data.Filename);
+            if (is_image(ext)) {
+                app.popimage(data.Filename);
+            } else if (is_md(ext)) {
+                app.popmd(data.Filename);
+            }
+        }
+
+        function handle_command_zoom(data) {
+            var { Zoom } = data;
+            let fontsize = get_font_size();
+            if (Zoom) {
+                fontsize++;
+            } else {
+                fontsize--;
+            }
+            set_font_size(fontsize);
+            window.location.reload();
+            console.log("zoom", Zoom);
         }
     };
     socket.onclose = function (event) {

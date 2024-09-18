@@ -854,12 +854,12 @@ func (code *CodeView) copyline(line bool) {
 		if line {
 			s := code.view.Buf.Line(int(code.view.Cursor.Loc.Y))
 			code.main.CopyToClipboard(s)
+			return
 		}
-	} else {
-		s := code.view.Cursor.GetSelection()
-		code.main.CopyToClipboard(s)
-		cmd.Vim.EnterEscape()
 	}
+	s := code.view.Cursor.GetSelection()
+	code.main.CopyToClipboard(s)
+	cmd.Vim.EnterEscape()
 }
 func (code *CodeView) word_right() {
 	Cur := code.view.Cursor
