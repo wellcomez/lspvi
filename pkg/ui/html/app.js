@@ -19,7 +19,7 @@ const call_term_stdout = "term"
 const call_xterm_init = "init"
 const call_resize = "resize"
 const call_paste_data = "call_paste_data"
-
+const call_redraw = "call_redraw"
 const forward_call_refresh = "forward_call_refresh"
 const lspvi_backend_start = "xterm_lspvi_start"
 
@@ -277,16 +277,7 @@ class LocalTerm {
 
 
 
-function handle_user_command(data) {
-    switch (data.Command) {
-        case "quit":
-            appstatus.quit = true;
-            term_obj.on_remote_stop();
-            break;
-        default:
-            return;
-    }
-}
+
 
 function handle_copy_data(data) {
     let text = data.SelectedString;
@@ -324,6 +315,8 @@ class Term {
             console.error('Action:', e.action);
             console.error('Trigger:', e.trigger);
         });
+
+        this.appstatus = new RemoteTermStatus()
     }
     paste_text = (data) => {
         let call = call_paste_data
@@ -339,9 +332,12 @@ class Term {
             return
         }
     }
-    start_xterm() {
+    start_xterm(start) {
         term_init(this, this.app);
-        this.start_lspvi();
+        if (start){
+            this.start_lspvi();
+        }
+
     }
     handle_command_zoom(data) {
         let { Zoom } = data;
@@ -353,7 +349,32 @@ class Term {
         }
         set_font_size(fontsize);
         window.location.reload();
+        // this.newMethod(Zoom)
+
+    }
+    newMethod(Zoom) {
+        this.term.clear();
+        this.term.dispose();
+        // this.term.reset()
+        let terminalContainer = document.getElementById('terminal');
+        let parent = terminalContainer.parentElement;
+        terminalContainer.remove();
+        terminalContainer = document.createElement('div');
+        terminalContainer.id = "terminal";
+        parent.appendChild(terminalContainer);
         console.log("zoom", Zoom);
+        this.start_xterm();
+        this.sendTextData({ Call: call_redraw })
+    }
+    handle_user_command(data) {
+        switch (data.Command) {
+            case "quit":
+                this.appstatus.quit = true;
+                this.on_remote_stop();
+                break;
+            default:
+                return;
+        }
     }
     handle_backend_command(Call, data, app) {
         if (Call == backend_on_zoom) {
@@ -363,7 +384,7 @@ class Term {
         } else if (backend_on_copy == Call) {
             this.clipdata = handle_copy_data(data);
         } else if (Call == backend_on_command) {
-            return handle_user_command(data);
+            return this.handle_user_command(data);
         } else {
             return false
         }
@@ -442,6 +463,8 @@ class Term {
         return true
     }
 }
+
+var termobj = new Term()
 const term_init = (termobj, app) => {
     window.addEventListener("contextmenu", function (e) {
         e.preventDefault();
@@ -512,7 +535,6 @@ const socket_int = (term_obj, app, start_lspvi) => {
     let localhost = window.location.host
     let wsproto = window.location.protocol === 'https:' ? 'wss' : 'ws'
     let socket = new WebSocket(wsproto + '://' + localhost + '/ws');
-    let appstatus = new RemoteTermStatus()
     let conn = new RemoteConn(socket)
     term_obj.conn = conn;
     const sendTextData = (data) => {
@@ -560,11 +582,10 @@ const socket_int = (term_obj, app, start_lspvi) => {
     conn.start_lspvi = start_lspvi.bind(conn)
 }
 const main = () => {
-    let termobj = new Term()
     let app = app_init()
     termobj.app = app
     socket_int(termobj, app, () => {
-        termobj.start_xterm()
+        termobj.start_xterm(true)
     })
 
 }
