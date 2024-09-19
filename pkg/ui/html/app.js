@@ -356,11 +356,11 @@ class Term {
         term.options.fontSize = fontsize
         cols = Math.ceil(cols / zoomfactor)
         rows = Math.ceil(rows / zoomfactor)
-        console.log("resize", term.cols,term.rows)
+        console.log("resize", term.cols, term.rows)
         term.resize(cols, rows)
-        console.log("after resize",term.cols,term.rows )
+        console.log("after resize", term.cols, term.rows)
         this.fit.fit()
-        console.log("after resize fit", term.cols,term.rows)
+        console.log("after resize fit", term.cols, term.rows)
         this.resizecall()
     }
     newMethod(Zoom) {
@@ -438,6 +438,15 @@ class Term {
             //     return false;
             // }
             return true;
+        }
+        if (ev.ctrlKey) {
+            if (ev.key == "="||ev.key == "+") {
+                this.handle_command_zoom({ Zoom: true })
+                return false
+            } else if (ev.key == "-") {
+                this.handle_command_zoom({ Zoom: false })
+                return false
+            }
         }
         if (ev.key == "v" && ev.ctrlKey) {
             if (this.on_paste()) {
