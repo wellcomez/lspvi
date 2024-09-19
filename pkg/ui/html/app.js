@@ -308,18 +308,7 @@ function handle_command_openfile(data, app) {
     }
 }
 
-function handle_command_zoom(data) {
-    let { Zoom } = data;
-    let fontsize = get_font_size();
-    if (Zoom) {
-        fontsize++;
-    } else {
-        fontsize--;
-    }
-    set_font_size(fontsize);
-    window.location.reload();
-    console.log("zoom", Zoom);
-}
+
 class Term {
     constructor(term) { this.set_term_ui(term) }
     handleMessage = (data, app) => {
@@ -332,9 +321,21 @@ class Term {
             return
         }
     }
+    handle_command_zoom(data) {
+        let { Zoom } = data;
+        let fontsize = get_font_size();
+        if (Zoom) {
+            fontsize++;
+        } else {
+            fontsize--;
+        }
+        set_font_size(fontsize);
+        window.location.reload();
+        console.log("zoom", Zoom);
+    }
     handle_backend_command(Call, data, app) {
         if (Call == backend_on_zoom) {
-            handle_command_zoom(data);
+            this.handle_command_zoom(data);
         } else if (Call == backend_on_openfile) {
             handle_command_openfile(data, app);
         } else if (backend_on_copy == Call) {
