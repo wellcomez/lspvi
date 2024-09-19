@@ -168,7 +168,6 @@ func (coloretheme *symbol_colortheme) update_default_color() {
 	}
 }
 func (coloretheme *symbol_colortheme) __update_default_color(bg tcell.Color, fg tcell.Color) {
-
 	tview.Styles.PrimitiveBackgroundColor = bg
 	tview.Styles.PrimaryTextColor = fg
 	tview.Styles.BorderColor = fg

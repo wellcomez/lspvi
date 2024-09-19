@@ -94,7 +94,11 @@ type console_pages struct {
 }
 
 func (console *console_pages) update_title(s string) {
-	UpdateTitleAndColor(console.Box, s)
+	// UpdateTitleAndColor(console.Box, s)
+	console.SetTitle(s)
+	console.SetTitleColor(tview.Styles.TitleColor)
+	console.SetBorder(true)
+	console.SetBorderColor(tview.Styles.BorderColor)
 }
 func new_console_pages() *console_pages {
 	return &console_pages{
@@ -686,6 +690,14 @@ func MainUI(arg *Arguments) {
 	resizer := []editor_mouse_resize{*console_area_resizer, *edit_area_resizer, *main_layout_resizer}
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		return handle_mouse_event(main, action, event, mainmenu, resizer)
+	})
+	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+		if main.cmdline.Vim.vi.Insert{
+			screen.SetCursorStyle(tcell.CursorStyleBlinkingBar)
+		}else{
+			screen.SetCursorStyle(tcell.CursorStyleDefault)
+		}
+		return false 
 	})
 	app.SetAfterDrawFunc(func(screen tcell.Screen) {
 		handle_draw_after(main, screen)

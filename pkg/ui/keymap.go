@@ -67,6 +67,7 @@ const (
 	vi_quick_prev
 	vi_search_mode
 	vi_line_head
+	vi_line_end
 	open_picker_help
 	handle_ctrl_c
 	handle_ctrl_v
@@ -345,11 +346,20 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 			m.codeview.copyline(true)
 			return true
 		}}
+	case vi_line_end:
+		return cmdactor{id, "goto line end", func() bool {
+			code := m.codeview
+			Cur := code.view.Cursor
+			x := len(code.view.Buf.Line(Cur.Loc.Y)) - 1
+			Loc := femto.Loc{X: x, Y: Cur.Loc.Y}
+			code.view.Cursor.Loc = Loc
+			return true
+		}}
 	case vi_line_head:
 		return cmdactor{id, "goto line head", func() bool {
 			code := m.codeview
 			Cur := code.view.Cursor
-			Cur.Loc = femto.Loc{X: 1, Y: Cur.Loc.Y}
+			Cur.Loc = femto.Loc{X: 0, Y: Cur.Loc.Y}
 			return true
 		}}
 	case vi_quick_prev:
@@ -465,6 +475,7 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, file_in_file_vi_word).esc_key(split("*")),
 		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),
 		get_cmd_actor(m, vi_line_head).esc_key(split("0")),
+		get_cmd_actor(m, vi_line_end).esc_key(split("A")),
 		get_cmd_actor(m, goto_callin).esc_key(split(chr_goto_callin)),
 		get_cmd_actor(m, goto_refer).esc_key(split(chr_goto_refer)),
 		get_cmd_actor(m, arrow_up).esc_key([]string{"k"}),
