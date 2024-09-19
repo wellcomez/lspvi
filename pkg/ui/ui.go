@@ -688,12 +688,12 @@ func MainUI(arg *Arguments) {
 		return handle_mouse_event(main, action, event, mainmenu, resizer)
 	})
 	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
-		if main.cmdline.Vim.vi.Insert{
+		if main.cmdline.Vim.vi.Insert {
 			screen.SetCursorStyle(tcell.CursorStyleBlinkingBar)
-		}else{
+		} else {
 			screen.SetCursorStyle(tcell.CursorStyleDefault)
 		}
-		return false 
+		return false
 	})
 	app.SetAfterDrawFunc(func(screen tcell.Screen) {
 		handle_draw_after(main, screen)
@@ -707,6 +707,12 @@ func MainUI(arg *Arguments) {
 	view_id_init(main)
 	main.quickview.RestoreLast()
 	UpdateTitleAndColor(main_layout.Box, main.codeview.filename)
+	go func() {
+		app.QueueUpdateDraw(func() {
+			view_code.setfocused(main)
+			main.cmdline.Vim.EnterEscape()
+		})
+	}()
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
