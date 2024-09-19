@@ -310,7 +310,25 @@ function handle_command_openfile(data, app) {
 
 
 class Term {
-    constructor(term) { this.set_term_ui(term) }
+    constructor(term) {
+        this.set_term_ui(term)
+
+        let clipboard = new ClipboardJS('.btn');
+        clipboard.on('success', function (e) {
+            // console.info('Action:', e.action);
+            // console.info('Text:', e.text);
+            // console.info('Trigger:', e.trigger);
+            e.clearSelection();
+        });
+        clipboard.on('error', function (e) {
+            console.error('Action:', e.action);
+            console.error('Trigger:', e.trigger);
+        });
+    }
+    paste_text = (data) => {
+        let call = call_paste_data
+        this.sendTextData({ call, data })
+    }
     handleMessage = (data, app) => {
         let { Call, Output } = data
         let { term } = this
@@ -320,6 +338,10 @@ class Term {
         if (this.handle_backend_command(Call, data, app)) {
             return
         }
+    }
+    start_xterm() {
+        term_init(this, this.app);
+        this.start_lspvi();
     }
     handle_command_zoom(data) {
         let { Zoom } = data;
@@ -504,31 +526,11 @@ const socket_int = (term_obj, app, start_lspvi) => {
     term_obj.sendTextData = sendTextData
     ws_sendTextData = sendTextData
 
-    const paste_text = (data) => {
-        let call = call_paste_data
-        sendTextData({ call, data })
-    }
-    term_obj.paste_text = paste_text.bind(term_obj)
-
-
-
     socket.onopen = function (event) {
         start_lspvi();
     };
 
-    let clipboard = new ClipboardJS('.btn');
 
-    clipboard.on('success', function (e) {
-        // console.info('Action:', e.action);
-        // console.info('Text:', e.text);
-        // console.info('Trigger:', e.trigger);
-        e.clearSelection();
-    });
-
-    clipboard.on('error', function (e) {
-        console.error('Action:', e.action);
-        console.error('Trigger:', e.trigger);
-    });
     socket.binaryType = "blob";
     socket.onmessage = function incoming(evt) {
         try {
@@ -560,13 +562,15 @@ const socket_int = (term_obj, app, start_lspvi) => {
 const main = () => {
     let termobj = new Term()
     let app = app_init()
+    termobj.app = app
     socket_int(termobj, app, () => {
-        term_init(termobj, app)
-        termobj.start_lspvi()
+        termobj.start_xterm()
     })
 
 }
 main()
+
+
 function set_font_size(fontSize) {
     window.localStorage.setItem("fontsize", fontSize);
 }
