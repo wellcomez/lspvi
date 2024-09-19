@@ -57,16 +57,16 @@ func (proxy *backend_of_xterm) Open(listen bool) error {
 	return nil
 }
 
-func (proxy *backend_of_xterm) start_listen_xterm_comand(con *websocket.Conn)  error {
+func (proxy *backend_of_xterm) start_listen_xterm_comand(con *websocket.Conn) error {
 	if err := SendJsonMessage(con, xterm_forward_cmd{Call: lspvi_backend_start}); err == nil {
 
-		go func()bool {
+		go func() bool {
 			for {
 				msg_type, message, err := proxy.con.ReadMessage()
 				if err != nil {
 					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 						log.Println("WebSocket proxy connection close")
-						return  true
+						return true
 					}
 					log.Println("WebSocket proxy connection read e:", err)
 					continue
@@ -98,6 +98,12 @@ func (proxy *backend_of_xterm) start_listen_xterm_comand(con *websocket.Conn)  e
 
 func (*backend_of_xterm) process_xterm_command(w init_call, message []byte) {
 	switch w.Call {
+	case call_redraw:
+		{
+			GlobalApp.QueueUpdateDraw(func() {
+
+			})
+		}
 	case forward_call_refresh:
 		{
 

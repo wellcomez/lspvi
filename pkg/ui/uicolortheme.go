@@ -115,25 +115,34 @@ func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
 	}
 
 	main.layout.console.SetBackgroundColor(bg)
-	main.page.SetBackgroundColor(bg)
 
-	trees := []*tview.TreeView{main.symboltree.view, main.fileexplorer.view, main.callinview.view, main.uml.file.view}
+	main.page.SetBackgroundColor(bg)
+	main.page.SetBorderColor(fg)
+
+	trees := []*tview.TreeView{
+		main.symboltree.view,
+		main.fileexplorer.view,
+		main.callinview.view,
+		main.uml.file.view}
 	for _, v := range trees {
 		v.SetGraphicsColor(fg)
 	}
 
-	main.page.SetBorderColor(fg)
-
+	for _, v := range all_view_list {
+		if v == view_code {
+			continue
+		}
+		view := main.get_view_from_id(v)
+		view.SetBackgroundColor(bg)
+	}
 	main.uml.file.view.SetBackgroundColor(bg)
-
-	main.console_index_list.SetBackgroundColor(bg)
+	main.log.log.SetTextColor(fg)
 	main.layout.editor_area.SetBackgroundColor(bg)
 	main.layout.tab_area.SetBackgroundColor(bg)
 	main.statusbar.SetBackgroundColor(bg)
 	main.console_index_list.SetBackgroundColor(bg)
 	main.layout.dialog.Frame.SetBackgroundColor(bg)
 	main.symboltree.update(main.lspmgr.Current)
-
 	main.page.SetTitleColor(fg)
 	main.layout.spacemenu.table.SetBackgroundColor(bg)
 	main.layout.spacemenu.load_spacemenu()
@@ -147,6 +156,7 @@ func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
 		input.SetFieldTextColor(fg)
 		input.SetBackgroundColor(bg)
 		input.SetFieldTextColor(fg)
+		input.SetLabelColor(fg)
 	}
 	main.fileexplorer.ChangeDir(main.fileexplorer.rootdir)
 }
@@ -158,7 +168,6 @@ func (coloretheme *symbol_colortheme) update_default_color() {
 	}
 }
 func (coloretheme *symbol_colortheme) __update_default_color(bg tcell.Color, fg tcell.Color) {
-
 	tview.Styles.PrimitiveBackgroundColor = bg
 	tview.Styles.PrimaryTextColor = fg
 	tview.Styles.BorderColor = fg

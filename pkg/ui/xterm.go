@@ -81,7 +81,10 @@ func (term *lspvi_backend) process(method string, message []byte) bool {
 func ForwardFromXterm[T any](message []byte, term *lspvi_backend) {
 	var a T
 	if err := json.Unmarshal(message, &a); err == nil {
-		SendJsonMessage(term.ws, a)
+		err=SendJsonMessage(term.ws, a)
+		if err!=nil {
+			log.Println("error sending message to websocket", err)
+		}
 	}
 }
 
@@ -178,8 +181,12 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (srv xterm_request) process(method string, message []byte) {
+func (srv *xterm_request) process(method string, message []byte) {
 	switch method {
+	case call_redraw:
+		{
+			ForwardFromXterm[xterm_forward_cmd_redraw](message, srv.backend)
+		}
 	case call_key:
 		{
 			srv.handle_xterm_input(message)

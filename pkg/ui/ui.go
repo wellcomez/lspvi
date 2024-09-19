@@ -687,6 +687,14 @@ func MainUI(arg *Arguments) {
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		return handle_mouse_event(main, action, event, mainmenu, resizer)
 	})
+	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+		if main.cmdline.Vim.vi.Insert{
+			screen.SetCursorStyle(tcell.CursorStyleBlinkingBar)
+		}else{
+			screen.SetCursorStyle(tcell.CursorStyleDefault)
+		}
+		return false 
+	})
 	app.SetAfterDrawFunc(func(screen tcell.Screen) {
 		handle_draw_after(main, screen)
 		// if main.codeview.rightmenu.visible {
@@ -884,7 +892,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	})
 	main.log = new_log_view(main)
 	main.log.log.SetText("Started")
-	// console.SetBorder(true).SetBorderColor(console_board_color)
+	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)
 	console.AddPage(view_log.getname(), main.log.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
 	console.AddPage(main.quickview.Name, main.quickview.view, true, true)

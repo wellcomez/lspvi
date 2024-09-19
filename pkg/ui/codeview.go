@@ -65,6 +65,7 @@ type CodeView struct {
 	colorscheme          *symbol_colortheme
 	ts                   *lspcore.TreeSitter
 	insert               bool
+	diff                 *Differ
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -733,8 +734,15 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 
 func new_linechange_checker(code *CodeView) linechange_checker {
 	lineno := code.view.Cursor.Loc.Y
-	next := get_line_content(lineno+1, code)
-	cur := get_line_content(lineno, code)
+	next := get_line_content(lineno+1, code.view.Buf)
+	cur := get_line_content(lineno, code.view.Buf)
+	if code.diff != nil {
+		if len(code.diff.bufer) == 0 {
+			Buf := code.view.Buf
+			end := Buf.LinesNum()
+			code.diff = &Differ{Buf.Lines(0, end), -1}
+		}
+	}
 	return linechange_checker{lineno: lineno, next: next, cur: cur}
 }
 
@@ -742,30 +750,43 @@ func (check *linechange_checker) after(code *CodeView) int {
 	after_lineno := code.view.Cursor.Loc.Y
 	next := check.next
 	lineno := check.lineno
-	after_cur := get_line_content(after_lineno, code)
+	after_cur := get_line_content(after_lineno, code.view.Buf)
 	if after_lineno+1 == lineno {
 		code.view.bookmark.after_line_changed(lineno, false)
-		code.view.linechange.Add(lineno, "", "", true)
+		code.udpate_modified_lines(lineno)
 		return lineno
 	} else if after_lineno == lineno {
-		if after_cur == next {
+		if after_cur == next { //delete line
 			code.view.bookmark.after_line_changed(lineno+1, false)
+			code.udpate_modified_lines(lineno)
 		} else if after_cur != check.cur {
-			code.view.linechange.Add(lineno, "", "", true)
+			code.udpate_modified_lines(lineno)
 			return lineno
 		}
 	} else if after_lineno == lineno+1 {
 		code.view.bookmark.after_line_changed(lineno+1, true)
-		code.view.linechange.Add(after_lineno, "", "", true)
+		code.udpate_modified_lines(lineno + 1)
 		return after_lineno
 	}
 	return -1
 }
 
-func get_line_content(line int, code *CodeView) string {
+func (code *CodeView) udpate_modified_lines(lineno int) {
+	if code.diff != nil {
+		code.diff.changed_line = femto.Max(code.diff.changed_line, lineno)
+		changed_line := code.diff.getChangedLineNumbers(code.view.Buf.Lines(0, code.view.Bottomline()))
+		bb := []LineMark{}
+		for _, v := range changed_line {
+			bb = append(bb, LineMark{Line: v + 1, Text: "", Comment: ""})
+		}
+		code.view.linechange.LineMark = bb
+	}
+}
+
+func get_line_content(line int, Buf *femto.Buffer) string {
 	line_prev := ""
-	if line < code.view.Buf.LinesNum()-1 && line > 0 && code.view.Buf.LinesNum() > 0 {
-		line_prev = code.view.Buf.Line(line)
+	if line < Buf.LinesNum()-1 && line > 0 && Buf.LinesNum() > 0 {
+		line_prev = Buf.Line(line)
 	}
 	return line_prev
 }
@@ -920,10 +941,14 @@ func (code *CodeView) Save() error {
 	return os.WriteFile(code.filename, []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
+	checker := new_linechange_checker(code)
 	code.view.Undo()
+	checker.after(code)
 }
 func (code *CodeView) deleteline() {
+	checker := new_linechange_checker(code)
 	code.view.CutLine()
+	checker.after(code)
 }
 
 func (code *CodeView) copyline(line bool) {
@@ -1270,7 +1295,11 @@ func (code *CodeView) is_softwrap() bool {
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	code.ts = nil
 	buffer := femto.NewBufferFromString(string(data), filename)
+	code.view.linechange = bookmarkfile{}
+	code.diff = nil
+
 	code.view.OpenBuffer(buffer)
+
 	code.config_wrap(filename)
 	// colorscheme/output/dracula.micro
 	// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
@@ -1278,6 +1307,9 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	// _, b, _ := n.Decompose()
 	// tview.Styles.PrimitiveBackgroundColor = b
 	code.change_theme()
+	if len(data) < 10000 {
+		code.diff = &Differ{}
+	}
 }
 
 func (code *CodeView) config_wrap(filename string) {

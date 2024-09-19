@@ -45,6 +45,7 @@ const call_key = "key"
 const call_term_stdout = "term"
 const call_xterm_init = "init"
 const call_resize = "resize"
+const call_redraw = "call_redraw"
 const call_paste_data = "call_paste_data"
 
 const forward_call_refresh = "forward_call_refresh"
@@ -56,6 +57,9 @@ const backend_on_copy = "onselected"
 const backend_on_openfile = "openfile"
 
 type xterm_forward_cmd_refresh struct {
+	Call string `json:"call"`
+}
+type xterm_forward_cmd_redraw struct {
 	Call string `json:"call"`
 }
 type xterm_forward_cmd_paste struct {
