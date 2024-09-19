@@ -329,11 +329,22 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 		view_link: &view_link{id: view_bookmark, up: view_code, left: view_uml, right: view_outline_list},
 		Name:      view_bookmark.getname(),
 		main:      main,
+		list:      new_customlist(false),
 	}
-	a, b := init_bookmark_list(main, func(i int) {
+	go func() {
+		GlobalApp.QueueUpdateDraw(func() {
+			ret.loaddta()
+		})
+	}()
+	return ret
+}
+
+func (ret *bookmark_view) loaddta() {
+	main:=ret.main
+	ret.data = reload_bookmark_list(main, ret.list, func(i int) {
+
 		ret.onclick(i)
 	})
-	ret.list = a
 	ret.list.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
 		main.gotoline(loc)
@@ -344,7 +355,6 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 	} else {
 		main.bookmark.changed = append(main.bookmark.changed, *ret)
 	}
-	ret.data = b
 	ret.fzf = new_fzf_on_list(ret.list, true)
 	ret.menuitem = []context_menu_item{
 		{item: create_menu_item("Delete"), handle: func() {
@@ -359,7 +369,7 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 	ret.right_context = bk_menu_context{
 		qk: ret,
 	}
-	return ret
+	return
 }
 
 type bk_menu_context struct {
@@ -372,9 +382,11 @@ func (menu bk_menu_context) on_mouse(action tview.MouseAction, event *tcell.Even
 
 // getbox implements context_menu_handle.
 func (menu bk_menu_context) getbox() *tview.Box {
-	yes := menu.qk.main.is_tab(view_bookmark.getname())
-	if yes {
-		return menu.qk.list.Box
+	if menu.qk != nil {
+		yes := menu.qk.main.is_tab(view_bookmark.getname())
+		if yes {
+			return menu.qk.list.Box
+		}
 	}
 	return nil
 }
