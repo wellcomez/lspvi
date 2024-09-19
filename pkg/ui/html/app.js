@@ -274,20 +274,7 @@ class LocalTerm {
     }
 }
 
-function handle_backend_command(Call, data, app) {
-    if (Call == backend_on_zoom) {
-        handle_command_zoom(data);
-    } else if (Call == backend_on_openfile) {
-        handle_command_openfile(data, app);
-    } else if (backend_on_copy == Call) {
-        term_obj.clipdata = handle_copy_data(data);
-    } else if (Call == backend_on_command) {
-        return handle_user_command(data);
-    } else {
-        return false
-    }
-    return true
-}
+
 
 
 function handle_user_command(data) {
@@ -341,9 +328,23 @@ class Term {
         if (Call == call_term_stdout) {
             term.write(Output)
         }
-        if (handle_backend_command(Call, data, app)) {
+        if (this.handle_backend_command(Call, data, app)) {
             return
         }
+    }
+    handle_backend_command(Call, data, app) {
+        if (Call == backend_on_zoom) {
+            handle_command_zoom(data);
+        } else if (Call == backend_on_openfile) {
+            handle_command_openfile(data, app);
+        } else if (backend_on_copy == Call) {
+            this.clipdata = handle_copy_data(data);
+        } else if (Call == backend_on_command) {
+            return handle_user_command(data);
+        } else {
+            return false
+        }
+        return true
     }
     start_lspvi(cmdline) {
         let { term } = this
