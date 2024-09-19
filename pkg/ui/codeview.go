@@ -1392,10 +1392,10 @@ func (code *CodeView) goto_loation_noupdate(loc lsp.Range) bool {
 	loc.End.Line = min(code.view.Buf.LinesNum(), loc.End.Line)
 
 	line := loc.Start.Line
-	if code.view.Topline > line || code.view.Bottomline() < line {
+	pagesize := code.view.Bottomline() - code.view.Topline
+	if code.view.Topline+pagesize/4 > line || code.view.Bottomline()-pagesize/4 < line {
 		code.change_topline_with_previousline(line)
 	}
-
 	Cur := code.view.Cursor
 	Cur.SetSelectionStart(femto.Loc{
 		X: loc.Start.Character + x,
@@ -1473,10 +1473,12 @@ func (code *CodeView) change_topline_with_previousline(line int) {
 	}
 	_, _, _, linecount := code.view.GetInnerRect()
 	linecount = min(linecount, code.view.Bottomline()-code.view.Topline+1)
-	topline := line - min(code.LineNumberUnderMouse, linecount)
-	if code.LineNumberUnderMouse == 0 && line != 0 {
-		topline = line - linecount/2
+
+	delta := femto.Abs(code.view.Topline + code.LineNumberUnderMouse - line)
+	if delta < 2 {
+		return
 	}
+	var topline = line - linecount/2
 	//linenumberusermouse should less than linecout
 	code.view.Topline = max(topline, 0)
 	// log.Println("gotoline", line, "linecount", linecount, "topline", code.view.Topline, "LineNumberUnderMouse", code.LineNumberUnderMouse)
