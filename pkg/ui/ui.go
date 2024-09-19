@@ -650,7 +650,7 @@ func MainUI(arg *Arguments) {
 	})
 	console_area_resizer := new_editor_resize(main, main.layout.console, nil, nil)
 	console_area_resizer.add(main.page.view_link, 0)
-	console_area_resizer.add(main.console_index_list.view_link, 1)
+	console_area_resizer.add(main.console_index_list.view_link, 1).load()
 	go func() {
 		main.app.QueueUpdate(func() {
 			_, _, w, _ := main.page.GetRect()
