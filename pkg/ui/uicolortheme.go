@@ -104,6 +104,13 @@ func (mgr *symbol_colortheme) StatusLine() *tcell.Style {
 }
 
 func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
+	go func() {
+		main.app.QueueUpdate(func() {
+			main.__set_widget_theme(fg, bg)
+		})
+	}()
+}
+func (main *mainui) __set_widget_theme(fg, bg tcell.Color) {
 	var colorscheme = main.codeview.colorscheme
 	if color := colorscheme.StatusLine(); color != nil {
 		f, b, _ := color.Decompose()

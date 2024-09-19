@@ -3,11 +3,11 @@ package mainui
 import (
 	// "log"
 	"fmt"
-	"log"
-	"strings"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"log"
+	"strings"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -440,6 +440,13 @@ func (v *SymbolTreeView) Clear() {
 	v.view.SetRoot(root_node)
 }
 func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
+	go func() {
+		v.main.app.QueueUpdate(func() {
+			v.__update(file)
+		})
+	}()
+}
+func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 	if file == nil {
 		v.waiter.SetText("no lsp client").SetTextColor(tcell.ColorDarkRed)
 		return
