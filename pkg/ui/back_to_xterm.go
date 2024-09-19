@@ -78,21 +78,7 @@ func (proxy *backend_of_xterm) start_listen_xterm_comand(con *websocket.Conn)  e
 						err = json.Unmarshal(message, &w)
 						if err == nil {
 							log.Printf("forward call %s", w.Call)
-							switch w.Call {
-							case forward_call_refresh:
-								{
-
-								}
-							case call_paste_data:
-								{
-									var data xterm_forward_cmd_paste
-									if err := json.Unmarshal(message, &data); err == nil {
-										log.Println(data.Call, data.Data)
-										paste := GlobalApp.GetFocus().PasteHandler()
-										paste(data.Data, nil)
-									}
-								}
-							}
+							proxy.process_xterm_command(w, message)
 						} else {
 							log.Println("recv", err, "msg len=", len(message))
 						}
@@ -108,6 +94,24 @@ func (proxy *backend_of_xterm) start_listen_xterm_comand(con *websocket.Conn)  e
 		return err
 	}
 	return nil
+}
+
+func (*backend_of_xterm) process_xterm_command(w init_call, message []byte) {
+	switch w.Call {
+	case forward_call_refresh:
+		{
+
+		}
+	case call_paste_data:
+		{
+			var data xterm_forward_cmd_paste
+			if err := json.Unmarshal(message, &data); err == nil {
+				log.Println(data.Call, data.Data)
+				paste := GlobalApp.GetFocus().PasteHandler()
+				paste(data.Data, nil)
+			}
+		}
+	}
 }
 
 var proxy *backend_of_xterm
