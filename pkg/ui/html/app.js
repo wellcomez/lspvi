@@ -8,10 +8,7 @@ function getFileExtension(filename) {
 function is_image(ext) {
     return ["jpg", "png", "gif", "jpeg", "bmp"].includes(ext)
 }
-const resize_handle = function (evt) {
-    let f = new fullscreen_check(term);
-    f.resize();
-};
+
 function is_md(ext) {
     return ["md"].includes(ext)
 }
@@ -344,17 +341,27 @@ class Term {
 
     }
     handle_command_zoom(data) {
-        let { Zoom } = data;
+        let zoomout = data.Zoom
         let fontsize = get_font_size();
-        if (Zoom) {
-            fontsize++;
+        let { cols, rows } = this.term
+        let zoomfactor = fontsize
+        if (zoomout) {
+            fontsize++
         } else {
-            fontsize--;
+            fontsize--
         }
+        zoomfactor = fontsize / zoomfactor
         set_font_size(fontsize);
-        window.location.reload();
-        // this.newMethod(Zoom)
-
+        let { term } = this
+        term.options.fontSize = fontsize
+        cols = Math.ceil(cols / zoomfactor)
+        rows = Math.ceil(rows / zoomfactor)
+        console.log("resize", term.cols,term.rows)
+        term.resize(cols, rows)
+        console.log("after resize",term.cols,term.rows )
+        this.fit.fit()
+        console.log("after resize fit", term.cols,term.rows)
+        this.resizecall()
     }
     newMethod(Zoom) {
         window.removeEventListener("resize", this.resizeListener);
@@ -439,19 +446,18 @@ class Term {
         }
         return true;
     };
+    resizecall = () => {
+        let { term } = this
+        let call = call_resize
+        let rows = term.rows, cols = term.cols
+        this.sendTextData({ call, cols, rows })
+    }
     set_term_ui(term) {
         this.term = term; this.status = {}
         if (term) {
-            let aaa = this
-            const resizecall = () => {
-                let { term } = aaa
-                let call = call_resize
-                let rows = term.rows, cols = term.cols
-                aaa.sendTextData({ call, cols, rows })
-            }
+            let a = this
             term.onResize((size) => {
-                console.log("event resize", size)
-                resizecall()
+                a.resizecall()
             })
         }
     }
@@ -533,8 +539,14 @@ const term_init = (termobj, app) => {
     let f = new fullscreen_check(term)
     f.resize(false)
     fit.fit()
+    termobj.fit = fit
     term.focus()
 
+    const resize_handle = function (evt) {
+        let f = new fullscreen_check(term);
+        f.resize();
+        fit.fit();
+    };
     window.addEventListener('resize', resize_handle)
 }
 
