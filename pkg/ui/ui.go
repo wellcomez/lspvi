@@ -94,11 +94,7 @@ type console_pages struct {
 }
 
 func (console *console_pages) update_title(s string) {
-	// UpdateTitleAndColor(console.Box, s)
-	console.SetTitle(s)
-	console.SetTitleColor(tview.Styles.TitleColor)
-	console.SetBorder(true)
-	console.SetBorderColor(tview.Styles.BorderColor)
+	UpdateTitleAndColor(console.Box, s)
 }
 func new_console_pages() *console_pages {
 	return &console_pages{
@@ -896,7 +892,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	})
 	main.log = new_log_view(main)
 	main.log.log.SetText("Started")
-	// console.SetBorder(true).SetBorderColor(console_board_color)
+	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)
 	console.AddPage(view_log.getname(), main.log.log, true, false)
 	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
 	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
