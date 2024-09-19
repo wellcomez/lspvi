@@ -1239,6 +1239,7 @@ func (code *CodeView) Load(filename string) error {
 	if filename == code.filename {
 		return nil
 	}
+	code.main.recent_open.add(filename)
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err

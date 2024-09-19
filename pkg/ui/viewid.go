@@ -34,6 +34,7 @@ const (
 	view_main_layout
 	view_qf_index_view
 	view_console_pages
+	view_recent_open_file
 )
 
 var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin}
@@ -95,6 +96,8 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 		return m.page.view_link
 	case view_console_area:
 		return m.layout.console.view_link
+	case view_recent_open_file:
+		return m.recent_open.view_link
 	}
 	return nil
 }
@@ -194,11 +197,13 @@ func (viewid view_id) Primitive(m *mainui) tview.Primitive {
 	case view_outline_list:
 		return m.symboltree.view
 	case view_bookmark:
-		return m.bk
+		return m.bk.list
 	case view_code_area:
 		return m.layout.editor_area
 	case view_console_area:
 		return m.layout.console
+	case view_recent_open_file:
+		return m.recent_open.list
 	case view_main_layout:
 		return m.layout.mainlayout
 	case view_qf_index_view:
@@ -228,11 +233,13 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 	case view_outline_list:
 		return m.symboltree.view.Box
 	case view_bookmark:
-		return m.bk.Box
+		return m.bk.list.Box
 	case view_code_area:
 		return m.layout.editor_area.Box
 	case view_console_area:
 		return m.layout.console.Box
+	case view_recent_open_file:
+		return m.recent_open.list.Box
 	case view_main_layout:
 		return m.layout.mainlayout.Box
 	case view_qf_index_view:
@@ -258,6 +265,7 @@ var all_view_list = []view_id{
 	view_main_layout,
 	view_qf_index_view,
 	view_console_pages,
+	view_recent_open_file,
 }
 var all_view_name = []string{
 	"none",
@@ -275,13 +283,14 @@ var all_view_name = []string{
 	"view_main_layout",
 	"view_qf_index_view",
 	"view_console_pages",
+	"Opened files",
 }
 
 func (viewid view_id) getname() string {
 	return all_view_name[viewid]
 }
 func config_main_tab_order(main *mainui) {
-	var vieworder = []view_id{view_code, view_outline_list, view_quickview, view_callin, view_uml, view_bookmark, view_file, view_code}
+	var vieworder = []view_id{view_code, view_outline_list, view_quickview, view_callin, view_uml, view_bookmark, view_recent_open_file, view_file, view_code}
 	for i, v := range vieworder {
 		if i+1 < len(vieworder) {
 			if link := v.to_view_link(main); link != nil {

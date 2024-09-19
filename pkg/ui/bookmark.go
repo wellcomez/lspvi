@@ -294,7 +294,7 @@ func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Flex {
 
 type bookmark_view struct {
 	*view_link
-	*customlist
+	list          *customlist
 	data          []ref_line
 	Name          string
 	fzf           *fzf_on_listview
@@ -305,19 +305,19 @@ type bookmark_view struct {
 
 func (bk bookmark_view) onsave() {
 	b := bk.main.bk
-	b.customlist.Clear()
-	b.customlist.SetChangedFunc(nil)
-	b.customlist.SetSelectedFunc(nil)
-	b.data = reload_bookmark_list(b.main, b.customlist, func(i int) {
+	b.list.Clear()
+	b.list.SetChangedFunc(nil)
+	b.list.SetSelectedFunc(nil)
+	b.data = reload_bookmark_list(b.main, b.list, func(i int) {
 		b.onclick(i)
 	})
-	b.fzf = new_fzf_on_list(b.customlist, true)
+	b.fzf = new_fzf_on_list(b.list, true)
 }
 func (bk *bookmark_view) OnSearch(txt string) {
-	bk.customlist.Key = txt
+	bk.list.Key = txt
 	old := bk.fzf.OnSearch(txt, true)
 	if len(txt) > 0 {
-		highlight_search_key(old, bk.customlist, txt)
+		highlight_search_key(old, bk.list, txt)
 	}
 	bk.fzf.selected = func(dataindex int, listindex int) {
 		loc := bk.data[dataindex].loc
@@ -333,8 +333,8 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 	a, b := init_bookmark_list(main, func(i int) {
 		ret.onclick(i)
 	})
-	ret.customlist = a
-	ret.customlist.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
+	ret.list = a
+	ret.list.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
 		main.gotoline(loc)
 	})
@@ -345,10 +345,10 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 		main.bookmark.changed = append(main.bookmark.changed, *ret)
 	}
 	ret.data = b
-	ret.fzf = new_fzf_on_list(ret.customlist, true)
+	ret.fzf = new_fzf_on_list(ret.list, true)
 	ret.menuitem = []context_menu_item{
 		{item: create_menu_item("Delete"), handle: func() {
-			idnex := ret.fzf.get_data_index(ret.GetCurrentItem())
+			idnex := ret.fzf.get_data_index(ret.list.GetCurrentItem())
 			if idnex < 0 {
 				return
 			}
@@ -374,7 +374,7 @@ func (menu bk_menu_context) on_mouse(action tview.MouseAction, event *tcell.Even
 func (menu bk_menu_context) getbox() *tview.Box {
 	yes := menu.qk.main.is_tab(view_bookmark.getname())
 	if yes {
-		return menu.qk.Box
+		return menu.qk.list.Box
 	}
 	return nil
 }
@@ -386,6 +386,6 @@ func (menu bk_menu_context) menuitem() []context_menu_item {
 func (ret *bookmark_view) onclick(i int) {
 	main := ret.main
 	loc := ret.data[i].loc
-	ret.customlist.SetCurrentItem(i)
+	ret.list.SetCurrentItem(i)
 	main.gotoline(loc)
 }

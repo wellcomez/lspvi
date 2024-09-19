@@ -17,8 +17,7 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-var tabs []view_id = []view_id{view_quickview, view_callin, view_uml, view_log, view_bookmark}
-var appname = "lspvi"
+// var appname = "lspvi"
 var httport = 0
 
 // flex_area
@@ -57,6 +56,40 @@ type rootlayout struct {
 	spacemenu   *space_menu
 	// hide_cb     func()
 }
+type recent_open_file struct {
+	list *customlist
+	*view_link
+	filelist []string
+	main     *mainui
+	Name     string
+}
+
+func (r *recent_open_file) add(filename string) {
+	go func() {
+		GlobalApp.QueueUpdateDraw(func() {
+			for _, v := range r.filelist {
+				if v == filename {
+					return
+				}
+			}
+			filepath := filename
+			r.filelist = append(r.filelist, filename)
+			filename = strings.TrimPrefix(filename, r.main.root)
+			r.list.AddItem(filename, "", func() {
+				r.main.OpenFile(filepath, nil)
+			})
+		})
+	}()
+}
+func new_recent_openfile(m *mainui) *recent_open_file {
+	return &recent_open_file{
+		list:      new_customlist(false),
+		view_link: &view_link{id: view_recent_open_file},
+		filelist:  []string{},
+		main:      m,
+		Name:      "Opened Files",
+	}
+}
 
 // editor_area_fouched
 
@@ -84,9 +117,11 @@ type mainui struct {
 	layout             *rootlayout
 	console_index_list *qf_index_view
 	right_context_menu *contextmenu
+	recent_open        *recent_open_file
 	// _editor_area_layout *editor_area_layout
-	tty bool
-	ws  string
+	tty    bool
+	ws     string
+	tab_id []view_id
 }
 type console_pages struct {
 	*tview.Pages
@@ -174,6 +209,7 @@ func (m *mainui) UpdatePageTitle() {
 	for _, v := range names {
 		name := v
 		switch name {
+		case view_recent_open_file.getname():
 		case view_bookmark.getname():
 		case view_quickview.getname():
 		case view_callin.getname():
@@ -275,7 +311,7 @@ func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 
 func (m *mainui) ActiveTab(id view_id, focused bool) {
 	yes := false
-	for _, v := range tabs {
+	for _, v := range m.tab_id {
 		if v == id {
 			yes = true
 			break
@@ -598,6 +634,7 @@ func MainUI(arg *Arguments) {
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
 	global_theme.update_default_color()
 
+	main.recent_open = new_recent_openfile(main)
 	if arg.Ws != "" {
 		main.ws = arg.Ws
 		main.tty = true
@@ -779,7 +816,7 @@ func load_from_history(main *mainui) {
 	main.quickview.view.Clear()
 	main.symboltree.Clear()
 	main.console_index_list.Clear()
-	main.bk.Clear()
+	main.bk.list.Clear()
 	if len(filearg.Path) > 0 {
 		main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
 			URI: lsp.NewDocumentURI(filearg.Path),
@@ -899,10 +936,11 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	main.log = new_log_view(main)
 	main.log.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)
-	console.AddPage(view_log.getname(), main.log.log, true, false)
-	console.AddPage(main.callinview.Name, main.callinview.view, true, false)
-	console.AddPage(main.quickview.Name, main.quickview.view, true, true)
-	console.AddPage(main.bk.Name, main.bk, true, false)
+	// console.AddPage(view_log.getname(), main.log.log, true, false)
+	// console.AddPage(main.callinview.Name, main.callinview.view, true, false)
+	// console.AddPage(main.quickview.Name, main.quickview.view, true, true)
+	// console.AddPage(main.bk.Name, main.bk, true, false)
+	// console.AddPage(main.recent_open.Name, main.recent_open.list, true, false)
 
 	main.console_index_list = new_qf_index_view(main)
 	console_layout := new_flex_area(view_console_area, main)
@@ -919,20 +957,20 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 		log.Fatal(err)
 	}
 	main.uml = uml
-	if uml != nil {
-		console.AddPage(uml.Name, uml.layout, true, false)
-	}
-
-	var tabs []string = []string{}
-	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark} {
-		if uml == nil {
-			if v == view_uml {
+	var tab_id = []view_id{}
+	var tabname []string = []string{}
+	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark, view_recent_open_file} {
+		if v == view_uml {
+			if main.uml == nil {
 				continue
 			}
 		}
-		tabs = append(tabs, v.getname())
+		console.AddPage(v.getname(), v.Primitive(main), true, view_quickview == v)
+		tabname = append(tabname, v.getname())
+		tab_id = append(tab_id, v)
 	}
-	group := NewButtonGroup(tabs, main.OnTabChanged)
+	main.tab_id = tab_id
+	group := NewButtonGroup(tabname, main.OnTabChanged)
 	main.tabs = group
 	tab_area := tview.NewFlex()
 	for _, v := range group.tabs {
@@ -1003,7 +1041,7 @@ func (main *mainui) OnSearch(option search_option) {
 var leadkey = ' '
 
 func (main *mainui) set_viewid_focus(v view_id) {
-	for _, tab := range tabs {
+	for _, tab := range main.tab_id {
 		if v == tab {
 			main.ActiveTab(tab, true)
 			return
