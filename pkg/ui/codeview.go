@@ -47,10 +47,6 @@ func (data right_menu_data) SelectInEditor(c *femto.Cursor) {
 	c.SelectWord()
 }
 
-type Differ struct {
-	bufer        []string
-	changed_line int
-}
 type CodeView struct {
 	*view_link
 	filename             string
@@ -740,6 +736,13 @@ func new_linechange_checker(code *CodeView) linechange_checker {
 	lineno := code.view.Cursor.Loc.Y
 	next := get_line_content(lineno+1, code.view.Buf)
 	cur := get_line_content(lineno, code.view.Buf)
+	if code.diff != nil {
+		if len(code.diff.bufer) == 0 {
+			Buf := code.view.Buf
+			end := Buf.LinesNum()
+			code.diff = &Differ{Buf.Lines(0, end), -1}
+		}
+	}
 	return linechange_checker{lineno: lineno, next: next, cur: cur}
 }
 
@@ -771,11 +774,10 @@ func (check *linechange_checker) after(code *CodeView) int {
 func (code *CodeView) udpate_modified_lines(lineno int) {
 	if code.diff != nil {
 		code.diff.changed_line = femto.Max(code.diff.changed_line, lineno)
+		changed_line := code.diff.getChangedLineNumbers(code.view.Buf.Lines(0, code.view.Bottomline()))
 		bb := []LineMark{}
-		for i := 0; i <= code.diff.changed_line; i++ {
-			if code.diff.bufer[i] != code.view.Buf.Line(i) {
-				bb = append(bb, LineMark{Line: i+1, Text: "", Comment: ""})
-			}
+		for _, v := range changed_line {
+			bb = append(bb, LineMark{Line: v + 1, Text: "", Comment: ""})
 		}
 		code.view.linechange.LineMark = bb
 	}
@@ -1295,12 +1297,9 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.linechange = bookmarkfile{}
 	code.diff = nil
-	if len(data) < 10000 {
-		end := buffer.LinesNum()
 
-		code.diff = &Differ{buffer.Lines(0, end), -1}
-	}
 	code.view.OpenBuffer(buffer)
+
 	code.config_wrap(filename)
 	// colorscheme/output/dracula.micro
 	// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
@@ -1308,6 +1307,9 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	// _, b, _ := n.Decompose()
 	// tview.Styles.PrimitiveBackgroundColor = b
 	code.change_theme()
+	if len(data) < 10000 {
+		code.diff = &Differ{}
+	}
 }
 
 func (code *CodeView) config_wrap(filename string) {
