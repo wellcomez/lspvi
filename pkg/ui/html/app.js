@@ -8,6 +8,10 @@ function getFileExtension(filename) {
 function is_image(ext) {
     return ["jpg", "png", "gif", "jpeg", "bmp"].includes(ext)
 }
+const resize_handle = function (evt) {
+    let f = new fullscreen_check(term);
+    f.resize();
+};
 function is_md(ext) {
     return ["md"].includes(ext)
 }
@@ -334,7 +338,7 @@ class Term {
     }
     start_xterm(start) {
         term_init(this, this.app);
-        if (start){
+        if (start) {
             this.start_lspvi();
         }
 
@@ -353,6 +357,7 @@ class Term {
 
     }
     newMethod(Zoom) {
+        window.removeEventListener("resize", this.resizeListener);
         this.term.clear();
         this.term.dispose();
         // this.term.reset()
@@ -529,6 +534,8 @@ const term_init = (termobj, app) => {
     f.resize(false)
     fit.fit()
     term.focus()
+
+    window.addEventListener('resize', resize_handle)
 }
 
 const socket_int = (term_obj, app, start_lspvi) => {
@@ -571,11 +578,7 @@ const socket_int = (term_obj, app, start_lspvi) => {
     socket.onclose = function (event) {
         console.error("Connection closed");
     };
-    window.addEventListener('resize', function (evt) {
-        let { term } = term_obj
-        let f = new fullscreen_check(term)
-        f.resize()
-    })
+
 
 
 
