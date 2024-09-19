@@ -1246,22 +1246,35 @@ func (code *CodeView) Load(filename string) error {
 	}
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
 	// "monokai"A
+	go func() {
+		code.main.app.QueueUpdate(func() {
+			code.load_in_main(filename, data)
+		})
+	}()
+	return nil
+}
+
+func (code *CodeView) load_in_main(filename string, data []byte) error {
 	b := code.view.Buf
 	b.Settings["syntax"] = false
 	code.tree_sitter = lspcore.GetNewTreeSitter(filename)
 	code.tree_sitter.Init(func(ts *lspcore.TreeSitter) {
-		code.change_theme()
-		if code.main != nil {
-			if len(ts.Outline) > 0 {
-				code.ts = ts
-				if ts.DefaultOutline() {
-					lsp := code.main.symboltree.upate_with_ts(ts)
-					code.main.lspmgr.Current = lsp
-				} else {
-					code.main.OnSymbolistChanged(nil, nil)
+		go func() {
+			code.main.app.QueueUpdate(func() {
+				code.change_theme()
+				if code.main != nil {
+					if len(ts.Outline) > 0 {
+						code.ts = ts
+						if ts.DefaultOutline() {
+							lsp := code.main.symboltree.upate_with_ts(ts)
+							code.main.lspmgr.Current = lsp
+						} else {
+							code.main.OnSymbolistChanged(nil, nil)
+						}
+					}
 				}
-			}
-		}
+			})
+		}()
 	})
 	code.LoadBuffer(data, filename)
 	code.view.Cursor.Loc.X = 0
