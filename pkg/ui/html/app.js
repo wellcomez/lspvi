@@ -37,20 +37,20 @@ const MINIMUM_ROWS = 1;
 var ws_sendTextData
 class fullscreen_check {
     constructor(term) {
-        this._terminal = term
+        this.term = term
         // fit.call(this)
     }
     dims = () => {
-        if (!this._terminal) {
+        if (!this.term) {
             return undefined;
         }
 
-        if (!this._terminal.element || !this._terminal.element.parentElement) {
+        if (!this.term.element || !this.term.element.parentElement) {
             return undefined;
         }
 
         // TODO: Remove reliance on private API
-        const core = this._terminal._core;
+        const core = this.term._core;
         const dims = core._renderService.dimensions;
 
         if (dims.css.cell.width === 0 || dims.css.cell.height === 0) {
@@ -60,18 +60,18 @@ class fullscreen_check {
 
     }
     scrollbarWidth = () => {
-        const scrollbarWidth = (this._terminal.options.scrollback === 0
+        const scrollbarWidth = (this.term.options.scrollback === 0
             ? 0
-            : (this._terminal.options.overviewRuler?.width || 1));
+            : (this.term.options.overviewRuler?.width || 1));
         return scrollbarWidth
     }
     resize = (call) => {
-        this._terminal.element.style.height = (window.innerHeight - 50) + "px"
-        this._terminal.element.style.width = window.innerWidth + "px"
+        this.term.element.style.height = (window.innerHeight - 50) + "px"
+        this.term.element.style.width = window.innerWidth + "px"
         let dims = this.check()
         // console.log("col-row", ss)
         if (dims != undefined) {
-            this._terminal.resize(dims.cols, dims.rows);
+            this.term.resize(dims.cols, dims.rows);
             if (call)
                 resizecall()
         }
@@ -79,10 +79,10 @@ class fullscreen_check {
     check = () => {
         const dims = this.dims()
         const scrollbarWidth = this.scrollbarWidth()
-        const parentElementStyle = window.getComputedStyle(this._terminal.element.parentElement);
+        const parentElementStyle = window.getComputedStyle(this.term.element.parentElement);
         const parentElementHeight = parseInt(parentElementStyle.getPropertyValue('height'));
         const parentElementWidth = Math.max(0, parseInt(parentElementStyle.getPropertyValue('width')));
-        const elementStyle = window.getComputedStyle(this._terminal.element);
+        const elementStyle = window.getComputedStyle(this.term.element);
         const elementPadding = {
             top: parseInt(elementStyle.getPropertyValue('padding-top')),
             bottom: parseInt(elementStyle.getPropertyValue('padding-bottom')),
@@ -237,7 +237,7 @@ class LocalTerm {
 
     // Usage example
     handleCommand(cmdline) {
-        let args = cmdline
+        //let args = cmdline
         let matched = false;
         this.local_cmd_matcher.forEach(element => {
             if (matched) return;
@@ -273,13 +273,139 @@ class LocalTerm {
         this.term.write(data)
     }
 }
+
+function handle_backend_command(Call, data, app) {
+    if (Call == backend_on_zoom) {
+        handle_command_zoom(data);
+    } else if (Call == backend_on_openfile) {
+        handle_command_openfile(data, app);
+    } else if (backend_on_copy == Call) {
+        term_obj.clipdata = handle_copy_data(data);
+    } else if (Call == backend_on_command) {
+        return handle_user_command(data);
+    } else {
+        return false
+    }
+    return true
+}
+
+
+function handle_user_command(data) {
+    switch (data.Command) {
+        case "quit":
+            appstatus.quit = true;
+            term_obj.on_remote_stop();
+            break;
+        default:
+            return;
+    }
+}
+
+function handle_copy_data(data) {
+    let text = data.SelectedString;
+    let txt = document.getElementById("bar");
+    txt.innerText = text;
+    let btn = document.getElementById("clip");
+    btn.click();
+    return text
+}
+
+function handle_command_openfile(data, app) {
+    console.log("openfile",
+        data.Filename);
+    let ext = getFileExtension(data.Filename);
+    if (is_image(ext)) {
+        app.popimage(data.Filename);
+    } else if (is_md(ext)) {
+        app.popmd(data.Filename);
+    }
+}
+
+function handle_command_zoom(data) {
+    let { Zoom } = data;
+    let fontsize = get_font_size();
+    if (Zoom) {
+        fontsize++;
+    } else {
+        fontsize--;
+    }
+    set_font_size(fontsize);
+    window.location.reload();
+    console.log("zoom", Zoom);
+}
 class Term {
-    constructor(term) { this.term = term; this.status = {} }
+    constructor(term) { this.set_term_ui(term) }
+    handleMessage = (data, app) => {
+        let { Call, Output } = data
+        let { term } = this
+        if (Call == call_term_stdout) {
+            term.write(Output)
+        }
+        if (handle_backend_command(Call, data, app)) {
+            return
+        }
+    }
+    start_lspvi(cmdline) {
+        let { term } = this
+        console.log("Connection opened");
+        let call = call_xterm_init;
+        let rows = term.rows, cols = term.cols;
+        let host = window.location.host;
+        this.Local = undefined
+        this.status = {}
+        this.sendTextData({ call, cols, rows, host, cmdline });
+    }
     on_remote_stop() {
         let stop = true
         this.status = { stop }
         this.Local = new LocalTerm(this.term, this.conn)
     }
+    onData(data) {
+        if (this.status.stop) {
+            this.Local.ondata(data);
+        } else {
+            let { term } = this
+            let call = call_key;
+            let rows = term.rows, cols = term.cols;
+            this.sendTextData({ call, data, rows, cols });
+        }
+    }
+    handle_key(ev) {
+        // console.log(ev)
+        if (this.Local) {
+            // if (ev.code == "Backspace") {
+            //     // term.write('\x7f')
+            //     ev.preventDefault(); // 阻止默认行为
+            //     // term.write('\b \b')
+            //     term.write('\x08'); // Backspace
+            //     return false;
+            // }
+            return true;
+        }
+        if (ev.key == "v" && ev.ctrlKey) {
+            if (this.on_paste()) {
+                return false;
+            }
+        }
+        return true;
+    };
+    set_term_ui(term) {
+        this.term = term; this.status = {}
+        if (term) {
+            let aaa = this
+            const resizecall = () => {
+                let { term } = aaa
+                let call = call_resize
+                let rows = term.rows, cols = term.cols
+                aaa.sendTextData({ call, cols, rows })
+            }
+            term.onResize((size) => {
+                console.log("event resize", size)
+                resizecall()
+            })
+        }
+    }
+
     on_remote_inited() {
         let init = true
         this.status = { init }
@@ -292,7 +418,7 @@ class Term {
         return true
     }
 }
-const term_init = (app, on_term_command) => {
+const term_init = (termobj, app) => {
     window.addEventListener("contextmenu", function (e) {
         e.preventDefault();
     })
@@ -325,40 +451,16 @@ const term_init = (app, on_term_command) => {
 
         // minimumContrastRatio: 1,
     });
-    let termobj = new Term(term)
+    termobj.set_term_ui(term)
     let wl = new WebglAddon.WebglAddon()
     term.loadAddon(wl)
     let fit = new FitAddon.FitAddon()
     term.loadAddon(fit);
-    // const imageAddon = new ImageAddon.ImageAddon(customSettings);
-    // terminal.loadAddon(imageAddon);
     term.onData(function (data) {
-        if (termobj.status.stop) {
-            termobj.Local.ondata(data)
-        } else {
-            let call = call_key
-            let rows = term.rows, cols = term.cols
-            ws_sendTextData({ call, data, rows, cols })
-        }
+        termobj.onData(data);
     })
     const handle_key = ev => {
-        // console.log(ev)
-        if (termobj && termobj.Local) {
-            // if (ev.code == "Backspace") {
-            //     // term.write('\x7f')
-            //     ev.preventDefault(); // 阻止默认行为
-            //     // term.write('\b \b')
-            //     term.write('\x08'); // Backspace
-            //     return false;
-            // }
-            return true;
-        }
-        if (ev.key == "v" && ev.ctrlKey) {
-            if (termobj.on_paste()) {
-                return false;
-            }
-        }
-        return true;
+        return termobj.handle_key(ev)
     };
     term.attachCustomKeyEventHandler(handle_key)
     const handle_wheel = ev => {
@@ -380,20 +482,9 @@ const term_init = (app, on_term_command) => {
     f.resize(false)
     fit.fit()
     term.focus()
-    return termobj
-
-    // function LoadLigaturesAddon() {
-    //     try {
-    //         const newLocal = new LigaturesAddon.LigaturesAddon();
-    //         term.loadAddon(newLocal);
-    //     } catch (error) {
-    //         console.error(error);
-    //     }
-    // }
 }
 
-const socket_int = (term_obj, app) => {
-    let { term } = term_obj
+const socket_int = (term_obj, app, start_lspvi) => {
     let localhost = window.location.host
     let wsproto = window.location.protocol === 'https:' ? 'wss' : 'ws'
     let socket = new WebSocket(wsproto + '://' + localhost + '/ws');
@@ -408,12 +499,9 @@ const socket_int = (term_obj, app) => {
             console.error('WebSocket connection is not open.');
         }
     }
+    term_obj.sendTextData = sendTextData
     ws_sendTextData = sendTextData
-    const resizecall = () => {
-        let call = call_resize
-        let rows = term.rows, cols = term.cols
-        sendTextData({ call, cols, rows })
-    }
+
     const paste_text = (data) => {
         let call = call_paste_data
         sendTextData({ call, data })
@@ -441,117 +529,40 @@ const socket_int = (term_obj, app) => {
     });
     socket.binaryType = "blob";
     socket.onmessage = function incoming(evt) {
-        const handleMessage = (data) => {
-            let { Call, Output } = data
-            if (Call == call_term_stdout) {
-                term.write(Output)
-            }
-            if (handle_backend_command(Call, data)) {
-                return
-            }
-
-        }
         try {
             let reader = new FileReader();
             reader.readAsArrayBuffer(evt.data);
             reader.addEventListener("loadend", function (e) {
                 const buffer = new Uint8Array(e.target.result);  // arraybuffer object
                 const message = msgpack5().decode(buffer);
-                handleMessage(message)
+                term_obj.handleMessage(message, app)
             });
         } catch (error) {
             console.error('Failed to decode data:', error);
         }
 
-        function handle_backend_command(Call, data) {
-            if (Call == backend_on_zoom) {
-                handle_command_zoom(data);
-            } else if (Call == backend_on_openfile) {
-                handle_command_openfile(data);
-            } else if (backend_on_copy == Call) {
-                term_obj.clipdata = handle_copy_data(data);
-            } else if (Call == backend_on_command) {
-                return handle_user_command(data);
-            } else {
-                return false
-            }
-            return true
-        }
-
-
-        function handle_user_command(data) {
-            switch (data.Command) {
-                case "quit":
-                    appstatus.quit = true;
-                    term_obj.on_remote_stop();
-                    break;
-                default:
-                    return;
-            }
-        }
-
-        function handle_copy_data(data) {
-            let text = data.SelectedString;
-            let txt = document.getElementById("bar");
-            txt.innerText = text;
-            let btn = document.getElementById("clip");
-            btn.click();
-            return text
-        }
-
-        function handle_command_openfile(data) {
-            console.log("openfile",
-                data.Filename);
-            let ext = getFileExtension(data.Filename);
-            if (is_image(ext)) {
-                app.popimage(data.Filename);
-            } else if (is_md(ext)) {
-                app.popmd(data.Filename);
-            }
-        }
-
-        function handle_command_zoom(data) {
-            let { Zoom } = data;
-            let fontsize = get_font_size();
-            if (Zoom) {
-                fontsize++;
-            } else {
-                fontsize--;
-            }
-            set_font_size(fontsize);
-            window.location.reload();
-            console.log("zoom", Zoom);
-        }
     };
     socket.onclose = function (event) {
         console.error("Connection closed");
     };
     window.addEventListener('resize', function (evt) {
+        let { term } = term_obj
         let f = new fullscreen_check(term)
         f.resize()
     })
-    term.onResize((size) => {
-        console.log("event resize", size)
-        resizecall()
-    })
 
-    function start_lspvi(cmdline) {
-        console.log("Connection opened");
-        let call = call_xterm_init;
-        let rows = term.rows, cols = term.cols;
-        let host = window.location.host;
-        term_obj.Local = undefined
-        term_obj.status = {}
-        sendTextData({ call, cols, rows, host, cmdline });
-    }
+
+
     conn.start_lspvi = start_lspvi.bind(conn)
 }
 const main = () => {
+    let termobj = new Term()
     let app = app_init()
-    let term = term_init(app, (command) => {
-
+    socket_int(termobj, app, () => {
+        term_init(termobj, app)
+        termobj.start_lspvi()
     })
-    socket_int(term, app)
+
 }
 main()
 function set_font_size(fontSize) {
