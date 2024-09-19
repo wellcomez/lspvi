@@ -936,12 +936,6 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	main.log = new_log_view(main)
 	main.log.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)
-	// console.AddPage(view_log.getname(), main.log.log, true, false)
-	// console.AddPage(main.callinview.Name, main.callinview.view, true, false)
-	// console.AddPage(main.quickview.Name, main.quickview.view, true, true)
-	// console.AddPage(main.bk.Name, main.bk, true, false)
-	// console.AddPage(main.recent_open.Name, main.recent_open.list, true, false)
-
 	main.console_index_list = new_qf_index_view(main)
 	console_layout := new_flex_area(view_console_area, main)
 	console_layout.AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
