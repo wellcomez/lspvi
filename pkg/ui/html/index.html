@@ -70,18 +70,13 @@
             overflow-y: auto;
             /* 当内容超出div高度时显示垂直滚动条 */
             position: absolute;
-            /* display: flex; */
             top: 5%;
             right: 5%;
             left: 5%;
             background-color: whitesmoke;
             padding: 20px;
-            height: 600px;
+            height:90vh;
             overflow: hidden;
-            /* height: 80%; */
-            /* padding: 20px; */
-            /* justify-content: center; */
-            /* align-items: center; */
             z-index: 2;
         }
 
@@ -105,7 +100,7 @@
             </button>
         </div>
         <div class="image-div" v-if="isVisible">
-            <img style="max-width: 100%;" :src="imageurl" />
+            <img style="max-width: 100%;max-height:90%" :src="imageurl" />
         </div>
         <div class="md" v-if="isVisibleMd">
         </div>
