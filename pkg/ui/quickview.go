@@ -637,6 +637,8 @@ func new_qf_history(main *mainui) (*quickfix_history, error) {
 	return qf, nil
 }
 
+var qk_index_update = make(chan bool)
+
 type qf_index_view struct {
 	*view_link
 	*customlist
@@ -680,6 +682,9 @@ func (view *qf_index_view) Add(data qf_history_data, add bool) error {
 	view.Load()
 	return err
 }
+func qf_index_view_update() {
+	qk_index_update <- true
+}
 func new_qf_index_view(main *mainui) *qf_index_view {
 	ret := &qf_index_view{
 		view_link: &view_link{
@@ -688,5 +693,13 @@ func new_qf_index_view(main *mainui) *qf_index_view {
 		customlist: new_customlist(false),
 		main:       main}
 	ret.customlist.SetBorder(true)
+	go func() {
+		for {
+			<-qk_index_update
+			main.app.QueueUpdateDraw(func() {
+				ret.Load()
+			})
+		}
+	}()
 	return ret
 }

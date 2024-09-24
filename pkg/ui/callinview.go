@@ -235,6 +235,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	}
 	if !found {
 		callin.task_list = append(callin.task_list, *task)
+		qf_index_view_update()
 	}
 	root_node := tview.NewTreeNode(
 		fmt.Sprintf("[%d]", len(callin.task_list)))
