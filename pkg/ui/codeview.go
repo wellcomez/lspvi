@@ -1236,6 +1236,9 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 }
 
 func (code *CodeView) Load(filename string) error {
+	return code.LoadAndCb(filename, nil)
+}
+func (code *CodeView) LoadAndCb(filename string, onload func()) error {
 	if filename == code.filename {
 		return nil
 	}
@@ -1249,6 +1252,9 @@ func (code *CodeView) Load(filename string) error {
 	go func() {
 		code.main.app.QueueUpdate(func() {
 			code.load_in_main(filename, data)
+			if onload != nil {
+				onload()
+			}
 		})
 	}()
 	return nil
@@ -1324,6 +1330,10 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	if len(data) < 10000 {
 		code.diff = &Differ{}
 	}
+}
+func (code *CodeView) update_colortheme_mgr(mgr *symbol_colortheme) {
+	code.view.Buf.SetTreesitter(code.tree_sitter)
+	code.view.SetColorscheme(mgr.colorscheme)
 }
 
 func (code *CodeView) config_wrap(filename string) {

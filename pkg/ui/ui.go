@@ -467,14 +467,14 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
-	m.codeview.Load(file)
-
-	if loc != nil {
-		lins := m.codeview.view.Buf.LinesNum()
-		loc.Range.Start.Line = min(lins-1, loc.Range.Start.Line)
-		loc.Range.End.Line = min(lins-1, loc.Range.Start.Line)
-		m.codeview.goto_loation(loc.Range)
-	}
+	m.codeview.LoadAndCb(file, func() {
+		if loc != nil {
+			lins := m.codeview.view.Buf.LinesNum()
+			loc.Range.Start.Line = min(lins-1, loc.Range.Start.Line)
+			loc.Range.End.Line = min(lins-1, loc.Range.End.Line)
+			m.codeview.goto_loation(loc.Range)
+		}
+	})
 	go m.async_open(file)
 }
 func (m *mainui) async_open(file string) {

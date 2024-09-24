@@ -51,16 +51,10 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 	if code == nil {
 		return false
 	}
-	code.view.Buf.SetTreesitter(code.tree_sitter)
-	code.view.SetColorscheme(mgr.colorscheme)
-	go func() {
-		if GlobalApp != nil {
-			GlobalApp.QueueUpdateDraw(func() {
-			})
-		}
-	}()
+	code.update_colortheme_mgr(mgr)
 	return false
 }
+
 
 func (mgr *symbol_colortheme) get_default_style() *tcell.Style {
 	mgr.CursorLine()
