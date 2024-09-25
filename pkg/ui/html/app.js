@@ -144,6 +144,21 @@ md_init = () => {
     }
     return new md()
 }
+const check_event_in_element = (classname, event) => {
+    var targetDiv = document.getElementsByClassName(classname)[0];
+    var rect = targetDiv.getBoundingClientRect();
+    let yes = false
+    if (targetDiv) {
+        if (event.clientX >= rect.left && event.clientX <= rect.right &&
+            event.clientY >= rect.top && event.clientY <= rect.bottom) {
+            yes = true
+        } else {
+            yes = false
+        }
+    }
+
+    return { el: targetDiv, yes: yes }
+}
 app_init = () => {
     let md = md_init()
     let app = new Vue({
@@ -157,6 +172,32 @@ app_init = () => {
         methods: {
             onhide() {
                 this.set_visible({})
+            },
+            on_click(event) {
+                if (this.isVisibleMd) {
+                    let { bubbles, target,
+                        cancelable,
+                        view,
+                        clientX,
+                        clientY } = event
+                    const { el, yes } = check_event_in_element("md", event)
+                    if (yes == false) {
+                        this.onhide()
+                    } else if (el != target) {
+                        const clickevent = new MouseEvent("click", {
+                            bubbles,
+                            cancelable,
+                            view,
+                            clientX,
+                            clientY
+                        })
+                        el.dispatchEvent(clickevent)
+                    }
+                    return true
+                } else {
+                    this.onhide()
+                }
+                return false
             },
             on_wheel(evt) {
                 if (this.isVisibleMd) {
@@ -183,8 +224,11 @@ app_init = () => {
             }
         }
     })
-    document.addEventListener("click", function () {
-        app.onhide()
+    document.addEventListener("click", function (ev) {
+        // app.onhide()
+        if (app.on_click(ev)) {
+
+        }
     })
     wheel = (evt) => {
         console.log(evt)
@@ -333,7 +377,7 @@ class Term {
             return
         }
     }
-    start_xterm(start,cmdline) {
+    start_xterm(start, cmdline) {
         term_init(this, this.app);
         if (start) {
             this.start_lspvi(cmdline);
@@ -643,7 +687,7 @@ const main = () => {
     let app = app_init()
     termobj.app = app
     socket_int(termobj, app, (cmdline) => {
-        termobj.start_xterm(true,cmdline)
+        termobj.start_xterm(true, cmdline)
     })
 
 }

@@ -349,6 +349,24 @@ func update_selection_menu(ret *CodeView) {
 		{item: create_menu_item(toggle_outline), handle: func() {
 			main.toggle_view(view_outline_list)
 		}},
+		{
+			item: create_menu_item("External open "),
+			handle: func() {
+				filename := ret.filename
+				yes, err := isDirectory(filename)
+				if err != nil {
+					return
+				}
+				log.Println("external open tty=", ret.main.tty)
+				if proxy != nil {
+					proxy.open_in_web(filename)
+				} else {
+					if !yes {
+						openfile(filename)
+					}
+				}
+			},
+		},
 		{item: create_menu_item("-"), handle: func() {
 		}, hide: !main.tty},
 		{item: create_menu_item("Zoom-in Browser"), handle: func() {
