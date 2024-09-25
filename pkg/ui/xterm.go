@@ -81,8 +81,8 @@ func (term *lspvi_backend) process(method string, message []byte) bool {
 func ForwardFromXterm[T any](message []byte, term *lspvi_backend) {
 	var a T
 	if err := json.Unmarshal(message, &a); err == nil {
-		err=SendJsonMessage(term.ws, a)
-		if err!=nil {
+		err = SendJsonMessage(term.ws, a)
+		if err != nil {
 			log.Println("error sending message to websocket", err)
 		}
 	}
@@ -525,8 +525,13 @@ func create_lspvi_backend(host string, cmdline string) {
 		if len(cmdline) > 0 {
 			argnew = []string{argnew[0]}
 			args := strings.Split(cmdline, " ")
-			argnew = append(argnew, "-ws", host)
-			argnew = append(argnew, args...)
+			if args[0] == "lspvi" {
+				args = args[1:]
+				argnew = append(argnew, "-ws", host)
+				argnew = append(argnew, args...)
+			} else {
+				argnew = args
+			}
 		} else {
 			argnew = append(argnew, "-ws", host)
 		}

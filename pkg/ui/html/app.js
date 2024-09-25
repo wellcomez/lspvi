@@ -333,10 +333,10 @@ class Term {
             return
         }
     }
-    start_xterm(start) {
+    start_xterm(start,cmdline) {
         term_init(this, this.app);
         if (start) {
-            this.start_lspvi();
+            this.start_lspvi(cmdline);
         }
 
     }
@@ -642,8 +642,8 @@ const socket_int = (term_obj, app, start_lspvi) => {
 const main = () => {
     let app = app_init()
     termobj.app = app
-    socket_int(termobj, app, () => {
-        termobj.start_xterm(true)
+    socket_int(termobj, app, (cmdline) => {
+        termobj.start_xterm(true,cmdline)
     })
 
 }
