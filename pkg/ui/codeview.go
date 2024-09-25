@@ -1240,6 +1240,9 @@ func (code *CodeView) Load(filename string) error {
 }
 func (code *CodeView) LoadAndCb(filename string, onload func()) error {
 	if filename == code.filename {
+		if onload != nil {
+			onload()
+		}
 		return nil
 	}
 	code.main.recent_open.add(filename)
