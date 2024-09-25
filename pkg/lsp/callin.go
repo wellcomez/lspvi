@@ -107,7 +107,7 @@ func (task *CallInTask) Delete(root string) error {
 	return os.RemoveAll(fielname)
 }
 func (task *CallInTask) Save(root string) error {
-	fielname := filepath.Join(root, task.Name, "callstack.json")
+	fielname := task.get_call_json_filename(root)
 	buf, err := json.Marshal(task)
 	if err != nil {
 		log.Println(err)
@@ -119,6 +119,11 @@ func (task *CallInTask) Save(root string) error {
 		return err
 	}
 	return err
+}
+
+func (task *CallInTask) get_call_json_filename(root string) string {
+	fielname := filepath.Join(root, task.Dir(), "callstack.json")
+	return fielname
 }
 
 var callstack_id = 0
