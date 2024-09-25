@@ -328,26 +328,6 @@ class Term {
         let { term } = this
         if (Call == call_term_stdout) {
             term.write(Output)
-            const { restart } = this.status
-            if (restart) {
-                let divs = document.querySelectorAll('.xterm')
-                if (divs.length == 1) {
-                    this.status['restart'] = false
-                } else {
-                    divs.forEach((el) => {
-                        if (el.classList.contains("focus") == false) {
-                            el.remove()
-                        }
-                    })
-                    divs = document.querySelectorAll('.xterm')
-                    if (divs.length == 1) {
-                        if (this.resize_handle){
-                            this.resize_handle()
-                        }
-                        this.status['restart'] = false
-                    }
-                }
-            }
         }
         if (this.handle_backend_command(Call, data, app)) {
             return
@@ -430,9 +410,40 @@ class Term {
         let host = window.location.host;
         this.Local = undefined
         this.status = {}
+        if (!this.observer) {
+            let termobj = this
+            let callback = (el) => {
+                let hasnew = false
+                console.log(el)
+                el.forEach((e) => {
+                    let { addedNodes } = e
+                    addedNodes.forEach((added) => {
+                        if (added.classList.contains("focus")) {
+                            hasnew = true
+                        }
+                    })
+                })
+                if (hasnew) {
+                    let divs = document.querySelectorAll('.xterm')
+                    divs.forEach((el) => {
+                        if (el.classList.contains("focus") == false) {
+                            el.remove()
+                        }
+                    })
+                    termobj.resize_handle()
+                }
+            }
+
+            const targetNode = document.getElementById('terminal')
+            const config = { attributes: false, childList: true, subtree: false };
+            const observer = new MutationObserver(callback.bind(this));
+            observer.observe(targetNode, config);
+            this.observer = observer
+        }
+
         this.sendTextData({ call, cols, rows, host, cmdline });
-        let restart = true
-        this.status = { restart }
+        // let restart = true
+        // this.status = { restart }
     }
     on_remote_stop() {
         let stop = true
@@ -556,7 +567,7 @@ const term_init = (termobj, app) => {
         if (app && app.on_wheel(ev)) {
             return false;
         }
-        console.log(ev);
+        // console.log(ev);
         return true;
     };
     term.attachCustomWheelEventHandler(handle_wheel)
