@@ -1330,16 +1330,17 @@ func (code *CodeView) bookmark() {
 	if !code.view.has_bookmark() {
 		code.Addbookmark()
 	} else {
-		code.Remvoebookmark()
+		code.Removebookmark()
 	}
 }
 func (code *CodeView) Addbookmark() {
 	new_bookmark_editor(code.main.layout.dialog, func(s string) {
 		code.view.addbookmark(true, s)
+		code.main.bookmark.udpate(&code.view.bookmark)
 		code.main.bookmark.save()
 	})
 }
-func (code *CodeView) Remvoebookmark() {
+func (code *CodeView) Removebookmark() {
 	code.view.addbookmark(false, "")
 	code.main.bookmark.save()
 }
