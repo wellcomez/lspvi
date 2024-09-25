@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	"fmt"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
 )
@@ -25,8 +27,17 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 	var line = view.Cursor.Loc.Y + 1
 	view.bookmark.Add(line, comment, view.Buf.Line(line-1), add)
 }
-
-func newFunction1(mark bookmarkfile, ch rune, root *codetextview, bottom int, screen tcell.Screen, x int, topY int, style tcell.Style) {
+func (root *codetextview) change_line_color(screen tcell.Screen, x int, topY int, style tcell.Style) {
+	line := root.Cursor.Loc.Y
+	x1 := root.GetLineNoFormDraw(line)
+	by := x1 - root.Topline
+	sss := fmt.Sprintf("%d", line)
+	for i, ch := range sss {
+		screen.SetContent(x+i, by+topY, ch, nil,
+			style.Foreground(tcell.ColorDarkGreen).Background(root.GetBackgroundColor()))
+	}
+}
+func (root *codetextview) draw_line_mark(mark bookmarkfile, ch rune, bottom int, screen tcell.Screen, x int, topY int, style tcell.Style) {
 	b := []int{}
 	for _, v := range mark.LineMark {
 		line := v.Line - 1
@@ -34,7 +45,8 @@ func newFunction1(mark bookmarkfile, ch rune, root *codetextview, bottom int, sc
 			b = append(b, line)
 		}
 		for _, line := range b {
-			by := root.GetLineNoFormDraw(line) - root.Topline
+			x1 := root.GetLineNoFormDraw(line)
+			by := x1 - root.Topline
 			screen.SetContent(x, by+topY, ch, nil,
 				style.Foreground(global_theme.search_highlight_color()).Background(root.GetBackgroundColor()))
 		}
@@ -53,8 +65,9 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		_, topY, _, _ := root.GetInnerRect()
 		bottom := root.Bottomline()
 		mark := root.bookmark
-		newFunction1(mark, 'B', root, bottom, screen, x, topY, style)
-		newFunction1(root.linechange, '*', root, bottom, screen, x, topY, style)
+		root.draw_line_mark(mark, 'B', bottom, screen, x, topY, style)
+		root.draw_line_mark(root.linechange, '*', bottom, screen, x, topY, style)
+		// root.change_line_color(screen, x, topY, style)
 		return root.GetInnerRect()
 	})
 	// root.Buf.Settings["scrollbar"] = true

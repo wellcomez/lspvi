@@ -55,7 +55,6 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 	return false
 }
 
-
 func (mgr *symbol_colortheme) get_default_style() *tcell.Style {
 	mgr.CursorLine()
 	if n, ok := mgr.colorscheme["normal"]; ok {
@@ -65,36 +64,43 @@ func (mgr *symbol_colortheme) get_default_style() *tcell.Style {
 	return nil
 }
 func (mgr *symbol_colortheme) CursorLine() *tcell.Style {
-	ret := mgr.newMethod("cursorline")
+	ret := mgr.get_color("cursorline")
 	if ret != nil {
 		mgr.colorscheme["cursor-line"] = *ret
 		// if _, ok := mgr.colorscheme["selection"]; !ok {
 		// 	mgr.colorscheme["selection"] = *ret
 		// }
 	}
-	if ret := mgr.newMethod("visual"); ret != nil {
+	if ret := mgr.get_color("visual"); ret != nil {
 		mgr.colorscheme["selection"] = *ret
 
+	}
+	if ret := mgr.get_color("linenr"); ret != nil {
+		mgr.colorscheme["line-number"] = *ret
+	}
+	if ret := mgr.get_color("@function"); ret != nil {
+		f,_,_:=ret.Decompose()
+		mgr.colorscheme["current-line-number"] = ret.Foreground(f)
 	}
 	return ret
 
 }
 func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
-	if color := mgr.newMethod("function"); color != nil {
+	if color := mgr.get_color("function"); color != nil {
 		a, _, _ := color.Decompose()
 		return a
 	}
 	return tcell.ColorYellow
 }
 
-func (mgr *symbol_colortheme) newMethod(name string) *tcell.Style {
+func (mgr *symbol_colortheme) get_color(name string) *tcell.Style {
 	if n, ok := mgr.colorscheme[name]; ok {
 		return &n
 	}
 	return nil
 }
 func (mgr *symbol_colortheme) StatusLine() *tcell.Style {
-	return mgr.newMethod("statusline")
+	return mgr.get_color("statusline")
 }
 
 func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
