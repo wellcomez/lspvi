@@ -605,6 +605,15 @@ func MainUI(arg *Arguments) {
 	}
 	if len(arg.Root) > 0 {
 		root = arg.Root
+		if strings.HasPrefix(root, "~/") {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				log.Fatalln(err)
+				return
+			}
+			root = filepath.Join(home, root[2:])
+			arg.Root = root
+		}
 	}
 	gload_workspace_list.Load()
 	prj, err := gload_workspace_list.Add(root)
