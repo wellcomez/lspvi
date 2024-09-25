@@ -64,6 +64,7 @@ type dom_node struct {
 	id        int
 	state     int
 	root      bool
+	parent    *lspcore.CallStackEntry
 }
 
 func new_callview(main *mainui) *callinview {
@@ -218,6 +219,17 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			sym := ref.call
 			if len(ref.fromrange) > 0 {
 				r := ref.fromrange[0]
+				if ref.parent != nil {
+					parent := ref.parent
+					for i := range ref.fromrange {
+						v := ref.fromrange[i]
+						if v.URI.AsPath().String() == parent.Item.URI.AsPath().String() {
+							// if lspcore.RangeAfter(ref.parent.Item.Range, v.Range) {
+								r = v
+							// }
+						}
+					}
+				}
 				view.main.gotoline(lsp.Location{
 					URI:   r.URI,
 					Range: r.Range,
@@ -266,13 +278,14 @@ func (view *callinview) update_node_color() {
 		return true
 	})
 }
-func NewRootNode(call lsp.CallHierarchyItem, fromrange []lsp.Location, root bool, id int) dom_node {
+func NewRootNode(call lsp.CallHierarchyItem, fromrange []lsp.Location, root bool, id int, parent *lspcore.CallStackEntry) dom_node {
 	return dom_node{
 		call:      call,
 		fromrange: fromrange,
 		root:      root,
 		id:        id,
 		state:     0,
+		parent:    parent,
 	}
 }
 
@@ -281,7 +294,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 
 	found := false
 	for i, v := range callin.task_list {
-		if v.call.Name == task.Name {
+		if v.call.UID == task.UID {
 			found = true
 			callin.task_list[i] = CallNode{*task, []int{}}
 			break
@@ -321,12 +334,14 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 		for _, v := range children {
 			if v.GetReference() == task.TreeNodeid() {
 				root_node = v
+				name := task.Dir()
+				root_node.SetText(name)
 				// v.ClearChildren()
 			}
 		}
 	}
 	if root_node == nil {
-		root_node = tview.NewTreeNode(task.Name)
+		root_node = tview.NewTreeNode(task.Dir())
 		root_node.SetReference(task.TreeNodeid())
 	}
 	for _, stack := range task.Allstack {
@@ -347,13 +362,13 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 		if parent == nil {
 			parent = tview.NewTreeNode("+" + callin.itemdisp(c))
 			parent.Collapse()
-			parent.SetReference(NewRootNode(c.Item, c.ReferencePlace, true, stack.UID))
+			parent.SetReference(NewRootNode(c.Item, c.ReferencePlace, true, stack.UID, nil))
 			root_node.AddChild(parent)
 		}
 		for i = 1; i < len(stack.Items); i++ {
-			c = stack.Items[i]
+			c := stack.Items[i]
 			parent1 := tview.NewTreeNode(callin.itemdisp(c))
-			parent1.SetReference(NewRootNode(c.Item, c.ReferencePlace, false, -1))
+			parent1.SetReference(NewRootNode(c.Item, c.ReferencePlace, false, -1, c))
 			parent.AddChild(parent1)
 			parent = parent1
 		}

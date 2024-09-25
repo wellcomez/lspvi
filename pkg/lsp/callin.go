@@ -40,10 +40,10 @@ func (c CallStackEntry) DisplayName() string {
 	if c.PtrSymobl != nil {
 		if len(c.PtrSymobl.classname) > 0 {
 			s := fmt.Sprintf("%s::%s", c.PtrSymobl.classname, c.PtrSymobl.SymInfo.Name)
-			return fmt.Sprintf("%s %s:%d", s, c.Item.URI.AsPath().String(), c.Item.Range.Start.Line)
+			return fmt.Sprintf("%s %s:%d", s, c.Item.URI.AsPath().String(), c.Item.Range.Start.Line+1)
 		}
 	}
-	return fmt.Sprintf("%s %s:%d", c.Name, c.Item.URI.AsPath().String(), c.Item.Range.Start.Line)
+	return fmt.Sprintf("%s %s:%d", c.Name, c.Item.URI.AsPath().String(), c.Item.Range.Start.Line+1)
 }
 func RangeAfter(r1 lsp.Range, r2 lsp.Range) bool {
 	if r1.Start.Line > r2.Start.Line {
@@ -130,7 +130,7 @@ var callstack_id = 0
 
 type CallStack struct {
 	Items    []*CallStackEntry
-	resovled bool
+	Resovled bool
 	UID      int
 }
 
@@ -156,7 +156,7 @@ func (c *CallStack) Add(item *CallStackEntry) {
 
 }
 func NewCallStack() *CallStack {
-	ret := CallStack{resovled: false}
+	ret := CallStack{Resovled: false}
 	return &ret
 }
 func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
@@ -178,7 +178,7 @@ func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
 }
 func (c CallInTask) Dir() string {
 	for _, v := range c.Allstack {
-		if v.resovled && len(v.Items) > 0 {
+		if v.Resovled && len(v.Items) > 0 {
 			a := v.Items[len(v.Items)-1]
 			return a.DirName()
 		}
@@ -255,7 +255,7 @@ func (task *CallInTask) run() error {
 		task.addchild(top, &leaf)
 		for _, v := range leaf.set {
 			callstack_id++
-			stacks := &CallStack{resovled: false, UID: callstack_id}
+			stacks := &CallStack{Resovled: false, UID: callstack_id}
 			for v != nil {
 				stacks.Add(NewCallStackEntry(v.data, v.fromRanges, v.ReferencePlace))
 				v = v.parent
@@ -276,7 +276,7 @@ func (c *class_resolve_task) Run() error {
 	for _, v := range c.callstack.Items {
 		c.resolve(v)
 	}
-	c.callstack.resovled = true
+	c.callstack.Resovled = true
 	return nil
 }
 func (c *class_resolve_task) resolve(entry *CallStackEntry) {
