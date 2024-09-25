@@ -293,14 +293,21 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	}
 	root_node := tview.NewTreeNode(
 		fmt.Sprintf("[%d]", len(callin.task_list)))
+	var current *tview.TreeNode
 	for i := range callin.task_list {
 		v := &callin.task_list[i]
 		c := callin.callroot(v)
 		root_node.AddChild(c)
+		if task.UID == v.call.UID {
+			current = c
+		}
 	}
 	root_node.Expand()
 	callin.view.SetRoot(root_node)
 	callin.main.UpdatePageTitle()
+	if current != nil {
+		callin.view.SetCurrentNode(current)
+	}
 	callin.update_node_color()
 }
 
