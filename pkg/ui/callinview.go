@@ -117,72 +117,7 @@ func new_callview(main *mainui) *callinview {
 		{item: create_menu_item("-"), handle: func() {}},
 		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
 		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
-			nodecurrent := ret.view.GetCurrentNode()
-			root := ret.view.GetRoot()
-			children := root.GetChildren()
-			for task_index, child := range children {
-				var find = false
-				child.Walk(func(node, parent *tview.TreeNode) bool {
-					if node == nodecurrent {
-						find = true
-						return false
-					} else {
-						return true
-					}
-				})
-				if find {
-					for call_index, cc := range child.GetChildren() {
-						remove_cc := false
-						cc.Walk(func(node, parent *tview.TreeNode) bool {
-							if node == nodecurrent {
-								remove_cc = true
-								return false
-							} else {
-								return true
-							}
-						})
-						if remove_cc {
-							value := cc.GetReference()
-							if ref, ok := value.(dom_node); ok {
-								log.Println(ref)
-							}
-							child.RemoveChild(cc)
-							callnode := &ret.task_list[task_index]
-							call_in := callnode.call.Allstack
-
-							var Allstack = []*lspcore.CallStack{}
-							for i := range call_in {
-								if i != call_index {
-									Allstack = append(Allstack, call_in[i])
-								} else {
-									callnode.DeltedUID = append(callnode.DeltedUID, call_in[i].UID)
-								}
-							}
-							callnode.call.Allstack = Allstack
-							if len(Allstack) == 0 {
-								callnode.call.Delete(lspviroot.uml)
-							} else {
-								callnode.call.Save(lspviroot.uml)
-							}
-							qf_index_view_update()
-							return
-						}
-					}
-					// list1 := []lspcore.CallInTask{}
-					root.RemoveChild(child)
-					list1 := []CallNode{}
-					for i := range ret.task_list {
-						if i == task_index {
-							ret.task_list[i].call.Delete(lspviroot.uml)
-							qf_index_view_update()
-						} else {
-							list1 = append(list1, ret.task_list[i])
-						}
-					}
-					ret.task_list = list1
-				}
-			}
-			ret.main.UpdatePageTitle()
+			ret.DeleteCurrentNode()
 		}},
 	}
 	ret.menuitem = addjust_menu_width(menuitem)
@@ -193,11 +128,85 @@ func new_callview(main *mainui) *callinview {
 
 }
 
+func (ret *callinview) DeleteCurrentNode() {
+	nodecurrent := ret.view.GetCurrentNode()
+	root := ret.view.GetRoot()
+	children := root.GetChildren()
+	for task_index, child := range children {
+		var find = false
+		child.Walk(func(node, parent *tview.TreeNode) bool {
+			if node == nodecurrent {
+				find = true
+				return true
+			} else {
+				return true
+			}
+		})
+		if find {
+			for call_index, cc := range child.GetChildren() {
+				remove_cc := false
+				cc.Walk(func(node, parent *tview.TreeNode) bool {
+					if node == nodecurrent {
+						remove_cc = true
+						return true
+					} else {
+						return true
+					}
+				})
+				if remove_cc {
+					value := cc.GetReference()
+					if ref, ok := value.(dom_node); ok {
+						log.Println(ref)
+					}
+					child.RemoveChild(cc)
+					callnode := &ret.task_list[task_index]
+					call_in := callnode.call.Allstack
+
+					var Allstack = []*lspcore.CallStack{}
+					for i := range call_in {
+						if i != call_index {
+							Allstack = append(Allstack, call_in[i])
+						} else {
+							callnode.DeltedUID = append(callnode.DeltedUID, call_in[i].UID)
+						}
+					}
+					callnode.call.Allstack = Allstack
+					if len(Allstack) == 0 {
+						callnode.call.Delete(lspviroot.uml)
+					} else {
+						callnode.call.Save(lspviroot.uml)
+					}
+					qf_index_view_update()
+					return
+				}
+			}
+
+			root.RemoveChild(child)
+			list1 := []CallNode{}
+			for i := range ret.task_list {
+				if i == task_index {
+					ret.task_list[i].call.Delete(lspviroot.uml)
+					qf_index_view_update()
+				} else {
+					list1 = append(list1, ret.task_list[i])
+				}
+			}
+			ret.task_list = list1
+		}
+	}
+	ret.main.UpdatePageTitle()
+	return
+}
+
 func (qk *callinview) OnSearch(txt string) {
 	qk.cmd_search_key = txt
 	qk.update_node_color()
 }
 func (view *callinview) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
+	if event.Rune() == 'd' {
+		view.DeleteCurrentNode()
+		return nil
+	}
 	return event
 }
 func (view *callinview) node_selected(node *tview.TreeNode) {
