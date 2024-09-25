@@ -233,29 +233,7 @@ app_init = () => {
             }
         }
     })
-    window.addEventListener("contextmenu", function (ev) {
-        if (app.on_mouse(ev)) {
-        } else {
-            ev.preventDefault();
-        }
-    })
-    document.addEventListener("mouseup", (ev) => {
-        if (app.on_mouse(ev)) {
-        }
-    })
-    document.addEventListener("mousedown", (ev) => {
-        if (app.on_mouse(ev)) {
-        }
-    })
-    document.addEventListener("mousemove", function (ev) {
-        if (app.on_mouse(ev)) {
-        }
-    })
-    document.addEventListener("click", function (ev) {
-        if (app.on_mouse(ev)) {
 
-        }
-    })
     wheel = (evt) => {
         console.log(evt)
     }
@@ -380,6 +358,41 @@ class Term {
 
         this.appstatus = new RemoteTermStatus()
     }
+    setapp(app) {
+        this.app = app
+        let obj = this 
+        window.addEventListener("contextmenu", function (ev) {
+            if (app.on_mouse(ev)) {
+            } else {
+                ev.preventDefault();
+            }
+        })
+        document.addEventListener("mouseup", (ev) => {
+            if (app.on_mouse(ev)) {
+            }
+        })
+        document.addEventListener("mousedown", (ev) => {
+            if (app.on_mouse(ev)) {
+            }
+        })
+        document.addEventListener("mousemove", function (ev) {
+            if (app.on_mouse(ev)) {
+            }
+        })
+        document.addEventListener("click", function (ev) {
+            if (app.on_mouse(ev)) {
+                if (app.isVisibleMd ) {
+                }else{
+                    obj.term.options.disableStdin = false
+
+                }
+                if (app.isVisible ) {
+                }else{
+                    obj.term.options.disableStdin = false
+                }
+            }
+        })
+    }
     paste_text = (data) => {
         let call = call_paste_data
         this.sendTextData({ call, data })
@@ -454,8 +467,10 @@ class Term {
             data.Filename);
         let ext = getFileExtension(data.Filename);
         if (is_image(ext)) {
+            this.term.options.disableStdin = true
             app.popimage(data.Filename);
         } else if (is_md(ext)) {
+            this.term.options.disableStdin = true
             app.popmd(data.Filename);
         }
     }
@@ -710,7 +725,7 @@ const socket_int = (term_obj, app, start_lspvi) => {
 }
 const main = () => {
     let app = app_init()
-    termobj.app = app
+    termobj.setapp(app)
     socket_int(termobj, app, (cmdline) => {
         termobj.start_xterm(true, cmdline)
     })
