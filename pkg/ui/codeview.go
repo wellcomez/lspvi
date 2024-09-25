@@ -1342,6 +1342,7 @@ func (code *CodeView) Addbookmark() {
 }
 func (code *CodeView) Removebookmark() {
 	code.view.addbookmark(false, "")
+	code.main.bookmark.udpate(&code.view.bookmark)
 	code.main.bookmark.save()
 }
 func is_lsppos_ok(pos lsp.Position) bool {
