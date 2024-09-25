@@ -840,6 +840,7 @@ func (main *mainui) create_right_context_menu() {
 		main.symboltree.right_context,
 		main.uml.file_right_context,
 		main.fileexplorer.right_context,
+		main.console_index_list.right_context,
 	}
 }
 

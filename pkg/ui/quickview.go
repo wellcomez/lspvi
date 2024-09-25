@@ -642,9 +642,10 @@ var qk_index_update = make(chan bool)
 type qf_index_view struct {
 	*view_link
 	*customlist
-	keys       []qf_history_data
-	keymaplist []string
-	main       *mainui
+	keys          []qf_history_data
+	keymaplist    []string
+	main          *mainui
+	right_context qf_index_menu_context
 }
 
 func (view *qf_index_view) Delete(index int) {
@@ -685,14 +686,48 @@ func (view *qf_index_view) Add(data qf_history_data, add bool) error {
 func qf_index_view_update() {
 	qk_index_update <- true
 }
+
+type qf_index_menu_context struct {
+	view      *qf_index_view
+	menu_item []context_menu_item
+	main      *mainui
+}
+
+func (menu qf_index_menu_context) getbox() *tview.Box {
+	return menu.view.Box
+}
+
+func (menu qf_index_menu_context) menuitem() []context_menu_item {
+	return menu.menu_item
+}
+
+func (menu qf_index_menu_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	if action == tview.MouseRightClick {
+		return tview.MouseConsumed, nil
+	}
+	return tview.MouseConsumed, nil
+}
 func new_qf_index_view(main *mainui) *qf_index_view {
+
 	ret := &qf_index_view{
 		view_link: &view_link{
 			id: view_qf_index_view,
 		},
 		customlist: new_customlist(false),
-		main:       main}
+		main:       main,
+	}
 	ret.customlist.SetBorder(true)
+
+	var items = []context_menu_item{
+		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
+			ret.Delete(ret.GetCurrentItem())
+		}},
+	}
+	ret.right_context = qf_index_menu_context{
+		view:      ret,
+		menu_item: items,
+		main:      main,
+	}
 	go func() {
 		for {
 			<-qk_index_update
