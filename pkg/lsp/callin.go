@@ -103,7 +103,7 @@ func (task CallInTask) TreeNodeid() string {
 	// return string(task.UID)
 }
 func (task *CallInTask) Delete(root string) error {
-	fielname := filepath.Join(root, task.Name)
+	fielname := filepath.Join(root, task.Dir())
 	return os.RemoveAll(fielname)
 }
 func (task *CallInTask) Save(root string) error {

@@ -158,6 +158,12 @@ func (ret *callinview) DeleteCurrentNode() {
 					if ref, ok := value.(dom_node); ok {
 						log.Println(ref)
 					}
+					var next *tview.TreeNode
+					if call_index+1 < len(child.GetChildren()) {
+						next = child.GetChildren()[call_index+1]
+					} else if call_index > 0 {
+						next = child.GetChildren()[call_index-1]
+					}
 					child.RemoveChild(cc)
 					callnode := &ret.task_list[task_index]
 					call_in := callnode.call.Allstack
@@ -177,6 +183,9 @@ func (ret *callinview) DeleteCurrentNode() {
 						callnode.call.Save(lspviroot.uml)
 					}
 					qf_index_view_update()
+					if next != nil {
+						ret.view.SetCurrentNode(next)
+					}
 					return
 				}
 			}
