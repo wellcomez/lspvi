@@ -34,12 +34,16 @@ func (menu callin_view_context) menuitem() []context_menu_item {
 	return menu.qk.menuitem
 }
 
+type CallNode struct {
+	call      lspcore.CallInTask
+	DeltedUID []int
+}
 type callinview struct {
 	*view_link
 	view           *tview.TreeView
 	Name           string
 	main           *mainui
-	task_list      []lspcore.CallInTask
+	task_list      []CallNode
 	menuitem       []context_menu_item
 	right_context  callin_view_context
 	cmd_search_key string
@@ -133,21 +137,26 @@ func new_callview(main *mainui) *callinview {
 								log.Println(ref)
 							}
 							child.RemoveChild(cc)
-							allstack := ret.task_list[task_index].Allstack
+							callnode := &ret.task_list[task_index]
+							call_in := callnode.call.Allstack
 
 							var Allstack = []*lspcore.CallStack{}
-							for i := range allstack {
+							for i := range call_in {
 								if i != call_index {
-									Allstack = append(Allstack, allstack[i])
+									Allstack = append(Allstack, call_in[i])
+								} else {
+									callnode.DeltedUID = append(callnode.DeltedUID, call_in[i].UID)
 								}
 							}
-							ret.task_list[task_index].Allstack = Allstack
+							callnode.call.Allstack = Allstack
+							callnode.call.Save(lspviroot.uml)
+							qf_index_view_update()
 							return
 						}
 					}
 					// list1 := []lspcore.CallInTask{}
 					root.RemoveChild(child)
-					list1 := []lspcore.CallInTask{}
+					list1 := []CallNode{}
 					if task_index-1 > 0 {
 						list1 = ret.task_list[0 : task_index-1]
 					}
@@ -257,14 +266,14 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 
 	found := false
 	for i, v := range callin.task_list {
-		if v.Name == task.Name {
+		if v.call.Name == task.Name {
 			found = true
-			callin.task_list[i] = *task
+			callin.task_list[i] = CallNode{*task, []int{}}
 			break
 		}
 	}
 	if !found {
-		callin.task_list = append(callin.task_list, *task)
+		callin.task_list = append(callin.task_list, CallNode{*task, []int{}})
 		qf_index_view_update()
 	}
 	root_node := tview.NewTreeNode(
@@ -279,7 +288,8 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	callin.update_node_color()
 }
 
-func (callin *callinview) callroot(task *lspcore.CallInTask) *tview.TreeNode {
+func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
+	var task *lspcore.CallInTask = &node.call
 	var children []*tview.TreeNode
 	var root_node *tview.TreeNode
 	root := callin.view.GetRoot()
