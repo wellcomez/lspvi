@@ -38,7 +38,7 @@ func (entry CallStackEntry) uml_class_name() string {
 	if entry.PtrSymobl == nil {
 		return ""
 	}
-	return strings.ReplaceAll(entry.PtrSymobl.classname, ":", ".")
+	return strings.ReplaceAll(entry.PtrSymobl.Classname, ":", ".")
 }
 func (entry CallStackEntry) symboldefine_name() string {
 	return entry.Item.Name
@@ -72,7 +72,7 @@ func (call CallStack) Uml(markdown bool) string {
 				} else {
 					if len(caller.uml_class_name()) > 0 && caller.uml_class_name() != s.uml_class_name() {
 						left = caller.uml_class_name()
-					}else{
+					} else {
 						left = caller.symboldefine_name()
 					}
 				}

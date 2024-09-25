@@ -106,7 +106,7 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 		if parent != nil {
 			if parent.contain(s) {
 				if is_memeber(v.Kind) {
-					s.classname = parent.SymInfo.Name
+					s.Classname = parent.SymInfo.Name
 					parent.Members = append(parent.Members, s)
 				}
 			} else {

@@ -75,7 +75,7 @@ var icons = map[int]string{
 type Symbol struct {
 	SymInfo   lsp.SymbolInformation
 	Members   []Symbol
-	classname string
+	Classname string
 }
 
 func inside_location(bigger lsp.Location, smaller lsp.Location) bool {

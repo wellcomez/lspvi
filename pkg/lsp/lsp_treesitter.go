@@ -218,7 +218,7 @@ func markdown_parser(ts *TreeSitter) {
 				ss := ts_to_symbol(s, ts)
 				aa := Symbol{
 					SymInfo:   ss,
-					classname: s.Code,
+					Classname: s.Code,
 				}
 				ts.Outline = append(ts.Outline, &aa)
 			}
@@ -458,7 +458,7 @@ func bash_parser(ts *TreeSitter) {
 			Outline = append(Outline, &Symbol{
 				SymInfo:   v,
 				Members:   []Symbol{},
-				classname: "",
+				Classname: "",
 			})
 		}
 	}

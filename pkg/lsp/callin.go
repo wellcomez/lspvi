@@ -29,8 +29,8 @@ type CallStackEntry struct {
 
 func (c CallStackEntry) DirName() string {
 	if c.PtrSymobl != nil {
-		if len(c.PtrSymobl.classname) > 0 {
-			s := fmt.Sprintf("%s::%s", c.PtrSymobl.classname, c.PtrSymobl.SymInfo.Name)
+		if len(c.PtrSymobl.Classname) > 0 {
+			s := fmt.Sprintf("%s::%s", c.PtrSymobl.Classname, c.PtrSymobl.SymInfo.Name)
 			return s
 		}
 	}
@@ -38,8 +38,8 @@ func (c CallStackEntry) DirName() string {
 }
 func (c CallStackEntry) DisplayName() string {
 	if c.PtrSymobl != nil {
-		if len(c.PtrSymobl.classname) > 0 {
-			s := fmt.Sprintf("%s::%s", c.PtrSymobl.classname, c.PtrSymobl.SymInfo.Name)
+		if len(c.PtrSymobl.Classname) > 0 {
+			s := fmt.Sprintf("%s::%s", c.PtrSymobl.Classname, c.PtrSymobl.SymInfo.Name)
 			return fmt.Sprintf("%s %s:%d", s, c.Item.URI.AsPath().String(), c.Item.Range.Start.Line+1)
 		}
 	}

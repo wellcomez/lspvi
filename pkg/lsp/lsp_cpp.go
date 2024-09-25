@@ -51,7 +51,7 @@ func (l lsp_lang_cpp) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) b
 
 					v.Members = append(v.Members, Symbol{
 						SymInfo:   member,
-						classname: classname,
+						Classname: classname,
 					})
 					return true
 				}
@@ -126,7 +126,7 @@ func (l lsp_lang_cpp) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	}
 	root := "--compile-commands-dir=" + wk.Path
 	cmd := "clangd"
-	if l.is_cmd_ok(){
+	if l.is_cmd_ok() {
 		cmd = l.Cmd
 	}
 	core.cmd = exec.Command(cmd, root, "--background-index")

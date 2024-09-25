@@ -53,7 +53,7 @@ func (symfile *Symbol_file) Convert_function_method(classname string, member lsp
 		if v.SymInfo.Name == classname {
 			v.Members = append(v.Members, Symbol{
 				SymInfo:   member,
-				classname: classname,
+				Classname: classname,
 			})
 			return
 		}
