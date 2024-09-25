@@ -263,13 +263,15 @@ func new_fzf_on_list(list *customlist, fuzz bool) *fzf_on_listview {
 		key = append(key, a+b)
 		ret.selected_index = append(ret.selected_index, i)
 	}
-	ret.fzf = fzf.New(key, opt)
+	if len(key) > 0 {
+		ret.fzf = fzf.New(key, opt)
+	}
 	return ret
 }
 func (fzf *fzf_on_listview) OnSearch(txt string, update bool) string {
 	var result fzflib.SearchResult
 	old := fzf.query
-	if len(txt) > 0 {
+	if len(txt) > 0 && fzf.fzf != nil {
 		fzf.fzf.Search(txt)
 		fzf.query = txt
 		result = <-fzf.fzf.GetResultChannel()
