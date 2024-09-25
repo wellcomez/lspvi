@@ -68,7 +68,8 @@ type CodeContextMenu struct {
 func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
 }
-func SelectWord(view *femto.View, c femto.Cursor) femto.Cursor {
+func (code *CodeView) SelectWord(c femto.Cursor) femto.Cursor {
+	view := code.view
 	if len(view.Buf.Line(c.Y)) == 0 {
 		return c
 	}
@@ -95,7 +96,7 @@ func SelectWord(view *femto.View, c femto.Cursor) femto.Cursor {
 
 	c.SetSelectionEnd(femto.Loc{X: forward, Y: c.Y}.Move(1, view.Buf))
 	c.OrigSelection[1] = c.CurSelection[1]
-	c.Loc = c.CurSelection[1]
+	code.set_loc(c.CurSelection[1])
 	return c
 }
 
@@ -121,11 +122,12 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		right_menu_data.previous_selection = selected
 		// code.rightmenu.text = root.Cursor.GetSelection()
 		cursor := *root.Cursor
-		cursor.Loc = code.tab_loc(pos)
+		Loc := code.tab_loc(pos)
+		code.set_loc(Loc)
 		cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		right_menu_data.rightmenu_loc = cursor.CurSelection[0]
 		// log.Println("before", cursor.CurSelection)
-		loc := SelectWord(root.View, cursor)
+		loc := code.SelectWord(cursor)
 		_, s := get_codeview_text_loc(root.View, loc.CurSelection[0], loc.CurSelection[1])
 		menu.code.right_menu_data.select_text = s
 		menu.code.right_menu_data.selection_range = text_loc_to_range(loc.CurSelection)
@@ -426,7 +428,6 @@ func addjust_menu_width(items []context_menu_item) []context_menu_item {
 	}
 	return leftitems
 }
-
 
 func (code *CodeView) get_selected_lines() editor_selection {
 	CurSelection := code.view.Cursor.CurSelection
@@ -1231,8 +1232,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 		}()
 	})
 	code.LoadBuffer(data, filename)
-	code.view.Cursor.Loc.X = 0
-	code.view.Cursor.Loc.Y = 0
+	code.set_loc(femto.Loc{X: 0, Y: 0})
 	code.filename = filename
 	if code.main != nil {
 		code.view.bookmark = *code.main.bookmark.GetFileBookmark(filename)
@@ -1364,8 +1364,13 @@ func (code *CodeView) goto_loation_noupdate(loc lsp.Range) bool {
 		Y: loc.End.Line,
 	}
 	Cur.SetSelectionEnd(end)
-	Cur.Loc = end
+	code.set_loc(end)
 	return false
+}
+
+func (code *CodeView) set_loc(end femto.Loc) {
+	Cur := code.view.Cursor
+	Cur.Loc = end
 }
 
 func is_lsprange_ok(loc lsp.Range) bool {
@@ -1395,6 +1400,7 @@ func (code *CodeView) gotoline(line int) {
 	// if line < code.view.Topline || code.view.Bottomline() < line {
 	// 	code.view.Topline = max(line-code.focus_line(), 0)
 	// }
+	Cur := code.view.Cursor
 	if line < code.view.Topline || code.view.Bottomline() < line {
 		code.change_topline_with_previousline(line)
 	}
@@ -1407,7 +1413,6 @@ func (code *CodeView) gotoline(line int) {
 			RightX = index + len(key)
 		}
 	}
-	Cur := code.view.Cursor
 	Cur.SetSelectionStart(femto.Loc{
 		X: leftX,
 		Y: line,
@@ -1416,7 +1421,8 @@ func (code *CodeView) gotoline(line int) {
 		X: RightX,
 		Y: line,
 	})
-	Cur.Loc = Cur.CurSelection[0]
+	Loc := Cur.CurSelection[0]
+	code.set_loc(Loc)
 	code.update_with_line_changed()
 }
 
