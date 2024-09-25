@@ -64,7 +64,6 @@ type dom_node struct {
 	id        int
 	state     int
 	root      bool
-	parent    *lspcore.CallStackEntry
 }
 
 func new_callview(main *mainui) *callinview {
@@ -90,7 +89,7 @@ func new_callview(main *mainui) *callinview {
 				if ref, ok := value.(dom_node); ok {
 					sym := ref.call
 					main.get_define(sym.Range, sym.URI.AsPath().String())
-					main.ActiveTab(view_quickview, false)
+					// main.ActiveTab(view_quickview, false)
 				}
 			}
 		}},
