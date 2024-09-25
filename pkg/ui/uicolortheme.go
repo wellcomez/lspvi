@@ -172,6 +172,10 @@ func (coloretheme *symbol_colortheme) update_default_color() {
 	if style := coloretheme.get_default_style(); style != nil {
 		fg, bg, _ := style.Decompose()
 		coloretheme.__update_default_color(bg, fg)
+		if ret:=coloretheme.get_color("@function");ret!=nil{
+			f,_,_:=ret.Decompose()
+			tview.Styles.BorderColor = f
+		}
 	}
 }
 func (coloretheme *symbol_colortheme) __update_default_color(bg tcell.Color, fg tcell.Color) {

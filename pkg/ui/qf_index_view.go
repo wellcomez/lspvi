@@ -18,7 +18,9 @@ type qf_index_view struct {
 
 func (view *qf_index_view) Delete(index int) {
 	view.List.RemoveItem(index)
-	view.Add(view.keys[index], false)
+	if len(view.keys) > 0 {
+		view.Add(view.keys[index], false)
+	}
 }
 func (view *qf_index_view) Load() {
 	list := view
