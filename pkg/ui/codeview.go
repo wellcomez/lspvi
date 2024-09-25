@@ -1413,14 +1413,16 @@ func (code *CodeView) gotoline(line int) {
 			RightX = index + len(key)
 		}
 	}
-	Cur.SetSelectionStart(femto.Loc{
+	start := femto.Loc{
 		X: leftX,
 		Y: line,
-	})
-	Cur.SetSelectionEnd(femto.Loc{
+	}
+	end := femto.Loc{
 		X: RightX,
 		Y: line,
-	})
+	}
+	Cur.SetSelectionStart(start)
+	Cur.SetSelectionEnd(end)
 	Loc := Cur.CurSelection[0]
 	code.set_loc(Loc)
 	code.update_with_line_changed()
