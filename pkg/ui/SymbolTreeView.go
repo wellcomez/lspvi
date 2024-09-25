@@ -441,7 +441,7 @@ func (v *SymbolTreeView) Clear() {
 }
 func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 	go func() {
-		v.main.app.QueueUpdate(func() {
+		v.main.app.QueueUpdateDraw(func() {
 			v.__update(file)
 		})
 	}()
