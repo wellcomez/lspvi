@@ -139,6 +139,9 @@ md_init = () => {
                 let ss = this.md.render(resp.data)
                 let div = document.getElementsByClassName("md")[0]
                 div.innerHTML = ss
+                document.getElementsByClassName("md")[0].addEventListener("click",(event)=>{
+                    console.log(event)
+                })
             });
         }
     }
@@ -170,32 +173,35 @@ app_init = () => {
             imageurl: "",
         },
         methods: {
+            on_forward(event) {
+                let { bubbles, target,
+                    cancelable,
+                    view,
+                    clientX,
+                    clientY } = event
+                const { el, yes } = check_event_in_element("md", event)
+                if (yes == false) {
+                    return false
+                } else if (el != target) {
+                    event.preventDefault()
+                    const clickevent = new PointerEvent(event.type, event)
+                    el.dispatchEvent(clickevent)
+                    return true
+                } else {
+                    return true
+                }
+            },
             onhide() {
                 this.set_visible({})
             },
-            on_click(event) {
+            on_mouse(event) {
                 if (this.isVisibleMd) {
-                    let { bubbles, target,
-                        cancelable,
-                        view,
-                        clientX,
-                        clientY } = event
-                    const { el, yes } = check_event_in_element("md", event)
-                    if (yes == false) {
-                        this.onhide()
-                    } else if (el != target) {
-                        const clickevent = new MouseEvent("click", {
-                            bubbles,
-                            cancelable,
-                            view,
-                            clientX,
-                            clientY
-                        })
-                        el.dispatchEvent(clickevent)
-                    }
+                    if (this.on_forward(event) == false) {
+                        if (event.type == "click") {
+                            this.onhide()
+                        }
+                    } 
                     return true
-                } else {
-                    this.onhide()
                 }
                 return false
             },
@@ -224,9 +230,26 @@ app_init = () => {
             }
         }
     })
+    window.addEventListener("contextmenu", function (ev) {
+        if (app.on_mouse(ev)) {
+        } else {
+            ev.preventDefault();
+        }
+    })
+    document.addEventListener("mouseup", (ev) => {
+        if (app.on_mouse(ev)) {
+        }
+    })
+    document.addEventListener("mousedown", (ev) => {
+        if (app.on_mouse(ev)) {
+        }
+    })
+    document.addEventListener("mousemove", function (ev) {
+        if (app.on_mouse(ev)) {
+        }
+    })
     document.addEventListener("click", function (ev) {
-        // app.onhide()
-        if (app.on_click(ev)) {
+        if (app.on_mouse(ev)) {
 
         }
     })
@@ -563,9 +586,7 @@ class Term {
 
 var termobj = new Term()
 const term_init = (termobj, app) => {
-    window.addEventListener("contextmenu", function (e) {
-        e.preventDefault();
-    })
+
     document.onkeydown = function (e) {
         e = e || window.event;//Get event
         if (!e.ctrlKey) return;
