@@ -99,7 +99,7 @@ type mainui struct {
 	lspmgr             *lspcore.LspWorkspace
 	symboltree         *SymbolTreeView
 	quickview          *quick_view
-	bk                 *bookmark_view
+	bookmark_view      *bookmark_view
 	activate_tab_name  string
 	page               *console_pages
 	callinview         *callinview
@@ -825,7 +825,7 @@ func load_from_history(main *mainui) {
 	main.quickview.view.Clear()
 	main.symboltree.Clear()
 	main.console_index_list.Clear()
-	main.bk.list.Clear()
+	main.bookmark_view.list.Clear()
 	if len(filearg.Path) > 0 {
 		main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
 			URI: lsp.NewDocumentURI(filearg.Path),
@@ -845,7 +845,7 @@ func (main *mainui) create_right_context_menu() {
 		main.codeview.rightmenu,
 		main.quickview.right_context,
 		main.callinview.right_context,
-		main.bk.right_context,
+		main.bookmark_view.right_context,
 		main.symboltree.right_context,
 		main.uml.file_right_context,
 		main.fileexplorer.right_context,
@@ -1000,7 +1000,7 @@ func create_edit_area(main *mainui) *flex_area {
 	codeview.view.SetBorder(true)
 
 	main.quickview = new_quikview(main)
-	main.bk = new_bookmark_view(main)
+	main.bookmark_view = new_bookmark_view(main)
 	main.callinview = new_callview(main)
 
 	main.fileexplorer = new_file_tree(main, "FileExplore", main.root, func(filename string) bool { return true })

@@ -91,7 +91,7 @@ func search_on_ui(option search_option, main *mainui) {
 		prev := main.prefocused
 		switch prev {
 		case view_bookmark:
-			main.bk.OnSearch(txt)
+			main.bookmark_view.OnSearch(txt)
 		}
 		return
 	}
@@ -122,7 +122,7 @@ func search_on_ui(option search_option, main *mainui) {
 	switch prefocused {
 	case view_bookmark:
 		{
-			main.bk.OnSearch(txt)
+			main.bookmark_view.OnSearch(txt)
 		}
 	case view_callin:
 		{

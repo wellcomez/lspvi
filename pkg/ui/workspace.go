@@ -37,6 +37,9 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	main.ws = arg.Ws
 	// }
 	main.bookmark.load()
+	if main.bookmark_view != nil {
+		main.bookmark_view.update_redraw()
+	}
 	handle.main = main
 	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)

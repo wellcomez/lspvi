@@ -304,7 +304,7 @@ type bookmark_view struct {
 }
 
 func (bk bookmark_view) onsave() {
-	b := bk.main.bk
+	b := bk.main.bookmark_view
 	b.list.Clear()
 	b.list.SetChangedFunc(nil)
 	b.list.SetSelectedFunc(nil)
@@ -331,16 +331,33 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 		main:      main,
 		list:      new_customlist(false),
 	}
-	go func() {
-		GlobalApp.QueueUpdateDraw(func() {
-			ret.loaddta()
-		})
-	}()
+	ret.right_context = bk_menu_context{
+		qk: ret,
+	}
+	ret.menuitem = []context_menu_item{
+		{item: create_menu_item("Delete"), handle: func() {
+			idnex := ret.fzf.get_data_index(ret.list.GetCurrentItem())
+			if idnex < 0 {
+				return
+			}
+			r := ret.data[idnex]
+			main.bookmark.delete(r)
+		}},
+	}
+	ret.update_redraw()
 	return ret
 }
 
-func (ret *bookmark_view) loaddta() {
-	main:=ret.main
+func (ret *bookmark_view) update_redraw() {
+	go func() {
+		GlobalApp.QueueUpdateDraw(func() {
+			ret.loaddata()
+		})
+	}()
+}
+
+func (ret *bookmark_view) loaddata() {
+	main := ret.main
 	ret.data = reload_bookmark_list(main, ret.list, func(i int) {
 
 		ret.onclick(i)
@@ -356,20 +373,7 @@ func (ret *bookmark_view) loaddta() {
 		main.bookmark.changed = append(main.bookmark.changed, *ret)
 	}
 	ret.fzf = new_fzf_on_list(ret.list, true)
-	ret.menuitem = []context_menu_item{
-		{item: create_menu_item("Delete"), handle: func() {
-			idnex := ret.fzf.get_data_index(ret.list.GetCurrentItem())
-			if idnex < 0 {
-				return
-			}
-			r := ret.data[idnex]
-			main.bookmark.delete(r)
-		}},
-	}
-	ret.right_context = bk_menu_context{
-		qk: ret,
-	}
-	return
+
 }
 
 type bk_menu_context struct {

@@ -87,7 +87,7 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 	case view_outline_list:
 		return m.symboltree.view_link
 	case view_bookmark:
-		return m.bk.view_link
+		return m.bookmark_view.view_link
 	case view_main_layout:
 		return m.layout.mainlayout.view_link
 	case view_qf_index_view:
@@ -197,7 +197,7 @@ func (viewid view_id) Primitive(m *mainui) tview.Primitive {
 	case view_outline_list:
 		return m.symboltree.view
 	case view_bookmark:
-		return m.bk.list
+		return m.bookmark_view.list
 	case view_code_area:
 		return m.layout.editor_area
 	case view_console_area:
@@ -233,7 +233,7 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 	case view_outline_list:
 		return m.symboltree.view.Box
 	case view_bookmark:
-		return m.bk.list.Box
+		return m.bookmark_view.list.Box
 	case view_code_area:
 		return m.layout.editor_area.Box
 	case view_console_area:
