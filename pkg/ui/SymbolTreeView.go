@@ -482,6 +482,7 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 		}
 	}
 	v.view.SetRoot(root_node)
+	v.main.codeview.update_with_line_changed()
 }
 
 func add_symbol_node_color(query *symbol_colortheme, c *lspcore.Symbol, cc *tview.TreeNode) {
