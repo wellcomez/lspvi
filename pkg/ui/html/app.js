@@ -328,6 +328,26 @@ class Term {
         let { term } = this
         if (Call == call_term_stdout) {
             term.write(Output)
+            const { restart } = this.status
+            if (restart) {
+                let divs = document.querySelectorAll('.xterm')
+                if (divs.length == 1) {
+                    this.status['restart'] = false
+                } else {
+                    divs.forEach((el) => {
+                        if (el.classList.contains("focus") == false) {
+                            el.remove()
+                        }
+                    })
+                    divs = document.querySelectorAll('.xterm')
+                    if (divs.length == 1) {
+                        if (this.resize_handle){
+                            this.resize_handle()
+                        }
+                        this.status['restart'] = false
+                    }
+                }
+            }
         }
         if (this.handle_backend_command(Call, data, app)) {
             return
@@ -363,21 +383,21 @@ class Term {
         console.log("after resize fit", term.cols, term.rows)
         this.resizecall()
     }
-    newMethod(Zoom) {
-        window.removeEventListener("resize", this.resizeListener);
-        this.term.clear();
-        this.term.dispose();
-        // this.term.reset()
-        let terminalContainer = document.getElementById('terminal');
-        let parent = terminalContainer.parentElement;
-        terminalContainer.remove();
-        terminalContainer = document.createElement('div');
-        terminalContainer.id = "terminal";
-        parent.appendChild(terminalContainer);
-        console.log("zoom", Zoom);
-        this.start_xterm();
-        this.sendTextData({ Call: call_redraw })
-    }
+    // reset(Zoom) {
+    //     window.removeEventListener("resize", this.resizeListener);
+    //     this.term.clear();
+    //     this.term.dispose();
+    //     // this.term.reset()
+    //     let terminalContainer = document.getElementById('terminal');
+    //     let parent = terminalContainer.parentElement;
+    //     terminalContainer.remove();
+    //     terminalContainer = document.createElement('div');
+    //     terminalContainer.id = "terminal";
+    //     parent.appendChild(terminalContainer);
+    //     console.log("zoom", Zoom);
+    //     this.start_xterm();
+    //     this.sendTextData({ Call: call_redraw })
+    // }
     handle_user_command(data) {
         switch (data.Command) {
             case "quit":
@@ -411,6 +431,8 @@ class Term {
         this.Local = undefined
         this.status = {}
         this.sendTextData({ call, cols, rows, host, cmdline });
+        let restart = true
+        this.status = { restart }
     }
     on_remote_stop() {
         let stop = true
@@ -440,7 +462,7 @@ class Term {
             return true;
         }
         if (ev.ctrlKey) {
-            if (ev.key == "="||ev.key == "+") {
+            if (ev.key == "=" || ev.key == "+") {
                 this.handle_command_zoom({ Zoom: true })
                 return false
             } else if (ev.key == "-") {
@@ -556,6 +578,7 @@ const term_init = (termobj, app) => {
         f.resize();
         fit.fit();
     };
+    termobj.resize_handle = resize_handle
     window.addEventListener('resize', resize_handle)
 }
 
