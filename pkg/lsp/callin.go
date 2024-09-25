@@ -102,6 +102,10 @@ func (task CallInTask) TreeNodeid() string {
 	return fmt.Sprintf("%d", task.UID)
 	// return string(task.UID)
 }
+func (task *CallInTask) Delete(root string) error {
+	fielname := filepath.Join(root, task.Name)
+	return os.RemoveAll(fielname)
+}
 func (task *CallInTask) Save(root string) error {
 	fielname := filepath.Join(root, task.Name, "callstack.json")
 	buf, err := json.Marshal(task)
@@ -228,7 +232,7 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 }
 
 func (task *CallInTask) run() error {
-	if task.lsp==nil{
+	if task.lsp == nil {
 		return errors.New("lsp is nil")
 	}
 	c1, err := task.lsp.PrepareCallHierarchy(task.Loc)

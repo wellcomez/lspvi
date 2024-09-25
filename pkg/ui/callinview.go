@@ -38,6 +38,16 @@ type CallNode struct {
 	call      lspcore.CallInTask
 	DeltedUID []int
 }
+
+func (node *CallNode) Ignore(uid int) bool {
+	for _, v := range node.DeltedUID {
+		if v == uid {
+			return true
+		}
+	}
+	return false
+}
+
 type callinview struct {
 	*view_link
 	view           *tview.TreeView
@@ -157,14 +167,15 @@ func new_callview(main *mainui) *callinview {
 					// list1 := []lspcore.CallInTask{}
 					root.RemoveChild(child)
 					list1 := []CallNode{}
-					if task_index-1 > 0 {
-						list1 = ret.task_list[0 : task_index-1]
-					}
-					if task_index+1 < len(ret.task_list) {
-						list1 = append(list1, ret.task_list[0:task_index]...)
+					for i := range ret.task_list {
+						if i == task_index {
+							ret.task_list[i].call.Delete(lspviroot.uml)
+							qf_index_view_update()
+						} else {
+							list1 = append(list1, ret.task_list[i])
+						}
 					}
 					ret.task_list = list1
-					break
 				}
 			}
 			ret.main.UpdatePageTitle()
@@ -278,8 +289,9 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	}
 	root_node := tview.NewTreeNode(
 		fmt.Sprintf("[%d]", len(callin.task_list)))
-	for _, v := range callin.task_list {
-		c := callin.callroot(&v)
+	for i := range callin.task_list {
+		v := &callin.task_list[i]
+		c := callin.callroot(v)
 		root_node.AddChild(c)
 	}
 	root_node.Expand()
@@ -333,6 +345,14 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 			parent1.SetReference(NewRootNode(c.Item, c.ReferencePlace, false, -1))
 			parent.AddChild(parent1)
 			parent = parent1
+		}
+	}
+	for _, v := range root_node.GetChildren() {
+		value := v.GetReference()
+		if ref, ok := value.(dom_node); ok {
+			if node.Ignore(ref.id) {
+				root_node.RemoveChild(v)
+			}
 		}
 	}
 	return root_node
