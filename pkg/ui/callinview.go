@@ -159,7 +159,11 @@ func new_callview(main *mainui) *callinview {
 								}
 							}
 							callnode.call.Allstack = Allstack
-							callnode.call.Save(lspviroot.uml)
+							if len(Allstack) == 0 {
+								callnode.call.Delete(lspviroot.uml)
+							} else {
+								callnode.call.Save(lspviroot.uml)
+							}
 							qf_index_view_update()
 							return
 						}
