@@ -51,6 +51,7 @@ type optionSet struct {
 	ignore        string
 	hidden        bool
 	ignorecase    bool
+	wholeword     bool
 }
 
 type searchScope struct {
@@ -288,6 +289,9 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 	}
 
 	var err error
+	if opt.wholeword {
+		pattern = `\b` + pattern + `\b`
+	}
 	base.pattern, err = regexp.Compile(pattern)
 	if err != nil {
 		// fmt.Fprintf(os.Stderr, "%v\n", err)

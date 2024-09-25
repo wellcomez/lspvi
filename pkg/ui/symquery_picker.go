@@ -72,8 +72,8 @@ func (pk workspace_query_picker) update_preview() {
 	cur := pk.impl.list.GetCurrentItem()
 	if cur < len(pk.impl.sym) {
 		item := pk.impl.sym[cur]
-		pk.impl.codeprev.Load(item.Location.URI.AsPath().String())
-		pk.impl.codeprev.gotoline(item.Location.Range.Start.Line)
+		pk.impl.codeprev.Load2Line(item.Location.URI.AsPath().String(),
+			item.Location.Range.Start.Line)
 	}
 }
 func (pk workspace_query_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {

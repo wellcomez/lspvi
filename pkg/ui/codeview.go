@@ -1202,6 +1202,11 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 func (code *CodeView) Load(filename string) error {
 	return code.LoadAndCb(filename, nil)
 }
+func (code *CodeView) Load2Line(filename string, line int) error {
+	return code.LoadAndCb(filename, func() {
+		code.gotoline(line)
+	})
+}
 func (code *CodeView) LoadAndCb(filename string, onload func()) error {
 	if filename == code.filename {
 		if onload != nil {

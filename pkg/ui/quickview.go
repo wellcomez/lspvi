@@ -30,8 +30,7 @@ func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
 	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line)
 	UpdateTitleAndColor(pk.frame.Box, title)
-	pk.codeprev.Load(loc.URI.AsPath().String())
-	pk.codeprev.gotoline(loc.Range.Start.Line)
+	pk.codeprev.Load2Line(loc.URI.AsPath().String(), loc.Range.Start.Line)
 }
 func new_quick_preview() *quick_preview {
 	codeprev := NewCodeView(nil)
@@ -636,8 +635,3 @@ func new_qf_history(main *mainui) (*quickfix_history, error) {
 	}
 	return qf, nil
 }
-
-
-
-
-

@@ -96,8 +96,7 @@ func (pk livewgreppicker) update_preview() {
 	}
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
-		pk.codeprev.Load(item.fpath)
-		pk.codeprev.gotoline(item.lineNumber - 1)
+		pk.codeprev.Load2Line(item.fpath, item.lineNumber-1)
 	}
 }
 
@@ -152,11 +151,11 @@ func (grepx *livewgreppicker) update_title() {
 		index = index + 1
 	}
 	s := fmt.Sprintf("Grep %s %d/%d", grepx.grep_list_view.Key, index, x)
-	grepx.parent.update_dialog_title( s)
+	grepx.parent.update_dialog_title(s)
 }
 
 func (parent *fzfmain) update_dialog_title(s string) {
-	UpdateTitleAndColor(parent.Frame.Box,s)
+	UpdateTitleAndColor(parent.Frame.Box, s)
 }
 func (grepx *livewgreppicker) grep_to_list() {
 	grep := grepx.impl
@@ -296,6 +295,7 @@ func (pk *livewgreppicker) __updatequery(query string) {
 	opt := optionSet{
 		grep_only: true,
 		g:         true,
+		wholeword: true,
 	}
 	pk.impl.taskid++
 	pk.impl.key = query

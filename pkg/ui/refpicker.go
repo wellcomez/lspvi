@@ -110,8 +110,7 @@ func (impl *prev_picker_impl) update_preview() {
 	cur := impl.listview.GetCurrentItem()
 	if cur < len(impl.listdata) {
 		item := impl.listdata[cur]
-		impl.codeprev.Load(item.loc.URI.AsPath().String())
-		impl.codeprev.gotoline(item.loc.Range.Start.Line)
+		impl.codeprev.Load2Line(item.loc.URI.AsPath().String(), item.loc.Range.Start.Line)
 	}
 }
 
