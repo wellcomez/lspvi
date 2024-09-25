@@ -106,6 +106,9 @@ class fullscreen_check {
 }
 md_init = () => {
     const mdIt = markdownit({
+        html: true,
+        linkify: true,
+        typographer: true,
         highlight: function (str, lang) {
             if (lang == "plantuml") {
                 return "<div class=\"plantuml\">" +
@@ -139,7 +142,7 @@ md_init = () => {
                 let ss = this.md.render(resp.data)
                 let div = document.getElementsByClassName("md")[0]
                 div.innerHTML = ss
-                document.getElementsByClassName("md")[0].addEventListener("click",(event)=>{
+                document.getElementsByClassName("md")[0].addEventListener("click", (event) => {
                     console.log(event)
                 })
             });
@@ -184,8 +187,8 @@ app_init = () => {
                     return false
                 } else if (el != target) {
                     event.preventDefault()
-                    const clickevent = new PointerEvent(event.type, event)
-                    el.dispatchEvent(clickevent)
+                    // const clickevent = new PointerEvent(event.type, event)
+                    // el.dispatchEvent(clickevent)
                     return true
                 } else {
                     return true
@@ -200,7 +203,7 @@ app_init = () => {
                         if (event.type == "click") {
                             this.onhide()
                         }
-                    } 
+                    }
                     return true
                 }
                 return false
@@ -356,16 +359,7 @@ function handle_copy_data(data) {
     return text
 }
 
-function handle_command_openfile(data, app) {
-    console.log("openfile",
-        data.Filename);
-    let ext = getFileExtension(data.Filename);
-    if (is_image(ext)) {
-        app.popimage(data.Filename);
-    } else if (is_md(ext)) {
-        app.popmd(data.Filename);
-    }
-}
+
 
 
 class Term {
@@ -455,11 +449,21 @@ class Term {
                 return;
         }
     }
+    handle_command_openfile(data, app) {
+        console.log("openfile",
+            data.Filename);
+        let ext = getFileExtension(data.Filename);
+        if (is_image(ext)) {
+            app.popimage(data.Filename);
+        } else if (is_md(ext)) {
+            app.popmd(data.Filename);
+        }
+    }
     handle_backend_command(Call, data, app) {
         if (Call == backend_on_zoom) {
             this.handle_command_zoom(data);
         } else if (Call == backend_on_openfile) {
-            handle_command_openfile(data, app);
+            this.handle_command_openfile(data, app);
         } else if (backend_on_copy == Call) {
             this.clipdata = handle_copy_data(data);
         } else if (Call == backend_on_command) {
