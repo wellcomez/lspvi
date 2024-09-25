@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -105,7 +106,7 @@ func new_callview(main *mainui) *callinview {
 			nodecurrent := ret.view.GetCurrentNode()
 			root := ret.view.GetRoot()
 			children := root.GetChildren()
-			for i, child := range children {
+			for task_index, child := range children {
 				var find = false
 				child.Walk(func(node, parent *tview.TreeNode) bool {
 					if node == nodecurrent {
@@ -116,13 +117,42 @@ func new_callview(main *mainui) *callinview {
 					}
 				})
 				if find {
+					for call_index, cc := range child.GetChildren() {
+						remove_cc := false
+						cc.Walk(func(node, parent *tview.TreeNode) bool {
+							if node == nodecurrent {
+								remove_cc = true
+								return false
+							} else {
+								return true
+							}
+						})
+						if remove_cc {
+							value := cc.GetReference()
+							if ref, ok := value.(dom_node); ok {
+								log.Println(ref)
+							}
+							child.RemoveChild(cc)
+							allstack := ret.task_list[task_index].Allstack
+
+							var Allstack = []*lspcore.CallStack{}
+							for i := range allstack {
+								if i != call_index {
+									Allstack = append(Allstack, allstack[i])
+								}
+							}
+							ret.task_list[task_index].Allstack = Allstack
+							return
+						}
+					}
+					// list1 := []lspcore.CallInTask{}
 					root.RemoveChild(child)
 					list1 := []lspcore.CallInTask{}
-					if i-1 > 0 {
-						list1 = ret.task_list[0 : i-1]
+					if task_index-1 > 0 {
+						list1 = ret.task_list[0 : task_index-1]
 					}
-					if i+1 < len(ret.task_list) {
-						list1 = append(list1, ret.task_list[0:i]...)
+					if task_index+1 < len(ret.task_list) {
+						list1 = append(list1, ret.task_list[0:task_index]...)
 					}
 					ret.task_list = list1
 					break
