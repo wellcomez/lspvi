@@ -194,6 +194,13 @@ app_init = () => {
                     return true
                 }
             },
+            is_hide() {
+                if (this.isVisibleMd == undefined && this.isVisible == undefined) {
+                    return true
+                } else {
+                    return false
+                }
+            },
             onhide() {
                 this.set_visible({})
             },
@@ -360,7 +367,7 @@ class Term {
     }
     setapp(app) {
         this.app = app
-        let obj = this 
+        let obj = this
         window.addEventListener("contextmenu", function (ev) {
             if (app.on_mouse(ev)) {
             } else {
@@ -381,13 +388,7 @@ class Term {
         })
         document.addEventListener("click", function (ev) {
             if (app.on_mouse(ev)) {
-                if (app.isVisibleMd ) {
-                }else{
-                    obj.term.options.disableStdin = false
-
-                }
-                if (app.isVisible ) {
-                }else{
+                if (app.is_hide()) {
                     obj.term.options.disableStdin = false
                 }
             }
