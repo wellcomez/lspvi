@@ -3,9 +3,10 @@ package mainui
 import (
 	// "io"
 	"bytes"
-	"encoding/hex"
+	// "encoding/hex"
 	"io"
 	"log"
+	"math"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -25,28 +26,28 @@ import (
 	"zen108.com/lspvi/pkg/term"
 )
 
-const (
-	keyCtrlC     = 3
-	keyCtrlD     = 4
-	keyCtrlU     = 21
-	keyEnter     = '\r'
-	keyEscape    = 27
-	keyBackspace = 127
-	keyUnknown   = 0xd800 /* UTF-16 surrogate area */ + iota
-	keyUp
-	keyDown
-	keyLeft
-	keyRight
-	keyAltLeft
-	keyAltRight
-	keyHome
-	keyEnd
-	keyDeleteWord
-	keyDeleteLine
-	keyClearScreen
-	keyPasteStart
-	keyPasteEnd
-)
+// const (
+// 	keyCtrlC     = 3
+// 	keyCtrlD     = 4
+// 	keyCtrlU     = 21
+// 	keyEnter     = '\r'
+// 	keyEscape    = 27
+// 	keyBackspace = 127
+// 	keyUnknown   = 0xd800 /* UTF-16 surrogate area */ + iota
+// 	keyUp
+// 	keyDown
+// 	keyLeft
+// 	keyRight
+// 	keyAltLeft
+// 	keyAltRight
+// 	keyHome
+// 	keyEnd
+// 	keyDeleteWord
+// 	keyDeleteLine
+// 	keyClearScreen
+// 	keyPasteStart
+// 	keyPasteEnd
+// )
 
 type terminal_impl struct {
 	ptystdio  *pty.Pty
@@ -69,11 +70,11 @@ type Term struct {
 func (t Term) Write(p []byte) (n int, err error) {
 	// not enough bytes for a full rune
 	if n, err := t.v100state(p); err != nil {
-		log.Println("vstate 100", err)
+		log.Println("vstate 100", err, n)
 	} else {
-		log.Println("write", n, hex.EncodeToString(p))
+		// log.Println("write", n, hex.EncodeToString(p))
 	}
-	go func ()  {
+	go func() {
 		GlobalApp.QueueUpdateDraw(func() {
 
 		})
@@ -212,25 +213,74 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	})
 	return &t
 }
+func indexToRGB(index uint8) tcell.Color {
+	// 计算RGB分量
+	r := (index & 0xE0) >> 5
+	g := (index & 0x1C) >> 2
+	b := (index & 0x03) << 1
 
+	// 将RGB分量转换为0-255的范围
+	r = uint8(math.Floor(float64(r)*255/7 + 0.5))
+	g = uint8(math.Floor(float64(g)*255/7 + 0.5))
+	b = uint8(math.Floor(float64(b)*255/3 + 0.5))
+
+	return tcell.Color((uint32(r) << 16) | (uint32(g) << 8) | uint32(b))
+}
+func Convert256ToRGB(colorIndex uint8) tcell.Color {
+	var r, g, b uint8
+	switch {
+	case colorIndex <= 7:
+		r, g, b = 0, 0, 0
+	case colorIndex >= 8 && colorIndex <= 15:
+		r, g, b = 255, 255, 255
+	case colorIndex >= 16 && colorIndex <= 231:
+		// 216色部分
+		offset := colorIndex - 16
+		r = (offset / 36) * 51
+		g = ((offset % 36) / 6) * 51
+		b = (offset % 6) * 51
+	case colorIndex >= 232:
+		// 灰度部分
+		grayLevel := colorIndex - 232
+		r, g, b = uint8(grayLevel*10+8), uint8(grayLevel*10+8), uint8(grayLevel*10+8)
+	default:
+		// 默认黑色
+		r, g, b = 0, 0, 0
+	}
+	return tcell.Color((uint32(r) << 16) | (uint32(g) << 8) | uint32(b))
+}
 func (t *Term) Draw(screen tcell.Screen) {
 	t.Box.DrawForSubclass(screen, t)
 	t.dest.Lock()
 	defer t.dest.Unlock()
 	posx, posy, width, height := t.GetInnerRect()
 	cols, rows := t.dest.Size()
+	default_fg, default_bg, _ := global_theme.get_default_style().Decompose()
 	log.Printf("width=%d,height=%d col=%d row=%d %x", width, height, cols, rows, tcell.ColorGreen)
 	for y := 0; y < rows; y++ {
 		for x := 0; x < cols; x++ {
-			ch, bg, fg := t.dest.Cell(x, y)
-			if x < 2 {
-				log.Printf("(%d,%d),#%x #%x", x, y, bg, fg)
+			ch, fg, bg := t.dest.Cell(x, y)
+			style := tcell.StyleDefault
+			if bg == terminal.DefaultBG {
+				style = style.Background(default_bg)
+			} else {
+				log.Printf("unknow bg color (%d,%d),#%x #%x", x, y, bg, fg)
 			}
-			screen.SetContent(posx+x, posy+y, ch, nil, tcell.StyleDefault.Foreground(tcell.Color(fg)).Background(tcell.Color(bg)))
+			if fg == terminal.DefaultFG {
+				style = style.Foreground(default_fg)
+			} else if fg < 256 {
+				style = style.Foreground(tcell.ColorValid + tcell.Color(fg))
+			} else {
+				log.Printf("unknow fg color (%d,%d),#%x #%x", x, y, bg, fg)
+			}
+
+			screen.SetContent(posx+x, posy+y, ch, nil, style)
 		}
 	}
 	if width != cols || height != rows {
-		t.imp.ptystdio.UpdateSize(uint16(width), uint16(height))
+		go func() {
+			t.imp.ptystdio.UpdateSize(uint16(width), uint16(height))
+		}()
 	}
 }
 
