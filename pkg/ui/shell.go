@@ -36,11 +36,9 @@ type terminal struct {
 // }
 
 // // Write implements io.Writer.
-// func (t terminal) Write(p []byte) (n int, err error) {
-// 	t.imp.buf = p
-// 	t.imp.ondata(t.imp)
-// 	return len(p), nil
-// }
+func (t terminal) Write(p []byte) (n int, err error) {
+	return t.TextView.Write(p)
+}
 
 var ansiEscapeRegex = regexp.MustCompile(`\x1B[@-_][0-?]*[ -/]*[@-~]`)
 
@@ -77,13 +75,13 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 	go func() {
 		ptyio := pty.RunNoStdin([]string{cmdline})
 		ret.imp.ptystdio = ptyio
-		v100term := v100.NewTerminal(ptyio.File, "")
-		ret.imp.v100term =v100term
+		// v100term := v100.NewTerminal(ptyio.File, "")
+		// ret.imp.v100term =v100term
 		io.Copy(ret, ptyio.File)
 	}()
 	ret.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if ret.imp.ptystdio != nil {
-			n, e := ret.imp.v100term.Write([]byte{byte(event.Rune())})
+			n, e := ret.imp.ptystdio.File.Write([]byte{byte(event.Rune())})
 			if e == nil {
 				log.Println(n, e)
 			}
