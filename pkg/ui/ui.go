@@ -94,6 +94,7 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
+	term               *terminal
 	fileexplorer       *file_tree_view
 	codeview           *CodeView
 	lspmgr             *lspcore.LspWorkspace
@@ -943,6 +944,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 		}
 		log.Println(strings.Join(xx, ","))
 	})
+	// main.term  =NewTerminal(main.app, "bash")
 	main.log = new_log_view(main)
 	main.log.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)

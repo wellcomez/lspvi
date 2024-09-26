@@ -35,38 +35,40 @@ const (
 	view_qf_index_view
 	view_console_pages
 	view_recent_open_file
+	view_term
 )
 
-var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin}
+// var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin, view_term}
 
-func find_tab_by_name(name string) view_id {
-	for _, v := range tab_view_id {
-		if v.getname() == name {
-			return v
-		}
-	}
-	return view_none
+// func find_tab_by_name(name string) view_id {
+// 	for _, v := range tab_view_id {
+// 		if v.getname() == name {
+// 			return v
+// 		}
+// 	}
+// 	return view_none
 
-}
+// }
 
 func (viewid view_id) setfocused(m *mainui) {
 	m.set_viewid_focus(viewid)
 }
-func mouseclick_view_focused(m *mainui, event *tcell.EventMouse) {
-	focused := focus_viewid(m)
-	for _, v := range all_view_list {
-		// if v == view_outline_list {
-		// log.Printf("")
-		// }
-		box := v.to_box(m)
-		if inbox(box, event) {
-			if focused != v {
-				v.setfocused(m)
-			}
-			return
-		}
-	}
-}
+
+// func mouseclick_view_focused(m *mainui, event *tcell.EventMouse) {
+// 	focused := focus_viewid(m)
+// 	for _, v := range all_view_list {
+// 		// if v == view_outline_list {
+// 		// log.Printf("")
+// 		// }
+// 		box := v.to_box(m)
+// 		if inbox(box, event) {
+// 			if focused != v {
+// 				v.setfocused(m)
+// 			}
+// 			return
+// 		}
+// 	}
+// }
 
 func (viewid view_id) to_view_link(m *mainui) *view_link {
 	switch viewid {
@@ -98,6 +100,8 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 		return m.layout.console.view_link
 	case view_recent_open_file:
 		return m.recent_open.view_link
+	case view_term:
+		return m.term.view_link
 	}
 	return nil
 }
@@ -111,7 +115,7 @@ func find_name_to_viewid(m string) view_id {
 }
 func focus_viewid(m *mainui) view_id {
 	for _, v := range all_view_list {
-		if v.to_box(m).HasFocus() {
+		if b := v.to_box(m); b != nil && b.HasFocus() {
 			return v
 		}
 	}
@@ -133,7 +137,7 @@ func view_id_init(m *mainui) {
 						}
 					})
 				}
-			case view_quickview, view_callin, view_uml:
+			case view_quickview, view_callin, view_uml, view_term:
 				{
 					box.SetFocusFunc(func() {
 						change_after_focused(box, m)
@@ -149,7 +153,7 @@ func view_id_init(m *mainui) {
 			}
 
 			switch v {
-			case view_quickview, view_callin, view_uml, view_log:
+			case view_quickview, view_callin, view_uml, view_log, view_term:
 				{
 					box.SetBlurFunc(func() {
 						box.SetBorderColor(tview.Styles.BorderColor)
@@ -178,76 +182,137 @@ func change_after_focused(box *tview.Box, m *mainui) {
 		m.cmdline.Vim.ExitEnterEscape()
 	}
 }
-func (viewid view_id) Primitive(m *mainui) tview.Primitive {
+func (viewid view_id) view_info(m *mainui) (tview.Primitive, *tview.Box, *view_link, string) {
 	switch viewid {
 	case view_log:
-		return m.log.log
+		v := m.log.log
+		return v, v.Box, m.log.view_link, "log"
 	case view_quickview:
-		return m.quickview.view
+		v := m.quickview.view
+		return v, v.Box, m.quickview.view_link, "quickview"
 	case view_callin:
-		return m.callinview.view
+		v := m.callinview.view
+		return v, v.Box, m.callinview.view_link, "callin"
 	case view_code:
-		return m.codeview.view
+		v := m.codeview.view
+		return v, v.Box, m.codeview.view_link, "codeview"
 	case view_uml:
-		return m.uml.layout
+		v := m.uml.layout
+		return v, v.Box, m.uml.view_link, "uml"
 	case view_cmd:
-		return m.cmdline.input
+		v := m.cmdline.input
+		return v, v.Box, m.cmdline.view_link, "commoand"
 	case view_file:
-		return m.fileexplorer.view
+		v := m.fileexplorer.view
+		return v, v.Box, m.fileexplorer.view_link, "file"
 	case view_outline_list:
-		return m.symboltree.view
+		v := m.symboltree.view
+		return v, v.Box, m.symboltree.view_link, "outline"
 	case view_bookmark:
-		return m.bookmark_view.list
+		v := m.bookmark_view.list
+		return v, v.Box, m.bookmark_view.view_link, "bookmark"
 	case view_code_area:
-		return m.layout.editor_area
+		v := m.layout.editor_area
+		return v, v.Box, m.layout.editor_area.view_link, "codearea"
 	case view_console_area:
-		return m.layout.console
+		v := m.layout.console
+		return v, v.Box, m.layout.console.view_link, "console"
 	case view_recent_open_file:
-		return m.recent_open.list
+		v := m.recent_open.list
+		return v, v.Box, m.recent_open.view_link, "recent files"
 	case view_main_layout:
-		return m.layout.mainlayout
+		v := m.layout.mainlayout
+		return v, v.Box, m.layout.mainlayout.view_link, "mainlayout"
 	case view_qf_index_view:
-		return m.console_index_list
+		v := m.console_index_list
+		return v, v.Box, m.console_index_list.view_link, "console index"
 	case view_console_pages:
-		return m.page
+		v := m.page
+		return v, v.Box, m.page.view_link, ""
+		// case view_term:
+		// v := m.term
+		// return v, v.Box, m.term.view_link, "term"
 	}
-	return nil
+	return nil, nil, nil, ""
+}
+func (viewid view_id) Primitive(m *mainui) tview.Primitive {
+	a, _, _, _ := viewid.view_info(m)
+	return a
+	// switch viewid {
+	// case view_log:
+	// 	return m.log.log
+	// case view_quickview:
+	// 	return m.quickview.view
+	// case view_callin:
+	// 	return m.callinview.view
+	// case view_code:
+	// 	return m.codeview.view
+	// case view_uml:
+	// 	return m.uml.layout
+	// case view_cmd:
+	// 	return m.cmdline.input
+	// case view_file:
+	// 	return m.fileexplorer.view
+	// case view_outline_list:
+	// 	return m.symboltree.view
+	// case view_bookmark:
+	// 	return m.bookmark_view.list
+	// case view_code_area:
+	// 	return m.layout.editor_area
+	// case view_console_area:
+	// 	return m.layout.console
+	// case view_recent_open_file:
+	// 	return m.recent_open.list
+	// case view_main_layout:
+	// 	return m.layout.mainlayout
+	// case view_qf_index_view:
+	// 	return m.console_index_list
+	// case view_console_pages:
+	// 	return m.page
+	// case view_term:
+	// 	return m.term
+	// }
+	// return nil
 }
 
 func (viewid view_id) to_box(m *mainui) *tview.Box {
-	switch viewid {
-	case view_log:
-		return m.log.log.Box
-	case view_quickview:
-		return m.quickview.view.Box
-	case view_callin:
-		return m.callinview.view.Box
-	case view_code:
-		return m.codeview.view.Box
-	case view_uml:
-		return m.uml.layout.Box
-	case view_cmd:
-		return m.cmdline.input.Box
-	case view_file:
-		return m.fileexplorer.view.Box
-	case view_outline_list:
-		return m.symboltree.view.Box
-	case view_bookmark:
-		return m.bookmark_view.list.Box
-	case view_code_area:
-		return m.layout.editor_area.Box
-	case view_console_area:
-		return m.layout.console.Box
-	case view_recent_open_file:
-		return m.recent_open.list.Box
-	case view_main_layout:
-		return m.layout.mainlayout.Box
-	case view_qf_index_view:
-		return m.console_index_list.Box
-	case view_console_pages:
-		return m.page.Box
-	}
-	return nil
+	_, b, _, _ := viewid.view_info(m)
+	return b
+	// switch viewid {
+	// case view_log:
+	// 	return m.log.log.Box
+	// case view_quickview:
+	// 	return m.quickview.view.Box
+	// case view_callin:
+	// 	return m.callinview.view.Box
+	// case view_code:
+	// 	return m.codeview.view.Box
+	// case view_uml:
+	// 	return m.uml.layout.Box
+	// case view_cmd:
+	// 	return m.cmdline.input.Box
+	// case view_file:
+	// 	return m.fileexplorer.view.Box
+	// case view_outline_list:
+	// 	return m.symboltree.view.Box
+	// case view_bookmark:
+	// 	return m.bookmark_view.list.Box
+	// case view_code_area:
+	// 	return m.layout.editor_area.Box
+	// case view_console_area:
+	// 	return m.layout.console.Box
+	// case view_recent_open_file:
+	// 	return m.recent_open.list.Box
+	// case view_main_layout:
+	// 	return m.layout.mainlayout.Box
+	// case view_qf_index_view:
+	// 	return m.console_index_list.Box
+	// case view_console_pages:
+	// 	return m.page.Box
+	// case view_term:
+	// 	return m.term.Box
+	// }
+	// return nil
 }
 
 var all_view_list = []view_id{
@@ -266,6 +331,7 @@ var all_view_list = []view_id{
 	view_qf_index_view,
 	view_console_pages,
 	view_recent_open_file,
+	view_term,
 }
 var all_view_name = []string{
 	"none",
@@ -284,6 +350,7 @@ var all_view_name = []string{
 	"view_qf_index_view",
 	"view_console_pages",
 	"Opened files",
+	"view_term",
 }
 
 func (viewid view_id) getname() string {
@@ -304,14 +371,14 @@ func config_main_tab_order(main *mainui) {
 }
 
 // inbox
-func inbox(root *tview.Box, event *tcell.EventMouse) bool {
-	posX, posY := event.Position()
-	return poition_inbox(root, posX, posY)
-}
-func poition_inbox(root *tview.Box, posX, posY int) bool {
-	x1, y1, w, h := root.GetRect()
-	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
-		return false
-	}
-	return true
-}
+// func inbox(root *tview.Box, event *tcell.EventMouse) bool {
+// 	posX, posY := event.Position()
+// 	return poition_inbox(root, posX, posY)
+// }
+// func poition_inbox(root *tview.Box, posX, posY int) bool {
+// 	x1, y1, w, h := root.GetRect()
+// 	if posX < x1 || posY > h+y1 || posY < y1 || posX > w+x1 {
+// 		return false
+// 	}
+// 	return true
+// }

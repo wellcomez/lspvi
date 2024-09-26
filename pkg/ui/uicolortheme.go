@@ -79,7 +79,7 @@ func (mgr *symbol_colortheme) CursorLine() *tcell.Style {
 		mgr.colorscheme["line-number"] = *ret
 	}
 	if ret := mgr.get_color("@function"); ret != nil {
-		f,_,_:=ret.Decompose()
+		f, _, _ := ret.Decompose()
 		mgr.colorscheme["current-line-number"] = ret.Foreground(f)
 	}
 	return ret
@@ -118,7 +118,10 @@ func (main *mainui) __set_widget_theme(fg, bg tcell.Color) {
 		main.statusbar.SetTextColor(f)
 	}
 	for _, v := range all_view_list {
-		v.to_box(main).SetBackgroundColor(bg)
+		b := v.to_box(main)
+		if b != nil {
+			b.SetBackgroundColor(bg)
+		}
 	}
 
 	main.layout.console.SetBackgroundColor(bg)
@@ -140,7 +143,9 @@ func (main *mainui) __set_widget_theme(fg, bg tcell.Color) {
 			continue
 		}
 		view := main.get_view_from_id(v)
-		view.SetBackgroundColor(bg)
+		if view != nil {
+			view.SetBackgroundColor(bg)
+		}
 	}
 	main.uml.file.view.SetBackgroundColor(bg)
 	main.log.log.SetTextColor(fg)
@@ -172,8 +177,8 @@ func (coloretheme *symbol_colortheme) update_default_color() {
 	if style := coloretheme.get_default_style(); style != nil {
 		fg, bg, _ := style.Decompose()
 		coloretheme.__update_default_color(bg, fg)
-		if ret:=coloretheme.get_color("@function");ret!=nil{
-			f,_,_:=ret.Decompose()
+		if ret := coloretheme.get_color("@function"); ret != nil {
+			f, _, _ := ret.Decompose()
 			tview.Styles.BorderColor = f
 		}
 	}
