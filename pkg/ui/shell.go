@@ -33,13 +33,25 @@ var re = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
 // Write implements io.Writer.
 func (t terminal) Write(p []byte) (n int, err error) {
-	p1 := re.ReplaceAll(p, []byte{})
-	go func() {
-		GlobalApp.QueueUpdateDraw(func() {
-			t.TextView.ScrollToEnd()
-		})
-	}()
-	t.TextView.Write(p1)
+	check := false
+	if len(p) == 3 {
+		if p[0] == 0x8 && p[2] == 0x8 && p[1] == 0x20 {
+			ret := t.TextView
+			t := ret.GetText(false)
+			t = t[0 : len(t)-1]
+			ret.SetText(t)
+			check = true
+		}
+	}
+	if !check {
+		p1 := re.ReplaceAll(p, []byte{})
+		go func() {
+			GlobalApp.QueueUpdateDraw(func() {
+				t.TextView.ScrollToEnd()
+			})
+		}()
+		t.TextView.Write(p1)
+	}
 	return len(p), nil
 }
 
@@ -84,12 +96,12 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 	}()
 	ret.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if ret.imp.ptystdio != nil {
-			switch event.Key() {
-			case tcell.KeyBackspace2, tcell.KeyBackspace:
-				t := ret.GetText(false)
-				t = t[0 : len(t)-1]
-				ret.SetText(t)
-			}
+			// switch event.Key() {
+			// case tcell.KeyBackspace2, tcell.KeyBackspace:
+			// 	t := ret.GetText(false)
+			// 	t = t[0 : len(t)-1]
+			// 	ret.SetText(t)
+			// }
 			n, e := ret.imp.v100term.Write([]byte{byte(event.Rune())})
 			if e == nil {
 				log.Println(n, e)
