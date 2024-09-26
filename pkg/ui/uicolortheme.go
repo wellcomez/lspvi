@@ -170,6 +170,7 @@ func (main *mainui) __set_widget_theme(fg, bg tcell.Color) {
 		input.SetFieldTextColor(fg)
 		input.SetLabelColor(fg)
 	}
+	main.term.SetColorscheme(main.codeview.colorscheme.colorscheme)
 	main.fileexplorer.ChangeDir(main.fileexplorer.rootdir)
 }
 
