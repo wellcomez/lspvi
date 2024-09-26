@@ -48,6 +48,7 @@ type terminal_impl struct {
 	buf       []byte
 	ondata    func(*terminal_impl)
 	v100term  *v100.Terminal
+	w, h      int
 }
 type terminal struct {
 	*femto.View
@@ -59,42 +60,80 @@ var re = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
 // Write implements io.Writer.
 func (t terminal) Write(p []byte) (n int, err error) {
+	retlen := len(p)
 	check := false
+
+	bash_1 := []uint8{
+		27, 91, 63, 50, 48, 48, 52, 108, 13,
+	}
+	bash2 := []byte{
+		27, 91, 63, 50, 48, 48, 52, 104, 27, 93, 48, 59,
+	}
+	data3 := []byte{
+		27, 91, 63, 50, 48, 48, 52, 104, 32,
+	}
+	p = replace_sub_array(p, bash2)
+	p = replace_sub_array(p, bash_1)
+	p = replace_sub_array(p, data3)
+
 	backetptn := []byte{0x8, 0x20, 0x8}
-	check = pth_match(p, backetptn)
+
+	// "\b\x1b[K"
+	bash_backet := []byte{
+		8, 27, 91, 75,
+	}
+	check = pth_match(p, backetptn) || pth_match(p, bash_backet)
 	if check {
 		b := t.imp.buf
 		t.imp.buf = b[0 : len(b)-1]
 		t.View.Backspace()
-	} else {
-		// cls := []byte{0x1b, 0x5b, 0x48, 0x1b, 0x5b, 0x32, 0x4a}
-		// if pth_match(p, cls) {
-		// 	t.imp.buf = []byte{}
-		// 	p = []byte("\r$")
-		// }
 	}
+
 	if !check {
 		p1 := re.ReplaceAll(p, []byte{})
 		t.imp.buf = append(t.imp.buf, p1...)
-		go func() {
-			GlobalApp.QueueUpdateDraw(func() {
-
-				t.View.OpenBuffer(femto.NewBufferFromString(string(t.imp.buf), ""))
-				t.Cursor.Loc = femto.Loc{
-					X: 0,
-					Y: t.View.Buf.LinesNum() - 1,
-				}
-
-				t.View.EndOfLine()
-				line := t.View.Buf.LinesNum()
-				_, _, _, h := t.GetRect()
-				if line > h && h > 0 {
-					t.Topline = t.View.Buf.LinesNum() - h
-				}
-			})
-		}()
 	}
-	return len(p), nil
+	go func() {
+		GlobalApp.QueueUpdateDraw(func() {
+			linecout := t.View.Buf.LinesNum()
+			if linecout > 1000 {
+				buf := []byte{}
+				for i := linecout - 500; i < linecout; i++ {
+					b := t.View.Buf.LineBytes(i)
+					b = append(b, []byte("\r\n")...)
+					buf = append(buf, b...)
+				}
+				t.imp.buf = buf
+			}
+			t.View.OpenBuffer(femto.NewBufferFromString(string(t.imp.buf), ""))
+			t.Cursor.Loc = femto.Loc{
+				X: 0,
+				Y: t.View.Buf.LinesNum() - 1,
+			}
+			ss := t.View.Buf.Line(t.Cursor.Loc.Y)
+			log.Println(ss)
+			t.View.EndOfLine()
+			line := t.View.Buf.LinesNum()
+			_, _, w, h := t.GetInnerRect()
+			if t.imp.w != w || t.imp.h != h {
+				t.imp.v100term.SetSize(w, h)
+				t.imp.w = w
+				t.imp.h = h
+			}
+			if line > h && h > 0 {
+				t.Topline = t.View.Buf.LinesNum() - h
+			}
+		})
+	}()
+	return retlen, nil
+}
+
+func replace_sub_array(p []byte, bash2 []byte) []byte {
+	index := bytes.Index(p, bash2)
+	if index != -1 {
+		p = append(p[:index], p[index+len(bash2):]...)
+	}
+	return p
 }
 
 func pth_match(p []byte, backetptn []byte) bool {
@@ -123,11 +162,13 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 			[]byte{},
 			nil,
 			nil,
+			0, 0,
 		},
 		&view_link{id: view_term},
 	}
 	ret.Buf.Settings["tabsize"] = false
 	ret.Buf.Settings["cursorline"] = false
+	// ret.Buf.Settings["ruler"] = false
 	ret.SetColorscheme(global_theme.colorscheme)
 	// view:=ret.View
 	// ret.imp.ondata = func(t *terminal_impl) {
