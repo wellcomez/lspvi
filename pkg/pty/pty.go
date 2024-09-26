@@ -101,6 +101,32 @@ func Ptymain(Args []string) *Pty {
 	// lspvi := "/Users/jialaizhu/dev/lspvi/lspvi"
 	return RunCommand(Args)
 }
+func RunNoStdin(Args []string) *Pty {
+	c := exec.Command(Args[0])
+	c.Args = Args
+	f, err := pty.Start(c)
+	if err != nil {
+		log.Panic(err)
+	}
+	// var stdout2 read_out
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+	if err != nil {
+		log.Fatal(err)
+	}
+	ret := &Pty{File: f, ch: make(chan os.Signal, 1)}
+	signal.Notify(ret.ch, syscall.SIGWINCH)
+	go func() {
+		for range ret.ch {
+			// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
+			// }
+			if err := pty.Setsize(ret.File, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
+				log.Printf("error resizing pty: %s", err)
+			}
+		}
+	}()
+	return ret
+}
 
 func RunCommand(Args []string) *Pty {
 	c := exec.Command(Args[0])

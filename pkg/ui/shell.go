@@ -1,20 +1,24 @@
 package mainui
 
 import (
+	// "io"
 	"io"
 	"log"
-	"os/exec"
 
-	"github.com/creack/pty"
+	// "os/exec"
+
+	// "github.com/creack/pty"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	// "zen108.com/lspvi/pkg/pty"
+
+	// "golang.org/x/term"
+	"zen108.com/lspvi/pkg/pty"
 )
 
-var buf = make(chan []byte)
+var inputdata = make(chan []byte)
 
 type terminal_impl struct {
-	// ptystdio  *pty.Pty
+	ptystdio  *pty.Pty
 	shellname string
 	buf       []byte
 	ondata    func(*terminal_impl)
@@ -25,21 +29,28 @@ type terminal struct {
 	*view_link
 }
 
+// Read implements io.Reader.
+func (t terminal) Read(p []byte) (n int, err error) {
+	// panic("unimplemented")
+	return len(p), nil
+}
+
 // Write implements io.Writer.
 func (t terminal) Write(p []byte) (n int, err error) {
 	t.imp.buf = p
 	t.imp.ondata(t.imp)
-	return len(buf), nil
+	return len(p), nil
+	// return len(inputdata), nil
 }
 
 func NewTerminal(app *tview.Application, shellname string) *terminal {
-	cmdline := ""
-	switch shellname {
-	case "bash":
-		cmdline = "/usr/bin/bash"
-		cmdline = "/usr/bin/ls"
-	}
-	ret := terminal{tview.NewTextView(), &terminal_impl{shellname, []byte{}, nil}, &view_link{id: view_term}}
+	// cmdline := ""
+	// switch shellname {
+	// case "bash":
+	// 	cmdline = "/usr/bin/bash"
+	// 	cmdline = "/usr/bin/ls"
+	// }
+	ret := terminal{tview.NewTextView(), &terminal_impl{nil, shellname, []byte{}, nil}, &view_link{id: view_term}}
 	ret.imp.ondata = func(t *terminal_impl) {
 		go func() {
 			app.QueueUpdateDraw(func() {
@@ -49,18 +60,19 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 			})
 		}()
 	}
-	c := exec.Command(cmdline)
-	f, err := pty.Start(c)
-	pty.Setsize(f, &pty.Winsize{Cols: 100, Rows: 80})
-	io.Copy(ret, f)
-	if err != nil {
-		log.Println(err)
-	}
+	go func() {
+		ptyio := pty.RunNoStdin([]string{"/usr/bin/bash"})
+		ret.imp.ptystdio = ptyio
+		io.Copy(ret, ptyio.File)
+	}()
 	ret.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		// f.Write([]byte{byte(event.Rune())})
-		n, err := f.WriteString("ls\n")
-		log.Println(n, err)
-		return nil
+		if ret.imp.ptystdio != nil {
+			n, e := ret.imp.ptystdio.File.Write([]byte{byte(event.Rune())})
+			if e == nil {
+				log.Println(n, e)
+			}
+		}
+		return event
 	})
 	return &ret
 }
