@@ -8,6 +8,7 @@ import (
 	"log"
 	"os/signal"
 	"regexp"
+	"strings"
 	"syscall"
 	"time"
 	"unicode"
@@ -19,7 +20,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"github.com/pgavlin/femto"
+	// "github.com/pgavlin/femto"
 	v100 "golang.org/x/term"
 	"zen108.com/lspvi/pkg/pty"
 	"zen108.com/lspvi/pkg/term"
@@ -57,7 +58,8 @@ type terminal_impl struct {
 	w, h      int
 }
 type Term struct {
-	*femto.View
+	// *femto.View
+	*tview.Box
 	imp *terminal_impl
 	*view_link
 	dest *terminal.State
@@ -83,75 +85,7 @@ func (t Term) Write(p []byte) (n int, err error) {
 	} else {
 		log.Println("write", n, hex.EncodeToString(p))
 	}
-
-	retlen := len(p)
-	check := false
-
-	bash_1 := []uint8{
-		27, 91, 63, 50, 48, 48, 52, 108, 13,
-	}
-	bash2 := []byte{
-		27, 91, 63, 50, 48, 48, 52, 104, 27, 93, 48, 59,
-	}
-	data3 := []byte{
-		27, 91, 63, 50, 48, 48, 52, 104, 32,
-	}
-	p = replace_sub_array(p, bash2)
-	p = replace_sub_array(p, bash_1)
-	p = replace_sub_array(p, data3)
-
-	backetptn := []byte{0x8, 0x20, 0x8}
-
-	// "\b\x1b[K"
-	bash_backet := []byte{
-		8, 27, 91, 75,
-	}
-	check = pth_match(p, backetptn) || pth_match(p, bash_backet)
-	if check {
-		b := t.imp.buf
-		t.imp.buf = b[0 : len(b)-1]
-		t.View.Backspace()
-	}
-
-	if !check {
-		p1 := re.ReplaceAll(p, []byte{})
-		t.imp.buf = append(t.imp.buf, p1...)
-	}
-	go func() {
-		GlobalApp.QueueUpdateDraw(func() {
-			linecout := t.View.Buf.LinesNum()
-			if linecout > 1000 {
-				buf := []byte{}
-				for i := linecout - 500; i < linecout; i++ {
-					b := t.View.Buf.LineBytes(i)
-					b = append(b, []byte("\r\n")...)
-					buf = append(buf, b...)
-				}
-				t.imp.buf = buf
-			}
-			t.View.OpenBuffer(femto.NewBufferFromString(string(t.imp.buf), ""))
-			t.Cursor.Loc = femto.Loc{
-				X: 0,
-				Y: t.View.Buf.LinesNum() - 1,
-			}
-			t.Buf.Settings["cursorline"] = false
-			t.Buf.Settings["ruler"] = false
-			ss := t.View.Buf.Line(t.Cursor.Loc.Y)
-			log.Println(ss)
-			t.View.EndOfLine()
-			line := t.View.Buf.LinesNum()
-			_, _, w, h := t.GetInnerRect()
-			if t.imp.w != w || t.imp.h != h {
-				t.imp.v100term.SetSize(w, h)
-				t.imp.w = w
-				t.imp.h = h
-			}
-			if line > h && h > 0 {
-				t.Topline = t.View.Buf.LinesNum() - h
-			}
-		})
-	}()
-	return retlen, nil
+	return len(p), err
 }
 func (t *Term) v100state(p []byte) (int, error) {
 	var written int
@@ -178,15 +112,17 @@ func (t *Term) v100state(p []byte) (int, error) {
 		t.dest.Put(c)
 	}
 	col, row := t.dest.Size()
+	log.Println(strings.Repeat("-", 80))
 	for y := 0; y < row; y++ {
-		var line []rune 
+		var line []rune
 		for x := 0; x < col; x++ {
-			ch,_,_:=t.dest.Cell(x,y)
-			line=append(line,ch)
+			ch, _, _ := t.dest.Cell(x, y)
+			line = append(line, ch)
 		}
-		log.Println(">",string(line))
+		log.Println(">", string(line))
 
 	}
+	log.Println(strings.Repeat("+", 80))
 	return written, nil
 }
 
@@ -218,7 +154,7 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		cmdline = "/usr/bin/sh"
 	}
 
-	t := Term{femto.NewView(femto.NewBufferFromString("", "")),
+	t := Term{tview.NewBox(),
 		&terminal_impl{
 			nil,
 			shellname,
@@ -232,21 +168,9 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	}
 	t.dest.Init()
 	t.dest.DebugLogger = log.Default()
-	t.SetColorscheme(global_theme.colorscheme)
-	// view:=ret.View
-	// ret.imp.ondata = func(t *terminal_impl) {
-	// 	go func() {
-	// 		app.QueueUpdateDraw(func() {
-	// 			s := filterANSIEscapeCodes(string(t.buf))
-	// 			ret.TextView.Write([]byte(s))
-	// 			ss := ret.TextView.GetText(true)
-	// 			log.Println("shell data", ss, string(t.buf))
-	// 		})
-	// 	}()
-	// }
-	col :=80
-	row :=40
-	t.dest.Resize(col,row)
+	col := 80
+	row := 40
+	t.dest.Resize(col, row)
 	go func() {
 		ptyio := pty.RunNoStdin([]string{cmdline})
 		if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(row), Cols: uint16(col)}); err != nil {
@@ -269,24 +193,37 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		}()
 		io.Copy(t, ptyio.File)
 	}()
-	t.View.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		switch action {
-		case 14, 13:
-			{
-				gap := 1
-				if action == 14 {
-					t.ScrollDown(gap)
-				} else {
-					t.ScrollUp(gap)
-				}
-				go func() {
-					app.QueueUpdateDraw(func() {})
-				}()
+	t.SetDrawFunc(func(screen tcell.Screen, posx, posy, width, height int) (int, int, int, int) {
+		log.Println("term", "width", width, "height", height)
+		cols, rows := t.dest.Size()
+		for y := 0; y < rows; y++ {
+			for x := 0; x < cols; x++ {
+				ch, bg, fg := t.dest.Cell(x, y)
+				screen.SetContent(posx+x, posy+y, ch, nil, tcell.StyleDefault.Foreground(tcell.Color(fg)).Background(tcell.Color(bg)))
 			}
 		}
+		return posx, posy, width, height
+	})
+	t.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		// switch action {
+		// case 14, 13:
+		// 	{
+		// 		gap := 1
+		// 		if action == 14 {
+		// 			t.ScrollDown(gap)
+		// 		} else {
+		// 			t.ScrollUp(gap)
+		// 		}
+		// 		go func() {
+		// 			app.QueueUpdateDraw(func() {})
+		// 		}()
+		// 	}
+		// }
 		return action, event
 	})
-	t.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	t.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		_, _, width, height := t.GetRect()
+		log.Println("term", "width", width, "height", height)
 		if t.imp.ptystdio != nil {
 			var n int
 			var err error
@@ -295,7 +232,7 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 			} else {
 				n, err = t.imp.v100term.Write([]byte{byte(event.Rune())})
 			}
-			if err == nil {
+			if err != nil {
 				log.Println(n, err)
 			}
 		}
@@ -304,6 +241,8 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	return &t
 }
 
+func (t *Term) Draw(screen tcell.Screen) {
+}
 type inputbuf struct {
 	buf        []byte
 	bufferMode bool
