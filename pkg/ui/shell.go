@@ -54,7 +54,7 @@ type terminal_impl struct {
 	buf       []byte
 	ondata    func(*terminal_impl)
 	// v100term  *v100.Terminal
-	w, h      int
+	// w, h int
 }
 type Term struct {
 	// *femto.View
@@ -132,8 +132,6 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 			shellname,
 			[]byte{},
 			nil,
-			// nil,
-			0, 0,
 		},
 		&view_link{id: view_term},
 		&terminal.State{},
@@ -176,24 +174,6 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		// }
 		return action, event
 	})
-	t.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		_, _, width, height := t.GetRect()
-		log.Println("term", "width", width, "height", height)
-		if t.imp.ptystdio != nil {
-			var n int
-			var err error
-			ptyio:=t.imp.ptystdio.File
-			if buf := t.TypedKey(event); buf != nil {
-				n, err = ptyio.Write(buf.buf)
-			} else {
-				n, err = ptyio.Write([]byte{byte(event.Rune())})
-			}
-			if err != nil {
-				log.Println(n, err)
-			}
-		}
-		return nil
-	})
 	return &t
 }
 
@@ -204,6 +184,25 @@ func (t Term) UpdateTermSize() {
 	if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
 		log.Printf("error resizing pty: %s", err)
 	}
+}
+func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+		_, _, width, height := t.GetRect()
+		log.Println("term", "width", width, "height", height)
+		if t.imp.ptystdio != nil {
+			var n int
+			var err error
+			ptyio := t.imp.ptystdio.File
+			if buf := t.TypedKey(event); buf != nil {
+				n, err = ptyio.Write(buf.buf)
+			} else {
+				n, err = ptyio.Write([]byte{byte(event.Rune())})
+			}
+			if err != nil {
+				log.Println(n, err)
+			}
+		}
+	})
 }
 func (t *Term) Draw(screen tcell.Screen) {
 	t.Box.DrawForSubclass(screen, t)
@@ -219,6 +218,8 @@ func (t *Term) Draw(screen tcell.Screen) {
 			style := tcell.StyleDefault
 			if bg == terminal.DefaultBG {
 				style = style.Background(default_bg)
+			} else if bg < 256 {
+				style = style.Foreground(tcell.ColorValid + tcell.Color(bg))
 			} else {
 				log.Printf("unknow bg color (%d,%d),#%x #%x", x, y, bg, fg)
 			}
