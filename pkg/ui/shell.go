@@ -77,12 +77,13 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 	go func() {
 		ptyio := pty.RunNoStdin([]string{cmdline})
 		ret.imp.ptystdio = ptyio
-		ret.imp.v100term = v100.NewTerminal(ptyio.File, "")
+		v100term := v100.NewTerminal(ptyio.File, "")
+		ret.imp.v100term =v100term
 		io.Copy(ret, ptyio.File)
 	}()
 	ret.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if ret.imp.ptystdio != nil {
-			n, e := ret.imp.ptystdio.File.Write([]byte{byte(event.Rune())})
+			n, e := ret.imp.v100term.Write([]byte{byte(event.Rune())})
 			if e == nil {
 				log.Println(n, e)
 			}
