@@ -185,21 +185,23 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 	// }
 	go func() {
 		ptyio := pty.RunNoStdin([]string{cmdline})
+		if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: 100, Cols: 200}); err != nil {
+			log.Printf("error resizing pty: %s", err)
+		}
 		signal.Notify(ptyio.Ch, syscall.SIGWINCH)
+		ret.imp.ptystdio = ptyio
+		v100term := v100.NewTerminal(ptyio.File, "")
+		ret.imp.v100term = v100term
 		go func() {
-			pp := ptyio
 			for range ptyio.Ch {
 				timer := time.After(500 * time.Millisecond)
 				<-timer
-				_, _, w, h := ret.GetInnerRect()
-				if err := corepty.Setsize(pp.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
+				_, _, w, h := ret.GetRect()
+				if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
 					log.Printf("error resizing pty: %s", err)
 				}
 			}
 		}()
-		ret.imp.ptystdio = ptyio
-		v100term := v100.NewTerminal(ptyio.File, "")
-		ret.imp.v100term = v100term
 		io.Copy(ret, ptyio.File)
 	}()
 	ret.View.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
