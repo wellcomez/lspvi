@@ -3,12 +3,14 @@ package mainui
 import (
 	// "io"
 	"bytes"
+	"encoding/hex"
 	"io"
 	"log"
 	"os/signal"
 	"regexp"
 	"syscall"
 	"time"
+	"unicode"
 
 	// "os/exec"
 
@@ -20,6 +22,7 @@ import (
 	"github.com/pgavlin/femto"
 	v100 "golang.org/x/term"
 	"zen108.com/lspvi/pkg/pty"
+	"zen108.com/lspvi/pkg/term"
 )
 
 const (
@@ -53,16 +56,34 @@ type terminal_impl struct {
 	v100term  *v100.Terminal
 	w, h      int
 }
-type terminal struct {
+type Term struct {
 	*femto.View
 	imp *terminal_impl
 	*view_link
+	dest *terminal.State
+	// dest *terminal.State
 }
 
 var re = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
+func extractStr(t *terminal.State, x0, x1, row int) string {
+	var s []rune
+	for i := x0; i <= x1; i++ {
+		c, _, _ := t.Cell(i, row)
+		s = append(s, c)
+	}
+	return string(s)
+}
+
 // Write implements io.Writer.
-func (t terminal) Write(p []byte) (n int, err error) {
+func (t Term) Write(p []byte) (n int, err error) {
+	// not enough bytes for a full rune
+	if n, err := t.v100state(p); err != nil {
+		log.Println("vstate 100", err)
+	} else {
+		log.Println("write", n, hex.EncodeToString(p))
+	}
+
 	retlen := len(p)
 	check := false
 
@@ -132,6 +153,42 @@ func (t terminal) Write(p []byte) (n int, err error) {
 	}()
 	return retlen, nil
 }
+func (t *Term) v100state(p []byte) (int, error) {
+	var written int
+	r := bytes.NewReader(p)
+	t.dest.Lock()
+	defer t.dest.Unlock()
+	for {
+		c, sz, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return written, err
+		}
+		written += sz
+		if c == unicode.ReplacementChar && sz == 1 {
+			if r.Len() == 0 {
+				// not enough bytes for a full rune
+				return written - 1, nil
+			}
+			log.Println("invalid utf8 sequence")
+			continue
+		}
+		t.dest.Put(c)
+	}
+	col, row := t.dest.Size()
+	for y := 0; y < row; y++ {
+		var line []rune 
+		for x := 0; x < col; x++ {
+			ch,_,_:=t.dest.Cell(x,y)
+			line=append(line,ch)
+		}
+		log.Println(">",string(line))
+
+	}
+	return written, nil
+}
 
 func replace_sub_array(p []byte, bash2 []byte) []byte {
 	index := bytes.Index(p, bash2)
@@ -154,13 +211,14 @@ func filterANSIEscapeCodes(s string) string {
 	return ansiEscapeRegex.ReplaceAllString(s, "")
 }
 
-func NewTerminal(app *tview.Application, shellname string) *terminal {
+func NewTerminal(app *tview.Application, shellname string) *Term {
 	cmdline := ""
 	switch shellname {
 	case "bash":
 		cmdline = "/usr/bin/sh"
 	}
-	ret := terminal{femto.NewView(femto.NewBufferFromString("", "")),
+
+	t := Term{femto.NewView(femto.NewBufferFromString("", "")),
 		&terminal_impl{
 			nil,
 			shellname,
@@ -170,8 +228,11 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 			0, 0,
 		},
 		&view_link{id: view_term},
+		&terminal.State{},
 	}
-	ret.SetColorscheme(global_theme.colorscheme)
+	t.dest.Init()
+	t.dest.DebugLogger = log.Default()
+	t.SetColorscheme(global_theme.colorscheme)
 	// view:=ret.View
 	// ret.imp.ondata = func(t *terminal_impl) {
 	// 	go func() {
@@ -183,36 +244,40 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 	// 		})
 	// 	}()
 	// }
+	col :=80
+	row :=40
+	t.dest.Resize(col,row)
 	go func() {
 		ptyio := pty.RunNoStdin([]string{cmdline})
-		if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: 100, Cols: 200}); err != nil {
+		if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(row), Cols: uint16(col)}); err != nil {
 			log.Printf("error resizing pty: %s", err)
 		}
 		signal.Notify(ptyio.Ch, syscall.SIGWINCH)
-		ret.imp.ptystdio = ptyio
+		t.imp.ptystdio = ptyio
 		v100term := v100.NewTerminal(ptyio.File, "")
-		ret.imp.v100term = v100term
+		t.imp.v100term = v100term
 		go func() {
 			for range ptyio.Ch {
 				timer := time.After(500 * time.Millisecond)
 				<-timer
-				_, _, w, h := ret.GetRect()
+				_, _, w, h := t.GetRect()
+				t.dest.Resize(w, h)
 				if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
 					log.Printf("error resizing pty: %s", err)
 				}
 			}
 		}()
-		io.Copy(ret, ptyio.File)
+		io.Copy(t, ptyio.File)
 	}()
-	ret.View.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	t.View.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		switch action {
 		case 14, 13:
 			{
 				gap := 1
 				if action == 14 {
-					ret.ScrollDown(gap)
+					t.ScrollDown(gap)
 				} else {
-					ret.ScrollUp(gap)
+					t.ScrollUp(gap)
 				}
 				go func() {
 					app.QueueUpdateDraw(func() {})
@@ -221,25 +286,122 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 		}
 		return action, event
 	})
-	ret.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if ret.imp.ptystdio != nil {
-			ch := event.Rune()
-			switch event.Key() {
-			case tcell.KeyLeft:
-				ch = keyLeft
-			case tcell.KeyRight:
-				ch = keyRight
-			case tcell.KeyUp:
-				ch = keyUp
-			case tcell.KeyDown:
-				ch = keyDown
+	t.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if t.imp.ptystdio != nil {
+			var n int
+			var err error
+			if buf := t.TypedKey(event); buf != nil {
+				n, err = t.imp.v100term.Write(buf.buf)
+			} else {
+				n, err = t.imp.v100term.Write([]byte{byte(event.Rune())})
 			}
-			n, e := ret.imp.v100term.Write([]byte{byte(ch)})
-			if e == nil {
-				log.Println(n, e)
+			if err == nil {
+				log.Println(n, err)
 			}
 		}
 		return nil
 	})
-	return &ret
+	return &t
+}
+
+type inputbuf struct {
+	buf        []byte
+	bufferMode bool
+}
+
+func (s *inputbuf) Write(buf []byte) (int, error) {
+	s.buf = buf
+	return len(buf), nil
+}
+func (t *inputbuf) typeCursorKey(key *tcell.EventKey) {
+	cursorPrefix := byte('[')
+	if t.bufferMode {
+		cursorPrefix = 'O'
+	}
+
+	switch key.Key() {
+	case tcell.KeyUp:
+		_, _ = t.Write([]byte{asciiEscape, cursorPrefix, 'A'})
+	case tcell.KeyDown:
+		_, _ = t.Write([]byte{asciiEscape, cursorPrefix, 'B'})
+	case tcell.KeyLeft:
+		_, _ = t.Write([]byte{asciiEscape, cursorPrefix, 'D'})
+	case tcell.KeyRight:
+		_, _ = t.Write([]byte{asciiEscape, cursorPrefix, 'C'})
+	}
+}
+
+const (
+	asciiBell      = 7
+	asciiBackspace = 8
+	asciiEscape    = 27
+
+	noEscape = 5000
+	tabWidth = 8
+)
+
+func (t *Term) TypedKey(e *tcell.EventKey) *inputbuf {
+	// if t.keyboardState.shiftPressed {
+	// 	t.keyTypedWithShift(e)
+	// 	return
+	// }
+	var in inputbuf
+	switch e.Key() {
+	// case tcell.KeyReturn:
+	// 	_, _ = in.Write([]byte{'\r'})
+	case tcell.KeyEnter:
+		_, _ = in.Write([]byte{'\r'})
+		// if t.newLineMode {
+		// 	_, _ = in.Write([]byte{'\r'})
+		// 	return
+		// }
+		_, _ = in.Write([]byte{'\n'})
+	case tcell.KeyTab:
+		_, _ = in.Write([]byte{'\t'})
+	case tcell.KeyF1:
+		_, _ = in.Write([]byte{asciiEscape, 'O', 'P'})
+	case tcell.KeyF2:
+		_, _ = in.Write([]byte{asciiEscape, 'O', 'Q'})
+	case tcell.KeyF3:
+		_, _ = in.Write([]byte{asciiEscape, 'O', 'R'})
+	case tcell.KeyF4:
+		_, _ = in.Write([]byte{asciiEscape, 'O', 'S'})
+	case tcell.KeyF5:
+		_, _ = in.Write([]byte{asciiEscape, '[', '1', '5', '~'})
+	case tcell.KeyF6:
+		_, _ = in.Write([]byte{asciiEscape, '[', '1', '7', '~'})
+	case tcell.KeyF7:
+		_, _ = in.Write([]byte{asciiEscape, '[', '1', '8', '~'})
+	case tcell.KeyF8:
+		_, _ = in.Write([]byte{asciiEscape, '[', '1', '9', '~'})
+	case tcell.KeyF9:
+		_, _ = in.Write([]byte{asciiEscape, '[', '2', '0', '~'})
+	case tcell.KeyF10:
+		_, _ = in.Write([]byte{asciiEscape, '[', '2', '1', '~'})
+	case tcell.KeyF11:
+		_, _ = in.Write([]byte{asciiEscape, '[', '2', '3', '~'})
+	case tcell.KeyF12:
+		_, _ = in.Write([]byte{asciiEscape, '[', '2', '4', '~'})
+	case tcell.KeyEscape:
+		_, _ = in.Write([]byte{asciiEscape})
+	case tcell.KeyBackspace:
+		_, _ = in.Write([]byte{asciiBackspace})
+	case tcell.KeyDelete:
+		_, _ = in.Write([]byte{asciiEscape, '[', '3', '~'})
+	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight:
+		in.typeCursorKey(e)
+	case tcell.KeyPgUp:
+		_, _ = in.Write([]byte{asciiEscape, '[', '5', '~'})
+	case tcell.KeyPgDn:
+		_, _ = in.Write([]byte{asciiEscape, '[', '6', '~'})
+	case tcell.KeyHome:
+		_, _ = in.Write([]byte{asciiEscape, 'O', 'H'})
+	case tcell.KeyInsert:
+		_, _ = in.Write([]byte{asciiEscape, '[', '2', '~'})
+	case tcell.KeyEnd:
+		_, _ = in.Write([]byte{asciiEscape, 'O', 'F'})
+	default:
+		return nil
+	}
+	return &in
 }

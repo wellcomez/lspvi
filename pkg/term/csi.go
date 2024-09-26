@@ -108,7 +108,7 @@ func (t *State) handleCSI() {
 	case 'I': // CHT - cursor forward tabulation <n> tab stops
 		n := c.arg(0, 1)
 		for i := 0; i < n; i++ {
-			t.putTab(true)
+			t.PutTab(true)
 		}
 	case 'J': // ED - clear screen
 		// TODO: sel.ob.x = -1
@@ -154,7 +154,7 @@ func (t *State) handleCSI() {
 	case 'Z': // CBT - cursor backward tabulation <n> tab stops
 		n := c.arg(0, 1)
 		for i := 0; i < n; i++ {
-			t.putTab(false)
+			t.PutTab(false)
 		}
 	case 'd': // VPA - move to <row>
 		t.moveAbsTo(t.cur.x, c.arg(0, 1)-1)

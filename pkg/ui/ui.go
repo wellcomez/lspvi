@@ -94,7 +94,7 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
-	term               *terminal
+	term               *Term
 	fileexplorer       *file_tree_view
 	codeview           *CodeView
 	lspmgr             *lspcore.LspWorkspace

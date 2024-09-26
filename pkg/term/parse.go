@@ -162,7 +162,7 @@ func (t *State) handleControlCodes(c rune) bool {
 	switch c {
 	// HT
 	case '\t':
-		t.putTab(true)
+		t.PutTab(true)
 	// BS
 	case '\b':
 		t.moveTo(t.cur.x-1, t.cur.y)

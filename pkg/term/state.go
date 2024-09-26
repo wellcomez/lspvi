@@ -100,6 +100,22 @@ type State struct {
 	title         string
 }
 
+func (dest *State) Size() (cols, rows int) {
+	cols = dest.cols
+	rows = dest.rows
+	return
+}
+func (dest *State) Resize(cols, rows int) {
+	dest.lock()
+	defer dest.unlock()
+	_ = dest.resize(cols, rows)
+}
+func (dest *State) Init() {
+	dest.numlock = true
+	dest.state = dest.parse
+	dest.cur.attr.fg = DefaultFG
+	dest.cur.attr.bg = DefaultBG
+}
 func (t *State) logf(format string, args ...interface{}) {
 	if t.DebugLogger != nil {
 		t.DebugLogger.Printf(format, args...)
@@ -187,11 +203,11 @@ func (t *State) restoreCursor() {
 	t.moveTo(t.cur.x, t.cur.y)
 }
 
-func (t *State) put(c rune) {
+func (t *State) Put(c rune) {
 	t.state(c)
 }
 
-func (t *State) putTab(forward bool) {
+func (t *State) PutTab(forward bool) {
 	x := t.cur.x
 	if forward {
 		if x == t.cols {
