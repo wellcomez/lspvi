@@ -9,9 +9,11 @@ import (
 	// "os/exec"
 
 	// "github.com/creack/pty"
+	// "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/pgavlin/femto"
 	v100 "golang.org/x/term"
 	"zen108.com/lspvi/pkg/pty"
 )
@@ -47,7 +49,7 @@ type terminal_impl struct {
 	v100term  *v100.Terminal
 }
 type terminal struct {
-	*tview.TextView
+	*femto.View
 	imp *terminal_impl
 	*view_link
 }
@@ -59,21 +61,27 @@ func (t terminal) Write(p []byte) (n int, err error) {
 	check := false
 	if len(p) == 3 {
 		if p[0] == 0x8 && p[2] == 0x8 && p[1] == 0x20 {
-			ret := t.TextView
-			t := ret.GetText(false)
-			t = t[0 : len(t)-1]
-			ret.SetText(t)
+			// ret := t.View
+			b := t.imp.buf
+			t.imp.buf = b[0 : len(b)-1]
+			t.View.Backspace()
 			check = true
 		}
 	}
 	if !check {
 		p1 := re.ReplaceAll(p, []byte{})
+		t.imp.buf = append(t.imp.buf, p1...)
 		go func() {
 			GlobalApp.QueueUpdateDraw(func() {
-				t.TextView.ScrollToEnd()
+
+				t.View.OpenBuffer(femto.NewBufferFromString(string(t.imp.buf), ""))
+				t.Cursor.Loc = femto.Loc{
+					X: 0,
+					Y: t.View.Buf.LinesNum() - 1,
+				}
+				t.View.EndOfLine()
 			})
 		}()
-		t.TextView.Write(p1)
 	}
 	return len(p), nil
 }
@@ -90,7 +98,7 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 	case "bash":
 		cmdline = "/usr/bin/sh"
 	}
-	ret := terminal{tview.NewTextView(),
+	ret := terminal{femto.NewView(femto.NewBufferFromString("", "")),
 		&terminal_impl{
 			nil,
 			shellname,
@@ -117,7 +125,8 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 		ret.imp.v100term = v100term
 		io.Copy(ret, ptyio.File)
 	}()
-	ret.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+
+	ret.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if ret.imp.ptystdio != nil {
 			ch := event.Rune()
 			switch event.Key() {
@@ -135,7 +144,7 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 				log.Println(n, e)
 			}
 		}
-		return event
+		return nil
 	})
 	return &ret
 }
