@@ -4,6 +4,7 @@ import (
 	// "io"
 	"io"
 	"log"
+	"regexp"
 
 	// "os/exec"
 
@@ -11,17 +12,16 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	// "golang.org/x/term"
+	v100 "golang.org/x/term"
 	"zen108.com/lspvi/pkg/pty"
 )
-
-var inputdata = make(chan []byte)
 
 type terminal_impl struct {
 	ptystdio  *pty.Pty
 	shellname string
 	buf       []byte
 	ondata    func(*terminal_impl)
+	v100term  *v100.Terminal
 }
 type terminal struct {
 	*tview.TextView
@@ -30,39 +30,54 @@ type terminal struct {
 }
 
 // Read implements io.Reader.
-func (t terminal) Read(p []byte) (n int, err error) {
-	// panic("unimplemented")
-	return len(p), nil
-}
+// func (t terminal) Read(p []byte) (n int, err error) {
+// 	// panic("unimplemented")
+// 	return len(p), nil
+// }
 
-// Write implements io.Writer.
-func (t terminal) Write(p []byte) (n int, err error) {
-	t.imp.buf = p
-	t.imp.ondata(t.imp)
-	return len(p), nil
-	// return len(inputdata), nil
+// // Write implements io.Writer.
+// func (t terminal) Write(p []byte) (n int, err error) {
+// 	t.imp.buf = p
+// 	t.imp.ondata(t.imp)
+// 	return len(p), nil
+// }
+
+var ansiEscapeRegex = regexp.MustCompile(`\x1B[@-_][0-?]*[ -/]*[@-~]`)
+
+func filterANSIEscapeCodes(s string) string {
+	return ansiEscapeRegex.ReplaceAllString(s, "")
 }
 
 func NewTerminal(app *tview.Application, shellname string) *terminal {
-	// cmdline := ""
-	// switch shellname {
-	// case "bash":
-	// 	cmdline = "/usr/bin/bash"
-	// 	cmdline = "/usr/bin/ls"
-	// }
-	ret := terminal{tview.NewTextView(), &terminal_impl{nil, shellname, []byte{}, nil}, &view_link{id: view_term}}
-	ret.imp.ondata = func(t *terminal_impl) {
-		go func() {
-			app.QueueUpdateDraw(func() {
-				ret.TextView.Write(t.buf)
-				ss := ret.TextView.GetText(true)
-				log.Println("shell data", ss, string(t.buf))
-			})
-		}()
+	cmdline := ""
+	switch shellname {
+	case "bash":
+		cmdline = "/usr/bin/sh"
 	}
+	ret := terminal{tview.NewTextView(),
+		&terminal_impl{
+			nil,
+			shellname,
+			[]byte{},
+			nil,
+			nil,
+		},
+		&view_link{id: view_term},
+	}
+	// ret.imp.ondata = func(t *terminal_impl) {
+	// 	go func() {
+	// 		app.QueueUpdateDraw(func() {
+	// 			s := filterANSIEscapeCodes(string(t.buf))
+	// 			ret.TextView.Write([]byte(s))
+	// 			ss := ret.TextView.GetText(true)
+	// 			log.Println("shell data", ss, string(t.buf))
+	// 		})
+	// 	}()
+	// }
 	go func() {
-		ptyio := pty.RunNoStdin([]string{"/usr/bin/bash"})
+		ptyio := pty.RunNoStdin([]string{cmdline})
 		ret.imp.ptystdio = ptyio
+		ret.imp.v100term = v100.NewTerminal(ptyio.File, "")
 		io.Copy(ret, ptyio.File)
 	}()
 	ret.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
