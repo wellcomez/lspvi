@@ -944,7 +944,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 		}
 		log.Println(strings.Join(xx, ","))
 	})
-	// main.term  =NewTerminal(main.app, "bash")
+	main.term  =NewTerminal(main.app, "bash")
 	main.log = new_log_view(main)
 	main.log.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)

@@ -99,10 +99,10 @@ func Ptymain(Args []string) *Pty {
 
 	// 创建一个新的伪终端
 	// lspvi := "/Users/jialaizhu/dev/lspvi/lspvi"
-	return newFunction1(Args)
+	return ptyRunCommand(Args)
 }
 
-func newFunction1(Args []string) *Pty {
+func ptyRunCommand(Args []string) *Pty {
 	c := exec.Command(Args[0])
 	c.Args = Args
 	f, err := pty.Start(c)

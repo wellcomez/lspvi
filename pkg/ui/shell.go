@@ -35,6 +35,8 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 		cmdline = "/usr/bin/bash"
 	}
 	ptystdio := pty.Ptymain([]string{cmdline})
+	ptystdio.Cols = 80
+	ptystdio.Rows = 24
 	ret := terminal{tview.NewTextView(), &terminal_impl{ptystdio, shellname, []byte{}, nil}, &view_link{id: view_term}}
 	ret.imp.ondata = func(t *terminal_impl) {
 		go func() {
