@@ -2,16 +2,19 @@ package mainui
 
 import (
 	"io"
+	"log"
+	"os/exec"
 
+	"github.com/creack/pty"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"zen108.com/lspvi/pkg/pty"
+	// "zen108.com/lspvi/pkg/pty"
 )
 
 var buf = make(chan []byte)
 
 type terminal_impl struct {
-	ptystdio  *pty.Pty
+	// ptystdio  *pty.Pty
 	shellname string
 	buf       []byte
 	ondata    func(*terminal_impl)
@@ -24,7 +27,8 @@ type terminal struct {
 
 // Write implements io.Writer.
 func (t terminal) Write(p []byte) (n int, err error) {
-	t.imp.buf = append(t.imp.buf, p...)
+	t.imp.buf = p
+	t.imp.ondata(t.imp)
 	return len(buf), nil
 }
 
@@ -33,21 +37,29 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 	switch shellname {
 	case "bash":
 		cmdline = "/usr/bin/bash"
+		cmdline = "/usr/bin/ls"
 	}
-	ptystdio := pty.Ptymain([]string{cmdline})
-	ptystdio.Cols = 80
-	ptystdio.Rows = 24
-	ret := terminal{tview.NewTextView(), &terminal_impl{ptystdio, shellname, []byte{}, nil}, &view_link{id: view_term}}
+	ret := terminal{tview.NewTextView(), &terminal_impl{shellname, []byte{}, nil}, &view_link{id: view_term}}
 	ret.imp.ondata = func(t *terminal_impl) {
 		go func() {
 			app.QueueUpdateDraw(func() {
-				ret.Write(t.buf)
+				ret.TextView.Write(t.buf)
+				ss := ret.TextView.GetText(true)
+				log.Println("shell data", ss, string(t.buf))
 			})
 		}()
 	}
-	io.Copy(ret, ptystdio.File)
+	c := exec.Command(cmdline)
+	f, err := pty.Start(c)
+	pty.Setsize(f, &pty.Winsize{Cols: 100, Rows: 80})
+	io.Copy(ret, f)
+	if err != nil {
+		log.Println(err)
+	}
 	ret.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		ret.imp.ptystdio.File.Write([]byte{byte(event.Rune())})
+		// f.Write([]byte{byte(event.Rune())})
+		n, err := f.WriteString("ls\n")
+		log.Println(n, err)
 		return nil
 	})
 	return &ret

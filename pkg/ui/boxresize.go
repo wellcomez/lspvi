@@ -138,7 +138,7 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 		for _, v := range m.contorls {
 			if v.index == index {
 				add = true
-				log.Println(index, "update link", v.view_link)
+				// log.Println(index, "update link", v.view_link)
 				if v.view_link.Hide {
 					box := tview.NewBox()
 					m.layout.AddItem(box, 0, 0, false)
@@ -313,7 +313,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 				resize.beginX = x
 				resize.beginY = y
 				resize.layout.zoom(zoomin, resize.view_link)
-				log.Println("zoom in", "zoom:", zoomin, "v:", resize.left, resize.view_link.id)
+				// log.Println("zoom in", "zoom:", zoomin, "v:", resize.left, resize.view_link.id)
 			}
 		}
 	default:

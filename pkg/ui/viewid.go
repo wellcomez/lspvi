@@ -228,9 +228,9 @@ func (viewid view_id) view_info(m *mainui) (tview.Primitive, *tview.Box, *view_l
 	case view_console_pages:
 		v := m.page
 		return v, v.Box, m.page.view_link, ""
-		// case view_term:
-		// v := m.term
-		// return v, v.Box, m.term.view_link, "term"
+	case view_term:
+		v := m.term
+		return v, v.Box, m.term.view_link, "Terminal"
 	}
 	return nil, nil, nil, ""
 }
@@ -349,7 +349,7 @@ var all_view_name = []string{
 	"view_qf_index_view",
 	"view_console_pages",
 	"Opened files",
-	"view_term",
+	"Terminal",
 }
 
 func (viewid view_id) getname() string {

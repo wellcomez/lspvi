@@ -944,7 +944,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 		}
 		log.Println(strings.Join(xx, ","))
 	})
-	main.term  =NewTerminal(main.app, "bash")
+	main.term = NewTerminal(main.app, "bash")
 	main.log = new_log_view(main)
 	main.log.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)
@@ -965,7 +965,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	main.uml = uml
 	var tab_id = []view_id{}
 	var tabname []string = []string{}
-	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark, view_recent_open_file} {
+	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark, view_recent_open_file, view_term} {
 		if v == view_uml {
 			if main.uml == nil {
 				continue
