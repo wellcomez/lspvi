@@ -113,6 +113,8 @@ func (t terminal) Write(p []byte) (n int, err error) {
 				X: 0,
 				Y: t.View.Buf.LinesNum() - 1,
 			}
+			t.Buf.Settings["cursorline"] = false
+			t.Buf.Settings["ruler"] = false
 			ss := t.View.Buf.Line(t.Cursor.Loc.Y)
 			log.Println(ss)
 			t.View.EndOfLine()
@@ -169,9 +171,6 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 		},
 		&view_link{id: view_term},
 	}
-	ret.Buf.Settings["tabsize"] = false
-	ret.Buf.Settings["cursorline"] = false
-	// ret.Buf.Settings["ruler"] = false
 	ret.SetColorscheme(global_theme.colorscheme)
 	// view:=ret.View
 	// ret.imp.ondata = func(t *terminal_impl) {
@@ -190,7 +189,7 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 		go func() {
 			pp := ptyio
 			for range ptyio.Ch {
-				timer := time.After(500* time.Millisecond)
+				timer := time.After(500 * time.Millisecond)
 				<-timer
 				_, _, w, h := ret.GetInnerRect()
 				if err := corepty.Setsize(pp.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
