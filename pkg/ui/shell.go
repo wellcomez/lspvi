@@ -29,15 +29,18 @@ type terminal struct {
 	*view_link
 }
 
-// Read implements io.Reader.
-// func (t terminal) Read(p []byte) (n int, err error) {
-// 	// panic("unimplemented")
-// 	return len(p), nil
-// }
+var re = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
-// // Write implements io.Writer.
+// Write implements io.Writer.
 func (t terminal) Write(p []byte) (n int, err error) {
-	return t.TextView.Write(p)
+	p1 := re.ReplaceAll(p, []byte{})
+	go func() {
+		GlobalApp.QueueUpdateDraw(func() {
+			t.TextView.ScrollToEnd()
+		})
+	}()
+	t.TextView.Write(p1)
+	return len(p), nil
 }
 
 var ansiEscapeRegex = regexp.MustCompile(`\x1B[@-_][0-?]*[ -/]*[@-~]`)
@@ -75,13 +78,19 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 	go func() {
 		ptyio := pty.RunNoStdin([]string{cmdline})
 		ret.imp.ptystdio = ptyio
-		// v100term := v100.NewTerminal(ptyio.File, "")
-		// ret.imp.v100term =v100term
+		v100term := v100.NewTerminal(ptyio.File, "")
+		ret.imp.v100term = v100term
 		io.Copy(ret, ptyio.File)
 	}()
 	ret.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if ret.imp.ptystdio != nil {
-			n, e := ret.imp.ptystdio.File.Write([]byte{byte(event.Rune())})
+			switch event.Key() {
+			case tcell.KeyBackspace2, tcell.KeyBackspace:
+				t := ret.GetText(false)
+				t = t[0 : len(t)-1]
+				ret.SetText(t)
+			}
+			n, e := ret.imp.v100term.Write([]byte{byte(event.Rune())})
 			if e == nil {
 				log.Println(n, e)
 			}
