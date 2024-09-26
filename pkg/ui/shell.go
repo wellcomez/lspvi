@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os/signal"
-	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -66,17 +65,6 @@ type Term struct {
 	// dest *terminal.State
 }
 
-var re = regexp.MustCompile(`\x1b\[[0-9;]*m`)
-
-func extractStr(t *terminal.State, x0, x1, row int) string {
-	var s []rune
-	for i := x0; i <= x1; i++ {
-		c, _, _ := t.Cell(i, row)
-		s = append(s, c)
-	}
-	return string(s)
-}
-
 // Write implements io.Writer.
 func (t Term) Write(p []byte) (n int, err error) {
 	// not enough bytes for a full rune
@@ -85,6 +73,11 @@ func (t Term) Write(p []byte) (n int, err error) {
 	} else {
 		log.Println("write", n, hex.EncodeToString(p))
 	}
+	go func ()  {
+		GlobalApp.QueueUpdateDraw(func() {
+
+		})
+	}()
 	return len(p), err
 }
 func (t *Term) v100state(p []byte) (int, error) {
@@ -124,27 +117,6 @@ func (t *Term) v100state(p []byte) (int, error) {
 	}
 	log.Println(strings.Repeat("+", 80))
 	return written, nil
-}
-
-func replace_sub_array(p []byte, bash2 []byte) []byte {
-	index := bytes.Index(p, bash2)
-	if index != -1 {
-		p = append(p[:index], p[index+len(bash2):]...)
-	}
-	return p
-}
-
-func pth_match(p []byte, backetptn []byte) bool {
-	if len(p) >= len(backetptn) && bytes.Equal(p[0:len(backetptn)], backetptn) {
-		return true
-	}
-	return false
-}
-
-var ansiEscapeRegex = regexp.MustCompile(`\x1B[@-_][0-?]*[ -/]*[@-~]`)
-
-func filterANSIEscapeCodes(s string) string {
-	return ansiEscapeRegex.ReplaceAllString(s, "")
 }
 
 func NewTerminal(app *tview.Application, shellname string) *Term {
@@ -193,7 +165,7 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		}()
 		io.Copy(t, ptyio.File)
 	}()
-	t.SetDrawFunc(func(screen tcell.Screen, posx, posy, width, height int) (int, int, int, int) {
+	/*t.SetDrawFunc(func(screen tcell.Screen, posx, posy, width, height int) (int, int, int, int) {
 		log.Println("term", "width", width, "height", height)
 		cols, rows := t.dest.Size()
 		for y := 0; y < rows; y++ {
@@ -203,7 +175,7 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 			}
 		}
 		return posx, posy, width, height
-	})
+	})*/
 	t.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		// switch action {
 		// case 14, 13:
@@ -242,7 +214,26 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 }
 
 func (t *Term) Draw(screen tcell.Screen) {
+	t.Box.DrawForSubclass(screen, t)
+	t.dest.Lock()
+	defer t.dest.Unlock()
+	posx, posy, width, height := t.GetInnerRect()
+	cols, rows := t.dest.Size()
+	log.Printf("width=%d,height=%d col=%d row=%d %x", width, height, cols, rows, tcell.ColorGreen)
+	for y := 0; y < rows; y++ {
+		for x := 0; x < cols; x++ {
+			ch, bg, fg := t.dest.Cell(x, y)
+			if x < 2 {
+				log.Printf("(%d,%d),#%x #%x", x, y, bg, fg)
+			}
+			screen.SetContent(posx+x, posy+y, ch, nil, tcell.StyleDefault.Foreground(tcell.Color(fg)).Background(tcell.Color(bg)))
+		}
+	}
+	if width != cols || height != rows {
+		t.imp.ptystdio.UpdateSize(uint16(width), uint16(height))
+	}
 }
+
 type inputbuf struct {
 	buf        []byte
 	bufferMode bool
