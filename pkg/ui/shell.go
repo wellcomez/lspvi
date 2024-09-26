@@ -20,7 +20,7 @@ import (
 	"github.com/rivo/tview"
 
 	// "github.com/pgavlin/femto"
-	v100 "golang.org/x/term"
+	// v100 "golang.org/x/term"
 	"zen108.com/lspvi/pkg/pty"
 	"zen108.com/lspvi/pkg/term"
 )
@@ -53,7 +53,7 @@ type terminal_impl struct {
 	shellname string
 	buf       []byte
 	ondata    func(*terminal_impl)
-	v100term  *v100.Terminal
+	// v100term  *v100.Terminal
 	w, h      int
 }
 type Term struct {
@@ -132,7 +132,7 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 			shellname,
 			[]byte{},
 			nil,
-			nil,
+			// nil,
 			0, 0,
 		},
 		&view_link{id: view_term},
@@ -148,8 +148,8 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		signal.Notify(ptyio.Ch, syscall.SIGWINCH)
 		t.imp.ptystdio = ptyio
 		t.UpdateTermSize()
-		v100term := v100.NewTerminal(ptyio.File, "")
-		t.imp.v100term = v100term
+		// v100term := v100.NewTerminal(ptyio.File, "")
+		// t.imp.v100term = v100term
 		go func() {
 			for range ptyio.Ch {
 				timer := time.After(100 * time.Millisecond)
@@ -159,17 +159,6 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		}()
 		io.Copy(t, ptyio.File)
 	}()
-	/*t.SetDrawFunc(func(screen tcell.Screen, posx, posy, width, height int) (int, int, int, int) {
-		log.Println("term", "width", width, "height", height)
-		cols, rows := t.dest.Size()
-		for y := 0; y < rows; y++ {
-			for x := 0; x < cols; x++ {
-				ch, bg, fg := t.dest.Cell(x, y)
-				screen.SetContent(posx+x, posy+y, ch, nil, tcell.StyleDefault.Foreground(tcell.Color(fg)).Background(tcell.Color(bg)))
-			}
-		}
-		return posx, posy, width, height
-	})*/
 	t.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		// switch action {
 		// case 14, 13:
@@ -193,10 +182,11 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		if t.imp.ptystdio != nil {
 			var n int
 			var err error
+			ptyio:=t.imp.ptystdio.File
 			if buf := t.TypedKey(event); buf != nil {
-				n, err = t.imp.v100term.Write(buf.buf)
+				n, err = ptyio.Write(buf.buf)
 			} else {
-				n, err = t.imp.v100term.Write([]byte{byte(event.Rune())})
+				n, err = ptyio.Write([]byte{byte(event.Rune())})
 			}
 			if err != nil {
 				log.Println(n, err)
