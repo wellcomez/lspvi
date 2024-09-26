@@ -16,6 +16,29 @@ import (
 	"zen108.com/lspvi/pkg/pty"
 )
 
+const (
+	keyCtrlC     = 3
+	keyCtrlD     = 4
+	keyCtrlU     = 21
+	keyEnter     = '\r'
+	keyEscape    = 27
+	keyBackspace = 127
+	keyUnknown   = 0xd800 /* UTF-16 surrogate area */ + iota
+	keyUp
+	keyDown
+	keyLeft
+	keyRight
+	keyAltLeft
+	keyAltRight
+	keyHome
+	keyEnd
+	keyDeleteWord
+	keyDeleteLine
+	keyClearScreen
+	keyPasteStart
+	keyPasteEnd
+)
+
 type terminal_impl struct {
 	ptystdio  *pty.Pty
 	shellname string
@@ -96,13 +119,18 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 	}()
 	ret.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if ret.imp.ptystdio != nil {
-			// switch event.Key() {
-			// case tcell.KeyBackspace2, tcell.KeyBackspace:
-			// 	t := ret.GetText(false)
-			// 	t = t[0 : len(t)-1]
-			// 	ret.SetText(t)
-			// }
-			n, e := ret.imp.v100term.Write([]byte{byte(event.Rune())})
+			ch := event.Rune()
+			switch event.Key() {
+			case tcell.KeyLeft:
+				ch = keyLeft
+			case tcell.KeyRight:
+				ch = keyRight
+			case tcell.KeyUp:
+				ch = keyUp
+			case tcell.KeyDown:
+				ch = keyDown
+			}
+			n, e := ret.imp.v100term.Write([]byte{byte(ch)})
 			if e == nil {
 				log.Println(n, e)
 			}
