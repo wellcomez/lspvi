@@ -6,7 +6,6 @@ import (
 	// "encoding/hex"
 	"io"
 	"log"
-	"math"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -146,22 +145,16 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	t.dest.Resize(col, row)
 	go func() {
 		ptyio := pty.RunNoStdin([]string{cmdline})
-		if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(row), Cols: uint16(col)}); err != nil {
-			log.Printf("error resizing pty: %s", err)
-		}
 		signal.Notify(ptyio.Ch, syscall.SIGWINCH)
 		t.imp.ptystdio = ptyio
+		t.UpdateTermSize()
 		v100term := v100.NewTerminal(ptyio.File, "")
 		t.imp.v100term = v100term
 		go func() {
 			for range ptyio.Ch {
-				timer := time.After(500 * time.Millisecond)
+				timer := time.After(100 * time.Millisecond)
 				<-timer
-				_, _, w, h := t.GetRect()
-				t.dest.Resize(w, h)
-				if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
-					log.Printf("error resizing pty: %s", err)
-				}
+				t.UpdateTermSize()
 			}
 		}()
 		io.Copy(t, ptyio.File)
@@ -213,41 +206,14 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	})
 	return &t
 }
-func indexToRGB(index uint8) tcell.Color {
-	// 计算RGB分量
-	r := (index & 0xE0) >> 5
-	g := (index & 0x1C) >> 2
-	b := (index & 0x03) << 1
 
-	// 将RGB分量转换为0-255的范围
-	r = uint8(math.Floor(float64(r)*255/7 + 0.5))
-	g = uint8(math.Floor(float64(g)*255/7 + 0.5))
-	b = uint8(math.Floor(float64(b)*255/3 + 0.5))
-
-	return tcell.Color((uint32(r) << 16) | (uint32(g) << 8) | uint32(b))
-}
-func Convert256ToRGB(colorIndex uint8) tcell.Color {
-	var r, g, b uint8
-	switch {
-	case colorIndex <= 7:
-		r, g, b = 0, 0, 0
-	case colorIndex >= 8 && colorIndex <= 15:
-		r, g, b = 255, 255, 255
-	case colorIndex >= 16 && colorIndex <= 231:
-		// 216色部分
-		offset := colorIndex - 16
-		r = (offset / 36) * 51
-		g = ((offset % 36) / 6) * 51
-		b = (offset % 6) * 51
-	case colorIndex >= 232:
-		// 灰度部分
-		grayLevel := colorIndex - 232
-		r, g, b = uint8(grayLevel*10+8), uint8(grayLevel*10+8), uint8(grayLevel*10+8)
-	default:
-		// 默认黑色
-		r, g, b = 0, 0, 0
+func (t Term) UpdateTermSize() {
+	ptyio := t.imp.ptystdio
+	_, _, w, h := t.GetRect()
+	t.dest.Resize(w, h)
+	if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
+		log.Printf("error resizing pty: %s", err)
 	}
-	return tcell.Color((uint32(r) << 16) | (uint32(g) << 8) | uint32(b))
 }
 func (t *Term) Draw(screen tcell.Screen) {
 	t.Box.DrawForSubclass(screen, t)
