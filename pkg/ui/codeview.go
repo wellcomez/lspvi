@@ -43,23 +43,23 @@ func (data right_menu_data) SelectInEditor(c *femto.Cursor) {
 
 type CodeView struct {
 	*view_link
-	filename             string
-	tree_sitter          *lspcore.TreeSitter
-	view                 *codetextview
-	theme                string
-	main                 *mainui
-	key_map              map[tcell.Key]func(code *CodeView)
-	mouse_select_area    bool
-	rightmenu_items      []context_menu_item
-	right_menu_data      *right_menu_data
-	rightmenu            CodeContextMenu
-	LineNumberUnderMouse int
-	not_preview          bool
-	bgcolor              tcell.Color
-	colorscheme          *symbol_colortheme
-	ts                   *lspcore.TreeSitter
-	insert               bool
-	diff                 *Differ
+	filename    string
+	tree_sitter *lspcore.TreeSitter
+	view        *codetextview
+	theme       string
+	main        *mainui
+	key_map     map[tcell.Key]func(code *CodeView)
+	// mouse_select_area    bool
+	rightmenu_items []context_menu_item
+	right_menu_data *right_menu_data
+	rightmenu       CodeContextMenu
+	// LineNumberUnderMouse int
+	not_preview bool
+	bgcolor     tcell.Color
+	colorscheme *symbol_colortheme
+	ts          *lspcore.TreeSitter
+	insert      bool
+	diff        *Differ
 }
 type CodeContextMenu struct {
 	code *CodeView
@@ -105,11 +105,11 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	code := menu.code
 	root := code.view
 
-	code.get_click_line_inview(event)
+	code.view.get_click_line_inview(event)
 	posX, posY := event.Position()
 	right_menu_data := code.right_menu_data
-	yOffset := code.yOfffset()
-	xOffset := code.xOffset()
+	yOffset := code.view.yOfffset()
+	xOffset := code.view.xOffset()
 	// offsetx:=3
 	pos := mouse_event_pos{
 		Y: posY + root.Topline - yOffset,
@@ -122,7 +122,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		right_menu_data.previous_selection = selected
 		// code.rightmenu.text = root.Cursor.GetSelection()
 		cursor := *root.Cursor
-		Loc := code.tab_loc(pos)
+		Loc := code.view.tab_loc(pos)
 		code.set_loc(Loc)
 		cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 		right_menu_data.rightmenu_loc = cursor.CurSelection[0]
@@ -527,22 +527,40 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		return action, event
 	}
 	root := code.view
+	return root.process_mouse(event, action, func(action tview.MouseAction) {
+		switch action {
+		case tview.MouseLeftDoubleClick:
+			code.main.codeview.action_goto_define()
+		case tview.MouseLeftDown, tview.MouseRightClick:
+			code.main.set_viewid_focus(view_code)
+
+		case tview.MouseLeftClick:
+			{
+
+				code.main.set_viewid_focus(view_code)
+				code.update_with_line_changed()
+			}
+		}
+	})
+}
+
+func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.MouseAction,  cb func(action tview.MouseAction)) (tview.MouseAction, *tcell.EventMouse) {
 	posX, posY := event.Position()
 
 	switch action {
 	case tview.MouseLeftClick, tview.MouseLeftDown, tview.MouseLeftDoubleClick:
-		code.get_click_line_inview(event)
+		root.get_click_line_inview(event)
 		// log.Println("handle_mouse_impl", inY, posY, posY-inY)
 	}
 
-	yOffset := code.yOfffset()
-	xOffset := code.xOffset()
+	yOffset := root.yOfffset()
+	xOffset := root.xOffset()
 	// offsetx:=3
 	pos := mouse_event_pos{
 		Y: posY + root.Topline - yOffset,
 		X: posX - int(xOffset),
 	}
-	// pos = avoid_position_overflow(root, pos)
+
 
 	if !InRect(event, root) {
 		return action, event
@@ -551,61 +569,54 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 
 	case tview.MouseLeftDoubleClick:
 		{
-			root.Cursor.Loc = code.tab_loc(pos)
+			root.Cursor.Loc = root.tab_loc(pos)
 			root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 			root.Cursor.SelectWord()
-			code.main.codeview.action_goto_define()
 		}
 	case tview.MouseLeftDown, tview.MouseRightClick:
 		{
-			code.main.set_viewid_focus(view_code)
-			code.mouse_select_area = true
-			//log.Print(x1, y1, x2, y2, "down")
-			pos := code.tab_loc(pos)
-			code.view.Cursor.SetSelectionStart(pos)
-			code.view.Cursor.SetSelectionEnd(pos)
+			root.mouse_select_area = true
+
+			pos := root.tab_loc(pos)
+			root.Cursor.SetSelectionStart(pos)
+			root.Cursor.SetSelectionEnd(pos)
+
 		}
 	case tview.MouseMove:
 		{
-			if code.mouse_select_area {
-				pos := code.tab_loc(pos)
-				code.view.Cursor.SetSelectionEnd(pos)
+			if root.mouse_select_area {
+				pos := root.tab_loc(pos)
+				root.Cursor.SetSelectionEnd(pos)
 			}
 		}
 	case tview.MouseLeftUp:
 		{
-			if code.mouse_select_area {
-				code.view.Cursor.SetSelectionEnd(code.tab_loc(pos))
-				code.mouse_select_area = false
+			if root.mouse_select_area {
+				root.Cursor.SetSelectionEnd(root.tab_loc(pos))
+				root.mouse_select_area = false
 			}
 		}
 	case tview.MouseLeftClick:
 		{
-			code.main.set_viewid_focus(view_code)
-			code.mouse_select_area = false
-			root.Cursor.Loc = code.tab_loc(pos)
+			root.mouse_select_area = false
+			root.Cursor.Loc = root.tab_loc(pos)
 			root.Cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
 			root.Cursor.SetSelectionEnd(femto.Loc{X: pos.X, Y: pos.Y})
-			code.update_with_line_changed()
 		}
 	case 14, 13:
 		{
-			code.mouse_select_area = false
+			root.mouse_select_area = false
 			gap := 1
-			// posY=root.Cursor.Y
+
 			if action == 14 {
-				// posY = posY + gap
+
 				root.ScrollDown(gap)
 			} else {
-				// posY = posY - gap
+
 				root.ScrollUp(gap)
 			}
-			// posX = posX - int(xOffset)
-			// root.Cursor.Loc = tab_loc(root, femto.Loc{X: posX, Y: femto.Max(0, femto.Min(posY+root.Topline-yOffset, root.Buf.NumLines))})
-			// log.Println(root.Cursor.Loc)
-			// root.SelectLine()
-			// code.update_with_line_changed()
-			code.LineNumberUnderMouse = root.Cursor.Loc.Y - root.Topline
+
+			root.LineNumberUnderMouse = root.Cursor.Loc.Y - root.Topline
 		}
 	default:
 		return action, event
@@ -613,9 +624,9 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	return tview.MouseConsumed, nil
 }
 
-func (code *CodeView) get_click_line_inview(event *tcell.EventMouse) {
+func (code *codetextview) get_click_line_inview(event *tcell.EventMouse) {
 	_, posY := event.Position()
-	_, inY, _, _ := code.view.GetInnerRect()
+	_, inY, _, _ := code.GetInnerRect()
 	code.LineNumberUnderMouse = (posY - inY)
 }
 
@@ -636,10 +647,9 @@ func avoid_position_overflow(root *codetextview, pos femto.Loc) femto.Loc {
 	pos.Y = min(root.Buf.LinesNum()-1, pos.Y)
 	return pos
 }
-func (code *CodeView) tab_loc(pos mouse_event_pos) femto.Loc {
-	root := code.view
-	if code.is_softwrap() {
-		x, lineY := code.view.VirtualLine(pos.Y, pos.X)
+func (root *codetextview) tab_loc(pos mouse_event_pos) femto.Loc {
+	if root.is_softwrap() {
+		x, lineY := root.VirtualLine(pos.Y, pos.X)
 		pos.Y = lineY
 		pos.X = x
 	} else {
@@ -655,12 +665,12 @@ func (code *CodeView) tab_loc(pos mouse_event_pos) femto.Loc {
 	return femto.Loc{X: pos.X, Y: pos.Y}
 }
 
-func (code *CodeView) yOfffset() int {
-	_, offfsety, _, _ := code.view.GetInnerRect()
+func (code *codetextview) yOfffset() int {
+	_, offfsety, _, _ := code.GetInnerRect()
 	return offfsety
 }
-func (code *CodeView) xOffset() int64 {
-	v := reflect.ValueOf(code.view).Elem()
+func (code *codetextview) xOffset() int64 {
+	v := reflect.ValueOf(code).Elem()
 	field := v.FieldByName("lineNumOffset")
 	x := field.Int()
 	field = v.FieldByName("x")
@@ -1280,8 +1290,8 @@ func (code *CodeView) on_change_color(c *color_theme_file) {
 	global_config.Save()
 	code.change_theme()
 }
-func (code *CodeView) is_softwrap() bool {
-	return code.view.Buf.Settings["softwrap"] == true
+func (view *codetextview) is_softwrap() bool {
+	return view.Buf.Settings["softwrap"] == true
 }
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	code.ts = nil
@@ -1459,13 +1469,13 @@ func (code *CodeView) change_topline_with_previousline(line int) {
 	if line > bufline {
 		line = 0
 	}
-	if bufline < code.LineNumberUnderMouse {
-		code.LineNumberUnderMouse = bufline / 2
+	if bufline < code.view.LineNumberUnderMouse {
+		code.view.LineNumberUnderMouse = bufline / 2
 	}
 	_, _, _, linecount := code.view.GetInnerRect()
 	linecount = min(linecount, code.view.Bottomline()-code.view.Topline+1)
 
-	delta := femto.Abs(code.view.Topline + code.LineNumberUnderMouse - line)
+	delta := femto.Abs(code.view.Topline + code.view.LineNumberUnderMouse - line)
 	if delta < 2 {
 		return
 	}

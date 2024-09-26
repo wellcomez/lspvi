@@ -9,9 +9,11 @@ import (
 
 type codetextview struct {
 	*femto.View
-	bookmark   bookmarkfile
-	linechange bookmarkfile
-	filename   string
+	bookmark             bookmarkfile
+	linechange           bookmarkfile
+	filename             string
+	mouse_select_area    bool
+	LineNumberUnderMouse int
 }
 
 func (view *codetextview) has_bookmark() bool {
@@ -59,6 +61,7 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		bookmarkfile{},
 		bookmarkfile{},
 		"",
+		false, 0,
 	}
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		style := tcell.StyleDefault
