@@ -2,6 +2,7 @@ package mainui
 
 import (
 	// "io"
+	"bytes"
 	"io"
 	"log"
 	"regexp"
@@ -59,14 +60,18 @@ var re = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 // Write implements io.Writer.
 func (t terminal) Write(p []byte) (n int, err error) {
 	check := false
-	if len(p) == 3 {
-		if p[0] == 0x8 && p[2] == 0x8 && p[1] == 0x20 {
-			// ret := t.View
-			b := t.imp.buf
-			t.imp.buf = b[0 : len(b)-1]
-			t.View.Backspace()
-			check = true
-		}
+	backetptn := []byte{0x8, 0x20, 0x8}
+	check = pth_match(p, backetptn)
+	if check {
+		b := t.imp.buf
+		t.imp.buf = b[0 : len(b)-1]
+		t.View.Backspace()
+	} else {
+		// cls := []byte{0x1b, 0x5b, 0x48, 0x1b, 0x5b, 0x32, 0x4a}
+		// if pth_match(p, cls) {
+		// 	t.imp.buf = []byte{}
+		// 	p = []byte("\r$")
+		// }
 	}
 	if !check {
 		p1 := re.ReplaceAll(p, []byte{})
@@ -79,11 +84,24 @@ func (t terminal) Write(p []byte) (n int, err error) {
 					X: 0,
 					Y: t.View.Buf.LinesNum() - 1,
 				}
+
 				t.View.EndOfLine()
+				line := t.View.Buf.LinesNum()
+				_, _, _, h := t.GetRect()
+				if line > h && h > 0 {
+					t.Topline = t.View.Buf.LinesNum() - h
+				}
 			})
 		}()
 	}
 	return len(p), nil
+}
+
+func pth_match(p []byte, backetptn []byte) bool {
+	if len(p) >= len(backetptn) && bytes.Equal(p[0:len(backetptn)], backetptn) {
+		return true
+	}
+	return false
 }
 
 var ansiEscapeRegex = regexp.MustCompile(`\x1B[@-_][0-?]*[ -/]*[@-~]`)
@@ -108,6 +126,10 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 		},
 		&view_link{id: view_term},
 	}
+	ret.Buf.Settings["tabsize"] = false
+	ret.Buf.Settings["cursorline"] = false
+	ret.SetColorscheme(global_theme.colorscheme)
+	// view:=ret.View
 	// ret.imp.ondata = func(t *terminal_impl) {
 	// 	go func() {
 	// 		app.QueueUpdateDraw(func() {
@@ -125,7 +147,23 @@ func NewTerminal(app *tview.Application, shellname string) *terminal {
 		ret.imp.v100term = v100term
 		io.Copy(ret, ptyio.File)
 	}()
-
+	ret.View.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		switch action {
+		case 14, 13:
+			{
+				gap := 1
+				if action == 14 {
+					ret.ScrollDown(gap)
+				} else {
+					ret.ScrollUp(gap)
+				}
+				go func() {
+					app.QueueUpdateDraw(func() {})
+				}()
+			}
+		}
+		return action, event
+	})
 	ret.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if ret.imp.ptystdio != nil {
 			ch := event.Rune()
