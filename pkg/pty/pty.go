@@ -82,7 +82,7 @@ func setupLogFile(filename string) (*os.File, error) {
 
 type Pty struct {
 	File *os.File
-	ch   chan os.Signal
+	Ch   chan os.Signal
 	Rows uint16 // ws_row: Number of rows (in cells).
 	Cols uint16 //
 }
@@ -90,7 +90,7 @@ type Pty struct {
 func (pty *Pty) UpdateSize(Rows uint16, Cols uint16) {
 	pty.Rows = Rows
 	pty.Cols = Cols
-	pty.ch <- syscall.SIGWINCH
+	pty.Ch <- syscall.SIGWINCH
 }
 
 func Ptymain(Args []string) *Pty {
@@ -114,17 +114,8 @@ func RunNoStdin(Args []string) *Pty {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ret := &Pty{File: f, ch: make(chan os.Signal, 1)}
-	signal.Notify(ret.ch, syscall.SIGWINCH)
-	go func() {
-		for range ret.ch {
-			// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
-			// }
-			if err := pty.Setsize(ret.File, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
-				log.Printf("error resizing pty: %s", err)
-			}
-		}
-	}()
+	ret := &Pty{File: f, Ch: make(chan os.Signal, 1)}
+
 	return ret
 }
 
@@ -148,10 +139,10 @@ func RunCommand(Args []string) *Pty {
 		}
 		io.Copy(stdin2, os.Stdin)
 	}()
-	ret := &Pty{File: f, ch: make(chan os.Signal, 1)}
-	signal.Notify(ret.ch, syscall.SIGWINCH)
+	ret := &Pty{File: f, Ch: make(chan os.Signal, 1)}
+	signal.Notify(ret.Ch, syscall.SIGWINCH)
 	go func() {
-		for range ret.ch {
+		for range ret.Ch {
 			// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
 			// }
 			if err := pty.Setsize(ret.File, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
