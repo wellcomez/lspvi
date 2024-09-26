@@ -215,30 +215,39 @@ func (t *Term) Draw(screen tcell.Screen) {
 	for y := 0; y < rows; y++ {
 		for x := 0; x < cols; x++ {
 			ch, fg, bg := t.dest.Cell(x, y)
-			style := tcell.StyleDefault
-			if bg == terminal.DefaultBG {
-				style = style.Background(default_bg)
-			} else if bg < 256 {
-				style = style.Foreground(tcell.ColorValid + tcell.Color(bg))
-			} else {
-				log.Printf("unknow bg color (%d,%d),#%x #%x", x, y, bg, fg)
-			}
-			if fg == terminal.DefaultFG {
-				style = style.Foreground(default_fg)
-			} else if fg < 256 {
-				style = style.Foreground(tcell.ColorValid + tcell.Color(fg))
-			} else {
-				log.Printf("unknow fg color (%d,%d),#%x #%x", x, y, bg, fg)
-			}
+			// log.Printf("unknow bg color (%d,%d),#%x #%x", x, y, bg, fg)
+			// log.Printf("unknow fg color (%d,%d),#%x #%x", x, y, bg, fg)
+			style := get_style_from_fg_bg(bg, default_bg, fg, default_fg)
 
 			screen.SetContent(posx+x, posy+y, ch, nil, style)
 		}
 	}
+	x, y := t.dest.Cursor()
+	screen.ShowCursor(posx+x, posy+y)
 	if width != cols || height != rows {
 		go func() {
 			t.imp.ptystdio.UpdateSize(uint16(width), uint16(height))
 		}()
 	}
+}
+
+func get_style_from_fg_bg(bg terminal.Color, default_bg tcell.Color, fg terminal.Color, default_fg tcell.Color) tcell.Style {
+	style := tcell.StyleDefault
+	if bg == terminal.DefaultBG {
+		style = style.Background(default_bg)
+	} else if bg < 256 {
+		style = style.Foreground(tcell.ColorValid + tcell.Color(bg))
+	} else {
+
+	}
+	if fg == terminal.DefaultFG {
+		style = style.Foreground(default_fg)
+	} else if fg < 256 {
+		style = style.Foreground(tcell.ColorValid + tcell.Color(fg))
+	} else {
+
+	}
+	return style
 }
 
 type inputbuf struct {
