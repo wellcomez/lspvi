@@ -28,7 +28,6 @@ type ui_reszier struct {
 	begin_time      time.Time
 	index           int
 	cb_begin_drag   func(*ui_reszier)
-	defaultWidth    int
 	resize_vertical bool
 }
 type editor_mouse_resize struct {
@@ -58,6 +57,7 @@ func (resize *editor_mouse_resize) add(parent *view_link, index int) *editor_mou
 
 type control_size_changer interface {
 	zoom(zoomin bool, viewid *view_link)
+	allow(contorl *ui_reszier, edget edge_type) bool
 }
 
 func new_editor_resize(main *mainui, layout *flex_area, updatelayout func(), begindrag func(*ui_reszier)) *editor_mouse_resize {
@@ -194,6 +194,29 @@ func (layout *editor_mouse_resize) toggle(viewlink *view_link) {
 	layout.save()
 	layout.update_editerea_layout()
 }
+func (layout *editor_mouse_resize) allow(a *ui_reszier, edge edge_type) bool {
+	if len(layout.contorls) > 0 {
+		fist := layout.contorls[0] == a
+		last := layout.contorls[len(layout.contorls)-1] == a
+		if a.resize_vertical {
+			switch edge {
+			case edge_top:
+				return !fist
+			case edge_bottom:
+				return !last
+			}
+		} else {
+			switch edge {
+			case edge_left:
+				return !fist
+			case edge_rigt:
+				return !last
+			}
+		}
+		return true
+	}
+	return true
+}
 func (layout *editor_mouse_resize) zoom(zoomin bool, viewlink *view_link) {
 	has := false
 	for _, v := range layout.contorls {
@@ -242,6 +265,15 @@ func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tc
 	return action
 }
 
+type edge_type int
+
+const (
+	edge_top edge_type = iota
+	edge_bottom
+	edge_left
+	edge_rigt
+)
+
 func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) bool {
 
 	bLeftX, top, bw, heigth := resize.box.GetRect()
@@ -267,20 +299,20 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 			if y >= top && y <= top+heigth && !resize.resize_vertical {
 				if x >= bLeftX && x <= bLeftX+1 {
 					resize.left = move_direction_hirizon
-					yes = true
+					yes = resize.layout.allow(resize, edge_left)
 				} else if x >= bRightX-1 && x <= bRightX {
 					resize.left = move_direction_hirizon
-					yes = true
+					yes = resize.layout.allow(resize, edge_rigt)
 				}
 			}
 			if !yes {
 				if x >= bLeftX && x <= bRightX && resize.resize_vertical {
 					if uprange_1 <= y && y <= uprange_2 {
 						resize.left = move_direction_vetical
-						yes = true
+						yes = resize.layout.allow(resize, edge_top)
 					} else if botom_1 <= y && y <= botom_2 {
 						resize.left = move_direction_vetical
-						yes = true
+						yes = resize.layout.allow(resize, edge_bottom)
 					}
 				}
 			}
