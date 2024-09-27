@@ -367,6 +367,9 @@ func update_selection_menu(ret *CodeView) {
 				}
 			},
 		},
+		{item: create_menu_item("Open Below"), handle: func() {
+			main.codeview2.Load(ret.filename)
+		}},
 		{item: create_menu_item("-"), handle: func() {
 		}, hide: !main.tty},
 		{item: create_menu_item("Zoom-in Browser"), handle: func() {
@@ -544,7 +547,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	})
 }
 
-func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.MouseAction,  cb func(action tview.MouseAction)) (tview.MouseAction, *tcell.EventMouse) {
+func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.MouseAction, cb func(action tview.MouseAction)) (tview.MouseAction, *tcell.EventMouse) {
 	posX, posY := event.Position()
 
 	switch action {
@@ -560,7 +563,6 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		Y: posY + root.Topline - yOffset,
 		X: posX - int(xOffset),
 	}
-
 
 	if !InRect(event, root) {
 		return action, event
@@ -621,7 +623,7 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 	default:
 		return action, event
 	}
-	if cb!=nil{
+	if cb != nil {
 		cb(action)
 	}
 	return tview.MouseConsumed, nil
@@ -1228,7 +1230,9 @@ func (code *CodeView) LoadAndCb(filename string, onload func()) error {
 		}
 		return nil
 	}
-	code.main.recent_open.add(filename)
+	if code.main != nil {
+		code.main.recent_open.add(filename)
+	}
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
@@ -1236,7 +1240,7 @@ func (code *CodeView) LoadAndCb(filename string, onload func()) error {
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
 	// "monokai"A
 	go func() {
-		code.main.app.QueueUpdate(func() {
+		GlobalApp.QueueUpdate(func() {
 			code.load_in_main(filename, data)
 			if onload != nil {
 				onload()
@@ -1252,7 +1256,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 	code.tree_sitter = lspcore.GetNewTreeSitter(filename)
 	code.tree_sitter.Init(func(ts *lspcore.TreeSitter) {
 		go func() {
-			code.main.app.QueueUpdate(func() {
+			GlobalApp.QueueUpdate(func() {
 				code.change_theme()
 				if code.main != nil {
 					if len(ts.Outline) > 0 {
