@@ -817,6 +817,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 
 func create_edit_area(main *mainui) *flex_area {
 	codeview := NewCodeView(main)
+	codeview.id = view_code
 	codeview.not_preview = true
 	codeview.Width = 8
 

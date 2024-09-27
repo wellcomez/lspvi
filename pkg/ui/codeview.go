@@ -163,12 +163,12 @@ func (code *CodeView) OnFindInfileWordOption(fzf bool, noloop bool, whole bool) 
 	if code.main == nil {
 		return ""
 	}
-	codeview := code.view
-	word := codeview.Cursor.GetSelection()
+	codetext := code.view
+	word := codetext.Cursor.GetSelection()
 	if len(word) < 2 {
-		codeview.Cursor.SelectWord()
-		sel := codeview.Cursor.CurSelection
-		Buf := codeview.Buf
+		codetext.Cursor.SelectWord()
+		sel := codetext.Cursor.CurSelection
+		Buf := codetext.Buf
 		if sel[0].Y == sel[1].Y {
 			word = Buf.Line(sel[0].Y)[sel[0].X:sel[1].X]
 		} else {
@@ -241,7 +241,7 @@ func NewCodeView(main *mainui) *CodeView {
 	// view := tview.NewTextView()
 	// view.SetBorder(true)
 	ret := CodeView{view_link: &view_link{
-		id:    view_code,
+		id: view_none,
 		right: view_outline_list,
 		down:  view_quickview,
 		left:  view_file},
@@ -282,16 +282,16 @@ func update_selection_menu(ret *CodeView) {
 	if !main.symboltree.Hide {
 		toggle_outline = "Hide outline view"
 	}
-	menudata := ret.main.codeview.right_menu_data
+	menudata := ret.right_menu_data
 	items := []context_menu_item{
 		{item: create_menu_item("Reference"), handle: func() {
 			menudata.SelectInEditor(ret.view.Cursor)
-			main.get_refer(menudata.selection_range, main.codeview.filename)
+			main.get_refer(menudata.selection_range, ret.filename)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
 			menudata.SelectInEditor(ret.view.Cursor)
-			main.get_define(menudata.selection_range, main.codeview.filename)
+			main.get_define(menudata.selection_range, ret.filename)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {
@@ -312,10 +312,10 @@ func update_selection_menu(ret *CodeView) {
 		{item: create_menu_item("-------------"), handle: func() {
 		}},
 		{item: create_menu_item("Bookmark"), handle: func() {
-			main.codeview.bookmark()
+			ret.bookmark()
 		}, hide: menudata.previous_selection.emtry()},
 		{item: create_menu_item("Save Selection"), handle: func() {
-			main.codeview.save_selection(menudata.previous_selection.selected_text)
+			ret.save_selection(menudata.previous_selection.selected_text)
 		}},
 		{item: create_menu_item("Search Selection"), handle: func() {
 			sss := menudata.previous_selection
@@ -1044,7 +1044,9 @@ func (code *CodeView) update_with_line_changed() {
 	if main == nil {
 		return
 	}
-	main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y)
+	if code.id == view_code {
+		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y)
+	}
 }
 
 func (code *CodeView) action_grep_word(selected bool) {
@@ -1068,7 +1070,7 @@ func (code *CodeView) action_goto_define() {
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	log.Printf("goto define %v %s", loc, code.view.Cursor.GetSelection())
-	main.get_define(loc, main.codeview.filename)
+	main.get_define(loc, code.filename)
 }
 func (code *CodeView) action_goto_declaration() {
 	main := code.main
@@ -1077,7 +1079,7 @@ func (code *CodeView) action_goto_declaration() {
 	}
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
-	main.get_declare(loc, main.codeview.filename)
+	main.get_declare(loc, code.filename)
 }
 
 func (code *CodeView) action_get_refer() {
@@ -1088,7 +1090,7 @@ func (code *CodeView) action_get_refer() {
 	code.view.Cursor.SelectWord()
 	main.quickview.view.Clear()
 	loc := code.lsp_cursor_loc()
-	main.get_refer(loc, main.codeview.filename)
+	main.get_refer(loc, code.filename)
 	// main.ActiveTab(view_fzf)
 
 }
