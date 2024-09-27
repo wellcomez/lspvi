@@ -44,30 +44,15 @@ func (ret *qf_index_view) Load(viewid view_id) {
 			term := ret.main.term
 			ret.right_context.menu_item = &menudata{[]context_menu_item{
 				{item: cmditem{cmd: cmdactor{desc: "new zsh"}}, handle: func() {
-					term.current = term.new_pty("zsh")
-					term.termlist = append(term.termlist, term.current)
+					term.addterm("zsh")
 					ret.Load(viewid)
 				}},
 				{item: cmditem{cmd: cmdactor{desc: "new bash"}}, handle: func() {
-					term.current = term.new_pty("bash")
-					term.termlist = append(term.termlist, term.current)
+					term.addterm("bash")
 					ret.Load(viewid)
 				}},
 				{item: cmditem{cmd: cmdactor{desc: "Exit"}}, handle: func() {
-					var pty []*terminal_pty
-					for i, v := range term.termlist {
-						if v == term.current {
-							pty = append(term.termlist[:i], term.termlist[i+1:]...)
-							break
-						}
-					}
-					term.termlist = pty
-					curent := term.current
-					if len(pty) == 0 {
-						term.current = term.new_pty("bash")
-						term.termlist = append(term.termlist, term.current)
-					}
-					curent.Kill()
+					term.Kill()
 					ret.Load(viewid)
 				}},
 			}}
@@ -91,6 +76,34 @@ func (ret *qf_index_view) Load(viewid view_id) {
 	default:
 		ret.customlist.Clear()
 	}
+}
+
+func (term *Term) addterm(s string) {
+	term.current = term.new_pty(s)
+	term.termlist = append(term.termlist, term.current)
+	go func() {
+		GlobalApp.QueueUpdateDraw(func() {})
+	}()
+}
+
+func (term *Term) Kill() {
+	var pty []*terminal_pty
+	for i, v := range term.termlist {
+		if v == term.current {
+			pty = append(term.termlist[:i], term.termlist[i+1:]...)
+			break
+		}
+	}
+	term.termlist = pty
+	curent := term.current
+	if len(pty) == 0 {
+		term.current = term.new_pty("bash")
+		term.termlist = append(term.termlist, term.current)
+	}
+	curent.Kill()
+	go func() {
+		GlobalApp.QueueUpdateDraw(func() {})
+	}()
 }
 func (view *qf_index_view_history) Load() {
 	list := view
