@@ -57,6 +57,14 @@ type selectarea struct {
 	nottext           bool
 }
 
+func (s *selectarea) order() {
+	if s.end.GreaterEqual(s.start) {
+		return
+	}
+	v := s.end
+	s.end = s.start
+	s.start = v
+}
 func (c *selectarea) GetSelection() string {
 	if c.HasSelection() {
 		var ret []string
@@ -286,6 +294,7 @@ func (root *selectarea) handle_mouse_selection(action tview.MouseAction,
 		{
 			if root.mouse_select_area {
 				root.end = (pos)
+				root.order()
 				root.alloc()
 				drawit = true
 				log.Println("move", root.start, pos)
@@ -295,6 +304,7 @@ func (root *selectarea) handle_mouse_selection(action tview.MouseAction,
 		{
 			if root.mouse_select_area {
 				root.end = pos
+				root.order()
 				root.mouse_select_area = false
 				root.alloc()
 				drawit = true
