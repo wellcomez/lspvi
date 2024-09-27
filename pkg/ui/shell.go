@@ -217,13 +217,13 @@ func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.
 	})
 }
 
-type linedraw struct {
+type term_line_drawer struct {
 	default_fg, default_bg tcell.Color
 	posx, posy             int
 	lineno_offset, cols    int
 }
 
-func (d linedraw) Draw(screen tcell.Screen, index, screenY int, style tcell.Style, OfflineCell func(x, y int) (ch rune, fg, bg terminal.Color)) {
+func (d term_line_drawer) Draw(screen tcell.Screen, index, screenY int, style tcell.Style, OfflineCell func(x, y int) (ch rune, fg, bg terminal.Color)) {
 	if d.lineno_offset > 0 {
 		sss := fmt.Sprintf("%4d", index)
 		for i, v := range sss {
@@ -253,13 +253,13 @@ func (termui *Term) Draw(screen tcell.Screen) {
 	offlines_to_draw := 0
 	lineno_offset := 5
 	default_theme_style := tcell.StyleDefault.Foreground(default_fg).Background(default_bg)
-	var draw = linedraw{
+	var draw = term_line_drawer{
 		default_fg, default_bg,
 		posx, posy,
 		lineno_offset, cols,
 	}
 
-	if t.topline > 0 {
+	if t.topline >= 0 {
 		offlines_to_draw = (total_offscreen_len - t.topline)
 		if offlines_to_draw > 0 {
 			screenY := posy
