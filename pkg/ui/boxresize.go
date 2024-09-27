@@ -109,7 +109,7 @@ func (e *editor_mouse_resize) config_filename() string {
 	return filename
 }
 func (e *editor_mouse_resize) set_heigth(link *view_link, a int) {
-	log.Println("zoom height", link.id.getname(), a)
+	// log.Println("zoom height", link.id.getname(), a)
 	// for i := range e.contorls {
 	// 	ctrl := e.contorls[i]
 	// 	_, _, _, h := ctrl.box.GetRect()
@@ -128,7 +128,7 @@ func (e *editor_mouse_resize) set_width(link *view_link, a int) {
 	// 	_, _, w, _ := ctrl.box.GetRect()
 	// 	ctrl.view_link.Width = w
 	// }
-	log.Println("zoom width", link.id.getname(), a)
+	// log.Println("zoom width", link.id.getname(), a)
 	if link != nil {
 		link.Width += a
 		link.Width = max(1, link.Width)
