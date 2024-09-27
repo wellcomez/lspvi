@@ -94,17 +94,16 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
-	term               *terminal
-	fileexplorer       *file_tree_view
-	codeview           *CodeView
-	lspmgr             *lspcore.LspWorkspace
-	symboltree         *SymbolTreeView
-	quickview          *quick_view
-	bookmark_view      *bookmark_view
-	activate_tab_name  string
-	page               *console_pages
-	callinview         *callinview
-	tabs               *ButtonGroup
+	term          *Term
+	fileexplorer  *file_tree_view
+	codeview      *CodeView
+	lspmgr        *lspcore.LspWorkspace
+	symboltree    *SymbolTreeView
+	quickview     *quick_view
+	bookmark_view *bookmark_view
+	page          *console_pages
+	callinview    *callinview
+	// tabs               *ButtonGroup
 	root               string
 	app                *tview.Application
 	uml                *umlview
@@ -120,23 +119,9 @@ type mainui struct {
 	right_context_menu *contextmenu
 	recent_open        *recent_open_file
 	// _editor_area_layout *editor_area_layout
-	tty    bool
-	ws     string
-	tab_id []view_id
-}
-type console_pages struct {
-	*tview.Pages
-	*view_link
-}
-
-func (console *console_pages) update_title(s string) {
-	UpdateTitleAndColor(console.Box, s)
-}
-func new_console_pages() *console_pages {
-	return &console_pages{
-		tview.NewPages(),
-		&view_link{id: view_console_pages},
-	}
+	tty bool
+	ws  string
+	tab *tabmgr
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
@@ -206,31 +191,11 @@ func (m *mainui) async_resolve_callstack(call_in_task *lspcore.CallInTask) {
 
 // UpdatePageTitle
 func (m *mainui) UpdatePageTitle() {
-	names := m.page.GetPageNames(true)
-	for _, v := range names {
-		name := v
-		switch name {
-		case view_recent_open_file.getname():
-		case view_bookmark.getname():
-		case view_quickview.getname():
-		case view_callin.getname():
-		case view_uml.getname():
-		case view_log.getname():
-			m.page.update_title(name)
-		default:
-			return
-		}
-	}
-
+	m.tab.UpdatePageTitle()
 }
+
 func (m *mainui) is_tab(tabname string) bool {
-	pages := m.page.GetPageNames(true)
-	for _, v := range pages {
-		if v == tabname {
-			return true
-		}
-	}
-	return false
+	return m.tab.is_tab(tabname)
 }
 
 func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
@@ -246,8 +211,7 @@ func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.L
 				return
 			}
 			m.quickview.OnLspRefenceChanged(refs, data_refs, ranges)
-			s := m.quickview.String()
-			m.page.update_title(s)
+			m.tab.update_tab_title(view_quickview)
 		})
 	}()
 
@@ -311,36 +275,7 @@ func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 }
 
 func (m *mainui) ActiveTab(id view_id, focused bool) {
-	yes := false
-	for _, v := range m.tab_id {
-		if v == id {
-			yes = true
-			break
-		}
-	}
-	if !yes {
-		return
-	}
-	if focused {
-		m.lost_focus(m.get_view_from_id(m.get_focus_view_id()))
-		m.set_focus(m.get_view_from_id(id))
-	}
-	var name = id.getname()
-	m.page.SwitchToPage(name)
-	tab := m.tabs.Find(name)
-	for _, v := range m.tabs.tabs {
-		if v == tab {
-			v.Focus(nil)
-		} else {
-			v.Blur()
-		}
-	}
-	switch id {
-	case view_quickview:
-		m.page.update_title(m.quickview.String())
-	default:
-		m.page.update_title(id.getname())
-	}
+	m.tab.ActiveTab(id, focused)
 }
 
 // OnCodeViewChanged implements lspcore.lsp_data_changed.
@@ -389,20 +324,7 @@ func (m mainui) OnCodeLineChange(x, y int) {
 	}
 	m.symboltree.OnCodeLineChange(x, y)
 }
-func (m *mainui) OnTabChanged(tab *TabButton) {
-	if tab.Name == "uml" {
-		if m.uml != nil {
-			m.uml.Init()
-		}
 
-	}
-	m.page.SwitchToPage(tab.Name)
-	// m.page.SetTitle(tab.Name)
-	if vid := find_name_to_viewid(tab.Name); vid != view_none {
-		m.set_viewid_focus(vid)
-	}
-	m.UpdatePageTitle()
-}
 func (m *mainui) quit() {
 	m.Close()
 }
@@ -934,60 +856,6 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 	tab_area.AddItem(main.statusbar, 0, 10, false)
 }
 
-func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
-
-	console := new_console_pages()
-	console.SetChangedFunc(func() {
-		xx := console.GetPageNames(true)
-		if len(xx) == 1 {
-			main.activate_tab_name = xx[0]
-		}
-		log.Println(strings.Join(xx, ","))
-	})
-	main.term = NewTerminal(main.app, "bash")
-	main.log = new_log_view(main)
-	main.log.log.SetText("Started")
-	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)
-	main.console_index_list = new_qf_index_view(main)
-	console_layout := new_flex_area(view_console_area, main)
-	console_layout.AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
-	main.reload_index_list()
-
-	main.page = console
-	main.page.SetChangedFunc(func() {
-		main.UpdatePageTitle()
-	})
-
-	uml, err := NewUmlView(main, &main.lspmgr.Wk)
-	if err != nil {
-		log.Fatal(err)
-	}
-	main.uml = uml
-	var tab_id = []view_id{}
-	var tabname []string = []string{}
-	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark, view_recent_open_file, view_term} {
-		if v == view_uml {
-			if main.uml == nil {
-				continue
-			}
-		}
-		console.AddPage(v.getname(), v.Primitive(main), true, view_quickview == v)
-		tabname = append(tabname, v.getname())
-		tab_id = append(tab_id, v)
-	}
-	main.tab_id = tab_id
-	group := NewButtonGroup(tabname, main.OnTabChanged)
-	main.tabs = group
-	tab_area := tview.NewFlex()
-	for _, v := range group.tabs {
-		tab_area.AddItem(v, len(v.GetLabel())+2, 1, true)
-	}
-	var tabid view_id = view_quickview
-	fzttab := group.Find(tabid.getname())
-	fzttab.Focus(nil)
-	return console_layout, tab_area
-}
-
 func create_edit_area(main *mainui) *flex_area {
 	codeview := NewCodeView(main)
 	codeview.not_preview = true
@@ -1023,7 +891,7 @@ func create_edit_area(main *mainui) *flex_area {
 func (main *mainui) reload_index_list() {
 	go func() {
 		main.app.QueueUpdateDraw(func() {
-			main.console_index_list.Load()
+			main.console_index_list.Load(main.tab.activate_tab_id)
 		})
 	}()
 }
@@ -1047,7 +915,7 @@ func (main *mainui) OnSearch(option search_option) {
 var leadkey = ' '
 
 func (main *mainui) set_viewid_focus(v view_id) {
-	for _, tab := range main.tab_id {
+	for _, tab := range main.tab.tab_id {
 		if v == tab {
 			main.ActiveTab(tab, true)
 			return
@@ -1104,7 +972,7 @@ func (main *mainui) move_to_window(t direction) {
 	if next == view_none {
 		return
 	}
-	next_is_tab := main.view_is_tab(next)
+	next_is_tab := main.tab.view_is_tab(next)
 	if next_is_tab {
 		if cur == view_code {
 			names := main.page.GetPageNames(true)
@@ -1122,10 +990,6 @@ func (main *mainui) move_to_window(t direction) {
 	}
 }
 
-func (main *mainui) view_is_tab(next view_id) bool {
-	x := main.tabs.Find(next.getname()) != nil
-	return x
-}
 func (main *mainui) IsSource(s string) bool {
 	return main.lspmgr.IsSource(s)
 }
@@ -1155,6 +1019,9 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	if main.layout.spacemenu.visible {
 		main.layout.spacemenu.handle_key(event)
 		return nil
+	}
+	if main.term.HasFocus() {
+		return event
 	}
 	for _, v := range main.global_key_map() {
 		if v.key.matched_event(*event) {

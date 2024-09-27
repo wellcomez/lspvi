@@ -204,7 +204,6 @@ func (ret *callinview) DeleteCurrentNode() {
 		}
 	}
 	ret.main.UpdatePageTitle()
-	return
 }
 
 func (qk *callinview) OnSearch(txt string) {

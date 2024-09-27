@@ -81,6 +81,7 @@ func setupLogFile(filename string) (*os.File, error) {
 }
 
 type Pty struct {
+	Cmd  *exec.Cmd
 	File *os.File
 	Ch   chan os.Signal
 	Rows uint16 // ws_row: Number of rows (in cells).
@@ -114,7 +115,7 @@ func RunNoStdin(Args []string) *Pty {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ret := &Pty{File: f, Ch: make(chan os.Signal, 1)}
+	ret := &Pty{Cmd: c, File: f, Ch: make(chan os.Signal, 1)}
 
 	return ret
 }
