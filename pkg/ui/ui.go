@@ -14,6 +14,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
+	// femto "zen108.com/lspvi/pkg/highlight"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -94,6 +95,7 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
+	icon          *smallicon
 	term          *Term
 	fileexplorer  *file_tree_view
 	codeview      *CodeView
@@ -451,65 +453,6 @@ func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 	}
 }
 
-type workdir struct {
-	root               string
-	logfile            string
-	configfile         string
-	uml                string
-	history            string
-	cmdhistory         string
-	search_cmd_history string
-	export             string
-	temp               string
-	filelist           string
-	bookmark           string
-}
-
-func new_workdir(root string) workdir {
-	config_root := false
-	globalroot, err := CreateLspviRoot()
-	if err == nil {
-		full, err := filepath.Abs(root)
-		if err == nil {
-			root = filepath.Join(globalroot, filepath.Base(full))
-			config_root = true
-		}
-	}
-	if !config_root {
-		root = filepath.Join(root, ".lspvi")
-	}
-	export := filepath.Join(root, "export")
-	wk := workdir{
-		root:               root,
-		configfile:         filepath.Join(globalroot, "config.yaml"),
-		logfile:            filepath.Join(root, "lspvi.log"),
-		history:            filepath.Join(root, "history.log"),
-		bookmark:           filepath.Join(root, "bookmark.json"),
-		cmdhistory:         filepath.Join(root, "cmdhistory.log"),
-		search_cmd_history: filepath.Join(root, "search_cmd_history.log"),
-		export:             export,
-		temp:               filepath.Join(root, "temp"),
-		uml:                filepath.Join(export, "uml"),
-		filelist:           filepath.Join(root, ".file"),
-	}
-	ensure_dir(root)
-	ensure_dir(export)
-	ensure_dir(wk.temp)
-	ensure_dir(wk.uml)
-	return wk
-}
-
-func ensure_dir(root string) {
-	if _, err := os.Stat(root); err != nil {
-		if err := os.MkdirAll(root, 0755); err != nil {
-			panic(err)
-		}
-	}
-}
-
-var lspviroot workdir
-var global_config *LspviConfig
-
 func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
 }
@@ -562,7 +505,7 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{}
 	prj.Load(arg, main)
-
+	main.icon = new_small_icon(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
 	global_theme.update_default_color()
 
@@ -686,7 +629,6 @@ func MainUI(arg *Arguments) {
 		panic(err)
 	}
 }
-
 func handle_draw_after(main *mainui, screen tcell.Screen) {
 	if main.right_context_menu.visible {
 		main.right_context_menu.Draw(screen)
@@ -701,9 +643,11 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 			main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
 		}
 	}
+	main.icon.Draw(screen)
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
+	main.icon.handle_mouse_event(action, event)
 	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 	if content_menu_action == tview.MouseConsumed {
 		return nil, tview.MouseConsumed
@@ -788,7 +732,7 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 		AddItem(console_layout, 0, console_layout.Height, false).
 		AddItem(tab_area, 1, 0, false).
 		AddItem(main.cmdline.input, 3, 1, false)
-	main_layout.SetBorder(true)
+	// main_layout.SetBorder(true)
 	main.layout = &rootlayout{
 		editor_area: editor_area,
 		console:     console_layout,

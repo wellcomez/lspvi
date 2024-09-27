@@ -178,3 +178,62 @@ func (pk *workspace_picker) on_select(c *Project) {
 	pk.impl.parent.main.on_select_project(c)
 	pk.impl.parent.hide()
 }
+
+type workdir struct {
+	root               string
+	logfile            string
+	configfile         string
+	uml                string
+	history            string
+	cmdhistory         string
+	search_cmd_history string
+	export             string
+	temp               string
+	filelist           string
+	bookmark           string
+}
+
+func new_workdir(root string) workdir {
+	config_root := false
+	globalroot, err := CreateLspviRoot()
+	if err == nil {
+		full, err := filepath.Abs(root)
+		if err == nil {
+			root = filepath.Join(globalroot, filepath.Base(full))
+			config_root = true
+		}
+	}
+	if !config_root {
+		root = filepath.Join(root, ".lspvi")
+	}
+	export := filepath.Join(root, "export")
+	wk := workdir{
+		root:               root,
+		configfile:         filepath.Join(globalroot, "config.yaml"),
+		logfile:            filepath.Join(root, "lspvi.log"),
+		history:            filepath.Join(root, "history.log"),
+		bookmark:           filepath.Join(root, "bookmark.json"),
+		cmdhistory:         filepath.Join(root, "cmdhistory.log"),
+		search_cmd_history: filepath.Join(root, "search_cmd_history.log"),
+		export:             export,
+		temp:               filepath.Join(root, "temp"),
+		uml:                filepath.Join(export, "uml"),
+		filelist:           filepath.Join(root, ".file"),
+	}
+	ensure_dir(root)
+	ensure_dir(export)
+	ensure_dir(wk.temp)
+	ensure_dir(wk.uml)
+	return wk
+}
+
+func ensure_dir(root string) {
+	if _, err := os.Stat(root); err != nil {
+		if err := os.MkdirAll(root, 0755); err != nil {
+			panic(err)
+		}
+	}
+}
+
+var lspviroot workdir
+var global_config *LspviConfig

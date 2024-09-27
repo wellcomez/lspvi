@@ -281,7 +281,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 	bRightX := bLeftX + bw - 1
 	// bottom := top + heigth
 	uprange_1 := top - 1
-	uprange_2 := top + 1
+	// uprange_2 := top + 1
 	botom_1 := top + heigth - 1
 	botom_2 := top + heigth + 1
 	x, y := event.Position()
@@ -310,7 +310,8 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 			}
 			if !yes {
 				if x >= bLeftX && x <= bRightX && resize.resize_vertical {
-					if uprange_1 <= y && y <= uprange_2 {
+
+					if uprange_1 <= y && y <= top{
 						resize.left = move_direction_vetical
 						yes = resize.layout.allow(resize, edge_top)
 						resize.edge = edge_top
