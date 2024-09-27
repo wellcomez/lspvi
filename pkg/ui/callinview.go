@@ -274,7 +274,7 @@ func (view *callinview) update_node_color() {
 	}
 	view.view.GetRoot().Walk(func(n, parent *tview.TreeNode) bool {
 		if n != node {
-			x := view.main.codeview.colorscheme
+			x := global_theme
 			if len(view.cmd_search_key) > 0 {
 				if strings.Contains(n.GetText(), view.cmd_search_key) {
 					n.SetColor(x.search_highlight_color())

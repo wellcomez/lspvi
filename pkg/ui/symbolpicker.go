@@ -166,9 +166,9 @@ func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	return layout
 }
 
-func new_outline_picker(v *fzfmain, file *lspcore.Symbol_file) symbolpicker {
+func new_outline_picker(v *fzfmain, file *lspcore.Symbol_file, code *CodeView) symbolpicker {
 	symbol := &SymbolTreeViewExt{}
-	symbol.SymbolTreeView = NewSymbolTreeView(v.main)
+	symbol.SymbolTreeView = NewSymbolTreeView(v.main, code)
 	symbol.parent = v
 	symbol.SymbolTreeView.view.SetSelectedFunc(symbol.OnClickSymobolNode)
 

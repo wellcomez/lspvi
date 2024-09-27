@@ -241,7 +241,7 @@ func NewCodeView(main *mainui) *CodeView {
 	// view := tview.NewTextView()
 	// view.SetBorder(true)
 	ret := CodeView{view_link: &view_link{
-		id: view_none,
+		id:    view_none,
 		right: view_outline_list,
 		down:  view_quickview,
 		left:  view_file},
@@ -1045,7 +1045,7 @@ func (code *CodeView) update_with_line_changed() {
 		return
 	}
 	if code.id == view_code {
-		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y)
+		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y, code.filename)
 	}
 }
 

@@ -168,8 +168,8 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.currentpicker = sym
 }
 
-func (v *fzfmain) OpenDocumntSymbolFzf(file *lspcore.Symbol_file) {
-	sym := new_outline_picker(v, file)
+func (v *fzfmain) OpenDocumntSymbolFzf(code *CodeView) {
+	sym := new_outline_picker(v, code.lspsymbol, code)
 	layout := sym.grid(v.input)
 	v.create_dialog_content(layout, sym)
 	v.currentpicker = sym

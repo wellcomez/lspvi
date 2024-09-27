@@ -322,11 +322,11 @@ func (m *mainui) Init() {
 	m.lspmgr.Handle = m
 }
 
-func (m mainui) OnCodeLineChange(x, y int) {
+func (m mainui) OnCodeLineChange(x, y int,file string) {
 	if m.symboltree.Hide {
 		return
 	}
-	m.symboltree.OnCodeLineChange(x, y)
+	m.symboltree.OnCodeLineChange(x, y,file)
 }
 
 func (m *mainui) quit() {
@@ -821,7 +821,7 @@ func create_edit_area(main *mainui) *flex_area {
 	codeview.not_preview = true
 	codeview.Width = 8
 
-	symbol_tree := NewSymbolTreeView(main)
+	symbol_tree := NewSymbolTreeView(main,codeview)
 	symbol_tree.Width = 2
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetBorder(true)
@@ -1064,7 +1064,7 @@ func (main *mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }
 func (main *mainui) open_document_symbol_picker() {
-	main.layout.dialog.OpenDocumntSymbolFzf(main.lspmgr.Current)
+	main.layout.dialog.OpenDocumntSymbolFzf(main.codeview)
 }
 
 type Search interface {
