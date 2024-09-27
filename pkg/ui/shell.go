@@ -3,11 +3,13 @@ package mainui
 import (
 	// "io"
 	"bytes"
+	"strings"
 	// "encoding/hex"
 	"io"
 	"log"
 	"os/signal"
-	"strings"
+
+	// "strings"
 	"syscall"
 	"time"
 	"unicode"
@@ -61,8 +63,8 @@ type Term struct {
 	*tview.Box
 	imp *terminal_impl
 	*view_link
-	dest *terminal.State
-	// dest *terminal.State
+	dest    *terminal.State
+	topline int
 }
 
 // Write implements io.Writer.
@@ -85,6 +87,14 @@ func (t *Term) v100state(p []byte) (int, error) {
 	r := bytes.NewReader(p)
 	t.dest.Lock()
 	defer t.dest.Unlock()
+
+	state := t.dest
+	offsize := t.topline
+	log.Println("offscreen size", offsize)
+	// _, bottom := state.Cursor()
+	// _, height := state.Size()
+	// log.Println("bottom", bottom)
+	// oldline := state.CurrentCell()
 	for {
 		c, sz, err := r.ReadRune()
 		if err != nil {
@@ -104,18 +114,35 @@ func (t *Term) v100state(p []byte) (int, error) {
 		}
 		t.dest.Put(c)
 	}
+	t.topline = len(t.dest.Offscreen)
+
+	log.Println("new offscreen size", t.topline, state.OfflineString(t.topline-1))
+	// newline := state.CurrentCell()
+	// _, new_bottom := state.Cursor()
+	// if new_bottom == height {
+	// 	if new_bottom > bottom {
+
+	// 	}
+	// }
+
 	col, row := t.dest.Size()
-	log.Println(strings.Repeat("-", 80))
+
+	log.Println(strings.Repeat("o", 80))
+	for y := 0; y < len(t.dest.Offscreen); y++ {
+		log.Println("<<<<<<", y, state.OfflineString(y))
+	}
+	log.Println(strings.Repeat("o", 80))
+
+	log.Println(strings.Repeat("n", 80))
 	for y := 0; y < row; y++ {
 		var line []rune
 		for x := 0; x < col; x++ {
 			ch, _, _ := t.dest.Cell(x, y)
 			line = append(line, ch)
 		}
-		log.Println(">", string(line))
-
+		log.Println(">>>>>", string(line))
 	}
-	log.Println(strings.Repeat("+", 80))
+	log.Println(strings.Repeat("n", 80))
 	return written, nil
 }
 
@@ -126,7 +153,7 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		cmdline = "/usr/bin/sh"
 	}
 
-	t := Term{tview.NewBox(),
+	t := &Term{tview.NewBox(),
 		&terminal_impl{
 			nil,
 			shellname,
@@ -135,6 +162,7 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		},
 		&view_link{id: view_term},
 		&terminal.State{},
+		0,
 	}
 	t.dest.Init()
 	t.dest.DebugLogger = log.Default()
@@ -158,23 +186,23 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		io.Copy(t, ptyio.File)
 	}()
 	t.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		// switch action {
-		// case 14, 13:
-		// 	{
-		// 		gap := 1
-		// 		if action == 14 {
-		// 			t.ScrollDown(gap)
-		// 		} else {
-		// 			t.ScrollUp(gap)
-		// 		}
-		// 		go func() {
-		// 			app.QueueUpdateDraw(func() {})
-		// 		}()
-		// 	}
-		// }
+		switch action {
+		case 14, 13:
+			{
+				state := t.dest
+				if action == 14 {
+					t.topline = min(len(state.Offscreen), t.topline+1)
+				} else {
+					t.topline = max(0, t.topline-1)
+				}
+				go func() {
+					app.QueueUpdateDraw(func() {})
+				}()
+			}
+		}
 		return action, event
 	})
-	return &t
+	return t
 }
 
 func (t Term) UpdateTermSize() {
@@ -211,7 +239,7 @@ func (t *Term) Draw(screen tcell.Screen) {
 	posx, posy, width, height := t.GetInnerRect()
 	cols, rows := t.dest.Size()
 	default_fg, default_bg, _ := global_theme.get_default_style().Decompose()
-	log.Printf("width=%d,height=%d col=%d row=%d %x", width, height, cols, rows, tcell.ColorGreen)
+	//log.Printf("width=%d,height=%d col=%d row=%d %x", width, height, cols, rows, tcell.ColorGreen)
 	for y := 0; y < rows; y++ {
 		for x := 0; x < cols; x++ {
 			ch, fg, bg := t.dest.Cell(x, y)

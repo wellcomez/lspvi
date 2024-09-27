@@ -2,6 +2,7 @@ package terminal
 
 import (
 	"log"
+	"strings"
 	"sync"
 )
 
@@ -86,6 +87,7 @@ type State struct {
 	changed       ChangeFlag
 	cols, rows    int
 	lines         []line
+	Offscreen     []line
 	altLines      []line
 	dirty         []bool // line dirtiness
 	anydirty      bool
@@ -145,6 +147,12 @@ func (t *State) Lock() {
 func (t *State) Unlock() {
 	t.resetChanges()
 	t.mu.Unlock()
+}
+func (t *State) OfflineCol(y int) int {
+	return len(t.Offscreen[y])
+}
+func (t *State) OfflineCell(x, y int) (ch rune, fg Color, bg Color) {
+	return t.Offscreen[y][x].c, Color(t.Offscreen[y][x].fg), Color(t.Offscreen[y][x].bg)
 }
 
 // Cell returns the character code, foreground color, and background
@@ -230,6 +238,13 @@ func (t *State) newline(firstCol bool) {
 	if y == t.bottom {
 		cur := t.cur
 		t.cur = t.defaultCursor()
+		for i := 0; i < 1; i++ {
+			var l line
+			l = append(l, t.lines[i]...)
+			t.Offscreen = append(t.Offscreen, l)
+			log.Println(strings.Repeat("+", 5), t.LineString(i))
+			log.Println("offscreen", l.String())
+		}
 		t.ScrollUp(t.top, 1)
 		t.cur = cur
 	} else {
@@ -240,6 +255,29 @@ func (t *State) newline(firstCol bool) {
 	} else {
 		t.moveTo(t.cur.x, y)
 	}
+}
+func (x line) String() string {
+	var r []rune
+	for _, v := range x {
+		r = append(r, v.c)
+	}
+	return string(r)
+}
+func (t *State) linestring(lines []line, i int) string {
+	if i < 0 {
+		return ""
+	}
+	if i < len(lines) {
+		s := lines[i].String()
+		return strings.TrimLeft(s, " ")
+	}
+	return ""
+}
+func (t *State) LineString(i int) string {
+	return t.linestring(t.lines, i)
+}
+func (t *State) OfflineString(i int) string {
+	return t.linestring(t.Offscreen, i)
 }
 
 // table from st, which in turn is from rxvt :)
