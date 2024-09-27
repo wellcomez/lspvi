@@ -26,30 +26,35 @@ import (
 	// "github.com/pgavlin/femto"
 	// v100 "golang.org/x/term"
 	"zen108.com/lspvi/pkg/pty"
-	"zen108.com/lspvi/pkg/term"
+	terminal "zen108.com/lspvi/pkg/term"
 )
 
 type terminal_impl struct {
 	ptystdio  *pty.Pty
 	shellname string
-	buf       []byte
 	ondata    func(*terminal_impl)
 	topline   int
 	dest      *terminal.State
-	// v100term  *v100.Terminal
-	// w, h int
+	ui        tview.Primitive
 }
 type Term struct {
 	// *femto.View
 	*tview.Box
-	imp *terminal_impl
+	term *terminal_impl
 	*view_link
+}
+type ptyread struct {
+	term *terminal_impl
+}
+
+func (ty ptyread) Write(p []byte) (n int, err error) {
+	return ty.term.Write(p)
 }
 
 // Write implements io.Writer.
-func (t Term) Write(p []byte) (n int, err error) {
+func (t *terminal_impl) Write(p []byte) (n int, err error) {
 	// not enough bytes for a full rune
-	if n, err := t.imp.v100state(p); err != nil {
+	if n, err := t.v100state(p); err != nil {
 		log.Println("vstate 100", err, n)
 	} else {
 		// log.Println("write", n, hex.EncodeToString(p))
@@ -133,66 +138,76 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	}
 
 	ret := &Term{tview.NewBox(),
-		&terminal_impl{
-			nil,
-			shellname,
-			[]byte{},
-			nil,
-			0,
-			&terminal.State{},
-		},
+		nil,
 		&view_link{id: view_term},
 	}
-	t := ret.imp
-	t.dest.Init()
-	t.dest.DebugLogger = log.Default()
-	col := 80
-	row := 40
-	t.dest.Resize(col, row)
-	go func() {
-		ptyio := pty.RunNoStdin([]string{cmdline})
-		signal.Notify(ptyio.Ch, syscall.SIGWINCH)
-		t.ptystdio = ptyio
-		ret.UpdateTermSize()
-		// v100term := v100.NewTerminal(ptyio.File, "")
-		// t.imp.v100term = v100term
-		go func() {
-			for range ptyio.Ch {
-				timer := time.After(100 * time.Millisecond)
-				<-timer
-				ret.UpdateTermSize()
-			}
-		}()
-		io.Copy(ret, ptyio.File)
-	}()
+	term := &terminal_impl{
+		nil,
+		shellname,
+		nil,
+		0,
+		&terminal.State{},
+		ret,
+	}
+	ret.term = term
+
+	term.start_pty(cmdline)
 	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		switch action {
-		case 14, 13:
-			{
-				state := t.dest
-				if action == 14 {
-					t.topline = min(len(state.Offscreen), t.topline+1)
-				} else {
-					if t.topline < 1 {
-						t.topline = 0
-					} else {
-						t.topline--
-					}
-				}
-				go func() {
-					app.QueueUpdateDraw(func() {})
-				}()
-			}
-		}
-		return action, event
+		return ret.handle_mouse(action, app, event)
 	})
 	return ret
 }
 
-func (t Term) UpdateTermSize() {
-	ptyio := t.imp.ptystdio
-	_, _, w, h := t.GetRect()
-	t.imp.dest.Resize(w, h)
+func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	t := ret.term
+	switch action {
+	case 14, 13:
+		{
+			state := t.dest
+			if action == 14 {
+				t.topline = min(len(state.Offscreen), t.topline+1)
+			} else {
+				if t.topline < 1 {
+					t.topline = 0
+				} else {
+					t.topline--
+				}
+			}
+			go func() {
+				app.QueueUpdateDraw(func() {})
+			}()
+		}
+	}
+	return action, event
+}
+
+func (term *terminal_impl) start_pty(cmdline string) {
+	term.dest.Init()
+	term.dest.DebugLogger = log.Default()
+	col := 80
+	row := 40
+	term.dest.Resize(col, row)
+	go func() {
+		ptyio := pty.RunNoStdin([]string{cmdline})
+		signal.Notify(ptyio.Ch, syscall.SIGWINCH)
+		term.ptystdio = ptyio
+		term.UpdateTermSize()
+		go func() {
+			for range ptyio.Ch {
+				timer := time.After(100 * time.Millisecond)
+				<-timer
+				term.UpdateTermSize()
+			}
+		}()
+
+		io.Copy(ptyread{term}, ptyio.File)
+	}()
+}
+
+func (term *terminal_impl) UpdateTermSize() {
+	ptyio := term.ptystdio
+	_, _, w, h := term.ui.GetRect()
+	term.dest.Resize(w, h)
 	if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
 		log.Printf("error resizing pty: %s", err)
 	}
@@ -201,10 +216,10 @@ func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		_, _, width, height := t.GetRect()
 		log.Println("term", "width", width, "height", height)
-		if t.imp.ptystdio != nil {
+		if t.term.ptystdio != nil {
 			var n int
 			var err error
-			ptyio := t.imp.ptystdio.File
+			ptyio := t.term.ptystdio.File
 			if buf := t.TypedKey(event); buf != nil {
 				n, err = ptyio.Write(buf.buf)
 			} else {
@@ -240,7 +255,7 @@ func (d term_line_drawer) Draw(screen tcell.Screen, index, screenY int, style tc
 
 func (termui *Term) Draw(screen tcell.Screen) {
 	termui.Box.DrawForSubclass(screen, termui)
-	t := termui.imp
+	t := termui.term
 	t.dest.Lock()
 	defer t.dest.Unlock()
 	posx, posy, width, height := termui.GetInnerRect()
