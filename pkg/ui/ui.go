@@ -1156,9 +1156,9 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		main.layout.spacemenu.handle_key(event)
 		return nil
 	}
-  if main.term.HasFocus(){
-    return event
-  }
+	if main.term.HasFocus() {
+		return event
+	}
 	for _, v := range main.global_key_map() {
 		if v.key.matched_event(*event) {
 			if v.cmd.handle() {

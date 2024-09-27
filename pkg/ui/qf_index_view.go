@@ -10,19 +10,30 @@ var qk_index_update = make(chan bool)
 type qf_index_view struct {
 	*view_link
 	*customlist
-	keys          []qf_history_data
-	keymaplist    []string
 	main          *mainui
+	qfh           *qf_index_view_history
 	right_context qf_index_menu_context
+}
+type qf_index_view_history struct {
+	*customlist
+	keys       []qf_history_data
+	keymaplist []string
+	main       *mainui
 }
 
 func (view *qf_index_view) Delete(index int) {
+	view.qfh.Delete(index)
+}
+func (view *qf_index_view_history) Delete(index int) {
 	view.List.RemoveItem(index)
 	if len(view.keys) > 0 {
 		view.Add(view.keys[index], false)
 	}
 }
 func (view *qf_index_view) Load() {
+	view.qfh.Load()
+}
+func (view *qf_index_view_history) Load() {
 	list := view
 	cur := list.GetCurrentItem()
 	main := view.main
@@ -42,7 +53,7 @@ func (view *qf_index_view) Load() {
 	view.keys = keys
 	view.keymaplist = keymaplist
 }
-func (view *qf_index_view) Add(data qf_history_data, add bool) error {
+func (view *qf_index_view_history) Add(data qf_history_data, add bool) error {
 	main := view.main
 	h, err := new_qf_history(main)
 	if err != nil {
@@ -86,11 +97,12 @@ func new_qf_index_view(main *mainui) *qf_index_view {
 		customlist: new_customlist(false),
 		main:       main,
 	}
+	ret.new_qfh()
 	ret.customlist.SetBorder(true)
 
 	var items = []context_menu_item{
 		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
-			ret.Delete(ret.GetCurrentItem())
+			ret.qfh.Delete(ret.GetCurrentItem())
 		}},
 	}
 	ret.right_context = qf_index_menu_context{
@@ -102,9 +114,19 @@ func new_qf_index_view(main *mainui) *qf_index_view {
 		for {
 			<-qk_index_update
 			main.app.QueueUpdateDraw(func() {
-				ret.Load()
+				ret.qfh.Load()
 			})
 		}
 	}()
 	return ret
+}
+
+func (ret *qf_index_view)new_qfh() {
+	qfh := &qf_index_view_history{
+		ret.customlist,
+		[]qf_history_data{},
+		[]string{},
+		ret.main,
+	}
+	ret.qfh = qfh
 }
