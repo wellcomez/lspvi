@@ -136,9 +136,9 @@ func (t *terminal_pty) v100state(p []byte) (int, error) {
 	t.dest.Lock()
 	defer t.dest.Unlock()
 
-	state := t.dest
-	offsize := t.topline
-	log.Println("offscreen size", offsize)
+	// state := t.dest
+	// offsize := t.topline
+	// log.Println("offscreen size", offsize)
 	// _, bottom := state.Cursor()
 	// _, height := state.Size()
 	// log.Println("bottom", bottom)
@@ -157,14 +157,14 @@ func (t *terminal_pty) v100state(p []byte) (int, error) {
 				// not enough bytes for a full rune
 				return written - 1, nil
 			}
-			log.Println("invalid utf8 sequence")
+			// log.Println("invalid utf8 sequence")
 			continue
 		}
 		t.dest.Put(c)
 	}
 	t.topline = len(t.dest.Offscreen)
 
-	log.Println("new offscreen size", t.topline, state.OfflineString(t.topline-1))
+	// log.Println("new offscreen size", t.topline, state.OfflineString(t.topline-1))
 	// newline := state.CurrentCell()
 	// _, new_bottom := state.Cursor()
 	// if new_bottom == height {
@@ -173,24 +173,24 @@ func (t *terminal_pty) v100state(p []byte) (int, error) {
 	// 	}
 	// }
 
-	col, row := t.dest.Size()
+	// col, row := t.dest.Size()
 
-	log.Println(strings.Repeat("o", 80))
-	for y := 0; y < len(t.dest.Offscreen); y++ {
-		log.Println("<<<<<<", y, state.OfflineString(y))
-	}
-	log.Println(strings.Repeat("o", 80))
+	// log.Println(strings.Repeat("o", 80))
+	// for y := 0; y < len(t.dest.Offscreen); y++ {
+	// log.Println("<<<<<<", y, state.OfflineString(y))
+	// }
+	// log.Println(strings.Repeat("o", 80))
 
-	log.Println(strings.Repeat("n", 80))
-	for y := 0; y < row; y++ {
-		var line []rune
-		for x := 0; x < col; x++ {
-			ch, _, _ := t.dest.Cell(x, y)
-			line = append(line, ch)
-		}
-		log.Println(">>>>>", string(line))
-	}
-	log.Println(strings.Repeat("n", 80))
+	// log.Println(strings.Repeat("n", 80))
+	// for y := 0; y < row; y++ {
+	// 	var line []rune
+	// 	for x := 0; x < col; x++ {
+	// 		ch, _, _ := t.dest.Cell(x, y)
+	// 		line = append(line, ch)
+	// 	}
+	// 	// log.Println(">>>>>", string(line))
+	// }
+	// log.Println(strings.Repeat("n", 80))
 	return written, nil
 }
 
