@@ -18,6 +18,7 @@ import (
 
 	// "os/exec"
 
+	"github.com/atotto/clipboard"
 	corepty "github.com/creack/pty"
 	// "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2"
@@ -48,12 +49,27 @@ func (t terminal_pty) displayname() string {
 	return fmt.Sprintf("%s-%s", t.shellname, pid)
 }
 
+type line []rune
 type selectarea struct {
 	mouse_select_area bool
 	start, end        femto.Loc
 	cols              int
+	text              []line
 }
 
+func (c *selectarea) GetSelection() string {
+	if c.HasSelection() {
+		var ret []string
+		for _, v := range c.text {
+			s1 := string(v)
+			ret = append(ret, s1)
+		}
+		s := strings.Join(ret, "\n")
+		clipboard.WriteAll(s)
+		return s
+	}
+	return ""
+}
 func (c *selectarea) HasSelection() bool {
 	return c.start != c.end
 }
@@ -73,8 +89,9 @@ type Term struct {
 	*tview.Box
 	current *terminal_pty
 	*view_link
-	termlist []*terminal_pty
-	sel      selectarea
+	termlist      []*terminal_pty
+	sel           selectarea
+	right_context *term_right_menu
 }
 type ptyread struct {
 	term *terminal_pty
@@ -170,6 +187,25 @@ func (t *terminal_pty) v100state(p []byte) (int, error) {
 	return written, nil
 }
 
+type term_right_menu struct {
+	view      *Term
+	menu_item *menudata
+}
+
+func (menu term_right_menu) getbox() *tview.Box {
+	return menu.view.Box
+}
+
+func (menu term_right_menu) menuitem() []context_menu_item {
+	return menu.menu_item.menu_item
+}
+
+func (menu term_right_menu) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	if action == tview.MouseRightClick {
+		return tview.MouseConsumed, nil
+	}
+	return tview.MouseConsumed, nil
+}
 func NewTerminal(app *tview.Application, shellname string) *Term {
 
 	ret := &Term{tview.NewBox(),
@@ -177,6 +213,17 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		&view_link{id: view_term},
 		[]*terminal_pty{},
 		selectarea{},
+		nil,
+	}
+	ret.right_context = &term_right_menu{
+		view: ret,
+		menu_item: &menudata{[]context_menu_item{
+			{item: cmditem{cmd: cmdactor{desc: "Copy "}}, handle: func() {
+				// ret.qfh.Delete(ret.GetCurrentItem())
+				ret.sel.GetSelection()
+			}},
+		}},
+		// main:      main,
 	}
 	term := ret.new_pty(shellname)
 	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -216,18 +263,13 @@ func (ret *Term) new_pty(shellname string) *terminal_pty {
 	term.start_pty(cmdline)
 	return term
 }
-
-func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-	t := ret.current
-	if t == nil {
-		return action, event
-	}
+func (root *selectarea) mouse_selection(action tview.MouseAction,
+	event *tcell.EventMouse) bool {
 	posX, posY := event.Position()
 	pos := femto.Loc{
 		X: posX,
 		Y: posY,
 	}
-	root := &ret.sel
 	drawit := false
 	switch action {
 	case tview.MouseLeftDoubleClick:
@@ -236,7 +278,7 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 	case tview.MouseLeftDown:
 		{
 			root.mouse_select_area = true
-			// root.end = pos
+			root.end = pos
 			root.start = pos
 			log.Println("down", root.start, pos)
 		}
@@ -244,6 +286,7 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 		{
 			if root.mouse_select_area {
 				root.end = (pos)
+				root.alloc()
 				drawit = true
 				log.Println("move", root.start, pos)
 			}
@@ -253,6 +296,7 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 			if root.mouse_select_area {
 				root.end = pos
 				root.mouse_select_area = false
+				root.alloc()
 				drawit = true
 				log.Println("up", root.start, pos)
 			}
@@ -263,6 +307,20 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 			root.start = pos
 			root.end = pos
 		}
+	}
+	return drawit
+}
+
+func (root *selectarea) alloc() {
+	root.text = make([]line, root.end.Y-root.start.Y+1)
+}
+func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	t := ret.current
+	if t == nil {
+		return action, event
+	}
+	drawit := ret.sel.mouse_selection(action, event)
+	switch action {
 	case 14, 13:
 		{
 			state := t.dest
@@ -342,11 +400,11 @@ type term_line_drawer struct {
 	default_fg, default_bg tcell.Color
 	posx, posy             int
 	lineno_offset, cols    int
-	sel                    selectarea
+	sel                    *selectarea
 	selection_style        tcell.Style
 }
 
-func (d term_line_drawer) Draw(screen tcell.Screen, index, screenY int, style tcell.Style, OfflineCell func(x, y int) (ch rune, fg, bg terminal.Color)) {
+func (d *term_line_drawer) Draw(screen tcell.Screen, index, screenY int, style tcell.Style, OfflineCell func(x, y int) (ch rune, fg, bg terminal.Color)) {
 	if d.lineno_offset > 0 {
 		sss := fmt.Sprintf("%4d", index)
 		for i, v := range sss {
@@ -363,6 +421,9 @@ func (d term_line_drawer) Draw(screen tcell.Screen, index, screenY int, style tc
 		style := get_style_from_fg_bg(bg, d.default_bg, fg, d.default_fg)
 		screenX := d.posx + x + d.lineno_offset
 		if d.sel.HasSelection() && d.sel.In(screenX, screenY) {
+			s := d.sel.text[screenY-d.sel.start.Y]
+			s = append(s, ch)
+			d.sel.text[screenY-d.sel.start.Y] = s
 			screen.SetContent(screenX, screenY, ch, nil, style.Background(selbg))
 		} else {
 			screen.SetContent(screenX, screenY, ch, nil, style)
@@ -394,7 +455,7 @@ func (termui *Term) Draw(screen tcell.Screen) {
 		default_fg, default_bg,
 		posx, posy,
 		lineno_offset, cols,
-		termui.sel,
+		&termui.sel,
 		sel_style,
 	}
 	if termui.sel.HasSelection() {
