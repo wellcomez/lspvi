@@ -50,7 +50,7 @@ func (t terminal_pty) displayname() string {
 type Term struct {
 	// *femto.View
 	*tview.Box
-	term *terminal_pty
+	current *terminal_pty
 	*view_link
 	termlist []*terminal_pty
 }
@@ -159,7 +159,7 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		return ret.handle_mouse(action, app, event)
 	})
-	ret.term = term
+	ret.current = term
 	ret.termlist = append(ret.termlist, term)
 	return ret
 }
@@ -191,7 +191,7 @@ func (ret *Term) new_pty(shellname string) *terminal_pty {
 }
 
 func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-	t := ret.term
+	t := ret.current
 	if t == nil {
 		return action, event
 	}
@@ -251,10 +251,10 @@ func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		_, _, width, height := t.GetRect()
 		log.Println("term", "width", width, "height", height)
-		if t.term.ptystdio != nil {
+		if t.current.ptystdio != nil {
 			var n int
 			var err error
-			ptyio := t.term.ptystdio.File
+			ptyio := t.current.ptystdio.File
 			if buf := t.TypedKey(event); buf != nil {
 				n, err = ptyio.Write(buf.buf)
 			} else {
@@ -290,7 +290,7 @@ func (d term_line_drawer) Draw(screen tcell.Screen, index, screenY int, style tc
 
 func (termui *Term) Draw(screen tcell.Screen) {
 	termui.Box.DrawForSubclass(screen, termui)
-	t := termui.term
+	t := termui.current
 	t.dest.Lock()
 	defer t.dest.Unlock()
 	posx, posy, width, height := termui.GetInnerRect()

@@ -30,8 +30,26 @@ func (view *qf_index_view_history) Delete(index int) {
 		view.Add(view.keys[index], false)
 	}
 }
-func (view *qf_index_view) Load(v view_id ) {
-	view.qfh.Load()
+func (view *qf_index_view) Load(v view_id) {
+	switch v {
+	case view_callin, view_quickview, view_bookmark:
+		view.qfh.Load()
+	case view_term:
+		{
+			list := view
+			list.Clear()
+			term := view.main.term
+			data := term.ListTerm()
+			for i := range data {
+				value := data[i]
+				list.AddItem(value, "", func() {
+					term.current = term.termlist[i]
+				})
+			}
+		}
+	default:
+		view.customlist.Clear()
+	}
 }
 func (view *qf_index_view_history) Load() {
 	list := view
@@ -121,7 +139,7 @@ func new_qf_index_view(main *mainui) *qf_index_view {
 	return ret
 }
 
-func (ret *qf_index_view)new_qfh() {
+func (ret *qf_index_view) new_qfh() {
 	qfh := &qf_index_view_history{
 		ret.customlist,
 		[]qf_history_data{},

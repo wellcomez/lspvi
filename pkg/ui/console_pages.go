@@ -86,12 +86,7 @@ func (tabs *tabmgr) ActiveTab(id view_id, focused bool) {
 	}
 	tabs.activate_tab_id = id
 	tabs.update_tab_title(id)
-	switch id {
-	case view_quickview, view_callin:
-		m.console_index_list.Load(id)
-	default:
-		tabs.page.update_title(id.getname())
-	}
+	m.console_index_list.Load(id)
 }
 
 func (tabs *tabmgr) update_tab_title(id view_id) {
