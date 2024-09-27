@@ -251,7 +251,7 @@ func (termui *Term) Draw(screen tcell.Screen) {
 	offline := state.Offscreen
 	total_offscreen_len := len(offline)
 	offlines_to_draw := 0
-	lineno_offset := 5
+	lineno_offset := 0
 	default_theme_style := tcell.StyleDefault.Foreground(default_fg).Background(default_bg)
 	var draw = term_line_drawer{
 		default_fg, default_bg,
