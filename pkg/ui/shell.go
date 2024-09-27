@@ -233,7 +233,7 @@ func NewTerminal(main *mainui, app *tview.Application, shellname string) *Term {
 		}},
 		// main:      main,
 	}
-	term := ret.new_pty(shellname)
+	term := ret.new_pty(shellname, nil)
 	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		return ret.handle_mouse(action, app, event)
 	})
@@ -249,7 +249,7 @@ func (t *Term) ListTerm() []string {
 	return ret
 }
 
-func (ret *Term) new_pty(shellname string) *terminal_pty {
+func (ret *Term) new_pty(shellname string, cb func(bool)) *terminal_pty {
 	cmdline := ""
 	switch shellname {
 	case "bash":
@@ -268,7 +268,19 @@ func (ret *Term) new_pty(shellname string) *terminal_pty {
 		ret,
 	}
 
-	term.start_pty(cmdline)
+	term.start_pty(cmdline, func(yes bool, t *terminal_pty) {
+		if !yes {
+			for i, v := range ret.termlist {
+				if v == t {
+					ret.termlist = append(ret.termlist[:i], ret.termlist[i+1:]...)
+					break
+				}
+			}
+		}
+		if cb != nil {
+			cb(yes)
+		}
+	})
 	return term
 }
 func (root *selectarea) handle_mouse_selection(action tview.MouseAction,
@@ -358,7 +370,7 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 	return action, event
 }
 
-func (term *terminal_pty) start_pty(cmdline string) {
+func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty)) {
 	term.dest.Init()
 	term.dest.DebugLogger = log.Default()
 	col := 80
@@ -376,8 +388,13 @@ func (term *terminal_pty) start_pty(cmdline string) {
 				term.UpdateTermSize()
 			}
 		}()
-
+		if end != nil {
+			end(true, term)
+		}
 		io.Copy(ptyread{term}, ptyio.File)
+		if end != nil {
+			end(false, term)
+		}
 	}()
 }
 

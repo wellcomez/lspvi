@@ -5,7 +5,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-var qk_index_update = make(chan bool)
+var qk_index_update = make(chan view_id)
 
 type qf_index_view struct {
 	*view_link
@@ -81,7 +81,11 @@ func (ret *qf_index_view) Load(viewid view_id) bool {
 }
 
 func (term *Term) addterm(s string) {
-	term.current = term.new_pty(s)
+	term.current = term.new_pty(s,func(b bool) {
+		if b{
+			qf_index_view_update(view_term)
+		}
+	})
 	term.termlist = append(term.termlist, term.current)
 	go func() {
 		GlobalApp.QueueUpdateDraw(func() {})
@@ -99,7 +103,11 @@ func (term *Term) Kill() {
 	term.termlist = pty
 	curent := term.current
 	if len(pty) == 0 {
-		term.current = term.new_pty("bash")
+		term.current = term.new_pty("bash",func(b bool) {
+			if b{
+				qf_index_view_update(view_term)
+			}
+		})
 		term.termlist = append(term.termlist, term.current)
 	}
 	curent.Kill()
@@ -138,8 +146,8 @@ func (view *qf_index_view_history) Add(data qf_history_data, add bool) error {
 	view.Load()
 	return err
 }
-func qf_index_view_update() {
-	qk_index_update <- true
+func qf_index_view_update(id view_id) {
+	qk_index_update <- id
 }
 
 type menudata struct {
@@ -184,9 +192,9 @@ func new_qf_index_view(main *mainui) *qf_index_view {
 	}
 	go func() {
 		for {
-			<-qk_index_update
+			var v = <-qk_index_update
 			main.app.QueueUpdateDraw(func() {
-				ret.qfh.Load()
+				ret.Load(v)
 			})
 		}
 	}()

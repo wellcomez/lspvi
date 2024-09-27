@@ -188,7 +188,7 @@ func (ret *callinview) DeleteCurrentNode() {
 					} else {
 						callnode.call.Save(lspviroot.uml)
 					}
-					qf_index_view_update()
+					qf_index_view_update(view_callin)
 					if next != nil {
 						ret.view.SetCurrentNode(next)
 					}
@@ -201,7 +201,7 @@ func (ret *callinview) DeleteCurrentNode() {
 			for i := range ret.task_list {
 				if i == task_index {
 					ret.task_list[i].call.Delete(lspviroot.uml)
-					qf_index_view_update()
+					qf_index_view_update(view_callin)
 				} else {
 					list1 = append(list1, ret.task_list[i])
 				}
@@ -313,7 +313,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	}
 	if !found {
 		callin.task_list = append(callin.task_list, CallNode{*task, []int{}})
-		qf_index_view_update()
+		qf_index_view_update(view_callin)
 	}
 	root_node := tview.NewTreeNode(
 		fmt.Sprintf("[%d]", len(callin.task_list)))
