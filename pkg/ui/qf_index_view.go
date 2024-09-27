@@ -53,13 +53,30 @@ func (ret *qf_index_view) Load(viewid view_id) {
 					term.termlist = append(term.termlist, term.current)
 					ret.Load(viewid)
 				}},
+				{item: cmditem{cmd: cmdactor{desc: "Exit"}}, handle: func() {
+					var pty []*terminal_pty
+					for i, v := range term.termlist {
+						if v == term.current {
+							pty = append(term.termlist[:i], term.termlist[i+1:]...)
+							break
+						}
+					}
+					term.termlist = pty
+					curent := term.current
+					if len(pty) == 0 {
+						term.current = term.new_pty("bash")
+						term.termlist = append(term.termlist, term.current)
+					}
+					curent.Kill()
+					ret.Load(viewid)
+				}},
 			}}
 			list := ret
 			list.Clear()
 			data := term.ListTerm()
 			current := 0
 			for i := range data {
-				index:=i
+				index := i
 				value := data[index]
 				list.AddItem(value, "", func() {
 					term.current = term.termlist[index]
