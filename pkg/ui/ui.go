@@ -100,6 +100,7 @@ type mainui struct {
 	term          *Term
 	fileexplorer  *file_tree_view
 	codeview      *CodeView
+	codeview1     *CodeView
 	codeview2     *CodeView
 	lspmgr        *lspcore.LspWorkspace
 	symboltree    *SymbolTreeView
@@ -322,11 +323,11 @@ func (m *mainui) Init() {
 	m.lspmgr.Handle = m
 }
 
-func (m mainui) OnCodeLineChange(x, y int,file string) {
+func (m mainui) OnCodeLineChange(x, y int, file string) {
 	if m.symboltree.Hide {
 		return
 	}
-	m.symboltree.OnCodeLineChange(x, y,file)
+	m.symboltree.OnCodeLineChange(x, y, file)
 }
 
 func (m *mainui) quit() {
@@ -820,8 +821,9 @@ func create_edit_area(main *mainui) *flex_area {
 	codeview.id = view_code
 	codeview.not_preview = true
 	codeview.Width = 8
+	main.codeview1 = codeview
 
-	symbol_tree := NewSymbolTreeView(main,codeview)
+	symbol_tree := NewSymbolTreeView(main, codeview)
 	symbol_tree.Width = 2
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetBorder(true)
