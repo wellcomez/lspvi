@@ -216,6 +216,28 @@ func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.
 		}
 	})
 }
+
+type linedraw struct {
+	default_fg, default_bg tcell.Color
+	posx, posy             int
+	lineno_offset, cols    int
+}
+
+func (d linedraw) Draw(screen tcell.Screen, index, screenY int, style tcell.Style, OfflineCell func(x, y int) (ch rune, fg, bg terminal.Color)) {
+	if d.lineno_offset > 0 {
+		sss := fmt.Sprintf("%4d", index)
+		for i, v := range sss {
+			screen.SetContent(d.posx+i, screenY, rune(v), nil, style)
+		}
+	}
+	for x := 0; x < d.cols-d.lineno_offset; x++ {
+		ch, fg, bg := OfflineCell(x, index)
+		style := get_style_from_fg_bg(bg, d.default_bg, fg, d.default_fg)
+		screenX := d.posx + x + d.lineno_offset
+		screen.SetContent(screenX, screenY, ch, nil, style)
+	}
+}
+
 func (termui *Term) Draw(screen tcell.Screen) {
 	termui.Box.DrawForSubclass(screen, termui)
 	t := termui.imp
@@ -224,37 +246,31 @@ func (termui *Term) Draw(screen tcell.Screen) {
 	posx, posy, width, height := termui.GetInnerRect()
 	cols, rows := t.dest.Size()
 	bottom := posy + height
-	top := posy
 	default_fg, default_bg, _ := global_theme.get_default_style().Decompose()
 	state := t.dest
 	offline := state.Offscreen
 	total_offscreen_len := len(offline)
 	offlines_to_draw := 0
 	lineno_offset := 5
+	default_theme_style := tcell.StyleDefault.Foreground(default_fg).Background(default_bg)
+	var draw = linedraw{
+		default_fg, default_bg,
+		posx, posy,
+		lineno_offset, cols,
+	}
 
 	if t.topline > 0 {
 		offlines_to_draw = (total_offscreen_len - t.topline)
 		if offlines_to_draw > 0 {
-			for y := 0; y < offlines_to_draw; y++ {
-				line_index := total_offscreen_len - y - 1
-				screenY := posy + y
-				if screenY < top {
+			screenY := posy
+			for index := total_offscreen_len - offlines_to_draw; index < total_offscreen_len; index++ {
+				if screenY < bottom {
+
+					draw.Draw(screen, index, screenY, tcell.StyleDefault, t.dest.OfflineCell)
+				} else {
 					break
 				}
-				if screenY < bottom {
-					if lineno_offset > 0 {
-						sss := fmt.Sprintf("%4d", line_index)
-						for i, v := range sss {
-							screen.SetContent(posx+i, screenY, rune(v), nil, tcell.StyleDefault)
-						}
-					}
-					for x := 0; x < cols-lineno_offset; x++ {
-						ch, fg, bg := t.dest.OfflineCell(x, line_index)
-						style := get_style_from_fg_bg(bg, default_bg, fg, default_fg)
-						screenX := posx + x + lineno_offset
-						screen.SetContent(screenX, screenY, ch, nil, style)
-					}
-				}
+				screenY++
 			}
 		}
 	}
@@ -263,19 +279,7 @@ func (termui *Term) Draw(screen tcell.Screen) {
 		if screenY >= bottom {
 			break
 		}
-		if lineno_offset > 0 {
-			sss := fmt.Sprintf("%4d", y+total_offscreen_len)
-			for i, v := range sss {
-				screen.SetContent(posx+i, screenY, rune(v), nil,
-					tcell.StyleDefault.Foreground(default_fg).Background(default_bg))
-			}
-		}
-		for x := 0; x < cols-lineno_offset; x++ {
-			ch, fg, bg := t.dest.Cell(x, y)
-			style := get_style_from_fg_bg(bg, default_bg, fg, default_fg)
-			screenX := posx + x + lineno_offset
-			screen.SetContent(screenX, screenY, ch, nil, style)
-		}
+		draw.Draw(screen, y, screenY, default_theme_style, t.dest.Cell)
 	}
 	if offlines_to_draw > 0 {
 		screen.HideCursor()
