@@ -37,6 +37,16 @@ type terminal_pty struct {
 	dest      *terminal.State
 	ui        tview.Primitive
 }
+
+func (t terminal_pty) displayname() string {
+	pid := ""
+	if t.ptystdio.Cmd != nil {
+		pid = fmt.Sprintf("%d",
+			t.ptystdio.Cmd.Process.Pid)
+	}
+	return fmt.Sprintf("%s-%s", t.shellname, pid)
+}
+
 type Term struct {
 	// *femto.View
 	*tview.Box
@@ -150,6 +160,14 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		return ret.handle_mouse(action, app, event)
 	})
 	ret.term = term
+	ret.termlist = append(ret.termlist, term)
+	return ret
+}
+func (t *Term) ListTerm() []string {
+	var ret = []string{}
+	for _, v := range t.termlist {
+		ret = append(ret, v.displayname())
+	}
 	return ret
 }
 

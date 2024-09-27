@@ -405,3 +405,4 @@ func (ret *bookmark_view) onclick(i int) {
 	ret.list.SetCurrentItem(i)
 	main.gotoline(loc)
 }
+

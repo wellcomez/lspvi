@@ -30,7 +30,7 @@ func (view *qf_index_view_history) Delete(index int) {
 		view.Add(view.keys[index], false)
 	}
 }
-func (view *qf_index_view) Load() {
+func (view *qf_index_view) Load(v view_id ) {
 	view.qfh.Load()
 }
 func (view *qf_index_view_history) Load() {
