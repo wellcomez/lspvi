@@ -869,59 +869,6 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 	tab_area.AddItem(main.statusbar, 0, 10, false)
 }
 
-func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
-	console := new_console_pages()
-	console.SetChangedFunc(func() {
-		xx := console.GetPageNames(true)
-		if len(xx) == 1 {
-			// main.tab.activate_tab_name = xx[0]
-		}
-		log.Println(strings.Join(xx, ","))
-	})
-	main.term = NewTerminal(main.app, "bash")
-	main.log = new_log_view(main)
-	main.log.log.SetText("Started")
-	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)
-	main.console_index_list = new_qf_index_view(main)
-	console_layout := new_flex_area(view_console_area, main)
-	console_layout.AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
-	main.reload_index_list()
-
-	main.page = console
-	main.page.SetChangedFunc(func() {
-		main.UpdatePageTitle()
-	})
-
-	main.tab = tabmgr{main: main, page: console}
-	uml, err := NewUmlView(main, &main.lspmgr.Wk)
-	if err != nil {
-		log.Fatal(err)
-	}
-	main.uml = uml
-	var tab_id = []view_id{}
-	var tabname []string = []string{}
-	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark, view_recent_open_file, view_term} {
-		if v == view_uml {
-			if main.uml == nil {
-				continue
-			}
-		}
-		console.AddPage(v.getname(), v.Primitive(main), true, view_quickview == v)
-		tabname = append(tabname, v.getname())
-		tab_id = append(tab_id, v)
-	}
-	main.tab.tab_id = tab_id
-	group := NewButtonGroup(tabname, main.OnTabChanged)
-	main.tab.tabs = group
-	tab_area := tview.NewFlex()
-	for _, v := range group.tabs {
-		tab_area.AddItem(v, len(v.GetLabel())+2, 1, true)
-	}
-	var tabid view_id = view_quickview
-	fzttab := group.Find(tabid.getname())
-	fzttab.Focus(nil)
-	return console_layout, tab_area
-}
 
 func create_edit_area(main *mainui) *flex_area {
 	codeview := NewCodeView(main)
