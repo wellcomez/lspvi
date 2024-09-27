@@ -114,13 +114,14 @@ func (tab *TabItem) Draw(screen tcell.Screen, x, y int, style, hl tcell.Style) i
 func NewTabbar() *Tabbar {
 	return &Tabbar{Box: tview.NewBox()}
 }
-func (bar *Tabbar) Add(name string) {
+func (bar *Tabbar) Add(name string) int{
 	if len(bar.tabs) > 0 {
 		bar.tabs[len(bar.tabs)-1].first = false
 	}
 	bar.tabs = append(bar.tabs, TabItem{tview.Box{}, name, true, false})
 	x := 0
 	y := 0
+	ret:=0
 	for i := range bar.tabs {
 		tab := &bar.tabs[i]
 		width := len(tab.name)
@@ -128,7 +129,9 @@ func (bar *Tabbar) Add(name string) {
 			width = len(tab.name) + 1
 		}
 		tab.SetRect(x, y, width, 1)
+		ret+=width
 	}
+	return ret
 }
 func (bar *Tabbar) Draw(screen tcell.Screen) {
 	style := tcell.StyleDefault

@@ -27,6 +27,7 @@ type tabmgr struct {
 	activate_tab_id view_id
 	main            *mainui
 	page            *console_pages
+	tabnames        []string
 	tabutton        *ButtonGroup
 }
 
@@ -81,13 +82,8 @@ func (tabs *tabmgr) ActiveTab(id view_id, focused bool) {
 	}
 	var name = id.getname()
 	tabs.page.SwitchToPage(name)
-	tab := tabs.tabutton.Find(name)
-	for _, v := range tabs.tabutton.tabs {
-		if v == tab {
-			v.Focus(nil)
-		} else {
-			v.Blur()
-		}
+	if tabs.tabutton != nil {
+		tabs.tabutton.Active(name)
 	}
 	tabs.activate_tab_id = id
 	tabs.update_tab_title(id)
@@ -99,9 +95,25 @@ func (tabs *tabmgr) ActiveTab(id view_id, focused bool) {
 		m.layout.console.resizer.hide(link)
 	}
 }
+
+func (tabutton *ButtonGroup) Active(name string) {
+	tab := tabutton.Find(name)
+	for _, v := range tabutton.tabs {
+		if v == tab {
+			v.Focus(nil)
+		} else {
+			v.Blur()
+		}
+	}
+}
 func (tabs *tabmgr) view_is_tab(next view_id) bool {
-	x := tabs.tabutton.Find(next.getname()) != nil
-	return x
+	name := next.getname()
+	for _, v := range tabs.tabnames {
+		if v == name {
+			return true
+		}
+	}
+	return false
 }
 func (tabs *tabmgr) update_tab_title(id view_id) {
 	m := tabs.main
@@ -142,7 +154,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	main.page = console
 
 	tab := console.new_tab_mgr(main)
-	tab_area := tab.new_tab_buttons()
+	tab_area := tab.new_tab()
 	main.tab = tab
 	main.page.SetChangedFunc(func() {
 		main.UpdatePageTitle()
@@ -151,8 +163,9 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	return console_layout, tab_area
 }
 func (tab *tabmgr) action_tab_button() {
-	fzttab := tab.tabutton.Find(tab.activate_tab_id.getname())
-	fzttab.Focus(nil)
+	if tab.tabutton != nil {
+		tab.tabutton.Active(tab.activate_tab_id.getname())
+	}
 }
 func (m *mainui) OnTabChanged(tab *TabButton) {
 	if tab.Name == "uml" {
@@ -181,9 +194,22 @@ func (console *console_pages) new_tab_mgr(main *mainui) *tabmgr {
 	}
 	tab := tabmgr{main: main, page: console, activate_tab_id: view_quickview}
 	tab.tab_id = tab_id
+	for _, v := range tab.tab_id {
+		tab.tabnames = append(tab.tabnames, v.getname())
+	}
 	return &tab
 }
-
+func (tab *tabmgr) new_tab() *tview.Flex {
+	ret := tview.NewFlex()
+	bar := NewTabbar()
+	width := 0
+	for _, v := range tab.tab_id {
+		width = bar.Add(v.getname())
+	}
+	tab.action_tab_button()
+	ret.AddItem(bar, width, 1, false)
+	return ret
+}
 func (tab *tabmgr) new_tab_buttons() *tview.Flex {
 	var tabname []string
 	for _, v := range tab.tab_id {
