@@ -18,7 +18,6 @@ import (
 
 	// "os/exec"
 
-	"github.com/atotto/clipboard"
 	corepty "github.com/creack/pty"
 	// "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2"
@@ -65,7 +64,6 @@ func (c *selectarea) GetSelection() string {
 			ret = append(ret, s1)
 		}
 		s := strings.Join(ret, "\n")
-		clipboard.WriteAll(s)
 		return s
 	}
 	return ""
@@ -206,7 +204,7 @@ func (menu term_right_menu) on_mouse(action tview.MouseAction, event *tcell.Even
 	}
 	return tview.MouseConsumed, nil
 }
-func NewTerminal(app *tview.Application, shellname string) *Term {
+func NewTerminal(main *mainui,app *tview.Application, shellname string) *Term {
 
 	ret := &Term{tview.NewBox(),
 		nil,
@@ -220,7 +218,8 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		menu_item: &menudata{[]context_menu_item{
 			{item: cmditem{cmd: cmdactor{desc: "Copy "}}, handle: func() {
 				// ret.qfh.Delete(ret.GetCurrentItem())
-				ret.sel.GetSelection()
+				s:= ret.sel.GetSelection()
+				main.CopyToClipboard(s)
 			}},
 		}},
 		// main:      main,

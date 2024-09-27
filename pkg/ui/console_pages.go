@@ -115,7 +115,7 @@ func (tabs *tabmgr) update_tab_title(id view_id) {
 
 func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 
-	main.term = NewTerminal(main.app, "bash")
+	main.term = NewTerminal(main, main.app, "bash")
 	main.log = new_log_view(main)
 	main.log.log.SetText("Started")
 
