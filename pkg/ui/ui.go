@@ -94,15 +94,15 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
-	term               *Term
-	fileexplorer       *file_tree_view
-	codeview           *CodeView
-	lspmgr             *lspcore.LspWorkspace
-	symboltree         *SymbolTreeView
-	quickview          *quick_view
-	bookmark_view      *bookmark_view
-	page               *console_pages
-	callinview         *callinview
+	term          *Term
+	fileexplorer  *file_tree_view
+	codeview      *CodeView
+	lspmgr        *lspcore.LspWorkspace
+	symboltree    *SymbolTreeView
+	quickview     *quick_view
+	bookmark_view *bookmark_view
+	page          *console_pages
+	callinview    *callinview
 	// tabs               *ButtonGroup
 	root               string
 	app                *tview.Application
@@ -121,7 +121,7 @@ type mainui struct {
 	// _editor_area_layout *editor_area_layout
 	tty bool
 	ws  string
-	tab tabmgr
+	tab *tabmgr
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
@@ -324,20 +324,7 @@ func (m mainui) OnCodeLineChange(x, y int) {
 	}
 	m.symboltree.OnCodeLineChange(x, y)
 }
-func (m *mainui) OnTabChanged(tab *TabButton) {
-	if tab.Name == "uml" {
-		if m.uml != nil {
-			m.uml.Init()
-		}
 
-	}
-	m.page.SwitchToPage(tab.Name)
-	// m.page.SetTitle(tab.Name)
-	if vid := find_name_to_viewid(tab.Name); vid != view_none {
-		m.set_viewid_focus(vid)
-	}
-	m.UpdatePageTitle()
-}
 func (m *mainui) quit() {
 	m.Close()
 }
@@ -869,7 +856,6 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 	tab_area.AddItem(main.statusbar, 0, 10, false)
 }
 
-
 func create_edit_area(main *mainui) *flex_area {
 	codeview := NewCodeView(main)
 	codeview.not_preview = true
@@ -1003,7 +989,6 @@ func (main *mainui) move_to_window(t direction) {
 		main.set_viewid_focus(next)
 	}
 }
-
 
 func (main *mainui) IsSource(s string) bool {
 	return main.lspmgr.IsSource(s)

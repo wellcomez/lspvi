@@ -108,6 +108,17 @@ func (tabs *tabmgr) update_tab_title(id view_id) {
 }
 
 func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
+
+	main.term = NewTerminal(main.app, "bash")
+	main.log = new_log_view(main)
+	main.log.log.SetText("Started")
+
+	uml, err := NewUmlView(main, &main.lspmgr.Wk)
+	if err != nil {
+		log.Fatal(err)
+	}
+	main.uml = uml
+
 	console := new_console_pages()
 	console.SetChangedFunc(func() {
 		xx := console.GetPageNames(true)
@@ -116,26 +127,41 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 		}
 		log.Println(strings.Join(xx, ","))
 	})
-	main.term = NewTerminal(main.app, "bash")
-	main.log = new_log_view(main)
-	main.log.log.SetText("Started")
 	console.SetBorder(true).SetBorderColor(tview.Styles.BorderColor)
 	main.console_index_list = new_qf_index_view(main)
 	console_layout := new_flex_area(view_console_area, main)
 	console_layout.AddItem(console, 0, 10, false).AddItem(main.console_index_list, 0, 2, false)
-	main.reload_index_list()
-
 	main.page = console
+
+	tab := console.new_tab_mgr(main)
+	tab_area := tab.new_tab_buttons()
+	main.tab = tab
 	main.page.SetChangedFunc(func() {
 		main.UpdatePageTitle()
 	})
-	uml, err := NewUmlView(main, &main.lspmgr.Wk)
-	if err != nil {
-		log.Fatal(err)
+	main.reload_index_list()
+	return console_layout, tab_area
+}
+func (tab *tabmgr) action_tab_button() {
+	fzttab := tab.tabutton.Find(tab.activate_tab_id.getname())
+	fzttab.Focus(nil)
+}
+func (m *mainui) OnTabChanged(tab *TabButton) {
+	if tab.Name == "uml" {
+		if m.uml != nil {
+			m.uml.Init()
+		}
+
 	}
-	main.uml = uml
+	m.page.SwitchToPage(tab.Name)
+	// m.page.SetTitle(tab.Name)
+	if vid := find_name_to_viewid(tab.Name); vid != view_none {
+		m.set_viewid_focus(vid)
+	}
+	m.UpdatePageTitle()
+}
+func (console *console_pages) new_tab_mgr(main *mainui) *tabmgr {
 	var tab_id = []view_id{}
-	var tabname []string = []string{}
 	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark, view_recent_open_file, view_term} {
 		if v == view_uml {
 			if main.uml == nil {
@@ -143,20 +169,24 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 			}
 		}
 		console.AddPage(v.getname(), v.Primitive(main), true, view_quickview == v)
-		tabname = append(tabname, v.getname())
 		tab_id = append(tab_id, v)
 	}
 	tab := tabmgr{main: main, page: console, activate_tab_id: view_quickview}
 	tab.tab_id = tab_id
-	group := NewButtonGroup(tabname, main.OnTabChanged)
+	return &tab
+}
+
+func (tab *tabmgr) new_tab_buttons() *tview.Flex {
+	var tabname []string
+	for _, v := range tab.tab_id {
+		tabname = append(tabname, v.getname())
+	}
+	group := NewButtonGroup(tabname, tab.main.OnTabChanged)
 	tab.tabutton = group
 	tab_area := tview.NewFlex()
 	for _, v := range group.tabs {
 		tab_area.AddItem(v, len(v.GetLabel())+2, 1, true)
 	}
-	var tabid view_id = view_quickview
-	fzttab := group.Find(tabid.getname())
-	fzttab.Focus(nil)
-	main.tab = tab
-	return console_layout, tab_area
+	tab.action_tab_button()
+	return tab_area
 }
