@@ -785,8 +785,8 @@ func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 		h(code)
 		return nil
 	}
-	cur := code.view.Cursor
-	log.Println("selection", cur.CurSelection[0], cur.CurSelection[1])
+	// cur := code.view.Cursor
+	// log.Println("selection", cur.CurSelection[0], cur.CurSelection[1])
 	// if code.run_command(code.basic_vi_command, ch) {
 	// 	return nil
 	// }

@@ -473,8 +473,8 @@ func (termui *Term) Draw(screen tcell.Screen) {
 	}
 	if termui.sel.HasSelection() {
 		// _, selbg, _ := d.selection_style.Decompose()
-		log.Println("selection", termui.sel.start, termui.sel.end,
-			"(", posx, posy, posx+width, posy+height, ")")
+		// log.Println("selection", termui.sel.start, termui.sel.end,
+		// 	"(", posx, posy, posx+width, posy+height, ")")
 	}
 	if t.topline >= 0 {
 		offlines_to_draw = (total_offscreen_len - t.topline)
