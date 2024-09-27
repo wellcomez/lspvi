@@ -143,6 +143,15 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 
 // getbox implements context_menu_handle.
 func (code CodeContextMenu) getbox() *tview.Box {
+	if code.code.main == nil {
+		return nil
+	}
+	main:=code.code.main
+	if code.code.id==view_code_below{
+		if main.tab.activate_tab_id!=view_code_below{
+			return nil
+		}
+	}
 	return code.code.view.Box
 }
 

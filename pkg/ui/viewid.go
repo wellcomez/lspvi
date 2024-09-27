@@ -54,56 +54,9 @@ func (viewid view_id) setfocused(m *mainui) {
 	m.set_viewid_focus(viewid)
 }
 
-// func mouseclick_view_focused(m *mainui, event *tcell.EventMouse) {
-// 	focused := focus_viewid(m)
-// 	for _, v := range all_view_list {
-// 		// if v == view_outline_list {
-// 		// log.Printf("")
-// 		// }
-// 		box := v.to_box(m)
-// 		if inbox(box, event) {
-// 			if focused != v {
-// 				v.setfocused(m)
-// 			}
-// 			return
-// 		}
-// 	}
-// }
-
 func (viewid view_id) to_view_link(m *mainui) *view_link {
-	switch viewid {
-	case view_log:
-		return nil
-	case view_quickview:
-		return m.quickview.view_link
-	case view_callin:
-		return m.callinview.view_link
-	case view_code:
-		return m.codeview.view_link
-	case view_uml:
-		return m.uml.view_link
-	case view_cmd:
-		return m.cmdline.view_link
-	case view_file:
-		return m.fileexplorer.view_link
-	case view_outline_list:
-		return m.symboltree.view_link
-	case view_bookmark:
-		return m.bookmark_view.view_link
-	case view_main_layout:
-		return m.layout.mainlayout.view_link
-	case view_qf_index_view:
-		return m.console_index_list.view_link
-	case view_console_pages:
-		return m.page.view_link
-	case view_console_area:
-		return m.layout.console.view_link
-	case view_recent_open_file:
-		return m.recent_open.view_link
-	case view_term:
-		return m.term.view_link
-	}
-	return nil
+	_, _, link, _ := viewid.view_info(m)
+	return link
 }
 func find_name_to_viewid(m string) view_id {
 	for _, v := range all_view_list {
@@ -195,7 +148,7 @@ func (viewid view_id) view_info(m *mainui) (tview.Primitive, *tview.Box, *view_l
 		return v, v.Box, m.callinview.view_link, "callin"
 	case view_code:
 		v := m.codeview.view
-		return v, v.Box, m.codeview.view_link, "codeview"
+		return v, v.Box, m.codeviewmain.view_link, "codeview"
 	case view_uml:
 		v := m.uml.layout
 		return v, v.Box, m.uml.view_link, "uml"

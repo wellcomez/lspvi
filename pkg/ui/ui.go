@@ -100,7 +100,7 @@ type mainui struct {
 	term          *Term
 	fileexplorer  *file_tree_view
 	codeview      *CodeView
-	codeview1     *CodeView
+	codeviewmain  *CodeView
 	codeview2     *CodeView
 	lspmgr        *lspcore.LspWorkspace
 	symboltree    *SymbolTreeView
@@ -821,7 +821,7 @@ func create_edit_area(main *mainui) *flex_area {
 	codeview.id = view_code
 	codeview.not_preview = true
 	codeview.Width = 8
-	main.codeview1 = codeview
+	main.codeviewmain = codeview
 
 	symbol_tree := NewSymbolTreeView(main, codeview)
 	symbol_tree.Width = 2
