@@ -109,26 +109,14 @@ func (e *editor_mouse_resize) config_filename() string {
 	return filename
 }
 func (e *editor_mouse_resize) set_heigth(link *view_link, a int) {
-	// log.Println("zoom height", link.id.getname(), a)
-	// for i := range e.contorls {
-	// 	ctrl := e.contorls[i]
-	// 	_, _, _, h := ctrl.box.GetRect()
-	// 	ctrl.view_link.Height = h
-	// }
 	if link != nil {
 		link.Height += a
 		link.Height = max(1, link.Height)
 		e.save()
 	}
 }
-func (e *editor_mouse_resize) set_width(link *view_link, a int) {
+func (e *editor_mouse_resize) increate(link *view_link, a int) {
 	// link := id.to_view_link(e.main)
-	// for i := range e.contorls {
-	// 	ctrl := e.contorls[i]
-	// 	_, _, w, _ := ctrl.box.GetRect()
-	// 	ctrl.view_link.Width = w
-	// }
-	// log.Println("zoom width", link.id.getname(), a)
 	if link != nil {
 		link.Width += a
 		link.Width = max(1, link.Width)
@@ -248,7 +236,7 @@ func (layout *editor_mouse_resize) zoom(zoomin bool, viewlink *view_link) {
 	if layout.layout.dir != int(move_direction_hirizon) {
 		layout.set_heigth(viewlink, add)
 	} else {
-		layout.set_width(viewlink, add)
+		layout.increate(viewlink, add)
 	}
 	layout.update_editerea_layout()
 
@@ -257,32 +245,25 @@ func (layout *editor_mouse_resize) zoom(zoomin bool, viewlink *view_link) {
 func new_ui_resize(vl *view_link, main *mainui, layout control_size_changer, verical bool) *ui_reszier {
 	return &ui_reszier{box: vl.id.to_box(main), view_link: vl, layout: layout, resize_vertical: verical}
 }
-
-func (resize *editor_mouse_resize) checkdrag(
-	action tview.MouseAction,
-	event *tcell.EventMouse) (bool, tview.MouseAction) {
+func (resize *editor_mouse_resize) checkdrag(action tview.MouseAction, event *tcell.EventMouse) tview.MouseAction {
+	end := false
 	for i := range resize.contorls {
 		r := resize.contorls[i]
-		switch r.checkdrag(action, event) {
-		case zoom_action_end:
-			{
-				for i := range resize.contorls {
-					r := resize.contorls[i]
-					r.dragging = false
-				}
-				return true, tview.MouseConsumed
-			}
-		case zoom_action_abort:
-			return true, action
-		case zoom_action_none:
-			{
-				if r.dragging {
-					return true, tview.MouseConsumed
-				}
-			}
+		if r.checkdrag(action, event) {
+			end = true
+		}
+		if r.dragging {
+			return tview.MouseConsumed
 		}
 	}
-	return false, action
+	if end {
+		for i := range resize.contorls {
+			r := resize.contorls[i]
+			r.dragging = false
+		}
+		return tview.MouseConsumed
+	}
+	return action
 }
 
 type edge_type int
@@ -294,25 +275,17 @@ const (
 	edge_rigt
 )
 
-type zoom_action int
-
-const (
-	zoom_action_none zoom_action = iota
-	zoom_action_end
-	zoom_action_abort
-	zoom_action_ignore
-)
-
-func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) zoom_action {
+func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.EventMouse) bool {
 
 	bLeftX, top, bw, heigth := resize.box.GetRect()
 	bRightX := bLeftX + bw - 1
+	// bottom := top + heigth
 	uprange_1 := top - 1
 	uprange_2 := top + 1
 	botom_1 := top + heigth - 1
 	botom_2 := top + heigth + 1
 	x, y := event.Position()
-	end := zoom_action_none
+	end := false
 	switch action {
 	case tview.MouseLeftDown:
 		{
@@ -320,7 +293,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 			bb.SetRect(bLeftX, top, bw, heigth)
 			inside := bb.InRect(x, y)
 			if !inside {
-				return zoom_action_ignore
+				return end
 			}
 			resize.dragging = false
 			yes := false
@@ -349,7 +322,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 				}
 			}
 			if !yes {
-				return zoom_action_ignore
+				return end
 			}
 
 			resize.dragging = yes
@@ -367,48 +340,49 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 				if Duration > time.Second {
 					resize.box.Blur()
 					resize.drag_off()
-					return zoom_action_end
+					return end
 				}
 				zoomin := false
 				if resize.left == move_direction_hirizon {
 					if x == resize.beginX {
-						return zoom_action_abort
-					} else {
-						switch resize.edge {
-						case edge_left:
-							zoomin = x > resize.beginX
-						case edge_rigt:
-							zoomin = x < resize.beginX
-						}
-						log.Println("zoom in", resize.view_link.id.getname(), zoomin, resize.beginX, "->", x)
+						break
 					}
+					switch resize.edge {
+					case edge_left:
+						zoomin = x > resize.beginX
+					case edge_rigt:
+						zoomin = x < resize.beginX
+					}
+					log.Println("zoom in", resize.view_link.id.getname(), zoomin, resize.beginX, "->", x)
 				} else if resize.left == move_direction_vetical {
 					if y == resize.beginY {
-						return zoom_action_abort
-					} else {
-						switch resize.edge {
-						case edge_top:
-							zoomin = y > resize.beginY
-						case edge_bottom:
-							zoomin = y < resize.beginY
-						}
+						break
+					}
+					switch resize.edge {
+					case edge_top:
+						zoomin = y > resize.beginY
+					case edge_bottom:
+						zoomin = y < resize.beginY
 					}
 				}
 				resize.beginX = x
 				resize.beginY = y
 				resize.layout.zoom(zoomin, resize.view_link)
+				// log.Println("zoom in", "zoom:", zoomin, "v:", resize.left, resize.view_link.id)
 			}
 		}
 	default:
 		if resize.dragging {
 			resize.box.Focus(nil)
 			resize.drag_off()
-			end = zoom_action_end
+			end = true
 		}
 	}
 	if resize.dragging {
+		// resize.box.SetBorder(true)
 		resize.box.SetBorderColor(tcell.ColorRed)
 	}
+	end = false
 	return end
 }
 

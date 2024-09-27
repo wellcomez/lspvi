@@ -736,12 +736,8 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 		return nil, tview.MouseConsumed
 	}
 	for _, v := range resizer {
-		if processed, a := v.checkdrag(action, event); processed {
-			GlobalApp.ForceDraw()
-			if a == tview.MouseConsumed {
-				return nil, a
-			}
-			return event, action
+		if v.checkdrag(action, event) == tview.MouseConsumed {
+			return nil, tview.MouseConsumed
 		}
 	}
 	return event, action
