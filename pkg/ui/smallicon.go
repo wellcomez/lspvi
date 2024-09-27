@@ -2,7 +2,6 @@ package mainui
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 )
 
@@ -19,13 +18,13 @@ func get_style_hide(hide bool) tcell.Style {
 }
 
 type smallicon struct {
-	file, code, outline femto.Loc
-	back, forward       femto.Loc
+	file, code, outline Pos
+	back, forward       Pos
 	main                *mainui
 	x, y                int
 }
 
-func (c *smallicon) Loc(loc femto.Loc) femto.Loc {
+func (c *smallicon) Loc(loc Pos) Pos {
 	loc.X += c.x
 	loc.Y += c.y
 	return loc
@@ -54,11 +53,11 @@ func (c *smallicon) Draw(screen tcell.Screen) {
 }
 func new_small_icon(main *mainui) *smallicon {
 	smallicon := &smallicon{
-		file:    femto.Loc{0, 0},
-		code:    femto.Loc{1, 0},
-		outline: femto.Loc{2, 0},
-		back:    femto.Loc{4, 0},
-		forward: femto.Loc{6, 0},
+		file:    Pos{0, 0},
+		code:    Pos{1, 0},
+		outline: Pos{2, 0},
+		back:    Pos{4, 0},
+		forward: Pos{6, 0},
 		main:    main,
 	}
 
@@ -67,7 +66,7 @@ func new_small_icon(main *mainui) *smallicon {
 func (icon *smallicon) handle_mouse_event(action tview.MouseAction, event *tcell.EventMouse) (*tcell.EventMouse, tview.MouseAction) {
 	x, y := event.Position()
 	left, top := icon.get_offset_xy()
-	loc := femto.Loc{X: x - left, Y: y - top}
+	loc := Pos{X: x - left, Y: y - top}
 	if action == tview.MouseLeftClick {
 		// if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 		switch loc {
