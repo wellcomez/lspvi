@@ -12,7 +12,7 @@ type qf_index_view struct {
 	*customlist
 	main          *mainui
 	qfh           *qf_index_view_history
-	right_context qf_index_menu_context
+	right_context *qf_index_menu_context
 }
 type qf_index_view_history struct {
 	*customlist
@@ -30,25 +30,49 @@ func (view *qf_index_view_history) Delete(index int) {
 		view.Add(view.keys[index], false)
 	}
 }
-func (view *qf_index_view) Load(v view_id) {
-	switch v {
+func (ret *qf_index_view) Load(viewid view_id) {
+	switch viewid {
 	case view_callin, view_quickview, view_bookmark:
-		view.qfh.Load()
+		ret.right_context.menu_item = &menudata{[]context_menu_item{
+			{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
+				ret.qfh.Delete(ret.GetCurrentItem())
+			}},
+		}}
+		ret.qfh.Load()
 	case view_term:
 		{
-			list := view
+			term := ret.main.term
+			ret.right_context.menu_item = &menudata{[]context_menu_item{
+				{item: cmditem{cmd: cmdactor{desc: "new zsh"}}, handle: func() {
+					term.current = term.new_pty("zsh")
+					term.termlist = append(term.termlist, term.current)
+					ret.Load(viewid)
+				}},
+				{item: cmditem{cmd: cmdactor{desc: "new bash"}}, handle: func() {
+					term.current = term.new_pty("bash")
+					term.termlist = append(term.termlist, term.current)
+					ret.Load(viewid)
+				}},
+			}}
+			list := ret
 			list.Clear()
-			term := view.main.term
 			data := term.ListTerm()
+			current := 0
 			for i := range data {
-				value := data[i]
+				index:=i
+				value := data[index]
 				list.AddItem(value, "", func() {
-					term.current = term.termlist[i]
+					term.current = term.termlist[index]
+					GlobalApp.ForceDraw()
 				})
+				if term.termlist[i] == term.current {
+					current = i
+				}
 			}
+			list.SetCurrentItem(current)
 		}
 	default:
-		view.customlist.Clear()
+		ret.customlist.Clear()
 	}
 }
 func (view *qf_index_view_history) Load() {
@@ -86,9 +110,12 @@ func qf_index_view_update() {
 	qk_index_update <- true
 }
 
+type menudata struct {
+	menu_item []context_menu_item
+}
 type qf_index_menu_context struct {
 	view      *qf_index_view
-	menu_item []context_menu_item
+	menu_item *menudata
 	main      *mainui
 }
 
@@ -97,7 +124,7 @@ func (menu qf_index_menu_context) getbox() *tview.Box {
 }
 
 func (menu qf_index_menu_context) menuitem() []context_menu_item {
-	return menu.menu_item
+	return menu.menu_item.menu_item
 }
 
 func (menu qf_index_menu_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -118,14 +145,9 @@ func new_qf_index_view(main *mainui) *qf_index_view {
 	ret.new_qfh()
 	ret.customlist.SetBorder(true)
 
-	var items = []context_menu_item{
-		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
-			ret.qfh.Delete(ret.GetCurrentItem())
-		}},
-	}
-	ret.right_context = qf_index_menu_context{
+	ret.right_context = &qf_index_menu_context{
 		view:      ret,
-		menu_item: items,
+		menu_item: &menudata{[]context_menu_item{}},
 		main:      main,
 	}
 	go func() {

@@ -40,7 +40,7 @@ type terminal_pty struct {
 
 func (t terminal_pty) displayname() string {
 	pid := ""
-	if t.ptystdio.Cmd != nil {
+	if t.ptystdio != nil && t.ptystdio.Cmd != nil {
 		pid = fmt.Sprintf("%d",
 			t.ptystdio.Cmd.Process.Pid)
 	}
@@ -175,6 +175,10 @@ func (ret *Term) new_pty(shellname string) *terminal_pty {
 	cmdline := ""
 	switch shellname {
 	case "bash":
+		cmdline = "/usr/bin/bash"
+	case "zsh":
+		cmdline = "/usr/bin/zsh"
+	case "sh":
 		cmdline = "/usr/bin/sh"
 	}
 	term := &terminal_pty{
