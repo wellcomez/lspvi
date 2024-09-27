@@ -54,6 +54,7 @@ type selectarea struct {
 	start, end        femto.Loc
 	cols              int
 	text              []line
+	nottext           bool
 }
 
 func (c *selectarea) GetSelection() string {
@@ -204,7 +205,7 @@ func (menu term_right_menu) on_mouse(action tview.MouseAction, event *tcell.Even
 	}
 	return tview.MouseConsumed, nil
 }
-func NewTerminal(main *mainui,app *tview.Application, shellname string) *Term {
+func NewTerminal(main *mainui, app *tview.Application, shellname string) *Term {
 
 	ret := &Term{tview.NewBox(),
 		nil,
@@ -218,7 +219,7 @@ func NewTerminal(main *mainui,app *tview.Application, shellname string) *Term {
 		menu_item: &menudata{[]context_menu_item{
 			{item: cmditem{cmd: cmdactor{desc: "Copy "}}, handle: func() {
 				// ret.qfh.Delete(ret.GetCurrentItem())
-				s:= ret.sel.GetSelection()
+				s := ret.sel.GetSelection()
 				main.CopyToClipboard(s)
 			}},
 		}},
@@ -262,7 +263,7 @@ func (ret *Term) new_pty(shellname string) *terminal_pty {
 	term.start_pty(cmdline)
 	return term
 }
-func (root *selectarea) mouse_selection(action tview.MouseAction,
+func (root *selectarea) handle_mouse_selection(action tview.MouseAction,
 	event *tcell.EventMouse) bool {
 	posX, posY := event.Position()
 	pos := femto.Loc{
@@ -311,6 +312,9 @@ func (root *selectarea) mouse_selection(action tview.MouseAction,
 }
 
 func (root *selectarea) alloc() {
+	if root.nottext {
+		return
+	}
 	root.text = make([]line, root.end.Y-root.start.Y+1)
 }
 func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -318,7 +322,7 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 	if t == nil {
 		return action, event
 	}
-	drawit := ret.sel.mouse_selection(action, event)
+	drawit := ret.sel.handle_mouse_selection(action, event)
 	switch action {
 	case 14, 13:
 		{
