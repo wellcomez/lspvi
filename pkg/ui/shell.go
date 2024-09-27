@@ -25,6 +25,7 @@ import (
 
 	// "github.com/pgavlin/femto"
 	// v100 "golang.org/x/term"
+	"github.com/pgavlin/femto"
 	"zen108.com/lspvi/pkg/pty"
 	terminal "zen108.com/lspvi/pkg/term"
 )
@@ -47,12 +48,33 @@ func (t terminal_pty) displayname() string {
 	return fmt.Sprintf("%s-%s", t.shellname, pid)
 }
 
+type selectarea struct {
+	mouse_select_area bool
+	start, end        femto.Loc
+	cols              int
+}
+
+func (c *selectarea) HasSelection() bool {
+	return c.start != c.end
+}
+func (c *selectarea) In(x, y int) bool {
+	loc := femto.Loc{X: x, Y: y}
+	if !loc.GreaterEqual(c.start) {
+		return false
+	}
+	if !loc.LessEqual(c.end) {
+		return false
+	}
+	return true
+}
+
 type Term struct {
 	// *femto.View
 	*tview.Box
 	current *terminal_pty
 	*view_link
 	termlist []*terminal_pty
+	sel      selectarea
 }
 type ptyread struct {
 	term *terminal_pty
@@ -154,6 +176,7 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		nil,
 		&view_link{id: view_term},
 		[]*terminal_pty{},
+		selectarea{},
 	}
 	term := ret.new_pty(shellname)
 	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -199,7 +222,47 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 	if t == nil {
 		return action, event
 	}
+	posX, posY := event.Position()
+	pos := femto.Loc{
+		X: posX,
+		Y: posY,
+	}
+	root := &ret.sel
+	drawit := false
 	switch action {
+	case tview.MouseLeftDoubleClick:
+		{
+		}
+	case tview.MouseLeftDown:
+		{
+			root.mouse_select_area = true
+			// root.end = pos
+			root.start = pos
+			log.Println("down", root.start, pos)
+		}
+	case tview.MouseMove:
+		{
+			if root.mouse_select_area {
+				root.end = (pos)
+				drawit = true
+				log.Println("move", root.start, pos)
+			}
+		}
+	case tview.MouseLeftUp:
+		{
+			if root.mouse_select_area {
+				root.end = pos
+				root.mouse_select_area = false
+				drawit = true
+				log.Println("up", root.start, pos)
+			}
+		}
+	case tview.MouseLeftClick:
+		{
+			root.mouse_select_area = false
+			root.start = pos
+			root.end = pos
+		}
 	case 14, 13:
 		{
 			state := t.dest
@@ -212,10 +275,14 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 					t.topline--
 				}
 			}
-			go func() {
-				app.QueueUpdateDraw(func() {})
-			}()
+			drawit = true
+
 		}
+	}
+	if drawit {
+		go func() {
+			app.QueueUpdateDraw(func() {})
+		}()
 	}
 	return action, event
 }
@@ -275,20 +342,31 @@ type term_line_drawer struct {
 	default_fg, default_bg tcell.Color
 	posx, posy             int
 	lineno_offset, cols    int
+	sel                    selectarea
+	selection_style        tcell.Style
 }
 
 func (d term_line_drawer) Draw(screen tcell.Screen, index, screenY int, style tcell.Style, OfflineCell func(x, y int) (ch rune, fg, bg terminal.Color)) {
 	if d.lineno_offset > 0 {
 		sss := fmt.Sprintf("%4d", index)
 		for i, v := range sss {
-			screen.SetContent(d.posx+i, screenY, rune(v), nil, style)
+			if d.sel.In(d.posx+i, screenY) {
+				screen.SetContent(d.posx+i, screenY, rune(v), nil, style)
+			} else {
+				screen.SetContent(d.posx+i, screenY, rune(v), nil, style)
+			}
 		}
 	}
+	_, selbg, _ := d.selection_style.Decompose()
 	for x := 0; x < d.cols-d.lineno_offset; x++ {
 		ch, fg, bg := OfflineCell(x, index)
 		style := get_style_from_fg_bg(bg, d.default_bg, fg, d.default_fg)
 		screenX := d.posx + x + d.lineno_offset
-		screen.SetContent(screenX, screenY, ch, nil, style)
+		if d.sel.HasSelection() && d.sel.In(screenX, screenY) {
+			screen.SetContent(screenX, screenY, ch, nil, style.Background(selbg))
+		} else {
+			screen.SetContent(screenX, screenY, ch, nil, style)
+		}
 	}
 }
 
@@ -299,6 +377,7 @@ func (termui *Term) Draw(screen tcell.Screen) {
 	defer t.dest.Unlock()
 	posx, posy, width, height := termui.GetInnerRect()
 	cols, rows := t.dest.Size()
+	termui.sel.cols = cols
 	bottom := posy + height
 	default_fg, default_bg, _ := global_theme.get_default_style().Decompose()
 	state := t.dest
@@ -307,12 +386,22 @@ func (termui *Term) Draw(screen tcell.Screen) {
 	offlines_to_draw := 0
 	lineno_offset := 0
 	default_theme_style := tcell.StyleDefault.Foreground(default_fg).Background(default_bg)
+	sel_style := default_theme_style
+	if s := global_theme.get_color("selection"); s != nil {
+		sel_style = *s
+	}
 	var draw = term_line_drawer{
 		default_fg, default_bg,
 		posx, posy,
 		lineno_offset, cols,
+		termui.sel,
+		sel_style,
 	}
-
+	if termui.sel.HasSelection() {
+		// _, selbg, _ := d.selection_style.Decompose()
+		log.Println("selection", termui.sel.start, termui.sel.end,
+			"(", posx, posy, posx+width, posy+height, ")")
+	}
 	if t.topline >= 0 {
 		offlines_to_draw = (total_offscreen_len - t.topline)
 		if offlines_to_draw > 0 {

@@ -56,14 +56,14 @@ func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
 }
 
 func (mgr *symbol_colortheme) get_default_style() *tcell.Style {
-	mgr.CursorLine()
+	mgr.set_currsor_line()
 	if n, ok := mgr.colorscheme["normal"]; ok {
 		mgr.colorscheme["default"] = n
 		return &n
 	}
 	return nil
 }
-func (mgr *symbol_colortheme) CursorLine() *tcell.Style {
+func (mgr *symbol_colortheme) set_currsor_line() *tcell.Style {
 	ret := mgr.get_color("cursorline")
 	if ret != nil {
 		mgr.colorscheme["cursor-line"] = *ret
