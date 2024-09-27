@@ -42,6 +42,7 @@ type Term struct {
 	*tview.Box
 	term *terminal_impl
 	*view_link
+	termlist []*terminal_impl
 }
 type ptyread struct {
 	term *terminal_impl
@@ -49,6 +50,13 @@ type ptyread struct {
 
 func (ty ptyread) Write(p []byte) (n int, err error) {
 	return ty.term.Write(p)
+}
+
+func (t *terminal_impl) Kill() error {
+	if t.ptystdio.Cmd != nil {
+		return t.ptystdio.Cmd.Process.Kill()
+	}
+	return fmt.Errorf("not cmd")
 }
 
 // Write implements io.Writer.
@@ -131,15 +139,25 @@ func (t *terminal_impl) v100state(p []byte) (int, error) {
 }
 
 func NewTerminal(app *tview.Application, shellname string) *Term {
-	cmdline := ""
-	switch shellname {
-	case "bash":
-		cmdline = "/usr/bin/sh"
-	}
 
 	ret := &Term{tview.NewBox(),
 		nil,
 		&view_link{id: view_term},
+		[]*terminal_impl{},
+	}
+	term := ret.new_term(shellname)
+	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		return ret.handle_mouse(action, app, event)
+	})
+	ret.term = term
+	return ret
+}
+
+func (ret *Term) new_term(shellname string) *terminal_impl {
+	cmdline := ""
+	switch shellname {
+	case "bash":
+		cmdline = "/usr/bin/sh"
 	}
 	term := &terminal_impl{
 		nil,
@@ -149,17 +167,16 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		&terminal.State{},
 		ret,
 	}
-	ret.term = term
 
 	term.start_pty(cmdline)
-	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		return ret.handle_mouse(action, app, event)
-	})
-	return ret
+	return term
 }
 
 func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	t := ret.term
+	if t == nil {
+		return action, event
+	}
 	switch action {
 	case 14, 13:
 		{
