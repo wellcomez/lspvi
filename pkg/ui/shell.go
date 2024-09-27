@@ -29,10 +29,10 @@ import (
 	terminal "zen108.com/lspvi/pkg/term"
 )
 
-type terminal_impl struct {
+type terminal_pty struct {
 	ptystdio  *pty.Pty
 	shellname string
-	ondata    func(*terminal_impl)
+	ondata    func(*terminal_pty)
 	topline   int
 	dest      *terminal.State
 	ui        tview.Primitive
@@ -40,19 +40,19 @@ type terminal_impl struct {
 type Term struct {
 	// *femto.View
 	*tview.Box
-	term *terminal_impl
+	term *terminal_pty
 	*view_link
-	termlist []*terminal_impl
+	termlist []*terminal_pty
 }
 type ptyread struct {
-	term *terminal_impl
+	term *terminal_pty
 }
 
 func (ty ptyread) Write(p []byte) (n int, err error) {
 	return ty.term.Write(p)
 }
 
-func (t *terminal_impl) Kill() error {
+func (t *terminal_pty) Kill() error {
 	if t.ptystdio.Cmd != nil {
 		return t.ptystdio.Cmd.Process.Kill()
 	}
@@ -60,7 +60,7 @@ func (t *terminal_impl) Kill() error {
 }
 
 // Write implements io.Writer.
-func (t *terminal_impl) Write(p []byte) (n int, err error) {
+func (t *terminal_pty) Write(p []byte) (n int, err error) {
 	// not enough bytes for a full rune
 	if n, err := t.v100state(p); err != nil {
 		log.Println("vstate 100", err, n)
@@ -74,7 +74,7 @@ func (t *terminal_impl) Write(p []byte) (n int, err error) {
 	}()
 	return len(p), err
 }
-func (t *terminal_impl) v100state(p []byte) (int, error) {
+func (t *terminal_pty) v100state(p []byte) (int, error) {
 	var written int
 	r := bytes.NewReader(p)
 	t.dest.Lock()
@@ -143,9 +143,9 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	ret := &Term{tview.NewBox(),
 		nil,
 		&view_link{id: view_term},
-		[]*terminal_impl{},
+		[]*terminal_pty{},
 	}
-	term := ret.new_term(shellname)
+	term := ret.new_pty(shellname)
 	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		return ret.handle_mouse(action, app, event)
 	})
@@ -153,13 +153,13 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	return ret
 }
 
-func (ret *Term) new_term(shellname string) *terminal_impl {
+func (ret *Term) new_pty(shellname string) *terminal_pty {
 	cmdline := ""
 	switch shellname {
 	case "bash":
 		cmdline = "/usr/bin/sh"
 	}
-	term := &terminal_impl{
+	term := &terminal_pty{
 		nil,
 		shellname,
 		nil,
@@ -198,7 +198,7 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 	return action, event
 }
 
-func (term *terminal_impl) start_pty(cmdline string) {
+func (term *terminal_pty) start_pty(cmdline string) {
 	term.dest.Init()
 	term.dest.DebugLogger = log.Default()
 	col := 80
@@ -221,7 +221,7 @@ func (term *terminal_impl) start_pty(cmdline string) {
 	}()
 }
 
-func (term *terminal_impl) UpdateTermSize() {
+func (term *terminal_pty) UpdateTermSize() {
 	ptyio := term.ptystdio
 	_, _, w, h := term.ui.GetRect()
 	term.dest.Resize(w, h)
