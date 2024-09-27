@@ -3,7 +3,9 @@ package mainui
 import (
 	// "io"
 	"bytes"
+	"fmt"
 	"strings"
+
 	// "encoding/hex"
 	"io"
 	"log"
@@ -27,34 +29,13 @@ import (
 	"zen108.com/lspvi/pkg/term"
 )
 
-// const (
-// 	keyCtrlC     = 3
-// 	keyCtrlD     = 4
-// 	keyCtrlU     = 21
-// 	keyEnter     = '\r'
-// 	keyEscape    = 27
-// 	keyBackspace = 127
-// 	keyUnknown   = 0xd800 /* UTF-16 surrogate area */ + iota
-// 	keyUp
-// 	keyDown
-// 	keyLeft
-// 	keyRight
-// 	keyAltLeft
-// 	keyAltRight
-// 	keyHome
-// 	keyEnd
-// 	keyDeleteWord
-// 	keyDeleteLine
-// 	keyClearScreen
-// 	keyPasteStart
-// 	keyPasteEnd
-// )
-
 type terminal_impl struct {
 	ptystdio  *pty.Pty
 	shellname string
 	buf       []byte
 	ondata    func(*terminal_impl)
+	topline   int
+	dest      *terminal.State
 	// v100term  *v100.Terminal
 	// w, h int
 }
@@ -63,14 +44,12 @@ type Term struct {
 	*tview.Box
 	imp *terminal_impl
 	*view_link
-	dest    *terminal.State
-	topline int
 }
 
 // Write implements io.Writer.
 func (t Term) Write(p []byte) (n int, err error) {
 	// not enough bytes for a full rune
-	if n, err := t.v100state(p); err != nil {
+	if n, err := t.imp.v100state(p); err != nil {
 		log.Println("vstate 100", err, n)
 	} else {
 		// log.Println("write", n, hex.EncodeToString(p))
@@ -82,7 +61,7 @@ func (t Term) Write(p []byte) (n int, err error) {
 	}()
 	return len(p), err
 }
-func (t *Term) v100state(p []byte) (int, error) {
+func (t *terminal_impl) v100state(p []byte) (int, error) {
 	var written int
 	r := bytes.NewReader(p)
 	t.dest.Lock()
@@ -153,17 +132,18 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		cmdline = "/usr/bin/sh"
 	}
 
-	t := &Term{tview.NewBox(),
+	ret := &Term{tview.NewBox(),
 		&terminal_impl{
 			nil,
 			shellname,
 			[]byte{},
 			nil,
+			0,
+			&terminal.State{},
 		},
 		&view_link{id: view_term},
-		&terminal.State{},
-		0,
 	}
+	t:=ret.imp
 	t.dest.Init()
 	t.dest.DebugLogger = log.Default()
 	col := 80
@@ -172,20 +152,20 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 	go func() {
 		ptyio := pty.RunNoStdin([]string{cmdline})
 		signal.Notify(ptyio.Ch, syscall.SIGWINCH)
-		t.imp.ptystdio = ptyio
-		t.UpdateTermSize()
+		t.ptystdio = ptyio
+		ret.UpdateTermSize()
 		// v100term := v100.NewTerminal(ptyio.File, "")
 		// t.imp.v100term = v100term
 		go func() {
 			for range ptyio.Ch {
 				timer := time.After(100 * time.Millisecond)
 				<-timer
-				t.UpdateTermSize()
+				ret.UpdateTermSize()
 			}
 		}()
-		io.Copy(t, ptyio.File)
+		io.Copy(ret, ptyio.File)
 	}()
-	t.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		switch action {
 		case 14, 13:
 			{
@@ -193,7 +173,11 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 				if action == 14 {
 					t.topline = min(len(state.Offscreen), t.topline+1)
 				} else {
-					t.topline = max(0, t.topline-1)
+					if t.topline<1{
+						t.topline = 0
+					}else{
+						t.topline--
+					}
 				}
 				go func() {
 					app.QueueUpdateDraw(func() {})
@@ -202,13 +186,13 @@ func NewTerminal(app *tview.Application, shellname string) *Term {
 		}
 		return action, event
 	})
-	return t
+	return ret
 }
 
 func (t Term) UpdateTermSize() {
 	ptyio := t.imp.ptystdio
 	_, _, w, h := t.GetRect()
-	t.dest.Resize(w, h)
+	t.imp.dest.Resize(w, h)
 	if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
 		log.Printf("error resizing pty: %s", err)
 	}
@@ -232,29 +216,64 @@ func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.
 		}
 	})
 }
-func (t *Term) Draw(screen tcell.Screen) {
-	t.Box.DrawForSubclass(screen, t)
+func (termui *Term) Draw(screen tcell.Screen) {
+	termui.Box.DrawForSubclass(screen, termui)
+	t:=termui.imp
 	t.dest.Lock()
 	defer t.dest.Unlock()
-	posx, posy, width, height := t.GetInnerRect()
+	posx, posy, width, height := termui.GetInnerRect()
 	cols, rows := t.dest.Size()
 	default_fg, default_bg, _ := global_theme.get_default_style().Decompose()
-	//log.Printf("width=%d,height=%d col=%d row=%d %x", width, height, cols, rows, tcell.ColorGreen)
-	for y := 0; y < rows; y++ {
-		for x := 0; x < cols; x++ {
-			ch, fg, bg := t.dest.Cell(x, y)
-			// log.Printf("unknow bg color (%d,%d),#%x #%x", x, y, bg, fg)
-			// log.Printf("unknow fg color (%d,%d),#%x #%x", x, y, bg, fg)
-			style := get_style_from_fg_bg(bg, default_bg, fg, default_fg)
-
-			screen.SetContent(posx+x, posy+y, ch, nil, style)
+	state := t.dest
+	offline := state.Offscreen
+	total_offscreen_len := len(offline)
+	offlines_to_draw := 0
+	lineno_offset := 5
+	if t.topline > 0 {
+		offlines_to_draw = (total_offscreen_len - t.topline)
+		if offlines_to_draw > 0 {
+			for y := 0; y < offlines_to_draw; y++ {
+				offY := total_offscreen_len - y - 1
+				if offY < rows {
+					if lineno_offset > 0 {
+						sss := fmt.Sprintf("%4d", offY)
+						for i, v := range sss {
+							screen.SetContent(posx+i, posy+y, rune(v), nil, tcell.StyleDefault)
+						}
+					}
+					for x := 0; x < cols-lineno_offset; x++ {
+						ch, fg, bg := t.dest.OfflineCell(x+lineno_offset, offY)
+						style := get_style_from_fg_bg(bg, default_bg, fg, default_fg)
+						screen.SetContent(posx+x, posy+y, ch, nil, style)
+					}
+				}
+			}
+			rows = max(0, rows-offlines_to_draw)
 		}
 	}
-	x, y := t.dest.Cursor()
-	screen.ShowCursor(posx+x, posy+y)
+	for y := 0; y < rows; y++ {
+		if lineno_offset > 0 {
+			sss := fmt.Sprintf("%4d", y)
+			for i, v := range sss {
+				screen.SetContent(posx+i, posy+y+offlines_to_draw, rune(v), nil,
+					tcell.StyleDefault.Foreground(default_fg).Background(default_bg))
+			}
+		}
+		for x := 0; x < cols-lineno_offset; x++ {
+			ch, fg, bg := t.dest.Cell(x, y)
+			style := get_style_from_fg_bg(bg, default_bg, fg, default_fg)
+			screen.SetContent(posx+x+lineno_offset, posy+y+offlines_to_draw, ch, nil, style)
+		}
+	}
+	if offlines_to_draw > 0 {
+		screen.HideCursor()
+	} else {
+		x, y := t.dest.Cursor()
+		screen.ShowCursor(posx+x+lineno_offset, posy+y)
+	}
 	if width != cols || height != rows {
 		go func() {
-			t.imp.ptystdio.UpdateSize(uint16(width), uint16(height))
+			t.ptystdio.UpdateSize(uint16(width), uint16(height))
 		}()
 	}
 }
