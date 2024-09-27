@@ -110,6 +110,11 @@ func (e *editor_mouse_resize) config_filename() string {
 }
 func (e *editor_mouse_resize) set_heigth(link *view_link, a int) {
 	log.Println("zoom height", link.id.getname(), a)
+	// for i := range e.contorls {
+	// 	ctrl := e.contorls[i]
+	// 	_, _, _, h := ctrl.box.GetRect()
+	// 	ctrl.view_link.Height = h
+	// }
 	if link != nil {
 		link.Height += a
 		link.Height = max(1, link.Height)
@@ -118,6 +123,11 @@ func (e *editor_mouse_resize) set_heigth(link *view_link, a int) {
 }
 func (e *editor_mouse_resize) set_width(link *view_link, a int) {
 	// link := id.to_view_link(e.main)
+	// for i := range e.contorls {
+	// 	ctrl := e.contorls[i]
+	// 	_, _, w, _ := ctrl.box.GetRect()
+	// 	ctrl.view_link.Width = w
+	// }
 	log.Println("zoom width", link.id.getname(), a)
 	if link != nil {
 		link.Width += a
