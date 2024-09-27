@@ -621,6 +621,9 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 	default:
 		return action, event
 	}
+	if cb!=nil{
+		cb(action)
+	}
 	return tview.MouseConsumed, nil
 }
 
