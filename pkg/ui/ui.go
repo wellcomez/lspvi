@@ -14,6 +14,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
+
 	// femto "zen108.com/lspvi/pkg/highlight"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
@@ -401,19 +402,27 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 			m.codeview.goto_loation(loc.Range)
 		}
 	})
-	go m.async_open(file)
+	go m.async_open(file, func(sym *lspcore.Symbol_file) {
+		m.codeview.lspsymbol = sym
+	})
 }
-func (m *mainui) async_open(file string) {
+func (m *mainui) async_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
 	if err == nil {
-		m.lspmgr.Current.LoadSymbol()
+		symbolfile.LoadSymbol()
 		m.app.QueueUpdate(func() {
+			if cb != nil {
+				cb(symbolfile)
+			}
 			m.app.ForceDraw()
 		})
 	} else {
 		m.app.QueueUpdate(func() {
 			m.OnSymbolistChanged(symbolfile, nil)
 			m.app.ForceDraw()
+			if cb != nil {
+				cb(symbolfile)
+			}
 		})
 	}
 
@@ -714,6 +723,7 @@ func (main *mainui) create_right_context_menu() {
 	main.right_context_menu = new_contextmenu(main)
 	main.right_context_menu.menu_handle = []context_menu_handle{
 		main.codeview.rightmenu,
+		main.codeview2.rightmenu,
 		main.quickview.right_context,
 		main.callinview.right_context,
 		main.bookmark_view.right_context,

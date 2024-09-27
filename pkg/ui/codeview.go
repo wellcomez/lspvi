@@ -48,6 +48,7 @@ type CodeView struct {
 	view        *codetextview
 	theme       string
 	main        *mainui
+	lspsymbol   *lspcore.Symbol_file
 	key_map     map[tcell.Key]func(code *CodeView)
 	// mouse_select_area    bool
 	rightmenu_items []context_menu_item
@@ -369,7 +370,7 @@ func update_selection_menu(ret *CodeView) {
 		},
 		{item: create_menu_item("Open Below"), handle: func() {
 			main.codeview2.Load(ret.filename)
-			main.tab.ActiveTab(view_code_below,false)
+			main.tab.ActiveTab(view_code_below, false)
 		}},
 		{item: create_menu_item("-"), handle: func() {
 		}, hide: !main.tty},
@@ -534,7 +535,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	return root.process_mouse(event, action, func(action tview.MouseAction) {
 		switch action {
 		case tview.MouseLeftDoubleClick:
-			code.main.codeview.action_goto_define()
+			code.action_goto_define()
 		case tview.MouseLeftDown, tview.MouseRightClick:
 			code.main.set_viewid_focus(view_code)
 
