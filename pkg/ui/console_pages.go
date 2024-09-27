@@ -124,6 +124,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 		log.Fatal(err)
 	}
 	main.uml = uml
+	main.codeview2 = NewCodeView(nil)
 
 	console := new_console_pages()
 	console.SetChangedFunc(func() {
@@ -168,7 +169,7 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 }
 func (console *console_pages) new_tab_mgr(main *mainui) *tabmgr {
 	var tab_id = []view_id{}
-	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark, view_recent_open_file, view_term} {
+	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark, view_recent_open_file, view_term, view_code_below} {
 		if v == view_uml {
 			if main.uml == nil {
 				continue

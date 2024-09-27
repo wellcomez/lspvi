@@ -99,6 +99,7 @@ type mainui struct {
 	term          *Term
 	fileexplorer  *file_tree_view
 	codeview      *CodeView
+	codeview2     *CodeView
 	lspmgr        *lspcore.LspWorkspace
 	symboltree    *SymbolTreeView
 	quickview     *quick_view

@@ -99,6 +99,7 @@ type Term struct {
 	termlist      []*terminal_pty
 	sel           selectarea
 	right_context *term_right_menu
+	main          *mainui
 }
 type ptyread struct {
 	term *terminal_pty
@@ -200,7 +201,11 @@ type term_right_menu struct {
 }
 
 func (menu term_right_menu) getbox() *tview.Box {
-	return menu.view.Box
+	// menu.view.
+	if menu.view.main.tab.activate_tab_id == view_term {
+		return menu.view.Box
+	}
+	return nil
 }
 
 func (menu term_right_menu) menuitem() []context_menu_item {
@@ -221,6 +226,7 @@ func NewTerminal(main *mainui, app *tview.Application, shellname string) *Term {
 		[]*terminal_pty{},
 		selectarea{},
 		nil,
+		main,
 	}
 	ret.right_context = &term_right_menu{
 		view: ret,

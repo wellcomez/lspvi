@@ -35,6 +35,7 @@ const (
 	view_console_pages
 	view_recent_open_file
 	view_term
+	view_code_below
 )
 
 // var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin, view_term}
@@ -152,7 +153,7 @@ func view_id_init(m *mainui) {
 			}
 
 			switch v {
-			case view_quickview, view_callin, view_uml, view_log, view_term:
+			case view_quickview, view_callin, view_uml, view_log, view_term, view_code_below:
 				{
 					box.SetBlurFunc(func() {
 						box.SetBorderColor(tview.Styles.BorderColor)
@@ -231,87 +232,20 @@ func (viewid view_id) view_info(m *mainui) (tview.Primitive, *tview.Box, *view_l
 	case view_term:
 		v := m.term
 		return v, v.Box, m.term.view_link, "Terminal"
+	case view_code_below:
+		v := m.codeview2.view
+		return v, v.Box, m.term.view_link, "Preview"
 	}
 	return nil, nil, nil, ""
 }
 func (viewid view_id) Primitive(m *mainui) tview.Primitive {
 	a, _, _, _ := viewid.view_info(m)
 	return a
-	// switch viewid {
-	// case view_log:
-	// 	return m.log.log
-	// case view_quickview:
-	// 	return m.quickview.view
-	// case view_callin:
-	// 	return m.callinview.view
-	// case view_code:
-	// 	return m.codeview.view
-	// case view_uml:
-	// 	return m.uml.layout
-	// case view_cmd:
-	// 	return m.cmdline.input
-	// case view_file:
-	// 	return m.fileexplorer.view
-	// case view_outline_list:
-	// 	return m.symboltree.view
-	// case view_bookmark:
-	// 	return m.bookmark_view.list
-	// case view_code_area:
-	// 	return m.layout.editor_area
-	// case view_console_area:
-	// 	return m.layout.console
-	// case view_recent_open_file:
-	// 	return m.recent_open.list
-	// case view_main_layout:
-	// 	return m.layout.mainlayout
-	// case view_qf_index_view:
-	// 	return m.console_index_list
-	// case view_console_pages:
-	// 	return m.page
-	// case view_term:
-	// 	return m.term
-	// }
-	// return nil
 }
 
 func (viewid view_id) to_box(m *mainui) *tview.Box {
 	_, b, _, _ := viewid.view_info(m)
 	return b
-	// switch viewid {
-	// case view_log:
-	// 	return m.log.log.Box
-	// case view_quickview:
-	// 	return m.quickview.view.Box
-	// case view_callin:
-	// 	return m.callinview.view.Box
-	// case view_code:
-	// 	return m.codeview.view.Box
-	// case view_uml:
-	// 	return m.uml.layout.Box
-	// case view_cmd:
-	// 	return m.cmdline.input.Box
-	// case view_file:
-	// 	return m.fileexplorer.view.Box
-	// case view_outline_list:
-	// 	return m.symboltree.view.Box
-	// case view_bookmark:
-	// 	return m.bookmark_view.list.Box
-	// case view_code_area:
-	// 	return m.layout.editor_area.Box
-	// case view_console_area:
-	// 	return m.layout.console.Box
-	// case view_recent_open_file:
-	// 	return m.recent_open.list.Box
-	// case view_main_layout:
-	// 	return m.layout.mainlayout.Box
-	// case view_qf_index_view:
-	// 	return m.console_index_list.Box
-	// case view_console_pages:
-	// 	return m.page.Box
-	// case view_term:
-	// 	return m.term.Box
-	// }
-	// return nil
 }
 
 var all_view_list = []view_id{
@@ -331,6 +265,7 @@ var all_view_list = []view_id{
 	view_console_pages,
 	view_recent_open_file,
 	view_term,
+	view_code_below,
 }
 var all_view_name = []string{
 	"none",
@@ -350,6 +285,7 @@ var all_view_name = []string{
 	"view_console_pages",
 	"Opened files",
 	"Terminal",
+	"CodePreview",
 }
 
 func (viewid view_id) getname() string {
