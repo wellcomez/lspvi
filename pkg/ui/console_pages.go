@@ -91,7 +91,13 @@ func (tabs *tabmgr) ActiveTab(id view_id, focused bool) {
 	}
 	tabs.activate_tab_id = id
 	tabs.update_tab_title(id)
-	m.console_index_list.Load(id)
+	show := m.console_index_list.Load(id)
+	link := view_qf_index_view.to_view_link(m)
+	if show {
+		m.layout.console.resizer.show(link)
+	} else {
+		m.layout.console.resizer.hide(link)
+	}
 }
 func (tabs *tabmgr) view_is_tab(next view_id) bool {
 	x := tabs.tabutton.Find(next.getname()) != nil

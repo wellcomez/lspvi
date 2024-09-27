@@ -170,8 +170,15 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 	}
 	// log.Println("file", m.fileexplorer.Width, "sym", m.symboltree.Width)
 }
-
+func (layout *editor_mouse_resize) show(viewlink *view_link) {
+	viewlink.Hide = true
+	layout.toggle(viewlink)
+}
 func (layout *editor_mouse_resize) hide(viewlink *view_link) {
+	viewlink.Hide = false
+	layout.toggle(viewlink)
+}
+func (layout *editor_mouse_resize) toggle(viewlink *view_link) {
 	var ui *ui_reszier
 	for i := range layout.contorls {
 		v := layout.contorls[i]

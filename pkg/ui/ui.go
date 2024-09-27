@@ -142,7 +142,7 @@ func (m *mainui) zoom(zoomin bool) {
 	// // m._editor_area_layout.zoom(zoomin, viewid)
 }
 func (m *mainui) toggle_view(id view_id) {
-	m.layout.editor_area.resizer.hide(id.to_view_link(m))
+	m.layout.editor_area.resizer.toggle(id.to_view_link(m))
 }
 
 func (m *mainui) OnLspCallTaskInViewResovled(stacks *lspcore.CallInTask) {

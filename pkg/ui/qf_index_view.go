@@ -30,7 +30,7 @@ func (view *qf_index_view_history) Delete(index int) {
 		view.Add(view.keys[index], false)
 	}
 }
-func (ret *qf_index_view) Load(viewid view_id) {
+func (ret *qf_index_view) Load(viewid view_id) bool {
 	switch viewid {
 	case view_callin, view_quickview, view_bookmark:
 		ret.right_context.menu_item = &menudata{[]context_menu_item{
@@ -75,7 +75,9 @@ func (ret *qf_index_view) Load(viewid view_id) {
 		}
 	default:
 		ret.customlist.Clear()
+		return false
 	}
+	return true
 }
 
 func (term *Term) addterm(s string) {
