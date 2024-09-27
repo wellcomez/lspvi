@@ -1207,6 +1207,7 @@ func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
 }
 
 func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
+	b.SetTitleAlign(tview.AlignLeft)
 	b.SetTitle(title)
 	b.SetTitleColor(tview.Styles.TitleColor)
 	return b

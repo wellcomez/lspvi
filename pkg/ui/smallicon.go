@@ -1,9 +1,9 @@
 package mainui
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
-	"github.com/gdamore/tcell/v2"
 )
 
 func get_style_hide(hide bool) tcell.Style {
@@ -35,18 +35,22 @@ func (c *smallicon) Draw(screen tcell.Screen) {
 	ch := '█'
 	ch = '■'
 
-	left, top, _, _ := c.main.codeview.view.GetRect()
+	left, top := c.get_offset_xy()
 	forward := '→'
 	back := '←'
+
+	back = '◀'
+	forward = '▶'
 	style := *global_theme.get_default_style()
 	screen.SetContent(c.file.X+left, c.file.Y+top, ch, nil, get_style_hide(view_file.to_view_link(main).Hide))
 	screen.SetContent(c.code.X+left, c.code.Y+top, ch, nil, get_style_hide(view_code.to_view_link(main).Hide))
 	screen.SetContent(c.outline.X+left, c.outline.Y+top, ch, nil, get_style_hide(view_outline_list.to_view_link(main).Hide))
 
-	screen.SetContent(c.back.X-1+left, top+c.back.Y, ' ', nil, style.Foreground(tcell.ColorWhite))
-	screen.SetContent(c.back.X+left, top+c.back.Y, back, nil, style.Foreground(tcell.ColorWhite))
+	screen.SetContent(c.back.X-1+left, top+c.back.Y, ' ', nil, style.Foreground(tcell.ColorWhite).Bold(true))
+	screen.SetContent(c.back.X+left, top+c.back.Y, back, nil, get_style_hide(!c.main.CanGoBack()))
 	screen.SetContent(c.back.X+1+left, top+c.back.Y, ' ', nil, style.Foreground(tcell.ColorWhite))
-	screen.SetContent(c.forward.X+left, top+c.forward.Y, forward, nil, style.Foreground(tcell.ColorWhite))
+	screen.SetContent(c.forward.X+left, top+c.forward.Y, forward, nil, get_style_hide(!c.main.CanGoFoward()).Bold(true))
+	screen.SetContent(c.forward.X+1+left, top+c.forward.Y, ' ', nil, style.Foreground(tcell.ColorWhite))
 }
 func new_small_icon(main *mainui) *smallicon {
 	smallicon := &smallicon{
@@ -62,7 +66,7 @@ func new_small_icon(main *mainui) *smallicon {
 }
 func (icon *smallicon) handle_mouse_event(action tview.MouseAction, event *tcell.EventMouse) (*tcell.EventMouse, tview.MouseAction) {
 	x, y := event.Position()
-	left, top, _, _ := icon.main.codeview.view.GetRect()
+	left, top := icon.get_offset_xy()
 	loc := femto.Loc{X: x - left, Y: y - top}
 	if action == tview.MouseLeftClick {
 		// if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
@@ -93,4 +97,11 @@ func (icon *smallicon) handle_mouse_event(action tview.MouseAction, event *tcell
 		return nil, tview.MouseConsumed
 	}
 	return event, action
+}
+
+func (icon *smallicon) get_offset_xy() (int, int) {
+	left, top, w, _ := icon.main.codeview.view.GetRect()
+	left += w
+	left -= 10
+	return left, top
 }

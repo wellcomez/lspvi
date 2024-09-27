@@ -1003,7 +1003,12 @@ func (main *mainui) GoForward() {
 		offset: i.Pos.Offset,
 	}, false)
 }
-
+func (main *mainui) CanGoBack() bool {
+	return main.bf.history.index < len(main.bf.history.datalist)-1
+}
+func (main *mainui) CanGoFoward() bool {
+	return main.bf.history.index != 0
+}
 func (main *mainui) GoBack() {
 	main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoBack()
