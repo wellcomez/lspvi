@@ -1,6 +1,11 @@
 package mainui
 
-import "github.com/rivo/tview"
+import (
+	"log"
+	"strings"
+
+	"github.com/rivo/tview"
+)
 
 type console_pages struct {
 	*tview.Pages
@@ -22,7 +27,7 @@ type tabmgr struct {
 	activate_tab_id view_id
 	main            *mainui
 	page            *console_pages
-	tabs            *ButtonGroup
+	tabutton        *ButtonGroup
 }
 
 func (m *tabmgr) UpdatePageTitle() {
@@ -76,8 +81,8 @@ func (tabs *tabmgr) ActiveTab(id view_id, focused bool) {
 	}
 	var name = id.getname()
 	tabs.page.SwitchToPage(name)
-	tab := tabs.tabs.Find(name)
-	for _, v := range tabs.tabs.tabs {
+	tab := tabs.tabutton.Find(name)
+	for _, v := range tabs.tabutton.tabs {
 		if v == tab {
 			v.Focus(nil)
 		} else {
@@ -88,7 +93,10 @@ func (tabs *tabmgr) ActiveTab(id view_id, focused bool) {
 	tabs.update_tab_title(id)
 	m.console_index_list.Load(id)
 }
-
+func (tabs *tabmgr) view_is_tab(next view_id) bool {
+	x := tabs.tabutton.Find(next.getname()) != nil
+	return x
+}
 func (tabs *tabmgr) update_tab_title(id view_id) {
 	m := tabs.main
 	switch id {
@@ -104,7 +112,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	console.SetChangedFunc(func() {
 		xx := console.GetPageNames(true)
 		if len(xx) == 1 {
-			// main.tab.activate_tab_name = xx[0]
+			// tab.activate_tab_name = xx[0]
 		}
 		log.Println(strings.Join(xx, ","))
 	})
@@ -121,8 +129,6 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	main.page.SetChangedFunc(func() {
 		main.UpdatePageTitle()
 	})
-
-	main.tab = tabmgr{main: main, page: console}
 	uml, err := NewUmlView(main, &main.lspmgr.Wk)
 	if err != nil {
 		log.Fatal(err)
@@ -140,9 +146,10 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 		tabname = append(tabname, v.getname())
 		tab_id = append(tab_id, v)
 	}
-	main.tab.tab_id = tab_id
+	tab := tabmgr{main: main, page: console, activate_tab_id: view_quickview}
+	tab.tab_id = tab_id
 	group := NewButtonGroup(tabname, main.OnTabChanged)
-	main.tab.tabs = group
+	tab.tabutton = group
 	tab_area := tview.NewFlex()
 	for _, v := range group.tabs {
 		tab_area.AddItem(v, len(v.GetLabel())+2, 1, true)
@@ -150,5 +157,6 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	var tabid view_id = view_quickview
 	fzttab := group.Find(tabid.getname())
 	fzttab.Focus(nil)
+	main.tab = tab
 	return console_layout, tab_area
 }

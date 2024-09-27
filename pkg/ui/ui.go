@@ -1004,10 +1004,7 @@ func (main *mainui) move_to_window(t direction) {
 	}
 }
 
-func (main *tabmgr) view_is_tab(next view_id) bool {
-	x := main.tabs.Find(next.getname()) != nil
-	return x
-}
+
 func (main *mainui) IsSource(s string) bool {
 	return main.lspmgr.IsSource(s)
 }
