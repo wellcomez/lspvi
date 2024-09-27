@@ -124,7 +124,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 		log.Fatal(err)
 	}
 	main.uml = uml
-	main.codeview2 = NewCodeView(nil)
+	main.codeview2 = NewCodeView(main)
 
 	console := new_console_pages()
 	console.SetChangedFunc(func() {

@@ -559,6 +559,9 @@ func MainUI(arg *Arguments) {
 		main.OpenFile(filearg, nil)
 	}
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if main.codeview2.view.HasFocus() {
+			return main.codeview2.handle_key(event)
+		}
 		return main.handle_key(event)
 	})
 	console_area_resizer := new_editor_resize(main, main.layout.console, nil, nil)

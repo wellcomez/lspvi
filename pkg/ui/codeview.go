@@ -369,6 +369,7 @@ func update_selection_menu(ret *CodeView) {
 		},
 		{item: create_menu_item("Open Below"), handle: func() {
 			main.codeview2.Load(ret.filename)
+			main.tab.ActiveTab(view_code_below,false)
 		}},
 		{item: create_menu_item("-"), handle: func() {
 		}, hide: !main.tty},
