@@ -121,7 +121,9 @@ func (tabs *tabmgr) update_tab_title(id view_id) {
 	m := tabs.main
 	switch id {
 	case view_quickview:
-		m.page.update_title(m.quickview.String())
+		tabs.page.update_title(m.quickview.String())
+	case view_code_below:
+		tabs.page.update_title(m.codeview2.filename)
 	default:
 		tabs.page.update_title(id.getname())
 	}

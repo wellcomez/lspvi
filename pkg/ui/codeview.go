@@ -300,13 +300,20 @@ func update_selection_menu(ret *CodeView) {
 			main.toggle_view(view_outline_list)
 		}},
 
+		{item: create_menu_item("-"), handle: func() {
+		}},
 		{item: create_menu_item("Open Below"), handle: func() {
 			if ret == main.codeview {
-				main.codeview2.Load(ret.filename)
-				go main.async_lsp_open(ret.filename, func(sym *lspcore.Symbol_file) {
-					main.codeview2.lspsymbol = sym
+				main.codeview2.LoadAndCb(ret.filename, func() {
+					go main.async_lsp_open(ret.filename, func(sym *lspcore.Symbol_file) {
+						main.codeview2.lspsymbol = sym
+					})
+					go func() {
+						main.app.QueueUpdateDraw(func() {
+							main.tab.ActiveTab(view_code_below, true)
+						})
+					}()
 				})
-				main.tab.ActiveTab(view_code_below, true)
 			}
 		}},
 		{
