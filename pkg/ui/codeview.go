@@ -146,9 +146,9 @@ func (code CodeContextMenu) getbox() *tview.Box {
 	if code.code.main == nil {
 		return nil
 	}
-	main:=code.code.main
-	if code.code.id==view_code_below{
-		if main.tab.activate_tab_id!=view_code_below{
+	main := code.code.main
+	if code.code.id == view_code_below {
+		if main.tab.activate_tab_id != view_code_below {
 			return nil
 		}
 	}
@@ -186,7 +186,9 @@ func (code *CodeView) OnFindInfileWordOption(fzf bool, noloop bool, whole bool) 
 			word = p1 + p2
 		}
 	}
-	code.main.prefocused = view_code
+	if code.id != view_none {
+		code.main.prefocused = code.id
+	}
 	code.main.OnSearch(search_option{word, fzf, noloop, whole})
 	return word
 }
@@ -379,7 +381,7 @@ func update_selection_menu(ret *CodeView) {
 		},
 		{item: create_menu_item("Open Below"), handle: func() {
 			main.codeview2.Load(ret.filename)
-			main.tab.ActiveTab(view_code_below, false)
+			main.tab.ActiveTab(view_code_below, true)
 		}},
 		{item: create_menu_item("-"), handle: func() {
 		}, hide: !main.tty},
@@ -546,12 +548,12 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		case tview.MouseLeftDoubleClick:
 			code.action_goto_define()
 		case tview.MouseLeftDown, tview.MouseRightClick:
-			code.main.set_viewid_focus(view_code)
+			code.main.set_viewid_focus(code.id)
 
 		case tview.MouseLeftClick:
 			{
 
-				code.main.set_viewid_focus(view_code)
+				code.main.set_viewid_focus(code.id)
 				code.update_with_line_changed()
 			}
 		}
@@ -793,7 +795,7 @@ func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 	if code.main == nil {
 		return event
 	}
-	if code.main.get_focus_view_id() != view_code {
+	if code.main.get_focus_view_id() != code.id {
 		return event
 	}
 	// ch := string(event.Rune())

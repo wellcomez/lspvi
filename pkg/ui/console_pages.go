@@ -77,6 +77,9 @@ func (tabs *tabmgr) ActiveTab(id view_id, focused bool) {
 	if !yes {
 		return
 	}
+	if id == view_code_below {
+		focused = true
+	}
 	if focused {
 		m.lost_focus(m.get_view_from_id(m.get_focus_view_id()))
 		m.set_focus(m.get_view_from_id(id))

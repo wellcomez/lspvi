@@ -758,7 +758,14 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 	}
 	return main_layout
 }
-
+func (main *mainui) current_editor() *CodeView {
+	for _, v := range []*CodeView{main.codeviewmain, main.codeview2} {
+		if v.view.HasFocus() {
+			return v
+		}
+	}
+	return main.codeviewmain
+}
 func (main *mainui) create_menu_bar(tab_area *tview.Flex) *tview.Button {
 	main.add_statusbar_to_tabarea(tab_area)
 
@@ -1066,7 +1073,7 @@ func (main *mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }
 func (main *mainui) open_document_symbol_picker() {
-	main.layout.dialog.OpenDocumntSymbolFzf(main.codeview)
+	main.layout.dialog.OpenDocumntSymbolFzf(main.current_editor())
 }
 
 type Search interface {

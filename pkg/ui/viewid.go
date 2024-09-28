@@ -80,7 +80,7 @@ func view_id_init(m *mainui) {
 		box := v.to_box(m)
 		if box != nil {
 			switch v {
-			case view_code:
+			case view_code,view_code_below:
 				{
 					box.SetFocusFunc(func() {
 						// m.editor_area_fouched()
