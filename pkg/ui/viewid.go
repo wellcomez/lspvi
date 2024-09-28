@@ -226,23 +226,23 @@ var all_view_list = []view_id{
 }
 var all_view_name = []string{
 	"none",
-	"log",
-	"quickview",
-	"callin",
-	"uml",
+	"Log",
+	"Refs|Search",
+	"Callin",
+	"UML",
 	"cmd",
 	"file",
 	"outline",
-	"bookmark",
+	"Bookmark",
 	"view_code_area",
 	"view_console_area",
 	"view_main_layout",
 	"view_qf_index_view",
 	"view_console_pages",
 	"Opened",
-	"Terminal",
+	"Term",
 	"code",
-	"CodePreview",
+	"Code",
 }
 
 func (viewid view_id) getname() string {
