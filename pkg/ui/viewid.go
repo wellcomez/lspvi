@@ -201,6 +201,12 @@ func (viewid view_id) view_info(m *mainui) (tview.Primitive, *tview.Box, *view_l
 		v := SplitCode.layout
 		return v, v.Box, m.term.view_link, "Preview"
 	}
+	if viewid > view_code {
+		if v, ok := SplitCode.code_collection[viewid]; ok {
+			v := v.view
+			return v, v.Box, m.term.view_link, viewid.getname()
+		}
+	}
 	return nil, nil, nil, ""
 }
 func (viewid view_id) Primitive(m *mainui) tview.Primitive {

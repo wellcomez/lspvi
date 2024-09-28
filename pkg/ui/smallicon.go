@@ -80,7 +80,7 @@ func (c *smallicon) Relocated() {
 func (c *smallicon) Draw(screen tcell.Screen) {
 	c.Relocated()
 	main := c.main
-	focus_color := tcell.ColorDarkRed
+	focus_color := tcell.ColorYellow
 	x := get_style_hide(view_outline_list.to_view_link(main).Hide)
 	if view_outline_list.to_box(c.main).HasFocus() {
 		x = x.Foreground(focus_color)
