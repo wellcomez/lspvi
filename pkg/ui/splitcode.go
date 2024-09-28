@@ -38,6 +38,24 @@ func NewCodeSplit(d *CodeView) *CodeSplit {
 
 var SplitCode = NewCodeSplit(nil)
 
+func (c CodeSplit) Last() *CodeView {
+	ind := len(c.index) - 1
+	return c.TabView(ind)
+}
+func (c CodeSplit) TabView(index int) *CodeView {
+	if len(c.index) == 0 {
+		return nil
+	}
+	if index < 0 || index >= len(c.index) {
+		return nil
+	}
+	viewid := c.index[index]
+	if code, ok := c.code_collection[viewid]; ok {
+		return code
+	}
+	return nil
+}
+
 func SplitClose(code *CodeView) context_menu_item {
 	return context_menu_item{item: create_menu_item("Close"), handle: func() {
 		SplitCode.layout.RemoveItem(code.view)

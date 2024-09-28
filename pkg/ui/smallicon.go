@@ -160,7 +160,11 @@ func (icon *smallicon) handle_mouse_event(action tview.MouseAction, event *tcell
 }
 
 func (icon *smallicon) get_offset_xy() (int, int) {
-	left, top, w, _ := icon.main.codeview.view.GetRect()
+	v := SplitCode.Last()
+	if v == nil {
+		v = icon.main.codeview
+	}
+	left, top, w, _ := v.view.GetRect()
 	left += w
 	left -= 10
 	return left, top
