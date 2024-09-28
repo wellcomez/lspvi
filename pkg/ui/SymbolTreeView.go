@@ -247,7 +247,7 @@ func NewSymbolTreeView(main *mainui, codeview *CodeView) *SymbolTreeView {
 	})
 	return ret
 }
-func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
+func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 	const openmark = " + "
 	if node.IsExpanded() {
 		if len(node.GetChildren()) > 0 {
@@ -289,8 +289,10 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 							},
 						}
 						code := symview.editor
-						symview.main.bf.history.SaveToHistory(code)
-						symview.main.bf.history.AddToHistory(code.filename, NewEditorPosition(r.Start.Line, symview.editor))
+						if code.id == view_code {
+							symview.main.bf.history.SaveToHistory(code)
+							symview.main.bf.history.AddToHistory(code.filename, NewEditorPosition(r.Start.Line, symview.editor))
+						}
 						symview.editor.goto_loation_noupdate(r)
 						return
 					}
