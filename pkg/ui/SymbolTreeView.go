@@ -46,7 +46,7 @@ type SymbolTreeView struct {
 	waiter        *tview.TextView
 	right_context symboltree_view_context
 	file          string
-	codeview      *CodeView
+	editor        *CodeView
 }
 type symboltree_view_context struct {
 	qk        *SymbolTreeView
@@ -208,7 +208,7 @@ func NewSymbolTreeView(main *mainui, codeview *CodeView) *SymbolTreeView {
 		view_link: &view_link{id: view_outline_list, left: view_code, down: view_quickview},
 		main:      main,
 		view:      symbol_tree,
-		codeview:  codeview,
+		editor:    codeview,
 	}
 
 	menu_item := []context_menu_item{}
@@ -240,7 +240,7 @@ func NewSymbolTreeView(main *mainui, codeview *CodeView) *SymbolTreeView {
 			bw := width / 2
 			bh := height / 2
 			ret.waiter.SetRect((width-bw)/2+x, y+(height-bh)/2, bw, bh)
-			ret.waiter.SetBackgroundColor(ret.codeview.bgcolor)
+			ret.waiter.SetBackgroundColor(ret.editor.bgcolor)
 			ret.waiter.Draw(screen)
 		}
 		return ret.view.GetInnerRect()
@@ -288,10 +288,10 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 								Character: idx + len(sym.Name),
 							},
 						}
-						code := symview.codeview
+						code := symview.editor
 						symview.main.bf.history.SaveToHistory(code)
-						symview.main.bf.history.AddToHistory(code.filename, NewEditorPosition(r.Start.Line, symview.codeview))
-						symview.codeview.goto_loation_noupdate(r)
+						symview.main.bf.history.AddToHistory(code.filename, NewEditorPosition(r.Start.Line, symview.editor))
+						symview.editor.goto_loation_noupdate(r)
 						return
 					}
 				}
@@ -300,7 +300,7 @@ func (symview SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 				Range.End.Line = Range.Start.Line
 				Range.End.Character = Range.Start.Character + len(sym.Name)
 			}
-			symview.codeview.goto_loation_noupdate(Range)
+			symview.editor.goto_loation_noupdate(Range)
 		}
 	}
 	symview.view.SetCurrentNode(node)
@@ -394,7 +394,7 @@ func (c *SymbolTreeView) HandleKey(event *tcell.EventKey) *tcell.EventKey {
 func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 	loc := sym.SymInfo.Location
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
-	beginline := c.codeview.view.Buf.Line(loc.Range.Start.Line)
+	beginline := c.editor.view.Buf.Line(loc.Range.Start.Line)
 	startIndex := strings.Index(beginline, sym.SymInfo.Name)
 	if startIndex > 0 {
 		loc.Range.Start.Character = startIndex
@@ -402,33 +402,33 @@ func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 		loc.Range.End.Line = loc.Range.Start.Line
 	}
 	// println(ss)
-	c.main.get_callin_stack(loc, c.codeview.filename)
+	c.main.get_callin_stack(loc, c.editor.filename)
 	// c.main.ActiveTab(view_callin)
 }
 func (c *SymbolTreeView) get_declare(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_declare(r, c.codeview.filename)
+	c.main.get_declare(r, c.editor.filename)
 }
 func (c *SymbolTreeView) get_define(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_define(r, c.codeview.filename)
+	c.main.get_define(r, c.editor.filename)
 }
 func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_refer(r, c.codeview.filename)
+	c.main.get_refer(r, c.editor.filename)
 	// c.main.ActiveTab(view_fzf)
 }
 
 func (c *SymbolTreeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
 	r := sym.SymInfo.Location.Range
 
-	beginline := c.codeview.view.Buf.Line(r.Start.Line)
+	beginline := c.editor.view.Buf.Line(r.Start.Line)
 	startIndex := strings.Index(beginline, sym.SymInfo.Name)
 	if startIndex > 0 {
 		r.Start.Character = startIndex
@@ -465,7 +465,7 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 	}
 	root_node := tview.NewTreeNode("symbol")
 	root_node.SetReference("1")
-	query := v.codeview.colorscheme
+	query := v.editor.colorscheme
 	for _, v := range file.Class_object {
 		if v.Is_class() {
 			c := tview.NewTreeNode(v.SymbolListStrint())
@@ -489,7 +489,7 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 		}
 	}
 	v.view.SetRoot(root_node)
-	v.codeview.update_with_line_changed()
+	v.editor.update_with_line_changed()
 }
 
 func add_symbol_node_color(query *symbol_colortheme, c *lspcore.Symbol, cc *tview.TreeNode) {
