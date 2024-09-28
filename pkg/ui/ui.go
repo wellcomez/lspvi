@@ -50,13 +50,12 @@ func new_flex_area(id view_id, main *mainui) *flex_area {
 
 type rootlayout struct {
 	editor_area *flex_area
-	// codelayout  *flex_area
-	console    *flex_area
-	cmdline    *tview.InputField
-	tab_area   *tview.Flex
-	mainlayout *flex_area
-	dialog     *fzfmain
-	spacemenu  *space_menu
+	console     *flex_area
+	cmdline     *tview.InputField
+	tab_area    *tview.Flex
+	mainlayout  *flex_area
+	dialog      *fzfmain
+	spacemenu   *space_menu
 	// hide_cb     func()
 }
 type recent_open_file struct {
@@ -589,7 +588,7 @@ func MainUI(arg *Arguments) {
 
 	edit_area_resizer := new_editor_resize(main, editor_area, nil, nil)
 	edit_area_resizer.add(main.fileexplorer.view_link, 0)
-	edit_area_resizer.add(main.codeview.view_link, 1)
+	edit_area_resizer.add(SplitCode.layout.view_link, 1)
 	edit_area_resizer.add(main.symboltree.view_link, 2).load()
 
 	main_layout_resizer := new_editor_resize(main, main_layout, func() {}, func(u *ui_reszier) {
