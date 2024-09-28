@@ -110,8 +110,14 @@ func (icon *smallicon) handle_mouse_event(action tview.MouseAction, event *tcell
 	loc := Pos{X: x, Y: y}
 	if action == tview.MouseLeftClick {
 		// if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
-		for _, v := range icon.code {
+		for i, v := range icon.code {
 			if v.in(loc) {
+				if i > 0 {
+					id:= SplitCode.index[i]
+					if view,ok:=SplitCode.code_collection[id];ok{
+						SplitClose(view).handle()
+					}
+				}
 				return nil, tview.MouseConsumed
 			}
 		}

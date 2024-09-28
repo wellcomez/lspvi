@@ -9,6 +9,7 @@ type CodeSplit struct {
 	last            view_id
 	layout          *flex_area
 	main            *mainui
+	index           []view_id
 }
 
 func (s *CodeSplit) AddCode(d *CodeView) {
@@ -16,6 +17,7 @@ func (s *CodeSplit) AddCode(d *CodeView) {
 		return
 	}
 	s.code_collection[d.id] = d
+	s.index = append(s.index, d.id)
 	s.last = max(d.id, s.last)
 	s.layout.AddItem(d.view, 0, 1, false)
 }
@@ -39,10 +41,15 @@ var SplitCode = NewCodeSplit(nil)
 func SplitClose(code *CodeView) context_menu_item {
 	return context_menu_item{item: create_menu_item("Close"), handle: func() {
 		SplitCode.layout.RemoveItem(code.view)
-		var s =make(map[view_id]*CodeView)
+		var s = make(map[view_id]*CodeView)
 		for k, v := range SplitCode.code_collection {
-			if v!=code{
+			if v != code {
 				s[k] = v
+			}
+		}
+		for i, v := range SplitCode.index {
+			if v == code.id {
+				SplitCode.index = append(SplitCode.index[:i], SplitCode.index[i+1:]...)
 			}
 		}
 		SplitCode.code_collection = s
