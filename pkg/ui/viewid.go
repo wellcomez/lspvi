@@ -37,7 +37,13 @@ const (
 	view_term
 	view_code_below
 )
-
+func (a view_id)is_editor()bool{
+	switch(a){
+		case view_code,view_code_below:
+			return true
+	}
+	return false
+}
 // var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin, view_term}
 
 // func find_tab_by_name(name string) view_id {

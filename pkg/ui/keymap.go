@@ -144,12 +144,12 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case open_picker_grep_word:
 		return cmdactor{id, "grep word", func() bool {
-			m.codeview.action_grep_word(true)
+			m.current_editor().action_grep_word(true)
 			return true
 		}}
 	case open_picker_global_search:
 		return cmdactor{id, "Search in files", func() bool {
-			m.codeview.action_grep_word(false)
+			m.current_editor().action_grep_word(false)
 			return true
 		}}
 	case open_picker_ctrlp:
@@ -159,8 +159,8 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case bookmark_it:
 		return cmdactor{id, "Bookmark", func() bool {
-			if m.codeview != nil {
-				m.codeview.bookmark()
+			if m.current_editor() != nil {
+				m.current_editor().bookmark()
 			}
 			return true
 		}}
@@ -187,44 +187,44 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}
 	case goto_first_line:
 		return cmdactor{id, "goto first line", func() bool {
-			m.codeview.gotoline(0)
+			m.current_editor().gotoline(0)
 			return true
 		}}
 	case goto_to_fileview:
 		{
 			return cmdactor{id, "goto file explorer", func() bool {
-				dir := filepath.Dir(m.codeview.filename)
+				dir := filepath.Dir(m.current_editor().filename)
 				if view_file.to_view_link(m).Hide {
 					m.toggle_view(view_file)
 				}
 				m.fileexplorer.ChangeDir(dir)
-				m.fileexplorer.FocusFile(m.codeview.filename)
+				m.fileexplorer.FocusFile(m.current_editor().filename)
 				return true
 			}}
 		}
 	case goto_last_line:
 		return cmdactor{id, "goto first line", func() bool {
-			m.codeview.gotoline(-1)
+			m.current_editor().gotoline(-1)
 			return true
 		}}
 	case goto_define:
 		return cmdactor{id, "goto define", func() bool {
-			m.codeview.action_goto_define()
+			m.current_editor().action_goto_define()
 			return true
 		}}
 	case goto_refer:
 		return cmdactor{id, "goto refer", func() bool {
-			m.codeview.action_get_refer()
+			m.current_editor().action_get_refer()
 			return true
 		}}
 	case goto_callin:
 		return cmdactor{id, "goto callin", func() bool {
-			m.codeview.key_call_in()
+			m.current_editor().key_call_in()
 			return true
 		}}
 	case goto_decl:
 		return cmdactor{id, "goto decl", func() bool {
-			m.codeview.action_goto_declaration()
+			m.current_editor().action_goto_declaration()
 			return true
 		}}
 	case next_window_down:
@@ -250,13 +250,13 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case file_in_file:
 		return cmdactor{id, "file in file", func() bool {
-			w := m.codeview.OnFindInfile(true, true)
+			w := m.current_editor().OnFindInfile(true, true)
 			m.cmdline.set_escape_search_mode(w)
 			return true
 		}}
 	case file_in_file_vi_word:
 		return cmdactor{id, "file in file vi", func() bool {
-			word := m.codeview.OnFindInfileWordOption(false, false, true)
+			word := m.current_editor().OnFindInfileWordOption(false, false, true)
 			cmdline := m.cmdline
 			cmdline.set_escape_search_mode(word)
 			return true
@@ -265,88 +265,88 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		{
 			return cmdactor{id, "match", func() bool {
 				if m.cmdline.Vim.vi.VMap {
-					begin := m.codeview.view.Cursor.Loc
-					m.codeview.view.JumpToMatchingBrace()
-					end := m.codeview.view.Cursor.Loc
+					begin := m.current_editor().view.Cursor.Loc
+					m.current_editor().view.JumpToMatchingBrace()
+					end := m.current_editor().view.Cursor.Loc
 					end.X += 1
-					m.codeview.view.Cursor.SetSelectionStart(begin)
-					m.codeview.view.Cursor.SetSelectionEnd(end)
+					m.current_editor().view.Cursor.SetSelectionStart(begin)
+					m.current_editor().view.Cursor.SetSelectionEnd(end)
 				} else {
-					m.codeview.view.JumpToMatchingBrace()
+					m.current_editor().view.JumpToMatchingBrace()
 				}
 				return true
 			}}
 		}
 	case arrow_up:
 		return cmdactor{id, "up", func() bool {
-			m.codeview.action_key_up()
+			m.current_editor().action_key_up()
 			return true
 		}}
 	case arrow_down:
 		return cmdactor{id, "down", func() bool {
-			m.codeview.action_key_down()
+			m.current_editor().action_key_down()
 			return true
 		}}
 	case vi_left, arrow_left:
 		return cmdactor{id, "left", func() bool {
-			m.codeview.key_left()
+			m.current_editor().key_left()
 			return true
 		}}
 	case vi_right, arrow_right:
 		return cmdactor{id, "right", func() bool {
-			m.codeview.key_right()
+			m.current_editor().key_right()
 			return true
 		}}
 	case vi_left_word:
 		return cmdactor{id, "word left", func() bool {
-			m.codeview.word_left()
+			m.current_editor().word_left()
 			return true
 		}}
 	case vi_right_word:
 		return cmdactor{id, "word right", func() bool {
-			m.codeview.word_right()
+			m.current_editor().word_right()
 			return true
 		}}
 	case vi_undo:
 		return cmdactor{id, "Undo", func() bool {
-			// m.codeview.copyline(false)
-			m.codeview.Undo()
+			// m.current_editor().copyline(false)
+			m.current_editor().Undo()
 			return true
 		}}
 	case vi_save:
 		return cmdactor{id, "Save", func() bool {
-			m.codeview.Save()
+			m.current_editor().Save()
 			return true
 		}}
 	case vi_pagedown:
 		return cmdactor{id, "PageUp", func() bool {
-			m.codeview.action_page_down(true)
+			m.current_editor().action_page_down(true)
 			return true
 		}}
 	case vi_pageup:
 		return cmdactor{id, "PageUp", func() bool {
-			m.codeview.action_page_down(false)
+			m.current_editor().action_page_down(false)
 			return true
 		}}
 	case vi_copy_text:
 		return cmdactor{id, "Copy", func() bool {
-			m.codeview.copyline(false)
+			m.current_editor().copyline(false)
 			return true
 		}}
 	case vi_del_line:
 		return cmdactor{id, "Delete", func() bool {
-			m.codeview.deleteline()
+			m.current_editor().deleteline()
 			return true
 		}}
 
 	case vi_copy_line:
 		return cmdactor{id, "Copy", func() bool {
-			m.codeview.copyline(true)
+			m.current_editor().copyline(true)
 			return true
 		}}
 	case vi_line_end:
 		return cmdactor{id, "goto line end", func() bool {
-			code := m.codeview
+			code := m.current_editor()
 			Cur := code.view.Cursor
 			x := len(code.view.Buf.Line(Cur.Loc.Y)) - 1
 			Loc := femto.Loc{X: x, Y: Cur.Loc.Y}
@@ -355,7 +355,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case vi_line_head:
 		return cmdactor{id, "goto line head", func() bool {
-			code := m.codeview
+			code := m.current_editor()
 			Cur := code.view.Cursor
 			Cur.Loc = femto.Loc{X: 0, Y: Cur.Loc.Y}
 			return true
@@ -376,16 +376,16 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}
 	case vi_search_mode:
 		return cmdactor{id, "search mode", func() bool {
-			code := m.codeview
+			code := m.current_editor()
 			vim := code.main.cmdline.Vim
 			vim.EnterEscape()
 			vim.EnterFind()
-			m.codeview.word_right()
+			m.current_editor().word_right()
 			return true
 		}}
 	case handle_ctrl_c:
 		return cmdactor{id, "ctrl-c copy", func() bool {
-			m.codeview.copyline(false)
+			m.current_editor().copyline(false)
 			log.Printf("copy to clipboard")
 			return true
 		}}
