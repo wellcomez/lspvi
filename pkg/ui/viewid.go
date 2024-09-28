@@ -245,6 +245,11 @@ func (viewid view_id) getname() string {
 	if s, ok := all_view_name_map[viewid]; ok {
 		return s
 	}
+	if viewid > view_code {
+		if index := SplitCode.TabIndex(viewid); index > 0 {
+			return fmt.Sprintf("Code:%d", index)
+		}
+	}
 	return fmt.Sprintf("view_id_%d", viewid)
 }
 func config_main_tab_order(main *mainui) {

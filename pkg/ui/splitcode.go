@@ -39,6 +39,14 @@ func NewCodeSplit(d *CodeView) *CodeSplit {
 
 var SplitCode = NewCodeSplit(nil)
 
+func (c CodeSplit) TabIndex(vid view_id) int {
+	for i, v := range c.index {
+		if v == vid {
+			return i
+		}
+	}
+	return -1
+}
 func (c CodeSplit) Last() *CodeView {
 	ind := len(c.index) - 1
 	return c.TabView(ind)
