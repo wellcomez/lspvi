@@ -203,7 +203,14 @@ func (console *console_pages) new_tab_mgr(main *mainui) *tabmgr {
 }
 func (tab *tabmgr) new_tab() *tview.Flex {
 	ret := tview.NewFlex()
-	bar := NewTabbar()
+	bar := NewTabbar(func(s string) {
+		for _, v := range tab.tab_id {
+			if v.getname() == s {
+				tab.ActiveTab(v, false)
+				break
+			}
+		}
+	})
 	tab.tabbar = bar
 	width := 0
 	for _, v := range tab.tab_id {

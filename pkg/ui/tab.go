@@ -92,10 +92,18 @@ type TabItem struct {
 }
 type Tabbar struct {
 	*tview.Box
-	tabs []TabItem
+	tabs   []TabItem
+	active func(string)
+	mode   tab_style
 }
 
-func (tab *TabItem) Draw(screen tcell.Screen, x, y int, style, hl tcell.Style) int {
+var space = true
+
+func (tab *TabItem) Draw(screen tcell.Screen, x, y int, style, hl tcell.Style, prevactive bool) int {
+	x = tab.draw_btn_mode(screen, x, y, style, hl, prevactive)
+	return x
+}
+func (tab *TabItem) draw_btn_mode(screen tcell.Screen, x, y int, style, hl tcell.Style, prevactive bool) int {
 	if !tab.first {
 		screen.SetContent(x, y, ' ', nil, style)
 		x++
@@ -110,9 +118,33 @@ func (tab *TabItem) Draw(screen tcell.Screen, x, y int, style, hl tcell.Style) i
 	}
 	return x
 }
+func (tab *TabItem) draw_tab_mode(screen tcell.Screen, x, y int, style, hl tcell.Style, prevactive bool) int {
+	s := style
+	if tab.active {
+		s = hl
+	}
+	if space {
+		if !tab.first && !prevactive {
+			screen.SetContent(x, y, ' ', nil, s)
+			x++
+		}
+	}
 
-func NewTabbar() *Tabbar {
-	return &Tabbar{Box: tview.NewBox()}
+	for _, ch := range tab.name {
+		screen.SetContent(x, y, ch, nil, s)
+		x++
+	}
+	if space {
+		if tab.active {
+			screen.SetContent(x, y, ' ', nil, s)
+			x++
+		}
+	}
+	return x
+}
+
+func NewTabbar(active func(string)) *Tabbar {
+	return &Tabbar{Box: tview.NewBox(), active: active}
 }
 func (bar *Tabbar) Add(name string) int {
 	if len(bar.tabs) > 0 {
@@ -125,8 +157,10 @@ func (bar *Tabbar) Add(name string) int {
 	for i := range bar.tabs {
 		tab := &bar.tabs[i]
 		width := len(tab.name)
-		if !tab.first {
-			width = len(tab.name) + 1
+		if space {
+			if !tab.first {
+				width = len(tab.name) + 1
+			}
 		}
 		tab.SetRect(x, y, width, 1)
 		ret += width
@@ -145,19 +179,54 @@ func (bar *Tabbar) Active(s string) {
 	}
 }
 func (bar *Tabbar) Draw(screen tcell.Screen) {
-	style := tcell.StyleDefault
-	if s := global_theme.get_default_style(); s != nil {
-		style = *s
-	}
-	hlstyle := style.Foreground(global_theme.search_highlight_color())
+
+	// .Underline(true)
+	hlstyle, style := style_mode(bar.mode)
 	bar.Box.DrawForSubclass(screen, bar)
 	x, y, _, _ := bar.GetRect()
 	posX := x
 	posY := y
 	for i, v := range bar.tabs {
 		v.first = i == 0
-		posX = v.Draw(screen, posX, posY, style, hlstyle)
+		pre_active := false
+		if i > 0 {
+			pre_active = bar.tabs[i-1].active
+		}
+		switch bar.mode {
+		case tab_style_btn:
+			posX = v.draw_btn_mode(screen, posX, posY, style, hlstyle, pre_active)
+		case tab_style_tab:
+			posX = v.draw_tab_mode(screen, posX, posY, style, hlstyle, pre_active)
+		}
 	}
+}
+
+type tab_style int
+
+const (
+	tab_style_btn tab_style = iota
+	tab_style_tab
+)
+
+func style_mode(mode tab_style) (tcell.Style, tcell.Style) {
+	style := tcell.StyleDefault
+	if s := global_theme.get_default_style(); s != nil {
+		style = *s
+	}
+	hlstyle := style.Foreground(global_theme.search_highlight_color())
+	seleted := tcell.ColorBlack
+	if s := global_theme.get_color("selection"); s != nil {
+		_, b, _ := s.Decompose()
+		seleted = b
+	}
+	switch mode {
+	case tab_style_btn:
+		style = style.Background(seleted)
+		return style, hlstyle
+	case tab_style_tab:
+		return hlstyle, style
+	}
+	return hlstyle, style
 }
 func (l *Tabbar) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return l.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -181,8 +250,11 @@ func (l *Tabbar) MouseHandler() func(action tview.MouseAction, event *tcell.Even
 				b.SetRect(bx+x, by+y, bw, bh)
 				if b.InRect(event.Position()) {
 					l.tabs[i].active = true
-				}else{
-					l.tabs[i].active = false 
+					if l.active != nil {
+						l.active(l.tabs[i].name)
+					}
+				} else {
+					l.tabs[i].active = false
 				}
 			}
 			consumed = true
