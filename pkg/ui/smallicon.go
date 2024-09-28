@@ -64,6 +64,9 @@ func new_small_icon(main *mainui) *smallicon {
 	return smallicon
 }
 func (icon *smallicon) handle_mouse_event(action tview.MouseAction, event *tcell.EventMouse) (*tcell.EventMouse, tview.MouseAction) {
+	if event == nil {
+		return event, action
+	}
 	x, y := event.Position()
 	left, top := icon.get_offset_xy()
 	loc := Pos{X: x - left, Y: y - top}

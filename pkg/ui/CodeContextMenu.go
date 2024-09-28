@@ -189,24 +189,7 @@ func update_selection_menu(code *CodeView) {
 	}
 	code.rightmenu_items = addjust_menu_width(items)
 }
-func SplitClose(code *CodeView) context_menu_item {
-	main := code.main
-	return context_menu_item{item: create_menu_item("Close"), handle: func() {
-		if code == main.codeview {
-			codeview2 := SplitCode.New()
-			codeview2.LoadAndCb(code.filename, func() {
-				go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
-					codeview2.lspsymbol = sym
-				})
-				go func() {
-					main.app.QueueUpdateDraw(func() {
-						main.tab.ActiveTab(view_code_below, true)
-					})
-				}()
-			})
-		}
-	}, hide: !(code.id > view_code)}
-}
+
 func SplitDown(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitDown"), handle: func() {

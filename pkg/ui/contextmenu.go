@@ -22,6 +22,18 @@ type contextmenu struct {
 	// parent      *tview.Box
 }
 
+func (menu *contextmenu) remove(item context_menu_handle) {
+	for i, v := range menu.menu_handle {
+		if v == item {
+			menu.menu_handle = append(menu.menu_handle[:i], menu.menu_handle[i+1:]...)
+			return
+		}
+	}
+}
+func (menu *contextmenu) add(item context_menu_handle) {
+	menu.menu_handle = append(menu.menu_handle, item)
+}
+
 type context_menu_item struct {
 	item   cmditem
 	handle func()
