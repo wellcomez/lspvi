@@ -114,24 +114,35 @@ func (tab *TabItem) Draw(screen tcell.Screen, x, y int, style, hl tcell.Style) i
 func NewTabbar() *Tabbar {
 	return &Tabbar{Box: tview.NewBox()}
 }
-func (bar *Tabbar) Add(name string) int{
+func (bar *Tabbar) Add(name string) int {
 	if len(bar.tabs) > 0 {
 		bar.tabs[len(bar.tabs)-1].first = false
 	}
 	bar.tabs = append(bar.tabs, TabItem{tview.Box{}, name, true, false})
 	x := 0
 	y := 0
-	ret:=0
+	ret := 0
 	for i := range bar.tabs {
 		tab := &bar.tabs[i]
 		width := len(tab.name)
-		if tab.first {
+		if !tab.first {
 			width = len(tab.name) + 1
 		}
 		tab.SetRect(x, y, width, 1)
-		ret+=width
+		ret += width
+		x += width
 	}
 	return ret
+}
+func (bar *Tabbar) Active(s string) {
+	for i := range bar.tabs {
+		v := &bar.tabs[i]
+		if v.name == s {
+			v.active = true
+		} else {
+			v.active = false
+		}
+	}
 }
 func (bar *Tabbar) Draw(screen tcell.Screen) {
 	style := tcell.StyleDefault
@@ -170,7 +181,8 @@ func (l *Tabbar) MouseHandler() func(action tview.MouseAction, event *tcell.Even
 				b.SetRect(bx+x, by+y, bw, bh)
 				if b.InRect(event.Position()) {
 					l.tabs[i].active = true
-					break
+				}else{
+					l.tabs[i].active = false 
 				}
 			}
 			consumed = true

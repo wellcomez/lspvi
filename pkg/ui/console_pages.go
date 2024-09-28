@@ -29,6 +29,7 @@ type tabmgr struct {
 	page            *console_pages
 	tabnames        []string
 	tabutton        *ButtonGroup
+	tabbar          *Tabbar
 }
 
 func (m *tabmgr) UpdatePageTitle() {
@@ -82,10 +83,8 @@ func (tabs *tabmgr) ActiveTab(id view_id, focused bool) {
 	}
 	var name = id.getname()
 	tabs.page.SwitchToPage(name)
-	if tabs.tabutton != nil {
-		tabs.tabutton.Active(name)
-	}
 	tabs.activate_tab_id = id
+	tabs.action_tab_button()
 	tabs.update_tab_title(id)
 	show := m.console_index_list.Load(id)
 	link := view_qf_index_view.to_view_link(m)
@@ -163,8 +162,11 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	return console_layout, tab_area
 }
 func (tab *tabmgr) action_tab_button() {
+	btnid := tab.activate_tab_id.getname()
 	if tab.tabutton != nil {
-		tab.tabutton.Active(tab.activate_tab_id.getname())
+		tab.tabutton.Active(btnid)
+	} else if tab.tabbar != nil {
+		tab.tabbar.Active(btnid)
 	}
 }
 func (m *mainui) OnTabChanged(tab *TabButton) {
@@ -202,10 +204,12 @@ func (console *console_pages) new_tab_mgr(main *mainui) *tabmgr {
 func (tab *tabmgr) new_tab() *tview.Flex {
 	ret := tview.NewFlex()
 	bar := NewTabbar()
+	tab.tabbar = bar
 	width := 0
 	for _, v := range tab.tab_id {
 		width = bar.Add(v.getname())
 	}
+	bar.Active(view_quickview.getname())
 	tab.action_tab_button()
 	ret.AddItem(bar, width, 1, false)
 	return ret
