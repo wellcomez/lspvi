@@ -98,6 +98,19 @@ type qf_index_view_history struct {
 func (view *qf_index_view) Delete(index int) {
 	view.qfh.Delete(index)
 }
+func (view *qf_index_view_history) DeleteRange(seleteRange []int) {
+	delete := []qf_history_data{}
+	for i := range view.keys {
+		if i >= seleteRange[0] && i <= seleteRange[1] {
+			delete = append(delete, view.keys[i])
+		}
+	}
+	for _, d := range delete {
+		view.add_or_remove_data(d, false)
+	}
+	view.List.Clear()
+	view.Load()
+}
 func (view *qf_index_view_history) Delete(index int) {
 	view.List.RemoveItem(index)
 	if len(view.keys) > 0 {
@@ -109,7 +122,12 @@ func (ret *qf_index_view) Load(viewid view_id) bool {
 	case view_callin, view_quickview, view_bookmark:
 		ret.right_context.menu_item = &menudata{[]context_menu_item{
 			{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
-				ret.qfh.Delete(ret.GetCurrentItem())
+				if len(ret.qfh.selected) > 0 {
+					ret.qfh.DeleteRange(ret.qfh.selected)
+					ret.update_select_item()
+				} else {
+					ret.qfh.Delete(ret.GetCurrentItem())
+				}
 			}},
 		}}
 		ret.qfh.Load()
@@ -211,13 +229,18 @@ func (view *qf_index_view_history) Load() {
 }
 func (view *qf_index_view_history) Add(data qf_history_data, add bool) error {
 	main := view.main
-	h, err := new_qf_history(main)
+	err := view.add_or_remove_data(data, add)
+	main.console_index_list.SetCurrentItem(0)
+	view.Load()
+	return err
+}
+
+func (view *qf_index_view_history) add_or_remove_data(data qf_history_data, add bool) error {
+	h, err := new_qf_history(view.main)
 	if err != nil {
 		return err
 	}
-	err = h.save_history(main.root, data, add)
-	main.console_index_list.SetCurrentItem(0)
-	view.Load()
+	err = h.save_history(view.main.root, data, add)
 	return err
 }
 func qf_index_view_update(id view_id) {
