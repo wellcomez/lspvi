@@ -3,11 +3,12 @@ package mainui
 import (
 	// "log"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	"log"
-	"strings"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -291,7 +292,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 						code := symview.editor
 						if code.id == view_code {
 							symview.main.bf.history.SaveToHistory(code)
-							symview.main.bf.history.AddToHistory(code.filename, NewEditorPosition(r.Start.Line, symview.editor))
+							symview.main.bf.history.AddToHistory(code.filepathname, NewEditorPosition(r.Start.Line, symview.editor))
 						}
 						symview.editor.goto_loation_noupdate(r)
 						return
@@ -404,26 +405,26 @@ func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 		loc.Range.End.Line = loc.Range.Start.Line
 	}
 	// println(ss)
-	c.main.get_callin_stack(loc, c.editor.filename)
+	c.main.get_callin_stack(loc, c.editor.filepathname)
 	// c.main.ActiveTab(view_callin)
 }
 func (c *SymbolTreeView) get_declare(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_declare(r, c.editor.filename)
+	c.main.get_declare(r, c.editor.filepathname)
 }
 func (c *SymbolTreeView) get_define(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_define(r, c.editor.filename)
+	c.main.get_define(r, c.editor.filepathname)
 }
 func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_refer(r, c.editor.filename)
+	c.main.get_refer(r, c.editor.filepathname)
 	// c.main.ActiveTab(view_fzf)
 }
 

@@ -213,7 +213,7 @@ func (sym symbolpicker) close() {
 
 // name implements picker.
 func (sym symbolpicker) name() string {
-	return "document symbol"
+	return "Document symbol " + sym.impl.symview.editor.FileName()
 }
 
 func (wk symbolpicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {

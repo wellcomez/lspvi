@@ -289,7 +289,7 @@ func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 }
 func (m *mainui) gotoline(loc lsp.Location) {
 	file := loc.URI.AsPath().String()
-	if file != m.codeview.filename {
+	if file != m.codeview.filepathname {
 		m.OpenFile(file, &loc)
 	} else {
 		m.codeview.gotoline(loc.Range.Start.Line)
@@ -299,7 +299,7 @@ func (m *mainui) gotoline(loc lsp.Location) {
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	if file != nil {
-		if file.Filename != m.codeview.filename {
+		if file.Filename != m.codeview.filepathname {
 			return
 		}
 	}
@@ -595,7 +595,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					main.codeview.Load(main.codeview.filename)
+					main.codeview.Load(main.codeview.filepathname)
 				})
 			}()
 		}
@@ -632,7 +632,7 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(main)
 	main.quickview.RestoreLast()
-	UpdateTitleAndColor(main_layout.Box, main.codeview.filename)
+	UpdateTitleAndColor(main_layout.Box, main.codeview.filepathname)
 	go func() {
 		app.QueueUpdateDraw(func() {
 			view_code.setfocused(main)
@@ -807,7 +807,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
 		}
-		titlename := fmt.Sprintf("%s ", main.codeview.filename)
+		titlename := fmt.Sprintf("%s ", main.codeview.filepathname)
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {

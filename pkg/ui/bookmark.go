@@ -217,7 +217,7 @@ func new_bookmark_editor(v *fzfmain, cb func(string)) bookmark_edit {
 		fzflist_impl: new_fzflist_impl(nil, v),
 		cb:           cb,
 	}
-	ret.fzflist_impl.list.AddItem(line1, code.filename, nil)
+	ret.fzflist_impl.list.AddItem(line1, code.filepathname, nil)
 	v.create_dialog_content(ret.grid(v.input), ret)
 	return ret
 }

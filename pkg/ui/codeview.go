@@ -43,13 +43,13 @@ func (data right_menu_data) SelectInEditor(c *femto.Cursor) {
 
 type CodeView struct {
 	*view_link
-	filename    string
-	tree_sitter *lspcore.TreeSitter
-	view        *codetextview
-	theme       string
-	main        *mainui
-	lspsymbol   *lspcore.Symbol_file
-	key_map     map[tcell.Key]func(code *CodeView)
+	filepathname string
+	tree_sitter  *lspcore.TreeSitter
+	view         *codetextview
+	theme        string
+	main         *mainui
+	lspsymbol    *lspcore.Symbol_file
+	key_map      map[tcell.Key]func(code *CodeView)
 	// mouse_select_area    bool
 	rightmenu_items []context_menu_item
 	right_menu_data *right_menu_data
@@ -63,6 +63,9 @@ type CodeView struct {
 	diff        *Differ
 }
 
+func (code CodeView) FileName() string {
+	return strings.TrimPrefix(code.filepathname, code.main.root)
+}
 func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
 }
@@ -300,7 +303,7 @@ func (code *CodeView) get_selected_lines() editor_selection {
 		selected_text: text,
 		begin:         ss[0],
 		end:           ss[1],
-		filename:      code.filename,
+		filename:      code.filepathname,
 	}
 }
 
@@ -777,7 +780,7 @@ func (code *CodeView) Save() error {
 	view := code.view
 	data := view.Buf.SaveString(false)
 	code.main.bookmark.udpate(&code.view.bookmark)
-	return os.WriteFile(code.filename, []byte(data), 0644)
+	return os.WriteFile(code.filepathname, []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
 	checker := new_linechange_checker(code)
@@ -903,7 +906,7 @@ func (code *CodeView) update_with_line_changed() {
 		return
 	}
 	if code.id == view_code {
-		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y, code.filename)
+		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y, code.filepathname)
 	}
 }
 
@@ -928,7 +931,7 @@ func (code *CodeView) action_goto_define() {
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	log.Printf("goto define %v %s", loc, code.view.Cursor.GetSelection())
-	main.get_define(loc, code.filename)
+	main.get_define(loc, code.filepathname)
 }
 func (code *CodeView) action_goto_declaration() {
 	main := code.main
@@ -937,7 +940,7 @@ func (code *CodeView) action_goto_declaration() {
 	}
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
-	main.get_declare(loc, code.filename)
+	main.get_declare(loc, code.filepathname)
 }
 
 func (code *CodeView) action_get_refer() {
@@ -948,7 +951,7 @@ func (code *CodeView) action_get_refer() {
 	code.view.Cursor.SelectWord()
 	main.quickview.view.Clear()
 	loc := code.lsp_cursor_loc()
-	main.get_refer(loc, code.filename)
+	main.get_refer(loc, code.filepathname)
 	// main.ActiveTab(view_fzf)
 
 }
@@ -980,8 +983,8 @@ func (code *CodeView) key_call_in() {
 	r := text_loc_to_range(loc)
 	code.main.get_callin_stack_by_cursor(lsp.Location{
 		Range: r,
-		URI:   lsp.NewDocumentURI(code.filename),
-	}, code.filename)
+		URI:   lsp.NewDocumentURI(code.filepathname),
+	}, code.filepathname)
 	// code.main.ActiveTab(view_callin)
 }
 
@@ -1086,7 +1089,7 @@ func (code *CodeView) Load2Line(filename string, line int) error {
 	})
 }
 func (code *CodeView) LoadAndCb(filename string, onload func()) error {
-	if filename == code.filename {
+	if filename == code.filepathname {
 		if onload != nil {
 			onload()
 		}
@@ -1136,7 +1139,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 	})
 	code.LoadBuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
-	code.filename = filename
+	code.filepathname = filename
 	if code.main != nil {
 		code.view.bookmark = *code.main.bookmark.GetFileBookmark(filename)
 	}
@@ -1151,7 +1154,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 }
 
 func (code *CodeView) change_appearance() {
-	code.config_wrap(code.filename)
+	code.config_wrap(code.filepathname)
 	code.change_theme()
 }
 func (code *CodeView) on_change_color(c *color_theme_file) {
@@ -1291,7 +1294,7 @@ func (code *CodeView) gotoline(line int) {
 	}
 	if code.main != nil && code.not_preview {
 		code.main.bf.history.SaveToHistory(code)
-		code.main.bf.history.AddToHistory(code.filename, NewEditorPosition(line, code))
+		code.main.bf.history.AddToHistory(code.filepathname, NewEditorPosition(line, code))
 	}
 	key := ""
 

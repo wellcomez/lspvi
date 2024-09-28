@@ -81,28 +81,28 @@ func update_selection_menu(code *CodeView) {
 	items := []context_menu_item{
 		{item: create_menu_item("Reference"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
-			main.get_refer(menudata.selection_range, code.filename)
+			main.get_refer(menudata.selection_range, code.filepathname)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
-			main.get_define(menudata.selection_range, code.filename)
+			main.get_define(menudata.selection_range, code.filepathname)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
 			loc := lsp.Location{
-				URI:   lsp.NewDocumentURI(code.filename),
+				URI:   lsp.NewDocumentURI(code.filepathname),
 				Range: menudata.selection_range,
 			}
-			main.get_callin_stack_by_cursor(loc, code.filename)
+			main.get_callin_stack_by_cursor(loc, code.filepathname)
 			main.ActiveTab(view_callin, false)
 		}},
 		{item: create_menu_item("Open in explorer"), handle: func() {
 			// ret.filename
-			dir := filepath.Dir(code.filename)
+			dir := filepath.Dir(code.filepathname)
 			main.fileexplorer.ChangeDir(dir)
-			main.fileexplorer.FocusFile(code.filename)
+			main.fileexplorer.FocusFile(code.filepathname)
 		}},
 		{item: create_menu_item("-------------"), handle: func() {
 		}},
@@ -156,7 +156,7 @@ func update_selection_menu(code *CodeView) {
 		{
 			item: create_menu_item("External open "),
 			handle: func() {
-				filename := code.filename
+				filename := code.filepathname
 				yes, err := isDirectory(filename)
 				if err != nil {
 					return
@@ -187,8 +187,8 @@ func SplitDown(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitDown"), handle: func() {
 		if code.id >= view_code {
-			main.codeview2.LoadAndCb(code.filename, func() {
-				go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
+			main.codeview2.LoadAndCb(code.filepathname, func() {
+				go main.async_lsp_open(code.filepathname, func(sym *lspcore.Symbol_file) {
 					main.codeview2.lspsymbol = sym
 				})
 				go func() {

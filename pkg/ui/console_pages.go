@@ -123,7 +123,7 @@ func (tabs *tabmgr) update_tab_title(id view_id) {
 	case view_quickview:
 		tabs.page.update_title(m.quickview.String())
 	case view_code_below:
-		tabs.page.update_title(m.codeview2.filename)
+		tabs.page.update_title(m.codeview2.filepathname)
 	default:
 		tabs.page.update_title(id.getname())
 	}

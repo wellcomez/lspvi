@@ -96,9 +96,9 @@ func SplitRight(code *CodeView) context_menu_item {
 		codeview2 := SplitCode.New()
 		codeview2.view.SetBorder(true)
 		main.right_context_menu.add(codeview2.rightmenu)
-		codeview2.LoadAndCb(code.filename, func() {
-			codeview2.view.SetTitle(codeview2.filename)
-			go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
+		codeview2.LoadAndCb(code.filepathname, func() {
+			codeview2.view.SetTitle(codeview2.filepathname)
+			go main.async_lsp_open(code.filepathname, func(sym *lspcore.Symbol_file) {
 				codeview2.lspsymbol = sym
 			})
 			go func() {
@@ -112,7 +112,7 @@ func SplitRight(code *CodeView) context_menu_item {
 func (codeview2 *CodeView) open_file_line(filename string, line *lsp.Location) {
 	main := codeview2.main
 	codeview2.LoadAndCb(filename, func() {
-		codeview2.view.SetTitle(codeview2.filename)
+		codeview2.view.SetTitle(codeview2.filepathname)
 		if line != nil {
 			codeview2.goto_loation(line.Range)
 		}
