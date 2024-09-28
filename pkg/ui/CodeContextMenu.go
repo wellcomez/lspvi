@@ -24,14 +24,12 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	pos := root.event_to_cursor_position(event) // pos = avoid_position_overflow(root, pos)
 
 	if action == tview.MouseRightClick {
-		// move cursor to mouse postion
-		Loc := code.view.tab_loc(pos)
-		code.set_loc(Loc)
 
 		//select line
 		selected := code.get_selected_lines()
 		right_menu_data.previous_selection = selected
 
+		Loc := code.view.tab_loc(pos)
 		//save cursor loc
 		cursor_data := *root.Cursor
 		right_menu_data.rightmenu_loc = Loc
@@ -41,7 +39,11 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		_, s := get_codeview_text_loc(root.View, word_select_cursor.CurSelection[0], word_select_cursor.CurSelection[1])
 		menu.code.right_menu_data.select_text = s
 		menu.code.right_menu_data.selection_range = text_loc_to_range(word_select_cursor.CurSelection)
+
+		// move cursor to mouse postion
+		code.set_loc(Loc)
 		update_selection_menu(code)
+
 	}
 	return action, event
 }
