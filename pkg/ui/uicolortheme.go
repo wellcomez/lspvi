@@ -157,10 +157,16 @@ func (main *mainui) __set_widget_theme(fg, bg tcell.Color) {
 	main.symboltree.update(main.lspmgr.Current)
 	main.page.SetTitleColor(fg)
 	main.layout.spacemenu.table.SetBackgroundColor(bg)
-	main.layout.spacemenu.load_spacemenu()
 	main.right_context_menu.table.SetBackgroundColor(bg)
 	main.codeview2.update_colortheme_mgr(global_theme)
-	// default_primarytext_color = fg
+	main.codeview2.view.SetBackgroundColor(bg)
+	for k, v := range SplitCode.code_collection {
+		if k != view_code {
+			v.view.SetBackgroundColor(bg)
+			v.update_colortheme_mgr(global_theme)
+		}
+	}
+	// sp= fg
 	// default_backgroudColor = bg
 	inputs := []*tview.InputField{main.cmdline.input, main.layout.dialog.input}
 	for _, input := range inputs {

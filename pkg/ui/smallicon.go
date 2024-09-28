@@ -7,10 +7,10 @@ import (
 
 func get_style_hide(hide bool) tcell.Style {
 	style := *global_theme.get_default_style()
-	hl := global_theme.search_highlight_color()
+	// hl := global_theme.search_highlight_color()
 	f, b, _ := style.Decompose()
 	hide_stycle := style.Foreground(f).Background(b)
-	x1 := style.Foreground(hl).Background(b)
+	x1 := style.Foreground(tcell.ColorBlue).Background(b)
 	if !hide {
 		hide_stycle = x1
 	}
