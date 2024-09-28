@@ -33,6 +33,7 @@ type right_menu_data struct {
 	select_text        string
 	selection_range    lsp.Range
 	rightmenu_loc      femto.Loc
+	local_changed      bool
 }
 
 func (data right_menu_data) SelectInEditor(c *femto.Cursor) {

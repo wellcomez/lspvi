@@ -30,6 +30,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		right_menu_data.previous_selection = selected
 
 		Loc := code.view.tab_loc(pos)
+		right_menu_data.local_changed = root.Cursor.Loc != (Loc)
 		//save cursor loc
 		cursor_data := *root.Cursor
 		right_menu_data.rightmenu_loc = Loc
