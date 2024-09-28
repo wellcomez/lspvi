@@ -159,7 +159,7 @@ func (main *mainui) __set_widget_theme(fg, bg tcell.Color) {
 	main.layout.spacemenu.table.SetBackgroundColor(bg)
 	main.layout.spacemenu.load_spacemenu()
 	main.right_context_menu.table.SetBackgroundColor(bg)
-
+	main.codeview2.update_colortheme_mgr(global_theme)
 	// default_primarytext_color = fg
 	// default_backgroudColor = bg
 	inputs := []*tview.InputField{main.cmdline.input, main.layout.dialog.input}
