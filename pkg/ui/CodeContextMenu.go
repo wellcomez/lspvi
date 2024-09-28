@@ -15,7 +15,6 @@ type CodeContextMenu struct {
 	code *CodeView
 }
 
-
 // on_mouse implements context_menu_handle.
 func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	code := menu.code
@@ -193,7 +192,7 @@ func update_selection_menu(code *CodeView) {
 func SplitDown(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitDown"), handle: func() {
-		if code == main.codeview {
+		if code.id >= view_code {
 			main.codeview2.LoadAndCb(code.filename, func() {
 				go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
 					main.codeview2.lspsymbol = sym
