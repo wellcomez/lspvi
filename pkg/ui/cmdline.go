@@ -51,7 +51,7 @@ func new_cmdline(main *mainui) *cmdline {
 			}
 		}},
 		{[]string{"w"}, "save", func(s []string) {
-			main.codeview.Save()
+			main.current_editor().Save()
 		}},
 		{[]string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string) {
 			main.Close()
@@ -81,7 +81,9 @@ func (cmd *cmdline) OnSet(args []string) bool {
 		{
 			global_config.Wrap = !global_config.Wrap
 			global_config.Save()
-			cmd.main.codeview.change_appearance()
+			for _, v := range SplitCode.code_collection {
+				v.change_appearance()
+			}
 		}
 	}
 	return true
@@ -119,7 +121,7 @@ func (cmd *cmdline) OnComand(commandinput string) bool {
 	command = strings.TrimRight(command, "\n")
 
 	if num, err := strconv.ParseInt(command, 10, 32); err == nil {
-		cmd.main.codeview.gotoline(int(num) - 1)
+		cmd.main.current_editor().gotoline(int(num) - 1)
 		return true
 	}
 
@@ -739,14 +741,14 @@ func (v *Vim) EnterLead() bool {
 	}
 }
 func (v *Vim) update_editor_mode() {
-	v.app.codeview.InsertMode(v.vi.Insert)
+	v.app.current_editor().InsertMode(v.vi.Insert)
 }
 
 // EnterInsert enters insert mode.
 func (v *Vim) EnterInsert() bool {
 	if v.vi.Escape {
 		v.vi = vimstate{Insert: true}
-		v.vi_handle = InsertHandle{main: v.app, codeview: v.app.codeview}
+		v.vi_handle = InsertHandle{main: v.app, codeview: v.app.current_editor()}
 		v.update_editor_mode()
 		return true
 	} else {
