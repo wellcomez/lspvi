@@ -57,7 +57,6 @@ type callinview struct {
 	menuitem       []context_menu_item
 	right_context  callin_view_context
 	cmd_search_key string
-	sel            selectarea
 }
 type dom_node struct {
 	call      lsp.CallHierarchyItem
@@ -79,7 +78,6 @@ func new_callview(main *mainui) *callinview {
 		view: view,
 		Name: "callin",
 		main: main,
-		sel:  selectarea{},
 	}
 	right_context := callin_view_context{qk: ret}
 	ret.right_context = right_context
@@ -127,7 +125,6 @@ func new_callview(main *mainui) *callinview {
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
 	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		ret.sel.handle_mouse_selection(action, event)
 		return action, event
 	})
 	return ret

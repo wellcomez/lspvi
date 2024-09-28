@@ -96,6 +96,7 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
+	sel           selectarea
 	icon          *smallicon
 	term          *Term
 	fileexplorer  *file_tree_view
@@ -514,7 +515,7 @@ func MainUI(arg *Arguments) {
 	// 	tty:      arg.Tty,
 	// 	ws:       arg.Ws,
 	// }
-	main := &mainui{}
+	main := &mainui{sel: selectarea{nottext: true}}
 	prj.Load(arg, main)
 	main.icon = new_small_icon(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
@@ -661,6 +662,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
+	main.sel.handle_mouse_selection(action, event)
 	main.icon.handle_mouse_event(action, event)
 	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 	if content_menu_action == tview.MouseConsumed {

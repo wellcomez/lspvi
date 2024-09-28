@@ -17,7 +17,6 @@ type customlist struct {
 	Key           string
 	fuzz          bool
 	default_color tcell.Color
-	sel           selectarea
 }
 
 func (l *customlist) Clear() *customlist {
@@ -220,7 +219,6 @@ func (l *customlist) get_hl_keys() []string {
 }
 
 func (l *customlist) draw_item_color(Positions []keypattern, MainText string, screen tcell.Screen, offset_x int, y int, selected_style tcell.Style, selected_stylehl tcell.Style) {
-	theme_selcted := global_theme.get_color("selection")
 	begin := 0
 	for _, e := range Positions {
 		normal := MainText[begin:e.begin]
@@ -229,11 +227,7 @@ func (l *customlist) draw_item_color(Positions []keypattern, MainText string, sc
 			if !l.InInnerRect(x, y) {
 				return
 			}
-			if l.sel.In(x, y) {
-				screen.SetContent(x, y, r, nil, *theme_selcted)
-			} else {
-				screen.SetContent(x, y, r, nil, selected_style)
-			}
+			screen.SetContent(x, y, r, nil, selected_style)
 		}
 		hltext := MainText[e.begin : e.begin+e.width]
 		for i, r := range hltext {
@@ -242,11 +236,7 @@ func (l *customlist) draw_item_color(Positions []keypattern, MainText string, sc
 			if !l.InInnerRect(x, y) {
 				return
 			}
-			if l.sel.In(x, y) {
-				screen.SetContent(x, y, r, nil, *theme_selcted)
-			} else {
-				screen.SetContent(x, y, r, nil, s.Foreground(e.color))
-			}
+			screen.SetContent(x, y, r, nil, s.Foreground(e.color))
 		}
 		begin = e.begin + e.width
 	}
@@ -257,11 +247,7 @@ func (l *customlist) draw_item_color(Positions []keypattern, MainText string, sc
 			if !l.InInnerRect(x, y) {
 				return
 			}
-			if l.sel.In(x, y) {
-				screen.SetContent(x, y, r, nil, *theme_selcted)
-			}else{
-				screen.SetContent(x, y, r, nil, selected_style)
-			}
+			screen.SetContent(x, y, r, nil, selected_style)
 		}
 	}
 }
