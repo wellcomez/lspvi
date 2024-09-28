@@ -196,6 +196,10 @@ func (viewid view_id) view_info(m *mainui) (tview.Primitive, *tview.Box, *view_l
 	case view_code_below:
 		v := m.codeview2.view
 		return v, v.Box, m.term.view_link, "Preview"
+
+	case view_layout_splicode:
+		v := SplitCode.layout
+		return v, v.Box, m.term.view_link, "Preview"
 	}
 	return nil, nil, nil, ""
 }

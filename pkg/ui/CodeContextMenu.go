@@ -11,41 +11,10 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-type CodeSplit struct {
-	code_collection map[view_id]*CodeView
-	last            view_id
-	layout          *flex_area
-	main            *mainui
-}
-
-func (s *CodeSplit) AddCode(d *CodeView) {
-	if d == nil {
-		return
-	}
-	s.code_collection[d.id] = d
-	s.last = max(d.id, s.last)
-	s.layout.AddItem(d.view, 0, 1, false)
-}
-func (s *CodeSplit) New() *CodeView {
-	a := NewCodeView(s.main)
-	a.id = s.last + 1
-	s.AddCode(a)
-	return a
-}
-func NewCodeSplit(d *CodeView) *CodeSplit {
-	code := make(map[view_id]*CodeView)
-	ret := &CodeSplit{
-		code_collection: code,
-	}
-	ret.AddCode(d)
-	return ret
-}
-
 type CodeContextMenu struct {
 	code *CodeView
 }
 
-var SplitCode = NewCodeSplit(nil)
 
 // on_mouse implements context_menu_handle.
 func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -220,24 +189,7 @@ func update_selection_menu(code *CodeView) {
 	}
 	code.rightmenu_items = addjust_menu_width(items)
 }
-func SplitClose(code *CodeView) context_menu_item {
-	main := code.main
-	return context_menu_item{item: create_menu_item("Close"), handle: func() {
-		if code == main.codeview {
-			codeview2 := SplitCode.New()
-			codeview2.LoadAndCb(code.filename, func() {
-				go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
-					codeview2.lspsymbol = sym
-				})
-				go func() {
-					main.app.QueueUpdateDraw(func() {
-						main.tab.ActiveTab(view_code_below, true)
-					})
-				}()
-			})
-		}
-	}, hide: !(code.id > view_code)}
-}
+
 func SplitDown(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitDown"), handle: func() {
@@ -245,24 +197,6 @@ func SplitDown(code *CodeView) context_menu_item {
 			main.codeview2.LoadAndCb(code.filename, func() {
 				go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
 					main.codeview2.lspsymbol = sym
-				})
-				go func() {
-					main.app.QueueUpdateDraw(func() {
-						main.tab.ActiveTab(view_code_below, true)
-					})
-				}()
-			})
-		}
-	}}
-}
-func SplitRight(code *CodeView) context_menu_item {
-	main := code.main
-	return context_menu_item{item: create_menu_item("SplitRight"), handle: func() {
-		if code == main.codeview {
-			codeview2 := SplitCode.New()
-			codeview2.LoadAndCb(code.filename, func() {
-				go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
-					codeview2.lspsymbol = sym
 				})
 				go func() {
 					main.app.QueueUpdateDraw(func() {

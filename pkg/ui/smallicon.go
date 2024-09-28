@@ -17,80 +17,119 @@ func get_style_hide(hide bool) tcell.Style {
 	return hide_stycle
 }
 
-type smallicon struct {
-	file, code, outline Pos
-	back, forward       Pos
-	main                *mainui
-	x, y                int
+type icon struct {
+	s          []rune
+	begin, end Pos
 }
 
+func (s icon) Draw(screen tcell.Screen, style tcell.Style) {
+	x := s.begin.X
+	y := s.begin.Y
+	for _, v := range s.s {
+		if v == ' ' {
+			screen.SetContent(x, y, v, nil, style)
+		} else {
+			screen.SetContent(x, y, v, nil, style)
+		}
+		x++
+	}
+}
+
+type smallicon struct {
+	back, forward icon
+	main          *mainui
+	x, y          int
+	file, outline icon
+	code          []icon
+}
+
+func (s *icon) in(p Pos) bool {
+	if p.GreaterEqual(s.begin) && p.LessEqual(s.end) {
+		return true
+	}
+	return false
+}
+func (s *icon) relocate(x, y int) int {
+	s.begin = Pos{x, y}
+	s.end = Pos{x + len(s.s) - 1, y}
+	return s.end.X + 1
+}
 func (c *smallicon) Loc(loc Pos) Pos {
 	loc.X += c.x
 	loc.Y += c.y
 	return loc
 }
-func (c *smallicon) Draw(screen tcell.Screen) {
-	main := c.main
-	ch := '█'
-	ch = '■'
 
+var block_str = '■'
+var str_back = '◀'
+var str_forward = '▶'
+
+func (c *smallicon) Relocated() {
 	left, top := c.get_offset_xy()
-	forward := '→'
-	back := '←'
+	c.code = make([]icon, len(SplitCode.code_collection))
+	left = c.file.relocate(left, top)
+	for i := range c.code {
+		c.code[i].s = []rune{block_str}
+		left = c.code[i].relocate(left, top)
+	}
+	left = c.outline.relocate(left, top)
+	left = c.back.relocate(left, top)
+	c.forward.relocate(left, top)
+}
 
-	back = '◀'
-	forward = '▶'
-	style := *global_theme.get_default_style()
-	screen.SetContent(c.file.X+left, c.file.Y+top, ch, nil, get_style_hide(view_file.to_view_link(main).Hide))
-	screen.SetContent(c.code.X+left, c.code.Y+top, ch, nil, get_style_hide(view_code.to_view_link(main).Hide))
-	screen.SetContent(c.outline.X+left, c.outline.Y+top, ch, nil, get_style_hide(view_outline_list.to_view_link(main).Hide))
+func (c *smallicon) Draw(screen tcell.Screen) {
+	c.Relocated()
+	main := c.main
+	c.outline.Draw(screen, get_style_hide(view_outline_list.to_view_link(main).Hide))
+	c.file.Draw(screen, get_style_hide(view_file.to_view_link(main).Hide))
+	for _, v := range c.code {
+		v.Draw(screen, get_style_hide(false))
+	}
 
-	screen.SetContent(c.back.X-1+left, top+c.back.Y, ' ', nil, style.Foreground(tcell.ColorWhite).Bold(true))
-	screen.SetContent(c.back.X+left, top+c.back.Y, back, nil, get_style_hide(!c.main.CanGoBack()))
-	screen.SetContent(c.back.X+1+left, top+c.back.Y, ' ', nil, style.Foreground(tcell.ColorWhite))
-	screen.SetContent(c.forward.X+left, top+c.forward.Y, forward, nil, get_style_hide(!c.main.CanGoFoward()).Bold(true))
-	screen.SetContent(c.forward.X+1+left, top+c.forward.Y, ' ', nil, style.Foreground(tcell.ColorWhite))
+	c.back.Draw(screen, get_style_hide(!c.main.CanGoBack()))
+	c.forward.Draw(screen, get_style_hide(!c.main.CanGoFoward()).Bold(true))
 }
 func new_small_icon(main *mainui) *smallicon {
 	smallicon := &smallicon{
-		file:    Pos{0, 0},
-		code:    Pos{1, 0},
-		outline: Pos{2, 0},
-		back:    Pos{4, 0},
-		forward: Pos{6, 0},
+		file:    icon{s: []rune{block_str}},
+		outline: icon{s: []rune{block_str}},
+		back:    icon{s: []rune{' ', str_back, ' '}},
+		forward: icon{s: []rune{str_forward}},
 		main:    main,
 	}
-
 	return smallicon
 }
+
 func (icon *smallicon) handle_mouse_event(action tview.MouseAction, event *tcell.EventMouse) (*tcell.EventMouse, tview.MouseAction) {
+	if event == nil {
+		return event, action
+	}
+	icon.Relocated()
+
 	x, y := event.Position()
-	left, top := icon.get_offset_xy()
-	loc := Pos{X: x - left, Y: y - top}
+	loc := Pos{X: x, Y: y}
 	if action == tview.MouseLeftClick {
 		// if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
-		switch loc {
-		case icon.code:
-			{
-
+		for i, v := range icon.code {
+			if v.in(loc) {
+				if i > 0 {
+					id:= SplitCode.index[i]
+					if view,ok:=SplitCode.code_collection[id];ok{
+						SplitClose(view).handle()
+					}
+				}
+				return nil, tview.MouseConsumed
 			}
-		case icon.file:
-			{
-				icon.main.toggle_view(view_file)
-			}
-		case icon.outline:
-			{
-				icon.main.toggle_view(view_outline_list)
-			}
-		case icon.back:
-			{
-				icon.main.GoBack()
-			}
-		case icon.forward:
-			{
-				icon.main.GoForward()
-			}
-		default:
+		}
+		if icon.file.in(loc) {
+			icon.main.toggle_view(view_file)
+		} else if icon.outline.in(loc) {
+			icon.main.toggle_view(view_outline_list)
+		} else if icon.back.in(loc) {
+			icon.main.GoBack()
+		} else if icon.forward.in(loc) {
+			icon.main.GoForward()
+		} else {
 			return event, action
 		}
 		return nil, tview.MouseConsumed
