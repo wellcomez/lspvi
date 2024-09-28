@@ -21,16 +21,8 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	root := code.view
 
 	code.view.get_click_line_inview(event)
-	posX, posY := event.Position()
 	right_menu_data := code.right_menu_data
-	yOffset := code.view.yOfffset()
-	xOffset := code.view.xOffset()
-	// offsetx:=3
-	pos := mouse_event_pos{
-		Y: posY + root.Topline - yOffset,
-		X: posX - int(xOffset),
-	}
-	// pos = avoid_position_overflow(root, pos)
+	pos := root.event_to_cursor_position(event) // pos = avoid_position_overflow(root, pos)
 
 	if action == tview.MouseRightClick {
 		selected := code.get_selected_lines()

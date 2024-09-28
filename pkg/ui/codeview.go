@@ -401,7 +401,6 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 }
 
 func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.MouseAction, cb func(action tview.MouseAction)) (tview.MouseAction, *tcell.EventMouse) {
-	posX, posY := event.Position()
 
 	switch action {
 	case tview.MouseLeftClick, tview.MouseLeftDown, tview.MouseLeftDoubleClick:
@@ -409,13 +408,8 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		// log.Println("handle_mouse_impl", inY, posY, posY-inY)
 	}
 
-	yOffset := root.yOfffset()
-	xOffset := root.xOffset()
 	// offsetx:=3
-	pos := mouse_event_pos{
-		Y: posY + root.Topline - yOffset,
-		X: posX - int(xOffset),
-	}
+	pos := root.event_to_cursor_position(event)
 
 	if !InRect(event, root) {
 		return action, event
@@ -480,6 +474,18 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		cb(action)
 	}
 	return tview.MouseConsumed, nil
+}
+
+func (root *codetextview) event_to_cursor_position(event *tcell.EventMouse) mouse_event_pos {
+	posX, posY := event.Position()
+	yOffset := root.yOfffset()
+	xOffset := root.xOffset()
+
+	pos := mouse_event_pos{
+		Y: posY + root.Topline - yOffset,
+		X: posX - int(xOffset),
+	}
+	return pos
 }
 
 func (code *codetextview) get_click_line_inview(event *tcell.EventMouse) {
