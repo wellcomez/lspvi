@@ -1240,7 +1240,7 @@ func (code *CodeView) Addbookmark() {
 		code.view.addbookmark(true, s)
 		code.main.bookmark.udpate(&code.view.bookmark)
 		code.main.bookmark.save()
-	})
+	},code)
 }
 func (code *CodeView) Removebookmark() {
 	code.view.addbookmark(false, "")

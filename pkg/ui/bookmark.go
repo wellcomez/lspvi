@@ -208,9 +208,7 @@ func (pk *bookmark_edit) grid(input *tview.InputField) *tview.Grid {
 	return pk.fzflist_impl.grid(input)
 }
 
-func new_bookmark_editor(v *fzfmain, cb func(string)) bookmark_edit {
-	main := v.main
-	code := main.codeview
+func new_bookmark_editor(v *fzfmain, cb func(string), code *CodeView) bookmark_edit {
 	var line = code.view.Cursor.Loc.Y + 1
 	line1 := code.view.Buf.Line(line - 1)
 	ret := bookmark_edit{
