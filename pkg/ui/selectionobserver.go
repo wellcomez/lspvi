@@ -14,7 +14,9 @@ type selectarea struct {
 	cols              int
 	text              []line
 	nottext           bool
+	observer          []selobserver
 }
+
 func (root *selectarea) alloc() {
 	if root.nottext {
 		return
@@ -54,7 +56,7 @@ func (c *selectarea) In(x, y int) bool {
 	}
 	return true
 }
-func (root *selectarea) handle_mouse_selection(action tview.MouseAction,
+func (sel *selectarea) handle_mouse_selection(action tview.MouseAction,
 	event *tcell.EventMouse) bool {
 	posX, posY := event.Position()
 	pos := Pos{
@@ -68,43 +70,56 @@ func (root *selectarea) handle_mouse_selection(action tview.MouseAction,
 		}
 	case tview.MouseLeftDown:
 		{
-			root.mouse_select_area = true
-			root.end = pos
-			root.start = pos
-			log.Println("down", root.start, pos)
+			sel.mouse_select_area = true
+			sel.end = pos
+			sel.start = pos
+			log.Println("down", sel.start, pos)
+			for _, v := range sel.observer {
+				v.on_select_beigin(sel)
+			}
 		}
 	case tview.MouseMove:
 		{
-			if root.mouse_select_area {
-				root.end = (pos)
-				root.order()
-				root.alloc()
+			if sel.mouse_select_area {
+				sel.end = (pos)
+				sel.order()
+				sel.alloc()
 				drawit = true
-				log.Println("move", root.start, pos)
+				log.Println("move", sel.start, pos)
+				for _, v := range sel.observer {
+					v.on_select_move(sel)
+				}
 			}
 		}
 	case tview.MouseLeftUp:
 		{
-			if root.mouse_select_area {
-				root.end = pos
-				root.order()
-				root.mouse_select_area = false
-				root.alloc()
+			if sel.mouse_select_area {
+				sel.end = pos
+				sel.order()
+				sel.mouse_select_area = false
+				sel.alloc()
 				drawit = true
-				log.Println("up", root.start, pos)
+				log.Println("up", sel.start, pos)
+				for _, v := range sel.observer {
+					v.on_select_end(sel)
+				}
 			}
 		}
 	case tview.MouseLeftClick:
 		{
-			root.mouse_select_area = false
-			root.start = pos
-			root.end = pos
+			sel.mouse_select_area = false
+			sel.start = pos
+			sel.end = pos
+			for _, v := range sel.observer {
+				v.on_select_end(sel)
+			}
 		}
 	}
 	return drawit
 }
+
 type selobserver interface {
-	on_select_beigin(*selectarea)
-	on_select_move(*selectarea)
-	on_select_end(*selectarea)
+	on_select_beigin(*selectarea) bool
+	on_select_move(*selectarea) bool
+	on_select_end(*selectarea) bool
 }
