@@ -8,6 +8,9 @@ import (
 	"github.com/rivo/tview"
 )
 
+type select_result struct {
+	start, end Pos
+}
 type selectarea struct {
 	mouse_select_area bool
 	start, end        Pos
@@ -105,13 +108,13 @@ func (sel *selectarea) handle_mouse_selection(action tview.MouseAction,
 				}
 			}
 		}
-	case tview.MouseLeftClick:
+	case tview.MouseLeftClick, tview.MouseRightClick:
 		{
 			sel.mouse_select_area = false
 			sel.start = pos
 			sel.end = pos
 			for _, v := range sel.observer {
-				v.on_select_end(sel)
+				v.on_select_abort(sel,action)
 			}
 		}
 	}
@@ -122,4 +125,5 @@ type selobserver interface {
 	on_select_beigin(*selectarea) bool
 	on_select_move(*selectarea) bool
 	on_select_end(*selectarea) bool
+	on_select_abort(*selectarea,tview.MouseAction) bool
 }

@@ -640,6 +640,7 @@ func MainUI(arg *Arguments) {
 			main.cmdline.Vim.EnterEscape()
 		})
 	}()
+	main.sel.observer = append(main.sel.observer, main.console_index_list)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
