@@ -3,6 +3,8 @@ package mainui
 import (
 	// "log"
 
+	"fmt"
+
 	"github.com/rivo/tview"
 )
 
@@ -33,9 +35,11 @@ const (
 	view_qf_index_view
 	view_console_pages
 	view_recent_open_file
+	view_layout_splicode
 	view_term
-	view_code
 	view_code_below
+	view_max
+	view_code
 )
 
 func (a view_id) is_editor() bool {
@@ -205,50 +209,34 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 	return b
 }
 
-var all_view_list = []view_id{
-	view_log,
-	view_quickview,
-	view_callin,
-	view_uml,
-	view_cmd,
-	view_file,
-	view_outline_list,
-	view_bookmark,
-	view_code_area,
-	view_console_area,
-	view_main_layout,
-	view_qf_index_view,
-	view_console_pages,
-	view_recent_open_file,
-	view_term,
-	view_code,
-	view_code_below,
-}
-var all_view_name = []string{
-	"none",
-	"Log",
-	"Refs|Search",
-	"Callin",
-	"UML",
-	"cmd",
-	"file",
-	"outline",
-	"Bookmark",
-	"view_code_area",
-	"view_console_area",
-	"view_main_layout",
-	"view_qf_index_view",
-	"view_console_pages",
-	"Opened",
-	"Term",
-	"code",
-	"Code",
+var all_view_list = []view_id{view_code}
+var all_view_name_map = map[view_id]string{
+	view_log:              "Log",
+	view_quickview:        "Refs|Search",
+	view_callin:           "Callin",
+	view_uml:              "UML",
+	view_cmd:              "cmd",
+	view_file:             "File",
+	view_outline_list:     "Ooutline",
+	view_bookmark:         "Bookmark",
+	view_qf_index_view:    "view_qf_index_view",
+	view_recent_open_file: "Opened",
+	view_term:             "Term",
+	view_code_below:       "code",
+	view_code:             "Code",
 }
 
 func (viewid view_id) getname() string {
-	return all_view_name[viewid]
+	if s, ok := all_view_name_map[viewid]; ok {
+		return s
+	}
+	return fmt.Sprintf("view_id_%d", viewid)
 }
 func config_main_tab_order(main *mainui) {
+	for i := view_none + 1; i < view_max; i++ {
+		all_view_list = append(all_view_list, i)
+	}
+
 	var vieworder = []view_id{view_code, view_outline_list, view_quickview, view_callin, view_uml, view_bookmark, view_recent_open_file, view_file, view_code}
 	for i, v := range vieworder {
 		if i+1 < len(vieworder) {

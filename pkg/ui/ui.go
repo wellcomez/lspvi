@@ -49,14 +49,14 @@ func new_flex_area(id view_id, main *mainui) *flex_area {
 }
 
 type rootlayout struct {
-	editor_area       *flex_area
-	multi_editor_area *flex_area
-	console           *flex_area
-	cmdline           *tview.InputField
-	tab_area          *tview.Flex
-	mainlayout        *flex_area
-	dialog            *fzfmain
-	spacemenu         *space_menu
+	editor_area *flex_area
+	codelayout  *flex_area
+	console     *flex_area
+	cmdline     *tview.InputField
+	tab_area    *tview.Flex
+	mainlayout  *flex_area
+	dialog      *fzfmain
+	spacemenu   *space_menu
 	// hide_cb     func()
 }
 type recent_open_file struct {
@@ -825,11 +825,14 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 }
 
 func create_edit_area(main *mainui) *flex_area {
+	codelayout := new_flex_area(view_layout_splicode, main)
 	codeview := NewCodeView(main)
 	codeview.id = view_code
 	codeview.not_preview = true
 	codeview.Width = 8
 	main.codeviewmain = codeview
+	codelayout.AddItem(codeview.view, 0, 1, true)
+	main.layout.codelayout = codelayout
 
 	symbol_tree := NewSymbolTreeView(main, codeview)
 	symbol_tree.Width = 2
@@ -853,7 +856,7 @@ func create_edit_area(main *mainui) *flex_area {
 	editor_area.set_dir(tview.FlexColumn)
 	editor_area.
 		AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
-		AddItem(codeview.view, 0, main.codeview.Width, true).
+		AddItem(codelayout, 0, main.codeview.Width, true).
 		AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
 	return editor_area
 }
