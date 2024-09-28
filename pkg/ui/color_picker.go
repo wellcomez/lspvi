@@ -15,7 +15,7 @@ import (
 type color_theme_file struct {
 	treesitter bool
 	// filename   string
-	name       string
+	name string
 }
 type color_pick_impl struct {
 	*fzflist_impl
@@ -24,6 +24,7 @@ type color_pick_impl struct {
 type color_picker struct {
 	impl *color_pick_impl
 	fzf  *fzf_on_listview
+	code *CodeView
 }
 
 // close implements picker.
@@ -52,12 +53,12 @@ func (c *color_picker) name() string {
 	return "color_picker"
 }
 
-func new_color_picker(v *fzfmain) *color_picker {
+func new_color_picker(v *fzfmain, code *CodeView) *color_picker {
 	impl := &color_pick_impl{
 		new_fzflist_impl(nil, v),
 		[]color_theme_file{},
 	}
-	ret := &color_picker{impl: impl}
+	ret := &color_picker{impl: impl, code: code}
 	dirs, err := treesittertheme.GetTheme()
 	if err == nil {
 		for i := range dirs {
@@ -90,7 +91,7 @@ func new_color_picker(v *fzfmain) *color_picker {
 		ret.on_select(&a)
 	}
 	for i, v := range ret.impl.data {
-		if v.name == ret.impl.parent.main.codeview.theme {
+		if v.name == code.theme {
 			ret.impl.list.SetCurrentItem(i)
 			break
 		}
@@ -99,7 +100,7 @@ func new_color_picker(v *fzfmain) *color_picker {
 }
 
 func (pk *color_picker) on_select(c *color_theme_file) {
-	code := pk.impl.parent.main.codeview
+	code := pk.code
 	code.on_change_color(c)
 	pk.impl.parent.hide()
 }

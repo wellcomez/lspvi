@@ -32,7 +32,7 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	handle := LspHandle{}
 	// var main = &mainui{
 	main.bf = NewBackForward(NewHistory(lspviroot.history))
-	main.bookmark = &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}}
+	main.bookmark = &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{},root: root}
 	main.tty = arg.Tty
 	main.ws = arg.Ws
 	// }

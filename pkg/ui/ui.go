@@ -858,7 +858,7 @@ func create_edit_area(main *mainui) *flex_area {
 	codeview.view.SetBorder(true)
 
 	main.quickview = new_quikview(main)
-	main.bookmark_view = new_bookmark_view(main)
+	main.bookmark_view = new_bookmark_view(main.bookmark, codeview, func() bool { return view_bookmark == main.tab.activate_tab_id })
 	main.callinview = new_callview(main)
 
 	main.fileexplorer = new_file_tree(main, "FileExplore", main.root, func(filename string) bool { return true })
@@ -1069,7 +1069,7 @@ func (main *mainui) GoBack() {
 //		main.layout.dialog.OpenFileFzf(main.root)
 //	}
 func (main *mainui) open_picker_bookmark() {
-	main.layout.dialog.OpenBookMarkFzf()
+	main.layout.dialog.OpenBookMarkFzf(main.codeview, main.bookmark)
 }
 func (main *mainui) open_picker_refs() {
 	code := main.current_editor()
@@ -1087,7 +1087,7 @@ func (main *mainui) open_picker_livegrep() {
 	main.layout.dialog.OpenLiveGrepFzf()
 }
 func (main *mainui) open_colorescheme() {
-	main.layout.dialog.OpenColorFzf()
+	main.layout.dialog.OpenColorFzf(main.codeview)
 }
 func (main *mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()

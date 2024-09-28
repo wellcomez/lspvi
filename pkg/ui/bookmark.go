@@ -48,6 +48,7 @@ type proj_bookmark struct {
 	Bookmark []bookmarkfile
 	path     string
 	changed  []bookmark_changed
+	root     string
 }
 
 func (prj *proj_bookmark) load() error {
@@ -221,7 +222,7 @@ func new_bookmark_editor(v *fzfmain, cb func(string), code *CodeView) bookmark_e
 }
 
 // new_bookmark_picker
-func new_bookmark_picker(v *fzfmain, code *CodeView) bookmark_picker {
+func new_bookmark_picker(v *fzfmain, code *CodeView, bookmark *proj_bookmark) bookmark_picker {
 	impl := &bookmark_picker_impl{
 		prev_picker_impl: new_preview_picker(v, code),
 	}
@@ -230,7 +231,7 @@ func new_bookmark_picker(v *fzfmain, code *CodeView) bookmark_picker {
 	}
 	sym.impl.codeprev.view.SetBorder(true)
 
-	impl.hlist, impl.listdata = init_bookmark_list(v.main, func(i int) {
+	impl.hlist, impl.listdata = init_bookmark_list(bookmark, func(i int) {
 		loc := sym.impl.listdata[i].loc
 		close_bookmark_picker(impl.prev_picker_impl, loc)
 	})
@@ -241,15 +242,14 @@ func new_bookmark_picker(v *fzfmain, code *CodeView) bookmark_picker {
 	return sym
 }
 
-func init_bookmark_list(main *mainui, selected func(int)) (*customlist, []ref_line) {
+func init_bookmark_list(bookmark *proj_bookmark, selected func(int)) (*customlist, []ref_line) {
 	hlist := new_customlist(false)
-	listdata := reload_bookmark_list(main, hlist, selected)
+	listdata := reload_bookmark_list(bookmark, hlist, selected)
 	return hlist, listdata
 }
 
-func reload_bookmark_list(main *mainui, hlist *customlist, selected func(int)) []ref_line {
+func reload_bookmark_list(bookmark *proj_bookmark, hlist *customlist, selected func(int)) []ref_line {
 	hlist.Clear()
-	bookmark := main.bookmark
 	marks := bookmark.Bookmark
 	listdata := []ref_line{}
 	for _, file := range marks {
@@ -270,7 +270,7 @@ func reload_bookmark_list(main *mainui, hlist *customlist, selected func(int)) [
 			listdata = append(listdata, ref)
 		}
 	}
-	root := main.root
+	root := bookmark.root
 	for i, v := range listdata {
 		a, b := get_list_item(v, root)
 		index := i
@@ -296,17 +296,19 @@ type bookmark_view struct {
 	data          []ref_line
 	Name          string
 	fzf           *fzf_on_listview
-	main          *mainui
 	menuitem      []context_menu_item
 	right_context bk_menu_context
+	bookmark      *proj_bookmark
+	code          *CodeView
+	yes           func() bool
 }
 
-func (bk bookmark_view) onsave() {
-	b := bk.main.bookmark_view
+func (bk *bookmark_view) onsave() {
+	b := bk
 	b.list.Clear()
 	b.list.SetChangedFunc(nil)
 	b.list.SetSelectedFunc(nil)
-	b.data = reload_bookmark_list(b.main, b.list, func(i int) {
+	b.data = reload_bookmark_list(b.bookmark, b.list, func(i int) {
 		b.onclick(i)
 	})
 	b.fzf = new_fzf_on_list(b.list, true)
@@ -319,15 +321,17 @@ func (bk *bookmark_view) OnSearch(txt string) {
 	}
 	bk.fzf.selected = func(dataindex int, listindex int) {
 		loc := bk.data[dataindex].loc
-		bk.main.gotoline(loc)
+		bk.code.open_file_line(loc.URI.AsPath().String(), &loc)
 	}
 }
-func new_bookmark_view(main *mainui) *bookmark_view {
+func new_bookmark_view(bookmark *proj_bookmark, code *CodeView, yes func() bool) *bookmark_view {
 	ret := &bookmark_view{
 		view_link: &view_link{id: view_bookmark, up: view_code, left: view_uml, right: view_outline_list},
 		Name:      view_bookmark.getname(),
-		main:      main,
 		list:      new_customlist(false),
+		code:      code,
+		bookmark:  bookmark,
+		yes:       yes,
 	}
 	ret.right_context = bk_menu_context{
 		qk: ret,
@@ -339,7 +343,7 @@ func new_bookmark_view(main *mainui) *bookmark_view {
 				return
 			}
 			r := ret.data[idnex]
-			main.bookmark.delete(r)
+			ret.bookmark.delete(r)
 		}},
 	}
 	ret.update_redraw()
@@ -355,20 +359,20 @@ func (ret *bookmark_view) update_redraw() {
 }
 
 func (ret *bookmark_view) loaddata() {
-	main := ret.main
-	ret.data = reload_bookmark_list(main, ret.list, func(i int) {
+	// main := ret.main
+	ret.data = reload_bookmark_list(ret.bookmark, ret.list, func(i int) {
 
 		ret.onclick(i)
 	})
 	ret.list.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
-		main.gotoline(loc)
+		ret.code.open_file_line(loc.URI.AsPath().String(), &loc)
 	})
 
-	if main.bookmark.changed == nil {
-		main.bookmark.changed = []bookmark_changed{*ret}
+	if ret.bookmark.changed == nil {
+		ret.bookmark.changed = []bookmark_changed{ret}
 	} else {
-		main.bookmark.changed = append(main.bookmark.changed, *ret)
+		ret.bookmark.changed = append(ret.bookmark.changed, ret)
 	}
 	ret.fzf = new_fzf_on_list(ret.list, true)
 
@@ -385,8 +389,8 @@ func (menu bk_menu_context) on_mouse(action tview.MouseAction, event *tcell.Even
 // getbox implements context_menu_handle.
 func (menu bk_menu_context) getbox() *tview.Box {
 	if menu.qk != nil {
-		yes := menu.qk.main.is_tab(view_bookmark.getname())
-		if yes {
+		yes := menu.qk.yes
+		if yes() {
 			return menu.qk.list.Box
 		}
 	}
@@ -398,8 +402,7 @@ func (menu bk_menu_context) menuitem() []context_menu_item {
 	return menu.qk.menuitem
 }
 func (ret *bookmark_view) onclick(i int) {
-	main := ret.main
 	loc := ret.data[i].loc
 	ret.list.SetCurrentItem(i)
-	main.gotoline(loc)
+	ret.code.open_file_line(loc.URI.AsPath().String(), &loc)
 }
