@@ -239,6 +239,7 @@ func new_bookmark_picker(v *fzfmain, code *CodeView, bookmark *proj_bookmark) bo
 	impl.use_cusutom_list(impl.hlist)
 	fzf := new_fzf_on_list(sym.impl.hlist, sym.impl.hlist.fuzz)
 	sym.impl.fzf = fzf
+	sym.UpdateQuery("")
 	return sym
 }
 
