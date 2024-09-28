@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 )
