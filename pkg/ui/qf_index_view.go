@@ -122,7 +122,7 @@ func (ret *qf_index_view) Load(viewid view_id) bool {
 	case view_callin, view_quickview, view_bookmark:
 		ret.right_context.menu_item = &menudata{[]context_menu_item{
 			{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
-				if len(ret.qfh.selected) > 0 {
+				if len(ret.qfh.selected) > 0 && ret.qfh.selected[0] != ret.qfh.selected[1] {
 					ret.qfh.DeleteRange(ret.qfh.selected)
 					ret.update_select_item()
 				} else {
