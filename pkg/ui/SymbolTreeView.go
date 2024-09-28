@@ -217,7 +217,7 @@ func NewSymbolTreeView(main *mainui, codeview *CodeView) *SymbolTreeView {
 	for i := range funs {
 		v := funs[i]
 		s := main.create_menu_item(v, func() {
-			ret.handle_commnad(v)
+			go ret.handle_commnad(v)
 		})
 		menu_item = append(menu_item, s)
 	}

@@ -19,16 +19,21 @@ type Body struct {
 // SubLine 函数用于从多行文本中提取子集
 func SubLine(begin, end lsp.Position, lines []string) []string {
 	subline := lines[begin.Line : end.Line+1]
-
+	e := end.Character
+	if begin.Character >= len(subline[0]) {
+		return subline
+	}
+	if e >= len(subline[0]) {
+		return subline
+	}
 	if begin.Line == end.Line {
-		e := end.Character
 		if e < 0 {
 			e = -1
 		}
+
 		subline[0] = subline[0][begin.Character:e]
 	} else {
 		subline[0] = subline[0][begin.Character:]
-		e := end.Character
 		if e < 0 {
 			e = -1
 		}
