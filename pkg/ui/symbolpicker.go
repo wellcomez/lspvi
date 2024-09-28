@@ -147,13 +147,13 @@ func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 		_, rectY, _, _ := t.GetInnerRect()
 		y += t.GetScrollOffset() - rectY
 		nodes := sym.impl.symview.nodes()
-		node := nodes[y]
 		if y >= len(nodes) || len(nodes) == 0 {
 			return
 		}
 		if y < 0 {
 			return
 		}
+		node := nodes[y]
 		t.SetCurrentNode(node)
 		sym.update_preview()
 	}

@@ -370,8 +370,14 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	if code.main == nil {
 		return action, event
 	}
+
 	root := code.view
-	return root.process_mouse(event, action, func(action tview.MouseAction) {
+	return root.process_mouse(event, action, func(action tview.MouseAction, mode mouse_action_cbmode) bool {
+		if code_mouse_cb_begin == mode {
+			if code.id == view_code_below && code.main.tab.activate_tab_id != code.id {
+				return false
+			}
+		}
 		switch action {
 		case tview.MouseLeftDoubleClick:
 			code.action_goto_define()
@@ -400,10 +406,18 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 				code.update_with_line_changed()
 			}
 		}
+		return true
 	})
 }
 
-func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.MouseAction, cb func(action tview.MouseAction)) (tview.MouseAction, *tcell.EventMouse) {
+type mouse_action_cbmode int
+
+const (
+	code_mouse_cb_begin mouse_action_cbmode = iota
+	code_mouse_cb_end
+)
+
+func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.MouseAction, cb func(tview.MouseAction, mouse_action_cbmode) bool) (tview.MouseAction, *tcell.EventMouse) {
 
 	switch action {
 	case tview.MouseLeftClick, tview.MouseLeftDown, tview.MouseLeftDoubleClick:
@@ -416,6 +430,11 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 
 	if !InRect(event, root) {
 		return action, event
+	}
+	if cb != nil {
+		if cb(action, code_mouse_cb_begin){
+			return action, event
+		}
 	}
 	switch action {
 
@@ -474,7 +493,7 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		return action, event
 	}
 	if cb != nil {
-		cb(action)
+		cb(action, code_mouse_cb_end)
 	}
 	return tview.MouseConsumed, nil
 }

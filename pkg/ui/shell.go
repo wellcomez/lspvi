@@ -216,6 +216,9 @@ func (menu term_right_menu) on_mouse(action tview.MouseAction, event *tcell.Even
 	if action == tview.MouseRightClick {
 		return tview.MouseConsumed, nil
 	}
+	if action == tview.MouseLeftClick {
+		view_term.setfocused(menu.view.main)
+	}
 	return tview.MouseConsumed, nil
 }
 func NewTerminal(main *mainui, app *tview.Application, shellname string) *Term {
