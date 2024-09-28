@@ -43,7 +43,7 @@ const (
 )
 
 func (a view_id) is_editor() bool {
-	return a >= view_code
+	return a >= view_code || a == view_code_below
 }
 
 // var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin, view_term}
@@ -78,6 +78,11 @@ func focus_viewid(m *mainui) view_id {
 	for _, v := range all_view_list {
 		if b := v.to_box(m); b != nil && b.HasFocus() {
 			return v
+		}
+	}
+	for _, v := range SplitCode.code_collection {
+		if v.view.HasFocus() {
+			return v.id
 		}
 	}
 	return view_none
@@ -239,6 +244,11 @@ var all_view_name_map = map[view_id]string{
 func (viewid view_id) getname() string {
 	if s, ok := all_view_name_map[viewid]; ok {
 		return s
+	}
+	if viewid > view_code {
+		if index := SplitCode.TabIndex(viewid); index > 0 {
+			return fmt.Sprintf("Code:%d", index)
+		}
 	}
 	return fmt.Sprintf("view_id_%d", viewid)
 }

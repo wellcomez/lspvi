@@ -509,7 +509,7 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 	vvv := qk.Refs.Refs[index]
 	qk.currentIndex = index
 	qk.view.SetCurrentItem(index)
-	same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.filename
+	same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.filepathname
 	if open || same {
 		qk.main.UpdatePageTitle()
 		qk.main.gotoline(vvv.Loc)

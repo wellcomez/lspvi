@@ -217,15 +217,15 @@ func new_bookmark_editor(v *fzfmain, cb func(string)) bookmark_edit {
 		fzflist_impl: new_fzflist_impl(nil, v),
 		cb:           cb,
 	}
-	ret.fzflist_impl.list.AddItem(line1, code.filename, nil)
+	ret.fzflist_impl.list.AddItem(line1, code.filepathname, nil)
 	v.create_dialog_content(ret.grid(v.input), ret)
 	return ret
 }
 
 // new_bookmark_picker
-func new_bookmark_picker(v *fzfmain) bookmark_picker {
+func new_bookmark_picker(v *fzfmain, code *CodeView) bookmark_picker {
 	impl := &bookmark_picker_impl{
-		prev_picker_impl: new_preview_picker(v),
+		prev_picker_impl: new_preview_picker(v, code),
 	}
 	sym := bookmark_picker{
 		impl: impl,
@@ -405,4 +405,3 @@ func (ret *bookmark_view) onclick(i int) {
 	ret.list.SetCurrentItem(i)
 	main.gotoline(loc)
 }
-

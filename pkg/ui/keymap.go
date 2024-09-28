@@ -193,12 +193,12 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case goto_to_fileview:
 		{
 			return cmdactor{id, "goto file explorer", func() bool {
-				dir := filepath.Dir(m.current_editor().filename)
+				dir := filepath.Dir(m.current_editor().filepathname)
 				if view_file.to_view_link(m).Hide {
 					m.toggle_view(view_file)
 				}
 				m.fileexplorer.ChangeDir(dir)
-				m.fileexplorer.FocusFile(m.current_editor().filename)
+				m.fileexplorer.FocusFile(m.current_editor().filepathname)
 				return true
 			}}
 		}

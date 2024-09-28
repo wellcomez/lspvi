@@ -191,7 +191,7 @@ func convert_to_fzfsearch(gs *GenericSearch, main *mainui) []lsp.Location {
 	for _, loc := range gs.indexList {
 		x := convert_search_pos_lsprange(loc, gs)
 		loc := lsp.Location{
-			URI:   lsp.NewDocumentURI(main.codeview.filename),
+			URI:   lsp.NewDocumentURI(main.codeview.filepathname),
 			Range: x,
 		}
 		locs = append(locs, loc)

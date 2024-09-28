@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
@@ -21,36 +20,31 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	root := code.view
 
 	code.view.get_click_line_inview(event)
-	posX, posY := event.Position()
 	right_menu_data := code.right_menu_data
-	yOffset := code.view.yOfffset()
-	xOffset := code.view.xOffset()
-	// offsetx:=3
-	pos := mouse_event_pos{
-		Y: posY + root.Topline - yOffset,
-		X: posX - int(xOffset),
-	}
-	// pos = avoid_position_overflow(root, pos)
+	pos := root.event_to_cursor_position(event) // pos = avoid_position_overflow(root, pos)
 
 	if action == tview.MouseRightClick {
+
+		//select line
 		selected := code.get_selected_lines()
 		right_menu_data.previous_selection = selected
-		// code.rightmenu.text = root.Cursor.GetSelection()
-		cursor := *root.Cursor
+
 		Loc := code.view.tab_loc(pos)
-		code.set_loc(Loc)
-		cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
-		right_menu_data.rightmenu_loc = cursor.CurSelection[0]
-		// log.Println("before", cursor.CurSelection)
-		loc := code.SelectWord(cursor)
-		_, s := get_codeview_text_loc(root.View, loc.CurSelection[0], loc.CurSelection[1])
+		right_menu_data.local_changed = root.Cursor.Loc != (Loc)
+		//save cursor loc
+		cursor_data := *root.Cursor
+		right_menu_data.rightmenu_loc = Loc
+
+		//get selected text
+		word_select_cursor := code.SelectWordFromCopyCursor(cursor_data)
+		_, s := get_codeview_text_loc(root.View, word_select_cursor.CurSelection[0], word_select_cursor.CurSelection[1])
 		menu.code.right_menu_data.select_text = s
-		menu.code.right_menu_data.selection_range = text_loc_to_range(loc.CurSelection)
-		// code.get_selected_lines()
-		// code.rightmenu_select_text = root.Cursor.GetSelection()
-		// code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
-		// log.Println("after ", code.view.Cursor.CurSelection)
+		menu.code.right_menu_data.selection_range = text_loc_to_range(word_select_cursor.CurSelection)
+
+		// move cursor to mouse postion
+		code.set_loc(Loc)
 		update_selection_menu(code)
+
 	}
 	return action, event
 }
@@ -87,28 +81,28 @@ func update_selection_menu(code *CodeView) {
 	items := []context_menu_item{
 		{item: create_menu_item("Reference"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
-			main.get_refer(menudata.selection_range, code.filename)
+			main.get_refer(menudata.selection_range, code.filepathname)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
-			main.get_define(menudata.selection_range, code.filename)
+			main.get_define(menudata.selection_range, code.filepathname)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
 			loc := lsp.Location{
-				URI:   lsp.NewDocumentURI(code.filename),
+				URI:   lsp.NewDocumentURI(code.filepathname),
 				Range: menudata.selection_range,
 			}
-			main.get_callin_stack_by_cursor(loc, code.filename)
+			main.get_callin_stack_by_cursor(loc, code.filepathname)
 			main.ActiveTab(view_callin, false)
 		}},
 		{item: create_menu_item("Open in explorer"), handle: func() {
 			// ret.filename
-			dir := filepath.Dir(code.filename)
+			dir := filepath.Dir(code.filepathname)
 			main.fileexplorer.ChangeDir(dir)
-			main.fileexplorer.FocusFile(code.filename)
+			main.fileexplorer.FocusFile(code.filepathname)
 		}},
 		{item: create_menu_item("-------------"), handle: func() {
 		}},
@@ -162,7 +156,7 @@ func update_selection_menu(code *CodeView) {
 		{
 			item: create_menu_item("External open "),
 			handle: func() {
-				filename := code.filename
+				filename := code.filepathname
 				yes, err := isDirectory(filename)
 				if err != nil {
 					return
@@ -193,8 +187,8 @@ func SplitDown(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitDown"), handle: func() {
 		if code.id >= view_code {
-			main.codeview2.LoadAndCb(code.filename, func() {
-				go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
+			main.codeview2.LoadAndCb(code.filepathname, func() {
+				go main.async_lsp_open(code.filepathname, func(sym *lspcore.Symbol_file) {
 					main.codeview2.lspsymbol = sym
 				})
 				go func() {

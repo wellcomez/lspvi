@@ -33,6 +33,7 @@ type right_menu_data struct {
 	select_text        string
 	selection_range    lsp.Range
 	rightmenu_loc      femto.Loc
+	local_changed      bool
 }
 
 func (data right_menu_data) SelectInEditor(c *femto.Cursor) {
@@ -42,13 +43,13 @@ func (data right_menu_data) SelectInEditor(c *femto.Cursor) {
 
 type CodeView struct {
 	*view_link
-	filename    string
-	tree_sitter *lspcore.TreeSitter
-	view        *codetextview
-	theme       string
-	main        *mainui
-	lspsymbol   *lspcore.Symbol_file
-	key_map     map[tcell.Key]func(code *CodeView)
+	filepathname string
+	tree_sitter  *lspcore.TreeSitter
+	view         *codetextview
+	theme        string
+	main         *mainui
+	lspsymbol    *lspcore.Symbol_file
+	key_map      map[tcell.Key]func(code *CodeView)
 	// mouse_select_area    bool
 	rightmenu_items []context_menu_item
 	right_menu_data *right_menu_data
@@ -62,10 +63,13 @@ type CodeView struct {
 	diff        *Differ
 }
 
+func (code CodeView) FileName() string {
+	return strings.TrimPrefix(code.filepathname, code.main.root)
+}
 func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
 }
-func (code *CodeView) SelectWord(c femto.Cursor) femto.Cursor {
+func (code *CodeView) SelectWordFromCopyCursor(c femto.Cursor) femto.Cursor {
 	view := code.view
 	if len(view.Buf.Line(c.Y)) == 0 {
 		return c
@@ -93,7 +97,6 @@ func (code *CodeView) SelectWord(c femto.Cursor) femto.Cursor {
 
 	c.SetSelectionEnd(femto.Loc{X: forward, Y: c.Y}.Move(1, view.Buf))
 	c.OrigSelection[1] = c.CurSelection[1]
-	code.set_loc(c.CurSelection[1])
 	return c
 }
 
@@ -300,7 +303,7 @@ func (code *CodeView) get_selected_lines() editor_selection {
 		selected_text: text,
 		begin:         ss[0],
 		end:           ss[1],
-		filename:      code.filename,
+		filename:      code.filepathname,
 	}
 }
 
@@ -367,8 +370,14 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	if code.main == nil {
 		return action, event
 	}
+
 	root := code.view
-	return root.process_mouse(event, action, func(action tview.MouseAction) {
+	return root.process_mouse(event, action, func(action tview.MouseAction, mode mouse_action_cbmode) bool {
+		if code_mouse_cb_begin == mode {
+			if code.id == view_code_below && code.main.tab.activate_tab_id != code.id {
+				return false
+			}
+		}
 		switch action {
 		case tview.MouseLeftDoubleClick:
 			code.action_goto_define()
@@ -377,10 +386,10 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			code.view.Focus(func(p tview.Primitive) {})
 			if code.id >= view_code {
 				symboltree := code.main.symboltree
-				if symboltree.editor!= code{
+				if symboltree.editor != code {
 					symboltree.editor = code
 					symboltree.Clear()
-					if code.lspsymbol == nil ||code.lspsymbol.Class_object == nil {
+					if code.lspsymbol == nil || code.lspsymbol.Class_object == nil {
 						if code.tree_sitter != nil {
 							symboltree.upate_with_ts(code.tree_sitter)
 						}
@@ -397,11 +406,18 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 				code.update_with_line_changed()
 			}
 		}
+		return true
 	})
 }
 
-func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.MouseAction, cb func(action tview.MouseAction)) (tview.MouseAction, *tcell.EventMouse) {
-	posX, posY := event.Position()
+type mouse_action_cbmode int
+
+const (
+	code_mouse_cb_begin mouse_action_cbmode = iota
+	code_mouse_cb_end
+)
+
+func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.MouseAction, cb func(tview.MouseAction, mouse_action_cbmode) bool) (tview.MouseAction, *tcell.EventMouse) {
 
 	switch action {
 	case tview.MouseLeftClick, tview.MouseLeftDown, tview.MouseLeftDoubleClick:
@@ -409,16 +425,16 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		// log.Println("handle_mouse_impl", inY, posY, posY-inY)
 	}
 
-	yOffset := root.yOfffset()
-	xOffset := root.xOffset()
 	// offsetx:=3
-	pos := mouse_event_pos{
-		Y: posY + root.Topline - yOffset,
-		X: posX - int(xOffset),
-	}
+	pos := root.event_to_cursor_position(event)
 
 	if !InRect(event, root) {
 		return action, event
+	}
+	if cb != nil {
+		if !cb(action, code_mouse_cb_begin){
+			return action, event
+		}
 	}
 	switch action {
 
@@ -477,9 +493,21 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		return action, event
 	}
 	if cb != nil {
-		cb(action)
+		cb(action, code_mouse_cb_end)
 	}
 	return tview.MouseConsumed, nil
+}
+
+func (root *codetextview) event_to_cursor_position(event *tcell.EventMouse) mouse_event_pos {
+	posX, posY := event.Position()
+	yOffset := root.yOfffset()
+	xOffset := root.xOffset()
+
+	pos := mouse_event_pos{
+		Y: posY + root.Topline - yOffset,
+		X: posX - int(xOffset),
+	}
+	return pos
 }
 
 func (code *codetextview) get_click_line_inview(event *tcell.EventMouse) {
@@ -771,7 +799,7 @@ func (code *CodeView) Save() error {
 	view := code.view
 	data := view.Buf.SaveString(false)
 	code.main.bookmark.udpate(&code.view.bookmark)
-	return os.WriteFile(code.filename, []byte(data), 0644)
+	return os.WriteFile(code.filepathname, []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
 	checker := new_linechange_checker(code)
@@ -897,7 +925,7 @@ func (code *CodeView) update_with_line_changed() {
 		return
 	}
 	if code.id == view_code {
-		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y, code.filename)
+		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y, code.filepathname)
 	}
 }
 
@@ -922,7 +950,7 @@ func (code *CodeView) action_goto_define() {
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	log.Printf("goto define %v %s", loc, code.view.Cursor.GetSelection())
-	main.get_define(loc, code.filename)
+	main.get_define(loc, code.filepathname)
 }
 func (code *CodeView) action_goto_declaration() {
 	main := code.main
@@ -931,7 +959,7 @@ func (code *CodeView) action_goto_declaration() {
 	}
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
-	main.get_declare(loc, code.filename)
+	main.get_declare(loc, code.filepathname)
 }
 
 func (code *CodeView) action_get_refer() {
@@ -942,7 +970,7 @@ func (code *CodeView) action_get_refer() {
 	code.view.Cursor.SelectWord()
 	main.quickview.view.Clear()
 	loc := code.lsp_cursor_loc()
-	main.get_refer(loc, code.filename)
+	main.get_refer(loc, code.filepathname)
 	// main.ActiveTab(view_fzf)
 
 }
@@ -974,8 +1002,8 @@ func (code *CodeView) key_call_in() {
 	r := text_loc_to_range(loc)
 	code.main.get_callin_stack_by_cursor(lsp.Location{
 		Range: r,
-		URI:   lsp.NewDocumentURI(code.filename),
-	}, code.filename)
+		URI:   lsp.NewDocumentURI(code.filepathname),
+	}, code.filepathname)
 	// code.main.ActiveTab(view_callin)
 }
 
@@ -1080,7 +1108,7 @@ func (code *CodeView) Load2Line(filename string, line int) error {
 	})
 }
 func (code *CodeView) LoadAndCb(filename string, onload func()) error {
-	if filename == code.filename {
+	if filename == code.filepathname {
 		if onload != nil {
 			onload()
 		}
@@ -1130,7 +1158,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 	})
 	code.LoadBuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
-	code.filename = filename
+	code.filepathname = filename
 	if code.main != nil {
 		code.view.bookmark = *code.main.bookmark.GetFileBookmark(filename)
 	}
@@ -1145,7 +1173,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 }
 
 func (code *CodeView) change_appearance() {
-	code.config_wrap(code.filename)
+	code.config_wrap(code.filepathname)
 	code.change_theme()
 }
 func (code *CodeView) on_change_color(c *color_theme_file) {
@@ -1285,7 +1313,7 @@ func (code *CodeView) gotoline(line int) {
 	}
 	if code.main != nil && code.not_preview {
 		code.main.bf.history.SaveToHistory(code)
-		code.main.bf.history.AddToHistory(code.filename, NewEditorPosition(line, code))
+		code.main.bf.history.AddToHistory(code.filepathname, NewEditorPosition(line, code))
 	}
 	key := ""
 

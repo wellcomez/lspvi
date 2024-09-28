@@ -96,6 +96,7 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
+	sel           selectarea
 	icon          *smallicon
 	term          *Term
 	fileexplorer  *file_tree_view
@@ -289,7 +290,7 @@ func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 }
 func (m *mainui) gotoline(loc lsp.Location) {
 	file := loc.URI.AsPath().String()
-	if file != m.codeview.filename {
+	if file != m.codeview.filepathname {
 		m.OpenFile(file, &loc)
 	} else {
 		m.codeview.gotoline(loc.Range.Start.Line)
@@ -299,7 +300,7 @@ func (m *mainui) gotoline(loc lsp.Location) {
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	if file != nil {
-		if file.Filename != m.codeview.filename {
+		if file.Filename != m.codeview.filepathname {
 			return
 		}
 	}
@@ -334,10 +335,10 @@ func (m *mainui) quit() {
 	m.Close()
 }
 func (m *mainui) open_qfh_query() {
-	m.layout.dialog.open_qfh_picker(m.lspmgr.Current)
+	m.layout.dialog.open_qfh_picker(m.codeview)
 }
 func (m *mainui) open_wks_query() {
-	m.layout.dialog.open_wks_query(m.lspmgr.Current)
+	m.layout.dialog.open_wks_query(m.codeview)
 }
 func (m *mainui) ZoomWeb(zoom bool) {
 	if proxy != nil {
@@ -514,7 +515,7 @@ func MainUI(arg *Arguments) {
 	// 	tty:      arg.Tty,
 	// 	ws:       arg.Ws,
 	// }
-	main := &mainui{}
+	main := &mainui{sel: selectarea{nottext: true}}
 	prj.Load(arg, main)
 	main.icon = new_small_icon(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
@@ -595,7 +596,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					main.codeview.Load(main.codeview.filename)
+					main.codeview.Load(main.codeview.filepathname)
 				})
 			}()
 		}
@@ -632,13 +633,14 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(main)
 	main.quickview.RestoreLast()
-	UpdateTitleAndColor(main_layout.Box, main.codeview.filename)
+	UpdateTitleAndColor(main_layout.Box, main.codeview.filepathname)
 	go func() {
 		app.QueueUpdateDraw(func() {
 			view_code.setfocused(main)
 			main.cmdline.Vim.EnterEscape()
 		})
 	}()
+	main.sel.observer = append(main.sel.observer, main.console_index_list)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
@@ -661,6 +663,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
+	main.sel.handle_mouse_selection(action, event)
 	main.icon.handle_mouse_event(action, event)
 	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 	if content_menu_action == tview.MouseConsumed {
@@ -807,7 +810,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
 		}
-		titlename := fmt.Sprintf("%s ", main.codeview.filename)
+		titlename := fmt.Sprintf("%s ", main.codeview.filepathname)
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {
@@ -1061,9 +1064,10 @@ func (main *mainui) open_picker_bookmark() {
 	main.layout.dialog.OpenBookMarkFzf()
 }
 func (main *mainui) open_picker_refs() {
-	main.codeview.view.Cursor.SelectWord()
-	loc := main.codeview.lsp_cursor_loc()
-	main.layout.dialog.OpenRefFzf(main.lspmgr.Current, loc)
+	code := main.current_editor()
+	code.view.Cursor.SelectWord()
+	loc := code.lsp_cursor_loc()
+	main.layout.dialog.OpenRefFzf(code, loc)
 }
 func (main *mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(main.root, main.current_editor())

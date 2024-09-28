@@ -8,7 +8,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 func (parent *fzfmain) openfile(path string) {
@@ -97,32 +96,32 @@ func (v *fzfmain) hide() {
 	v.input.SetText("")
 	v.input.SetLabel("")
 }
-func (v *fzfmain) open_qfh_picker(file *lspcore.Symbol_file) {
-	sym := new_qk_history_picker(v)
+func (v *fzfmain) open_qfh_picker(code *CodeView) {
+	sym := new_qk_history_picker(v, code)
 	x := sym.grid()
 	v.create_dialog_content(x, sym)
 }
-func (v *fzfmain) open_wks_query(file *lspcore.Symbol_file) {
-	sym := new_workspace_symbol_picker(v, file)
+func (v *fzfmain) open_wks_query(code *CodeView) {
+	sym := new_workspace_symbol_picker(v, code)
 	x := sym.grid()
 	v.create_dialog_content(x, sym)
 }
 
 func (v *fzfmain) OpenBookMarkFzf() {
-	sym := new_bookmark_picker(v)
+	sym := new_bookmark_picker(v, v.main.current_editor())
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
 
 // NewSymboWalk
-func (v *fzfmain) OpenRefFzf(file *lspcore.Symbol_file, ranges lsp.Range) {
-	sym := new_refer_picker(*file, v)
+func (v *fzfmain) OpenRefFzf(code *CodeView, ranges lsp.Range) {
+	sym := new_refer_picker(*code.lspsymbol, v, code)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 	sym.load(ranges)
 }
 func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bool) *greppicker {
-	sym := new_grep_picker(v)
+	sym := new_grep_picker(v, v.main.current_editor())
 	sym.parent.Visible = qf == nil
 	sym.qf = qf
 	if qf == nil {
@@ -134,7 +133,7 @@ func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bo
 	return sym
 }
 func (v *fzfmain) OpenLiveGrepFzf() {
-	sym := new_live_grep_picker(v)
+	sym := new_live_grep_picker(v, v.main.current_editor())
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
