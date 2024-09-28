@@ -205,9 +205,10 @@ func (m *mainui) is_tab(tabname string) bool {
 }
 
 func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
+	code := m.codeview
 	go func() {
 		m.app.QueueUpdateDraw(func() {
-			m.quickview.view.Key = m.codeview.view.Cursor.GetSelection()
+			m.quickview.view.Key = code.view.Cursor.GetSelection()
 			if len(ranges.Key) > 0 {
 				m.quickview.view.Key = ranges.Key
 			}
@@ -289,18 +290,20 @@ func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 	// panic("unimplemented")
 }
 func (m *mainui) gotoline(loc lsp.Location) {
+	code := m.codeview
 	file := loc.URI.AsPath().String()
-	if file != m.codeview.filepathname {
+	if file != code.filepathname {
 		m.OpenFile(file, &loc)
 	} else {
-		m.codeview.gotoline(loc.Range.Start.Line)
+		code.gotoline(loc.Range.Start.Line)
 	}
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
+	code := m.codeview
 	if file != nil {
-		if file.Filename != m.codeview.filepathname {
+		if file.Filename != code.filepathname {
 			return
 		}
 	}
@@ -309,8 +312,8 @@ func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	}
 	m.symboltree.update(file)
 	if file == nil || !file.HasLsp() {
-		if m.codeview.ts != nil {
-			m.symboltree.upate_with_ts(m.codeview.ts)
+		if code.ts != nil {
+			m.symboltree.upate_with_ts(code.ts)
 		}
 	}
 }
@@ -335,10 +338,12 @@ func (m *mainui) quit() {
 	m.Close()
 }
 func (m *mainui) open_qfh_query() {
-	m.layout.dialog.open_qfh_picker(m.codeview)
+	code := m.codeview
+	m.layout.dialog.open_qfh_picker(code)
 }
 func (m *mainui) open_wks_query() {
-	m.layout.dialog.open_wks_query(m.codeview)
+	code := m.codeview
+	m.layout.dialog.open_wks_query(code)
 }
 func (m *mainui) ZoomWeb(zoom bool) {
 	if proxy != nil {
@@ -376,6 +381,7 @@ type navigation_loc struct {
 func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory bool) {
 	// dirname := filepath.Dir(file)
 	// m.fileexplorer.ChangeDir(dirname)
+	code := m.codeview
 	var loc *lsp.Location
 	if navi != nil {
 		loc = navi.loc
@@ -386,26 +392,26 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	}
 	if addhistory {
 		if loc != nil {
-			m.bf.history.SaveToHistory(m.codeview)
-			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line, m.codeview))
+			m.bf.history.SaveToHistory(code)
+			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line, code))
 		} else {
-			m.bf.history.SaveToHistory(m.codeview)
+			m.bf.history.SaveToHistory(code)
 			m.bf.history.AddToHistory(file, nil)
 		}
 	}
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
-	m.codeview.LoadAndCb(file, func() {
+	code.LoadAndCb(file, func() {
 		if loc != nil {
-			lins := m.codeview.view.Buf.LinesNum()
+			lins := code.view.Buf.LinesNum()
 			loc.Range.Start.Line = min(lins-1, loc.Range.Start.Line)
 			loc.Range.End.Line = min(lins-1, loc.Range.End.Line)
-			m.codeview.goto_loation(loc.Range)
+			code.goto_loation(loc.Range)
 		}
 	})
 	go m.async_lsp_open(file, func(sym *lspcore.Symbol_file) {
-		m.codeview.lspsymbol = sym
+		code.lspsymbol = sym
 	})
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
@@ -556,6 +562,7 @@ func MainUI(arg *Arguments) {
 	main.app = GlobalApp
 
 	editor_area := create_edit_area(main)
+	code := main.codeview
 	console_layout, tab_area := create_console_area(main)
 
 	main_layout := main.create_main_layout(editor_area, console_layout, tab_area)
@@ -596,7 +603,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					main.codeview.Load(main.codeview.filepathname)
+					code.Load(code.filepathname)
 				})
 			}()
 		}
@@ -633,7 +640,7 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(main)
 	main.quickview.RestoreLast()
-	UpdateTitleAndColor(main_layout.Box, main.codeview.filepathname)
+	UpdateTitleAndColor(main_layout.Box, code.filepathname)
 	go func() {
 		app.QueueUpdateDraw(func() {
 			view_code.setfocused(main)
@@ -705,6 +712,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 }
 
 func load_from_history(main *mainui) {
+	code := main.codeview
 	filearg := main.bf.Last()
 	main.quickview.view.Clear()
 	main.symboltree.Clear()
@@ -719,7 +727,7 @@ func load_from_history(main *mainui) {
 			},
 		}, offset: 0}, false)
 	} else {
-		main.codeview.Load("")
+		code.Load("")
 	}
 }
 
