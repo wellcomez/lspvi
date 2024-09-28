@@ -59,21 +59,26 @@ func SplitClose(code *CodeView) context_menu_item {
 func SplitRight(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitRight"), handle: func() {
-		if code == main.codeview {
-			codeview2 := SplitCode.New()
-			codeview2.view.SetBorder(true)
-			main.right_context_menu.add(codeview2.rightmenu)
-			codeview2.LoadAndCb(code.filename, func() {
-				codeview2.view.SetTitle(codeview2.filename)
-				go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
-					codeview2.lspsymbol = sym
-				})
-				go func() {
-					main.app.QueueUpdateDraw(func() {
-						main.tab.ActiveTab(view_code_below, true)
-					})
-				}()
-			})
+		if code.id == view_code_below {
+			return
 		}
+		if code.id < view_code {
+			return
+		}
+
+		codeview2 := SplitCode.New()
+		codeview2.view.SetBorder(true)
+		main.right_context_menu.add(codeview2.rightmenu)
+		codeview2.LoadAndCb(code.filename, func() {
+			codeview2.view.SetTitle(codeview2.filename)
+			go main.async_lsp_open(code.filename, func(sym *lspcore.Symbol_file) {
+				codeview2.lspsymbol = sym
+			})
+			go func() {
+				main.app.QueueUpdateDraw(func() {
+					main.tab.ActiveTab(view_code_below, true)
+				})
+			}()
+		})
 	}}
 }
