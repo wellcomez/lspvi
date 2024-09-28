@@ -403,11 +403,11 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 			m.codeview.goto_loation(loc.Range)
 		}
 	})
-	go m.async_open(file, func(sym *lspcore.Symbol_file) {
+	go m.async_lsp_open(file, func(sym *lspcore.Symbol_file) {
 		m.codeview.lspsymbol = sym
 	})
 }
-func (m *mainui) async_open(file string, cb func(sym *lspcore.Symbol_file)) {
+func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
 	if err == nil {
 		symbolfile.LoadSymbol()
@@ -569,9 +569,9 @@ func MainUI(arg *Arguments) {
 		main.OpenFile(filearg, nil)
 	}
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if main.codeview2.view.HasFocus() {
-			return main.codeview2.handle_key(event)
-		}
+		// if main.codeview2.view.HasFocus() {
+		// 	return main.codeview2.handle_key(event)
+		// }
 		return main.handle_key(event)
 	})
 	console_area_resizer := new_editor_resize(main, main.layout.console, nil, nil)

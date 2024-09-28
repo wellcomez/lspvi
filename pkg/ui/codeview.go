@@ -299,6 +299,16 @@ func update_selection_menu(ret *CodeView) {
 		{item: create_menu_item(toggle_outline), handle: func() {
 			main.toggle_view(view_outline_list)
 		}},
+
+		{item: create_menu_item("Open Below"), handle: func() {
+			if ret == main.codeview {
+				main.codeview2.Load(ret.filename)
+				go main.async_lsp_open(ret.filename, func(sym *lspcore.Symbol_file) {
+					main.codeview2.lspsymbol = sym
+				})
+				main.tab.ActiveTab(view_code_below, true)
+			}
+		}},
 		{
 			item: create_menu_item("External open "),
 			handle: func() {
@@ -317,10 +327,6 @@ func update_selection_menu(ret *CodeView) {
 				}
 			},
 		},
-		{item: create_menu_item("Open Below"), handle: func() {
-			main.codeview2.Load(ret.filename)
-			main.tab.ActiveTab(view_code_below, true)
-		}},
 		{item: create_menu_item("-"), handle: func() {
 		}, hide: !main.tty},
 		{item: create_menu_item("Zoom-in Browser"), handle: func() {
@@ -655,11 +661,12 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 		code.view.HandleEvent(event)
+		return nil
 	} else {
-		code.handle_key_impl(event)
+		event = code.handle_key_impl(event)
 	}
 	status1.after(code)
-	return nil
+	return event
 }
 
 func new_linechange_checker(code *CodeView) linechange_checker {
