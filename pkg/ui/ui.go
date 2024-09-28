@@ -50,13 +50,13 @@ func new_flex_area(id view_id, main *mainui) *flex_area {
 
 type rootlayout struct {
 	editor_area *flex_area
-	codelayout  *flex_area
-	console     *flex_area
-	cmdline     *tview.InputField
-	tab_area    *tview.Flex
-	mainlayout  *flex_area
-	dialog      *fzfmain
-	spacemenu   *space_menu
+	// codelayout  *flex_area
+	console    *flex_area
+	cmdline    *tview.InputField
+	tab_area   *tview.Flex
+	mainlayout *flex_area
+	dialog     *fzfmain
+	spacemenu  *space_menu
 	// hide_cb     func()
 }
 type recent_open_file struct {
@@ -826,16 +826,18 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 
 func create_edit_area(main *mainui) *flex_area {
 	codelayout := new_flex_area(view_layout_splicode, main)
+	codelayout.Width = 80
+	SplitCode.layout = codelayout
+	SplitCode.main = main
 	codeview := NewCodeView(main)
 	codeview.id = view_code
 	codeview.not_preview = true
-	codeview.Width = 8
+	codeview.Width = 80
 	main.codeviewmain = codeview
-	codelayout.AddItem(codeview.view, 0, 1, true)
-	main.layout.codelayout = codelayout
+	SplitCode.AddCode(codeview)
 
 	symbol_tree := NewSymbolTreeView(main, codeview)
-	symbol_tree.Width = 2
+	symbol_tree.Width = 20
 	main.symboltree = symbol_tree
 	symbol_tree.view.SetBorder(true)
 
@@ -847,7 +849,7 @@ func create_edit_area(main *mainui) *flex_area {
 	main.callinview = new_callview(main)
 
 	main.fileexplorer = new_file_tree(main, "FileExplore", main.root, func(filename string) bool { return true })
-	main.fileexplorer.Width = 2
+	main.fileexplorer.Width = 20
 	main.fileexplorer.Init()
 	main.fileexplorer.openfile = main.open_file
 
@@ -856,7 +858,7 @@ func create_edit_area(main *mainui) *flex_area {
 	editor_area.set_dir(tview.FlexColumn)
 	editor_area.
 		AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
-		AddItem(codelayout, 0, main.codeview.Width, true).
+		AddItem(codelayout, 0, codelayout.Width, true).
 		AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
 	return editor_area
 }
