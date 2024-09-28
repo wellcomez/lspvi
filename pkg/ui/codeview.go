@@ -65,7 +65,7 @@ type CodeView struct {
 func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
 }
-func (code *CodeView) SelectWord(c femto.Cursor) femto.Cursor {
+func (code *CodeView) SelectWordFromCopyCursor(c femto.Cursor) femto.Cursor {
 	view := code.view
 	if len(view.Buf.Line(c.Y)) == 0 {
 		return c
@@ -93,7 +93,6 @@ func (code *CodeView) SelectWord(c femto.Cursor) femto.Cursor {
 
 	c.SetSelectionEnd(femto.Loc{X: forward, Y: c.Y}.Move(1, view.Buf))
 	c.OrigSelection[1] = c.CurSelection[1]
-	code.set_loc(c.CurSelection[1])
 	return c
 }
 
@@ -377,10 +376,10 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			code.view.Focus(func(p tview.Primitive) {})
 			if code.id >= view_code {
 				symboltree := code.main.symboltree
-				if symboltree.editor!= code{
+				if symboltree.editor != code {
 					symboltree.editor = code
 					symboltree.Clear()
-					if code.lspsymbol == nil ||code.lspsymbol.Class_object == nil {
+					if code.lspsymbol == nil || code.lspsymbol.Class_object == nil {
 						if code.tree_sitter != nil {
 							symboltree.upate_with_ts(code.tree_sitter)
 						}

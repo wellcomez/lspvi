@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
@@ -25,23 +24,23 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	pos := root.event_to_cursor_position(event) // pos = avoid_position_overflow(root, pos)
 
 	if action == tview.MouseRightClick {
-		selected := code.get_selected_lines()
-		right_menu_data.previous_selection = selected
-		// code.rightmenu.text = root.Cursor.GetSelection()
-		cursor := *root.Cursor
+		// move cursor to mouse postion
 		Loc := code.view.tab_loc(pos)
 		code.set_loc(Loc)
-		cursor.SetSelectionStart(femto.Loc{X: pos.X, Y: pos.Y})
-		right_menu_data.rightmenu_loc = cursor.CurSelection[0]
-		// log.Println("before", cursor.CurSelection)
-		loc := code.SelectWord(cursor)
-		_, s := get_codeview_text_loc(root.View, loc.CurSelection[0], loc.CurSelection[1])
+
+		//select line
+		selected := code.get_selected_lines()
+		right_menu_data.previous_selection = selected
+
+		//save cursor loc
+		cursor_data := *root.Cursor
+		right_menu_data.rightmenu_loc = Loc
+
+		//get selected text
+		word_select_cursor := code.SelectWordFromCopyCursor(cursor_data)
+		_, s := get_codeview_text_loc(root.View, word_select_cursor.CurSelection[0], word_select_cursor.CurSelection[1])
 		menu.code.right_menu_data.select_text = s
-		menu.code.right_menu_data.selection_range = text_loc_to_range(loc.CurSelection)
-		// code.get_selected_lines()
-		// code.rightmenu_select_text = root.Cursor.GetSelection()
-		// code.rightmenu_select_range = code.convert_curloc_range(code.view.Cursor.CurSelection)
-		// log.Println("after ", code.view.Cursor.CurSelection)
+		menu.code.right_menu_data.selection_range = text_loc_to_range(word_select_cursor.CurSelection)
 		update_selection_menu(code)
 	}
 	return action, event
