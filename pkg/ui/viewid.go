@@ -22,7 +22,6 @@ const (
 	view_log
 	view_quickview
 	view_callin
-	view_code
 	view_uml
 	view_cmd
 	view_file
@@ -35,15 +34,14 @@ const (
 	view_console_pages
 	view_recent_open_file
 	view_term
+	view_code
 	view_code_below
 )
-func (a view_id)is_editor()bool{
-	switch(a){
-		case view_code,view_code_below:
-			return true
-	}
-	return false
+
+func (a view_id) is_editor() bool {
+	return a >= view_code
 }
+
 // var tab_view_id = []view_id{view_quickview, view_log, view_uml, view_callin, view_term}
 
 // func find_tab_by_name(name string) view_id {
@@ -86,7 +84,7 @@ func view_id_init(m *mainui) {
 		box := v.to_box(m)
 		if box != nil {
 			switch v {
-			case view_code,view_code_below:
+			case view_code, view_code_below:
 				{
 					box.SetFocusFunc(func() {
 						// m.editor_area_fouched()
@@ -211,7 +209,6 @@ var all_view_list = []view_id{
 	view_log,
 	view_quickview,
 	view_callin,
-	view_code,
 	view_uml,
 	view_cmd,
 	view_file,
@@ -224,6 +221,7 @@ var all_view_list = []view_id{
 	view_console_pages,
 	view_recent_open_file,
 	view_term,
+	view_code,
 	view_code_below,
 }
 var all_view_name = []string{
@@ -231,7 +229,6 @@ var all_view_name = []string{
 	"log",
 	"quickview",
 	"callin",
-	"code",
 	"uml",
 	"cmd",
 	"file",
@@ -242,8 +239,9 @@ var all_view_name = []string{
 	"view_main_layout",
 	"view_qf_index_view",
 	"view_console_pages",
-	"Opened files",
+	"Opened",
 	"Terminal",
+	"code",
 	"CodePreview",
 }
 

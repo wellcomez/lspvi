@@ -49,13 +49,14 @@ func new_flex_area(id view_id, main *mainui) *flex_area {
 }
 
 type rootlayout struct {
-	editor_area *flex_area
-	console     *flex_area
-	cmdline     *tview.InputField
-	tab_area    *tview.Flex
-	mainlayout  *flex_area
-	dialog      *fzfmain
-	spacemenu   *space_menu
+	editor_area       *flex_area
+	multi_editor_area *flex_area
+	console           *flex_area
+	cmdline           *tview.InputField
+	tab_area          *tview.Flex
+	mainlayout        *flex_area
+	dialog            *fzfmain
+	spacemenu         *space_menu
 	// hide_cb     func()
 }
 type recent_open_file struct {

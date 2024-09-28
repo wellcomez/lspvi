@@ -295,7 +295,7 @@ func update_selection_menu(ret *CodeView) {
 		}},
 		{item: create_menu_item(toggle_file_view), handle: func() {
 			main.toggle_view(view_file)
-		}},
+		},hide: ret.id!=view_code,},
 		{item: create_menu_item(toggle_outline), handle: func() {
 			main.toggle_view(view_outline_list)
 		}},
