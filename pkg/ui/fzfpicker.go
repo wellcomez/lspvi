@@ -176,8 +176,8 @@ func (v *fzfmain) OpenDocumntSymbolFzf(code *CodeView) {
 }
 
 // OpenFileFzf
-func (v *fzfmain) OpenFileFzf(root string) {
-	filewalk := NewDirWalk(root, v)
+func (v *fzfmain) OpenFileFzf(root string, code *CodeView) {
+	filewalk := NewDirWalk(root, v, code)
 	v.Frame = tview.NewFrame(filewalk.grid(v.input))
 	v.input.SetLabel(">")
 	v.app.SetFocus(v.input)

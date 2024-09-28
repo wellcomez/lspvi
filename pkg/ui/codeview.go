@@ -377,8 +377,17 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			code.view.Focus(func(p tview.Primitive) {})
 			if code.id >= view_code {
 				symboltree := code.main.symboltree
-				symboltree.editor = code
-				symboltree.update(code.lspsymbol)
+				if symboltree.editor!= code{
+					symboltree.editor = code
+					symboltree.Clear()
+					if code.lspsymbol == nil ||code.lspsymbol.Class_object == nil {
+						if code.tree_sitter != nil {
+							symboltree.upate_with_ts(code.tree_sitter)
+						}
+					} else {
+						symboltree.update(code.lspsymbol)
+					}
+				}
 			}
 
 		case tview.MouseLeftClick:

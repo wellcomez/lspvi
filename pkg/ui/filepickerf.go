@@ -296,7 +296,7 @@ type file_picker_item struct {
 	Positions []int
 }
 
-func NewDirWalk(root string, v *fzfmain) *DirWalk {
+func NewDirWalk(root string, v *fzfmain, code *CodeView) *DirWalk {
 	impl := new_fzflist_impl(nil, v)
 	var hayStack = walk(root)
 	ret := &DirWalk{
@@ -305,7 +305,7 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 		cb: func(t querytask) {
 			v.app.QueueUpdate(func() {
 				list := impl.list
-				update_list_view(list, t, v)
+				update_list_view(list, t, v, code)
 				v.app.ForceDraw()
 			})
 		}, hayStack: hayStack,
@@ -326,13 +326,13 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 				path: v,
 			})
 		}
-		update_list_view(ret.list, task, v)
+		update_list_view(ret.list, task, v, code)
 	}
 	return ret
 }
 
-func update_list_view(list *customlist, t querytask, v *fzfmain) {
-	UpdateTitleAndColor(list.Box,fmt.Sprintf("Files %d/%d", t.match_count, t.count))
+func update_list_view(list *customlist, t querytask, v *fzfmain, code *CodeView) {
+	UpdateTitleAndColor(list.Box, fmt.Sprintf("Files %d/%d", t.match_count, t.count))
 	if t.update_count {
 		return
 	}
@@ -344,7 +344,7 @@ func update_list_view(list *customlist, t querytask, v *fzfmain) {
 			idx := list.GetCurrentItem()
 			f := t.ret[idx]
 			v.hide()
-			v.main.OpenFile(f.path, nil)
+			code.open_file_line(f.path, nil)
 		})
 	}
 }

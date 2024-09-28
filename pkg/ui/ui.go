@@ -1066,7 +1066,7 @@ func (main *mainui) open_picker_refs() {
 	main.layout.dialog.OpenRefFzf(main.lspmgr.Current, loc)
 }
 func (main *mainui) open_picker_ctrlp() {
-	main.layout.dialog.OpenFileFzf(main.root)
+	main.layout.dialog.OpenFileFzf(main.root, main.current_editor())
 }
 func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker {
 	return main.layout.dialog.OpenGrepWordFzf(word, qf)
