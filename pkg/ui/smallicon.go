@@ -80,14 +80,30 @@ func (c *smallicon) Relocated() {
 func (c *smallicon) Draw(screen tcell.Screen) {
 	c.Relocated()
 	main := c.main
-	c.outline.Draw(screen, get_style_hide(view_outline_list.to_view_link(main).Hide))
-	c.file.Draw(screen, get_style_hide(view_file.to_view_link(main).Hide))
+	focus_color := tcell.ColorDarkRed
+	x := get_style_hide(view_outline_list.to_view_link(main).Hide)
+	if view_outline_list.to_box(c.main).HasFocus() {
+		x = x.Foreground(focus_color)
+	}
+	c.outline.Draw(screen, x)
+
+	x = get_style_hide(view_file.to_view_link(main).Hide)
+	if view_file.to_box(c.main).HasFocus() {
+		x = x.Foreground(focus_color)
+	}
+	c.file.Draw(screen, x)
+
 	for i, v := range c.code {
-		if i == 0 {
-			v.Draw(screen, get_style_hide(false).Foreground(tcell.ColorYellow))
-		} else {
-			v.Draw(screen, get_style_hide(false))
+		style := get_style_hide(false)
+		id := SplitCode.index[i]
+		focus := false
+		if view, ok := SplitCode.code_collection[id]; ok {
+			focus = view.view.HasFocus()
+			if focus {
+				style = style.Foreground(focus_color)
+			}
 		}
+		v.Draw(screen, style)
 	}
 
 	c.back.Draw(screen, get_style_hide(!c.main.CanGoBack()))
