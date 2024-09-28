@@ -87,11 +87,11 @@ func (pk *workspace_query_picker) handle() func(event *tcell.EventKey, setFocus 
 	return pk.handle_key_override
 }
 
-func new_workspace_symbol_picker(v *fzfmain, file *lspcore.Symbol_file) *workspace_query_picker {
+func new_workspace_symbol_picker(v *fzfmain, code *CodeView) *workspace_query_picker {
 	ret := &workspace_query_picker{
 		impl: &workspace_query_picker_impl{
-			prev_picker_impl: new_preview_picker(v),
-			file:             file,
+			prev_picker_impl: new_preview_picker(v, code),
+			file:             code.lspsymbol,
 			list:             new_customlist(false),
 		},
 	}

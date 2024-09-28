@@ -120,16 +120,16 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	}
 	return layout
 }
-func new_grep_picker(v *fzfmain) *greppicker {
+func new_grep_picker(v *fzfmain,code *CodeView) *greppicker {
 	grep := &greppicker{
-		livewgreppicker: new_live_grep_picker(v),
+		livewgreppicker: new_live_grep_picker(v,code),
 	}
 	grep.not_live = true
 	return grep
 }
-func new_live_grep_picker(v *fzfmain) *livewgreppicker {
+func new_live_grep_picker(v *fzfmain,code *CodeView) *livewgreppicker {
 	main := v.main
-	x := new_preview_picker(v)
+	x := new_preview_picker(v, code)
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
 		grep_list_view:   new_customlist(false),

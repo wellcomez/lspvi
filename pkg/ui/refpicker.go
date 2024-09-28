@@ -100,6 +100,7 @@ type prev_picker_impl struct {
 	list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
+	editor           *CodeView
 }
 
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
@@ -249,7 +250,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 }
 
 func (impl *prev_picker_impl) open_location(v lsp.Location) {
-	impl.codeprev.main.OpenFile(v.URI.AsPath().String(), &v)
+	impl.editor.open_file_line(v.URI.AsPath().String(), &v)
 	impl.parent.hide()
 }
 
@@ -293,8 +294,8 @@ func (ref refpicker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	panic("unimplemented")
 }
 
-func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
-	x := new_preview_picker(v)
+func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code *CodeView) refpicker {
+	x := new_preview_picker(v, code)
 	sym := refpicker{
 		impl: &refpicker_impl{
 			prev_picker_impl: x,
@@ -306,11 +307,12 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 	return sym
 }
 
-func new_preview_picker(v *fzfmain) *prev_picker_impl {
+func new_preview_picker(v *fzfmain, editor *CodeView) *prev_picker_impl {
 	x := &prev_picker_impl{
 		listview: tview.NewList(),
 		codeprev: NewCodeView(v.main),
 		parent:   v,
+		editor:   editor,
 	}
 	return x
 }
@@ -351,7 +353,7 @@ func (pk refpicker) onselected(data int, list int) {
 	index := data
 	v := pk.impl.listdata[index]
 
-	pk.impl.codeprev.main.OpenFile(v.loc.URI.AsPath().String(), &v.loc)
+	pk.impl.editor.open_file_line(v.loc.URI.AsPath().String(), &v.loc)
 	pk.impl.parent.hide()
 }
 

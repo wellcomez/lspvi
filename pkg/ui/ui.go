@@ -334,10 +334,10 @@ func (m *mainui) quit() {
 	m.Close()
 }
 func (m *mainui) open_qfh_query() {
-	m.layout.dialog.open_qfh_picker(m.lspmgr.Current)
+	m.layout.dialog.open_qfh_picker(m.codeview)
 }
 func (m *mainui) open_wks_query() {
-	m.layout.dialog.open_wks_query(m.lspmgr.Current)
+	m.layout.dialog.open_wks_query(m.codeview)
 }
 func (m *mainui) ZoomWeb(zoom bool) {
 	if proxy != nil {
@@ -1061,9 +1061,10 @@ func (main *mainui) open_picker_bookmark() {
 	main.layout.dialog.OpenBookMarkFzf()
 }
 func (main *mainui) open_picker_refs() {
-	main.codeview.view.Cursor.SelectWord()
-	loc := main.codeview.lsp_cursor_loc()
-	main.layout.dialog.OpenRefFzf(main.lspmgr.Current, loc)
+	code := main.current_editor()
+	code.view.Cursor.SelectWord()
+	loc := code.lsp_cursor_loc()
+	main.layout.dialog.OpenRefFzf(code, loc)
 }
 func (main *mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(main.root, main.current_editor())

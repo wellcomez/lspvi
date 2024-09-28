@@ -223,9 +223,9 @@ func new_bookmark_editor(v *fzfmain, cb func(string)) bookmark_edit {
 }
 
 // new_bookmark_picker
-func new_bookmark_picker(v *fzfmain) bookmark_picker {
+func new_bookmark_picker(v *fzfmain, code *CodeView) bookmark_picker {
 	impl := &bookmark_picker_impl{
-		prev_picker_impl: new_preview_picker(v),
+		prev_picker_impl: new_preview_picker(v, code),
 	}
 	sym := bookmark_picker{
 		impl: impl,
@@ -405,4 +405,3 @@ func (ret *bookmark_view) onclick(i int) {
 	ret.list.SetCurrentItem(i)
 	main.gotoline(loc)
 }
-

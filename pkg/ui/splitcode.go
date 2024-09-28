@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -100,20 +101,25 @@ func SplitRight(code *CodeView) context_menu_item {
 		})
 	}}
 }
-func (codeview2 *CodeView) open_file_line(filename string, line *int) {
+func (codeview2 *CodeView) open_file_line(filename string, line *lsp.Location) {
 	main := codeview2.main
 	codeview2.LoadAndCb(filename, func() {
 		codeview2.view.SetTitle(codeview2.filename)
+		if line != nil {
+			codeview2.goto_loation(line.Range)
+		}
 		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
 			codeview2.lspsymbol = sym
 			if sym == nil {
 				main.symboltree.Clear()
 			}
 		})
-		go func() {
-			main.app.QueueUpdateDraw(func() {
-				main.tab.ActiveTab(view_code_below, true)
-			})
-		}()
+		if codeview2.id == view_code_below {
+			go func() {
+				main.app.QueueUpdateDraw(func() {
+					main.tab.ActiveTab(view_code_below, true)
+				})
+			}()
+		}
 	})
 }
