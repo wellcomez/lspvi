@@ -82,8 +82,12 @@ func (c *smallicon) Draw(screen tcell.Screen) {
 	main := c.main
 	c.outline.Draw(screen, get_style_hide(view_outline_list.to_view_link(main).Hide))
 	c.file.Draw(screen, get_style_hide(view_file.to_view_link(main).Hide))
-	for _, v := range c.code {
-		v.Draw(screen, get_style_hide(false))
+	for i, v := range c.code {
+		if i == 0 {
+			v.Draw(screen, get_style_hide(false).Foreground(tcell.ColorYellow))
+		} else {
+			v.Draw(screen, get_style_hide(false))
+		}
 	}
 
 	c.back.Draw(screen, get_style_hide(!c.main.CanGoBack()))
@@ -112,9 +116,11 @@ func (icon *smallicon) handle_mouse_event(action tview.MouseAction, event *tcell
 		// if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 		for i, v := range icon.code {
 			if v.in(loc) {
-				if i > 0 {
-					id:= SplitCode.index[i]
-					if view,ok:=SplitCode.code_collection[id];ok{
+				id := SplitCode.index[i]
+				if view, ok := SplitCode.code_collection[id]; ok {
+					if i == 0 {
+						view.id.setfocused(icon.main)
+					} else {
 						SplitClose(view).handle()
 					}
 				}

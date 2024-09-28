@@ -759,7 +759,10 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 	return main_layout
 }
 func (main *mainui) current_editor() *CodeView {
-	for _, v := range []*CodeView{main.codeviewmain, main.codeview2} {
+	if main.codeview2.view.HasFocus() {
+		return main.codeview2
+	}
+	for _, v := range SplitCode.code_collection {
 		if v.view.HasFocus() {
 			return v
 		}
