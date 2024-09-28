@@ -432,7 +432,7 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		return action, event
 	}
 	if cb != nil {
-		if cb(action, code_mouse_cb_begin){
+		if !cb(action, code_mouse_cb_begin){
 			return action, event
 		}
 	}
