@@ -173,9 +173,9 @@ func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
 		return ""
 	}
 	callerstr := fmt.Sprintf("%s:%d **%-20s**",
-		strings.TrimPrefix(
+		trim_project_filename(
 			caller.Item.URI.AsPath().String(), root),
-		caller.Item.Range.Start.Line, caller.Name)
+		caller.Item.Range.Start.Line+1, caller.Name)
 	return callerstr
 }
 

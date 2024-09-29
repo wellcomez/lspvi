@@ -284,7 +284,7 @@ func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) *CallStackEnt
 		Item: lsp.CallHierarchyItem{
 			Name:  s.SymInfo.Name,
 			Range: r,
-			URI:   lsp.NewDocumentURI(filename),
+			URI:   s.SymInfo.Location.URI,
 		},
 		Name: s.SymInfo.Name,
 	}

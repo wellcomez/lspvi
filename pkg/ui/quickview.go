@@ -645,11 +645,13 @@ func (caller ref_with_caller) ListItem(root string) string {
 	if len(root) > 0 {
 		path = trim_project_filename(path, root)
 	}
-	callerstr := ""
+	secondline := fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
 	if caller.Caller != nil {
-		callerstr = caller_to_listitem(caller.Caller, root)
+		callerstr := caller_to_listitem(caller.Caller, root)
+		if callerstr != "" {
+			secondline = fmt.Sprintf("%s %s", callerstr, line)
+		}
 	}
-	secondline := fmt.Sprintf("%s %s:%-4d %s", callerstr, path, v.Range.Start.Line+1, line)
 	return secondline
 }
 

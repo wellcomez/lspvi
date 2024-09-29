@@ -76,7 +76,7 @@ func (r *recent_open_file) add(filename string) {
 			}
 			filepath := filename
 			r.filelist = append(r.filelist, filename)
-			filename = strings.TrimPrefix(filename, global_prj_root)
+			filename = trim_project_filename(filename, global_prj_root)
 			r.list.AddItem(filename, "", func() {
 				r.main.OpenFile(filepath, nil)
 			})
