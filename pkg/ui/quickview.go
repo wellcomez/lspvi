@@ -65,6 +65,8 @@ type quick_view struct {
 
 	cmd_search_key string
 	grep           *greppicker
+	sel            *list_multi_select
+	data           []string
 }
 type qf_history_data struct {
 	Type   DateType
@@ -331,25 +333,13 @@ func new_quikview(main *mainui) *quick_view {
 	view.default_color = tcell.ColorGreen
 	view.List.SetMainTextStyle(tcell.StyleDefault.Normal()).ShowSecondaryText(false)
 	var vid view_id = view_quickview
-	var items = []context_menu_item{
-		{item: cmditem{cmd: cmdactor{desc: "Open"}}, handle: func() {
-			if view.GetItemCount() > 0 {
-				qk := main.quickview
-				qk.selection_handle_impl(view.GetCurrentItem(), true)
-			}
-		}},
-		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {
-			main.quickview.save()
-		}},
-	}
+
 	ret := &quick_view{
 		view_link: &view_link{id: view_quickview, up: view_code, right: view_callin},
 		Name:      vid.getname(),
 		view:      view,
 		main:      main,
 		quickview: new_quick_preview(),
-		menuitem:  items,
-		// menu:      new_contextmenu(main, items,view.Box),
 	}
 
 	// ret.Flex = layout
@@ -378,6 +368,30 @@ func new_quikview(main *mainui) *quick_view {
 		return nil
 	})
 	view.SetSelectedFunc(ret.selection_handle)
+
+	ret.menuitem = []context_menu_item{
+		{item: cmditem{cmd: cmdactor{desc: "Open "}}, handle: func() {
+			if view.GetItemCount() > 0 {
+				ret.selection_handle_impl(view.GetCurrentItem(), true)
+			}
+		}},
+		{item: cmditem{cmd: cmdactor{desc: "Save "}}, handle: func() {
+			ret.save()
+		}},
+		{item: cmditem{cmd: cmdactor{desc: "Copy"}}, handle: func() {
+			ss := ret.sel.list.selected
+			if len(ss) > 0 {
+
+				sss := ret.data[ss[0]:ss[1]]
+				data := strings.Join(sss, "\n")
+				main.CopyToClipboard(data)
+			} else {
+				main.CopyToClipboard(ret.data[view.GetCurrentItem()])
+			}
+		}},
+	}
+	ret.sel = &list_multi_select{list: view}
+	main.sel.Add(ret.sel)
 	return ret
 }
 func (qf *quickfix_history) InitDir() (string, error) {
@@ -582,6 +596,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.cmd_search_key = ""
 	_, _, width, _ := qk.view.GetRect()
 	m := qk.main
+	var data = []string{}
 	for i, caller := range qk.Refs.Refs {
 		caller.width = width
 		v := caller.Loc
@@ -590,8 +605,11 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 		if len(secondline) == 0 {
 			continue
 		}
-		qk.view.AddItem(fmt.Sprintf("%-3d %s", i+1, secondline), "", nil)
+		x := fmt.Sprintf("%-3d %s", i+1, secondline)
+		data = append(data, x)
+		qk.view.AddItem(x, "", nil)
 	}
+	qk.data = data
 	qk.main.UpdatePageTitle()
 	// qk.open_index(qk.view.GetCurrentItem())
 }
