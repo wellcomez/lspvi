@@ -67,8 +67,17 @@ type quick_view struct {
 	grep           *greppicker
 	sel            *list_multi_select
 
-	trees []list_tree
+	tree *list_view_tree_extend
 }
+type list_view_tree_extend struct {
+	tree           []list_tree_node
+	tree_data_item []*list_tree_node
+}
+
+func (l list_view_tree_extend) NeedCreate() bool {
+	return len(l.tree) == 0
+}
+
 type qf_history_data struct {
 	Type   DateType
 	Key    lspcore.SymolSearchKey
@@ -381,7 +390,15 @@ func new_quikview(main *mainui) *quick_view {
 		}},
 		{item: cmditem{cmd: cmdactor{desc: "Copy"}}, handle: func() {
 			ss := ret.sel.list.selected
-			data := ret.BuildListString("", main.lspmgr)
+			var data []string
+			if ret.tree == nil {
+				data = ret.BuildListString("", main.lspmgr)
+			} else {
+				x := ret.tree.tree_data_item
+				for _, v := range x {
+					data = append(data, v.text)
+				}
+			}
 			if len(ss) > 0 {
 
 				sss := data[ss[0]:ss[1]]
@@ -524,15 +541,39 @@ func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 }
 
 func (qk *quick_view) selection_handle_impl(index int, open bool) {
-	vvv := qk.Refs.Refs[index]
-	qk.currentIndex = index
-	qk.view.SetCurrentItem(index)
-	same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.Path()
-	if open || same {
+	if qk.tree != nil {
+		qk.view.SetCurrentItem(index)
+		node := qk.tree.tree_data_item[index]
+		need_draw := false
+		if node.parent {
+			node.expand = !node.expand
+			data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.lspmgr)
+			qk.view.Clear()
+			for _, v := range data {
+				qk.view.AddItem(v.text, "", func() {
+
+				})
+			}
+			need_draw = true
+		}
+		refindex := node.ref_index
+		vvv := qk.Refs.Refs[refindex]
 		qk.main.UpdatePageTitle()
 		qk.main.gotoline(vvv.Loc)
+		if need_draw {
+			GlobalApp.ForceDraw()
+		}
 	} else {
+		vvv := qk.Refs.Refs[index]
+		qk.currentIndex = index
+		qk.view.SetCurrentItem(index)
+		same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.Path()
+		if open || same {
+			qk.main.UpdatePageTitle()
+			qk.main.gotoline(vvv.Loc)
+		} else {
 
+		}
 	}
 }
 
@@ -569,6 +610,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 		qk.Type = t
 		qk.searchkey = key
 		qk.grep.close()
+		qk.reset_tree()
 	}
 	if end {
 		qk.save()
@@ -586,6 +628,10 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 
 	// qk.open_index(qk.view.GetCurrentItem())
 }
+
+func (qk *quick_view) reset_tree() {
+	qk.tree = nil
+}
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
 	if qk.grep != nil {
 		qk.grep.close()
@@ -598,13 +644,13 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.SetCurrentItem(-1)
 	qk.currentIndex = 0
 	qk.cmd_search_key = ""
+	qk.reset_tree()
 	// _, _, width, _ := qk.view.GetRect()
 	m := qk.main
 	lspmgr := m.lspmgr
-
-	qk.build_tree(Refs)
-
-	data := qk.BuildListStringGroup(global_prj_root, lspmgr)
+	qk.tree = &list_view_tree_extend{}
+	qk.tree.build_tree(Refs)
+	data := qk.tree.BuildListStringGroup(qk, global_prj_root, lspmgr)
 	for _, v := range data {
 		qk.view.AddItem(v.text, "", func() {
 
@@ -613,47 +659,47 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.main.UpdatePageTitle()
 }
 
-func (qk *quick_view) build_tree(Refs []ref_with_caller) {
-	group := make(map[string]list_tree)
+func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
+	group := make(map[string]list_tree_node)
 	for i := range Refs {
-		caller := qk.Refs.Refs[i]
+		caller := Refs[i]
 		v := caller.Loc
 		if s, ok := group[v.URI.String()]; ok {
-			s.children = append(s.children, list_tree{data_index: i})
+			s.children = append(s.children, list_tree_node{ref_index: i})
 			group[v.URI.String()] = s
 		} else {
-			group[v.URI.String()] = list_tree{data_index: i, parent: true, expand: true}
+			group[v.URI.String()] = list_tree_node{ref_index: i, parent: true, expand: true}
 		}
 	}
-	trees := []list_tree{}
+	trees := []list_tree_node{}
 	for _, v := range group {
 		trees = append(trees, v)
 	}
-	qk.trees = trees
+	qk.tree = trees
 }
-func (qk *quick_view) BuildListStringGroup(root string, lspmgr *lspcore.LspWorkspace) []*list_tree {
-	var data = []*list_tree{}
-	if len(qk.trees) == 0 {
-		qk.build_tree(qk.Refs.Refs)
-	}
-
+func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root string, lspmgr *lspcore.LspWorkspace) []*list_tree_node {
+	var data = []*list_tree_node{}
+	qk.build_tree(view.Refs.Refs)
 	lineno := 1
-	for i := range qk.trees {
-		a := &qk.trees[i]
-		a.quickfix_listitem_string(qk, lspmgr, lineno)
+	for i := range qk.tree {
+		a := &qk.tree[i]
+		a.quickfix_listitem_string(view, lspmgr, lineno)
 		data = append(data, a)
-		for i := range a.children {
-			c := &a.children[i]
-			c.quickfix_listitem_string(qk, lspmgr, lineno)
-			data = append(data, c)
+		if a.expand {
+			for i := range a.children {
+				c := &a.children[i]
+				c.quickfix_listitem_string(view, lspmgr, lineno)
+				data = append(data, c)
+			}
 		}
 		lineno++
 	}
+	qk.tree_data_item = data
 	return data
 }
 
-func (tree *list_tree) quickfix_listitem_string(qk *quick_view, lspmgr *lspcore.LspWorkspace, lineno int) {
-	caller := &qk.Refs.Refs[tree.data_index]
+func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lspcore.LspWorkspace, lineno int) {
+	caller := &qk.Refs.Refs[tree.ref_index]
 	parent := tree.parent
 	root := lspmgr.Wk.Path
 	switch qk.Type {
@@ -666,6 +712,15 @@ func (tree *list_tree) quickfix_listitem_string(qk *quick_view, lspmgr *lspcore.
 	secondline := caller.ListItem(root, parent)
 	if parent {
 		tree.text = fmt.Sprintf("%3d. %s", lineno, secondline)
+		if len(tree.children) > 0 {
+			if !tree.expand {
+				tree.text = "+" + tree.text
+			} else {
+				tree.text = " " + tree.text
+			}
+		} else {
+			tree.text = " " + tree.text
+		}
 	} else {
 		tree.text = fmt.Sprintf("     %s", secondline)
 	}
@@ -691,12 +746,12 @@ func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace)
 	return data
 }
 
-type list_tree struct {
-	data_index int
+type list_tree_node struct {
+	ref_index  int
 	list_index int
 	expand     bool
 	parent     bool
-	children   []list_tree
+	children   []list_tree_node
 	text       string
 }
 

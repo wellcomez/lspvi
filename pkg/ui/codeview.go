@@ -82,7 +82,7 @@ type CodeView struct {
 	not_preview bool
 	bgcolor     tcell.Color
 	colorscheme *symbol_colortheme
-	ts          *lspcore.TreeSitter
+	// ts          *lspcore.TreeSitter
 	insert      bool
 	diff        *Differ
 }
@@ -1186,10 +1186,10 @@ func (code *CodeView) on_content_changed() {
 	var new_ts = lspcore.GetNewTreeSitter(code.Path(), data)
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
 		go GlobalApp.QueueUpdateDraw(func() {
+			code.tree_sitter = ts
 			code.change_theme()
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
-					code.ts = ts
 					if ts.DefaultOutline() {
 						lsp := code.main.symboltree.upate_with_ts(ts)
 						code.main.lspmgr.Current = lsp
@@ -1204,13 +1204,14 @@ func (code *CodeView) on_content_changed() {
 func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	b := code.view.Buf
 	b.Settings["syntax"] = false
-	code.tree_sitter = lspcore.GetNewTreeSitter(filename, []byte{})
-	code.tree_sitter.Init(func(ts *lspcore.TreeSitter) {
+	code.tree_sitter = nil
+	var tree_sitter = lspcore.GetNewTreeSitter(filename, []byte{})
+	tree_sitter.Init(func(ts *lspcore.TreeSitter) {
 		go GlobalApp.QueueUpdate(func() {
+			code.tree_sitter = ts
 			code.change_theme()
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
-					code.ts = ts
 					if ts.DefaultOutline() {
 						lsp := code.main.symboltree.upate_with_ts(ts)
 						code.main.lspmgr.Current = lsp
@@ -1251,7 +1252,7 @@ func (view *codetextview) is_softwrap() bool {
 	return view.Buf.Settings["softwrap"] == true
 }
 func (code *CodeView) LoadBuffer(data []byte, filename string) {
-	code.ts = nil
+	code.tree_sitter = nil
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.linechange = bookmarkfile{}
 	code.diff = nil

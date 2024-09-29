@@ -311,8 +311,8 @@ func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	}
 	m.symboltree.update(file)
 	if file == nil || !file.HasLsp() {
-		if code.ts != nil {
-			m.symboltree.upate_with_ts(code.ts)
+		if code.tree_sitter != nil {
+			m.symboltree.upate_with_ts(code.tree_sitter)
 		}
 	}
 }
