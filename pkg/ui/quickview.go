@@ -66,7 +66,6 @@ type quick_view struct {
 	cmd_search_key string
 	grep           *greppicker
 	sel            *list_multi_select
-	data           []string
 }
 type qf_history_data struct {
 	Type   DateType
@@ -380,15 +379,16 @@ func new_quikview(main *mainui) *quick_view {
 		}},
 		{item: cmditem{cmd: cmdactor{desc: "Copy"}}, handle: func() {
 			ss := ret.sel.list.selected
+			data := ret.BuildListString("", -1, main.lspmgr)
 			if len(ss) > 0 {
 
-				sss := ret.data[ss[0]:ss[1]]
+				sss := data[ss[0]:ss[1]]
 				data := strings.Join(sss, "\n")
 				main.CopyToClipboard(data)
 				ret.sel.clear()
 				main.app.ForceDraw()
 			} else {
-				main.CopyToClipboard(ret.data[view.GetCurrentItem()])
+				main.CopyToClipboard(data[view.GetCurrentItem()])
 			}
 		}},
 	}
@@ -598,22 +598,29 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.cmd_search_key = ""
 	_, _, width, _ := qk.view.GetRect()
 	m := qk.main
+	lspmgr := m.lspmgr
+
+	data := qk.BuildListString(global_prj_root, width, lspmgr)
+	for _, v := range data {
+		qk.view.AddItem(v, "", nil)
+	}
+	qk.main.UpdatePageTitle()
+}
+
+func (qk *quick_view) BuildListString(root string, width int, lspmgr *lspcore.LspWorkspace) []string {
 	var data = []string{}
 	for i, caller := range qk.Refs.Refs {
 		caller.width = width
 		v := caller.Loc
-		caller.Caller = m.lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
-		secondline := caller.ListItem(global_prj_root)
+		caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+		secondline := caller.ListItem(root)
 		if len(secondline) == 0 {
 			continue
 		}
-		x := fmt.Sprintf("%-3d %s", i+1, secondline)
+		x := fmt.Sprintf("%3d. %s", i+1, secondline)
 		data = append(data, x)
-		qk.view.AddItem(x, "", nil)
 	}
-	qk.data = data
-	qk.main.UpdatePageTitle()
-	// qk.open_index(qk.view.GetCurrentItem())
+	return data
 }
 
 func (caller ref_with_caller) ListItem(root string) string {
@@ -632,15 +639,21 @@ func (caller ref_with_caller) ListItem(root string) string {
 		}
 	}
 	gap := max(40, caller.width/2)
+	if caller.width == -1 {
+		gap = 0
+	}
 	begin := min(len(line), max(0, v.Range.Start.Character-gap))
 	end := min(len(line), v.Range.Start.Character+gap)
-	path := strings.Replace(v.URI.AsPath().String(), root, "", -1)
+	path := v.URI.AsPath().String()
+	if len(root) > 0 {
+		path =trim_project_filename(path, root)
+	}
 	callerstr := ""
 	if caller.Caller != nil {
 		callerstr = caller_to_listitem(caller.Caller, root)
 	}
 	code := line[begin:end]
-	secondline := fmt.Sprintf("%s -> %s:%-4d %s", callerstr, path, v.Range.Start.Line+1, code)
+	secondline := fmt.Sprintf("%s %s:%-4d %s", callerstr, path, v.Range.Start.Line+1, code)
 	return secondline
 }
 

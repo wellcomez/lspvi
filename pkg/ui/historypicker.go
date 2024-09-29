@@ -74,7 +74,7 @@ func new_history_picker(v *fzfmain, edit *CodeView) history_picker {
 	}
 	for i, h := range history.history_files() {
 
-		dispname := strings.TrimPrefix(h, global_prj_root)
+		dispname := trim_project_filename(h, global_prj_root)
 		h := history_item{
 			filepath: h,
 			dispname: dispname,

@@ -661,9 +661,9 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
-	main.sel.handle_mouse_selection(action, event)
-	main.code_navigation_bar.handle_mouse_event(action, event)
-	main.quickbar.handle_mouse_event(action, event)
+	spacemenu := main.layout.spacemenu
+	dialog := main.layout.dialog
+
 	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 	if content_menu_action == tview.MouseConsumed {
 		return nil, tview.MouseConsumed
@@ -671,8 +671,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 	if main.right_context_menu.visible {
 		return nil, tview.MouseConsumed
 	}
-	if main.layout.spacemenu.visible {
-		spacemenu := main.layout.spacemenu
+	if spacemenu.visible {
 		action, event := spacemenu.handle_mouse(action, event)
 		if action == tview.MouseConsumed {
 			return event, action
@@ -685,16 +684,21 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 		}
 	}
 
-	if main.layout.dialog.Visible {
-		if !InRect(event, main.layout.dialog.Frame) {
+	if dialog.Visible {
+		if !InRect(event, dialog.Frame) {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
-				main.layout.dialog.hide()
+				dialog.hide()
 			}
 		} else {
-			main.layout.dialog.MouseHanlde(event, action)
+			dialog.MouseHanlde(event, action)
 		}
 		return nil, tview.MouseConsumed
 	}
+
+	main.sel.handle_mouse_selection(action, event)
+	main.code_navigation_bar.handle_mouse_event(action, event)
+	main.quickbar.handle_mouse_event(action, event)
+	
 	for _, v := range resizer {
 		if v.checkdrag(action, event) == tview.MouseConsumed {
 			return nil, tview.MouseConsumed

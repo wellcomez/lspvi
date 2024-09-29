@@ -18,6 +18,7 @@ type selectarea struct {
 	text              []line
 	nottext           bool
 	observer          []selobserver
+	enable            bool
 }
 
 func (root *selectarea) alloc() {

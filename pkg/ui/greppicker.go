@@ -2,7 +2,6 @@ package mainui
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -167,7 +166,7 @@ func (grepx *livewgreppicker) grep_to_list() {
 	grep.temp = nil
 	grep.result.data = append(grep.result.data, tmp.data...)
 	for _, o := range tmp.data {
-		path := strings.TrimPrefix(o.fpath, global_prj_root)
+		path := trim_project_filename(o.fpath, global_prj_root)
 		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
 		grepx.grep_list_view.AddItem(data, "", func() {
 			loc := convert_grep_info_location(&o)

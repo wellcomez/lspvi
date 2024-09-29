@@ -235,7 +235,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 		gap := 40
 		begin := max(0, v.Range.Start.Character-gap)
 		end := min(len(line), v.Range.Start.Character+gap)
-		path := strings.Replace(v.URI.AsPath().String(), global_prj_root, "", -1)
+		path := trim_project_filename(v.URI.AsPath().String(), global_prj_root)
 		callinfo := ""
 		if caller.Caller != nil {
 			callinfo = caller_to_listitem(caller.Caller, global_prj_root)

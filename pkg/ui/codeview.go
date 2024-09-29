@@ -53,7 +53,7 @@ func (f File) SamePath(filename string) bool {
 	return filename == f.filepathname
 }
 func NewFile(filename string) File {
-	file := strings.TrimPrefix(filename, global_prj_root)
+	file := trim_project_filename(filename, global_prj_root)
 	fileInfo, err := os.Stat(filename)
 	modTime := time.Time{}
 	if err == nil {
@@ -1229,7 +1229,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	}
 	name := filename
 	if code.main != nil {
-		name = strings.ReplaceAll(filename, global_prj_root, "")
+		name = trim_project_filename(filename, global_prj_root)
 	}
 	name = strings.TrimLeft(name, "/")
 	UpdateTitleAndColor(code.view.Box, name)
