@@ -637,8 +637,7 @@ func MainUI(arg *Arguments) {
 			main.cmdline.Vim.EnterEscape()
 		})
 	}()
-	a:=list_multi_select{}
-	main.sel.observer = append(main.sel.observer, main.console_index_list,&a)
+	main.sel.observer = append(main.sel.observer, main.console_index_list.sel)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}

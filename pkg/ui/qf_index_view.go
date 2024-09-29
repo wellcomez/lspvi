@@ -1,8 +1,6 @@
 package mainui
 
 import (
-	"log"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -15,78 +13,9 @@ type qf_index_view struct {
 	main          *mainui
 	qfh           *qf_index_view_history
 	right_context *qf_index_menu_context
-	sel           *selectarea
+	sel           *list_multi_select
 }
 
-func (view *qf_index_view) on_select_abort(sel *selectarea, action tview.MouseAction) bool {
-	view.sel = nil
-	if action != tview.MouseRightClick {
-		view.update_select_item()
-	}
-	return false
-}
-
-// on_select_beigin implements selobserver.
-func (view *qf_index_view) on_select_beigin(sel *selectarea) bool {
-	_, top, _, _ := view.GetInnerRect()
-	if view.InInnerRect(sel.start.X, sel.start.Y) {
-		view.sel = sel
-		log.Println("qf index begin", sel.start.Y-top)
-	} else {
-		view.sel = nil
-	}
-	view.update_select_item()
-	return view.sel != nil
-}
-
-// on_select_end implements selobserver.
-func (view *qf_index_view) on_select_end(sel *selectarea) bool {
-	_, top, _, _ := view.GetInnerRect()
-	if view.InInnerRect(sel.end.X, sel.end.Y) {
-		view.sel = sel
-	}
-	if view.sel != nil {
-		log.Println("qf index move", sel.start.Y-top, sel.end.Y-top)
-	}
-	view.update_select_item()
-	return view.sel != nil
-}
-
-func (view *qf_index_view) update_select_item() {
-	sel := view.sel
-	if sel == nil {
-		view.selected = []int{}
-	} else {
-
-		_, top, _, _ := view.GetInnerRect()
-		b := sel.start.Y - top
-		e := sel.end.Y - top
-		if b < e {
-			c := b
-			e = c
-			b = e
-		}
-		if len(view.selected) > 0 {
-			b = min(view.selected[0], b)
-			e = max(view.selected[1], e)
-		}
-		view.selected = []int{b, e}
-		GlobalApp.ForceDraw()
-	}
-}
-
-// on_select_move implements selobserver.
-func (view *qf_index_view) on_select_move(sel *selectarea) bool {
-	_, top, _, _ := view.GetInnerRect()
-	if view.InInnerRect(sel.end.X, sel.end.Y) {
-		view.sel = sel
-	}
-	if view.sel != nil {
-		log.Println("qf index end", sel.start.Y-top, sel.end.Y-top)
-	}
-	view.update_select_item()
-	return view.sel != nil
-}
 
 type qf_index_view_history struct {
 	*customlist
@@ -124,7 +53,7 @@ func (ret *qf_index_view) Load(viewid view_id) bool {
 			{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
 				if len(ret.qfh.selected) > 0 && ret.qfh.selected[0] != ret.qfh.selected[1] {
 					ret.qfh.DeleteRange(ret.qfh.selected)
-					ret.update_select_item()
+					ret.sel.update_select_item()
 				} else {
 					ret.qfh.Delete(ret.GetCurrentItem())
 				}
@@ -278,6 +207,9 @@ func new_qf_index_view(main *mainui) *qf_index_view {
 		},
 		customlist: new_customlist(false),
 		main:       main,
+	}
+	ret.sel=&list_multi_select{
+		list: ret.customlist,
 	}
 	ret.new_qfh()
 	ret.customlist.SetBorder(true)
