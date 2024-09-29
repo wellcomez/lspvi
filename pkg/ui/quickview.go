@@ -575,7 +575,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
 	// _, _, width, _ := qk.view.GetRect()
 	// caller.width = width
-	secondline := caller.ListItem(global_prj_root)
+	secondline := caller.ListItem(global_prj_root, true)
 	if len(secondline) == 0 {
 		return
 	}
@@ -600,13 +600,52 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	m := qk.main
 	lspmgr := m.lspmgr
 
-	data := qk.BuildListString(global_prj_root, lspmgr)
+	data := qk.BuildListStringGroup(global_prj_root, lspmgr)
 	for _, v := range data {
 		qk.view.AddItem(v, "", nil)
 	}
 	qk.main.UpdatePageTitle()
 }
-
+func (qk *quick_view) BuildListStringGroup(root string, lspmgr *lspcore.LspWorkspace) []string {
+	var data = []string{}
+	// map[string]*Cal
+	group := make(map[string][]int)
+	for i := range qk.Refs.Refs {
+		caller := qk.Refs.Refs[i]
+		v := caller.Loc
+		if s, ok := group[v.URI.String()]; ok {
+			group[v.URI.String()] = append(s, i)
+		} else {
+			group[v.URI.String()] = []int{i}
+		}
+	}
+	lineno := 1
+	for _, array := range group {
+		for i, index := range array {
+			caller := qk.Refs.Refs[index]
+			switch qk.Type {
+			case data_refs:
+				v := caller.Loc
+				if caller.Caller == nil || len(caller.Caller.Name) == 0 {
+					caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+				}
+			}
+			secondline := caller.ListItem(root, i == 0)
+			if len(secondline) == 0 {
+				continue
+			}
+			if i == 0 {
+				x := fmt.Sprintf("%3d. %s", lineno, secondline)
+				data = append(data, x)
+				lineno++
+			} else {
+				x := fmt.Sprintf("     %s", secondline)
+				data = append(data, x)
+			}
+		}
+	}
+	return data
+}
 func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
 	var data = []string{}
 	for i, caller := range qk.Refs.Refs {
@@ -614,9 +653,11 @@ func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace)
 		switch qk.Type {
 		case data_refs:
 			v := caller.Loc
-			caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+			if caller.Caller == nil || len(caller.Caller.Name) == 0 {
+				caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+			}
 		}
-		secondline := caller.ListItem(root)
+		secondline := caller.ListItem(root, true)
 		if len(secondline) == 0 {
 			continue
 		}
@@ -626,7 +667,7 @@ func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace)
 	return data
 }
 
-func (caller ref_with_caller) ListItem(root string) string {
+func (caller ref_with_caller) ListItem(root string, full bool) string {
 	v := caller.Loc
 	source_file_path := v.URI.AsPath().String()
 	data, err := os.ReadFile(source_file_path)
@@ -645,14 +686,23 @@ func (caller ref_with_caller) ListItem(root string) string {
 	if len(root) > 0 {
 		path = trim_project_filename(path, root)
 	}
-	secondline := fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
+
 	if caller.Caller != nil {
-		callerstr := caller_to_listitem(caller.Caller, root)
-		if callerstr != "" {
-			secondline = fmt.Sprintf("%s %s", callerstr, line)
+		callname := caller.Caller.Name
+		callname = strings.TrimLeft(callname, " ")
+		callname = strings.TrimRight(callname, " ")
+		if full {
+			return fmt.Sprintf("%s:%-4d **%s** %s", path, v.Range.Start.Line+1, callname, line)
+		} else {
+			return fmt.Sprintf("	:%-4d **%s** %s", v.Range.Start.Line+1, callname, line)
+		}
+	} else {
+		if full {
+			return fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
+		} else {
+			return fmt.Sprintf("	:%-4d %s", v.Range.Start.Line+1, line)
 		}
 	}
-	return secondline
 }
 
 func new_qf_history(main *mainui) (*quickfix_history, error) {
