@@ -91,8 +91,9 @@ type CodeView struct {
 func (code *CodeView) OnFileChange(file string) bool {
 	if code.file.SamePath(file) {
 		go code.lspsymbol.DidSave()
-		go code.on_content_changed()
-		return true
+		code.LoadAndCb(code.Path(), func() {
+			go code.on_content_changed()
+		})
 	}
 	return false
 }
@@ -1168,7 +1169,7 @@ func (code *CodeView) LoadAndCb(filename string, onload func()) error {
 	// "monokai"A
 	go func() {
 		GlobalApp.QueueUpdate(func() {
-			code.load_in_main(filename, data)
+			code.__load_in_main(filename, data)
 			if onload != nil {
 				onload()
 			}
@@ -1200,7 +1201,7 @@ func (code *CodeView) on_content_changed() {
 		})
 	})
 }
-func (code *CodeView) load_in_main(filename string, data []byte) error {
+func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	b := code.view.Buf
 	b.Settings["syntax"] = false
 	code.tree_sitter = lspcore.GetNewTreeSitter(filename, []byte{})
