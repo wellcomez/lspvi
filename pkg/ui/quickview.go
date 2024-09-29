@@ -641,8 +641,6 @@ func (caller ref_with_caller) ListItem(root string) string {
 			return ""
 		}
 	}
-	begin := 0
-	end := len(line) - 1
 	path := v.URI.AsPath().String()
 	if len(root) > 0 {
 		path = trim_project_filename(path, root)
@@ -651,8 +649,7 @@ func (caller ref_with_caller) ListItem(root string) string {
 	if caller.Caller != nil {
 		callerstr = caller_to_listitem(caller.Caller, root)
 	}
-	code := line[begin:end]
-	secondline := fmt.Sprintf("%s %s:%-4d %s", callerstr, path, v.Range.Start.Line+1, code)
+	secondline := fmt.Sprintf("%s %s:%-4d %s", callerstr, path, v.Range.Start.Line+1, line)
 	return secondline
 }
 
