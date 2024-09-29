@@ -279,8 +279,8 @@ func (view *file_tree_view) dir_replace(node *tview.TreeNode, filename string) {
 			dirname = filepath.Dir(filename)
 		}
 		title := dirname
-		if len(title) > len(view.main.root) {
-			title = strings.Replace(title, view.main.root, "", 1)
+		if len(title) > len(global_prj_root) {
+			title = strings.Replace(title, global_prj_root, "", 1)
 		}
 		UpdateTitleAndColor(view.view.Box, title)
 		// x := node.GetText(A)

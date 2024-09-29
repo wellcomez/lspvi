@@ -55,7 +55,7 @@ type history_item struct {
 	dispname string
 }
 
-func new_history_picker(v *fzfmain,edit *CodeView) history_picker {
+func new_history_picker(v *fzfmain, edit *CodeView) history_picker {
 	// list := new_customlist()
 	// list.SetBorder(true)
 	sym := history_picker{
@@ -70,11 +70,11 @@ func new_history_picker(v *fzfmain,edit *CodeView) history_picker {
 		v := sym.impl.listdata[data_index]
 		path := v.filepath
 		parent := sym.impl.parent
-		parent.openfile(path,edit)
+		parent.openfile(path, edit)
 	}
 	for i, h := range history.history_files() {
 
-		dispname := strings.TrimPrefix(h, v.main.root)
+		dispname := strings.TrimPrefix(h, global_prj_root)
 		h := history_item{
 			filepath: h,
 			dispname: dispname,

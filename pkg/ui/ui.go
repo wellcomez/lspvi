@@ -76,7 +76,7 @@ func (r *recent_open_file) add(filename string) {
 			}
 			filepath := filename
 			r.filelist = append(r.filelist, filename)
-			filename = strings.TrimPrefix(filename, r.main.root)
+			filename = strings.TrimPrefix(filename, global_prj_root)
 			r.list.AddItem(filename, "", func() {
 				r.main.OpenFile(filepath, nil)
 			})
@@ -109,8 +109,6 @@ type mainui struct {
 	bookmark_view *bookmark_view
 	page          *console_pages
 	callinview    *callinview
-	// tabs               *ButtonGroup
-	root               string
 	app                *tview.Application
 	uml                *umlview
 	bf                 *BackForward
@@ -542,7 +540,7 @@ func MainUI(arg *Arguments) {
 	// }
 	// lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
 	// main.lspmgr = lspmgr
-	// main.root = root
+	// global_prj_root = root
 
 	main.cmdline = new_cmdline(main)
 	var logfile, _ = os.OpenFile(lspviroot.logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -851,7 +849,7 @@ func create_edit_area(main *mainui) *flex_area {
 	main.bookmark_view = new_bookmark_view(main.bookmark, codeview, func() bool { return view_bookmark == main.tab.activate_tab_id })
 	main.callinview = new_callview(main)
 
-	main.fileexplorer = new_file_tree(main, "FileExplore", main.root, func(filename string) bool { return true })
+	main.fileexplorer = new_file_tree(main, "FileExplore", global_prj_root, func(filename string) bool { return true })
 	main.fileexplorer.Width = 20
 	main.fileexplorer.Init()
 	main.fileexplorer.openfile = main.open_file
@@ -1056,7 +1054,7 @@ func (main *mainui) GoBack() {
 }
 
 //	func (main *mainui) open_file_picker() {
-//		main.layout.dialog.OpenFileFzf(main.root)
+//		main.layout.dialog.OpenFileFzf(global_prj_root)
 //	}
 func (main *mainui) open_picker_bookmark() {
 	main.layout.dialog.OpenBookMarkFzf(main.codeview, main.bookmark)
@@ -1068,7 +1066,7 @@ func (main *mainui) open_picker_refs() {
 	main.layout.dialog.OpenRefFzf(code, loc)
 }
 func (main *mainui) open_picker_ctrlp() {
-	main.layout.dialog.OpenFileFzf(main.root, main.current_editor())
+	main.layout.dialog.OpenFileFzf(global_prj_root, main.current_editor())
 }
 func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker {
 	return main.layout.dialog.OpenGrepWordFzf(word, qf)

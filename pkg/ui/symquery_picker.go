@@ -32,7 +32,7 @@ func (pk *workspace_query_picker) name() string {
 
 func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInformation, err error) {
 	pk.impl.sym = sym
-	root := pk.impl.parent.main.root
+	root := global_prj_root
 	pk.impl.parent.app.QueueUpdateDraw(func() {
 		pk.impl.list.Key = pk.impl.query
 		for i, v := range sym {

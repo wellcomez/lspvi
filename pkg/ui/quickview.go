@@ -79,7 +79,7 @@ func save_qf_uirefresh(main *mainui, data qf_history_data) error {
 	if err != nil {
 		return err
 	}
-	err = h.save_history(main.root, data, true)
+	err = h.save_history(global_prj_root, data, true)
 	if err == nil {
 		main.console_index_list.SetCurrentItem(0)
 	}
@@ -559,7 +559,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
 	_, _, width, _ := qk.view.GetRect()
 	caller.width = width
-	secondline := caller.ListItem(qk.main.root)
+	secondline := caller.ListItem(global_prj_root)
 	if len(secondline) == 0 {
 		return
 	}
@@ -586,7 +586,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 		caller.width = width
 		v := caller.Loc
 		caller.Caller = m.lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
-		secondline := caller.ListItem(qk.main.root)
+		secondline := caller.ListItem(global_prj_root)
 		if len(secondline) == 0 {
 			continue
 		}

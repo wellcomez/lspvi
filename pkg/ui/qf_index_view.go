@@ -240,7 +240,7 @@ func (view *qf_index_view_history) add_or_remove_data(data qf_history_data, add 
 	if err != nil {
 		return err
 	}
-	err = h.save_history(view.main.root, data, add)
+	err = h.save_history(global_prj_root, data, add)
 	return err
 }
 func qf_index_view_update(id view_id) {

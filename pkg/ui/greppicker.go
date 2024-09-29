@@ -167,7 +167,7 @@ func (grepx *livewgreppicker) grep_to_list() {
 	grep.temp = nil
 	grep.result.data = append(grep.result.data, tmp.data...)
 	for _, o := range tmp.data {
-		path := strings.TrimPrefix(o.fpath, grepx.main.root)
+		path := strings.TrimPrefix(o.fpath, global_prj_root)
 		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
 		grepx.grep_list_view.AddItem(data, "", func() {
 			loc := convert_grep_info_location(&o)
@@ -312,7 +312,7 @@ func (pk *livewgreppicker) __updatequery(query string) {
 	impl.grep = g
 	impl.result = &grepresult{}
 	g.cb = pk.end
-	chans := g.kick(pk.main.root)
+	chans := g.kick(global_prj_root)
 	go g.report(chans, false)
 
 }

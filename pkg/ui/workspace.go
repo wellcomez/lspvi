@@ -3,11 +3,12 @@ package mainui
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -21,6 +22,7 @@ type workspace_list struct {
 
 var gload_workspace_list workspace_list
 var global_prj_root string
+
 func (prj *Project) Load(arg *Arguments, main *mainui) {
 	root := prj.Root
 	lspviroot = new_workdir(root)
@@ -32,7 +34,7 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	handle := LspHandle{}
 	// var main = &mainui{
 	main.bf = NewBackForward(NewHistory(lspviroot.history))
-	main.bookmark = &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{},root: root}
+	main.bookmark = &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}, root: root}
 	main.tty = arg.Tty
 	main.ws = arg.Ws
 	// }
@@ -48,7 +50,6 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle, ConfigFile: ConfigFile})
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main
-	main.root = root
 	global_prj_root = root
 }
 func (wk *workspace_list) Add(root string) (*Project, error) {

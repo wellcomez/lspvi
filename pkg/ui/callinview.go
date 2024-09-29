@@ -410,7 +410,7 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 }
 
 func (call *callinview) itemdisp(c *lspcore.CallStackEntry) string {
-	return strings.Replace(c.DisplayName(), call.main.root, "", -1)
+	return strings.Replace(c.DisplayName(), global_prj_root, "", -1)
 }
 
 // func (callin *callinview) update(stacks []lspcore.CallStack) {

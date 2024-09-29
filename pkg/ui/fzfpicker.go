@@ -11,7 +11,7 @@ import (
 )
 
 func (parent *fzfmain) openfile(path string, code *CodeView) {
-	code.open_file_line(path, nil,true)
+	code.open_file_line(path, nil, true)
 	parent.hide()
 	parent.main.set_viewid_focus(code.id)
 	parent.main.cmdline.Vim.EnterEscape()
@@ -234,7 +234,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 			mouseDownY:     -1,
 		},
 	}
-	// new_filewalk(main.root)
+	// new_filewalk(global_prj_root)
 	return ret
 }
 

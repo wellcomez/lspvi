@@ -85,7 +85,7 @@ func (code CodeView) Path() string {
 	return code.file.filepathname
 }
 func (code CodeView) FileName() string {
-	return code.FileName()
+	return code.file.filename
 }
 func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
@@ -1185,7 +1185,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 	}
 	name := filename
 	if code.main != nil {
-		name = strings.ReplaceAll(filename, code.main.root, "")
+		name = strings.ReplaceAll(filename, global_prj_root, "")
 	}
 	name = strings.TrimLeft(name, "/")
 	UpdateTitleAndColor(code.view.Box, name)

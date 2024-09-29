@@ -72,7 +72,7 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 }
 func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
 	ret := pk.impl.grid(input, 2)
-	pk.impl.PrevOpen(pk.impl.file.Filename,-1)
+	pk.impl.PrevOpen(pk.impl.file.Filename, -1)
 	return ret
 }
 func layout_list_row_edit(list tview.Primitive, code tview.Primitive, input *tview.InputField) *tview.Flex {
@@ -235,14 +235,14 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 		gap := 40
 		begin := max(0, v.Range.Start.Character-gap)
 		end := min(len(line), v.Range.Start.Character+gap)
-		path := strings.Replace(v.URI.AsPath().String(), pk.impl.codeprev.main.root, "", -1)
+		path := strings.Replace(v.URI.AsPath().String(), global_prj_root, "", -1)
 		callinfo := ""
 		if caller.Caller != nil {
-			callinfo = caller_to_listitem(caller.Caller, pk.impl.parent.main.root)
+			callinfo = caller_to_listitem(caller.Caller, global_prj_root)
 		}
 		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1, callinfo)
 		r := ref_line{
-			caller: caller_to_listitem(caller.Caller, pk.impl.parent.main.root),
+			caller: caller_to_listitem(caller.Caller, global_prj_root),
 			loc:    v,
 			line:   line,
 			path:   path,
