@@ -385,6 +385,8 @@ func new_quikview(main *mainui) *quick_view {
 				sss := ret.data[ss[0]:ss[1]]
 				data := strings.Join(sss, "\n")
 				main.CopyToClipboard(data)
+				ret.sel.clear()
+				main.app.ForceDraw()
 			} else {
 				main.CopyToClipboard(ret.data[view.GetCurrentItem()])
 			}

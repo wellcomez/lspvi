@@ -185,6 +185,10 @@ func (l *list_multi_select) on_select_move(sel *selectarea) bool {
 	l.update_select_item()
 	return l.sel != nil
 }
+func (l *list_multi_select) clear() {
+	l.sel = nil
+	l.list.selected = []int{}
+}
 func (l *list_multi_select) update_select_item() {
 	view := l.list
 	sel := l.sel
@@ -204,6 +208,8 @@ func (l *list_multi_select) update_select_item() {
 			b = min(view.selected[0], b)
 			e = max(view.selected[1], e)
 		}
+		b = max(0, b)
+		e = min(view.GetItemCount()-1, e)
 		view.selected = []int{b, e}
 		GlobalApp.ForceDraw()
 	}
