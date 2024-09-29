@@ -11,10 +11,23 @@ type change_reciever interface {
 }
 type FileWatch struct {
 	watcher  *fsnotify.Watcher
-	root     string
 	started  bool
 	recieved []change_reciever
 	files    []string
+}
+
+func (f *FileWatch) AddReciever(reciever change_reciever) {
+	f.recieved = append(f.recieved, reciever)
+}
+func (f *FileWatch) Remove(reciever change_reciever) {
+	recieved := []change_reciever{}
+	for _, v := range f.recieved {
+		if v == reciever {
+			continue
+		}
+		recieved = append(recieved, v)
+	}
+	f.recieved = recieved
 }
 
 func NewFileWatch() *FileWatch {

@@ -272,9 +272,12 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 	}
 	task.Save(export_root.Dir)
 }
-func (sym *Symbol_file) __load_symbol_impl() error {
+func (sym *Symbol_file) __load_symbol_impl(force bool) error {
 	if sym.lsp == nil {
 		return fmt.Errorf("lsp is nil")
+	}
+	if force {
+		sym.Class_object = []*Symbol{}
 	}
 	if len(sym.Class_object) > 0 {
 		sym.Handle.OnSymbolistChanged(sym, nil)
@@ -287,8 +290,8 @@ func (sym *Symbol_file) __load_symbol_impl() error {
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
 	return nil
 }
-func (sym *Symbol_file) LoadSymbol() {
-	err := sym.__load_symbol_impl()
+func (sym *Symbol_file) LoadSymbol(force bool) {
+	err := sym.__load_symbol_impl(force)
 	sym.Handle.OnSymbolistChanged(sym, err)
 }
 func (sym Symbol_file) find_stack_symbol(call *CallStackEntry) (*Symbol, error) {

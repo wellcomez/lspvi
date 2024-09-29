@@ -49,6 +49,9 @@ type File struct {
 	modTiem      time.Time
 }
 
+func (f File) SamePath(filename string) bool {
+	return filename == f.filepathname
+}
 func NewFile(filename string) File {
 	file := strings.TrimPrefix(filename, global_prj_root)
 	fileInfo, err := os.Stat(filename)
@@ -82,6 +85,16 @@ type CodeView struct {
 	ts          *lspcore.TreeSitter
 	insert      bool
 	diff        *Differ
+}
+
+// OnFileChange implements change_reciever.
+func (code *CodeView) OnFileChange(file string) bool {
+	if code.file.SamePath(file) {
+		go code.on_content_changed()
+		go code.lspsymbol.LoadSymbol(true)
+		return true
+	}
+	return false
 }
 
 func (code CodeView) Path() string {
@@ -1140,6 +1153,9 @@ func (code *CodeView) LoadAndCb(filename string, onload func()) error {
 			onload()
 		}
 		return nil
+	}
+	if code.id.is_editor() {
+		global_file_watch.Add(filename)
 	}
 	if code.main != nil {
 		code.main.recent_open.add(filename)

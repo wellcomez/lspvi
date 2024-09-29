@@ -96,19 +96,19 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
-	sel           selectarea
-	icon          *smallicon
-	term          *Term
-	fileexplorer  *file_tree_view
-	codeview      *CodeView
-	codeviewmain  *CodeView
-	codeview2     *CodeView
-	lspmgr        *lspcore.LspWorkspace
-	symboltree    *SymbolTreeView
-	quickview     *quick_view
-	bookmark_view *bookmark_view
-	page          *console_pages
-	callinview    *callinview
+	sel                selectarea
+	icon               *smallicon
+	term               *Term
+	fileexplorer       *file_tree_view
+	codeview           *CodeView
+	codeviewmain       *CodeView
+	codeview2          *CodeView
+	lspmgr             *lspcore.LspWorkspace
+	symboltree         *SymbolTreeView
+	quickview          *quick_view
+	bookmark_view      *bookmark_view
+	page               *console_pages
+	callinview         *callinview
 	app                *tview.Application
 	uml                *umlview
 	bf                 *BackForward
@@ -402,13 +402,10 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	m.symboltree.Clear()
 	code.open_file_line(file, loc, true)
 }
-type filemonitor struct{
-
-}
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
 	if err == nil {
-		symbolfile.LoadSymbol()
+		symbolfile.LoadSymbol(false)
 		m.app.QueueUpdate(func() {
 			if cb != nil {
 				cb(symbolfile)
@@ -465,9 +462,6 @@ func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
 }
-
-
-
 
 var apparg Arguments
 var GlobalApp *tview.Application
@@ -838,6 +832,7 @@ func create_edit_area(main *mainui) *flex_area {
 	SplitCode.main = main
 	codeview := NewCodeView(main)
 	codeview.id = view_code
+	global_file_watch.AddReciever(codeview)
 	codeview.not_preview = true
 	codeview.Width = 80
 	main.codeviewmain = codeview

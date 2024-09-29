@@ -203,7 +203,7 @@ func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, err
 		return nil, err
 	}
 	if isnew {
-		symbolfile.__load_symbol_impl()
+		symbolfile.__load_symbol_impl(false)
 	}
 	if symbolfile == nil {
 		log.Printf("fail to loadd  %s\n", filename)

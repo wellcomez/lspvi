@@ -52,10 +52,10 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main
 	global_prj_root = root
-	if  !global_file_watch.started{
-		global_file_watch.Run(global_prj_root)
-	}else{
-		global_file_watch.Change(global_prj_root)
+	if !global_file_watch.started {
+		go global_file_watch.Run(global_prj_root)
+	} else {
+		global_file_watch.Add(global_prj_root)
 	}
 }
 func (wk *workspace_list) Add(root string) (*Project, error) {
