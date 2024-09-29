@@ -616,6 +616,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 		qk.save()
 		return
 	}
+	qk.reset_tree()
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
 	// _, _, width, _ := qk.view.GetRect()
 	// caller.width = width
@@ -775,15 +776,15 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 			s := v.Range.Start.Character
 			e := v.Range.End.Character
 			if v.Range.Start.Line == v.Range.End.Line {
-				if len(line) > s && len(line) > e {
+				if len(line) > s && len(line) > e && s < e {
 					a1 := line[:s]
 					a := line[s:e]
 					a2 := line[e:]
-					if a1[len(a1)-1]=='*'{
-						a1+=" "
+					if len(a1) > 0 && a1[len(a1)-1] == '*' {
+						a1 += " "
 					}
-					if a2[0]=='*'{
-						a2 = " "+a2
+					if len(a2) > 0 && a2[0] == '*' {
+						a2 = " " + a2
 					}
 					line = strings.Join([]string{a1, "**", a, "**", a2}, "")
 				}
