@@ -22,7 +22,7 @@ type workspace_list struct {
 
 var gload_workspace_list workspace_list
 var global_prj_root string
-
+var global_file_watch = NewFileWatch()
 func (prj *Project) Load(arg *Arguments, main *mainui) {
 	root := prj.Root
 	lspviroot = new_workdir(root)
@@ -51,6 +51,7 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main
 	global_prj_root = root
+	global_file_watch.Change(global_prj_root)
 }
 func (wk *workspace_list) Add(root string) (*Project, error) {
 	if !checkDirExists(root) {

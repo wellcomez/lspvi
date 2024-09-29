@@ -402,6 +402,9 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	m.symboltree.Clear()
 	code.open_file_line(file, loc, true)
 }
+type filemonitor struct{
+
+}
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
 	if err == nil {
