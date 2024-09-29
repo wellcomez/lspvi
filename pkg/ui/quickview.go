@@ -679,7 +679,6 @@ func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 }
 func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root string, lspmgr *lspcore.LspWorkspace) []*list_tree_node {
 	var data = []*list_tree_node{}
-	qk.build_tree(view.Refs.Refs)
 	lineno := 1
 	for i := range qk.tree {
 		a := &qk.tree[i]
