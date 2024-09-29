@@ -31,13 +31,20 @@ func SubLine(begin, end lsp.Position, lines []string) []string {
 			e = -1
 		}
 
-		subline[0] = subline[0][begin.Character:e]
+		line := subline[0]
+		if begin.Character < len(line) && e < len(line) {
+			subline[0] = line[begin.Character:e]
+		}
 	} else {
 		subline[0] = subline[0][begin.Character:]
 		if e < 0 {
 			e = -1
 		}
-		subline[len(subline)-1] = subline[len(subline)-1][:e]
+		line := subline[len(subline)-1]
+		if len(line) > e {
+			line = line[:e]
+		}
+		subline[len(subline)-1] = line
 	}
 
 	return subline

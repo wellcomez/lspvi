@@ -482,10 +482,9 @@ func (qk *quick_view) go_next() {
 	}
 }
 func (qk *quick_view) OnSearch(txt string) {
-	old_query := qk.cmd_search_key
-	view := qk.view
-
-	highlight_search_key(old_query, view, txt)
+	// old_query := qk.cmd_search_key
+	// view := qk.view
+	// highlight_search_key(old_query, view, txt)
 	qk.cmd_search_key = txt
 }
 
