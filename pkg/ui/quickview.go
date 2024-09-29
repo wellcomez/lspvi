@@ -579,7 +579,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	if len(secondline) == 0 {
 		return
 	}
-	qk.view.AddItem(fmt.Sprintf("%-3d %s", qk.view.GetItemCount()+1, secondline), "", nil)
+	qk.view.AddItem(fmt.Sprintf("%3d. %s", qk.view.GetItemCount()+1, secondline), "", nil)
 	// qk.main.UpdatePageTitle()
 
 	// qk.open_index(qk.view.GetCurrentItem())
@@ -611,8 +611,11 @@ func (qk *quick_view) BuildListString(root string, width int, lspmgr *lspcore.Ls
 	var data = []string{}
 	for i, caller := range qk.Refs.Refs {
 		caller.width = width
-		v := caller.Loc
-		caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+		switch qk.Type {
+		case data_refs:
+			v := caller.Loc
+			caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+		}
 		secondline := caller.ListItem(root)
 		if len(secondline) == 0 {
 			continue
@@ -638,15 +641,16 @@ func (caller ref_with_caller) ListItem(root string) string {
 			return ""
 		}
 	}
-	gap := max(40, caller.width/2)
-	if caller.width == -1 {
-		gap = 0
+	begin := 0
+	end := len(line) - 1
+	if caller.width != -1 {
+		gap := max(40, caller.width/2)
+		begin = min(len(line), max(0, v.Range.Start.Character-gap))
+		end = min(len(line), v.Range.Start.Character+gap)
 	}
-	begin := min(len(line), max(0, v.Range.Start.Character-gap))
-	end := min(len(line), v.Range.Start.Character+gap)
 	path := v.URI.AsPath().String()
 	if len(root) > 0 {
-		path =trim_project_filename(path, root)
+		path = trim_project_filename(path, root)
 	}
 	callerstr := ""
 	if caller.Caller != nil {
