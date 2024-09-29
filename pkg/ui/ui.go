@@ -295,7 +295,7 @@ func (m *mainui) gotoline(loc lsp.Location) {
 	if file != code.filepathname {
 		m.OpenFile(file, &loc)
 	} else {
-		code.gotoline(loc.Range.Start.Line)
+		code.gotoline_not_open(loc.Range.Start.Line)
 	}
 }
 

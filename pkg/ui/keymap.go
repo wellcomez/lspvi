@@ -187,7 +187,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}
 	case goto_first_line:
 		return cmdactor{id, "goto first line", func() bool {
-			m.current_editor().gotoline(0)
+			m.current_editor().gotoline_not_open(0)
 			return true
 		}}
 	case goto_to_fileview:
@@ -204,7 +204,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}
 	case goto_last_line:
 		return cmdactor{id, "goto first line", func() bool {
-			m.current_editor().gotoline(-1)
+			m.current_editor().gotoline_not_open(-1)
 			return true
 		}}
 	case goto_define:

@@ -432,7 +432,7 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		return action, event
 	}
 	if cb != nil {
-		if !cb(action, code_mouse_cb_begin){
+		if !cb(action, code_mouse_cb_begin) {
 			return action, event
 		}
 	}
@@ -1104,7 +1104,7 @@ func (code *CodeView) Load(filename string) error {
 }
 func (code *CodeView) Load2Line(filename string, line int) error {
 	return code.LoadAndCb(filename, func() {
-		code.gotoline(line)
+		code.gotoline_not_open(line)
 	})
 }
 func (code *CodeView) LoadAndCb(filename string, onload func()) error {
@@ -1240,7 +1240,7 @@ func (code *CodeView) Addbookmark() {
 		code.view.addbookmark(true, s)
 		code.main.bookmark.udpate(&code.view.bookmark)
 		code.main.bookmark.save()
-	},code)
+	}, code)
 }
 func (code *CodeView) Removebookmark() {
 	code.view.addbookmark(false, "")
@@ -1306,7 +1306,7 @@ func is_lsprange_ok(loc lsp.Range) bool {
 	}
 	return false
 }
-func (code *CodeView) gotoline(line int) {
+func (code *CodeView) gotoline_not_open(line int) {
 	if line == -1 {
 		code.view.EndOfLine()
 		return
