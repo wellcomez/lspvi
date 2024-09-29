@@ -20,6 +20,8 @@ func get_style_hide(hide bool) tcell.Style {
 type icon struct {
 	s          []rune
 	begin, end Pos
+	click      func()
+	style      func() tcell.Style
 }
 
 func (s icon) Draw(screen tcell.Screen, style tcell.Style) {
@@ -109,6 +111,7 @@ func (c *smallicon) Draw(screen tcell.Screen) {
 	c.back.Draw(screen, get_style_hide(!c.main.CanGoBack()))
 	c.forward.Draw(screen, get_style_hide(!c.main.CanGoFoward()).Bold(true))
 }
+
 func new_small_icon(main *mainui) *smallicon {
 	smallicon := &smallicon{
 		file:    icon{s: []rune{block_str}},
@@ -168,4 +171,91 @@ func (icon *smallicon) get_offset_xy() (int, int) {
 	left += w
 	left -= 10
 	return left, top
+}
+
+type minitoolbar struct {
+	item  []icon
+	getxy func() (int, int)
+}
+
+func (toobar *minitoolbar) get_offset_xy() (int, int) {
+	if toobar.getxy != nil {
+		return toobar.getxy()
+	}
+	return 0, 0
+}
+func (toolbar *minitoolbar) Relocated() {
+	left, top := toolbar.get_offset_xy()
+	for i := range toolbar.item {
+		a := &toolbar.item[i]
+		left = a.relocate(left, top)
+	}
+}
+func (toolbar *minitoolbar) handle_mouse_event(action tview.MouseAction, event *tcell.EventMouse) (*tcell.EventMouse, tview.MouseAction) {
+	if event == nil {
+		return event, action
+	}
+	toolbar.Relocated()
+
+	x, y := event.Position()
+	loc := Pos{X: x, Y: y}
+	if action == tview.MouseLeftClick {
+		for i := range toolbar.item {
+			a := &toolbar.item[i]
+			if a.in(loc) {
+				if a.click != nil {
+					a.click()
+				}
+				return nil, tview.MouseConsumed
+			}
+		}
+		return nil, tview.MouseConsumed
+	}
+	return event, action
+}
+
+func (c *minitoolbar) Width() int {
+	w := 0
+	for _, v := range c.item {
+		w += len(v.s)
+	}
+	return w
+}
+func (c *minitoolbar) Draw(screen tcell.Screen) {
+	c.Relocated()
+	for i := range c.item {
+		a := &c.item[i]
+		a.Draw(screen, a.style())
+	}
+}
+func new_quick_toolbar(main *mainui) *minitoolbar {
+	var quick_btn icon = icon{
+		s: []rune{block_str},
+		click: func() {
+
+		},
+		style: func() tcell.Style {
+			return get_style_hide(false)
+		},
+	}
+	var index_bt icon = icon{
+		s: []rune{block_str},
+		click: func() {
+			main.layout.console.resizer.toggle(view_qf_index_view.to_view_link(main))
+			main.app.ForceDraw()
+		},
+		style: func() tcell.Style {
+			return get_style_hide(view_qf_index_view.to_view_link(main).Hide)
+		},
+	}
+	icon := []icon{quick_btn, index_bt}
+	ret := &minitoolbar{
+		item: icon,
+	}
+	ret.getxy = func() (int, int) {
+		x, y, w, _ := main.page.GetRect()
+		x = x + w - ret.Width()
+		return x, y
+	}
+	return ret
 }

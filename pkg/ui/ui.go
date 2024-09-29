@@ -96,32 +96,33 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
-	sel                selectarea
-	icon               *smallicon
-	term               *Term
-	fileexplorer       *file_tree_view
-	codeview           *CodeView
-	codeviewmain       *CodeView
-	codeview2          *CodeView
-	lspmgr             *lspcore.LspWorkspace
-	symboltree         *SymbolTreeView
-	quickview          *quick_view
-	bookmark_view      *bookmark_view
-	page               *console_pages
-	callinview         *callinview
-	app                *tview.Application
-	uml                *umlview
-	bf                 *BackForward
-	bookmark           *proj_bookmark
-	log                *logview
-	cmdline            *cmdline
-	prefocused         view_id
-	searchcontext      *GenericSearch
-	statusbar          *tview.TextView
-	layout             *rootlayout
-	console_index_list *qf_index_view
-	right_context_menu *contextmenu
-	recent_open        *recent_open_file
+	sel                 selectarea
+	code_navigation_bar *smallicon
+	quickbar            *minitoolbar
+	term                *Term
+	fileexplorer        *file_tree_view
+	codeview            *CodeView
+	codeviewmain        *CodeView
+	codeview2           *CodeView
+	lspmgr              *lspcore.LspWorkspace
+	symboltree          *SymbolTreeView
+	quickview           *quick_view
+	bookmark_view       *bookmark_view
+	page                *console_pages
+	callinview          *callinview
+	app                 *tview.Application
+	uml                 *umlview
+	bf                  *BackForward
+	bookmark            *proj_bookmark
+	log                 *logview
+	cmdline             *cmdline
+	prefocused          view_id
+	searchcontext       *GenericSearch
+	statusbar           *tview.TextView
+	layout              *rootlayout
+	console_index_list  *qf_index_view
+	right_context_menu  *contextmenu
+	recent_open         *recent_open_file
 	// _editor_area_layout *editor_area_layout
 	tty bool
 	ws  string
@@ -511,7 +512,8 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{sel: selectarea{nottext: true}}
 	prj.Load(arg, main)
-	main.icon = new_small_icon(main)
+	main.code_navigation_bar = new_small_icon(main)
+	main.quickbar = new_quick_toolbar(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
 	global_theme.update_default_color()
 
@@ -654,12 +656,14 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 			main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
 		}
 	}
-	main.icon.Draw(screen)
+	main.code_navigation_bar.Draw(screen)
+	main.quickbar.Draw(screen)
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
 	main.sel.handle_mouse_selection(action, event)
-	main.icon.handle_mouse_event(action, event)
+	main.code_navigation_bar.handle_mouse_event(action, event)
+	main.quickbar.handle_mouse_event(action, event)
 	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 	if content_menu_action == tview.MouseConsumed {
 		return nil, tview.MouseConsumed
