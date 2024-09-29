@@ -72,7 +72,7 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 }
 func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
 	ret := pk.impl.grid(input, 2)
-	pk.impl.codeprev.Load(pk.impl.file.Filename)
+	pk.impl.PrevOpen(pk.impl.file.Filename, -1)
 	return ret
 }
 func layout_list_row_edit(list tview.Primitive, code tview.Primitive, input *tview.InputField) *tview.Flex {
@@ -103,6 +103,15 @@ type prev_picker_impl struct {
 	editor           *CodeView
 }
 
+func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
+	imp.codeprev.LoadAndCb(filename, func() {
+		if line == -1 {
+			return
+		}
+		p := lsp.Position{Line: line, Character: 0}
+		imp.codeprev.goto_loation(lsp.Range{Start: p, End: p}, false)
+	})
+}
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
 	impl.listview = l.List
 	impl.listcustom = l
@@ -111,7 +120,7 @@ func (impl *prev_picker_impl) update_preview() {
 	cur := impl.listview.GetCurrentItem()
 	if cur < len(impl.listdata) {
 		item := impl.listdata[cur]
-		impl.codeprev.Load2Line(item.loc.URI.AsPath().String(), item.loc.Range.Start.Line)
+		impl.PrevOpen(item.loc.URI.AsPath().String(), item.loc.Range.Start.Line)
 	}
 }
 
@@ -164,9 +173,9 @@ func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
 		return ""
 	}
 	callerstr := fmt.Sprintf("%s:%d **%-20s**",
-		strings.TrimPrefix(
+		trim_project_filename(
 			caller.Item.URI.AsPath().String(), root),
-		caller.Item.Range.Start.Line, caller.Name)
+		caller.Item.Range.Start.Line+1, caller.Name)
 	return callerstr
 }
 
@@ -202,7 +211,6 @@ func (ref ref_line) String() string {
 type ref_with_caller struct {
 	Loc    lsp.Location
 	Caller *lspcore.CallStackEntry
-	width  int
 }
 
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
@@ -226,14 +234,14 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 		gap := 40
 		begin := max(0, v.Range.Start.Character-gap)
 		end := min(len(line), v.Range.Start.Character+gap)
-		path := strings.Replace(v.URI.AsPath().String(), pk.impl.codeprev.main.root, "", -1)
+		path := trim_project_filename(v.URI.AsPath().String(), global_prj_root)
 		callinfo := ""
 		if caller.Caller != nil {
-			callinfo = caller_to_listitem(caller.Caller, pk.impl.parent.main.root)
+			callinfo = caller_to_listitem(caller.Caller, global_prj_root)
 		}
 		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1, callinfo)
 		r := ref_line{
-			caller: caller_to_listitem(caller.Caller, pk.impl.parent.main.root),
+			caller: caller_to_listitem(caller.Caller, global_prj_root),
 			loc:    v,
 			line:   line,
 			path:   path,
@@ -250,7 +258,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 }
 
 func (impl *prev_picker_impl) open_location(v lsp.Location) {
-	impl.editor.open_file_line(v.URI.AsPath().String(), &v)
+	impl.editor.open_file_line(v.URI.AsPath().String(), &v, true)
 	impl.parent.hide()
 }
 
@@ -353,7 +361,7 @@ func (pk refpicker) onselected(data int, list int) {
 	index := data
 	v := pk.impl.listdata[index]
 
-	pk.impl.editor.open_file_line(v.loc.URI.AsPath().String(), &v.loc)
+	pk.impl.editor.open_file_line(v.loc.URI.AsPath().String(), &v.loc, true)
 	pk.impl.parent.hide()
 }
 

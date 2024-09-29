@@ -86,10 +86,10 @@ func (mgr *symbol_colortheme) set_currsor_line() *tcell.Style {
 
 }
 func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
-	if color := mgr.get_color("function"); color != nil {
-		a, _, _ := color.Decompose()
-		return a
-	}
+	// if color := mgr.get_color("function"); color != nil {
+	// 	a, _, _ := color.Decompose()
+	// 	return a
+	// }
 	return tcell.ColorYellow
 }
 

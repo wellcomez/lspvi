@@ -24,6 +24,7 @@ func (s *CodeSplit) AddCode(d *CodeView) {
 }
 func (s *CodeSplit) New() *CodeView {
 	a := NewCodeView(s.main)
+	global_file_watch.AddReciever(a)
 	a.id = s.last + 1
 	s.AddCode(a)
 	return a
@@ -67,21 +68,27 @@ func (c CodeSplit) TabView(index int) *CodeView {
 
 func SplitClose(code *CodeView) context_menu_item {
 	return context_menu_item{item: create_menu_item("Close"), handle: func() {
-		SplitCode.layout.RemoveItem(code.view)
-		var s = make(map[view_id]*CodeView)
-		for k, v := range SplitCode.code_collection {
-			if v != code {
-				s[k] = v
-			}
-		}
-		for i, v := range SplitCode.index {
-			if v == code.id {
-				SplitCode.index = append(SplitCode.index[:i], SplitCode.index[i+1:]...)
-			}
-		}
-		SplitCode.code_collection = s
+		SplitCode.Remove(code)
 		code.main.right_context_menu.remove(code.rightmenu)
 	}, hide: !(code.id > view_code)}
+}
+
+func (SplitCode *CodeSplit) Remove(code *CodeView) {
+	SplitCode.layout.RemoveItem(code.view)
+	id := code.id
+	var s = make(map[view_id]*CodeView)
+	for k, v := range SplitCode.code_collection {
+		if v != code {
+			s[k] = v
+		}
+	}
+	for i, v := range SplitCode.index {
+		if v == id {
+			SplitCode.index = append(SplitCode.index[:i], SplitCode.index[i+1:]...)
+		}
+	}
+	SplitCode.code_collection = s
+	global_file_watch.Remove(code)
 }
 func SplitRight(code *CodeView) context_menu_item {
 	main := code.main
@@ -96,30 +103,22 @@ func SplitRight(code *CodeView) context_menu_item {
 		codeview2 := SplitCode.New()
 		codeview2.view.SetBorder(true)
 		main.right_context_menu.add(codeview2.rightmenu)
-		codeview2.LoadAndCb(code.filepathname, func() {
-			codeview2.view.SetTitle(codeview2.filepathname)
-			go main.async_lsp_open(code.filepathname, func(sym *lspcore.Symbol_file) {
-				codeview2.lspsymbol = sym
-			})
-			go func() {
-				main.app.QueueUpdateDraw(func() {
-					main.tab.ActiveTab(view_code_below, true)
-				})
-			}()
-		})
+		codeview2.open_file_line(code.Path(), nil, true)
 	}}
 }
-func (codeview2 *CodeView) open_file_line(filename string, line *lsp.Location) {
+func (codeview2 *CodeView) open_file_line(filename string, line *lsp.Location, focus bool) {
 	main := codeview2.main
 	codeview2.LoadAndCb(filename, func() {
-		codeview2.view.SetTitle(codeview2.filepathname)
+		codeview2.view.SetTitle(codeview2.Path())
 		if line != nil {
-			codeview2.goto_loation(line.Range)
+			codeview2.goto_loation(line.Range, codeview2.id != view_code_below)
 		}
 		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
 			codeview2.lspsymbol = sym
-			if sym == nil {
-				main.symboltree.Clear()
+			if focus && codeview2.id != view_code_below {
+				if sym == nil {
+					main.symboltree.Clear()
+				}
 			}
 		})
 		if codeview2.id == view_code_below {

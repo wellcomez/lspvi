@@ -30,7 +30,7 @@ func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
 	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line)
 	UpdateTitleAndColor(pk.frame.Box, title)
-	pk.codeprev.Load2Line(loc.URI.AsPath().String(), loc.Range.Start.Line)
+	pk.codeprev.LoadNoSymbol(loc.URI.AsPath().String(), loc.Range.Start.Line)
 }
 func new_quick_preview() *quick_preview {
 	codeprev := NewCodeView(nil)
@@ -65,7 +65,19 @@ type quick_view struct {
 
 	cmd_search_key string
 	grep           *greppicker
+	sel            *list_multi_select
+
+	tree *list_view_tree_extend
 }
+type list_view_tree_extend struct {
+	tree           []list_tree_node
+	tree_data_item []*list_tree_node
+}
+
+func (l list_view_tree_extend) NeedCreate() bool {
+	return len(l.tree) == 0
+}
+
 type qf_history_data struct {
 	Type   DateType
 	Key    lspcore.SymolSearchKey
@@ -79,7 +91,7 @@ func save_qf_uirefresh(main *mainui, data qf_history_data) error {
 	if err != nil {
 		return err
 	}
-	err = h.save_history(main.root, data, true)
+	err = h.save_history(global_prj_root, data, true)
 	if err == nil {
 		main.console_index_list.SetCurrentItem(0)
 	}
@@ -331,25 +343,13 @@ func new_quikview(main *mainui) *quick_view {
 	view.default_color = tcell.ColorGreen
 	view.List.SetMainTextStyle(tcell.StyleDefault.Normal()).ShowSecondaryText(false)
 	var vid view_id = view_quickview
-	var items = []context_menu_item{
-		{item: cmditem{cmd: cmdactor{desc: "Open"}}, handle: func() {
-			if view.GetItemCount() > 0 {
-				qk := main.quickview
-				qk.selection_handle_impl(view.GetCurrentItem(), true)
-			}
-		}},
-		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {
-			main.quickview.save()
-		}},
-	}
+
 	ret := &quick_view{
 		view_link: &view_link{id: view_quickview, up: view_code, right: view_callin},
 		Name:      vid.getname(),
 		view:      view,
 		main:      main,
 		quickview: new_quick_preview(),
-		menuitem:  items,
-		// menu:      new_contextmenu(main, items,view.Box),
 	}
 
 	// ret.Flex = layout
@@ -378,6 +378,41 @@ func new_quikview(main *mainui) *quick_view {
 		return nil
 	})
 	view.SetSelectedFunc(ret.selection_handle)
+
+	ret.menuitem = []context_menu_item{
+		{item: cmditem{cmd: cmdactor{desc: "Open "}}, handle: func() {
+			if view.GetItemCount() > 0 {
+				ret.selection_handle_impl(view.GetCurrentItem(), true)
+			}
+		}},
+		{item: cmditem{cmd: cmdactor{desc: "Save "}}, handle: func() {
+			ret.save()
+		}},
+		{item: cmditem{cmd: cmdactor{desc: "Copy"}}, handle: func() {
+			ss := ret.sel.list.selected
+			var data []string
+			if ret.tree == nil {
+				data = ret.BuildListString("", main.lspmgr)
+			} else {
+				x := ret.tree.tree_data_item
+				for _, v := range x {
+					data = append(data, v.text)
+				}
+			}
+			if len(ss) > 0 {
+
+				sss := data[ss[0]:ss[1]]
+				data := strings.Join(sss, "\n")
+				main.CopyToClipboard(data)
+				ret.sel.clear()
+				main.app.ForceDraw()
+			} else {
+				main.CopyToClipboard(data[view.GetCurrentItem()])
+			}
+		}},
+	}
+	ret.sel = &list_multi_select{list: view}
+	main.sel.Add(ret.sel)
 	return ret
 }
 func (qf *quickfix_history) InitDir() (string, error) {
@@ -506,15 +541,39 @@ func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 }
 
 func (qk *quick_view) selection_handle_impl(index int, open bool) {
-	vvv := qk.Refs.Refs[index]
-	qk.currentIndex = index
-	qk.view.SetCurrentItem(index)
-	same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.filepathname
-	if open || same {
+	if qk.tree != nil {
+		qk.view.SetCurrentItem(index)
+		node := qk.tree.tree_data_item[index]
+		need_draw := false
+		if node.parent {
+			node.expand = !node.expand
+			data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.lspmgr)
+			qk.view.Clear()
+			for _, v := range data {
+				qk.view.AddItem(v.text, "", func() {
+
+				})
+			}
+			need_draw = true
+		}
+		refindex := node.ref_index
+		vvv := qk.Refs.Refs[refindex]
 		qk.main.UpdatePageTitle()
 		qk.main.gotoline(vvv.Loc)
+		if need_draw {
+			GlobalApp.ForceDraw()
+		}
 	} else {
+		vvv := qk.Refs.Refs[index]
+		qk.currentIndex = index
+		qk.view.SetCurrentItem(index)
+		same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.Path()
+		if open || same {
+			qk.main.UpdatePageTitle()
+			qk.main.gotoline(vvv.Loc)
+		} else {
 
+		}
 	}
 }
 
@@ -551,22 +610,28 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 		qk.Type = t
 		qk.searchkey = key
 		qk.grep.close()
+		qk.reset_tree()
 	}
 	if end {
 		qk.save()
 		return
 	}
+	qk.reset_tree()
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
-	_, _, width, _ := qk.view.GetRect()
-	caller.width = width
-	secondline := caller.ListItem(qk.main.root)
+	// _, _, width, _ := qk.view.GetRect()
+	// caller.width = width
+	secondline := caller.ListItem(global_prj_root, true)
 	if len(secondline) == 0 {
 		return
 	}
-	qk.view.AddItem(fmt.Sprintf("%-3d %s", qk.view.GetItemCount()+1, secondline), "", nil)
+	qk.view.AddItem(fmt.Sprintf("%3d. %s", qk.view.GetItemCount()+1, secondline), "", nil)
 	// qk.main.UpdatePageTitle()
 
 	// qk.open_index(qk.view.GetCurrentItem())
+}
+
+func (qk *quick_view) reset_tree() {
+	qk.tree = nil
 }
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
 	if qk.grep != nil {
@@ -580,48 +645,171 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.SetCurrentItem(-1)
 	qk.currentIndex = 0
 	qk.cmd_search_key = ""
-	_, _, width, _ := qk.view.GetRect()
+	qk.reset_tree()
+	// _, _, width, _ := qk.view.GetRect()
 	m := qk.main
-	for i, caller := range qk.Refs.Refs {
-		caller.width = width
+	lspmgr := m.lspmgr
+	qk.tree = &list_view_tree_extend{}
+	qk.tree.build_tree(Refs)
+	data := qk.tree.BuildListStringGroup(qk, global_prj_root, lspmgr)
+	for _, v := range data {
+		qk.view.AddItem(v.text, "", func() {
+
+		})
+	}
+	qk.main.UpdatePageTitle()
+}
+
+func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
+	group := make(map[string]list_tree_node)
+	for i := range Refs {
+		caller := Refs[i]
 		v := caller.Loc
-		caller.Caller = m.lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
-		secondline := caller.ListItem(qk.main.root)
+		if s, ok := group[v.URI.String()]; ok {
+			s.children = append(s.children, list_tree_node{ref_index: i})
+			group[v.URI.String()] = s
+		} else {
+			group[v.URI.String()] = list_tree_node{ref_index: i, parent: true, expand: true}
+		}
+	}
+	trees := []list_tree_node{}
+	for _, v := range group {
+		trees = append(trees, v)
+	}
+	qk.tree = trees
+}
+func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root string, lspmgr *lspcore.LspWorkspace) []*list_tree_node {
+	var data = []*list_tree_node{}
+	lineno := 1
+	for i := range qk.tree {
+		a := &qk.tree[i]
+		a.quickfix_listitem_string(view, lspmgr, lineno)
+		data = append(data, a)
+		if a.expand {
+			for i := range a.children {
+				c := &a.children[i]
+				c.quickfix_listitem_string(view, lspmgr, lineno)
+				data = append(data, c)
+			}
+		}
+		lineno++
+	}
+	qk.tree_data_item = data
+	return data
+}
+
+func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lspcore.LspWorkspace, lineno int) {
+	caller := &qk.Refs.Refs[tree.ref_index]
+	parent := tree.parent
+	root := lspmgr.Wk.Path
+	switch qk.Type {
+	case data_refs, data_search, data_grep_word:
+		v := caller.Loc
+		if caller.Caller == nil || len(caller.Caller.Name) == 0 {
+			caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+		}
+	}
+	secondline := caller.ListItem(root, parent)
+	if parent {
+		tree.text = fmt.Sprintf("%3d. %s", lineno, secondline)
+		if len(tree.children) > 0 {
+			if !tree.expand {
+				tree.text = "+" + tree.text
+			} else {
+				tree.text = " " + tree.text
+			}
+		} else {
+			tree.text = " " + tree.text
+		}
+	} else {
+		tree.text = fmt.Sprintf("     %s", secondline)
+	}
+}
+func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
+	var data = []string{}
+	for i, caller := range qk.Refs.Refs {
+		// caller.width = width
+		switch qk.Type {
+		case data_refs:
+			v := caller.Loc
+			if caller.Caller == nil || len(caller.Caller.Name) == 0 {
+				caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+			}
+		}
+		secondline := caller.ListItem(root, true)
 		if len(secondline) == 0 {
 			continue
 		}
-		qk.view.AddItem(fmt.Sprintf("%-3d %s", i+1, secondline), "", nil)
+		x := fmt.Sprintf("%3d. %s", i+1, secondline)
+		data = append(data, x)
 	}
-	qk.main.UpdatePageTitle()
-	// qk.open_index(qk.view.GetCurrentItem())
+	return data
 }
 
-func (caller ref_with_caller) ListItem(root string) string {
+type list_tree_node struct {
+	ref_index  int
+	list_index int
+	expand     bool
+	parent     bool
+	children   []list_tree_node
+	text       string
+}
+
+func (caller ref_with_caller) ListItem(root string, full bool) string {
 	v := caller.Loc
+
+	line := ""
+	path := v.URI.AsPath().String()
+	if len(root) > 0 {
+		path = trim_project_filename(path, root)
+	}
+
 	source_file_path := v.URI.AsPath().String()
 	data, err := os.ReadFile(source_file_path)
+
 	if err != nil {
-		return ""
-	}
-	lines := strings.Split(string(data), "\n")
-	line := ""
-	if len(lines) > v.Range.Start.Line {
-		line = lines[v.Range.Start.Line]
-		if len(line) == 0 {
-			return ""
+		line = err.Error()
+	} else {
+		lines := strings.Split(string(data), "\n")
+		if len(lines) > v.Range.Start.Line {
+			line = lines[v.Range.Start.Line]
+			s := v.Range.Start.Character
+			e := v.Range.End.Character
+			if v.Range.Start.Line == v.Range.End.Line {
+				if len(line) > s && len(line) > e && s < e {
+					a1 := line[:s]
+					a := line[s:e]
+					a2 := line[e:]
+					if len(a1) > 0 && a1[len(a1)-1] == '*' {
+						a1 += " "
+					}
+					if len(a2) > 0 && a2[0] == '*' {
+						a2 = " " + a2
+					}
+					line = strings.Join([]string{a1, "**", a, "**", a2}, "")
+				}
+			}
+		} else {
+			line = "File changed lines not exsited"
 		}
 	}
-	gap := max(40, caller.width/2)
-	begin := min(len(line), max(0, v.Range.Start.Character-gap))
-	end := min(len(line), v.Range.Start.Character+gap)
-	path := strings.Replace(v.URI.AsPath().String(), root, "", -1)
-	callerstr := ""
+
 	if caller.Caller != nil {
-		callerstr = caller_to_listitem(caller.Caller, root)
+		callname := caller.Caller.Name
+		callname = strings.TrimLeft(callname, " ")
+		callname = strings.TrimRight(callname, " ")
+		if full {
+			return fmt.Sprintf("%s:%-4d **%s** %s", path, v.Range.Start.Line+1, callname, line)
+		} else {
+			return fmt.Sprintf("	:%-4d **%s** %s", v.Range.Start.Line+1, callname, line)
+		}
+	} else {
+		if full {
+			return fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
+		} else {
+			return fmt.Sprintf("	:%-4d %s", v.Range.Start.Line+1, line)
+		}
 	}
-	code := line[begin:end]
-	secondline := fmt.Sprintf("%s -> %s:%-4d %s", callerstr, path, v.Range.Start.Line+1, code)
-	return secondline
 }
 
 func new_qf_history(main *mainui) (*quickfix_history, error) {

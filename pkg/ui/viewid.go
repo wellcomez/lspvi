@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 
+	// "github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -107,7 +108,7 @@ func view_id_init(m *mainui) {
 				{
 					box.SetFocusFunc(func() {
 						change_after_focused(box, m)
-						m.page.SetBorderColor(global_theme.search_highlight_color())
+						m.page.SetBorderColor(tview.Styles.BorderColor)
 					})
 				}
 			default:
@@ -139,7 +140,7 @@ func view_id_init(m *mainui) {
 }
 
 func change_after_focused(box *tview.Box, m *mainui) {
-	box.SetBorderColor(global_theme.search_highlight_color())
+	box.SetBorderColor(tview.Styles.BorderColor)
 	vid := m.get_focus_view_id()
 	switch vid {
 	case view_code, view_cmd:

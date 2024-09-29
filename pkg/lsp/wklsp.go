@@ -203,7 +203,7 @@ func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, err
 		return nil, err
 	}
 	if isnew {
-		symbolfile.__load_symbol_impl()
+		symbolfile.__load_symbol_impl(false)
 	}
 	if symbolfile == nil {
 		log.Printf("fail to loadd  %s\n", filename)
@@ -284,7 +284,7 @@ func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) *CallStackEnt
 		Item: lsp.CallHierarchyItem{
 			Name:  s.SymInfo.Name,
 			Range: r,
-			URI:   lsp.NewDocumentURI(filename),
+			URI:   s.SymInfo.Location.URI,
 		},
 		Name: s.SymInfo.Name,
 	}

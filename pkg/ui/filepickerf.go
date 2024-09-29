@@ -344,7 +344,7 @@ func update_list_view(list *customlist, t querytask, v *fzfmain, code *CodeView)
 			idx := list.GetCurrentItem()
 			f := t.ret[idx]
 			v.hide()
-			code.open_file_line(f.path, nil)
+			code.open_file_line(f.path, nil,true)
 		})
 	}
 }

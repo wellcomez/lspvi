@@ -206,8 +206,22 @@ func (l *customlist) Draw(screen tcell.Screen) {
 }
 
 func get_hl_postion(MainText string, keys []colorkey, l *customlist, keys2 []colorkey) (string, []keypattern) {
-	hlkey, MainText := l.find_hl_key(MainText)
-	hlkey = append(hlkey, keys...)
+	k, MainText := l.find_hl_key(MainText)
+	for i := range k{
+		k[i].str = strings.ToLower(k[i].str)
+	}
+	hlkey := k
+	for _, v := range k {
+		k1 :=v.str
+		for _, v2 := range keys {
+			k2 := strings.ToLower(v2.str)
+			if k1 == k2 {
+				continue
+			} else {
+				hlkey = append(hlkey, v2)
+			}
+		}
+	}
 	main_postion := find_key(MainText, hlkey, 0)
 	if l.fuzz && len(main_postion) == 0 && len(keys2) > 0 {
 		main_postion = find_key_fuzzy2(MainText, keys2, 0)

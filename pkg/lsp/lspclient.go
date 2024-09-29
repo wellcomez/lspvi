@@ -14,6 +14,8 @@ type lspclient interface {
 	InitializeLsp(wk WorkSpace) error
 	Launch_Lsp_Server() error
 	DidOpen(file string) error
+	DidSave(file string, text string) error
+	DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error
 	GetDocumentSymbol(file string) (*document_symbol, error)
 	GetReferences(file string, pos lsp.Position) ([]lsp.Location, error)
 	GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
@@ -81,6 +83,12 @@ func (l lsp_base) IsMe(filename string) bool {
 // Initialize implements lspclient.
 func (l lsp_base) DidOpen(file string) error {
 	return l.core.DidOpen(file)
+}
+func (l lsp_base) DidSave(file, text string) error {
+	return l.core.DidSave(file, text)
+}
+func (l lsp_base) DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error {
+	return l.core.DidChange(file, verion, ContentChanges)
 }
 
 func (l lsp_base) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {

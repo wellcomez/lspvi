@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	// "strings"
 
@@ -48,7 +49,8 @@ type TreeSitterSymbol struct {
 	Symbol     string
 }
 type TreeSitter struct {
-	filename   string
+	filename   SourceFile
+	content    []byte
 	parser     *sitter.Parser
 	tree       *sitter.Tree
 	sourceCode []byte
@@ -122,7 +124,7 @@ func (ret *ts_lang_def) load_scm() {
 	}
 }
 func (tsdef *ts_lang_def) create_treesitter(file string) *TreeSitter {
-	ret := NewTreeSitter(file)
+	ret := NewTreeSitter(file, []byte{})
 	ret.tsdef = tsdef
 	return ret
 }
@@ -239,7 +241,7 @@ func ts_to_symbol(s TreeSitterSymbol, ts *TreeSitter) lsp.SymbolInformation {
 		Name: s.Code,
 		Kind: lsp.SymbolKindVariable,
 		Location: lsp.Location{
-			URI: lsp.NewDocumentURI(ts.filename),
+			URI: lsp.NewDocumentURI(ts.filename.Path()),
 			Range: lsp.Range{
 				Start: lsp.Position{Line: int(s.Begin.Row), Character: int(s.Begin.Column)},
 				End:   lsp.Position{Line: int(s.End.Row), Character: int(s.End.Column)},
@@ -507,7 +509,7 @@ func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	}
 	for i := range tree_sitter_lang_map {
 		v := tree_sitter_lang_map[i]
-		if ts_name := v.get_ts_name(t.filename); len(ts_name) > 0 {
+		if ts_name := v.get_ts_name(t.filename.Path()); len(ts_name) > 0 {
 			t.tsdef = v
 			t.Loadfile(v.tslang, cb)
 			return nil
@@ -615,23 +617,49 @@ func (ts ts_lang_def) read_embbed(p string) ([]byte, error) {
 	return []byte{}, err
 }
 
+type SourceFile struct {
+	filepathname string
+	modTiem      time.Time
+}
+
+func (s SourceFile) Path() string {
+	return s.filepathname
+}
+
+func NewFile(filename string) SourceFile {
+	fileInfo, err := os.Stat(filename)
+	modTime := time.Time{}
+	if err == nil {
+		modTime = fileInfo.ModTime()
+	}
+	return SourceFile{filepathname: filename, modTiem: modTime}
+}
+func (s SourceFile) Same(s1 SourceFile) bool {
+	return s == s1
+}
+
 var loaded_files = make(map[string]*TreeSitter)
 
-func GetNewTreeSitter(name string) *TreeSitter {
+func GetNewTreeSitter(name string, content []byte) *TreeSitter {
 	if len(name) == 0 {
 		return nil
 	}
-	if ts, ok := loaded_files[name]; ok {
-		return ts
+	if len(content) == 0 {
+		if ts, ok := loaded_files[name]; ok {
+			if ts.filename.Same(NewFile(name)) {
+				return ts
+			}
+		}
 	}
-	v := NewTreeSitter(name)
+	v := NewTreeSitter(name, content)
 	loaded_files[name] = v
 	return v
 }
-func NewTreeSitter(name string) *TreeSitter {
+func NewTreeSitter(name string, content []byte) *TreeSitter {
 	ret := &TreeSitter{
 		parser:   sitter.NewParser(),
-		filename: name,
+		filename: NewFile(name),
+		content:  content,
 	}
 	ret.HlLine = make(map[int][]TreeSitterSymbol)
 	return ret
@@ -722,7 +750,7 @@ func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
 						Name: s.Code,
 						Kind: kind,
 						Location: lsp.Location{
-							URI:   lsp.NewDocumentURI(ts.filename),
+							URI:   lsp.NewDocumentURI(ts.filename.Path()),
 							Range: Range,
 						},
 					}
@@ -782,12 +810,16 @@ func (s TreeSitterSymbol) lsprange() lsp.Range {
 
 func (ts *TreeSitter) _load_file(lang *sitter.Language) error {
 	ts.parser.SetLanguage(lang)
-	buf, err := os.ReadFile(ts.filename)
-	if err != nil {
-		return err
+	if len(ts.content) == 0 {
+		buf, err := os.ReadFile(ts.filename.Path())
+		if err != nil {
+			return err
+		}
+		ts.sourceCode = buf
+	} else {
+		ts.sourceCode = ts.content
 	}
-	ts.sourceCode = buf
-	tree, err := ts.parser.ParseCtx(context.Background(), nil, buf)
+	tree, err := ts.parser.ParseCtx(context.Background(), nil, ts.sourceCode)
 	ts.tree = tree
 	return err
 }

@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -279,14 +278,14 @@ func (view *file_tree_view) dir_replace(node *tview.TreeNode, filename string) {
 			dirname = filepath.Dir(filename)
 		}
 		title := dirname
-		if len(title) > len(view.main.root) {
-			title = strings.Replace(title, view.main.root, "", 1)
+		if len(title) > len(global_prj_root) {
+			title = trim_project_filename(title,global_prj_root)
 		}
 		UpdateTitleAndColor(view.view.Box, title)
 		// x := node.GetText(A)
 		title2 := filename
 		if len(title2) > len(view.rootdir) {
-			title2 = strings.TrimPrefix(title2, view.rootdir)
+			title2 = trim_project_filename(title2, view.rootdir)
 		}
 		root2 := tview.NewTreeNode(title2)
 		parent := tview.NewTreeNode("..")

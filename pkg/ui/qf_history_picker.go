@@ -78,14 +78,14 @@ func (t DateType) String() string {
 	}
 	return ""
 }
-func new_qk_history_picker(v *fzfmain,code *CodeView) qk_history_picker {
+func new_qk_history_picker(v *fzfmain, code *CodeView) qk_history_picker {
 	list := new_customlist(false)
 	list.fuzz = true
 	list.SetBorder(true)
 	main := v.main
 	keys, keymaplist := load_qf_history(main)
 
-	x := new_preview_picker(v,code)
+	x := new_preview_picker(v, code)
 	x.use_cusutom_list(list)
 
 	ret := qk_history_picker{
@@ -129,7 +129,7 @@ func load_qf_history(main *mainui) ([]qf_history_data, []string) {
 	keys, _ := hh.Load()
 	sort.Sort(ByAge(keys))
 	keymaplist := []string{}
-	root := main.root
+	root := global_prj_root
 	for _, v := range keys {
 		file_info := ""
 		if len(v.Key.File) > 0 {
@@ -189,11 +189,11 @@ func (qk *qk_history_picker) updateprev() {
 	case data_refs, data_grep_word, data_search:
 		{
 			caller := keys[index].Result.Refs
-			_, _, width, _ := qk.prev_picker_impl.listview.GetInnerRect()
+			// _, _, width, _ := qk.prev_picker_impl.listview.GetInnerRect()
 			dataprev := []string{}
 			for _, call := range caller {
-				call.width = width
-				dataprev = append(dataprev, call.ListItem(qk.parent.main.root))
+				// call.width = width
+				dataprev = append(dataprev, call.ListItem(global_prj_root,true))
 			}
 			qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
 		}

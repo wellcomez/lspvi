@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -96,7 +97,7 @@ func (pk livewgreppicker) update_preview() {
 	}
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
-		pk.codeprev.Load2Line(item.fpath, item.lineNumber-1)
+		pk.PrevOpen(item.fpath, item.lineNumber-1)
 	}
 }
 
@@ -120,14 +121,14 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	}
 	return layout
 }
-func new_grep_picker(v *fzfmain,code *CodeView) *greppicker {
+func new_grep_picker(v *fzfmain, code *CodeView) *greppicker {
 	grep := &greppicker{
-		livewgreppicker: new_live_grep_picker(v,code),
+		livewgreppicker: new_live_grep_picker(v, code),
 	}
 	grep.not_live = true
 	return grep
 }
-func new_live_grep_picker(v *fzfmain,code *CodeView) *livewgreppicker {
+func new_live_grep_picker(v *fzfmain, code *CodeView) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v, code)
 	grep := &livewgreppicker{
@@ -167,7 +168,7 @@ func (grepx *livewgreppicker) grep_to_list() {
 	grep.temp = nil
 	grep.result.data = append(grep.result.data, tmp.data...)
 	for _, o := range tmp.data {
-		path := strings.TrimPrefix(o.fpath, grepx.main.root)
+		path := trim_project_filename(o.fpath, global_prj_root)
 		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
 		grepx.grep_list_view.AddItem(data, "", func() {
 			loc := convert_grep_info_location(&o)
@@ -229,7 +230,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			grepx.grep_to_list()
 		})
 	} else {
-		ref := o.to_ref_caller()
+		ref := o.to_ref_caller(grepx.impl.key)
 		if !grepx.qf(false, ref) {
 			grep.grep.abort()
 		}
@@ -248,9 +249,14 @@ func convert_grep_info_location(o *grep_output) lsp.Location {
 	return loc
 }
 
-func (o *grep_output) to_ref_caller() ref_with_caller {
-	start := lsp.Position{Line: o.lineNumber - 1, Character: 0}
+func (o *grep_output) to_ref_caller(key string) ref_with_caller {
+	b := strings.Index(o.line, key)
+	e := b + len(key)
+	sss:=o.line[b:e]
+	log.Println(sss)
+	start := lsp.Position{Line: o.lineNumber - 1, Character: b}
 	end := start
+	end.Character = e
 	ref := ref_with_caller{
 		Loc: lsp.Location{
 			URI: lsp.NewDocumentURI(o.fpath),
@@ -270,7 +276,7 @@ func (pk livewgreppicker) Save() {
 		Date: time.Now().Unix(),
 	}
 	for _, v := range pk.impl.result.data {
-		Result.Refs = append(Result.Refs, v.to_ref_caller())
+		Result.Refs = append(Result.Refs, v.to_ref_caller(pk.impl.key))
 	}
 	data.Result = Result
 	main := pk.main
@@ -312,7 +318,7 @@ func (pk *livewgreppicker) __updatequery(query string) {
 	impl.grep = g
 	impl.result = &grepresult{}
 	g.cb = pk.end
-	chans := g.kick(pk.main.root)
+	chans := g.kick(global_prj_root)
 	go g.report(chans, false)
 
 }

@@ -10,10 +10,10 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
-func (parent *fzfmain) openfile(path string) {
-	parent.main.OpenFile(path, nil)
+func (parent *fzfmain) openfile(path string, code *CodeView) {
+	code.open_file_line(path, nil, true)
 	parent.hide()
-	parent.main.set_viewid_focus(view_code)
+	parent.main.set_viewid_focus(code.id)
 	parent.main.cmdline.Vim.EnterEscape()
 }
 
@@ -107,8 +107,8 @@ func (v *fzfmain) open_wks_query(code *CodeView) {
 	v.create_dialog_content(x, sym)
 }
 
-func (v *fzfmain) OpenBookMarkFzf() {
-	sym := new_bookmark_picker(v, v.main.current_editor())
+func (v *fzfmain) OpenBookMarkFzf(code *CodeView, bookmark *proj_bookmark) {
+	sym := new_bookmark_picker(v, code, bookmark)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
@@ -137,8 +137,8 @@ func (v *fzfmain) OpenLiveGrepFzf() {
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
-func (v *fzfmain) OpenColorFzf() {
-	sym := new_color_picker(v)
+func (v *fzfmain) OpenColorFzf(code *CodeView) {
+	sym := new_color_picker(v, code)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
@@ -148,7 +148,7 @@ func (v *fzfmain) OpenWorkspaceFzf() {
 	v.create_dialog_content(x, sym)
 }
 func (v *fzfmain) OpenHistoryFzf() {
-	sym := new_history_picker(v)
+	sym := new_history_picker(v, v.main.current_editor())
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
@@ -234,7 +234,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 			mouseDownY:     -1,
 		},
 	}
-	// new_filewalk(main.root)
+	// new_filewalk(global_prj_root)
 	return ret
 }
 

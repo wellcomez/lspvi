@@ -76,7 +76,7 @@ func (r *recent_open_file) add(filename string) {
 			}
 			filepath := filename
 			r.filelist = append(r.filelist, filename)
-			filename = strings.TrimPrefix(filename, r.main.root)
+			filename = trim_project_filename(filename, global_prj_root)
 			r.list.AddItem(filename, "", func() {
 				r.main.OpenFile(filepath, nil)
 			})
@@ -96,34 +96,33 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 // editor_area_fouched
 
 type mainui struct {
-	sel           selectarea
-	icon          *smallicon
-	term          *Term
-	fileexplorer  *file_tree_view
-	codeview      *CodeView
-	codeviewmain  *CodeView
-	codeview2     *CodeView
-	lspmgr        *lspcore.LspWorkspace
-	symboltree    *SymbolTreeView
-	quickview     *quick_view
-	bookmark_view *bookmark_view
-	page          *console_pages
-	callinview    *callinview
-	// tabs               *ButtonGroup
-	root               string
-	app                *tview.Application
-	uml                *umlview
-	bf                 *BackForward
-	bookmark           *proj_bookmark
-	log                *logview
-	cmdline            *cmdline
-	prefocused         view_id
-	searchcontext      *GenericSearch
-	statusbar          *tview.TextView
-	layout             *rootlayout
-	console_index_list *qf_index_view
-	right_context_menu *contextmenu
-	recent_open        *recent_open_file
+	sel                 selectarea
+	code_navigation_bar *smallicon
+	quickbar            *minitoolbar
+	term                *Term
+	fileexplorer        *file_tree_view
+	codeview            *CodeView
+	codeviewmain        *CodeView
+	codeview2           *CodeView
+	lspmgr              *lspcore.LspWorkspace
+	symboltree          *SymbolTreeView
+	quickview           *quick_view
+	bookmark_view       *bookmark_view
+	page                *console_pages
+	callinview          *callinview
+	app                 *tview.Application
+	uml                 *umlview
+	bf                  *BackForward
+	bookmark            *proj_bookmark
+	log                 *logview
+	cmdline             *cmdline
+	prefocused          view_id
+	searchcontext       *GenericSearch
+	statusbar           *tview.TextView
+	layout              *rootlayout
+	console_index_list  *qf_index_view
+	right_context_menu  *contextmenu
+	recent_open         *recent_open_file
 	// _editor_area_layout *editor_area_layout
 	tty bool
 	ws  string
@@ -205,9 +204,10 @@ func (m *mainui) is_tab(tabname string) bool {
 }
 
 func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
+	code := m.codeview
 	go func() {
 		m.app.QueueUpdateDraw(func() {
-			m.quickview.view.Key = m.codeview.view.Cursor.GetSelection()
+			m.quickview.view.Key = code.view.Cursor.GetSelection()
 			if len(ranges.Key) > 0 {
 				m.quickview.view.Key = ranges.Key
 			}
@@ -289,18 +289,20 @@ func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 	// panic("unimplemented")
 }
 func (m *mainui) gotoline(loc lsp.Location) {
+	code := m.codeview
 	file := loc.URI.AsPath().String()
-	if file != m.codeview.filepathname {
+	if file != code.Path() {
 		m.OpenFile(file, &loc)
 	} else {
-		m.codeview.gotoline(loc.Range.Start.Line)
+		code.gotoline_not_open(loc.Range.Start.Line)
 	}
 }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
+	code := m.codeview
 	if file != nil {
-		if file.Filename != m.codeview.filepathname {
+		if file.Filename != code.Path() {
 			return
 		}
 	}
@@ -309,8 +311,8 @@ func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	}
 	m.symboltree.update(file)
 	if file == nil || !file.HasLsp() {
-		if m.codeview.ts != nil {
-			m.symboltree.upate_with_ts(m.codeview.ts)
+		if code.tree_sitter != nil {
+			m.symboltree.upate_with_ts(code.tree_sitter)
 		}
 	}
 }
@@ -335,10 +337,12 @@ func (m *mainui) quit() {
 	m.Close()
 }
 func (m *mainui) open_qfh_query() {
-	m.layout.dialog.open_qfh_picker(m.codeview)
+	code := m.codeview
+	m.layout.dialog.open_qfh_picker(code)
 }
 func (m *mainui) open_wks_query() {
-	m.layout.dialog.open_wks_query(m.codeview)
+	code := m.codeview
+	m.layout.dialog.open_wks_query(code)
 }
 func (m *mainui) ZoomWeb(zoom bool) {
 	if proxy != nil {
@@ -376,6 +380,7 @@ type navigation_loc struct {
 func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory bool) {
 	// dirname := filepath.Dir(file)
 	// m.fileexplorer.ChangeDir(dirname)
+	code := m.codeview
 	var loc *lsp.Location
 	if navi != nil {
 		loc = navi.loc
@@ -386,32 +391,22 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	}
 	if addhistory {
 		if loc != nil {
-			m.bf.history.SaveToHistory(m.codeview)
-			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line, m.codeview))
+			m.bf.history.SaveToHistory(code)
+			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line, code))
 		} else {
-			m.bf.history.SaveToHistory(m.codeview)
+			m.bf.history.SaveToHistory(code)
 			m.bf.history.AddToHistory(file, nil)
 		}
 	}
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
-	m.codeview.LoadAndCb(file, func() {
-		if loc != nil {
-			lins := m.codeview.view.Buf.LinesNum()
-			loc.Range.Start.Line = min(lins-1, loc.Range.Start.Line)
-			loc.Range.End.Line = min(lins-1, loc.Range.End.Line)
-			m.codeview.goto_loation(loc.Range)
-		}
-	})
-	go m.async_lsp_open(file, func(sym *lspcore.Symbol_file) {
-		m.codeview.lspsymbol = sym
-	})
+	code.open_file_line(file, loc, true)
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
 	if err == nil {
-		symbolfile.LoadSymbol()
+		symbolfile.LoadSymbol(false)
 		m.app.QueueUpdate(func() {
 			if cb != nil {
 				cb(symbolfile)
@@ -517,7 +512,8 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{sel: selectarea{nottext: true}}
 	prj.Load(arg, main)
-	main.icon = new_small_icon(main)
+	main.code_navigation_bar = new_small_icon(main)
+	main.quickbar = new_quick_toolbar(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
 	global_theme.update_default_color()
 
@@ -546,7 +542,7 @@ func MainUI(arg *Arguments) {
 	// }
 	// lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle})
 	// main.lspmgr = lspmgr
-	// main.root = root
+	// global_prj_root = root
 
 	main.cmdline = new_cmdline(main)
 	var logfile, _ = os.OpenFile(lspviroot.logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -556,6 +552,7 @@ func MainUI(arg *Arguments) {
 	main.app = GlobalApp
 
 	editor_area := create_edit_area(main)
+	code := main.codeview
 	console_layout, tab_area := create_console_area(main)
 
 	main_layout := main.create_main_layout(editor_area, console_layout, tab_area)
@@ -596,7 +593,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					main.codeview.Load(main.codeview.filepathname)
+					code.Load(code.Path())
 				})
 			}()
 		}
@@ -633,14 +630,14 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(main)
 	main.quickview.RestoreLast()
-	UpdateTitleAndColor(main_layout.Box, main.codeview.filepathname)
+	UpdateTitleAndColor(main_layout.Box, code.Path())
 	go func() {
 		app.QueueUpdateDraw(func() {
 			view_code.setfocused(main)
 			main.cmdline.Vim.EnterEscape()
 		})
 	}()
-	main.sel.observer = append(main.sel.observer, main.console_index_list)
+	main.sel.observer = append(main.sel.observer, main.console_index_list.sel)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
@@ -659,12 +656,14 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 			main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
 		}
 	}
-	main.icon.Draw(screen)
+	main.code_navigation_bar.Draw(screen)
+	main.quickbar.Draw(screen)
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
-	main.sel.handle_mouse_selection(action, event)
-	main.icon.handle_mouse_event(action, event)
+	spacemenu := main.layout.spacemenu
+	dialog := main.layout.dialog
+
 	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 	if content_menu_action == tview.MouseConsumed {
 		return nil, tview.MouseConsumed
@@ -672,8 +671,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 	if main.right_context_menu.visible {
 		return nil, tview.MouseConsumed
 	}
-	if main.layout.spacemenu.visible {
-		spacemenu := main.layout.spacemenu
+	if spacemenu.visible {
 		action, event := spacemenu.handle_mouse(action, event)
 		if action == tview.MouseConsumed {
 			return event, action
@@ -686,16 +684,21 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 		}
 	}
 
-	if main.layout.dialog.Visible {
-		if !InRect(event, main.layout.dialog.Frame) {
+	if dialog.Visible {
+		if !InRect(event, dialog.Frame) {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
-				main.layout.dialog.hide()
+				dialog.hide()
 			}
 		} else {
-			main.layout.dialog.MouseHanlde(event, action)
+			dialog.MouseHanlde(event, action)
 		}
 		return nil, tview.MouseConsumed
 	}
+
+	main.sel.handle_mouse_selection(action, event)
+	main.code_navigation_bar.handle_mouse_event(action, event)
+	main.quickbar.handle_mouse_event(action, event)
+	
 	for _, v := range resizer {
 		if v.checkdrag(action, event) == tview.MouseConsumed {
 			return nil, tview.MouseConsumed
@@ -705,6 +708,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 }
 
 func load_from_history(main *mainui) {
+	code := main.codeview
 	filearg := main.bf.Last()
 	main.quickview.view.Clear()
 	main.symboltree.Clear()
@@ -719,7 +723,7 @@ func load_from_history(main *mainui) {
 			},
 		}, offset: 0}, false)
 	} else {
-		main.codeview.Load("")
+		code.Load("")
 	}
 }
 
@@ -810,7 +814,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
 		}
-		titlename := fmt.Sprintf("%s ", main.codeview.filepathname)
+		titlename := fmt.Sprintf("%s ", main.codeview.Path())
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {
@@ -836,6 +840,7 @@ func create_edit_area(main *mainui) *flex_area {
 	SplitCode.main = main
 	codeview := NewCodeView(main)
 	codeview.id = view_code
+	global_file_watch.AddReciever(codeview)
 	codeview.not_preview = true
 	codeview.Width = 80
 	main.codeviewmain = codeview
@@ -850,10 +855,10 @@ func create_edit_area(main *mainui) *flex_area {
 	codeview.view.SetBorder(true)
 
 	main.quickview = new_quikview(main)
-	main.bookmark_view = new_bookmark_view(main)
+	main.bookmark_view = new_bookmark_view(main.bookmark, codeview, func() bool { return view_bookmark == main.tab.activate_tab_id })
 	main.callinview = new_callview(main)
 
-	main.fileexplorer = new_file_tree(main, "FileExplore", main.root, func(filename string) bool { return true })
+	main.fileexplorer = new_file_tree(main, "FileExplore", global_prj_root, func(filename string) bool { return true })
 	main.fileexplorer.Width = 20
 	main.fileexplorer.Init()
 	main.fileexplorer.openfile = main.open_file
@@ -1058,10 +1063,10 @@ func (main *mainui) GoBack() {
 }
 
 //	func (main *mainui) open_file_picker() {
-//		main.layout.dialog.OpenFileFzf(main.root)
+//		main.layout.dialog.OpenFileFzf(global_prj_root)
 //	}
 func (main *mainui) open_picker_bookmark() {
-	main.layout.dialog.OpenBookMarkFzf()
+	main.layout.dialog.OpenBookMarkFzf(main.codeview, main.bookmark)
 }
 func (main *mainui) open_picker_refs() {
 	code := main.current_editor()
@@ -1070,7 +1075,7 @@ func (main *mainui) open_picker_refs() {
 	main.layout.dialog.OpenRefFzf(code, loc)
 }
 func (main *mainui) open_picker_ctrlp() {
-	main.layout.dialog.OpenFileFzf(main.root, main.current_editor())
+	main.layout.dialog.OpenFileFzf(global_prj_root, main.current_editor())
 }
 func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker {
 	return main.layout.dialog.OpenGrepWordFzf(word, qf)
@@ -1079,7 +1084,7 @@ func (main *mainui) open_picker_livegrep() {
 	main.layout.dialog.OpenLiveGrepFzf()
 }
 func (main *mainui) open_colorescheme() {
-	main.layout.dialog.OpenColorFzf()
+	main.layout.dialog.OpenColorFzf(main.codeview)
 }
 func (main *mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()

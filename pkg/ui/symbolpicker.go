@@ -228,7 +228,7 @@ func (wk symbolpicker) update_preview() {
 		value := cur.GetReference()
 		if value != nil {
 			if sym, ok := value.(lsp.SymbolInformation); ok {
-				wk.impl.codeprev.gotoline(sym.Location.Range.Start.Line)
+				wk.impl.codeprev.gotoline_not_open(sym.Location.Range.Start.Line)
 			}
 		}
 	}

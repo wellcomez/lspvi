@@ -146,7 +146,7 @@ func search_on_ui(option search_option, main *mainui) {
 			if changed {
 				gs.indexList = main.codeview.OnSearch(txt, whole)
 				pos := gs.GetIndex()
-				main.codeview.goto_loation(convert_search_pos_lsprange(pos, gs))
+				main.codeview.goto_loation(convert_search_pos_lsprange(pos, gs),true)
 				if tofzf {
 					locs := convert_to_fzfsearch(gs, main)
 					main.ActiveTab(view_quickview, false)
@@ -156,7 +156,7 @@ func search_on_ui(option search_option, main *mainui) {
 							Loc: loc,
 						})
 					}
-					main.quickview.main.quickview.UpdateListView(data_search, data, lspcore.SymolSearchKey{Key: txt})
+					main.quickview.UpdateListView(data_search, data, lspcore.SymolSearchKey{Key: txt})
 				}
 			} else {
 				var pos SearchPos
@@ -165,7 +165,7 @@ func search_on_ui(option search_option, main *mainui) {
 				} else {
 					pos = gs.GetPrev()
 				}
-				main.codeview.goto_loation(convert_search_pos_lsprange(pos, gs))
+				main.codeview.goto_loation(convert_search_pos_lsprange(pos, gs),true)
 			}
 			main.page.update_title(gs.String())
 		}
@@ -191,7 +191,7 @@ func convert_to_fzfsearch(gs *GenericSearch, main *mainui) []lsp.Location {
 	for _, loc := range gs.indexList {
 		x := convert_search_pos_lsprange(loc, gs)
 		loc := lsp.Location{
-			URI:   lsp.NewDocumentURI(main.codeview.filepathname),
+			URI:   lsp.NewDocumentURI(main.codeview.Path()),
 			Range: x,
 		}
 		locs = append(locs, loc)

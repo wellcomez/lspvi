@@ -7,7 +7,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type CodeContextMenu struct {
@@ -80,29 +79,32 @@ func update_selection_menu(code *CodeView) {
 	menudata := code.right_menu_data
 	items := []context_menu_item{
 		{item: create_menu_item("Reference"), handle: func() {
-			menudata.SelectInEditor(code.view.Cursor)
-			main.get_refer(menudata.selection_range, code.filepathname)
-			main.ActiveTab(view_quickview, false)
+
+			if menudata.SelectInEditor(code.view.Cursor) {
+				main.get_refer(menudata.selection_range, code.Path())
+				main.ActiveTab(view_quickview, false)
+			}
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
-			main.get_define(menudata.selection_range, code.filepathname)
+			main.get_define(menudata.selection_range, code.Path())
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {
-			menudata.SelectInEditor(code.view.Cursor)
-			loc := lsp.Location{
-				URI:   lsp.NewDocumentURI(code.filepathname),
-				Range: menudata.selection_range,
+			if menudata.SelectInEditor(code.view.Cursor) {
+				loc := lsp.Location{
+					URI:   lsp.NewDocumentURI(code.Path()),
+					Range: menudata.selection_range,
+				}
+				main.get_callin_stack_by_cursor(loc, code.Path())
+				main.ActiveTab(view_callin, false)
 			}
-			main.get_callin_stack_by_cursor(loc, code.filepathname)
-			main.ActiveTab(view_callin, false)
 		}},
 		{item: create_menu_item("Open in explorer"), handle: func() {
 			// ret.filename
-			dir := filepath.Dir(code.filepathname)
+			dir := filepath.Dir(code.Path())
 			main.fileexplorer.ChangeDir(dir)
-			main.fileexplorer.FocusFile(code.filepathname)
+			main.fileexplorer.FocusFile(code.Path())
 		}},
 		{item: create_menu_item("-------------"), handle: func() {
 		}},
@@ -156,7 +158,7 @@ func update_selection_menu(code *CodeView) {
 		{
 			item: create_menu_item("External open "),
 			handle: func() {
-				filename := code.filepathname
+				filename := code.Path()
 				yes, err := isDirectory(filename)
 				if err != nil {
 					return
@@ -187,16 +189,7 @@ func SplitDown(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitDown"), handle: func() {
 		if code.id >= view_code {
-			main.codeview2.LoadAndCb(code.filepathname, func() {
-				go main.async_lsp_open(code.filepathname, func(sym *lspcore.Symbol_file) {
-					main.codeview2.lspsymbol = sym
-				})
-				go func() {
-					main.app.QueueUpdateDraw(func() {
-						main.tab.ActiveTab(view_code_below, true)
-					})
-				}()
-			})
+			main.codeview2.open_file_line(code.Path(), nil, false)
 		}
 	}}
 }
