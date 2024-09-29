@@ -2,6 +2,8 @@ package mainui
 
 import (
 	"fmt"
+	"log"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -228,7 +230,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			grepx.grep_to_list()
 		})
 	} else {
-		ref := o.to_ref_caller()
+		ref := o.to_ref_caller(grepx.impl.key)
 		if !grepx.qf(false, ref) {
 			grep.grep.abort()
 		}
@@ -247,9 +249,14 @@ func convert_grep_info_location(o *grep_output) lsp.Location {
 	return loc
 }
 
-func (o *grep_output) to_ref_caller() ref_with_caller {
-	start := lsp.Position{Line: o.lineNumber - 1, Character: 0}
+func (o *grep_output) to_ref_caller(key string) ref_with_caller {
+	b := strings.Index(o.line, key)
+	e := b + len(key)
+	sss:=o.line[b:e]
+	log.Println(sss)
+	start := lsp.Position{Line: o.lineNumber - 1, Character: b}
 	end := start
+	end.Character = e
 	ref := ref_with_caller{
 		Loc: lsp.Location{
 			URI: lsp.NewDocumentURI(o.fpath),
@@ -269,7 +276,7 @@ func (pk livewgreppicker) Save() {
 		Date: time.Now().Unix(),
 	}
 	for _, v := range pk.impl.result.data {
-		Result.Refs = append(Result.Refs, v.to_ref_caller())
+		Result.Refs = append(Result.Refs, v.to_ref_caller(pk.impl.key))
 	}
 	data.Result = Result
 	main := pk.main
