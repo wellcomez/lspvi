@@ -379,7 +379,7 @@ func new_quikview(main *mainui) *quick_view {
 		}},
 		{item: cmditem{cmd: cmdactor{desc: "Copy"}}, handle: func() {
 			ss := ret.sel.list.selected
-			data := ret.BuildListString("", -1, main.lspmgr)
+			data := ret.BuildListString("", main.lspmgr)
 			if len(ss) > 0 {
 
 				sss := data[ss[0]:ss[1]]
@@ -573,8 +573,8 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 		return
 	}
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
-	_, _, width, _ := qk.view.GetRect()
-	caller.width = width
+	// _, _, width, _ := qk.view.GetRect()
+	// caller.width = width
 	secondline := caller.ListItem(global_prj_root)
 	if len(secondline) == 0 {
 		return
@@ -596,21 +596,21 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.SetCurrentItem(-1)
 	qk.currentIndex = 0
 	qk.cmd_search_key = ""
-	_, _, width, _ := qk.view.GetRect()
+	// _, _, width, _ := qk.view.GetRect()
 	m := qk.main
 	lspmgr := m.lspmgr
 
-	data := qk.BuildListString(global_prj_root, width, lspmgr)
+	data := qk.BuildListString(global_prj_root, lspmgr)
 	for _, v := range data {
 		qk.view.AddItem(v, "", nil)
 	}
 	qk.main.UpdatePageTitle()
 }
 
-func (qk *quick_view) BuildListString(root string, width int, lspmgr *lspcore.LspWorkspace) []string {
+func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
 	var data = []string{}
 	for i, caller := range qk.Refs.Refs {
-		caller.width = width
+		// caller.width = width
 		switch qk.Type {
 		case data_refs:
 			v := caller.Loc
@@ -643,11 +643,6 @@ func (caller ref_with_caller) ListItem(root string) string {
 	}
 	begin := 0
 	end := len(line) - 1
-	if caller.width != -1 {
-		gap := max(40, caller.width/2)
-		begin = min(len(line), max(0, v.Range.Start.Character-gap))
-		end = min(len(line), v.Range.Start.Character+gap)
-	}
 	path := v.URI.AsPath().String()
 	if len(root) > 0 {
 		path = trim_project_filename(path, root)

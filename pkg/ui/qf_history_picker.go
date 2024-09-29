@@ -189,10 +189,10 @@ func (qk *qk_history_picker) updateprev() {
 	case data_refs, data_grep_word, data_search:
 		{
 			caller := keys[index].Result.Refs
-			_, _, width, _ := qk.prev_picker_impl.listview.GetInnerRect()
+			// _, _, width, _ := qk.prev_picker_impl.listview.GetInnerRect()
 			dataprev := []string{}
 			for _, call := range caller {
-				call.width = width
+				// call.width = width
 				dataprev = append(dataprev, call.ListItem(global_prj_root))
 			}
 			qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
