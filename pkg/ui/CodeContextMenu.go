@@ -79,9 +79,11 @@ func update_selection_menu(code *CodeView) {
 	menudata := code.right_menu_data
 	items := []context_menu_item{
 		{item: create_menu_item("Reference"), handle: func() {
-			menudata.SelectInEditor(code.view.Cursor)
-			main.get_refer(menudata.selection_range, code.Path())
-			main.ActiveTab(view_quickview, false)
+
+			if menudata.SelectInEditor(code.view.Cursor) {
+				main.get_refer(menudata.selection_range, code.Path())
+				main.ActiveTab(view_quickview, false)
+			}
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
@@ -89,13 +91,14 @@ func update_selection_menu(code *CodeView) {
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {
-			menudata.SelectInEditor(code.view.Cursor)
-			loc := lsp.Location{
-				URI:   lsp.NewDocumentURI(code.Path()),
-				Range: menudata.selection_range,
+			if menudata.SelectInEditor(code.view.Cursor) {
+				loc := lsp.Location{
+					URI:   lsp.NewDocumentURI(code.Path()),
+					Range: menudata.selection_range,
+				}
+				main.get_callin_stack_by_cursor(loc, code.Path())
+				main.ActiveTab(view_callin, false)
 			}
-			main.get_callin_stack_by_cursor(loc, code.Path())
-			main.ActiveTab(view_callin, false)
 		}},
 		{item: create_menu_item("Open in explorer"), handle: func() {
 			// ret.filename

@@ -37,9 +37,10 @@ type right_menu_data struct {
 	local_changed      bool
 }
 
-func (data right_menu_data) SelectInEditor(c *femto.Cursor) {
+func (data right_menu_data) SelectInEditor(c *femto.Cursor) bool {
 	c.SetSelectionStart(data.rightmenu_loc)
 	c.SelectWord()
+	return len(c.GetSelection()) > 1
 }
 
 type File struct {
@@ -998,11 +999,11 @@ func (code *CodeView) action_get_refer() {
 func (code *CodeView) lsp_cursor_loc() lsp.Range {
 	root := code.view
 	loc := root.Cursor.CurSelection
-	x := code.convert_curloc_range(loc)
+	x := code.cursor_selection_to_lsprange(loc)
 	return x
 }
 
-func (*CodeView) convert_curloc_range(loc [2]femto.Loc) lsp.Range {
+func (*CodeView) cursor_selection_to_lsprange(loc [2]femto.Loc) lsp.Range {
 	x := lsp.Range{
 		Start: lsp.Position{
 			Line:      loc[0].Y,
@@ -1178,7 +1179,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 	})
 	code.LoadBuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
-	code.file =NewFile( filename,global_prj_root)
+	code.file = NewFile(filename, global_prj_root)
 	if code.main != nil {
 		code.view.bookmark = *code.main.bookmark.GetFileBookmark(filename)
 	}
