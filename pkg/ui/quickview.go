@@ -639,17 +639,17 @@ func (qk *quick_view) BuildListStringGroup(root string, lspmgr *lspcore.LspWorks
 	for _, a := range qk.trees {
 		index := a.data_index
 		caller := &qk.Refs.Refs[index]
-		data = append(data, newFunction1(qk, caller, lspmgr, true, lineno))
+		data = append(data, quickfix_listitem_string(qk, caller, lspmgr, true, lineno))
 		for _, c := range a.children {
 			caller := &qk.Refs.Refs[c.data_index]
-			data = append(data, newFunction1(qk, caller, lspmgr, false, lineno))
+			data = append(data, quickfix_listitem_string(qk, caller, lspmgr, false, lineno))
 		}
 		lineno++
 	}
 	return data
 }
 
-func newFunction1(qk *quick_view, caller *ref_with_caller, lspmgr *lspcore.LspWorkspace, parent bool, lineno int) string {
+func quickfix_listitem_string(qk *quick_view, caller *ref_with_caller, lspmgr *lspcore.LspWorkspace, parent bool, lineno int) string {
 	root := lspmgr.Wk.Path
 	switch qk.Type {
 	case data_refs, data_search, data_grep_word:
