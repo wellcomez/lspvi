@@ -50,6 +50,7 @@ type TreeSitterSymbol struct {
 }
 type TreeSitter struct {
 	filename   SourceFile
+	content    []byte
 	parser     *sitter.Parser
 	tree       *sitter.Tree
 	sourceCode []byte
@@ -123,7 +124,7 @@ func (ret *ts_lang_def) load_scm() {
 	}
 }
 func (tsdef *ts_lang_def) create_treesitter(file string) *TreeSitter {
-	ret := NewTreeSitter(file)
+	ret := NewTreeSitter(file, []byte{})
 	ret.tsdef = tsdef
 	return ret
 }
@@ -639,23 +640,26 @@ func (s SourceFile) Same(s1 SourceFile) bool {
 
 var loaded_files = make(map[string]*TreeSitter)
 
-func GetNewTreeSitter(name string) *TreeSitter {
+func GetNewTreeSitter(name string, content []byte) *TreeSitter {
 	if len(name) == 0 {
 		return nil
 	}
-	if ts, ok := loaded_files[name]; ok {
-		if ts.filename.Same(NewFile(name)) {
-			return ts
+	if len(content) == 0 {
+		if ts, ok := loaded_files[name]; ok {
+			if ts.filename.Same(NewFile(name)) {
+				return ts
+			}
 		}
 	}
-	v := NewTreeSitter(name)
+	v := NewTreeSitter(name, content)
 	loaded_files[name] = v
 	return v
 }
-func NewTreeSitter(name string) *TreeSitter {
+func NewTreeSitter(name string, content []byte) *TreeSitter {
 	ret := &TreeSitter{
 		parser:   sitter.NewParser(),
 		filename: NewFile(name),
+		content:  content,
 	}
 	ret.HlLine = make(map[int][]TreeSitterSymbol)
 	return ret
@@ -806,12 +810,16 @@ func (s TreeSitterSymbol) lsprange() lsp.Range {
 
 func (ts *TreeSitter) _load_file(lang *sitter.Language) error {
 	ts.parser.SetLanguage(lang)
-	buf, err := os.ReadFile(ts.filename.Path())
-	if err != nil {
-		return err
+	if len(ts.content) == 0 {
+		buf, err := os.ReadFile(ts.filename.Path())
+		if err != nil {
+			return err
+		}
+		ts.sourceCode = buf
+	} else {
+		ts.sourceCode = ts.content
 	}
-	ts.sourceCode = buf
-	tree, err := ts.parser.ParseCtx(context.Background(), nil, buf)
+	tree, err := ts.parser.ParseCtx(context.Background(), nil, ts.sourceCode)
 	ts.tree = tree
 	return err
 }
