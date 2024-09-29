@@ -96,30 +96,22 @@ func SplitRight(code *CodeView) context_menu_item {
 		codeview2 := SplitCode.New()
 		codeview2.view.SetBorder(true)
 		main.right_context_menu.add(codeview2.rightmenu)
-		codeview2.LoadAndCb(code.filepathname, func() {
-			codeview2.view.SetTitle(codeview2.filepathname)
-			go main.async_lsp_open(code.filepathname, func(sym *lspcore.Symbol_file) {
-				codeview2.lspsymbol = sym
-			})
-			go func() {
-				main.app.QueueUpdateDraw(func() {
-					main.tab.ActiveTab(view_code_below, true)
-				})
-			}()
-		})
+		codeview2.open_file_line(code.Path(), nil, true)
 	}}
 }
-func (codeview2 *CodeView) open_file_line(filename string, line *lsp.Location) {
+func (codeview2 *CodeView) open_file_line(filename string, line *lsp.Location, focus bool) {
 	main := codeview2.main
 	codeview2.LoadAndCb(filename, func() {
-		codeview2.view.SetTitle(codeview2.filepathname)
+		codeview2.view.SetTitle(codeview2.Path())
 		if line != nil {
-			codeview2.goto_loation(line.Range)
+			codeview2.goto_loation(line.Range, codeview2.id != view_code_below)
 		}
 		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
 			codeview2.lspsymbol = sym
-			if sym == nil {
-				main.symboltree.Clear()
+			if focus && codeview2.id != view_code_below {
+				if sym == nil {
+					main.symboltree.Clear()
+				}
 			}
 		})
 		if codeview2.id == view_code_below {

@@ -96,7 +96,7 @@ func (pk livewgreppicker) update_preview() {
 	}
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
-		pk.codeprev.Load2Line(item.fpath, item.lineNumber-1)
+		pk.PrevOpen(item.fpath, item.lineNumber-1)
 	}
 }
 
@@ -120,14 +120,14 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	}
 	return layout
 }
-func new_grep_picker(v *fzfmain,code *CodeView) *greppicker {
+func new_grep_picker(v *fzfmain, code *CodeView) *greppicker {
 	grep := &greppicker{
-		livewgreppicker: new_live_grep_picker(v,code),
+		livewgreppicker: new_live_grep_picker(v, code),
 	}
 	grep.not_live = true
 	return grep
 }
-func new_live_grep_picker(v *fzfmain,code *CodeView) *livewgreppicker {
+func new_live_grep_picker(v *fzfmain, code *CodeView) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v, code)
 	grep := &livewgreppicker{

@@ -30,7 +30,7 @@ func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
 	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line)
 	UpdateTitleAndColor(pk.frame.Box, title)
-	pk.codeprev.Load2Line(loc.URI.AsPath().String(), loc.Range.Start.Line)
+	pk.codeprev.LoadNoSymbol(loc.URI.AsPath().String(), loc.Range.Start.Line)
 }
 func new_quick_preview() *quick_preview {
 	codeprev := NewCodeView(nil)
@@ -509,7 +509,7 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 	vvv := qk.Refs.Refs[index]
 	qk.currentIndex = index
 	qk.view.SetCurrentItem(index)
-	same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.filepathname
+	same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.Path()
 	if open || same {
 		qk.main.UpdatePageTitle()
 		qk.main.gotoline(vvv.Loc)

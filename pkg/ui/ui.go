@@ -292,7 +292,7 @@ func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 func (m *mainui) gotoline(loc lsp.Location) {
 	code := m.codeview
 	file := loc.URI.AsPath().String()
-	if file != code.filepathname {
+	if file != code.Path() {
 		m.OpenFile(file, &loc)
 	} else {
 		code.gotoline_not_open(loc.Range.Start.Line)
@@ -303,7 +303,7 @@ func (m *mainui) gotoline(loc lsp.Location) {
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	code := m.codeview
 	if file != nil {
-		if file.Filename != code.filepathname {
+		if file.Filename != code.Path() {
 			return
 		}
 	}
@@ -402,17 +402,7 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
-	code.LoadAndCb(file, func() {
-		if loc != nil {
-			lins := code.view.Buf.LinesNum()
-			loc.Range.Start.Line = min(lins-1, loc.Range.Start.Line)
-			loc.Range.End.Line = min(lins-1, loc.Range.End.Line)
-			code.goto_loation(loc.Range)
-		}
-	})
-	go m.async_lsp_open(file, func(sym *lspcore.Symbol_file) {
-		code.lspsymbol = sym
-	})
+	code.open_file_line(file, loc, true)
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
@@ -603,7 +593,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					code.Load(code.filepathname)
+					code.Load(code.Path())
 				})
 			}()
 		}
@@ -640,7 +630,7 @@ func MainUI(arg *Arguments) {
 	})
 	view_id_init(main)
 	main.quickview.RestoreLast()
-	UpdateTitleAndColor(main_layout.Box, code.filepathname)
+	UpdateTitleAndColor(main_layout.Box, code.Path())
 	go func() {
 		app.QueueUpdateDraw(func() {
 			view_code.setfocused(main)
@@ -818,7 +808,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
 			viewname = main.searchcontext.view.getname()
 		}
-		titlename := fmt.Sprintf("%s ", main.codeview.filepathname)
+		titlename := fmt.Sprintf("%s ", main.codeview.Path())
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
 				main.app.QueueUpdateDraw(func() {

@@ -72,7 +72,7 @@ func (pk workspace_query_picker) update_preview() {
 	cur := pk.impl.list.GetCurrentItem()
 	if cur < len(pk.impl.sym) {
 		item := pk.impl.sym[cur]
-		pk.impl.codeprev.Load2Line(item.Location.URI.AsPath().String(),
+		pk.impl.PrevOpen(item.Location.URI.AsPath().String(),
 			item.Location.Range.Start.Line)
 	}
 }

@@ -292,9 +292,9 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 						code := symview.editor
 						if code.id == view_code {
 							symview.main.bf.history.SaveToHistory(code)
-							symview.main.bf.history.AddToHistory(code.filepathname, NewEditorPosition(r.Start.Line, symview.editor))
+							symview.main.bf.history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line, symview.editor))
 						}
-						symview.editor.goto_loation_noupdate(r)
+						symview.editor.goto_loation(r, false)
 						return
 					}
 				}
@@ -303,7 +303,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 				Range.End.Line = Range.Start.Line
 				Range.End.Character = Range.Start.Character + len(sym.Name)
 			}
-			symview.editor.goto_loation_noupdate(Range)
+			symview.editor.goto_loation(Range, false)
 		}
 	}
 	symview.view.SetCurrentNode(node)
@@ -405,26 +405,26 @@ func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
 		loc.Range.End.Line = loc.Range.Start.Line
 	}
 	// println(ss)
-	c.main.get_callin_stack(loc, c.editor.filepathname)
+	c.main.get_callin_stack(loc, c.editor.Path())
 	// c.main.ActiveTab(view_callin)
 }
 func (c *SymbolTreeView) get_declare(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_declare(r, c.editor.filepathname)
+	c.main.get_declare(r, c.editor.Path())
 }
 func (c *SymbolTreeView) get_define(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_define(r, c.editor.filepathname)
+	c.main.get_define(r, c.editor.Path())
 }
 func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_refer(r, c.editor.filepathname)
+	c.main.get_refer(r, c.editor.Path())
 	// c.main.ActiveTab(view_fzf)
 }
 

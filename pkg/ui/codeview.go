@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
@@ -41,15 +42,31 @@ func (data right_menu_data) SelectInEditor(c *femto.Cursor) {
 	c.SelectWord()
 }
 
+type File struct {
+	filepathname string
+	filename     string
+	modTiem      time.Time
+}
+
+func NewFile(filename, root string) File {
+	file := strings.TrimPrefix(filename, root)
+	fileInfo, err := os.Stat(filename)
+	modTime := time.Time{}
+	if err == nil {
+		modTime = fileInfo.ModTime()
+	}
+	return File{filepathname: filename, filename: file, modTiem: modTime}
+}
+
 type CodeView struct {
 	*view_link
-	filepathname string
-	tree_sitter  *lspcore.TreeSitter
-	view         *codetextview
-	theme        string
-	main         *mainui
-	lspsymbol    *lspcore.Symbol_file
-	key_map      map[tcell.Key]func(code *CodeView)
+	file        File
+	tree_sitter *lspcore.TreeSitter
+	view        *codetextview
+	theme       string
+	main        *mainui
+	lspsymbol   *lspcore.Symbol_file
+	key_map     map[tcell.Key]func(code *CodeView)
 	// mouse_select_area    bool
 	rightmenu_items []context_menu_item
 	right_menu_data *right_menu_data
@@ -63,8 +80,11 @@ type CodeView struct {
 	diff        *Differ
 }
 
+func (code CodeView) Path() string {
+	return code.file.filepathname
+}
 func (code CodeView) FileName() string {
-	return strings.TrimPrefix(code.filepathname, code.main.root)
+	return code.FileName()
 }
 func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
@@ -303,7 +323,7 @@ func (code *CodeView) get_selected_lines() editor_selection {
 		selected_text: text,
 		begin:         ss[0],
 		end:           ss[1],
-		filename:      code.filepathname,
+		filename:      code.Path(),
 	}
 }
 
@@ -799,7 +819,7 @@ func (code *CodeView) Save() error {
 	view := code.view
 	data := view.Buf.SaveString(false)
 	code.main.bookmark.udpate(&code.view.bookmark)
-	return os.WriteFile(code.filepathname, []byte(data), 0644)
+	return os.WriteFile(code.Path(), []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
 	checker := new_linechange_checker(code)
@@ -925,7 +945,7 @@ func (code *CodeView) update_with_line_changed() {
 		return
 	}
 	if code.id == view_code {
-		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y, code.filepathname)
+		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y, code.Path())
 	}
 }
 
@@ -950,7 +970,7 @@ func (code *CodeView) action_goto_define() {
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	log.Printf("goto define %v %s", loc, code.view.Cursor.GetSelection())
-	main.get_define(loc, code.filepathname)
+	main.get_define(loc, code.Path())
 }
 func (code *CodeView) action_goto_declaration() {
 	main := code.main
@@ -959,7 +979,7 @@ func (code *CodeView) action_goto_declaration() {
 	}
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
-	main.get_declare(loc, code.filepathname)
+	main.get_declare(loc, code.Path())
 }
 
 func (code *CodeView) action_get_refer() {
@@ -970,7 +990,7 @@ func (code *CodeView) action_get_refer() {
 	code.view.Cursor.SelectWord()
 	main.quickview.view.Clear()
 	loc := code.lsp_cursor_loc()
-	main.get_refer(loc, code.filepathname)
+	main.get_refer(loc, code.Path())
 	// main.ActiveTab(view_fzf)
 
 }
@@ -1002,8 +1022,8 @@ func (code *CodeView) key_call_in() {
 	r := text_loc_to_range(loc)
 	code.main.get_callin_stack_by_cursor(lsp.Location{
 		Range: r,
-		URI:   lsp.NewDocumentURI(code.filepathname),
-	}, code.filepathname)
+		URI:   lsp.NewDocumentURI(code.Path()),
+	}, code.Path())
 	// code.main.ActiveTab(view_callin)
 }
 
@@ -1102,13 +1122,13 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 func (code *CodeView) Load(filename string) error {
 	return code.LoadAndCb(filename, nil)
 }
-func (code *CodeView) Load2Line(filename string, line int) error {
+func (code *CodeView) LoadNoSymbol(filename string, line int) error {
 	return code.LoadAndCb(filename, func() {
 		code.gotoline_not_open(line)
 	})
 }
 func (code *CodeView) LoadAndCb(filename string, onload func()) error {
-	if filename == code.filepathname {
+	if filename == code.Path() {
 		if onload != nil {
 			onload()
 		}
@@ -1158,7 +1178,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 	})
 	code.LoadBuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
-	code.filepathname = filename
+	code.file =NewFile( filename,global_prj_root)
 	if code.main != nil {
 		code.view.bookmark = *code.main.bookmark.GetFileBookmark(filename)
 	}
@@ -1173,7 +1193,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 }
 
 func (code *CodeView) change_appearance() {
-	code.config_wrap(code.filepathname)
+	code.config_wrap(code.Path())
 	code.change_theme()
 }
 func (code *CodeView) on_change_color(c *color_theme_file) {
@@ -1256,21 +1276,10 @@ func is_lsppos_ok(pos lsp.Position) bool {
 	}
 	return true
 }
-func (code *CodeView) goto_loation(loc lsp.Range) {
-	// if line < code.view.Topline || code.view.Bottomline() < line {
-	// 	code.view.Topline = max(line-code.focus_line(), 0)
-	// }
-	shouldReturn1 := code.goto_loation_noupdate(loc)
-	if shouldReturn1 {
-		return
-	}
-	code.update_with_line_changed()
-}
-
-func (code *CodeView) goto_loation_noupdate(loc lsp.Range) bool {
+func (code *CodeView) goto_loation(loc lsp.Range, update bool) {
 	shouldReturn := is_lsprange_ok(loc)
 	if shouldReturn {
-		return true
+		return
 	}
 	x := 0
 	loc.Start.Line = min(code.view.Buf.LinesNum(), loc.Start.Line)
@@ -1292,7 +1301,9 @@ func (code *CodeView) goto_loation_noupdate(loc lsp.Range) bool {
 	}
 	Cur.SetSelectionEnd(end)
 	code.set_loc(end)
-	return false
+	if update && code.id >= view_code {
+		code.update_with_line_changed()
+	}
 }
 
 func (code *CodeView) set_loc(end femto.Loc) {
@@ -1313,7 +1324,7 @@ func (code *CodeView) gotoline_not_open(line int) {
 	}
 	if code.main != nil && code.not_preview {
 		code.main.bf.history.SaveToHistory(code)
-		code.main.bf.history.AddToHistory(code.filepathname, NewEditorPosition(line, code))
+		code.main.bf.history.AddToHistory(code.Path(), NewEditorPosition(line, code))
 	}
 	key := ""
 

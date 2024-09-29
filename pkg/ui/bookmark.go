@@ -216,7 +216,7 @@ func new_bookmark_editor(v *fzfmain, cb func(string), code *CodeView) bookmark_e
 		fzflist_impl: new_fzflist_impl(nil, v),
 		cb:           cb,
 	}
-	ret.fzflist_impl.list.AddItem(line1, code.filepathname, nil)
+	ret.fzflist_impl.list.AddItem(line1, code.Path(), nil)
 	v.create_dialog_content(ret.grid(v.input), ret)
 	return ret
 }
@@ -322,7 +322,7 @@ func (bk *bookmark_view) OnSearch(txt string) {
 	}
 	bk.fzf.selected = func(dataindex int, listindex int) {
 		loc := bk.data[dataindex].loc
-		bk.code.open_file_line(loc.URI.AsPath().String(), &loc)
+		bk.code.open_file_line(loc.URI.AsPath().String(), &loc,true)
 	}
 }
 func new_bookmark_view(bookmark *proj_bookmark, code *CodeView, yes func() bool) *bookmark_view {
@@ -367,7 +367,7 @@ func (ret *bookmark_view) loaddata() {
 	})
 	ret.list.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
-		ret.code.open_file_line(loc.URI.AsPath().String(), &loc)
+		ret.code.open_file_line(loc.URI.AsPath().String(), &loc,true)
 	})
 
 	if ret.bookmark.changed == nil {
@@ -405,5 +405,5 @@ func (menu bk_menu_context) menuitem() []context_menu_item {
 func (ret *bookmark_view) onclick(i int) {
 	loc := ret.data[i].loc
 	ret.list.SetCurrentItem(i)
-	ret.code.open_file_line(loc.URI.AsPath().String(), &loc)
+	ret.code.open_file_line(loc.URI.AsPath().String(), &loc,true)
 }
