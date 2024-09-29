@@ -772,9 +772,24 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 		lines := strings.Split(string(data), "\n")
 		if len(lines) > v.Range.Start.Line {
 			line = lines[v.Range.Start.Line]
-			if len(line) == 0 {
-				line = "read line no existed"
+			s := v.Range.Start.Character
+			e := v.Range.End.Character
+			if v.Range.Start.Line == v.Range.End.Line {
+				if len(line) > s && len(line) > e {
+					a1 := line[:s]
+					a := line[s:e]
+					a2 := line[e:]
+					if a1[len(a1)-1]=='*'{
+						a1+=" "
+					}
+					if a2[0]=='*'{
+						a2 = " "+a2
+					}
+					line = strings.Join([]string{a1, "**", a, "**", a2}, "")
+				}
 			}
+		} else {
+			line = "File changed lines not exsited"
 		}
 	}
 
