@@ -606,7 +606,9 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 
 	data := qk.BuildListStringGroup(global_prj_root, lspmgr)
 	for _, v := range data {
-		qk.view.AddItem(v, "", nil)
+		qk.view.AddItem(v.text, "", func() {
+
+		})
 	}
 	qk.main.UpdatePageTitle()
 }
@@ -620,7 +622,7 @@ func (qk *quick_view) build_tree(Refs []ref_with_caller) {
 			s.children = append(s.children, list_tree{data_index: i})
 			group[v.URI.String()] = s
 		} else {
-			group[v.URI.String()] = list_tree{data_index: i}
+			group[v.URI.String()] = list_tree{data_index: i, parent: true, expand: true}
 		}
 	}
 	trees := []list_tree{}
@@ -629,27 +631,30 @@ func (qk *quick_view) build_tree(Refs []ref_with_caller) {
 	}
 	qk.trees = trees
 }
-func (qk *quick_view) BuildListStringGroup(root string, lspmgr *lspcore.LspWorkspace) []string {
-	var data = []string{}
+func (qk *quick_view) BuildListStringGroup(root string, lspmgr *lspcore.LspWorkspace) []*list_tree {
+	var data = []*list_tree{}
 	if len(qk.trees) == 0 {
 		qk.build_tree(qk.Refs.Refs)
 	}
 
 	lineno := 1
-	for _, a := range qk.trees {
-		index := a.data_index
-		caller := &qk.Refs.Refs[index]
-		data = append(data, quickfix_listitem_string(qk, caller, lspmgr, true, lineno))
-		for _, c := range a.children {
-			caller := &qk.Refs.Refs[c.data_index]
-			data = append(data, quickfix_listitem_string(qk, caller, lspmgr, false, lineno))
+	for i := range qk.trees {
+		a := &qk.trees[i]
+		a.quickfix_listitem_string(qk, lspmgr, lineno)
+		data = append(data, a)
+		for i := range a.children {
+			c := &a.children[i]
+			c.quickfix_listitem_string(qk, lspmgr, lineno)
+			data = append(data, c)
 		}
 		lineno++
 	}
 	return data
 }
 
-func quickfix_listitem_string(qk *quick_view, caller *ref_with_caller, lspmgr *lspcore.LspWorkspace, parent bool, lineno int) string {
+func (tree *list_tree) quickfix_listitem_string(qk *quick_view, lspmgr *lspcore.LspWorkspace, lineno int) {
+	caller := &qk.Refs.Refs[tree.data_index]
+	parent := tree.parent
 	root := lspmgr.Wk.Path
 	switch qk.Type {
 	case data_refs, data_search, data_grep_word:
@@ -660,9 +665,9 @@ func quickfix_listitem_string(qk *quick_view, caller *ref_with_caller, lspmgr *l
 	}
 	secondline := caller.ListItem(root, parent)
 	if parent {
-		return fmt.Sprintf("%3d. %s", lineno, secondline)
+		tree.text = fmt.Sprintf("%3d. %s", lineno, secondline)
 	} else {
-		return fmt.Sprintf("     %s", secondline)
+		tree.text = fmt.Sprintf("     %s", secondline)
 	}
 }
 func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
@@ -690,7 +695,9 @@ type list_tree struct {
 	data_index int
 	list_index int
 	expand     bool
+	parent     bool
 	children   []list_tree
+	text       string
 }
 
 func (caller ref_with_caller) ListItem(root string, full bool) string {
