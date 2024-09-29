@@ -49,14 +49,17 @@ type File struct {
 	modTiem      time.Time
 }
 
-func NewFile(filename, root string) File {
-	file := strings.TrimPrefix(filename, root)
+func NewFile(filename string) File {
+	file := strings.TrimPrefix(filename, global_prj_root)
 	fileInfo, err := os.Stat(filename)
 	modTime := time.Time{}
 	if err == nil {
 		modTime = fileInfo.ModTime()
 	}
 	return File{filepathname: filename, filename: file, modTiem: modTime}
+}
+func (s File) Same(s1 File) bool {
+	return s == s1
 }
 
 type CodeView struct {
@@ -1129,7 +1132,7 @@ func (code *CodeView) LoadNoSymbol(filename string, line int) error {
 	})
 }
 func (code *CodeView) LoadAndCb(filename string, onload func()) error {
-	if filename == code.Path() {
+	if NewFile(filename).Same(code.file) {
 		if onload != nil {
 			onload()
 		}
@@ -1179,7 +1182,7 @@ func (code *CodeView) load_in_main(filename string, data []byte) error {
 	})
 	code.LoadBuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
-	code.file = NewFile(filename, global_prj_root)
+	code.file = NewFile(filename)
 	if code.main != nil {
 		code.view.bookmark = *code.main.bookmark.GetFileBookmark(filename)
 	}
