@@ -609,6 +609,7 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 		code.view.HandleEvent(event)
+		go code.on_content_changed()
 		return nil
 	} else {
 		event = code.handle_key_impl(event)
@@ -829,11 +830,13 @@ func (code *CodeView) Undo() {
 	checker := new_linechange_checker(code)
 	code.view.Undo()
 	checker.after(code)
+	go code.on_content_changed()
 }
 func (code *CodeView) deleteline() {
 	checker := new_linechange_checker(code)
 	code.view.CutLine()
 	checker.after(code)
+	go code.on_content_changed()
 }
 
 func (code *CodeView) copyline(line bool) {
@@ -1157,28 +1160,49 @@ func (code *CodeView) LoadAndCb(filename string, onload func()) error {
 	}()
 	return nil
 }
-
+func (code *CodeView) on_content_changed() {
+	data := []byte{}
+	for i := 0; i < code.view.Buf.LinesNum(); i++ {
+		data = append(data, code.view.Buf.LineBytes(i)...)
+		data = append(data, '\n')
+	}
+	code.tree_sitter = lspcore.GetNewTreeSitter(code.Path(), data)
+	code.tree_sitter.Init(func(ts *lspcore.TreeSitter) {
+		go GlobalApp.QueueUpdateDraw(func() {
+			code.change_theme()
+			if code.main != nil {
+				if len(ts.Outline) > 0 {
+					code.ts = ts
+					if ts.DefaultOutline() {
+						lsp := code.main.symboltree.upate_with_ts(ts)
+						code.main.lspmgr.Current = lsp
+					} else {
+						code.main.OnSymbolistChanged(nil, nil)
+					}
+				}
+			}
+		})
+	})
+}
 func (code *CodeView) load_in_main(filename string, data []byte) error {
 	b := code.view.Buf
 	b.Settings["syntax"] = false
-	code.tree_sitter = lspcore.GetNewTreeSitter(filename)
+	code.tree_sitter = lspcore.GetNewTreeSitter(filename, []byte{})
 	code.tree_sitter.Init(func(ts *lspcore.TreeSitter) {
-		go func() {
-			GlobalApp.QueueUpdate(func() {
-				code.change_theme()
-				if code.main != nil {
-					if len(ts.Outline) > 0 {
-						code.ts = ts
-						if ts.DefaultOutline() {
-							lsp := code.main.symboltree.upate_with_ts(ts)
-							code.main.lspmgr.Current = lsp
-						} else {
-							code.main.OnSymbolistChanged(nil, nil)
-						}
+		go GlobalApp.QueueUpdate(func() {
+			code.change_theme()
+			if code.main != nil {
+				if len(ts.Outline) > 0 {
+					code.ts = ts
+					if ts.DefaultOutline() {
+						lsp := code.main.symboltree.upate_with_ts(ts)
+						code.main.lspmgr.Current = lsp
+					} else {
+						code.main.OnSymbolistChanged(nil, nil)
 					}
 				}
-			})
-		}()
+			}
+		})
 	})
 	code.LoadBuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
