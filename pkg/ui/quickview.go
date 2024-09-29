@@ -66,6 +66,8 @@ type quick_view struct {
 	cmd_search_key string
 	grep           *greppicker
 	sel            *list_multi_select
+
+	trees []list_tree
 }
 type qf_history_data struct {
 	Type   DateType
@@ -600,51 +602,68 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	m := qk.main
 	lspmgr := m.lspmgr
 
+	qk.build_tree(Refs)
+
 	data := qk.BuildListStringGroup(global_prj_root, lspmgr)
 	for _, v := range data {
 		qk.view.AddItem(v, "", nil)
 	}
 	qk.main.UpdatePageTitle()
 }
-func (qk *quick_view) BuildListStringGroup(root string, lspmgr *lspcore.LspWorkspace) []string {
-	var data = []string{}
-	// map[string]*Cal
-	group := make(map[string][]int)
-	for i := range qk.Refs.Refs {
+
+func (qk *quick_view) build_tree(Refs []ref_with_caller) {
+	group := make(map[string]list_tree)
+	for i := range Refs {
 		caller := qk.Refs.Refs[i]
 		v := caller.Loc
 		if s, ok := group[v.URI.String()]; ok {
-			group[v.URI.String()] = append(s, i)
+			s.children = append(s.children, list_tree{data_index: i})
+			group[v.URI.String()] = s
 		} else {
-			group[v.URI.String()] = []int{i}
+			group[v.URI.String()] = list_tree{data_index: i}
 		}
 	}
+	trees := []list_tree{}
+	for _, v := range group {
+		trees = append(trees, v)
+	}
+	qk.trees = trees
+}
+func (qk *quick_view) BuildListStringGroup(root string, lspmgr *lspcore.LspWorkspace) []string {
+	var data = []string{}
+	if len(qk.trees) == 0 {
+		qk.build_tree(qk.Refs.Refs)
+	}
+
 	lineno := 1
-	for _, array := range group {
-		for i, index := range array {
-			caller := qk.Refs.Refs[index]
-			switch qk.Type {
-			case data_refs:
-				v := caller.Loc
-				if caller.Caller == nil || len(caller.Caller.Name) == 0 {
-					caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
-				}
-			}
-			secondline := caller.ListItem(root, i == 0)
-			if len(secondline) == 0 {
-				continue
-			}
-			if i == 0 {
-				x := fmt.Sprintf("%3d. %s", lineno, secondline)
-				data = append(data, x)
-				lineno++
-			} else {
-				x := fmt.Sprintf("     %s", secondline)
-				data = append(data, x)
-			}
+	for _, a := range qk.trees {
+		index := a.data_index
+		caller := &qk.Refs.Refs[index]
+		data = append(data, newFunction1(qk, caller, lspmgr, true, lineno))
+		for _, c := range a.children {
+			caller := &qk.Refs.Refs[c.data_index]
+			data = append(data, newFunction1(qk, caller, lspmgr, false, lineno))
 		}
+		lineno++
 	}
 	return data
+}
+
+func newFunction1(qk *quick_view, caller *ref_with_caller, lspmgr *lspcore.LspWorkspace, parent bool, lineno int) string {
+	root := lspmgr.Wk.Path
+	switch qk.Type {
+	case data_refs, data_search, data_grep_word:
+		v := caller.Loc
+		if caller.Caller == nil || len(caller.Caller.Name) == 0 {
+			caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+		}
+	}
+	secondline := caller.ListItem(root, parent)
+	if parent {
+		return fmt.Sprintf("%3d. %s", lineno, secondline)
+	} else {
+		return fmt.Sprintf("     %s", secondline)
+	}
 }
 func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
 	var data = []string{}
@@ -667,24 +686,35 @@ func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace)
 	return data
 }
 
+type list_tree struct {
+	data_index int
+	list_index int
+	expand     bool
+	children   []list_tree
+}
+
 func (caller ref_with_caller) ListItem(root string, full bool) string {
 	v := caller.Loc
-	source_file_path := v.URI.AsPath().String()
-	data, err := os.ReadFile(source_file_path)
-	if err != nil {
-		return ""
-	}
-	lines := strings.Split(string(data), "\n")
+
 	line := ""
-	if len(lines) > v.Range.Start.Line {
-		line = lines[v.Range.Start.Line]
-		if len(line) == 0 {
-			return ""
-		}
-	}
 	path := v.URI.AsPath().String()
 	if len(root) > 0 {
 		path = trim_project_filename(path, root)
+	}
+
+	source_file_path := v.URI.AsPath().String()
+	data, err := os.ReadFile(source_file_path)
+
+	if err != nil {
+		line = err.Error()
+	} else {
+		lines := strings.Split(string(data), "\n")
+		if len(lines) > v.Range.Start.Line {
+			line = lines[v.Range.Start.Line]
+			if len(line) == 0 {
+				line = "read line no existed"
+			}
+		}
 	}
 
 	if caller.Caller != nil {
