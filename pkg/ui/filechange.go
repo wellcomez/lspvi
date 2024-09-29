@@ -1,8 +1,9 @@
 package mainui
 
 import (
-	"github.com/fsnotify/fsnotify"
 	"log"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 type change_reciever interface {
@@ -13,6 +14,7 @@ type FileWatch struct {
 	root     string
 	started  bool
 	recieved []change_reciever
+	files    []string
 }
 
 func NewFileWatch() *FileWatch {
@@ -23,19 +25,15 @@ func NewFileWatch() *FileWatch {
 	return &FileWatch{watcher: watcher}
 }
 
-func (f *FileWatch) Change(s string) error {
+func (f *FileWatch) Add(s string) error {
 	if err := f.watcher.Add(s); err != nil {
 		return err
 	}
-	if len(f.root) > 0 {
-		if err := f.watcher.Remove(f.root); err != nil {
-			return err
-		}
-	}
-	f.root = s
+	f.files = append(f.files, s)
 	return nil
 }
-func (f *FileWatch) Run() error {
+
+func (f *FileWatch) Run(root string) error {
 	if f.started {
 		return nil
 	}
@@ -68,11 +66,11 @@ func (f *FileWatch) Run() error {
 			}
 		}
 	}()
-	err := watcher.Add(f.root)
-	if err != nil {
+	if err := f.Add(root); err == nil {
+		f.started = true
+	} else {
 		return err
 	}
-	f.started = true
 	<-make(chan struct{})
 	return nil
 }

@@ -466,6 +466,9 @@ func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
 }
 
+
+
+
 var apparg Arguments
 var GlobalApp *tview.Application
 
