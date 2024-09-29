@@ -90,8 +90,8 @@ type CodeView struct {
 // OnFileChange implements change_reciever.
 func (code *CodeView) OnFileChange(file string) bool {
 	if code.file.SamePath(file) {
+		go code.lspsymbol.DidSave()
 		go code.on_content_changed()
-		go code.lspsymbol.LoadSymbol(true)
 		return true
 	}
 	return false
@@ -1182,8 +1182,8 @@ func (code *CodeView) on_content_changed() {
 		data = append(data, code.view.Buf.LineBytes(i)...)
 		data = append(data, '\n')
 	}
-	code.tree_sitter = lspcore.GetNewTreeSitter(code.Path(), data)
-	code.tree_sitter.Init(func(ts *lspcore.TreeSitter) {
+	var new_ts = lspcore.GetNewTreeSitter(code.Path(), data)
+	new_ts.Init(func(ts *lspcore.TreeSitter) {
 		go GlobalApp.QueueUpdateDraw(func() {
 			code.change_theme()
 			if code.main != nil {

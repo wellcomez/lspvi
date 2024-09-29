@@ -127,6 +127,24 @@ func (core *lspcore) DidOpen(file string) error {
 	})
 	return err
 }
+func (core *lspcore) DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error {
+	Method := "textDocument/didChange"
+	err := core.conn.Notify(context.Background(), Method, lsp.DidChangeTextDocumentParams{
+		TextDocument: lsp.VersionedTextDocumentIdentifier{
+			TextDocumentIdentifier: lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(file)},
+			Version:                1,
+		},
+		ContentChanges: ContentChanges,
+	})
+	return err
+}
+func (core *lspcore) DidSave(file string, text string) error {
+	err := core.conn.Notify(context.Background(), "textDocument/didSave", lsp.DidSaveTextDocumentParams{
+		TextDocument: lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(file)},
+		Text:         text,
+	})
+	return err
+}
 
 func (core *lspcore) newTextDocument(file string) (lsp.TextDocumentItem, error) {
 	content, err := os.ReadFile(file)
