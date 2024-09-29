@@ -156,7 +156,7 @@ func search_on_ui(option search_option, main *mainui) {
 							Loc: loc,
 						})
 					}
-					main.quickview.main.quickview.UpdateListView(data_search, data, lspcore.SymolSearchKey{Key: txt})
+					main.quickview.UpdateListView(data_search, data, lspcore.SymolSearchKey{Key: txt})
 				}
 			} else {
 				var pos SearchPos

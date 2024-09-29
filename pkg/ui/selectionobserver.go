@@ -46,6 +46,9 @@ func (c *selectarea) GetSelection() string {
 	}
 	return ""
 }
+func (c *selectarea) Add(ob selobserver) {
+	c.observer = append(c.observer, ob)
+}
 func (c *selectarea) HasSelection() bool {
 	return c.start != c.end
 }
