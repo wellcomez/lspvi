@@ -82,7 +82,7 @@ func (cmd *cmdline) OnSet(args []string) bool {
 			global_config.Wrap = !global_config.Wrap
 			global_config.Save()
 			for _, v := range SplitCode.code_collection {
-				v.change_appearance()
+				v.change_wrap_appearance()
 			}
 		}
 	}

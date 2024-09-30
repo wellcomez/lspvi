@@ -637,10 +637,17 @@ func MainUI(arg *Arguments) {
 			main.cmdline.Vim.EnterEscape()
 		})
 	}()
+	global_theme.update_controller_theme()
 	main.sel.observer = append(main.sel.observer, main.console_index_list.sel)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
+}
+func (main *mainui) on_change_color(name string ) {
+	global_config.Colorscheme =name 
+	global_config.Save()
+	global_theme = new_ui_theme(name, main)
+	global_theme.update_controller_theme()
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
 	if main.right_context_menu.visible {

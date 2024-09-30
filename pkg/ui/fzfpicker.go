@@ -138,7 +138,7 @@ func (v *fzfmain) OpenLiveGrepFzf() {
 	v.create_dialog_content(x, sym)
 }
 func (v *fzfmain) OpenColorFzf(code *CodeView) {
-	sym := new_color_picker(v, code)
+	sym := new_color_picker(v)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }

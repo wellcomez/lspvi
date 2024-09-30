@@ -19,9 +19,10 @@ import (
 type symbol_colortheme struct {
 	colorscheme femto.Colorscheme
 	main        *mainui
+	name        string
 }
 
-func (mgr *symbol_colortheme) get_color_style(kind lsp.SymbolKind) (tcell.Style, error) {
+func (mgr symbol_colortheme) get_color_style(kind lsp.SymbolKind) (tcell.Style, error) {
 	switch kind {
 	case lsp.SymbolKindClass, lsp.SymbolKindInterface:
 		return mgr.colorscheme.GetColor("@type.class"), nil
@@ -36,22 +37,15 @@ func (mgr *symbol_colortheme) get_color_style(kind lsp.SymbolKind) (tcell.Style,
 	}
 	return tcell.StyleDefault, errors.New("not found")
 }
-func (mgr *symbol_colortheme) update_controller_theme(code *CodeView) bool {
+func (mgr *symbol_colortheme) update_controller_theme() bool {
 	mgr.update_default_color()
-	// fg, bg, _ := n.Decompose()
 	if style := mgr.get_default_style(); style != nil {
 		fg, bg, _ := style.Decompose()
 		if mgr.main != nil {
-			mgr.main.set_widget_theme(fg, bg)
+			mgr.set_widget_theme(fg, bg, mgr.main)
 		}
-		if code != nil {
-			code.bgcolor = bg
-		}
+
 	}
-	if code == nil {
-		return false
-	}
-	code.update_colortheme_mgr(mgr)
 	return false
 }
 
@@ -103,15 +97,7 @@ func (mgr *symbol_colortheme) StatusLine() *tcell.Style {
 	return mgr.get_color("statusline")
 }
 
-func (main *mainui) set_widget_theme(fg, bg tcell.Color) {
-	go func() {
-		main.app.QueueUpdate(func() {
-			main.__set_widget_theme(fg, bg)
-		})
-	}()
-}
-func (main *mainui) __set_widget_theme(fg, bg tcell.Color) {
-	var colorscheme = main.codeview.colorscheme
+func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main *mainui) {
 	if color := colorscheme.StatusLine(); color != nil {
 		f, b, _ := color.Decompose()
 		main.statusbar.SetBackgroundColor(b)
@@ -158,14 +144,7 @@ func (main *mainui) __set_widget_theme(fg, bg tcell.Color) {
 	main.page.SetTitleColor(fg)
 	main.layout.spacemenu.table.SetBackgroundColor(bg)
 	main.right_context_menu.table.SetBackgroundColor(bg)
-	main.codeview2.update_colortheme_mgr(global_theme)
-	main.codeview2.view.SetBackgroundColor(bg)
-	for k, v := range SplitCode.code_collection {
-		if k != view_code {
-			v.view.SetBackgroundColor(bg)
-			v.update_colortheme_mgr(global_theme)
-		}
-	}
+
 	// sp= fg
 	// default_backgroudColor = bg
 	inputs := []*tview.InputField{main.cmdline.input, main.layout.dialog.input}
@@ -176,8 +155,11 @@ func (main *mainui) __set_widget_theme(fg, bg tcell.Color) {
 		input.SetFieldTextColor(fg)
 		input.SetLabelColor(fg)
 	}
-	// main.term.SetColorscheme(main.codeview.colorscheme.colorscheme)
-	// main.fileexplorer.ChangeDir(main.fileexplorer.rootdir)
+
+	for _, v := range SplitCode.code_collection {
+		v.set_codeview_colortheme(colorscheme)
+	}
+	main.codeview2.set_codeview_colortheme(colorscheme)
 }
 
 func (coloretheme *symbol_colortheme) update_default_color() {
@@ -234,6 +216,7 @@ func new_ui_theme(theme string, main *mainui) *symbol_colortheme {
 		uicolorscheme = &symbol_colortheme{
 			colorscheme,
 			main,
+			theme,
 		}
 	}
 	return uicolorscheme

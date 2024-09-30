@@ -468,7 +468,7 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 	}
 	root_node := tview.NewTreeNode("symbol")
 	root_node.SetReference("1")
-	query := v.editor.colorscheme
+	query :=global_theme 
 	for _, v := range file.Class_object {
 		if v.Is_class() {
 			c := tview.NewTreeNode(v.SymbolListStrint())

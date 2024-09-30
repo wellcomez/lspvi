@@ -69,11 +69,12 @@ type CodeView struct {
 	*view_link
 	file        File
 	tree_sitter *lspcore.TreeSitter
-	view        *codetextview
-	theme       string
-	main        *mainui
-	lspsymbol   *lspcore.Symbol_file
-	key_map     map[tcell.Key]func(code *CodeView)
+	// tree_sitter_highlight lspcore.TreesiterSymbolLine
+	view *codetextview
+	// theme     string
+	main      *mainui
+	lspsymbol *lspcore.Symbol_file
+	key_map   map[tcell.Key]func(code *CodeView)
 	// mouse_select_area    bool
 	rightmenu_items []context_menu_item
 	right_menu_data *right_menu_data
@@ -81,7 +82,7 @@ type CodeView struct {
 	// LineNumberUnderMouse int
 	not_preview bool
 	bgcolor     tcell.Color
-	colorscheme *symbol_colortheme
+	// colorscheme *symbol_colortheme
 	// ts          *lspcore.TreeSitter
 	insert bool
 	diff   *Differ
@@ -234,7 +235,7 @@ func NewCodeView(main *mainui) *CodeView {
 		right: view_outline_list,
 		down:  view_quickview,
 		left:  view_file},
-		theme:       global_config.Colorscheme,
+		// theme:       global_config.Colorscheme,
 		not_preview: false,
 	}
 	ret.right_menu_data = &right_menu_data{}
@@ -1187,7 +1188,7 @@ func (code *CodeView) on_content_changed() {
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
 		go GlobalApp.QueueUpdateDraw(func() {
 			code.tree_sitter = ts
-			code.change_theme()
+			code.set_color()
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
 					if ts.DefaultOutline() {
@@ -1209,7 +1210,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	tree_sitter.Init(func(ts *lspcore.TreeSitter) {
 		go GlobalApp.QueueUpdate(func() {
 			code.tree_sitter = ts
-			code.change_theme()
+			code.set_color()
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
 					if ts.DefaultOutline() {
@@ -1238,16 +1239,17 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	return nil
 }
 
-func (code *CodeView) change_appearance() {
+func (code CodeView) change_wrap_appearance() {
 	code.config_wrap(code.Path())
-	code.change_theme()
+	code.set_color()
 }
-func (code *CodeView) on_change_color(c *color_theme_file) {
-	code.theme = c.name
-	global_config.Colorscheme = c.name
-	global_config.Save()
-	code.change_theme()
-}
+
+//	func (code *CodeView) on_change_color(c *color_theme_file) {
+//		code.theme = c.name
+//		global_config.Colorscheme = c.name
+//		global_config.Save()
+//		code.change_theme()
+//	}
 func (view *codetextview) is_softwrap() bool {
 	return view.Buf.Settings["softwrap"] == true
 }
@@ -1265,18 +1267,10 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	// colorscheme = femto.ParseColorscheme(string(buf))
 	// _, b, _ := n.Decompose()
 	// tview.Styles.PrimitiveBackgroundColor = b
-	code.change_theme()
+	code.set_color()
 	if len(data) < 10000 {
 		code.diff = &Differ{}
 	}
-}
-func (code *CodeView) update_colortheme_mgr(mgr *symbol_colortheme) {
-	if code.tree_sitter == nil {
-		code.view.Buf.SetTreesitter(lspcore.TreesiterSymbolLine{})
-	} else {
-		code.view.Buf.SetTreesitter(code.tree_sitter.HlLine)
-	}
-	code.view.SetColorscheme(mgr.colorscheme)
 }
 
 func (code *CodeView) config_wrap(filename string) {
@@ -1286,14 +1280,25 @@ func (code *CodeView) config_wrap(filename string) {
 		code.view.Buf.Settings["softwrap"] = false
 	}
 }
+func (v *CodeView) set_codeview_colortheme(theme *symbol_colortheme) {
+	if style := theme.get_default_style(); style != nil {
+		_, bg, _ := style.Decompose()
+		v.view.SetBackgroundColor(bg)
+	}
+	v.set_synax_color(theme)
+}
 
-func (code *CodeView) change_theme() {
-	main := code.main
-	theme := code.theme
-	uicolorscheme := new_ui_theme(theme, main)
-	global_theme = uicolorscheme
-	code.colorscheme = uicolorscheme
-	code.colorscheme.update_controller_theme(code)
+
+func (code *CodeView) set_color() {
+	code.set_codeview_colortheme(global_theme)
+}
+func (code *CodeView) set_synax_color(theme *symbol_colortheme) {
+	if code.tree_sitter == nil {
+		code.view.Buf.SetTreesitter(lspcore.TreesiterSymbolLine{})
+	} else {
+		code.view.Buf.SetTreesitter(code.tree_sitter.HlLine)
+	}
+	code.view.SetColorscheme(theme.colorscheme)
 }
 
 func (code *CodeView) save_selection(s string) {
