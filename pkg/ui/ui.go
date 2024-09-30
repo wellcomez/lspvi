@@ -108,6 +108,7 @@ type MainService interface {
 
 	FileExplore() *file_tree_view
 	OutLineView() *SymbolTreeView
+	Term() *Term
 
 	OnSearch(option search_option)
 
@@ -149,7 +150,7 @@ type MainService interface {
 	open_picker_ctrlp()
 
 	move_to_window(direction)
-	
+
 	switch_tab_view()
 	GoBack()
 	GoForward()
@@ -254,6 +255,9 @@ func (m mainui) Recent_open() *recent_open_file {
 }
 func (m mainui) OutLineView() *SymbolTreeView {
 	return m.symboltree
+}
+func (m mainui)Term() *Term{
+	return m.term
 }
 func (m mainui) FileExplore() *file_tree_view {
 	return m.fileexplorer
