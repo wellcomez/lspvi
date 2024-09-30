@@ -102,7 +102,7 @@ func (c *smallicon) Draw(screen tcell.Screen) {
 		id := SplitCode.index[i]
 		focus := false
 		if view, ok := SplitCode.code_collection[id]; ok {
-			focus = view.view.HasFocus()
+			focus = view.view.HasFocus()||view==c.main.current_editor()
 			if focus {
 				style = style.Foreground(focus_color)
 			}
