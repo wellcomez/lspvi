@@ -419,7 +419,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		}
 		switch action {
 		case tview.MouseLeftDoubleClick:
-			code.action_goto_define()
+			code.action_goto_define(&code.view.Cursor.Loc.Y)
 		case tview.MouseLeftDown, tview.MouseRightClick:
 			code.main.set_viewid_focus(code.id)
 			code.view.Focus(func(p tview.Primitive) {})
@@ -984,7 +984,7 @@ func (code *CodeView) action_grep_word(selected bool) {
 	word := code.view.Cursor.GetSelection()
 	main.open_picker_grep(word, nil)
 }
-func (code *CodeView) action_goto_define() {
+func (code *CodeView) action_goto_define(line *int) {
 	main := code.main
 	if main == nil {
 		return
@@ -992,7 +992,7 @@ func (code *CodeView) action_goto_define() {
 	code.view.Cursor.SelectWord()
 	loc := code.lsp_cursor_loc()
 	log.Printf("goto define %v %s", loc, code.view.Cursor.GetSelection())
-	main.get_define(loc, code.Path())
+	main.get_define(loc, code.Path(), line)
 }
 func (code *CodeView) action_goto_declaration() {
 	main := code.main
@@ -1287,7 +1287,6 @@ func (v *CodeView) set_codeview_colortheme(theme *symbol_colortheme) {
 	}
 	v.set_synax_color(theme)
 }
-
 
 func (code *CodeView) set_color() {
 	code.set_codeview_colortheme(global_theme)

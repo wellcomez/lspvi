@@ -87,7 +87,7 @@ func update_selection_menu(code *CodeView) {
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
-			main.get_define(menudata.selection_range, code.Path())
+			main.get_define(menudata.selection_range, code.Path(),nil)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {

@@ -148,7 +148,7 @@ func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	key := body.String()
 	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key}, loc)
 }
-func (sym *Symbol_file) Declare(ranges lsp.Range) {
+func (sym *Symbol_file) Declare(ranges lsp.Range, line *int) {
 	if sym.lsp == nil {
 		return
 	}
@@ -156,9 +156,9 @@ func (sym *Symbol_file) Declare(ranges lsp.Range) {
 	if err != nil {
 		return
 	}
-	sym.Handle.OnFileChange(loc)
+	sym.Handle.OnFileChange(loc, line)
 }
-func (sym *Symbol_file) GotoDefine(ranges lsp.Range) {
+func (sym *Symbol_file) GotoDefine(ranges lsp.Range, line *int) {
 	if sym.lsp == nil {
 		return
 	}
@@ -167,7 +167,7 @@ func (sym *Symbol_file) GotoDefine(ranges lsp.Range) {
 		return
 	}
 	if len(loc) > 0 {
-		sym.Handle.OnFileChange(loc)
+		sym.Handle.OnFileChange(loc, line)
 	}
 }
 

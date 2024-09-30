@@ -209,7 +209,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case goto_define:
 		return cmdactor{id, "goto define", func() bool {
-			m.current_editor().action_goto_define()
+			m.current_editor().action_goto_define(nil)
 			return true
 		}}
 	case goto_refer:

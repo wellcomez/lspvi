@@ -88,7 +88,7 @@ func new_callview(main *mainui) *callinview {
 			if value != nil {
 				if ref, ok := value.(dom_node); ok {
 					sym := ref.call
-					main.get_define(sym.Range, sym.URI.AsPath().String())
+					main.get_define(sym.Range, sym.URI.AsPath().String(), nil)
 					// main.ActiveTab(view_quickview, false)
 				}
 			}
@@ -411,7 +411,7 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 
 func (call *callinview) itemdisp(c *lspcore.CallStackEntry) string {
 	x := c.DisplayName()
-	return trim_project_filename(x,global_prj_root)
+	return trim_project_filename(x, global_prj_root)
 }
 
 func trim_project_filename(x, y string) string {
