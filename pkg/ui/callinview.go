@@ -22,7 +22,7 @@ func (menu callin_view_context) on_mouse(action tview.MouseAction, event *tcell.
 
 // getbox implements context_menu_handle.
 func (menu callin_view_context) getbox() *tview.Box {
-	yes := menu.qk.main.is_tab("callin")
+	yes := menu.qk.main.Tab().activate_tab_id==view_callin 
 	if yes {
 		return menu.qk.view.Box
 	}
@@ -52,7 +52,7 @@ type callinview struct {
 	*view_link
 	view           *tview.TreeView
 	Name           string
-	main           *mainui
+	main           MainService
 	task_list      []CallNode
 	menuitem       []context_menu_item
 	right_context  callin_view_context
@@ -66,7 +66,7 @@ type dom_node struct {
 	root      bool
 }
 
-func new_callview(main *mainui) *callinview {
+func new_callview(main MainService) *callinview {
 	view := tview.NewTreeView()
 	ret := &callinview{
 		view_link: &view_link{
@@ -206,7 +206,7 @@ func (ret *callinview) DeleteCurrentNode() {
 			ret.task_list = list1
 		}
 	}
-	ret.main.UpdatePageTitle()
+	ret.main.Tab().UpdatePageTitle()
 }
 
 func (qk *callinview) OnSearch(txt string) {
@@ -238,16 +238,15 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			sym := ref.call
 			if ref.fromrange != nil {
 				r := ref.fromrange
-
-				view.main.gotoline(lsp.Location{
+				view.main.current_editor().LoadFileWithLsp(r.URI.AsPath().String(),&lsp.Location{
 					URI:   r.URI,
 					Range: r.Range,
-				})
+				},false)
 			} else {
-				view.main.gotoline(lsp.Location{
+				view.main.current_editor().LoadFileWithLsp(sym.URI.AsPath().String(), &lsp.Location{
 					URI:   sym.URI,
 					Range: sym.SelectionRange,
-				})
+				},false)
 			}
 			view.update_node_color()
 			return
@@ -325,7 +324,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	}
 	root_node.Expand()
 	callin.view.SetRoot(root_node)
-	callin.main.UpdatePageTitle()
+	callin.main.Tab().UpdatePageTitle()
 	if current != nil {
 		callin.view.SetCurrentNode(current)
 	}

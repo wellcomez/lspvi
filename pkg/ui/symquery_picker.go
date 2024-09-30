@@ -46,7 +46,7 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 			pk.impl.list.AddItem(s, "", func() {
 				sym := pk.impl.sym[index]
 				main := pk.impl.parent.main
-				main.OpenFile(sym.Location.URI.AsPath().String(), &sym.Location)
+				main.OpenFileHistory(sym.Location.URI.AsPath().String(), &sym.Location)
 				pk.impl.parent.hide()
 			})
 		}

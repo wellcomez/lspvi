@@ -47,8 +47,8 @@ type CodeEditor interface {
 	LoadFileNoLsp(filename string, line int) error
 	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
 
-	goto_symbol_location(loc lsp.Range, update bool, option *lspcore.OpenOption)
-	goto_plaintext_line(line int)
+	goto_location_nohistory(loc lsp.Range, update bool, option *lspcore.OpenOption)
+	goto_line_history(line int)
 
 	get_symbol_range(sym lspcore.Symbol) lsp.Range
 	LspSymbol() *lspcore.Symbol_file
@@ -1274,14 +1274,14 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 }
 
 func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus bool) {
-	code.open_file_line_option(filename, line, focus, nil)
+	code.open_file_lspon_line_option(filename, line, focus, nil)
 }
-func (code *CodeView) open_file_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
+func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
 	main := code.main
 	code.openfile(filename, func() {
 		code.view.SetTitle(code.Path())
 		if line != nil {
-			code.goto_symbol_location(line.Range, code.id != view_code_below, option)
+			code.goto_location_nohistory(line.Range, code.id != view_code_below, option)
 		}
 		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
 			code.lspsymbol = sym
@@ -1306,7 +1306,7 @@ func (code *CodeView) open_file_line_option(filename string, line *lsp.Location,
 //	}
 func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
 	return code.openfile(filename, func() {
-		code.goto_plaintext_line(line)
+		code.goto_line_history(line)
 	})
 }
 func (code *CodeView) openfile(filename string, onload func()) error {
@@ -1504,7 +1504,7 @@ func is_lsppos_ok(pos lsp.Position) bool {
 	}
 	return true
 }
-func (code *CodeView) goto_symbol_location(loc lsp.Range, update bool, option *lspcore.OpenOption) {
+func (code *CodeView) goto_location_nohistory(loc lsp.Range, update bool, option *lspcore.OpenOption) {
 	shouldReturn := is_lsprange_ok(loc)
 	if shouldReturn {
 		return
@@ -1568,7 +1568,7 @@ func is_lsprange_ok(loc lsp.Range) bool {
 	}
 	return false
 }
-func (code *CodeView) goto_plaintext_line(line int) {
+func (code *CodeView) goto_line_history(line int) {
 	if line == -1 {
 		code.view.EndOfLine()
 		return
@@ -1577,15 +1577,15 @@ func (code *CodeView) goto_plaintext_line(line int) {
 		code.main.Navigation().history.SaveToHistory(code)
 		code.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(line))
 	}
-	key := ""
+	// key := ""
 
-	var gs *GenericSearch
-	if code.main != nil {
-		gs = code.main.Searchcontext()
-	}
-	if gs != nil && gs.view == view_code {
-		key = strings.ToLower(gs.key)
-	}
+	// var gs *GenericSearch
+	// if code.main != nil {
+	// 	gs = code.main.Searchcontext()
+	// }
+	// if gs != nil && gs.view == view_code {
+	// 	key = strings.ToLower(gs.key)
+	// }
 	// if line < code.view.Topline || code.view.Bottomline() < line {
 	// 	code.view.Topline = max(line-code.focus_line(), 0)
 	// }
@@ -1596,12 +1596,12 @@ func (code *CodeView) goto_plaintext_line(line int) {
 	text := strings.ToLower(code.view.Buf.Line(line))
 	RightX := len(text)
 	leftX := 0
-	if len(key) > 0 {
-		if index := strings.Index(text, key); index >= 0 {
-			leftX = index
-			RightX = index + len(key)
-		}
-	}
+	// if len(key) > 0 {
+	// 	if index := strings.Index(text, key); index >= 0 {
+	// 		leftX = index
+	// 		RightX = index + len(key)
+	// 	}
+	// }
 	start := femto.Loc{
 		X: leftX,
 		Y: line,

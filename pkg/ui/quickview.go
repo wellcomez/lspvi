@@ -55,7 +55,7 @@ type quick_view struct {
 	view         *customlist
 	Name         string
 	Refs         search_reference_result
-	main         *mainui
+	main         MainService
 	currentIndex int
 	Type         DateType
 	// menu         *contextmenu
@@ -228,7 +228,7 @@ func (menu quick_view_context) on_mouse(action tview.MouseAction, event *tcell.E
 
 // getbox implements context_menu_handle.
 func (menu quick_view_context) getbox() *tview.Box {
-	yes := menu.qk.main.is_tab(view_quickview.getname())
+	yes := menu.qk.main.Tab().activate_tab_id == view_quickview
 	if yes {
 		return menu.qk.view.Box
 	}
@@ -547,7 +547,7 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 		need_draw := false
 		if node.parent {
 			node.expand = !node.expand
-			data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.lspmgr)
+			data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.Lspmgr())
 			qk.view.Clear()
 			for _, v := range data {
 				qk.view.AddItem(v.text, "", func() {
@@ -558,8 +558,8 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 		}
 		refindex := node.ref_index
 		vvv := qk.Refs.Refs[refindex]
-		qk.main.UpdatePageTitle()
-		qk.main.gotoline(vvv.Loc)
+		qk.main.Tab().UpdatePageTitle()
+		qk.main.current_editor().LoadFileWithLsp(vvv.Loc.URI.AsPath().String(), &vvv.Loc, false)
 		if need_draw {
 			GlobalApp.ForceDraw()
 		}
@@ -567,10 +567,10 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 		vvv := qk.Refs.Refs[index]
 		qk.currentIndex = index
 		qk.view.SetCurrentItem(index)
-		same := vvv.Loc.URI.AsPath().String() == qk.main.codeview.Path()
+		same := vvv.Loc.URI.AsPath().String() == qk.main.current_editor().Path()
 		if open || same {
-			qk.main.UpdatePageTitle()
-			qk.main.gotoline(vvv.Loc)
+			qk.main.Tab().UpdatePageTitle()
+			qk.main.current_editor().LoadFileWithLsp(vvv.Loc.URI.AsPath().String(), &vvv.Loc, false)
 		} else {
 
 		}
@@ -598,7 +598,7 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	qk.view.Clear()
 
 	m := qk.main
-	Refs := get_loc_caller(qk.main, refs, m.lspmgr.Current)
+	Refs := get_loc_caller(qk.main, refs, m.Lspmgr().Current)
 
 	qk.UpdateListView(t, Refs, key)
 	qk.save()
@@ -648,7 +648,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.reset_tree()
 	// _, _, width, _ := qk.view.GetRect()
 	m := qk.main
-	lspmgr := m.lspmgr
+	lspmgr := m.Lspmgr()
 	qk.tree = &list_view_tree_extend{filename: qk.main.current_editor().Path()}
 	qk.tree.build_tree(Refs)
 	data := qk.tree.BuildListStringGroup(qk, global_prj_root, lspmgr)
@@ -657,7 +657,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 
 		})
 	}
-	qk.main.UpdatePageTitle()
+	qk.main.Tab().UpdatePageTitle()
 }
 
 func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
@@ -818,10 +818,10 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 	}
 }
 
-func new_qf_history(main *mainui) (*quickfix_history, error) {
+func new_qf_history(main MainService) (*quickfix_history, error) {
 	qf := &quickfix_history{
-		Wk:   main.lspmgr.Wk,
-		last: filepath.Join(main.lspmgr.Wk.Export, "quickfix_last.json"),
+		Wk:   main.Lspmgr().Wk,
+		last: filepath.Join(main.Lspmgr().Wk.Export, "quickfix_last.json"),
 	}
 	qfdir, err := qf.InitDir()
 	qf.qfdir = qfdir

@@ -78,7 +78,7 @@ func (r *recent_open_file) add(filename string) {
 			r.filelist = append(r.filelist, filename)
 			filename = trim_project_filename(filename, global_prj_root)
 			r.list.AddItem(filename, "", func() {
-				r.main.OpenFile(filepath, nil)
+				r.main.OpenFileHistory(filepath, nil)
 			})
 		})
 	}()
@@ -105,7 +105,7 @@ type MainService interface {
 	OnSearch(option search_option)
 
 	current_editor() CodeEditor
-	OpenFile(filename string, line *lsp.Location)
+	OpenFileHistory(filename string, line *lsp.Location)
 
 	on_select_project(prj *Project)
 
@@ -132,6 +132,8 @@ type MainService interface {
 	save_qf_uirefresh(data qf_history_data) error
 	open_in_tabview(keys []qf_history_data, i int)
 
+	open_colorescheme()
+	
 	create_menu_item(id command_id, handle func()) context_menu_item
 	Navigation() *BackForward
 
@@ -417,15 +419,16 @@ func (m *mainui) ActiveTab(id view_id, focused bool) {
 func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 	// panic("unimplemented")
 }
-func (m *mainui) gotoline(loc lsp.Location) {
-	code := m.codeview
-	file := loc.URI.AsPath().String()
-	if file != code.Path() {
-		m.OpenFile(file, &loc)
-	} else {
-		code.goto_plaintext_line(loc.Range.Start.Line)
-	}
-}
+
+// func (m *mainui) gotoline(loc lsp.Location) {
+// 	code := m.codeview
+// 	file := loc.URI.AsPath().String()
+// 	if file != code.Path() {
+// 		m.OpenFileHistory(file, &loc)
+// 	} else {
+// 		code.goto_line_history(loc.Range.Start.Line)
+// 	}
+// }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
@@ -478,7 +481,7 @@ func (m *mainui) ZoomWeb(zoom bool) {
 		proxy.set_browser_font(zoom)
 	}
 }
-func (m *mainui) OpenFile(file string, loc *lsp.Location) {
+func (m *mainui) OpenFileHistory(file string, loc *lsp.Location) {
 	m.OpenFileWithOption(file, loc, nil)
 }
 
@@ -533,7 +536,7 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
-	code.open_file_line_option(file, loc, true, option)
+	code.open_file_lspon_line_option(file, loc, true, option)
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
@@ -566,7 +569,7 @@ type Arguments struct {
 }
 
 func (m *mainui) open_file(file string) {
-	m.OpenFile(file, nil)
+	m.OpenFileHistory(file, nil)
 }
 
 type LspHandle struct {
@@ -696,7 +699,7 @@ func MainUI(arg *Arguments) {
 	if len(filearg) == 0 {
 		load_from_history(main)
 	} else {
-		main.OpenFile(filearg, nil)
+		main.OpenFileHistory(filearg, nil)
 	}
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// if main.codeview2.view.HasFocus() {

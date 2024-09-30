@@ -309,7 +309,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 							symview.main.Navigation().history.SaveToHistory(code)
 							symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line))
 						}
-						symview.editor.goto_symbol_location(r, false, nil)
+						symview.editor.goto_location_nohistory(r, false, nil)
 						return
 					}
 				}
@@ -318,7 +318,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 				Range.End.Line = Range.Start.Line
 				Range.End.Character = Range.Start.Character + len(sym.Name)
 			}
-			symview.editor.goto_symbol_location(Range, false, nil)
+			symview.editor.goto_location_nohistory(Range, false, nil)
 		}
 	}
 	symview.view.SetCurrentNode(node)

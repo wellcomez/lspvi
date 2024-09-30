@@ -172,7 +172,7 @@ func (grepx *livewgreppicker) grep_to_list() {
 		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
 		grepx.grep_list_view.AddItem(data, "", func() {
 			loc := convert_grep_info_location(&o)
-			grepx.main.OpenFile(o.fpath, &loc)
+			grepx.main.OpenFileHistory(o.fpath, &loc)
 			grepx.parent.hide()
 		})
 	}
@@ -196,7 +196,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
 					o := grepx.impl.result.data[dataindex]
 					loc := convert_grep_info_location(&o)
-					grepx.main.OpenFile(o.fpath, &loc)
+					grepx.main.OpenFileHistory(o.fpath, &loc)
 					grepx.parent.hide()
 				}
 			})
@@ -252,7 +252,7 @@ func convert_grep_info_location(o *grep_output) lsp.Location {
 func (o *grep_output) to_ref_caller(key string) ref_with_caller {
 	b := strings.Index(o.line, key)
 	e := b + len(key)
-	sss:=o.line[b:e]
+	sss := o.line[b:e]
 	log.Println(sss)
 	start := lsp.Position{Line: o.lineNumber - 1, Character: b}
 	end := start
