@@ -196,7 +196,7 @@ func (qk *qk_history_picker) updateprev() {
 				// call.width = width
 				dataprev = append(dataprev, call.ListItem(global_prj_root, true))
 			}
-			qk.codeprev.openbuffer([]byte(strings.Join(dataprev, "\n")), "")
+			qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
 		}
 	case data_callin:
 		{
@@ -225,7 +225,7 @@ func (qk *qk_history_picker) updateprev() {
 					}
 				}
 				data := strings.Join(content, "\n")
-				qk.codeprev.openbuffer([]byte(data), "")
+				qk.codeprev.LoadBuffer([]byte(data), "")
 			} else {
 				dirs, err := os.ReadDir(callin)
 				content := []string{}
@@ -234,13 +234,13 @@ func (qk *qk_history_picker) updateprev() {
 				}
 				data := strings.Join(content, "\n")
 				if err == nil {
-					qk.codeprev.openbuffer([]byte(data), "")
+					qk.codeprev.LoadBuffer([]byte(data), "")
 				}
 			}
 		}
 	default:
 		{
-			qk.codeprev.openbuffer([]byte("????"), "")
+			qk.codeprev.LoadBuffer([]byte("????"), "")
 		}
 	}
 }

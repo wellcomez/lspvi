@@ -41,9 +41,9 @@ type CodeEditor interface {
 	action_get_refer()
 	action_goto_define(line *lspcore.OpenOption)
 
-	openbuffer(data []byte, filename string)
 	openfile(filename string, onload func()) error
-	
+
+	LoadBuffer(data []byte, filename string)
 	LoadFileNoLsp(filename string, line int) error
 	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
 
@@ -1383,7 +1383,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 			}
 		})
 	})
-	code.openbuffer(data, filename)
+	code.LoadBuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
 	code.file = NewFile(filename)
 	if code.main != nil {
@@ -1413,7 +1413,7 @@ func (code CodeView) change_wrap_appearance() {
 func (view *codetextview) is_softwrap() bool {
 	return view.Buf.Settings["softwrap"] == true
 }
-func (code *CodeView) openbuffer(data []byte, filename string) {
+func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	code.tree_sitter = nil
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.linechange = bookmarkfile{}
