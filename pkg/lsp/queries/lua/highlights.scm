@@ -1,80 +1,82 @@
-; Keywords
-"return" @keyword.return
+;; Keywords
+
+"return" @keyword
 
 [
-  "goto"
-  "in"
-  "local"
+ "goto"
+ "in"
+ "local"
 ] @keyword
 
 (break_statement) @keyword
 
 (do_statement
-  [
-    "do"
-    "end"
-  ] @keyword)
+[
+  "do"
+  "end"
+] @keyword)
 
 (while_statement
-  [
-    "while"
-    "do"
-    "end"
-  ] @keyword.repeat)
+[
+  "while"
+  "do"
+  "end"
+] @keyword)
 
 (repeat_statement
-  [
-    "repeat"
-    "until"
-  ] @keyword.repeat)
+[
+  "repeat"
+  "until"
+] @keyword)
 
 (if_statement
-  [
-    "if"
-    "elseif"
-    "else"
-    "then"
-    "end"
-  ] @keyword.conditional)
+[
+  "if"
+  "elseif"
+  "else"
+  "then"
+  "end"
+] @keyword)
 
 (elseif_statement
-  [
-    "elseif"
-    "then"
-    "end"
-  ] @keyword.conditional)
+[
+  "elseif"
+  "then"
+  "end"
+] @keyword)
 
 (else_statement
-  [
-    "else"
-    "end"
-  ] @keyword.conditional)
+[
+  "else"
+  "end"
+] @keyword)
 
 (for_statement
-  [
-    "for"
-    "do"
-    "end"
-  ] @keyword.repeat)
+[
+  "for"
+  "do"
+  "end"
+] @keyword)
 
 (function_declaration
-  [
-    "function"
-    "end"
-  ] @keyword.function)
+[
+  "function"
+  "end"
+] @keyword)
 
 (function_definition
-  [
-    "function"
-    "end"
-  ] @keyword.function)
-
-; Operators
 [
-  "and"
-  "not"
-  "or"
-] @keyword.operator
+  "function"
+  "end"
+] @keyword)
+
+;; Operators
+
+[
+ "and"
+ "not"
+ "or"
+] @operator
 
 [
   "+"
@@ -100,56 +102,42 @@
   ".."
 ] @operator
 
-; Punctuations
+;; Punctuations
+
 [
   ";"
   ":"
-  "::"
   ","
   "."
 ] @punctuation.delimiter
 
-; Brackets
+;; Brackets
+
 [
-  "("
-  ")"
-  "["
-  "]"
-  "{"
-  "}"
+ "("
+ ")"
+ "["
+ "]"
+ "{"
+ "}"
 ] @punctuation.bracket
 
-; Variables
+;; Variables
+
 (identifier) @variable
 
-((identifier) @constant.builtin
-  (#eq? @constant.builtin "_VERSION"))
-
-((identifier) @variable.builtin
-  (#eq? @variable.builtin "self"))
-
-((identifier) @module.builtin
-  (#any-of? @module.builtin "_G" "debug" "io" "jit" "math" "os" "package" "string" "table" "utf8"))
-
-((identifier) @keyword.coroutine
-  (#eq? @keyword.coroutine "coroutine"))
+((identifier) @variable.special
+ (#eq? @variable.special "self"))
 
 (variable_list
-  (attribute
-    "<" @punctuation.bracket
-    (identifier) @attribute
-    ">" @punctuation.bracket))
+   attribute: (attribute
+     (["<" ">"] @punctuation.bracket
+      (identifier) @attribute)))
 
-; Labels
-(label_statement
-  (identifier) @label)
+;; Constants
 
-(goto_statement
-  (identifier) @label)
-
-; Constants
 ((identifier) @constant
-  (#lua-match? @constant "^[A-Z][A-Z_0-9]*$"))
+ (#match? @constant "^[A-Z][A-Z_0-9]*$"))
 
 (vararg_expression) @constant
 
@@ -160,108 +148,51 @@
   (true)
 ] @boolean
 
-; Tables
-(field
-  name: (identifier) @property)
+;; Tables
 
-(dot_index_expression
-  field: (identifier) @variable.member)
+(field name: (identifier) @property)
 
-(table_constructor
-  [
-    "{"
-    "}"
-  ] @constructor)
-
-; Functions
-(parameters
-  (identifier) @variable.parameter)
-
-(vararg_expression) @variable.parameter.builtin
-
-(function_declaration
-  name: [
-    (identifier) @function
-    (dot_index_expression
-      field: (identifier) @function)
-  ])
-
-(function_declaration
-  name: (method_index_expression
-    method: (identifier) @function.method))
-
-(assignment_statement
-  (variable_list
-    .
-    name: [
-      (identifier) @function
-      (dot_index_expression
-        field: (identifier) @function)
-    ])
-  (expression_list
-    .
-    value: (function_definition)))
+(dot_index_expression field: (identifier) @property)
 
 (table_constructor
-  (field
-    name: (identifier) @function
-    value: (function_definition)))
+[
+  "{"
+  "}"
+] @constructor)
+
+;; Functions
+
+(parameters (identifier) @parameter)
 
 (function_call
   name: [
-    (identifier) @function.call
-    (dot_index_expression
-      field: (identifier) @function.call)
-    (method_index_expression
-      method: (identifier) @function.method.call)
+    (identifier) @function
+    (dot_index_expression field: (identifier) @function)
   ])
+
+(function_declaration
+  name: [
+    (identifier) @function.definition
+    (dot_index_expression field: (identifier) @function.definition)
+  ])
+
+(method_index_expression method: (identifier) @function.method)
 
 (function_call
   (identifier) @function.builtin
   (#any-of? @function.builtin
-    ; built-in functions in Lua 5.1
-    "assert" "collectgarbage" "dofile" "error" "getfenv" "getmetatable" "ipairs" "load" "loadfile"
-    "loadstring" "module" "next" "pairs" "pcall" "print" "rawequal" "rawget" "rawlen" "rawset"
-    "require" "select" "setfenv" "setmetatable" "tonumber" "tostring" "type" "unpack" "xpcall"
-    "__add" "__band" "__bnot" "__bor" "__bxor" "__call" "__concat" "__div" "__eq" "__gc" "__idiv"
-    "__index" "__le" "__len" "__lt" "__metatable" "__mod" "__mul" "__name" "__newindex" "__pairs"
-    "__pow" "__shl" "__shr" "__sub" "__tostring" "__unm"))
+    ;; built-in functions in Lua 5.1
+    "assert" "collectgarbage" "dofile" "error" "getfenv" "getmetatable" "ipairs"
+    "load" "loadfile" "loadstring" "module" "next" "pairs" "pcall" "print"
+    "rawequal" "rawget" "rawset" "require" "select" "setfenv" "setmetatable"
+    "tonumber" "tostring" "type" "unpack" "xpcall"))
 
-; Others
-(comment) @comment @spell
+;; Others
 
-((comment) @comment.documentation
-  (#lua-match? @comment.documentation "^[-][-][-]"))
+(comment) @comment
 
-((comment) @comment.documentation
-  (#lua-match? @comment.documentation "^[-][-](%s?)@"))
-
-(hash_bang_line) @keyword.directive
+(hash_bang_line) @preproc
 
 (number) @number
 
 (string) @string
-
-(escape_sequence) @string.escape
-
-; string.match("123", "%d+")
-(function_call
-  (dot_index_expression
-    field: (identifier) @_method
-    (#any-of? @_method "find" "match" "gmatch" "gsub"))
-  arguments: (arguments
-    .
-    (_)
-    .
-    (string
-      content: (string_content) @string.regexp)))
-
-;("123"):match("%d+")
-(function_call
-  (method_index_expression
-    method: (identifier) @_method
-    (#any-of? @_method "find" "match" "gmatch" "gsub"))
-  arguments: (arguments
-    .
-    (string
-      content: (string_content) @string.regexp)))
