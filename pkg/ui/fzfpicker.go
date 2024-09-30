@@ -96,12 +96,12 @@ func (v *fzfmain) hide() {
 	v.input.SetText("")
 	v.input.SetLabel("")
 }
-func (v *fzfmain) open_qfh_picker(code *CodeView) {
+func (v *fzfmain) open_qfh_picker(code CodeEditor) {
 	sym := new_qk_history_picker(v, code)
 	x := sym.grid()
 	v.create_dialog_content(x, sym)
 }
-func (v *fzfmain) open_wks_query(code *CodeView) {
+func (v *fzfmain) open_wks_query(code CodeEditor) {
 	sym := new_workspace_symbol_picker(v, code)
 	x := sym.grid()
 	v.create_dialog_content(x, sym)
@@ -114,8 +114,8 @@ func (v *fzfmain) OpenBookMarkFzf(code *CodeView, bookmark *proj_bookmark) {
 }
 
 // NewSymboWalk
-func (v *fzfmain) OpenRefFzf(code *CodeView, ranges lsp.Range) {
-	sym := new_refer_picker(*code.lspsymbol, v, code)
+func (v *fzfmain) OpenRefFzf(code CodeEditor, ranges lsp.Range) {
+	sym := new_refer_picker(*code.LspSymbol(), v, code)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 	sym.load(ranges)
@@ -137,7 +137,7 @@ func (v *fzfmain) OpenLiveGrepFzf() {
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
-func (v *fzfmain) OpenColorFzf(code *CodeView) {
+func (v *fzfmain) OpenColorFzf(code CodeEditor) {
 	sym := new_color_picker(v)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
@@ -168,7 +168,7 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 }
 
 func (v *fzfmain) OpenDocumntSymbolFzf(code CodeEditor) {
-	sym := new_outline_picker(v, code.LspSymbol(), code)
+	sym := new_outline_picker(v, code)
 	layout := sym.grid(v.input)
 	v.create_dialog_content(layout, sym)
 	v.currentpicker = sym

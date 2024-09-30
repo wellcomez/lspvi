@@ -78,7 +78,7 @@ func (t DateType) String() string {
 	}
 	return ""
 }
-func new_qk_history_picker(v *fzfmain, code *CodeView) qk_history_picker {
+func new_qk_history_picker(v *fzfmain, code CodeEditor) qk_history_picker {
 	list := new_customlist(false)
 	list.fuzz = true
 	list.SetBorder(true)
