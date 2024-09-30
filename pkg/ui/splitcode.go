@@ -1,8 +1,6 @@
 package mainui
 
 import (
-	"github.com/tectiv3/go-lsp"
-	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type CodeSplit struct {
