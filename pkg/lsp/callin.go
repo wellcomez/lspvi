@@ -89,12 +89,13 @@ func NewCallStackEntry(item lsp.CallHierarchyItem, fromRanges []lsp.Range, refer
 var callstack_task_id = 0
 
 type CallInTask struct {
-	Name     string
-	Allstack []*CallStack
-	Loc      lsp.Location
-	lsp      lspclient
-	set      map[string]bool
-	UID      int
+	Name         string
+	Allstack     []*CallStack
+	Loc          lsp.Location
+	lsp          lspclient
+	set          map[string]bool
+	UID          int
+	TraceLevel int
 	// cb       *func(task CallInTask)
 }
 
@@ -159,7 +160,7 @@ func NewCallStack() *CallStack {
 	ret := CallStack{Resovled: false}
 	return &ret
 }
-func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
+func NewCallInTask(loc lsp.Location, lsp lspclient,level int) *CallInTask {
 	name := ""
 	if body, err := NewBody(loc); err == nil {
 		name = body.String()
@@ -172,6 +173,7 @@ func NewCallInTask(loc lsp.Location, lsp lspclient) *CallInTask {
 		Loc:  loc,
 		lsp:  lsp,
 		UID:  callstack_task_id,
+		TraceLevel: level,
 	}
 	task.set = make(map[string]bool)
 	return task
@@ -197,9 +199,11 @@ type added struct {
 	set []*callchain
 }
 
+var CallMaxLevel = 5
+
 func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 	child, err := task.lsp.CallHierarchyIncomingCalls(parent.data)
-	if err != nil || parent.level > 5 {
+	if err != nil || parent.level > task.TraceLevel{
 		leaf.set = append(leaf.set, parent)
 		return err
 	}

@@ -199,7 +199,7 @@ type mainui struct {
 
 // new_bookmark_editor implements MainService.
 // func (main *mainui) new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit {
-	// panic("unimplemented")
+// panic("unimplemented")
 // }
 
 type mode struct {
@@ -374,7 +374,7 @@ func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
 	if err != nil {
 		return
 	}
-	lsp.CallinTask(loc)
+	lsp.CallinTask(loc, lspcore.CallMaxLevel)
 }
 func (m *mainui) get_callin_stack_by_cursor(loc lsp.Location, filepath string) {
 	m.get_callin_stack(loc, filepath)

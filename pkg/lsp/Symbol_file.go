@@ -219,8 +219,8 @@ func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 	}
 	return ret, nil
 }
-func (sym *Symbol_file) CallinTask(loc lsp.Location) (*CallInTask, error) {
-	task := NewCallInTask(loc, sym.lsp)
+func (sym *Symbol_file) CallinTask(loc lsp.Location, level int) (*CallInTask, error) {
+	task := NewCallInTask(loc, sym.lsp, level)
 	task.run()
 	sym.Handle.OnLspCallTaskInViewChanged(task)
 	return task, nil
