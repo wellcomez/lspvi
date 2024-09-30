@@ -29,12 +29,15 @@ type CodeEditor interface {
 	bookmark()
 	Path() string
 	vid() view_id
-
+	Primitive() tview.Primitive
+	LoadBuffer(data []byte, filename string)
+	LoadAndCb(filename string, onload func()) error
 	action_grep_word(selected bool)
 	action_get_refer()
 	key_call_in()
 	action_goto_declaration()
-get_symbol_range(sym lspcore.Symbol) lsp.Range
+	LoadNoSymbol(filename string, line int) error
+	get_symbol_range(sym lspcore.Symbol) lsp.Range
 	goto_loation(loc lsp.Range, update bool, option *lspcore.OpenOption)
 	gotoline_not_open(line int)
 	action_goto_define(line *lspcore.OpenOption)
@@ -190,13 +193,16 @@ type CodeView struct {
 	rightmenu       CodeContextMenu
 	// LineNumberUnderMouse int
 	not_preview bool
-	bgcolor     tcell.Color
+	// bgcolor     tcell.Color
 	// colorscheme *symbol_colortheme
 	// ts          *lspcore.TreeSitter
 	insert bool
 	diff   *Differ
 }
 
+func (code CodeView) Primitive() tview.Primitive {
+	return code.view
+}
 func (code CodeView) LspSymbol() *lspcore.Symbol_file {
 	return code.lspsymbol
 }

@@ -20,7 +20,7 @@ func (grepx *prev_picker_impl) update_title(s string) {
 	grepx.parent.update_dialog_title(s)
 }
 func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.Flex {
-	code := impl.codeprev.view
+	code := impl.codeprev.Primitive()
 	if impl.listcustom != nil {
 		list := impl.listcustom
 		list.SetBorder(true)
@@ -52,7 +52,7 @@ func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.
 func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.Grid {
 	list := impl.listview
 	list.SetBorder(true)
-	code := impl.codeprev.view
+	code := impl.codeprev.Primitive()
 	var layout *tview.Grid
 	if impl.listcustom != nil {
 		layout = layout_list_edit(impl.listcustom, code, input)
@@ -95,7 +95,7 @@ func layout_list_edit(list tview.Primitive, code tview.Primitive, input *tview.I
 type prev_picker_impl struct {
 	listview         *tview.List
 	listcustom       *customlist
-	codeprev         *CodeView
+	codeprev         CodeEditor
 	parent           *fzfmain
 	list_click_check *GridListClickCheck
 	on_list_selected func()
@@ -217,7 +217,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
 	lsp := pk.impl.parent.main.Lspmgr().Current
-	pk.impl.refs = get_loc_caller(pk.impl.codeprev.main, file, lsp)
+	pk.impl.refs = get_loc_caller(pk.impl.parent.main, file, lsp)
 	for i := range pk.impl.refs {
 		caller := pk.impl.refs[i]
 		v := caller.Loc
@@ -311,7 +311,7 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code CodeEditor) re
 		},
 	}
 	sym.impl.use_cusutom_list(new_customlist(true))
-	sym.impl.codeprev.view.SetBorder(true)
+	// sym.impl.codeprev.view.SetBorder(true)
 	return sym
 }
 

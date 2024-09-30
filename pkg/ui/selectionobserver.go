@@ -65,6 +65,9 @@ func (c *selectarea) In(x, y int) bool {
 }
 func (sel *selectarea) handle_mouse_selection(action tview.MouseAction,
 	event *tcell.EventMouse) bool {
+	if event == nil {
+		return false
+	}
 	posX, posY := event.Position()
 	pos := Pos{
 		X: posX,

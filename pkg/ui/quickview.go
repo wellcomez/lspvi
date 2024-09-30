@@ -20,7 +20,7 @@ import (
 )
 
 type quick_preview struct {
-	codeprev *CodeView
+	codeprev CodeEditor
 	frame    *tview.Frame
 	visisble bool
 }

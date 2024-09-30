@@ -229,7 +229,7 @@ func new_bookmark_picker(v *fzfmain, code *CodeView, bookmark *proj_bookmark) bo
 	sym := bookmark_picker{
 		impl: impl,
 	}
-	sym.impl.codeprev.view.SetBorder(true)
+	// sym.impl.codeprev.view.SetBorder(true)
 
 	impl.hlist, impl.listdata = init_bookmark_list(bookmark, func(i int) {
 		loc := sym.impl.listdata[i].loc
