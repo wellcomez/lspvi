@@ -1259,9 +1259,9 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	return b
 }
 
-func (code *CodeView) Load(filename string) error {
-	return code.LoadAndCb(filename, nil)
-}
+// func (code *CodeView) Load(filename string) error {
+// 	return code.LoadAndCb(filename, nil)
+// }
 func (code *CodeView) LoadNoSymbol(filename string, line int) error {
 	return code.LoadAndCb(filename, func() {
 		code.gotoline_not_open(line)

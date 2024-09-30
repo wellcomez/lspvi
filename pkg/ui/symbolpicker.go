@@ -137,8 +137,8 @@ func (pk *GridClickCheck) handle_mouse(action tview.MouseAction, event *tcell.Ev
 func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	list := sym.impl.symview.view
 	list.SetBorder(true)
-	code := sym.impl.codeprev.view
-	sym.impl.codeprev.Load(sym.impl.file.Filename)
+	code := sym.impl.codeprev.Primitive()
+	sym.impl.codeprev.LoadAndCb(sym.impl.file.Filename,nil)
 	layout := layout_list_edit(list, code, input)
 	sym.impl.click = NewGridTreeClickCheck(layout, sym.impl.symview.view)
 	sym.impl.click.click = func(event *tcell.EventMouse) {
@@ -166,7 +166,7 @@ func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	return layout
 }
 
-func new_outline_picker(v *fzfmain,  code CodeEditor) symbolpicker {
+func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 	symbol := &SymbolTreeViewExt{}
 	symbol.SymbolTreeView = NewSymbolTreeView(v.main, code)
 	symbol.parent = v
@@ -199,7 +199,7 @@ type SymbolWalkImpl struct {
 	file     *lspcore.Symbol_file
 	symview  *SymbolTreeViewExt
 	gs       *GenericSearch
-	codeprev *CodeView
+	codeprev CodeEditor
 	click    *GridTreeClickCheck
 }
 
