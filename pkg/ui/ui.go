@@ -94,6 +94,7 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 }
 
 type MainService interface {
+	Dialog() *fzfmain
 	toggle_view(id view_id)
 	zoom(zoomin bool)
 	ZoomWeb(zoom bool)
@@ -103,7 +104,7 @@ type MainService interface {
 
 	OnSearch(option search_option)
 
-	current_editor() *CodeView
+	current_editor() CodeEditor
 	OpenFile(filename string, line *lsp.Location)
 
 	on_select_project(prj *Project)
@@ -517,7 +518,7 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	if addhistory {
 		if loc != nil {
 			m.bf.history.SaveToHistory(code)
-			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line, code))
+			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line))
 		} else {
 			m.bf.history.SaveToHistory(code)
 			m.bf.history.AddToHistory(file, nil)
@@ -526,7 +527,7 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
-	code.open_file_line_option(file, loc, true,option)
+	code.open_file_line_option(file, loc, true, option)
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
@@ -899,7 +900,7 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 	}
 	return main_layout
 }
-func (main *mainui) current_editor() *CodeView {
+func (main *mainui) current_editor() CodeEditor {
 	if main.codeview2.view.HasFocus() {
 		return main.codeview2
 	}
@@ -1202,11 +1203,11 @@ func (main *mainui) GoBack() {
 func (main *mainui) open_picker_bookmark() {
 	main.layout.dialog.OpenBookMarkFzf(main.codeview, main.bookmark)
 }
+func (main mainui) Dialog() *fzfmain {
+	return main.layout.dialog
+}
 func (main *mainui) open_picker_refs() {
-	code := main.current_editor()
-	code.view.Cursor.SelectWord()
-	loc := code.lsp_cursor_loc()
-	main.layout.dialog.OpenRefFzf(code, loc)
+	main.current_editor().open_picker_refs()
 }
 func (main *mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(global_prj_root, main.current_editor())
@@ -1224,7 +1225,7 @@ func (main *mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }
 func (main *mainui) open_document_symbol_picker() {
-	main.layout.dialog.OpenDocumntSymbolFzf(main.current_editor())
+	main.Dialog().OpenDocumntSymbolFzf(main.current_editor())
 }
 
 type Search interface {

@@ -47,7 +47,7 @@ type SymbolTreeView struct {
 	waiter        *tview.TextView
 	right_context symboltree_view_context
 	file          string
-	editor        *CodeView
+	editor        CodeEditor
 }
 type symboltree_view_context struct {
 	qk        *SymbolTreeView
@@ -203,7 +203,7 @@ func (m *SymbolTreeView) OnCodeLineChange(x, y int, file string) {
 	}
 }
 
-func NewSymbolTreeView(main MainService, codeview *CodeView) *SymbolTreeView {
+func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
 	ret := &SymbolTreeView{
 		view_link: &view_link{id: view_outline_list, left: view_code, down: view_quickview},
@@ -252,7 +252,10 @@ func NewSymbolTreeView(main MainService, codeview *CodeView) *SymbolTreeView {
 			bw := width / 2
 			bh := height / 2
 			waiter.SetRect((width-bw)/2+x, y+(height-bh)/2, bw, bh)
-			waiter.SetBackgroundColor(ret.editor.bgcolor)
+			if style := global_theme.get_default_style(); style != nil {
+				waiter.SetTextStyle(*style)
+			}
+			// waiter.SetBackgroundColor(ret.editor.bgcolor)
 			waiter.Draw(screen)
 		}
 		return ret.view.GetInnerRect()
@@ -301,9 +304,9 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 							},
 						}
 						code := symview.editor
-						if code.id == view_code {
+						if code.vid() == view_code {
 							symview.main.Navigation().history.SaveToHistory(code)
-							symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line, symview.editor))
+							symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line))
 						}
 						symview.editor.goto_loation(r, false, nil)
 						return
@@ -406,18 +409,19 @@ func (c *SymbolTreeView) HandleKey(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
-	loc := sym.SymInfo.Location
-	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
-	beginline := c.editor.view.Buf.Line(loc.Range.Start.Line)
-	startIndex := strings.Index(beginline, sym.SymInfo.Name)
-	if startIndex > 0 {
-		loc.Range.Start.Character = startIndex
-		loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex
-		loc.Range.End.Line = loc.Range.Start.Line
-	}
-	// println(ss)
-	c.main.get_callin_stack(loc, c.editor.Path())
-	// c.main.ActiveTab(view_callin)
+	// loc := sym.SymInfo.Location
+	// // ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	// beginline := c.editor.view.Buf.Line(loc.Range.Start.Line)
+	// startIndex := strings.Index(beginline, sym.SymInfo.Name)
+	// if startIndex > 0 {
+	// 	loc.Range.Start.Character = startIndex
+	// 	loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex
+	// 	loc.Range.End.Line = loc.Range.Start.Line
+	// }
+	// // println(ss)
+	// c.main.get_callin_stack(loc, c.editor.Path())
+	// // c.main.ActiveTab(view_callin)
+	c.editor.get_callin(sym)
 }
 func (c *SymbolTreeView) get_declare(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
@@ -440,16 +444,7 @@ func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 }
 
 func (c *SymbolTreeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
-	r := sym.SymInfo.Location.Range
-
-	beginline := c.editor.view.Buf.Line(r.Start.Line)
-	startIndex := strings.Index(beginline, sym.SymInfo.Name)
-	if startIndex > 0 {
-		r.Start.Character = startIndex
-		r.End.Character = len(sym.SymInfo.Name) + startIndex - 1
-		r.End.Line = r.Start.Line
-	}
-	return r
+	return c.editor.get_symbol_range(sym)
 }
 
 func (v *SymbolTreeView) Clear() {

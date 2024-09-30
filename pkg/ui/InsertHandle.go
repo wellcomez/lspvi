@@ -4,7 +4,7 @@ import "github.com/gdamore/tcell/v2"
 
 type InsertHandle struct {
 	main     *mainui
-	codeview *CodeView
+	codeview CodeEditor
 }
 
 // HanldeKey implements vim_mode_handle.

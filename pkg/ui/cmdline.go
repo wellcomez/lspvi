@@ -649,7 +649,7 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 	if event.Rune() == '/' || event.Rune() == '?' {
 		if v.vi.Escape {
 			if v.app.searchcontext == nil {
-				v.app.searchcontext = NewGenericSearch(v.app.current_editor().id, "")
+				v.app.searchcontext = NewGenericSearch(v.app.current_editor().vid(), "")
 			}
 			aa := (event.Rune() == '/')
 			v.app.searchcontext.next_or_prev = aa
@@ -818,7 +818,7 @@ func (v *Vim) EnterVmap() {
 func (v *Vim) EnterEscape() {
 	v.app.cmdline.Clear()
 	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}
-	v.app.current_editor().view.Cursor.ResetSelection()
+	v.app.current_editor().ResetSelection()
 	f := v.app.get_focus_view_id()
 	if f == view_cmd || f == view_none {
 		v.app.set_viewid_focus(view_code)

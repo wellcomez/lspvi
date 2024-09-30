@@ -64,23 +64,19 @@ type EditorPosition struct {
 	Offset int
 }
 
-func NewEditorPosition(Line int, text *CodeView) *EditorPosition {
+func NewEditorPosition(Line int) *EditorPosition {
 	return &EditorPosition{
 		Line:   Line,
 		Offset: 0,
 	}
 }
-func (h *History) SaveToHistory(code *CodeView) {
-	if !code.not_preview {
+func (h *History) SaveToHistory(code CodeEditor) {
+	pos := code.EditorPosition()
+	if pos == nil {
 		return
 	}
-	line := code.view.Cursor.Loc.Y
-	pos := EditorPosition{
-		Line:   line,
-		Offset: code.view.Topline,
-	}
 	if len(h.datalist) > 0 {
-		h.datalist[h.index].Pos = pos
+		h.datalist[h.index].Pos = *pos
 		h.save_to_file()
 	}
 }

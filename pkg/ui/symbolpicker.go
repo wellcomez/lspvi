@@ -166,7 +166,7 @@ func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	return layout
 }
 
-func new_outline_picker(v *fzfmain, file *lspcore.Symbol_file, code *CodeView) symbolpicker {
+func new_outline_picker(v *fzfmain,  code CodeEditor) symbolpicker {
 	symbol := &SymbolTreeViewExt{}
 	symbol.SymbolTreeView = NewSymbolTreeView(v.main, code)
 	symbol.parent = v
@@ -174,12 +174,12 @@ func new_outline_picker(v *fzfmain, file *lspcore.Symbol_file, code *CodeView) s
 
 	sym := symbolpicker{
 		impl: &SymbolWalkImpl{
-			file:     file,
+			file:     code.LspSymbol(),
 			symview:  symbol,
 			codeprev: NewCodeView(v.main),
 		},
 	}
-	symbol.update(file)
+	symbol.update(code.LspSymbol())
 	return sym
 }
 
@@ -191,7 +191,7 @@ type SymbolTreeViewExt struct {
 func (v SymbolTreeViewExt) OnClickSymobolNode(node *tview.TreeNode) {
 	v.SymbolTreeView.OnClickSymobolNode(node)
 	v.parent.hide()
-	v.main.set_viewid_focus(v.SymbolTreeView.editor.id)
+	v.main.set_viewid_focus(v.SymbolTreeView.editor.vid())
 	v.main.CmdLine().Vim.EnterEscape()
 }
 

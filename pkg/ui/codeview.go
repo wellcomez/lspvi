@@ -19,6 +19,115 @@ import (
 	// "github.com/gdamore/tcell"
 )
 
+type CodeEditor interface {
+	FileName() string
+	update_with_line_changed()
+	LspSymbol() *lspcore.Symbol_file
+	Save() error
+	handle_key(event *tcell.EventKey) *tcell.EventKey
+	ResetSelection()
+	bookmark()
+	Path() string
+	vid() view_id
+
+	action_grep_word(selected bool)
+	action_get_refer()
+	key_call_in()
+	action_goto_declaration()
+get_symbol_range(sym lspcore.Symbol) lsp.Range
+	goto_loation(loc lsp.Range, update bool, option *lspcore.OpenOption)
+	gotoline_not_open(line int)
+	action_goto_define(line *lspcore.OpenOption)
+	open_file_line(filename string, line *lsp.Location, focus bool)
+	Match()
+
+	action_key_up()
+	action_key_down()
+	key_left()
+	key_right()
+	word_left()
+	word_right()
+	Undo()
+	action_page_down(bool)
+	copyline(bool)
+	deleteline()
+	goto_line_end()
+	goto_line_head()
+	get_callin(sym lspcore.Symbol)
+
+	open_picker_refs()
+	InsertMode(yes bool)
+	OnFindInfile(fzf bool, noloop bool) string
+	OnFindInfileWordOption(fzf bool, noloop bool, whole bool) string
+
+	EditorPosition() *EditorPosition
+}
+
+func (editor *CodeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
+	r := sym.SymInfo.Location.Range
+
+	beginline := editor.view.Buf.Line(r.Start.Line)
+	startIndex := strings.Index(beginline, sym.SymInfo.Name)
+	if startIndex > 0 {
+		r.Start.Character = startIndex
+		r.End.Character = len(sym.SymInfo.Name) + startIndex - 1
+		r.End.Line = r.Start.Line
+	}
+	return r
+}
+func (code *CodeView) goto_line_head() {
+	Cur := code.view.Cursor
+	Cur.Loc = femto.Loc{X: 0, Y: Cur.Loc.Y}
+}
+func (code *CodeView) EditorPosition() *EditorPosition {
+	if !code.not_preview {
+		return nil
+	}
+	line := code.view.Cursor.Loc.Y
+	pos := &EditorPosition{
+		Line:   line,
+		Offset: code.view.Topline,
+	}
+	return pos
+}
+func (code *CodeView) goto_line_end() {
+	m := code.main
+	if m.CmdLine().Vim.vi.VMap {
+		begin := code.view.Cursor.Loc
+		code.view.JumpToMatchingBrace()
+		end := code.view.Cursor.Loc
+		end.X += 1
+		code.view.Cursor.SetSelectionStart(begin)
+		code.view.Cursor.SetSelectionEnd(end)
+	} else {
+		code.view.JumpToMatchingBrace()
+	}
+}
+func (code *CodeView) open_picker_refs() {
+	code.view.Cursor.SelectWord()
+	loc := code.lsp_cursor_loc()
+	code.main.Dialog().OpenRefFzf(code, loc)
+}
+func (code *CodeView) Match() {
+	m := code.main
+	if m.CmdLine().Vim.vi.VMap {
+		begin := code.view.Cursor.Loc
+		code.view.JumpToMatchingBrace()
+		end := code.view.Cursor.Loc
+		end.X += 1
+		code.view.Cursor.SetSelectionStart(begin)
+		code.view.Cursor.SetSelectionEnd(end)
+	} else {
+		code.view.JumpToMatchingBrace()
+	}
+}
+func (code CodeView) vid() view_id {
+	return code.id
+}
+func (code *CodeView) ResetSelection() {
+	code.view.Cursor.ResetSelection()
+}
+
 type editor_selection struct {
 	selected_text string
 	begin, end    femto.Loc
@@ -86,6 +195,10 @@ type CodeView struct {
 	// ts          *lspcore.TreeSitter
 	insert bool
 	diff   *Differ
+}
+
+func (code CodeView) LspSymbol() *lspcore.Symbol_file {
+	return code.lspsymbol
 }
 
 // OnFileChange implements change_reciever.
@@ -1374,6 +1487,20 @@ func (code *CodeView) set_loc(end femto.Loc) {
 	Cur := code.view.Cursor
 	Cur.Loc = end
 }
+func (editor *CodeView) get_callin(sym lspcore.Symbol) {
+	loc := sym.SymInfo.Location
+	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	beginline := editor.view.Buf.Line(loc.Range.Start.Line)
+	startIndex := strings.Index(beginline, sym.SymInfo.Name)
+	if startIndex > 0 {
+		loc.Range.Start.Character = startIndex
+		loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex
+		loc.Range.End.Line = loc.Range.Start.Line
+	}
+	// println(ss)
+	editor.main.get_callin_stack(loc, editor.Path())
+	// c.main.ActiveTab(view_callin)
+}
 
 func is_lsprange_ok(loc lsp.Range) bool {
 	if !is_lsppos_ok(loc.Start) || !is_lsppos_ok(loc.End) {
@@ -1388,7 +1515,7 @@ func (code *CodeView) gotoline_not_open(line int) {
 	}
 	if code.main != nil && code.not_preview {
 		code.main.Navigation().history.SaveToHistory(code)
-		code.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(line, code))
+		code.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(line))
 	}
 	key := ""
 

@@ -100,7 +100,7 @@ type prev_picker_impl struct {
 	list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
-	editor           *CodeView
+	editor           CodeEditor
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
@@ -315,7 +315,7 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code *CodeView) ref
 	return sym
 }
 
-func new_preview_picker(v *fzfmain, editor *CodeView) *prev_picker_impl {
+func new_preview_picker(v *fzfmain, editor CodeEditor) *prev_picker_impl {
 	x := &prev_picker_impl{
 		listview: tview.NewList(),
 		codeprev: NewCodeView(v.main),

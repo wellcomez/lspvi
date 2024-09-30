@@ -10,10 +10,10 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
-func (parent *fzfmain) openfile(path string, code *CodeView) {
+func (parent *fzfmain) openfile(path string, code CodeEditor) {
 	code.open_file_line(path, nil, true)
 	parent.hide()
-	parent.main.set_viewid_focus(code.id)
+	parent.main.set_viewid_focus(code.vid())
 	parent.main.CmdLine().Vim.EnterEscape()
 }
 
@@ -167,15 +167,15 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.currentpicker = sym
 }
 
-func (v *fzfmain) OpenDocumntSymbolFzf(code *CodeView) {
-	sym := new_outline_picker(v, code.lspsymbol, code)
+func (v *fzfmain) OpenDocumntSymbolFzf(code CodeEditor) {
+	sym := new_outline_picker(v, code.LspSymbol(), code)
 	layout := sym.grid(v.input)
 	v.create_dialog_content(layout, sym)
 	v.currentpicker = sym
 }
 
 // OpenFileFzf
-func (v *fzfmain) OpenFileFzf(root string, code *CodeView) {
+func (v *fzfmain) OpenFileFzf(root string, code CodeEditor) {
 	filewalk := NewDirWalk(root, v, code)
 	v.Frame = tview.NewFrame(filewalk.grid(v.input))
 	v.input.SetLabel(">")

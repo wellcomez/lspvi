@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/pgavlin/femto"
 )
 
 type command_id int
@@ -264,16 +263,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case brack_match:
 		{
 			return cmdactor{id, "match", func() bool {
-				if m.cmdline.Vim.vi.VMap {
-					begin := m.current_editor().view.Cursor.Loc
-					m.current_editor().view.JumpToMatchingBrace()
-					end := m.current_editor().view.Cursor.Loc
-					end.X += 1
-					m.current_editor().view.Cursor.SetSelectionStart(begin)
-					m.current_editor().view.Cursor.SetSelectionEnd(end)
-				} else {
-					m.current_editor().view.JumpToMatchingBrace()
-				}
+				m.current_editor().Match()
 				return true
 			}}
 		}
@@ -346,18 +336,12 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case vi_line_end:
 		return cmdactor{id, "goto line end", func() bool {
-			code := m.current_editor()
-			Cur := code.view.Cursor
-			x := len(code.view.Buf.Line(Cur.Loc.Y)) - 1
-			Loc := femto.Loc{X: x, Y: Cur.Loc.Y}
-			code.view.Cursor.Loc = Loc
+			m.current_editor().goto_line_end()
 			return true
 		}}
 	case vi_line_head:
 		return cmdactor{id, "goto line head", func() bool {
-			code := m.current_editor()
-			Cur := code.view.Cursor
-			Cur.Loc = femto.Loc{X: 0, Y: Cur.Loc.Y}
+			m.current_editor().goto_line_head()
 			return true
 		}}
 	case vi_quick_prev:
@@ -376,8 +360,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}
 	case vi_search_mode:
 		return cmdactor{id, "search mode", func() bool {
-			code := m.current_editor()
-			vim := code.main.CmdLine().Vim
+			vim := m.CmdLine().Vim
 			vim.EnterEscape()
 			vim.EnterFind()
 			m.current_editor().word_right()
