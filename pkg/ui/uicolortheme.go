@@ -134,7 +134,10 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 		}
 	}
 	main.uml.file.view.SetBackgroundColor(bg)
+
 	main.log.log.SetTextColor(fg)
+	main.log.log.SetBackgroundColor(bg)
+
 	main.layout.editor_area.SetBackgroundColor(bg)
 	main.layout.tab_area.SetBackgroundColor(bg)
 	main.statusbar.SetBackgroundColor(bg)
