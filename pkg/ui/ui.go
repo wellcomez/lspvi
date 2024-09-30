@@ -592,9 +592,9 @@ type Arguments struct {
 	Cert string
 }
 
-func (m *mainui) open_file(file string) {
-	m.OpenFileHistory(file, nil)
-}
+// func (m *mainui) open_file(file string) {
+// 	m.OpenFileHistory(file, nil)
+// }
 
 type LspHandle struct {
 	main *mainui
@@ -1029,7 +1029,10 @@ func create_edit_area(main *mainui) *flex_area {
 	main.fileexplorer = new_file_tree(main, "FileExplore", global_prj_root, func(filename string) bool { return true })
 	main.fileexplorer.Width = 20
 	main.fileexplorer.Init()
-	main.fileexplorer.openfile = main.open_file
+	main.fileexplorer.openfile = func(filename string) {
+		var s MainService=main
+		s.OpenFileHistory(filename, nil)
+	}
 
 	editor_area :=
 		new_flex_area(view_code_area, main)
