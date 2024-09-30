@@ -158,9 +158,12 @@ func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	}
 	sym.Handle.OnFileChange(loc, line)
 }
-type OpenOption struct{
-	Line int
+
+type OpenOption struct {
+	LineNumber int
+	Offset     int
 }
+
 func (sym *Symbol_file) GotoDefine(ranges lsp.Range, line *OpenOption) {
 	if sym.lsp == nil {
 		return

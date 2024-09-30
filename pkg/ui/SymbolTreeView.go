@@ -237,13 +237,13 @@ func NewSymbolTreeView(main MainService, codeview *CodeView) *SymbolTreeView {
 	ret.waiter = tview.NewTextView().SetText("loading").SetTextColor(tcell.ColorDarkGray)
 	waiter := ret.waiter
 	waiter.SetTextStyle(tcell.StyleDefault)
-	if style:=global_theme.get_default_style();style!=nil{
-		f,b,_:=style.Decompose()
+	if style := global_theme.get_default_style(); style != nil {
+		f, b, _ := style.Decompose()
 		waiter.SetBackgroundColor(b)
 		waiter.SetTextColor(f)
-	}else{
-		bg:=symbol_tree.GetBackgroundColor()
-		style:=tcell.StyleDefault.Background(bg)
+	} else {
+		bg := symbol_tree.GetBackgroundColor()
+		style := tcell.StyleDefault.Background(bg)
 		waiter.SetTextStyle(style)
 	}
 	ret.view.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
@@ -305,7 +305,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 							symview.main.Navigation().history.SaveToHistory(code)
 							symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line, symview.editor))
 						}
-						symview.editor.goto_loation(r, false)
+						symview.editor.goto_loation(r, false, nil)
 						return
 					}
 				}
@@ -314,7 +314,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 				Range.End.Line = Range.Start.Line
 				Range.End.Character = Range.Start.Character + len(sym.Name)
 			}
-			symview.editor.goto_loation(Range, false)
+			symview.editor.goto_loation(Range, false, nil)
 		}
 	}
 	symview.view.SetCurrentNode(node)

@@ -419,7 +419,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		}
 		switch action {
 		case tview.MouseLeftDoubleClick:
-			code.action_goto_define(&lspcore.OpenOption{Line: code.view.Cursor.Loc.Y})
+			code.action_goto_define(&lspcore.OpenOption{LineNumber: code.view.Cursor.Loc.Y, Offset: code.view.Cursor.Loc.Y - code.view.Topline})
 		case tview.MouseLeftDown, tview.MouseRightClick:
 			code.main.set_viewid_focus(code.id)
 			code.view.Focus(func(p tview.Primitive) {})
@@ -1331,7 +1331,7 @@ func is_lsppos_ok(pos lsp.Position) bool {
 	}
 	return true
 }
-func (code *CodeView) goto_loation(loc lsp.Range, update bool) {
+func (code *CodeView) goto_loation(loc lsp.Range, update bool, option *lspcore.OpenOption) {
 	shouldReturn := is_lsprange_ok(loc)
 	if shouldReturn {
 		return
@@ -1340,10 +1340,19 @@ func (code *CodeView) goto_loation(loc lsp.Range, update bool) {
 	loc.Start.Line = min(code.view.Buf.LinesNum(), loc.Start.Line)
 	loc.End.Line = min(code.view.Buf.LinesNum(), loc.End.Line)
 
-	line := loc.Start.Line
-	pagesize := code.view.Bottomline() - code.view.Topline
-	if code.view.Topline+pagesize/4 > line || code.view.Bottomline()-pagesize/4 < line {
-		code.change_topline_with_previousline(line)
+	use_option := false
+	if option != nil {
+		if offset := loc.Start.Line - option.Offset; offset >= 0 {
+			code.view.Topline = offset
+			use_option = true
+		}
+	}
+	if !use_option {
+		line := loc.Start.Line
+		pagesize := code.view.Bottomline() - code.view.Topline
+		if code.view.Topline+pagesize/4 > line || code.view.Bottomline()-pagesize/4 < line {
+			code.change_topline_with_previousline(line)
+		}
 	}
 	Cur := code.view.Cursor
 	Cur.SetSelectionStart(femto.Loc{
