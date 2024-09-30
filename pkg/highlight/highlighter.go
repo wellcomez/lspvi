@@ -87,7 +87,7 @@ type Highlighter struct {
 	lastRegion *region
 	Def        *Def
 	// Tdongshangnezha reeSitter
-	Tree *lspcore.TreeSitter
+	Tree lspcore.TreesiterSymbolLine
 }
 
 // NewHighlighter returns a new highlighter from the given syntax definition
@@ -361,8 +361,8 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 		}
 		line := input.LineBytes(i)
 		var match_tree_match LineMatch = make(LineMatch)
-		if h.Tree != nil {
-			if sym_in_line, ok := h.Tree.HlLine[i]; ok {
+		if len(h.Tree)>0  {
+			if sym_in_line, ok := h.Tree[i]; ok {
 				for _, v := range sym_in_line {
 					x := []string{"@" + v.SymbolName}
 					ind := strings.Index(v.SymbolName, ".")

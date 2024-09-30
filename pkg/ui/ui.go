@@ -657,7 +657,9 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 		}
 	}
 	main.code_navigation_bar.Draw(screen)
-	main.quickbar.Draw(screen)
+	if !main.layout.dialog.Visible {
+		main.quickbar.Draw(screen)
+	}
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
@@ -698,7 +700,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 	main.sel.handle_mouse_selection(action, event)
 	main.code_navigation_bar.handle_mouse_event(action, event)
 	main.quickbar.handle_mouse_event(action, event)
-	
+
 	for _, v := range resizer {
 		if v.checkdrag(action, event) == tview.MouseConsumed {
 			return nil, tview.MouseConsumed

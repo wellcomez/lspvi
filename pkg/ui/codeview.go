@@ -83,18 +83,18 @@ type CodeView struct {
 	bgcolor     tcell.Color
 	colorscheme *symbol_colortheme
 	// ts          *lspcore.TreeSitter
-	insert      bool
-	diff        *Differ
+	insert bool
+	diff   *Differ
 }
 
 // OnFileChange implements change_reciever.
 func (code *CodeView) OnFileChange(file string) bool {
-	if code.file.SamePath(file) {
-		go code.lspsymbol.DidSave()
-		code.LoadAndCb(code.Path(), func() {
-			// go code.on_content_changed()
-		})
-	}
+	// if code.file.SamePath(file) {
+	// 	go code.lspsymbol.DidSave()
+	// 	code.LoadAndCb(code.Path(), func() {
+	// 		// go code.on_content_changed()
+	// 	})
+	// }
 	return false
 }
 
@@ -1271,7 +1271,11 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	}
 }
 func (code *CodeView) update_colortheme_mgr(mgr *symbol_colortheme) {
-	code.view.Buf.SetTreesitter(code.tree_sitter)
+	if code.tree_sitter == nil {
+		code.view.Buf.SetTreesitter(lspcore.TreesiterSymbolLine{})
+	} else {
+		code.view.Buf.SetTreesitter(code.tree_sitter.HlLine)
+	}
 	code.view.SetColorscheme(mgr.colorscheme)
 }
 
