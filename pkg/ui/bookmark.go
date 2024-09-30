@@ -209,17 +209,17 @@ func (pk *bookmark_edit) grid(input *tview.InputField) *tview.Grid {
 	return pk.fzflist_impl.grid(input)
 }
 
-func new_bookmark_editor(v *fzfmain, cb func(string), code *CodeView) bookmark_edit {
-	var line = code.view.Cursor.Loc.Y + 1
-	line1 := code.view.Buf.Line(line - 1)
-	ret := bookmark_edit{
-		fzflist_impl: new_fzflist_impl(nil, v),
-		cb:           cb,
-	}
-	ret.fzflist_impl.list.AddItem(line1, code.Path(), nil)
-	v.create_dialog_content(ret.grid(v.input), ret)
-	return ret
-}
+// func new_bookmark_editor(v *fzfmain, cb func(string), code *CodeView) bookmark_edit {
+// 	var line = code.view.Cursor.Loc.Y + 1
+// 	line1 := code.view.Buf.Line(line - 1)
+// 	ret := bookmark_edit{
+// 		fzflist_impl: new_fzflist_impl(nil, v),
+// 		cb:           cb,
+// 	}
+// 	ret.fzflist_impl.list.AddItem(line1, code.Path(), nil)
+// 	v.create_dialog_content(ret.grid(v.input), ret)
+// 	return ret
+// }
 
 // new_bookmark_picker
 func new_bookmark_picker(v *fzfmain, code *CodeView, bookmark *proj_bookmark) bookmark_picker {

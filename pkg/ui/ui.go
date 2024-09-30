@@ -157,7 +157,7 @@ type MainService interface {
 
 	async_lsp_open(file string, cb func(sym *lspcore.Symbol_file))
 
-	new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit
+	// new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit
 	set_perfocus_view(viewid view_id)
 }
 
@@ -196,6 +196,12 @@ type mainui struct {
 	ws  string
 	tab *tabmgr
 }
+
+// new_bookmark_editor implements MainService.
+// func (main *mainui) new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit {
+	// panic("unimplemented")
+// }
+
 type mode struct {
 	tty bool
 }
@@ -243,14 +249,14 @@ func (m mainui) CmdLine() *cmdline {
 	return m.cmdline
 }
 
-func (m mainui) new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit {
-	return new_bookmark_editor(m.layout.dialog, func(s string) {
-		code.view.addbookmark(true, s)
-		bookmark := code.main.Bookmark()
-		bookmark.udpate(&code.view.bookmark)
-		bookmark.save()
-	}, code)
-}
+// func (m mainui) new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit {
+// 	return m.codeview.new_bookmark_editor(m.layout.dialog, func(s string,code *CodeView) {
+// 		code.view.addbookmark(true, s)
+// 		bookmark := code.main.Bookmark()
+// 		bookmark.udpate(&code.view.bookmark)
+// 		bookmark.save()
+// 	})
+// }
 
 // OnFileChange implements lspcore.lsp_data_changed.
 func (m *mainui) OnFileChange(file []lsp.Location, line *lspcore.OpenOption) {
@@ -719,7 +725,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					code.LoadAndCb(code.Path(),nil)
+					code.LoadAndCb(code.Path(), nil)
 				})
 			}()
 		}
@@ -858,7 +864,7 @@ func load_from_history(main *mainui) {
 			},
 		}, offset: 0}, false, nil)
 	} else {
-		code.LoadAndCb("",nil)
+		code.LoadAndCb("", nil)
 	}
 }
 

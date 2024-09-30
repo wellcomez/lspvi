@@ -1259,9 +1259,9 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	return b
 }
 
-// func (code *CodeView) Load(filename string) error {
-// 	return code.LoadAndCb(filename, nil)
-// }
+//	func (code *CodeView) Load(filename string) error {
+//		return code.LoadAndCb(filename, nil)
+//	}
 func (code *CodeView) LoadNoSymbol(filename string, line int) error {
 	return code.LoadAndCb(filename, func() {
 		code.gotoline_not_open(line)
@@ -1427,13 +1427,25 @@ func (code *CodeView) bookmark() {
 		code.Removebookmark()
 	}
 }
+func (code *CodeView) new_bookmark_editor_cb(cb func(string)) bookmark_edit {
+	dlg := code.main.Dialog()
+	var line = code.view.Cursor.Loc.Y + 1
+	line1 := code.view.Buf.Line(line - 1)
+	ret := bookmark_edit{
+		fzflist_impl: new_fzflist_impl(nil, dlg),
+		cb:           cb,
+	}
+	ret.fzflist_impl.list.AddItem(line1, code.Path(), nil)
+	dlg.create_dialog_content(ret.grid(dlg.input), ret)
+	return ret
+}
 func (code *CodeView) Addbookmark() {
-	code.main.new_bookmark_editor(func(s string) {
+	code.new_bookmark_editor_cb(func(s string) {
 		code.view.addbookmark(true, s)
 		bookmark := code.main.Bookmark()
 		bookmark.udpate(&code.view.bookmark)
 		bookmark.save()
-	}, code)
+	})
 }
 func (code *CodeView) Removebookmark() {
 	code.view.addbookmark(false, "")
