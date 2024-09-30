@@ -72,7 +72,7 @@ type CodeView struct {
 	// tree_sitter_highlight lspcore.TreesiterSymbolLine
 	view *codetextview
 	// theme     string
-	main      *mainui
+	main      MainService
 	lspsymbol *lspcore.Symbol_file
 	key_map   map[tcell.Key]func(code *CodeView)
 	// mouse_select_area    bool
@@ -166,7 +166,7 @@ func (code *CodeView) OnFindInfileWordOption(fzf bool, noloop bool, whole bool) 
 		}
 	}
 	if code.id != view_none {
-		code.main.prefocused = code.id
+		code.main.set_perfocus_view(code.id)
 	}
 	code.main.OnSearch(search_option{word, fzf, noloop, whole})
 	return word
@@ -227,7 +227,7 @@ func search_text_in_buffer(txt string, Buf *femto.Buffer, whole bool) []SearchPo
 	}
 	return ret
 }
-func NewCodeView(main *mainui) *CodeView {
+func NewCodeView(main MainService) *CodeView {
 	// view := tview.NewTextView()
 	// view.SetBorder(true)
 	ret := CodeView{view_link: &view_link{
@@ -262,7 +262,7 @@ func NewCodeView(main *mainui) *CodeView {
 	return &ret
 }
 
-func qf_grep_word(main *mainui, rightmenu_select_text string) {
+func (main *mainui) qf_grep_word(rightmenu_select_text string) {
 	main.quickview.view.Clear()
 	key := lspcore.SymolSearchKey{
 		Key: rightmenu_select_text,
@@ -413,18 +413,18 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 	root := code.view
 	return root.process_mouse(event, action, func(action tview.MouseAction, mode mouse_action_cbmode) bool {
 		if code_mouse_cb_begin == mode {
-			if code.id == view_code_below && code.main.tab.activate_tab_id != code.id {
+			if code.id == view_code_below && code.main.Tab().activate_tab_id != code.id {
 				return false
 			}
 		}
 		switch action {
 		case tview.MouseLeftDoubleClick:
-			code.action_goto_define(&lspcore.OpenOption{Line:code.view.Cursor.Loc.Y})
+			code.action_goto_define(&lspcore.OpenOption{Line: code.view.Cursor.Loc.Y})
 		case tview.MouseLeftDown, tview.MouseRightClick:
 			code.main.set_viewid_focus(code.id)
 			code.view.Focus(func(p tview.Primitive) {})
 			if code.id >= view_code {
-				symboltree := code.main.symboltree
+				symboltree := code.main.OutLineView()
 				if symboltree.editor != code {
 					symboltree.editor = code
 					symboltree.Clear()
@@ -754,23 +754,24 @@ func (v *vmap_selection) update_vi_selection(code *CodeView) {
 	v.vmapEnd = get_codeview_vm_position(code)
 	// }
 	v.switch_begin_end()
-	code.main.cmdline.Vim.vi.vmapBegin = v.vmapBegin
-	code.main.cmdline.Vim.vi.vmapEnd = v.vmapEnd
-	cmd := code.main.cmdline
+	cmdline := code.main.CmdLine()
+	cmdline.Vim.vi.vmapBegin = v.vmapBegin
+	cmdline.Vim.vi.vmapEnd = v.vmapEnd
 	code.view.Cursor.SetSelectionStart(femto.Loc{
-		X: cmd.Vim.vi.vmapBegin.X,
-		Y: cmd.Vim.vi.vmapBegin.Y,
+		X: cmdline.Vim.vi.vmapBegin.X,
+		Y: cmdline.Vim.vi.vmapBegin.Y,
 	})
-	code.view.Cursor.SetSelectionEnd(femto.Loc{X: cmd.Vim.vi.vmapEnd.X, Y: cmd.Vim.vi.vmapEnd.Y})
+	code.view.Cursor.SetSelectionEnd(femto.Loc{X: cmdline.Vim.vi.vmapEnd.X, Y: cmdline.Vim.vi.vmapEnd.Y})
 }
 
 func new_vmap_selection(code *CodeView) *vmap_selection {
-	if !code.main.cmdline.Vim.vi.VMap {
+	cmdline := code.main.CmdLine()
+	if !cmdline.Vim.vi.VMap {
 		return nil
 	}
 	var b, e *VmapPosition
-	b = code.main.cmdline.Vim.vi.vmapBegin
-	e = code.main.cmdline.Vim.vi.vmapEnd
+	b = cmdline.Vim.vi.vmapBegin
+	e = cmdline.Vim.vi.vmapEnd
 	view := code.view
 	Cur := view.Cursor
 	origin := Cur.Loc
@@ -838,7 +839,7 @@ func (m *mainui) CopyToClipboard(s string) {
 func (code *CodeView) Save() error {
 	view := code.view
 	data := view.Buf.SaveString(false)
-	code.main.bookmark.udpate(&code.view.bookmark)
+	code.main.Bookmark().udpate(&code.view.bookmark)
 	return os.WriteFile(code.Path(), []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
@@ -855,7 +856,7 @@ func (code *CodeView) deleteline() {
 }
 
 func (code *CodeView) copyline(line bool) {
-	cmd := code.main.cmdline
+	cmd := code.main.CmdLine()
 	if !cmd.Vim.vi.VMap {
 		if line {
 			s := code.view.Buf.Line(int(code.view.Cursor.Loc.Y))
@@ -1010,11 +1011,9 @@ func (code *CodeView) action_get_refer() {
 		return
 	}
 	code.view.Cursor.SelectWord()
-	main.quickview.view.Clear()
+	//warning xxxxxxxxxxxxxxxxxxxxxxxxx
 	loc := code.lsp_cursor_loc()
 	main.get_refer(loc, code.Path())
-	// main.ActiveTab(view_fzf)
-
 }
 
 func (code *CodeView) lsp_cursor_loc() lsp.Range {
@@ -1160,7 +1159,7 @@ func (code *CodeView) LoadAndCb(filename string, onload func()) error {
 		global_file_watch.Add(filename)
 	}
 	if code.main != nil {
-		code.main.recent_open.add(filename)
+		code.main.Recent_open().add(filename)
 	}
 	data, err := os.ReadFile(filename)
 	if err != nil {
@@ -1192,8 +1191,8 @@ func (code *CodeView) on_content_changed() {
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
 					if ts.DefaultOutline() {
-						lsp := code.main.symboltree.upate_with_ts(ts)
-						code.main.lspmgr.Current = lsp
+						lsp := code.main.OutLineView().upate_with_ts(ts)
+						code.main.Lspmgr().Current = lsp
 					} else {
 						code.main.OnSymbolistChanged(nil, nil)
 					}
@@ -1214,8 +1213,8 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
 					if ts.DefaultOutline() {
-						lsp := code.main.symboltree.upate_with_ts(ts)
-						code.main.lspmgr.Current = lsp
+						lsp := code.main.OutLineView().upate_with_ts(ts)
+						code.main.Lspmgr().Current = lsp
 					} else {
 						code.main.OnSymbolistChanged(nil, nil)
 					}
@@ -1227,7 +1226,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	code.set_loc(femto.Loc{X: 0, Y: 0})
 	code.file = NewFile(filename)
 	if code.main != nil {
-		code.view.bookmark = *code.main.bookmark.GetFileBookmark(filename)
+		code.view.bookmark = *code.main.Bookmark().GetFileBookmark(filename)
 	}
 	name := filename
 	if code.main != nil {
@@ -1310,16 +1309,18 @@ func (code *CodeView) bookmark() {
 	}
 }
 func (code *CodeView) Addbookmark() {
-	new_bookmark_editor(code.main.layout.dialog, func(s string) {
+	code.main.new_bookmark_editor(func(s string) {
 		code.view.addbookmark(true, s)
-		code.main.bookmark.udpate(&code.view.bookmark)
-		code.main.bookmark.save()
+		bookmark := code.main.Bookmark()
+		bookmark.udpate(&code.view.bookmark)
+		bookmark.save()
 	}, code)
 }
 func (code *CodeView) Removebookmark() {
 	code.view.addbookmark(false, "")
-	code.main.bookmark.udpate(&code.view.bookmark)
-	code.main.bookmark.save()
+	bookmark := code.main.Bookmark()
+	bookmark.udpate(&code.view.bookmark)
+	bookmark.save()
 }
 func is_lsppos_ok(pos lsp.Position) bool {
 	if pos.Line < 0 {
@@ -1377,14 +1378,14 @@ func (code *CodeView) gotoline_not_open(line int) {
 		return
 	}
 	if code.main != nil && code.not_preview {
-		code.main.bf.history.SaveToHistory(code)
-		code.main.bf.history.AddToHistory(code.Path(), NewEditorPosition(line, code))
+		code.main.Navigation().history.SaveToHistory(code)
+		code.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(line, code))
 	}
 	key := ""
 
 	var gs *GenericSearch
 	if code.main != nil {
-		gs = code.main.searchcontext
+		gs = code.main.Searchcontext()
 	}
 	if gs != nil && gs.view == view_code {
 		key = strings.ToLower(gs.key)

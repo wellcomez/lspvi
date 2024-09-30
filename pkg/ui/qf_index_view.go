@@ -147,7 +147,7 @@ func (view *qf_index_view_history) Load() {
 		ind := i
 		value := keymaplist[ind]
 		list.AddItem(value, "", func() {
-			open_in_tabview(keys, ind, main)
+			main.open_in_tabview(keys, ind)
 		})
 	}
 	if cur >= 0 && cur < n {

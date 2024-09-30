@@ -86,7 +86,7 @@ type qf_history_data struct {
 	UID    string
 }
 
-func save_qf_uirefresh(main *mainui, data qf_history_data) error {
+func (main *mainui) save_qf_uirefresh(data qf_history_data) error {
 	h, err := new_qf_history(main)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (h *qf_history_data) ListItem() string {
 
 func (qk quick_view) save() error {
 	date := time.Now().Unix()
-	save_qf_uirefresh(qk.main,
+	qk.main.save_qf_uirefresh(
 		qf_history_data{qk.Type, qk.searchkey, qk.Refs, date, ""})
 	return nil
 }
@@ -597,7 +597,7 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	qk.view.Clear()
 
 	m := qk.main
-	Refs := qk.main.get_loc_caller(refs, m.lspmgr.Current)
+	Refs := get_loc_caller(qk.main, refs, m.lspmgr.Current)
 
 	qk.UpdateListView(t, Refs, key)
 	qk.save()

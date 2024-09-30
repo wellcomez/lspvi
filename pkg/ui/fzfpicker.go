@@ -14,7 +14,7 @@ func (parent *fzfmain) openfile(path string, code *CodeView) {
 	code.open_file_line(path, nil, true)
 	parent.hide()
 	parent.main.set_viewid_focus(code.id)
-	parent.main.cmdline.Vim.EnterEscape()
+	parent.main.CmdLine().Vim.EnterEscape()
 }
 
 type clickdetector struct {
@@ -57,7 +57,7 @@ type fzfmain struct {
 	input   *tview.InputField
 	Visible bool
 	app     *tview.Application
-	main    *mainui
+	main    MainService
 	// query   string
 	// filewalk      *DirWalkk
 	// symbolwalk    *SymbolWalk

@@ -69,7 +69,7 @@ func (c CodeSplit) TabView(index int) *CodeView {
 func SplitClose(code *CodeView) context_menu_item {
 	return context_menu_item{item: create_menu_item("Close"), handle: func() {
 		SplitCode.Remove(code)
-		code.main.right_context_menu.remove(code.rightmenu)
+		code.main.Right_context_menu().remove(code.rightmenu)
 	}, hide: !(code.id > view_code)}
 }
 
@@ -102,7 +102,7 @@ func SplitRight(code *CodeView) context_menu_item {
 
 		codeview2 := SplitCode.New()
 		codeview2.view.SetBorder(true)
-		main.right_context_menu.add(codeview2.rightmenu)
+		main.Right_context_menu().add(codeview2.rightmenu)
 		codeview2.open_file_line(code.Path(), nil, true)
 	}}
 }
@@ -117,14 +117,14 @@ func (codeview2 *CodeView) open_file_line(filename string, line *lsp.Location, f
 			codeview2.lspsymbol = sym
 			if focus && codeview2.id != view_code_below {
 				if sym == nil {
-					main.symboltree.Clear()
+					main.OutLineView().Clear()
 				}
 			}
 		})
 		if codeview2.id == view_code_below {
 			go func() {
-				main.app.QueueUpdateDraw(func() {
-					main.tab.ActiveTab(view_code_below, true)
+				main.App().QueueUpdateDraw(func() {
+					main.Tab().ActiveTab(view_code_below, true)
 				})
 			}()
 		}

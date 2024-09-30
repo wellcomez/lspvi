@@ -93,6 +93,73 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 	}
 }
 
+type MainService interface {
+	toggle_view(id view_id)
+	zoom(zoomin bool)
+	ZoomWeb(zoom bool)
+
+	FileExplore() *file_tree_view
+	OutLineView() *SymbolTreeView
+
+	OnSearch(option search_option)
+
+	current_editor() *CodeView
+	OpenFile(filename string, line *lsp.Location)
+
+	on_select_project(prj *Project)
+
+	ActiveTab(id view_id, focused bool)
+	CmdLine() *cmdline
+
+	set_viewid_focus(v view_id)
+	on_change_color(name string)
+	App() *tview.Application
+	get_focus_view_id() view_id
+
+	key_map_space_menu() []cmditem
+	key_map_escape() []cmditem
+	key_map_leader() []cmditem
+
+	Lspmgr() *lspcore.LspWorkspace
+	get_callin_stack(loc lsp.Location, filepath string)
+	get_callin_stack_by_cursor(loc lsp.Location, filepath string)
+	get_refer(pos lsp.Range, filepath string)
+	get_define(pos lsp.Range, filepath string, line *lspcore.OpenOption)
+	get_declare(pos lsp.Range, filepath string)
+
+	CopyToClipboard(s string)
+	save_qf_uirefresh(data qf_history_data) error
+	open_in_tabview(keys []qf_history_data, i int)
+
+	create_menu_item(id command_id, handle func()) context_menu_item
+	Navigation() *BackForward
+
+	Recent_open() *recent_open_file
+	Bookmark() *proj_bookmark
+	Tab() *tabmgr
+
+	qf_grep_word(rightmenu_select_text string)
+
+	Mode() mode
+
+	open_picker_refs()
+
+	open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker
+	OnCodeLineChange(x, y int, file string)
+
+	OnSymbolistChanged(file *lspcore.Symbol_file, err error)
+
+	Right_context_menu() *contextmenu
+
+	Searchcontext() *GenericSearch
+	Codeview2() *CodeView
+
+	async_lsp_open(file string, cb func(sym *lspcore.Symbol_file))
+
+	new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit
+	set_perfocus_view(viewid view_id)
+}
+
 // editor_area_fouched
 
 type mainui struct {
@@ -127,6 +194,61 @@ type mainui struct {
 	tty bool
 	ws  string
 	tab *tabmgr
+}
+type mode struct {
+	tty bool
+}
+
+func (m *mainui) set_perfocus_view(viewid view_id) {
+	m.prefocused = viewid
+}
+func (m mainui) Codeview2() *CodeView {
+	return m.codeview2
+}
+func (m mainui) Searchcontext() *GenericSearch {
+	return m.searchcontext
+}
+func (m mainui) Right_context_menu() *contextmenu {
+	return m.right_context_menu
+}
+func (m mainui) Mode() mode {
+	return mode{tty: m.tty}
+}
+func (m mainui) Tab() *tabmgr {
+	return m.tab
+}
+func (m mainui) Bookmark() *proj_bookmark {
+	return m.bookmark
+}
+func (m mainui) Recent_open() *recent_open_file {
+	return m.recent_open
+}
+func (m mainui) OutLineView() *SymbolTreeView {
+	return m.symboltree
+}
+func (m mainui) FileExplore() *file_tree_view {
+	return m.fileexplorer
+}
+func (m mainui) Navigation() *BackForward {
+	return m.bf
+}
+func (m mainui) App() *tview.Application {
+	return m.app
+}
+func (m mainui) Lspmgr() *lspcore.LspWorkspace {
+	return m.lspmgr
+}
+func (m mainui) CmdLine() *cmdline {
+	return m.cmdline
+}
+
+func (m mainui) new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit {
+	return new_bookmark_editor(m.layout.dialog, func(s string) {
+		code.view.addbookmark(true, s)
+		bookmark := code.main.Bookmark()
+		bookmark.udpate(&code.view.bookmark)
+		bookmark.save()
+	}, code)
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.

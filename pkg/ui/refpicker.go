@@ -216,8 +216,8 @@ type ref_with_caller struct {
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
-	lsp := pk.impl.parent.main.lspmgr.Current
-	pk.impl.refs = pk.impl.codeprev.main.get_loc_caller(file, lsp)
+	lsp := pk.impl.parent.main.Lspmgr().Current
+	pk.impl.refs = get_loc_caller(pk.impl.codeprev.main, file, lsp)
 	for i := range pk.impl.refs {
 		caller := pk.impl.refs[i]
 		v := caller.Loc
@@ -262,7 +262,7 @@ func (impl *prev_picker_impl) open_location(v lsp.Location) {
 	impl.parent.hide()
 }
 
-func (m *mainui) get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
+func get_loc_caller(m MainService, file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
 	ref_call_in := []ref_with_caller{}
 	for _, v := range file {
 		stacks, err := lsp.Caller(v, false)
@@ -274,7 +274,7 @@ func (m *mainui) get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) [
 			}
 
 		}
-		caller := m.lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+		caller := m.Lspmgr().GetCallEntry(v.URI.AsPath().String(), v.Range)
 		ref_call_in = append(ref_call_in, ref_with_caller{Loc: v, Caller: caller})
 
 	}

@@ -124,8 +124,8 @@ func (a ByAge) Less(i, j int) bool {
 	return a[i].Date > a[j].Date
 }
 
-func load_qf_history(main *mainui) ([]qf_history_data, []string) {
-	hh := quickfix_history{Wk: main.lspmgr.Wk}
+func load_qf_history(main MainService) ([]qf_history_data, []string) {
+	hh := quickfix_history{Wk: main.Lspmgr().Wk}
 	keys, _ := hh.Load()
 	sort.Sort(ByAge(keys))
 	keymaplist := []string{}
@@ -147,10 +147,11 @@ func (qk *qk_history_picker) open_in_qf() {
 	}
 	main := qk.parent.main
 	keys := qk.impl.keys
-	open_in_tabview(keys, i, main)
+	main.open_in_tabview(keys, i)
+
 }
 
-func open_in_tabview(keys []qf_history_data, i int, main *mainui) {
+func (main *mainui)open_in_tabview(keys []qf_history_data, i int) {
 	item := keys[i]
 	if item.Type == data_refs || item.Type == data_search || item.Type == data_grep_word {
 		main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)

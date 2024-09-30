@@ -377,7 +377,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case vi_search_mode:
 		return cmdactor{id, "search mode", func() bool {
 			code := m.current_editor()
-			vim := code.main.cmdline.Vim
+			vim := code.main.CmdLine().Vim
 			vim.EnterEscape()
 			vim.EnterFind()
 			m.current_editor().word_right()

@@ -26,7 +26,7 @@ type grep_impl struct {
 type livewgreppicker struct {
 	*prev_picker_impl
 	grep_list_view *customlist
-	main           *mainui
+	main           MainService
 	impl           *grep_impl
 	qf             func(bool, ref_with_caller) bool
 	not_live       bool
@@ -180,7 +180,7 @@ func (grepx *livewgreppicker) grep_to_list() {
 		grepx.update_preview()
 	}
 	grepx.update_title()
-	grepx.main.app.ForceDraw()
+	grepx.main.App().ForceDraw()
 }
 func (grepx *livewgreppicker) end(task int, o *grep_output) {
 	if task != grepx.impl.taskid {
@@ -190,7 +190,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 		if grepx.qf != nil {
 			grepx.qf(true, ref_with_caller{})
 		} else if grepx.not_live {
-			grepx.main.app.QueueUpdate(func() {
+			grepx.main.App().QueueUpdate(func() {
 				grepx.grep_to_list()
 				grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
@@ -226,7 +226,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 				return
 			}
 		}
-		grepx.main.app.QueueUpdate(func() {
+		grepx.main.App().QueueUpdate(func() {
 			grepx.grep_to_list()
 		})
 	} else {
@@ -280,7 +280,7 @@ func (pk livewgreppicker) Save() {
 	}
 	data.Result = Result
 	main := pk.main
-	save_qf_uirefresh(main, data)
+	main.save_qf_uirefresh(data)
 }
 
 func (pk livewgreppicker) UpdateQuery(query string) {

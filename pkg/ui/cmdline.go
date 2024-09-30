@@ -92,7 +92,7 @@ func (cmd *cmdline) OnSearchCommand(args []string) bool {
 	if len(args) > 1 {
 		arg := args[1]
 
-		qf_grep_word(cmd.main, arg)
+		cmd.main.qf_grep_word(arg)
 	}
 	return true
 }

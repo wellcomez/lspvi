@@ -41,7 +41,7 @@ type SymbolTreeView struct {
 	*view_link
 	view *tview.TreeView
 	// symbols       []SymbolListItem
-	main          *mainui
+	main          MainService
 	searcheresult *TextFilter
 	show_wait     bool
 	waiter        *tview.TextView
@@ -203,7 +203,7 @@ func (m *SymbolTreeView) OnCodeLineChange(x, y int, file string) {
 	}
 }
 
-func NewSymbolTreeView(main *mainui, codeview *CodeView) *SymbolTreeView {
+func NewSymbolTreeView(main MainService, codeview *CodeView) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
 	ret := &SymbolTreeView{
 		view_link: &view_link{id: view_outline_list, left: view_code, down: view_quickview},
@@ -291,8 +291,8 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 						}
 						code := symview.editor
 						if code.id == view_code {
-							symview.main.bf.history.SaveToHistory(code)
-							symview.main.bf.history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line, symview.editor))
+							symview.main.Navigation().history.SaveToHistory(code)
+							symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line, symview.editor))
 						}
 						symview.editor.goto_loation(r, false)
 						return
@@ -418,7 +418,7 @@ func (c *SymbolTreeView) get_define(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_define(r, c.editor.Path(),nil)
+	c.main.get_define(r, c.editor.Path(), nil)
 }
 func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
@@ -450,7 +450,7 @@ func (v *SymbolTreeView) Clear() {
 }
 func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 	go func() {
-		v.main.app.QueueUpdateDraw(func() {
+		v.main.App().QueueUpdateDraw(func() {
 			v.__update(file)
 		})
 	}()
@@ -468,7 +468,7 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 	}
 	root_node := tview.NewTreeNode("symbol")
 	root_node.SetReference("1")
-	query :=global_theme 
+	query := global_theme
 	for _, v := range file.Class_object {
 		if v.Is_class() {
 			c := tview.NewTreeNode(v.SymbolListStrint())
