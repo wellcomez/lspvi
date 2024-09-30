@@ -165,7 +165,7 @@ func (pk refpicker) OnCodeViewChanged(file *lspcore.Symbol_file) {
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
-func (pk refpicker) OnFileChange([]lsp.Location, *int) {
+func (pk refpicker) OnFileChange([]lsp.Location, *lspcore.OpenOption) {
 	panic("unimplemented")
 }
 func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {

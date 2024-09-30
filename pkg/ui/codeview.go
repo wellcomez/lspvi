@@ -419,7 +419,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		}
 		switch action {
 		case tview.MouseLeftDoubleClick:
-			code.action_goto_define(&code.view.Cursor.Loc.Y)
+			code.action_goto_define(&lspcore.OpenOption{Line:code.view.Cursor.Loc.Y})
 		case tview.MouseLeftDown, tview.MouseRightClick:
 			code.main.set_viewid_focus(code.id)
 			code.view.Focus(func(p tview.Primitive) {})
@@ -984,7 +984,7 @@ func (code *CodeView) action_grep_word(selected bool) {
 	word := code.view.Cursor.GetSelection()
 	main.open_picker_grep(word, nil)
 }
-func (code *CodeView) action_goto_define(line *int) {
+func (code *CodeView) action_goto_define(line *lspcore.OpenOption) {
 	main := code.main
 	if main == nil {
 		return

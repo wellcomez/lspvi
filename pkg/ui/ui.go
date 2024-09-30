@@ -130,8 +130,8 @@ type mainui struct {
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
-func (m *mainui) OnFileChange(file []lsp.Location,line *int) {
-	m.OpenFile(file[0].URI.AsPath().String(), &file[0])
+func (m *mainui) OnFileChange(file []lsp.Location, line *lspcore.OpenOption) {
+	m.OpenFileLineKeep(file[0].URI.AsPath().String(), &file[0], line)
 }
 
 func (m *mainui) on_select_project(prj *Project) {
@@ -258,19 +258,19 @@ func (m *mainui) get_callin_stack_by_cursor(loc lsp.Location, filepath string) {
 //		}
 //		lsp.Callin(loc)
 //	}
-func (m *mainui) get_define(pos lsp.Range, filepath string,line* int) {
+func (m *mainui) get_define(pos lsp.Range, filepath string, line *lspcore.OpenOption) {
 	lsp, err := m.lspmgr.Open(filepath)
 	if err != nil {
 		return
 	}
-	lsp.GotoDefine(pos,line)
+	lsp.GotoDefine(pos, line)
 }
 func (m *mainui) get_declare(pos lsp.Range, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
 	if err != nil {
 		return
 	}
-	lsp.Declare(pos,nil)
+	lsp.Declare(pos, nil)
 }
 func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
@@ -349,10 +349,13 @@ func (m *mainui) ZoomWeb(zoom bool) {
 		proxy.set_browser_font(zoom)
 	}
 }
+func (m *mainui) OpenFile(file string, loc *lsp.Location) {
+	m.OpenFileLineKeep(file, loc, nil)
+}
 
 // OpenFile
 // OpenFile
-func (m *mainui) OpenFile(file string, loc *lsp.Location) {
+func (m *mainui) OpenFileLineKeep(file string, loc *lsp.Location, line *lspcore.OpenOption) {
 	if m.tty {
 		ext := filepath.Ext(file)
 		open_in_image_set := []string{".png", ".md"}
@@ -643,8 +646,8 @@ func MainUI(arg *Arguments) {
 		panic(err)
 	}
 }
-func (main *mainui) on_change_color(name string ) {
-	global_config.Colorscheme =name 
+func (main *mainui) on_change_color(name string) {
+	global_config.Colorscheme = name
 	global_config.Save()
 	global_theme = new_ui_theme(name, main)
 	global_theme.update_controller_theme()
