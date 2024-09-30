@@ -130,9 +130,9 @@ func (f *FileWatch) Run(root string) error {
 				if !ok {
 					return
 				}
-				log.Printf("Watched file %s", event.Name)
+				// log.Printf("Watched file %s", event.Name)
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Printf("modified file: %s", event.Name)
+					// log.Printf("modified file: %s", event.Name)
 					for _, v := range f.recieved {
 						if v.OnFileChange(event.Name) {
 							break

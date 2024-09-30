@@ -57,6 +57,12 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	} else {
 		global_file_watch.Add(global_prj_root)
 	}
+	theme := global_config.Colorscheme
+	if global_theme==nil{
+		global_theme = new_ui_theme(theme, main)
+	}else{
+		main.on_change_color(theme)
+	}
 }
 func (wk *workspace_list) Add(root string) (*Project, error) {
 	if !checkDirExists(root) {

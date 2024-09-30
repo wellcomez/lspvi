@@ -137,8 +137,8 @@ func (pk *GridClickCheck) handle_mouse(action tview.MouseAction, event *tcell.Ev
 func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	list := sym.impl.symview.view
 	list.SetBorder(true)
-	code := sym.impl.codeprev.view
-	sym.impl.codeprev.Load(sym.impl.file.Filename)
+	code := sym.impl.codeprev.Primitive()
+	sym.impl.codeprev.LoadFileNoLsp(sym.impl.file.Filename, 0,false)
 	layout := layout_list_edit(list, code, input)
 	sym.impl.click = NewGridTreeClickCheck(layout, sym.impl.symview.view)
 	sym.impl.click.click = func(event *tcell.EventMouse) {
@@ -166,7 +166,7 @@ func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	return layout
 }
 
-func new_outline_picker(v *fzfmain, file *lspcore.Symbol_file, code *CodeView) symbolpicker {
+func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 	symbol := &SymbolTreeViewExt{}
 	symbol.SymbolTreeView = NewSymbolTreeView(v.main, code)
 	symbol.parent = v
@@ -174,12 +174,12 @@ func new_outline_picker(v *fzfmain, file *lspcore.Symbol_file, code *CodeView) s
 
 	sym := symbolpicker{
 		impl: &SymbolWalkImpl{
-			file:     file,
+			file:     code.LspSymbol(),
 			symview:  symbol,
 			codeprev: NewCodeView(v.main),
 		},
 	}
-	symbol.update(file)
+	symbol.update(code.LspSymbol())
 	return sym
 }
 
@@ -191,15 +191,15 @@ type SymbolTreeViewExt struct {
 func (v SymbolTreeViewExt) OnClickSymobolNode(node *tview.TreeNode) {
 	v.SymbolTreeView.OnClickSymobolNode(node)
 	v.parent.hide()
-	v.main.set_viewid_focus(v.SymbolTreeView.editor.id)
-	v.main.cmdline.Vim.EnterEscape()
+	v.main.set_viewid_focus(v.SymbolTreeView.editor.vid())
+	v.main.CmdLine().Vim.EnterEscape()
 }
 
 type SymbolWalkImpl struct {
 	file     *lspcore.Symbol_file
 	symview  *SymbolTreeViewExt
 	gs       *GenericSearch
-	codeprev *CodeView
+	codeprev CodeEditor
 	click    *GridTreeClickCheck
 }
 
@@ -228,7 +228,7 @@ func (wk symbolpicker) update_preview() {
 		value := cur.GetReference()
 		if value != nil {
 			if sym, ok := value.(lsp.SymbolInformation); ok {
-				wk.impl.codeprev.gotoline_not_open(sym.Location.Range.Start.Line)
+				wk.impl.codeprev.goto_line_history(sym.Location.Range.Start.Line,false)
 			}
 		}
 	}

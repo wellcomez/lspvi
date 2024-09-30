@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/pgavlin/femto"
 )
 
 type command_id int
@@ -79,7 +78,7 @@ func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_ite
 		item: cmditem{cmd: get_cmd_actor(m, id)}, handle: handle,
 	}
 }
-func get_cmd_actor(m *mainui, id command_id) cmdactor {
+func get_cmd_actor(m MainService, id command_id) cmdactor {
 	switch id {
 	case zoomout:
 		return cmdactor{id, "zoom out", func() bool {
@@ -119,7 +118,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case open_picker_workspace:
 		return cmdactor{id, "workspace", func() bool {
-			m.layout.dialog.OpenWorkspaceFzf()
+			m.Dialog().OpenWorkspaceFzf()
 			return true
 		}}
 	case open_picker_refs:
@@ -187,29 +186,29 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}
 	case goto_first_line:
 		return cmdactor{id, "goto first line", func() bool {
-			m.current_editor().gotoline_not_open(0)
+			m.current_editor().goto_line_history(0,true)
 			return true
 		}}
 	case goto_to_fileview:
 		{
 			return cmdactor{id, "goto file explorer", func() bool {
 				dir := filepath.Dir(m.current_editor().Path())
-				if view_file.to_view_link(m).Hide {
+				if m.to_view_link(view_file).Hide {
 					m.toggle_view(view_file)
 				}
-				m.fileexplorer.ChangeDir(dir)
-				m.fileexplorer.FocusFile(m.current_editor().Path())
+				m.FileExplore().ChangeDir(dir)
+				m.FileExplore().FocusFile(m.current_editor().Path())
 				return true
 			}}
 		}
 	case goto_last_line:
 		return cmdactor{id, "goto first line", func() bool {
-			m.current_editor().gotoline_not_open(-1)
+			m.current_editor().goto_line_history(-1,true)
 			return true
 		}}
 	case goto_define:
 		return cmdactor{id, "goto define", func() bool {
-			m.current_editor().action_goto_define()
+			m.current_editor().action_goto_define(nil)
 			return true
 		}}
 	case goto_refer:
@@ -251,29 +250,20 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case file_in_file:
 		return cmdactor{id, "file in file", func() bool {
 			w := m.current_editor().OnFindInfile(true, true)
-			m.cmdline.set_escape_search_mode(w)
+			m.CmdLine().set_escape_search_mode(w)
 			return true
 		}}
 	case file_in_file_vi_word:
 		return cmdactor{id, "file in file vi", func() bool {
 			word := m.current_editor().OnFindInfileWordOption(false, false, true)
-			cmdline := m.cmdline
+			cmdline := m.CmdLine()
 			cmdline.set_escape_search_mode(word)
 			return true
 		}}
 	case brack_match:
 		{
 			return cmdactor{id, "match", func() bool {
-				if m.cmdline.Vim.vi.VMap {
-					begin := m.current_editor().view.Cursor.Loc
-					m.current_editor().view.JumpToMatchingBrace()
-					end := m.current_editor().view.Cursor.Loc
-					end.X += 1
-					m.current_editor().view.Cursor.SetSelectionStart(begin)
-					m.current_editor().view.Cursor.SetSelectionEnd(end)
-				} else {
-					m.current_editor().view.JumpToMatchingBrace()
-				}
+				m.current_editor().Match()
 				return true
 			}}
 		}
@@ -346,38 +336,31 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case vi_line_end:
 		return cmdactor{id, "goto line end", func() bool {
-			code := m.current_editor()
-			Cur := code.view.Cursor
-			x := len(code.view.Buf.Line(Cur.Loc.Y)) - 1
-			Loc := femto.Loc{X: x, Y: Cur.Loc.Y}
-			code.view.Cursor.Loc = Loc
+			m.current_editor().goto_line_end()
 			return true
 		}}
 	case vi_line_head:
 		return cmdactor{id, "goto line head", func() bool {
-			code := m.current_editor()
-			Cur := code.view.Cursor
-			Cur.Loc = femto.Loc{X: 0, Y: Cur.Loc.Y}
+			m.current_editor().goto_line_head()
 			return true
 		}}
 	case vi_quick_prev:
 		{
 			return cmdactor{id, "prev", func() bool {
-				m.quickview.go_prev()
+				// m.quickview.go_prev()
 				return true
 			}}
 		}
 	case vi_quick_next:
 		{
 			return cmdactor{id, "quick_next", func() bool {
-				m.quickview.go_next()
+				// m.quickview.go_next()
 				return true
 			}}
 		}
 	case vi_search_mode:
 		return cmdactor{id, "search mode", func() bool {
-			code := m.current_editor()
-			vim := code.main.cmdline.Vim
+			vim := m.CmdLine().Vim
 			vim.EnterEscape()
 			vim.EnterFind()
 			m.current_editor().word_right()
@@ -395,7 +378,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case open_picker_help:
 		return cmdactor{id, "help", func() bool {
-			m.layout.dialog.OpenKeymapFzf()
+			m.Dialog().OpenKeymapFzf()
 			return true
 		}}
 	default:

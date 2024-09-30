@@ -26,6 +26,7 @@ import (
 	ts_html "github.com/smacker/go-tree-sitter/html"
 	ts_java "github.com/smacker/go-tree-sitter/java"
 	ts_js "github.com/smacker/go-tree-sitter/javascript"
+	ts_lua "github.com/smacker/go-tree-sitter/lua"
 	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
 	ts_protobuf "github.com/smacker/go-tree-sitter/protobuf"
 	ts_py "github.com/smacker/go-tree-sitter/python"
@@ -115,12 +116,18 @@ func new_tsdef(
 func (ret *ts_lang_def) load_scm() {
 	if h, er := ret.query(query_highlights); er == nil {
 		ret.hl = h
+	} else {
+		log.Println("fail to load highlights ", ret.name, er)
 	}
 	if h, er := ret.query(query_locals); er == nil {
 		ret.local = h
+	} else {
+		log.Println("fail to load local ", ret.name, er)
 	}
 	if h, er := ret.query(query_outline); er == nil {
 		ret.outline = h
+	} else {
+		log.Println("fail to load outline ", ret.name, er)
 	}
 }
 func (tsdef *ts_lang_def) create_treesitter(file string) *TreeSitter {
@@ -476,6 +483,7 @@ func bash_parser(ts *TreeSitter) {
 }
 
 var tree_sitter_lang_map = []*ts_lang_def{
+	new_tsdef("lua", lsp_dummy{}, ts_lua.GetLanguage()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(rs_outline),
 	new_tsdef("proto", lsp_dummy{}, ts_protobuf.GetLanguage()).set_ext([]string{"proto"}).setparser(rs_outline),
@@ -500,11 +508,7 @@ func (t *TreeSitter) DefaultOutline() bool {
 }
 func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	if t.tsdef != nil {
-		go func() {
-			if t.HlLine != nil {
-				t.callback_to_ui(cb)
-			}
-		}()
+		t.Loadfile(t.tsdef.tslang, cb)
 		return nil
 	}
 	for i := range tree_sitter_lang_map {

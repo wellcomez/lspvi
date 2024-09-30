@@ -10,11 +10,11 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
-func (parent *fzfmain) openfile(path string, code *CodeView) {
-	code.open_file_line(path, nil, true)
+func (parent *fzfmain) openfile(path string, code CodeEditor) {
+	code.LoadFileWithLsp(path, nil, true)
 	parent.hide()
-	parent.main.set_viewid_focus(code.id)
-	parent.main.cmdline.Vim.EnterEscape()
+	parent.main.set_viewid_focus(code.vid())
+	parent.main.CmdLine().Vim.EnterEscape()
 }
 
 type clickdetector struct {
@@ -57,7 +57,7 @@ type fzfmain struct {
 	input   *tview.InputField
 	Visible bool
 	app     *tview.Application
-	main    *mainui
+	main    MainService
 	// query   string
 	// filewalk      *DirWalkk
 	// symbolwalk    *SymbolWalk
@@ -96,26 +96,26 @@ func (v *fzfmain) hide() {
 	v.input.SetText("")
 	v.input.SetLabel("")
 }
-func (v *fzfmain) open_qfh_picker(code *CodeView) {
+func (v *fzfmain) open_qfh_picker(code CodeEditor) {
 	sym := new_qk_history_picker(v, code)
 	x := sym.grid()
 	v.create_dialog_content(x, sym)
 }
-func (v *fzfmain) open_wks_query(code *CodeView) {
+func (v *fzfmain) open_wks_query(code CodeEditor) {
 	sym := new_workspace_symbol_picker(v, code)
 	x := sym.grid()
 	v.create_dialog_content(x, sym)
 }
 
-func (v *fzfmain) OpenBookMarkFzf(code *CodeView, bookmark *proj_bookmark) {
+func (v *fzfmain) OpenBookMarkFzf(code CodeEditor, bookmark *proj_bookmark) {
 	sym := new_bookmark_picker(v, code, bookmark)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
 
 // NewSymboWalk
-func (v *fzfmain) OpenRefFzf(code *CodeView, ranges lsp.Range) {
-	sym := new_refer_picker(*code.lspsymbol, v, code)
+func (v *fzfmain) OpenRefFzf(code CodeEditor, ranges lsp.Range) {
+	sym := new_refer_picker(*code.LspSymbol(), v, code)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 	sym.load(ranges)
@@ -137,8 +137,8 @@ func (v *fzfmain) OpenLiveGrepFzf() {
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
-func (v *fzfmain) OpenColorFzf(code *CodeView) {
-	sym := new_color_picker(v, code)
+func (v *fzfmain) OpenColorFzf(code CodeEditor) {
+	sym := new_color_picker(v)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
@@ -167,15 +167,15 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.currentpicker = sym
 }
 
-func (v *fzfmain) OpenDocumntSymbolFzf(code *CodeView) {
-	sym := new_outline_picker(v, code.lspsymbol, code)
+func (v *fzfmain) OpenDocumntSymbolFzf(code CodeEditor) {
+	sym := new_outline_picker(v, code)
 	layout := sym.grid(v.input)
 	v.create_dialog_content(layout, sym)
 	v.currentpicker = sym
 }
 
 // OpenFileFzf
-func (v *fzfmain) OpenFileFzf(root string, code *CodeView) {
+func (v *fzfmain) OpenFileFzf(root string, code CodeEditor) {
 	filewalk := NewDirWalk(root, v, code)
 	v.Frame = tview.NewFrame(filewalk.grid(v.input))
 	v.input.SetLabel(">")

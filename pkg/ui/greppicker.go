@@ -26,7 +26,7 @@ type grep_impl struct {
 type livewgreppicker struct {
 	*prev_picker_impl
 	grep_list_view *customlist
-	main           *mainui
+	main           MainService
 	impl           *grep_impl
 	qf             func(bool, ref_with_caller) bool
 	not_live       bool
@@ -121,14 +121,14 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	}
 	return layout
 }
-func new_grep_picker(v *fzfmain, code *CodeView) *greppicker {
+func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
 	grep := &greppicker{
 		livewgreppicker: new_live_grep_picker(v, code),
 	}
 	grep.not_live = true
 	return grep
 }
-func new_live_grep_picker(v *fzfmain, code *CodeView) *livewgreppicker {
+func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v, code)
 	grep := &livewgreppicker{
@@ -172,7 +172,7 @@ func (grepx *livewgreppicker) grep_to_list() {
 		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
 		grepx.grep_list_view.AddItem(data, "", func() {
 			loc := convert_grep_info_location(&o)
-			grepx.main.OpenFile(o.fpath, &loc)
+			grepx.main.OpenFileHistory(o.fpath, &loc)
 			grepx.parent.hide()
 		})
 	}
@@ -180,7 +180,7 @@ func (grepx *livewgreppicker) grep_to_list() {
 		grepx.update_preview()
 	}
 	grepx.update_title()
-	grepx.main.app.ForceDraw()
+	grepx.main.App().ForceDraw()
 }
 func (grepx *livewgreppicker) end(task int, o *grep_output) {
 	if task != grepx.impl.taskid {
@@ -190,13 +190,13 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 		if grepx.qf != nil {
 			grepx.qf(true, ref_with_caller{})
 		} else if grepx.not_live {
-			grepx.main.app.QueueUpdate(func() {
+			grepx.main.App().QueueUpdate(func() {
 				grepx.grep_to_list()
 				grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
 					o := grepx.impl.result.data[dataindex]
 					loc := convert_grep_info_location(&o)
-					grepx.main.OpenFile(o.fpath, &loc)
+					grepx.main.OpenFileHistory(o.fpath, &loc)
 					grepx.parent.hide()
 				}
 			})
@@ -226,7 +226,7 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 				return
 			}
 		}
-		grepx.main.app.QueueUpdate(func() {
+		grepx.main.App().QueueUpdate(func() {
 			grepx.grep_to_list()
 		})
 	} else {
@@ -252,7 +252,7 @@ func convert_grep_info_location(o *grep_output) lsp.Location {
 func (o *grep_output) to_ref_caller(key string) ref_with_caller {
 	b := strings.Index(o.line, key)
 	e := b + len(key)
-	sss:=o.line[b:e]
+	sss := o.line[b:e]
 	log.Println(sss)
 	start := lsp.Position{Line: o.lineNumber - 1, Character: b}
 	end := start
@@ -280,7 +280,7 @@ func (pk livewgreppicker) Save() {
 	}
 	data.Result = Result
 	main := pk.main
-	save_qf_uirefresh(main, data)
+	main.save_qf_uirefresh(data)
 }
 
 func (pk livewgreppicker) UpdateQuery(query string) {

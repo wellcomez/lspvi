@@ -12,7 +12,7 @@ import (
 
 type space_menu struct {
 	table     *tview.List
-	main      *mainui
+	main     MainService 
 	visible   bool
 	impl      *space_menu_impl
 	input     *inputdelay
@@ -300,7 +300,7 @@ func (v *space_menu) Draw(screen tcell.Screen) {
 	width, height := screen.Size()
 	w := 40
 	h := len(v.impl.items) + 2
-	_, _, _, cmdlcmdline_height := v.main.cmdline.input.GetRect()
+	_, _, _, cmdlcmdline_height := v.main.CmdLine().input.GetRect()
 	v.table.SetRect(width-w-5, height-h-cmdlcmdline_height-3, w, h)
 	v.table.Draw(screen)
 }

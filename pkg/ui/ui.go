@@ -78,7 +78,7 @@ func (r *recent_open_file) add(filename string) {
 			r.filelist = append(r.filelist, filename)
 			filename = trim_project_filename(filename, global_prj_root)
 			r.list.AddItem(filename, "", func() {
-				r.main.OpenFile(filepath, nil)
+				r.main.OpenFileHistory(filepath, nil)
 			})
 		})
 	}()
@@ -91,6 +91,97 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 		main:      m,
 		Name:      "Opened Files",
 	}
+}
+
+type MainService interface {
+	Close()
+	quit()
+
+	helpkey(bool) []string
+
+	Dialog() *fzfmain
+	toggle_view(id view_id)
+	zoom(zoomin bool)
+	ZoomWeb(zoom bool)
+
+	to_view_link(viewid view_id) *view_link
+
+	FileExplore() *file_tree_view
+	OutLineView() *SymbolTreeView
+	Term() *Term
+
+	OnSearch(option search_option)
+
+	current_editor() CodeEditor
+	OpenFileHistory(filename string, line *lsp.Location)
+
+	on_select_project(prj *Project)
+
+	ActiveTab(id view_id, focused bool)
+	CmdLine() *cmdline
+
+	set_viewid_focus(v view_id)
+	on_change_color(name string)
+	App() *tview.Application
+	get_focus_view_id() view_id
+
+	key_map_space_menu() []cmditem
+	key_map_escape() []cmditem
+	key_map_leader() []cmditem
+
+	Lspmgr() *lspcore.LspWorkspace
+	get_callin_stack(loc lsp.Location, filepath string)
+	get_callin_stack_by_cursor(loc lsp.Location, filepath string)
+	get_refer(pos lsp.Range, filepath string)
+	get_define(pos lsp.Range, filepath string, line *lspcore.OpenOption)
+	get_declare(pos lsp.Range, filepath string)
+
+	CopyToClipboard(s string)
+	save_qf_uirefresh(data qf_history_data) error
+	open_in_tabview(keys []qf_history_data, i int)
+
+	open_colorescheme()
+	open_qfh_query()
+	open_wks_query()
+	open_document_symbol_picker()
+	open_picker_bookmark()
+	open_picker_history()
+	open_picker_livegrep()
+	open_picker_ctrlp()
+
+	move_to_window(direction)
+
+	switch_tab_view()
+	GoBack()
+	GoForward()
+
+	create_menu_item(id command_id, handle func()) context_menu_item
+	Navigation() *BackForward
+
+	Recent_open() *recent_open_file
+	Bookmark() *proj_bookmark
+	Tab() *tabmgr
+
+	qf_grep_word(rightmenu_select_text string)
+
+	Mode() mode
+
+	open_picker_refs()
+
+	open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker
+	OnCodeLineChange(x, y int, file string)
+
+	OnSymbolistChanged(file *lspcore.Symbol_file, err error)
+
+	Right_context_menu() *contextmenu
+
+	Searchcontext() *GenericSearch
+	Codeview2() *CodeView
+
+	async_lsp_open(file string, cb func(sym *lspcore.Symbol_file))
+
+	// new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit
+	set_perfocus_view(viewid view_id)
 }
 
 // editor_area_fouched
@@ -129,9 +220,73 @@ type mainui struct {
 	tab *tabmgr
 }
 
+// new_bookmark_editor implements MainService.
+// func (main *mainui) new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit {
+// panic("unimplemented")
+// }
+
+type mode struct {
+	tty bool
+}
+
+func (m *mainui) set_perfocus_view(viewid view_id) {
+	m.prefocused = viewid
+}
+func (m mainui) Codeview2() *CodeView {
+	return m.codeview2
+}
+func (m mainui) Searchcontext() *GenericSearch {
+	return m.searchcontext
+}
+func (m mainui) Right_context_menu() *contextmenu {
+	return m.right_context_menu
+}
+func (m mainui) Mode() mode {
+	return mode{tty: m.tty}
+}
+func (m mainui) Tab() *tabmgr {
+	return m.tab
+}
+func (m mainui) Bookmark() *proj_bookmark {
+	return m.bookmark
+}
+func (m mainui) Recent_open() *recent_open_file {
+	return m.recent_open
+}
+func (m mainui) OutLineView() *SymbolTreeView {
+	return m.symboltree
+}
+func (m mainui) Term() *Term {
+	return m.term
+}
+func (m mainui) FileExplore() *file_tree_view {
+	return m.fileexplorer
+}
+func (m mainui) Navigation() *BackForward {
+	return m.bf
+}
+func (m mainui) App() *tview.Application {
+	return m.app
+}
+func (m mainui) Lspmgr() *lspcore.LspWorkspace {
+	return m.lspmgr
+}
+func (m mainui) CmdLine() *cmdline {
+	return m.cmdline
+}
+
+// func (m mainui) new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit {
+// 	return m.codeview.new_bookmark_editor(m.layout.dialog, func(s string,code *CodeView) {
+// 		code.view.addbookmark(true, s)
+// 		bookmark := code.main.Bookmark()
+// 		bookmark.udpate(&code.view.bookmark)
+// 		bookmark.save()
+// 	})
+// }
+
 // OnFileChange implements lspcore.lsp_data_changed.
-func (m *mainui) OnFileChange(file []lsp.Location) {
-	m.OpenFile(file[0].URI.AsPath().String(), &file[0])
+func (m *mainui) OnFileChange(file []lsp.Location, line *lspcore.OpenOption) {
+	m.open_file_to_history_option(file[0].URI.AsPath().String(), &file[0], line)
 }
 
 func (m *mainui) on_select_project(prj *Project) {
@@ -245,7 +400,7 @@ func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
 	if err != nil {
 		return
 	}
-	lsp.CallinTask(loc)
+	lsp.CallinTask(loc, 2)
 }
 func (m *mainui) get_callin_stack_by_cursor(loc lsp.Location, filepath string) {
 	m.get_callin_stack(loc, filepath)
@@ -258,19 +413,19 @@ func (m *mainui) get_callin_stack_by_cursor(loc lsp.Location, filepath string) {
 //		}
 //		lsp.Callin(loc)
 //	}
-func (m *mainui) get_define(pos lsp.Range, filepath string) {
+func (m *mainui) get_define(pos lsp.Range, filepath string, line *lspcore.OpenOption) {
 	lsp, err := m.lspmgr.Open(filepath)
 	if err != nil {
 		return
 	}
-	lsp.GotoDefine(pos)
+	lsp.GotoDefine(pos, line)
 }
 func (m *mainui) get_declare(pos lsp.Range, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
 	if err != nil {
 		return
 	}
-	lsp.Declare(pos)
+	lsp.Declare(pos, nil)
 }
 func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)
@@ -288,15 +443,16 @@ func (m *mainui) ActiveTab(id view_id, focused bool) {
 func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 	// panic("unimplemented")
 }
-func (m *mainui) gotoline(loc lsp.Location) {
-	code := m.codeview
-	file := loc.URI.AsPath().String()
-	if file != code.Path() {
-		m.OpenFile(file, &loc)
-	} else {
-		code.gotoline_not_open(loc.Range.Start.Line)
-	}
-}
+
+// func (m *mainui) gotoline(loc lsp.Location) {
+// 	code := m.codeview
+// 	file := loc.URI.AsPath().String()
+// 	if file != code.Path() {
+// 		m.OpenFileHistory(file, &loc)
+// 	} else {
+// 		code.goto_line_history(loc.Range.Start.Line)
+// 	}
+// }
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
@@ -349,10 +505,13 @@ func (m *mainui) ZoomWeb(zoom bool) {
 		proxy.set_browser_font(zoom)
 	}
 }
+func (m *mainui) OpenFileHistory(file string, loc *lsp.Location) {
+	m.open_file_to_history_option(file, loc, nil)
+}
 
 // OpenFile
 // OpenFile
-func (m *mainui) OpenFile(file string, loc *lsp.Location) {
+func (m *mainui) open_file_to_history_option(file string, loc *lsp.Location, line *lspcore.OpenOption) {
 	if m.tty {
 		ext := filepath.Ext(file)
 		open_in_image_set := []string{".png", ".md"}
@@ -369,7 +528,7 @@ func (m *mainui) OpenFile(file string, loc *lsp.Location) {
 		}
 
 	}
-	m.OpenFileToHistory(file, &navigation_loc{loc: loc}, true)
+	m.open_file_to_history(file, &navigation_loc{loc: loc}, true, line)
 }
 
 type navigation_loc struct {
@@ -377,10 +536,10 @@ type navigation_loc struct {
 	offset int
 }
 
-func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory bool) {
+func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhistory bool, option *lspcore.OpenOption) {
 	// dirname := filepath.Dir(file)
 	// m.fileexplorer.ChangeDir(dirname)
-	code := m.codeview
+	var code = m.codeview
 	var loc *lsp.Location
 	if navi != nil {
 		loc = navi.loc
@@ -392,7 +551,7 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	if addhistory {
 		if loc != nil {
 			m.bf.history.SaveToHistory(code)
-			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line, code))
+			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line))
 		} else {
 			m.bf.history.SaveToHistory(code)
 			m.bf.history.AddToHistory(file, nil)
@@ -401,7 +560,7 @@ func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
 	m.symboltree.Clear()
-	code.open_file_line(file, loc, true)
+	code.open_file_lspon_line_option(file, loc, true, option)
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
@@ -433,9 +592,9 @@ type Arguments struct {
 	Cert string
 }
 
-func (m *mainui) open_file(file string) {
-	m.OpenFile(file, nil)
-}
+// func (m *mainui) open_file(file string) {
+// 	m.OpenFileHistory(file, nil)
+// }
 
 type LspHandle struct {
 	main *mainui
@@ -564,7 +723,7 @@ func MainUI(arg *Arguments) {
 	if len(filearg) == 0 {
 		load_from_history(main)
 	} else {
-		main.OpenFile(filearg, nil)
+		main.OpenFileHistory(filearg, nil)
 	}
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// if main.codeview2.view.HasFocus() {
@@ -593,7 +752,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					code.Load(code.Path())
+					code.openfile(code.Path(), nil)
 				})
 			}()
 		}
@@ -637,10 +796,17 @@ func MainUI(arg *Arguments) {
 			main.cmdline.Vim.EnterEscape()
 		})
 	}()
+	global_theme.update_controller_theme()
 	main.sel.observer = append(main.sel.observer, main.console_index_list.sel)
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
+}
+func (main *mainui) on_change_color(name string) {
+	global_config.Colorscheme = name
+	global_config.Save()
+	global_theme = new_ui_theme(name, main)
+	global_theme.update_controller_theme()
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
 	if main.right_context_menu.visible {
@@ -657,7 +823,9 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 		}
 	}
 	main.code_navigation_bar.Draw(screen)
-	main.quickbar.Draw(screen)
+	if !main.layout.dialog.Visible {
+		main.quickbar.Draw(screen)
+	}
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
@@ -698,7 +866,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 	main.sel.handle_mouse_selection(action, event)
 	main.code_navigation_bar.handle_mouse_event(action, event)
 	main.quickbar.handle_mouse_event(action, event)
-	
+
 	for _, v := range resizer {
 		if v.checkdrag(action, event) == tview.MouseConsumed {
 			return nil, tview.MouseConsumed
@@ -715,15 +883,15 @@ func load_from_history(main *mainui) {
 	main.console_index_list.Clear()
 	main.bookmark_view.list.Clear()
 	if len(filearg.Path) > 0 {
-		main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
+		main.open_file_to_history(filearg.Path, &navigation_loc{loc: &lsp.Location{
 			URI: lsp.NewDocumentURI(filearg.Path),
 			Range: lsp.Range{
 				Start: lsp.Position{Line: filearg.Pos.Line, Character: 0},
 				End:   lsp.Position{Line: filearg.Pos.Line, Character: 0},
 			},
-		}, offset: 0}, false)
+		}, offset: 0}, false, nil)
 	} else {
-		code.Load("")
+		code.openfile("", nil)
 	}
 }
 
@@ -765,7 +933,7 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 	}
 	return main_layout
 }
-func (main *mainui) current_editor() *CodeView {
+func (main *mainui) current_editor() CodeEditor {
 	if main.codeview2.view.HasFocus() {
 		return main.codeview2
 	}
@@ -773,6 +941,9 @@ func (main *mainui) current_editor() *CodeView {
 		if v.view.HasFocus() {
 			return v
 		}
+	}
+	if SplitCode.active_codeview != nil {
+		return SplitCode.active_codeview
 	}
 	return main.codeviewmain
 }
@@ -861,7 +1032,10 @@ func create_edit_area(main *mainui) *flex_area {
 	main.fileexplorer = new_file_tree(main, "FileExplore", global_prj_root, func(filename string) bool { return true })
 	main.fileexplorer.Width = 20
 	main.fileexplorer.Init()
-	main.fileexplorer.openfile = main.open_file
+	main.fileexplorer.openfile = func(filename string) {
+		var s MainService = main
+		s.OpenFileHistory(filename, nil)
+	}
 
 	editor_area :=
 		new_flex_area(view_code_area, main)
@@ -1038,10 +1212,10 @@ func (main *mainui) GoForward() {
 	i := main.bf.GoForward()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go forward %v", i)
-	main.OpenFileToHistory(i.Path, &navigation_loc{
+	main.open_file_to_history(i.Path, &navigation_loc{
 		loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
 		offset: i.Pos.Offset,
-	}, false)
+	}, false, nil)
 }
 func (main *mainui) CanGoBack() bool {
 	return main.bf.history.index < len(main.bf.history.datalist)-1
@@ -1054,12 +1228,12 @@ func (main *mainui) GoBack() {
 	i := main.bf.GoBack()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go %v", i)
-	main.OpenFileToHistory(i.Path,
+	main.open_file_to_history(i.Path,
 		&navigation_loc{
 			loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
 			offset: i.Pos.Offset,
 		},
-		false)
+		false, nil)
 }
 
 //	func (main *mainui) open_file_picker() {
@@ -1068,11 +1242,11 @@ func (main *mainui) GoBack() {
 func (main *mainui) open_picker_bookmark() {
 	main.layout.dialog.OpenBookMarkFzf(main.codeview, main.bookmark)
 }
+func (main mainui) Dialog() *fzfmain {
+	return main.layout.dialog
+}
 func (main *mainui) open_picker_refs() {
-	code := main.current_editor()
-	code.view.Cursor.SelectWord()
-	loc := code.lsp_cursor_loc()
-	main.layout.dialog.OpenRefFzf(code, loc)
+	main.current_editor().open_picker_refs()
 }
 func (main *mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(global_prj_root, main.current_editor())
@@ -1090,7 +1264,7 @@ func (main *mainui) open_picker_history() {
 	main.layout.dialog.OpenHistoryFzf()
 }
 func (main *mainui) open_document_symbol_picker() {
-	main.layout.dialog.OpenDocumntSymbolFzf(main.current_editor())
+	main.Dialog().OpenDocumntSymbolFzf(main.current_editor())
 }
 
 type Search interface {

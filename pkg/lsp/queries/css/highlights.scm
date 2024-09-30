@@ -1,38 +1,10 @@
-[
-  "@media"
-  "@charset"
-  "@namespace"
-  "@supports"
-  "@keyframes"
-  (at_keyword)
-] @keyword.directive
-
-"@import" @keyword.import
+(comment) @comment
 
 [
-  (to)
-  (from)
-] @keyword
-
-(comment) @comment @spell
-
-(tag_name) @tag
-
-(class_name) @type
-
-(id_name) @constant
-
-[
-  (property_name)
-  (feature_name)
-] @property
-
-[
+  (tag_name)
   (nesting_selector)
   (universal_selector)
-] @character.special
-
-(function_name) @function
+] @tag
 
 [
   "~"
@@ -47,61 +19,60 @@
   "~="
   "$="
   "*="
-] @operator
-
-[
   "and"
   "or"
   "not"
   "only"
-] @keyword.operator
+] @operator
 
-(important) @keyword.modifier
+(attribute_selector (plain_value) @string)
 
-(attribute_selector
-  (plain_value) @string)
-
-(pseudo_element_selector
-  "::"
-  (tag_name) @attribute)
-
-(pseudo_class_selector
-  (class_name) @attribute)
-
-(attribute_name) @tag.attribute
-
-(namespace_name) @module
-
-((property_name) @variable
-  (#lua-match? @variable "^[-][-]"))
-
-((plain_value) @variable
-  (#lua-match? @variable "^[-][-]"))
+(attribute_name) @attribute
+(pseudo_element_selector (tag_name) @attribute)
+(pseudo_class_selector (class_name) @attribute)
 
 [
-  (string_value)
-  (color_value)
-  (unit)
-] @string
+  (class_name)
+  (id_name)
+  (namespace_name)
+  (property_name)
+  (feature_name)
+] @property
 
-(integer_value) @number
+(function_name) @function
 
-(float_value) @number.float
+(
+  [
+    (property_name)
+    (plain_value)
+  ] @variable.special
+  (#match? @variable.special "^--")
+)
 
 [
-  "#"
+  "@media"
+  "@import"
+  "@charset"
+  "@namespace"
+  "@supports"
+  "@keyframes"
+  (at_keyword)
+  (to)
+  (from)
+  (important)
+]  @keyword
+
+(string_value) @string
+(color_value) @string.special
+
+[
+  (integer_value)
+  (float_value)
+] @number
+
+(unit) @type
+
+[
   ","
-  "."
   ":"
-  "::"
-  ";"
 ] @punctuation.delimiter
-
-[
-  "{"
-  ")"
-  "("
-  "}"
-  "["
-  "]"
-] @punctuation.bracket

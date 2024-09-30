@@ -82,7 +82,7 @@ func (cmd *cmdline) OnSet(args []string) bool {
 			global_config.Wrap = !global_config.Wrap
 			global_config.Save()
 			for _, v := range SplitCode.code_collection {
-				v.change_appearance()
+				v.change_wrap_appearance()
 			}
 		}
 	}
@@ -92,7 +92,7 @@ func (cmd *cmdline) OnSearchCommand(args []string) bool {
 	if len(args) > 1 {
 		arg := args[1]
 
-		qf_grep_word(cmd.main, arg)
+		cmd.main.qf_grep_word(arg)
 	}
 	return true
 }
@@ -121,7 +121,7 @@ func (cmd *cmdline) OnComand(commandinput string) bool {
 	command = strings.TrimRight(command, "\n")
 
 	if num, err := strconv.ParseInt(command, 10, 32); err == nil {
-		cmd.main.current_editor().gotoline_not_open(int(num) - 1)
+		cmd.main.current_editor().goto_line_history(int(num) - 1,true)
 		return true
 	}
 
@@ -649,7 +649,7 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 	if event.Rune() == '/' || event.Rune() == '?' {
 		if v.vi.Escape {
 			if v.app.searchcontext == nil {
-				v.app.searchcontext = NewGenericSearch(v.app.current_editor().id, "")
+				v.app.searchcontext = NewGenericSearch(v.app.current_editor().vid(), "")
 			}
 			aa := (event.Rune() == '/')
 			v.app.searchcontext.next_or_prev = aa
@@ -818,7 +818,7 @@ func (v *Vim) EnterVmap() {
 func (v *Vim) EnterEscape() {
 	v.app.cmdline.Clear()
 	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}
-	v.app.current_editor().view.Cursor.ResetSelection()
+	v.app.current_editor().ResetSelection()
 	f := v.app.get_focus_view_id()
 	if f == view_cmd || f == view_none {
 		v.app.set_viewid_focus(view_code)

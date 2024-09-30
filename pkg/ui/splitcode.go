@@ -1,16 +1,12 @@
 package mainui
 
-import (
-	"github.com/tectiv3/go-lsp"
-	lspcore "zen108.com/lspvi/pkg/lsp"
-)
-
 type CodeSplit struct {
 	code_collection map[view_id]*CodeView
 	last            view_id
 	layout          *flex_area
 	main            *mainui
 	index           []view_id
+	active_codeview *CodeView
 }
 
 func (s *CodeSplit) AddCode(d *CodeView) {
@@ -21,6 +17,9 @@ func (s *CodeSplit) AddCode(d *CodeView) {
 	s.index = append(s.index, d.id)
 	s.last = max(d.id, s.last)
 	s.layout.AddItem(d.view, 0, 1, false)
+}
+func (s *CodeSplit) SetActive(v* CodeView) {
+	s.active_codeview = v
 }
 func (s *CodeSplit) New() *CodeView {
 	a := NewCodeView(s.main)
@@ -69,7 +68,7 @@ func (c CodeSplit) TabView(index int) *CodeView {
 func SplitClose(code *CodeView) context_menu_item {
 	return context_menu_item{item: create_menu_item("Close"), handle: func() {
 		SplitCode.Remove(code)
-		code.main.right_context_menu.remove(code.rightmenu)
+		code.main.Right_context_menu().remove(code.rightmenu)
 	}, hide: !(code.id > view_code)}
 }
 
@@ -102,31 +101,7 @@ func SplitRight(code *CodeView) context_menu_item {
 
 		codeview2 := SplitCode.New()
 		codeview2.view.SetBorder(true)
-		main.right_context_menu.add(codeview2.rightmenu)
-		codeview2.open_file_line(code.Path(), nil, true)
+		main.Right_context_menu().add(codeview2.rightmenu)
+		codeview2.LoadFileWithLsp(code.Path(), nil, true)
 	}}
-}
-func (codeview2 *CodeView) open_file_line(filename string, line *lsp.Location, focus bool) {
-	main := codeview2.main
-	codeview2.LoadAndCb(filename, func() {
-		codeview2.view.SetTitle(codeview2.Path())
-		if line != nil {
-			codeview2.goto_loation(line.Range, codeview2.id != view_code_below)
-		}
-		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
-			codeview2.lspsymbol = sym
-			if focus && codeview2.id != view_code_below {
-				if sym == nil {
-					main.symboltree.Clear()
-				}
-			}
-		})
-		if codeview2.id == view_code_below {
-			go func() {
-				main.app.QueueUpdateDraw(func() {
-					main.tab.ActiveTab(view_code_below, true)
-				})
-			}()
-		}
-	})
 }

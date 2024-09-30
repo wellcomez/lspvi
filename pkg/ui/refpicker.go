@@ -20,7 +20,7 @@ func (grepx *prev_picker_impl) update_title(s string) {
 	grepx.parent.update_dialog_title(s)
 }
 func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.Flex {
-	code := impl.codeprev.view
+	code := impl.codeprev.Primitive()
 	if impl.listcustom != nil {
 		list := impl.listcustom
 		list.SetBorder(true)
@@ -52,7 +52,7 @@ func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.
 func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.Grid {
 	list := impl.listview
 	list.SetBorder(true)
-	code := impl.codeprev.view
+	code := impl.codeprev.Primitive()
 	var layout *tview.Grid
 	if impl.listcustom != nil {
 		layout = layout_list_edit(impl.listcustom, code, input)
@@ -95,22 +95,16 @@ func layout_list_edit(list tview.Primitive, code tview.Primitive, input *tview.I
 type prev_picker_impl struct {
 	listview         *tview.List
 	listcustom       *customlist
-	codeprev         *CodeView
+	codeprev         CodeEditor
 	parent           *fzfmain
 	list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
-	editor           *CodeView
+	editor           CodeEditor
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
-	imp.codeprev.LoadAndCb(filename, func() {
-		if line == -1 {
-			return
-		}
-		p := lsp.Position{Line: line, Character: 0}
-		imp.codeprev.goto_loation(lsp.Range{Start: p, End: p}, false)
-	})
+	imp.codeprev.LoadFileNoLsp(filename, line,false)
 }
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
 	impl.listview = l.List
@@ -165,7 +159,7 @@ func (pk refpicker) OnCodeViewChanged(file *lspcore.Symbol_file) {
 }
 
 // OnFileChange implements lspcore.lsp_data_changed.
-func (pk refpicker) OnFileChange(file []lsp.Location) {
+func (pk refpicker) OnFileChange([]lsp.Location, *lspcore.OpenOption) {
 	panic("unimplemented")
 }
 func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
@@ -216,8 +210,8 @@ type ref_with_caller struct {
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
-	lsp := pk.impl.parent.main.lspmgr.Current
-	pk.impl.refs = pk.impl.codeprev.main.get_loc_caller(file, lsp)
+	lsp := pk.impl.parent.main.Lspmgr().Current
+	pk.impl.refs = get_loc_caller(pk.impl.parent.main, file, lsp)
 	for i := range pk.impl.refs {
 		caller := pk.impl.refs[i]
 		v := caller.Loc
@@ -258,11 +252,11 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 }
 
 func (impl *prev_picker_impl) open_location(v lsp.Location) {
-	impl.editor.open_file_line(v.URI.AsPath().String(), &v, true)
+	impl.editor.LoadFileWithLsp(v.URI.AsPath().String(), &v, true)
 	impl.parent.hide()
 }
 
-func (m *mainui) get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
+func get_loc_caller(m MainService, file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
 	ref_call_in := []ref_with_caller{}
 	for _, v := range file {
 		stacks, err := lsp.Caller(v, false)
@@ -274,7 +268,7 @@ func (m *mainui) get_loc_caller(file []lsp.Location, lsp *lspcore.Symbol_file) [
 			}
 
 		}
-		caller := m.lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+		caller := m.Lspmgr().GetCallEntry(v.URI.AsPath().String(), v.Range)
 		ref_call_in = append(ref_call_in, ref_with_caller{Loc: v, Caller: caller})
 
 	}
@@ -302,7 +296,7 @@ func (ref refpicker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	panic("unimplemented")
 }
 
-func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code *CodeView) refpicker {
+func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code CodeEditor) refpicker {
 	x := new_preview_picker(v, code)
 	sym := refpicker{
 		impl: &refpicker_impl{
@@ -311,11 +305,11 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code *CodeView) ref
 		},
 	}
 	sym.impl.use_cusutom_list(new_customlist(true))
-	sym.impl.codeprev.view.SetBorder(true)
+	// sym.impl.codeprev.view.SetBorder(true)
 	return sym
 }
 
-func new_preview_picker(v *fzfmain, editor *CodeView) *prev_picker_impl {
+func new_preview_picker(v *fzfmain, editor CodeEditor) *prev_picker_impl {
 	x := &prev_picker_impl{
 		listview: tview.NewList(),
 		codeprev: NewCodeView(v.main),
@@ -361,7 +355,7 @@ func (pk refpicker) onselected(data int, list int) {
 	index := data
 	v := pk.impl.listdata[index]
 
-	pk.impl.editor.open_file_line(v.loc.URI.AsPath().String(), &v.loc, true)
+	pk.impl.editor.LoadFileWithLsp(v.loc.URI.AsPath().String(), &v.loc, true)
 	pk.impl.parent.hide()
 }
 

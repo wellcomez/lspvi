@@ -46,7 +46,7 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 			pk.impl.list.AddItem(s, "", func() {
 				sym := pk.impl.sym[index]
 				main := pk.impl.parent.main
-				main.OpenFile(sym.Location.URI.AsPath().String(), &sym.Location)
+				main.OpenFileHistory(sym.Location.URI.AsPath().String(), &sym.Location)
 				pk.impl.parent.hide()
 			})
 		}
@@ -87,11 +87,11 @@ func (pk *workspace_query_picker) handle() func(event *tcell.EventKey, setFocus 
 	return pk.handle_key_override
 }
 
-func new_workspace_symbol_picker(v *fzfmain, code *CodeView) *workspace_query_picker {
+func new_workspace_symbol_picker(v *fzfmain, code CodeEditor) *workspace_query_picker {
 	ret := &workspace_query_picker{
 		impl: &workspace_query_picker_impl{
 			prev_picker_impl: new_preview_picker(v, code),
-			file:             code.lspsymbol,
+			file:             code.LspSymbol(),
 			list:             new_customlist(false),
 		},
 	}

@@ -209,27 +209,27 @@ func (pk *bookmark_edit) grid(input *tview.InputField) *tview.Grid {
 	return pk.fzflist_impl.grid(input)
 }
 
-func new_bookmark_editor(v *fzfmain, cb func(string), code *CodeView) bookmark_edit {
-	var line = code.view.Cursor.Loc.Y + 1
-	line1 := code.view.Buf.Line(line - 1)
-	ret := bookmark_edit{
-		fzflist_impl: new_fzflist_impl(nil, v),
-		cb:           cb,
-	}
-	ret.fzflist_impl.list.AddItem(line1, code.Path(), nil)
-	v.create_dialog_content(ret.grid(v.input), ret)
-	return ret
-}
+// func new_bookmark_editor(v *fzfmain, cb func(string), code *CodeView) bookmark_edit {
+// 	var line = code.view.Cursor.Loc.Y + 1
+// 	line1 := code.view.Buf.Line(line - 1)
+// 	ret := bookmark_edit{
+// 		fzflist_impl: new_fzflist_impl(nil, v),
+// 		cb:           cb,
+// 	}
+// 	ret.fzflist_impl.list.AddItem(line1, code.Path(), nil)
+// 	v.create_dialog_content(ret.grid(v.input), ret)
+// 	return ret
+// }
 
 // new_bookmark_picker
-func new_bookmark_picker(v *fzfmain, code *CodeView, bookmark *proj_bookmark) bookmark_picker {
+func new_bookmark_picker(v *fzfmain, code CodeEditor, bookmark *proj_bookmark) bookmark_picker {
 	impl := &bookmark_picker_impl{
 		prev_picker_impl: new_preview_picker(v, code),
 	}
 	sym := bookmark_picker{
 		impl: impl,
 	}
-	sym.impl.codeprev.view.SetBorder(true)
+	// sym.impl.codeprev.view.SetBorder(true)
 
 	impl.hlist, impl.listdata = init_bookmark_list(bookmark, func(i int) {
 		loc := sym.impl.listdata[i].loc
@@ -322,7 +322,7 @@ func (bk *bookmark_view) OnSearch(txt string) {
 	}
 	bk.fzf.selected = func(dataindex int, listindex int) {
 		loc := bk.data[dataindex].loc
-		bk.code.open_file_line(loc.URI.AsPath().String(), &loc,true)
+		bk.code.LoadFileWithLsp(loc.URI.AsPath().String(), &loc, true)
 	}
 }
 func new_bookmark_view(bookmark *proj_bookmark, code *CodeView, yes func() bool) *bookmark_view {
@@ -367,7 +367,7 @@ func (ret *bookmark_view) loaddata() {
 	})
 	ret.list.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
-		ret.code.open_file_line(loc.URI.AsPath().String(), &loc,true)
+		ret.code.LoadFileWithLsp(loc.URI.AsPath().String(), &loc, true)
 	})
 
 	if ret.bookmark.changed == nil {
@@ -405,5 +405,5 @@ func (menu bk_menu_context) menuitem() []context_menu_item {
 func (ret *bookmark_view) onclick(i int) {
 	loc := ret.data[i].loc
 	ret.list.SetCurrentItem(i)
-	ret.code.open_file_line(loc.URI.AsPath().String(), &loc,true)
+	ret.code.LoadFileWithLsp(loc.URI.AsPath().String(), &loc, true)
 }

@@ -296,7 +296,7 @@ type file_picker_item struct {
 	Positions []int
 }
 
-func NewDirWalk(root string, v *fzfmain, code *CodeView) *DirWalk {
+func NewDirWalk(root string, v *fzfmain, code CodeEditor) *DirWalk {
 	impl := new_fzflist_impl(nil, v)
 	var hayStack = walk(root)
 	ret := &DirWalk{
@@ -331,7 +331,7 @@ func NewDirWalk(root string, v *fzfmain, code *CodeView) *DirWalk {
 	return ret
 }
 
-func update_list_view(list *customlist, t querytask, v *fzfmain, code *CodeView) {
+func update_list_view(list *customlist, t querytask, v *fzfmain, code CodeEditor) {
 	UpdateTitleAndColor(list.Box, fmt.Sprintf("Files %d/%d", t.match_count, t.count))
 	if t.update_count {
 		return
@@ -344,7 +344,7 @@ func update_list_view(list *customlist, t querytask, v *fzfmain, code *CodeView)
 			idx := list.GetCurrentItem()
 			f := t.ret[idx]
 			v.hide()
-			code.open_file_line(f.path, nil,true)
+			code.LoadFileWithLsp(f.path, nil, true)
 		})
 	}
 }

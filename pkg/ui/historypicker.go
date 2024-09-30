@@ -55,7 +55,7 @@ type history_item struct {
 	dispname string
 }
 
-func new_history_picker(v *fzfmain, edit *CodeView) history_picker {
+func new_history_picker(v *fzfmain, edit CodeEditor) history_picker {
 	// list := new_customlist()
 	// list.SetBorder(true)
 	sym := history_picker{

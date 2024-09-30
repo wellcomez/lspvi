@@ -4,6 +4,7 @@ import (
 	// "log"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -41,13 +42,13 @@ type SymbolTreeView struct {
 	*view_link
 	view *tview.TreeView
 	// symbols       []SymbolListItem
-	main          *mainui
+	main          MainService
 	searcheresult *TextFilter
 	show_wait     bool
 	waiter        *tview.TextView
 	right_context symboltree_view_context
 	file          string
-	editor        *CodeView
+	editor        CodeEditor
 }
 type symboltree_view_context struct {
 	qk        *SymbolTreeView
@@ -203,7 +204,7 @@ func (m *SymbolTreeView) OnCodeLineChange(x, y int, file string) {
 	}
 }
 
-func NewSymbolTreeView(main *mainui, codeview *CodeView) *SymbolTreeView {
+func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
 	ret := &SymbolTreeView{
 		view_link: &view_link{id: view_outline_list, left: view_code, down: view_quickview},
@@ -235,14 +236,28 @@ func NewSymbolTreeView(main *mainui, codeview *CodeView) *SymbolTreeView {
 	symbol_tree.SetInputCapture(ret.HandleKey)
 	symbol_tree.SetSelectedFunc(ret.OnClickSymobolNode)
 	ret.waiter = tview.NewTextView().SetText("loading").SetTextColor(tcell.ColorDarkGray)
+	waiter := ret.waiter
+	waiter.SetTextStyle(tcell.StyleDefault)
+	if style := global_theme.get_default_style(); style != nil {
+		f, b, _ := style.Decompose()
+		waiter.SetBackgroundColor(b)
+		waiter.SetTextColor(f)
+	} else {
+		bg := symbol_tree.GetBackgroundColor()
+		style := tcell.StyleDefault.Background(bg)
+		waiter.SetTextStyle(style)
+	}
 	ret.view.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		if ret.show_wait {
 			// log.Println("click", x, y, width, height)
 			bw := width / 2
 			bh := height / 2
-			ret.waiter.SetRect((width-bw)/2+x, y+(height-bh)/2, bw, bh)
-			ret.waiter.SetBackgroundColor(ret.editor.bgcolor)
-			ret.waiter.Draw(screen)
+			waiter.SetRect((width-bw)/2+x, y+(height-bh)/2, bw, bh)
+			if style := global_theme.get_default_style(); style != nil {
+				waiter.SetTextStyle(*style)
+			}
+			// waiter.SetBackgroundColor(ret.editor.bgcolor)
+			waiter.Draw(screen)
 		}
 		return ret.view.GetInnerRect()
 	})
@@ -290,11 +305,11 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 							},
 						}
 						code := symview.editor
-						if code.id == view_code {
-							symview.main.bf.history.SaveToHistory(code)
-							symview.main.bf.history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line, symview.editor))
+						if code.vid() == view_code {
+							symview.main.Navigation().history.SaveToHistory(code)
+							symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line))
 						}
-						symview.editor.goto_loation(r, false)
+						symview.editor.goto_location_no_history(r, false, nil)
 						return
 					}
 				}
@@ -303,7 +318,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 				Range.End.Line = Range.Start.Line
 				Range.End.Character = Range.Start.Character + len(sym.Name)
 			}
-			symview.editor.goto_loation(Range, false)
+			symview.editor.goto_location_no_history(Range, false, nil)
 		}
 	}
 	symview.view.SetCurrentNode(node)
@@ -395,18 +410,19 @@ func (c *SymbolTreeView) HandleKey(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 func (c *SymbolTreeView) get_callin(sym lspcore.Symbol) {
-	loc := sym.SymInfo.Location
-	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
-	beginline := c.editor.view.Buf.Line(loc.Range.Start.Line)
-	startIndex := strings.Index(beginline, sym.SymInfo.Name)
-	if startIndex > 0 {
-		loc.Range.Start.Character = startIndex
-		loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex
-		loc.Range.End.Line = loc.Range.Start.Line
-	}
-	// println(ss)
-	c.main.get_callin_stack(loc, c.editor.Path())
-	// c.main.ActiveTab(view_callin)
+	// loc := sym.SymInfo.Location
+	// // ss := lspcore.NewBody(sym.SymInfo.Location).String()
+	// beginline := c.editor.view.Buf.Line(loc.Range.Start.Line)
+	// startIndex := strings.Index(beginline, sym.SymInfo.Name)
+	// if startIndex > 0 {
+	// 	loc.Range.Start.Character = startIndex
+	// 	loc.Range.End.Character = len(sym.SymInfo.Name) + startIndex
+	// 	loc.Range.End.Line = loc.Range.Start.Line
+	// }
+	// // println(ss)
+	// c.main.get_callin_stack(loc, c.editor.Path())
+	// // c.main.ActiveTab(view_callin)
+	c.editor.get_callin(sym)
 }
 func (c *SymbolTreeView) get_declare(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
@@ -418,7 +434,7 @@ func (c *SymbolTreeView) get_define(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
 	r := c.get_symbol_range(sym)
 	// println(ss)
-	c.main.get_define(r, c.editor.Path())
+	c.main.get_define(r, c.editor.Path(), nil)
 }
 func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 	// ss := lspcore.NewBody(sym.SymInfo.Location).String()
@@ -429,16 +445,7 @@ func (c *SymbolTreeView) get_refer(sym lspcore.Symbol) {
 }
 
 func (c *SymbolTreeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
-	r := sym.SymInfo.Location.Range
-
-	beginline := c.editor.view.Buf.Line(r.Start.Line)
-	startIndex := strings.Index(beginline, sym.SymInfo.Name)
-	if startIndex > 0 {
-		r.Start.Character = startIndex
-		r.End.Character = len(sym.SymInfo.Name) + startIndex - 1
-		r.End.Line = r.Start.Line
-	}
-	return r
+	return c.editor.get_symbol_range(sym)
 }
 
 func (v *SymbolTreeView) Clear() {
@@ -450,7 +457,7 @@ func (v *SymbolTreeView) Clear() {
 }
 func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 	go func() {
-		v.main.app.QueueUpdateDraw(func() {
+		v.main.App().QueueUpdateDraw(func() {
 			v.__update(file)
 		})
 	}()
@@ -466,9 +473,10 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 	if root != nil {
 		root.ClearChildren()
 	}
-	root_node := tview.NewTreeNode("symbol")
+	name := filepath.Base(file.Filename)
+	root_node := tview.NewTreeNode(name)
 	root_node.SetReference("1")
-	query := v.editor.colorscheme
+	query := global_theme
 	for _, v := range file.Class_object {
 		if v.Is_class() {
 			c := tview.NewTreeNode(v.SymbolListStrint())
