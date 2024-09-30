@@ -286,7 +286,7 @@ func (m mainui) CmdLine() *cmdline {
 
 // OnFileChange implements lspcore.lsp_data_changed.
 func (m *mainui) OnFileChange(file []lsp.Location, line *lspcore.OpenOption) {
-	m.OpenFileWithOption(file[0].URI.AsPath().String(), &file[0], line)
+	m.open_file_to_history_option(file[0].URI.AsPath().String(), &file[0], line)
 }
 
 func (m *mainui) on_select_project(prj *Project) {
@@ -400,7 +400,7 @@ func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
 	if err != nil {
 		return
 	}
-	lsp.CallinTask(loc, lspcore.CallMaxLevel)
+	lsp.CallinTask(loc, 3)
 }
 func (m *mainui) get_callin_stack_by_cursor(loc lsp.Location, filepath string) {
 	m.get_callin_stack(loc, filepath)
@@ -506,12 +506,12 @@ func (m *mainui) ZoomWeb(zoom bool) {
 	}
 }
 func (m *mainui) OpenFileHistory(file string, loc *lsp.Location) {
-	m.OpenFileWithOption(file, loc, nil)
+	m.open_file_to_history_option(file, loc, nil)
 }
 
 // OpenFile
 // OpenFile
-func (m *mainui) OpenFileWithOption(file string, loc *lsp.Location, line *lspcore.OpenOption) {
+func (m *mainui) open_file_to_history_option(file string, loc *lsp.Location, line *lspcore.OpenOption) {
 	if m.tty {
 		ext := filepath.Ext(file)
 		open_in_image_set := []string{".png", ".md"}
@@ -528,7 +528,7 @@ func (m *mainui) OpenFileWithOption(file string, loc *lsp.Location, line *lspcor
 		}
 
 	}
-	m.OpenFileToHistory(file, &navigation_loc{loc: loc}, true, line)
+	m.open_file_to_history(file, &navigation_loc{loc: loc}, true, line)
 }
 
 type navigation_loc struct {
@@ -536,10 +536,10 @@ type navigation_loc struct {
 	offset int
 }
 
-func (m *mainui) OpenFileToHistory(file string, navi *navigation_loc, addhistory bool, option *lspcore.OpenOption) {
+func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhistory bool, option *lspcore.OpenOption) {
 	// dirname := filepath.Dir(file)
 	// m.fileexplorer.ChangeDir(dirname)
-	code := m.codeview
+	var code = m.codeview
 	var loc *lsp.Location
 	if navi != nil {
 		loc = navi.loc
@@ -883,7 +883,7 @@ func load_from_history(main *mainui) {
 	main.console_index_list.Clear()
 	main.bookmark_view.list.Clear()
 	if len(filearg.Path) > 0 {
-		main.OpenFileToHistory(filearg.Path, &navigation_loc{loc: &lsp.Location{
+		main.open_file_to_history(filearg.Path, &navigation_loc{loc: &lsp.Location{
 			URI: lsp.NewDocumentURI(filearg.Path),
 			Range: lsp.Range{
 				Start: lsp.Position{Line: filearg.Pos.Line, Character: 0},
@@ -1209,7 +1209,7 @@ func (main *mainui) GoForward() {
 	i := main.bf.GoForward()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go forward %v", i)
-	main.OpenFileToHistory(i.Path, &navigation_loc{
+	main.open_file_to_history(i.Path, &navigation_loc{
 		loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
 		offset: i.Pos.Offset,
 	}, false, nil)
@@ -1225,7 +1225,7 @@ func (main *mainui) GoBack() {
 	i := main.bf.GoBack()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go %v", i)
-	main.OpenFileToHistory(i.Path,
+	main.open_file_to_history(i.Path,
 		&navigation_loc{
 			loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
 			offset: i.Pos.Offset,

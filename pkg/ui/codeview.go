@@ -44,11 +44,11 @@ type CodeEditor interface {
 	// openfile(filename string, onload func()) error
 
 	LoadBuffer(data []byte, filename string)
-	LoadFileNoLsp(filename string, line int) error
+	LoadFileNoLsp(filename string, line int, historyin bool) error
 	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
 
-	goto_location_nohistory(loc lsp.Range, update bool, option *lspcore.OpenOption)
-	goto_line_history(line int)
+	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
+	goto_line_history(line int, history bool)
 
 	get_symbol_range(sym lspcore.Symbol) lsp.Range
 	LspSymbol() *lspcore.Symbol_file
@@ -1281,7 +1281,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 	code.openfile(filename, func() {
 		code.view.SetTitle(code.Path())
 		if line != nil {
-			code.goto_location_nohistory(line.Range, code.id != view_code_below, option)
+			code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 		}
 		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
 			code.lspsymbol = sym
@@ -1304,9 +1304,9 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 //	func (code *CodeView) Load(filename string) error {
 //		return code.LoadAndCb(filename, nil)
 //	}
-func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
+func (code *CodeView) LoadFileNoLsp(filename string, line int, history bool) error {
 	return code.openfile(filename, func() {
-		code.goto_line_history(line)
+		code.goto_line_history(line, history)
 	})
 }
 func (code *CodeView) openfile(filename string, onload func()) error {
@@ -1504,7 +1504,7 @@ func is_lsppos_ok(pos lsp.Position) bool {
 	}
 	return true
 }
-func (code *CodeView) goto_location_nohistory(loc lsp.Range, update bool, option *lspcore.OpenOption) {
+func (code *CodeView) goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption) {
 	shouldReturn := is_lsprange_ok(loc)
 	if shouldReturn {
 		return
@@ -1568,12 +1568,12 @@ func is_lsprange_ok(loc lsp.Range) bool {
 	}
 	return false
 }
-func (code *CodeView) goto_line_history(line int) {
+func (code *CodeView) goto_line_history(line int, historyin bool) {
 	if line == -1 {
 		code.view.EndOfLine()
 		return
 	}
-	if code.main != nil && code.not_preview {
+	if code.main != nil {
 		code.main.Navigation().history.SaveToHistory(code)
 		code.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(line))
 	}
