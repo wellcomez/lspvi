@@ -41,10 +41,12 @@ type CodeEditor interface {
 	action_get_refer()
 	action_goto_define(line *lspcore.OpenOption)
 
-	LoadBuffer(data []byte, filename string)
-	LoadAndCb(filename string, onload func()) error
-	LoadNoSymbol(filename string, line int) error
-	open_file_line(filename string, line *lsp.Location, focus bool)
+	openbuffer(data []byte, filename string)
+	openfile(filename string, onload func()) error
+	
+	LoadFileNoLsp(filename string, line int) error
+	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
+
 	goto_symbol_location(loc lsp.Range, update bool, option *lspcore.OpenOption)
 	goto_plaintext_line(line int)
 
@@ -223,7 +225,7 @@ func (code CodeView) LspSymbol() *lspcore.Symbol_file {
 func (code *CodeView) OnFileChange(file string) bool {
 	if code.file.SamePath(file) {
 		go code.lspsymbol.DidSave()
-		code.LoadAndCb(code.Path(), func() {
+		code.openfile(code.Path(), func() {
 			// go code.on_content_changed()
 		})
 	}
@@ -1271,12 +1273,12 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	return b
 }
 
-func (code *CodeView) open_file_line(filename string, line *lsp.Location, focus bool) {
+func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus bool) {
 	code.open_file_line_option(filename, line, focus, nil)
 }
 func (code *CodeView) open_file_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
 	main := code.main
-	code.LoadAndCb(filename, func() {
+	code.openfile(filename, func() {
 		code.view.SetTitle(code.Path())
 		if line != nil {
 			code.goto_symbol_location(line.Range, code.id != view_code_below, option)
@@ -1302,12 +1304,12 @@ func (code *CodeView) open_file_line_option(filename string, line *lsp.Location,
 //	func (code *CodeView) Load(filename string) error {
 //		return code.LoadAndCb(filename, nil)
 //	}
-func (code *CodeView) LoadNoSymbol(filename string, line int) error {
-	return code.LoadAndCb(filename, func() {
+func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
+	return code.openfile(filename, func() {
 		code.goto_plaintext_line(line)
 	})
 }
-func (code *CodeView) LoadAndCb(filename string, onload func()) error {
+func (code *CodeView) openfile(filename string, onload func()) error {
 	if NewFile(filename).Same(code.file) {
 		if onload != nil {
 			onload()
@@ -1381,7 +1383,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 			}
 		})
 	})
-	code.LoadBuffer(data, filename)
+	code.openbuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
 	code.file = NewFile(filename)
 	if code.main != nil {
@@ -1411,7 +1413,7 @@ func (code CodeView) change_wrap_appearance() {
 func (view *codetextview) is_softwrap() bool {
 	return view.Buf.Settings["softwrap"] == true
 }
-func (code *CodeView) LoadBuffer(data []byte, filename string) {
+func (code *CodeView) openbuffer(data []byte, filename string) {
 	code.tree_sitter = nil
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.linechange = bookmarkfile{}

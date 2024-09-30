@@ -1,8 +1,5 @@
 package mainui
 
-import (
-)
-
 type CodeSplit struct {
 	code_collection map[view_id]*CodeView
 	last            view_id
@@ -101,6 +98,6 @@ func SplitRight(code *CodeView) context_menu_item {
 		codeview2 := SplitCode.New()
 		codeview2.view.SetBorder(true)
 		main.Right_context_menu().add(codeview2.rightmenu)
-		codeview2.open_file_line(code.Path(), nil, true)
+		codeview2.LoadFileWithLsp(code.Path(), nil, true)
 	}}
 }

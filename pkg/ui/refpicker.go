@@ -104,7 +104,7 @@ type prev_picker_impl struct {
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
-	imp.codeprev.LoadAndCb(filename, func() {
+	imp.codeprev.openfile(filename, func() {
 		if line == -1 {
 			return
 		}
@@ -258,7 +258,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 }
 
 func (impl *prev_picker_impl) open_location(v lsp.Location) {
-	impl.editor.open_file_line(v.URI.AsPath().String(), &v, true)
+	impl.editor.LoadFileWithLsp(v.URI.AsPath().String(), &v, true)
 	impl.parent.hide()
 }
 
@@ -361,7 +361,7 @@ func (pk refpicker) onselected(data int, list int) {
 	index := data
 	v := pk.impl.listdata[index]
 
-	pk.impl.editor.open_file_line(v.loc.URI.AsPath().String(), &v.loc, true)
+	pk.impl.editor.LoadFileWithLsp(v.loc.URI.AsPath().String(), &v.loc, true)
 	pk.impl.parent.hide()
 }
 

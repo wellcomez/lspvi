@@ -725,7 +725,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					code.LoadAndCb(code.Path(), nil)
+					code.openfile(code.Path(), nil)
 				})
 			}()
 		}
@@ -864,7 +864,7 @@ func load_from_history(main *mainui) {
 			},
 		}, offset: 0}, false, nil)
 	} else {
-		code.LoadAndCb("", nil)
+		code.openfile("", nil)
 	}
 }
 

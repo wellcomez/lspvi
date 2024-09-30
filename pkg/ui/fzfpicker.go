@@ -11,7 +11,7 @@ import (
 )
 
 func (parent *fzfmain) openfile(path string, code CodeEditor) {
-	code.open_file_line(path, nil, true)
+	code.LoadFileWithLsp(path, nil, true)
 	parent.hide()
 	parent.main.set_viewid_focus(code.vid())
 	parent.main.CmdLine().Vim.EnterEscape()

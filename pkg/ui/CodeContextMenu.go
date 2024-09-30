@@ -78,7 +78,7 @@ func update_selection_menu(code *CodeView) {
 	if !x.Hide {
 		toggle_outline = "Hide outline view"
 	}
-	tty:=main.Mode().tty
+	tty := main.Mode().tty
 	menudata := code.right_menu_data
 	items := []context_menu_item{
 		{item: create_menu_item("Reference"), handle: func() {
@@ -90,7 +90,7 @@ func update_selection_menu(code *CodeView) {
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
-			main.get_define(menudata.selection_range, code.Path(),nil)
+			main.get_define(menudata.selection_range, code.Path(), nil)
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {
@@ -192,7 +192,7 @@ func SplitDown(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitDown"), handle: func() {
 		if code.id >= view_code {
-			main.Codeview2().open_file_line(code.Path(), nil, false)
+			main.Codeview2().LoadFileWithLsp(code.Path(), nil, false)
 		}
 	}}
 }

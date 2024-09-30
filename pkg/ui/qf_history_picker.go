@@ -151,7 +151,7 @@ func (qk *qk_history_picker) open_in_qf() {
 
 }
 
-func (main *mainui)open_in_tabview(keys []qf_history_data, i int) {
+func (main *mainui) open_in_tabview(keys []qf_history_data, i int) {
 	item := keys[i]
 	if item.Type == data_refs || item.Type == data_search || item.Type == data_grep_word {
 		main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
@@ -194,9 +194,9 @@ func (qk *qk_history_picker) updateprev() {
 			dataprev := []string{}
 			for _, call := range caller {
 				// call.width = width
-				dataprev = append(dataprev, call.ListItem(global_prj_root,true))
+				dataprev = append(dataprev, call.ListItem(global_prj_root, true))
 			}
-			qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
+			qk.codeprev.openbuffer([]byte(strings.Join(dataprev, "\n")), "")
 		}
 	case data_callin:
 		{
@@ -225,7 +225,7 @@ func (qk *qk_history_picker) updateprev() {
 					}
 				}
 				data := strings.Join(content, "\n")
-				qk.codeprev.LoadBuffer([]byte(data), "")
+				qk.codeprev.openbuffer([]byte(data), "")
 			} else {
 				dirs, err := os.ReadDir(callin)
 				content := []string{}
@@ -234,13 +234,13 @@ func (qk *qk_history_picker) updateprev() {
 				}
 				data := strings.Join(content, "\n")
 				if err == nil {
-					qk.codeprev.LoadBuffer([]byte(data), "")
+					qk.codeprev.openbuffer([]byte(data), "")
 				}
 			}
 		}
 	default:
 		{
-			qk.codeprev.LoadBuffer([]byte("????"), "")
+			qk.codeprev.openbuffer([]byte("????"), "")
 		}
 	}
 }
