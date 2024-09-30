@@ -235,14 +235,25 @@ func NewSymbolTreeView(main MainService, codeview *CodeView) *SymbolTreeView {
 	symbol_tree.SetInputCapture(ret.HandleKey)
 	symbol_tree.SetSelectedFunc(ret.OnClickSymobolNode)
 	ret.waiter = tview.NewTextView().SetText("loading").SetTextColor(tcell.ColorDarkGray)
+	waiter := ret.waiter
+	waiter.SetTextStyle(tcell.StyleDefault)
+	if style:=global_theme.get_default_style();style!=nil{
+		f,b,_:=style.Decompose()
+		waiter.SetBackgroundColor(b)
+		waiter.SetTextColor(f)
+	}else{
+		bg:=symbol_tree.GetBackgroundColor()
+		style:=tcell.StyleDefault.Background(bg)
+		waiter.SetTextStyle(style)
+	}
 	ret.view.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		if ret.show_wait {
 			// log.Println("click", x, y, width, height)
 			bw := width / 2
 			bh := height / 2
-			ret.waiter.SetRect((width-bw)/2+x, y+(height-bh)/2, bw, bh)
-			ret.waiter.SetBackgroundColor(ret.editor.bgcolor)
-			ret.waiter.Draw(screen)
+			waiter.SetRect((width-bw)/2+x, y+(height-bh)/2, bw, bh)
+			waiter.SetBackgroundColor(ret.editor.bgcolor)
+			waiter.Draw(screen)
 		}
 		return ret.view.GetInnerRect()
 	})

@@ -141,8 +141,14 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.console_index_list.SetBackgroundColor(bg)
 	main.layout.dialog.Frame.SetBackgroundColor(bg)
 	main.symboltree.update(main.lspmgr.Current)
+	main.symboltree.waiter.SetBackgroundColor(bg)
+	main.symboltree.waiter.SetTextColor(fg)
+
 	main.page.SetTitleColor(fg)
+
 	main.layout.spacemenu.table.SetBackgroundColor(bg)
+	main.layout.spacemenu.load_spacemenu()
+
 	main.right_context_menu.table.SetBackgroundColor(bg)
 
 	// sp= fg
@@ -160,6 +166,7 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 		v.set_codeview_colortheme(colorscheme)
 	}
 	main.codeview2.set_codeview_colortheme(colorscheme)
+	main.fileexplorer.ChangeDir(main.fileexplorer.rootdir)
 }
 
 func (coloretheme *symbol_colortheme) update_default_color() {

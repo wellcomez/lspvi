@@ -90,12 +90,12 @@ type CodeView struct {
 
 // OnFileChange implements change_reciever.
 func (code *CodeView) OnFileChange(file string) bool {
-	// if code.file.SamePath(file) {
-	// 	go code.lspsymbol.DidSave()
-	// 	code.LoadAndCb(code.Path(), func() {
-	// 		// go code.on_content_changed()
-	// 	})
-	// }
+	if code.file.SamePath(file) {
+		go code.lspsymbol.DidSave()
+		code.LoadAndCb(code.Path(), func() {
+			// go code.on_content_changed()
+		})
+	}
 	return false
 }
 

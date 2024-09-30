@@ -21,12 +21,12 @@ import (
 	ts_c "github.com/smacker/go-tree-sitter/c"
 	ts_cpp "github.com/smacker/go-tree-sitter/cpp"
 	ts_css "github.com/smacker/go-tree-sitter/css"
-	ts_lua "github.com/smacker/go-tree-sitter/lua"
 	ts_dockerfile "github.com/smacker/go-tree-sitter/dockerfile"
 	ts_go "github.com/smacker/go-tree-sitter/golang"
 	ts_html "github.com/smacker/go-tree-sitter/html"
 	ts_java "github.com/smacker/go-tree-sitter/java"
 	ts_js "github.com/smacker/go-tree-sitter/javascript"
+	ts_lua "github.com/smacker/go-tree-sitter/lua"
 	tree_sitter_markdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
 	ts_protobuf "github.com/smacker/go-tree-sitter/protobuf"
 	ts_py "github.com/smacker/go-tree-sitter/python"
@@ -116,12 +116,18 @@ func new_tsdef(
 func (ret *ts_lang_def) load_scm() {
 	if h, er := ret.query(query_highlights); er == nil {
 		ret.hl = h
+	} else {
+		log.Println("fail to load highlights ", ret.name, er)
 	}
 	if h, er := ret.query(query_locals); er == nil {
 		ret.local = h
+	} else {
+		log.Println("fail to load local ", ret.name, er)
 	}
 	if h, er := ret.query(query_outline); er == nil {
 		ret.outline = h
+	} else {
+		log.Println("fail to load outline ", ret.name, er)
 	}
 }
 func (tsdef *ts_lang_def) create_treesitter(file string) *TreeSitter {
@@ -477,10 +483,10 @@ func bash_parser(ts *TreeSitter) {
 }
 
 var tree_sitter_lang_map = []*ts_lang_def{
+	new_tsdef("lua", lsp_dummy{}, ts_lua.GetLanguage()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(rs_outline),
 	new_tsdef("proto", lsp_dummy{}, ts_protobuf.GetLanguage()).set_ext([]string{"proto"}).setparser(rs_outline),
-	new_tsdef("lua", lsp_dummy{}, ts_lua.GetLanguage()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("css", lsp_dummy{}, ts_css.GetLanguage()).set_ext([]string{"css"}).setparser(rs_outline),
 	new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),
 	new_tsdef("html", lsp_dummy{}, ts_html.GetLanguage()).set_ext([]string{"html"}).setparser(rs_outline),
