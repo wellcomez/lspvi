@@ -107,7 +107,7 @@ func (v *fzfmain) open_wks_query(code CodeEditor) {
 	v.create_dialog_content(x, sym)
 }
 
-func (v *fzfmain) OpenBookMarkFzf(code *CodeView, bookmark *proj_bookmark) {
+func (v *fzfmain) OpenBookMarkFzf(code CodeEditor, bookmark *proj_bookmark) {
 	sym := new_bookmark_picker(v, code, bookmark)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
