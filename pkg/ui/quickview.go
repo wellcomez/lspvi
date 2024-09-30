@@ -72,6 +72,7 @@ type quick_view struct {
 type list_view_tree_extend struct {
 	tree           []list_tree_node
 	tree_data_item []*list_tree_node
+	filename       string
 }
 
 func (l list_view_tree_extend) NeedCreate() bool {
@@ -648,7 +649,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	// _, _, width, _ := qk.view.GetRect()
 	m := qk.main
 	lspmgr := m.lspmgr
-	qk.tree = &list_view_tree_extend{}
+	qk.tree = &list_view_tree_extend{filename: qk.main.current_editor().Path()}
 	qk.tree.build_tree(Refs)
 	data := qk.tree.BuildListStringGroup(qk, global_prj_root, lspmgr)
 	for _, v := range data {
@@ -664,15 +665,21 @@ func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 	for i := range Refs {
 		caller := Refs[i]
 		v := caller.Loc
-		if s, ok := group[v.URI.String()]; ok {
+		x := v.URI.AsPath().String()
+		if s, ok := group[x]; ok {
 			s.children = append(s.children, list_tree_node{ref_index: i})
-			group[v.URI.String()] = s
+			group[x] = s
 		} else {
-			group[v.URI.String()] = list_tree_node{ref_index: i, parent: true, expand: true}
+			group[x] = list_tree_node{ref_index: i, parent: true, expand: true}
 		}
 	}
 	trees := []list_tree_node{}
-	for _, v := range group {
+	for k, v := range group {
+		if k == qk.filename {
+			aaa := []list_tree_node{v}
+			trees = append(aaa, trees...)
+			continue
+		}
 		trees = append(trees, v)
 	}
 	qk.tree = trees
