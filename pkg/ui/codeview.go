@@ -1259,6 +1259,35 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	return b
 }
 
+
+func (code *CodeView) open_file_line(filename string, line *lsp.Location, focus bool) {
+	code.open_file_line_option(filename, line, focus, nil)
+}
+func (code *CodeView) open_file_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
+	main := code.main
+	code.LoadAndCb(filename, func() {
+		code.view.SetTitle(code.Path())
+		if line != nil {
+			code.goto_loation(line.Range, code.id != view_code_below,option)
+		}
+		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
+			code.lspsymbol = sym
+			if focus && code.id != view_code_below {
+				if sym == nil {
+					main.OutLineView().Clear()
+				}
+			}
+		})
+		if code.id == view_code_below {
+			go func() {
+				main.App().QueueUpdateDraw(func() {
+					main.Tab().ActiveTab(view_code_below, true)
+				})
+			}()
+		}
+	})
+}
+
 //	func (code *CodeView) Load(filename string) error {
 //		return code.LoadAndCb(filename, nil)
 //	}

@@ -106,30 +106,3 @@ func SplitRight(code *CodeView) context_menu_item {
 		codeview2.open_file_line(code.Path(), nil, true)
 	}}
 }
-func (codeview2 *CodeView) open_file_line(filename string, line *lsp.Location, focus bool) {
-	codeview2.open_file_line_option(filename, line, focus, nil)
-}
-func (codeview2 *CodeView) open_file_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
-	main := codeview2.main
-	codeview2.LoadAndCb(filename, func() {
-		codeview2.view.SetTitle(codeview2.Path())
-		if line != nil {
-			codeview2.goto_loation(line.Range, codeview2.id != view_code_below,option)
-		}
-		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
-			codeview2.lspsymbol = sym
-			if focus && codeview2.id != view_code_below {
-				if sym == nil {
-					main.OutLineView().Clear()
-				}
-			}
-		})
-		if codeview2.id == view_code_below {
-			go func() {
-				main.App().QueueUpdateDraw(func() {
-					main.Tab().ActiveTab(view_code_below, true)
-				})
-			}()
-		}
-	})
-}
