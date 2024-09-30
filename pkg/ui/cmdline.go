@@ -121,7 +121,7 @@ func (cmd *cmdline) OnComand(commandinput string) bool {
 	command = strings.TrimRight(command, "\n")
 
 	if num, err := strconv.ParseInt(command, 10, 32); err == nil {
-		cmd.main.current_editor().gotoline_not_open(int(num) - 1)
+		cmd.main.current_editor().goto_plaintext_line(int(num) - 1)
 		return true
 	}
 

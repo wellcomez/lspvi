@@ -109,7 +109,7 @@ func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
 			return
 		}
 		p := lsp.Position{Line: line, Character: 0}
-		imp.codeprev.goto_loation(lsp.Range{Start: p, End: p}, false, nil)
+		imp.codeprev.goto_symbol_location(lsp.Range{Start: p, End: p}, false, nil)
 	})
 }
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {

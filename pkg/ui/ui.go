@@ -423,7 +423,7 @@ func (m *mainui) gotoline(loc lsp.Location) {
 	if file != code.Path() {
 		m.OpenFile(file, &loc)
 	} else {
-		code.gotoline_not_open(loc.Range.Start.Line)
+		code.goto_plaintext_line(loc.Range.Start.Line)
 	}
 }
 

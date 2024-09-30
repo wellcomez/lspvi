@@ -20,46 +20,58 @@ import (
 )
 
 type CodeEditor interface {
-	FileName() string
-	update_with_line_changed()
-	LspSymbol() *lspcore.Symbol_file
-	Save() error
-	handle_key(event *tcell.EventKey) *tcell.EventKey
-	ResetSelection()
-	bookmark()
-	Path() string
 	vid() view_id
 	Primitive() tview.Primitive
-	LoadBuffer(data []byte, filename string)
-	LoadAndCb(filename string, onload func()) error
-	action_grep_word(selected bool)
-	action_get_refer()
+
+	FileName() string
+	Path() string
+
+	update_with_line_changed()
+
+	Save() error
+
+	handle_key(event *tcell.EventKey) *tcell.EventKey
+
+	ResetSelection()
+
+	bookmark()
+
 	key_call_in()
 	action_goto_declaration()
-	LoadNoSymbol(filename string, line int) error
-	get_symbol_range(sym lspcore.Symbol) lsp.Range
-	goto_loation(loc lsp.Range, update bool, option *lspcore.OpenOption)
-	gotoline_not_open(line int)
+	action_get_refer()
 	action_goto_define(line *lspcore.OpenOption)
+
+	LoadBuffer(data []byte, filename string)
+	LoadAndCb(filename string, onload func()) error
+	LoadNoSymbol(filename string, line int) error
 	open_file_line(filename string, line *lsp.Location, focus bool)
+	goto_symbol_location(loc lsp.Range, update bool, option *lspcore.OpenOption)
+	goto_plaintext_line(line int)
+
+	get_symbol_range(sym lspcore.Symbol) lsp.Range
+	LspSymbol() *lspcore.Symbol_file
 	Match()
 
 	action_key_up()
 	action_key_down()
+	action_page_down(bool)
 	key_left()
 	key_right()
 	word_left()
 	word_right()
+
 	Undo()
-	action_page_down(bool)
-	copyline(bool)
 	deleteline()
+	copyline(bool)
+
 	goto_line_end()
 	goto_line_head()
 	get_callin(sym lspcore.Symbol)
 
 	open_picker_refs()
 	InsertMode(yes bool)
+
+	action_grep_word(selected bool)
 	OnFindInfile(fzf bool, noloop bool) string
 	OnFindInfileWordOption(fzf bool, noloop bool, whole bool) string
 
@@ -1259,7 +1271,6 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	return b
 }
 
-
 func (code *CodeView) open_file_line(filename string, line *lsp.Location, focus bool) {
 	code.open_file_line_option(filename, line, focus, nil)
 }
@@ -1268,7 +1279,7 @@ func (code *CodeView) open_file_line_option(filename string, line *lsp.Location,
 	code.LoadAndCb(filename, func() {
 		code.view.SetTitle(code.Path())
 		if line != nil {
-			code.goto_loation(line.Range, code.id != view_code_below,option)
+			code.goto_symbol_location(line.Range, code.id != view_code_below, option)
 		}
 		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
 			code.lspsymbol = sym
@@ -1293,7 +1304,7 @@ func (code *CodeView) open_file_line_option(filename string, line *lsp.Location,
 //	}
 func (code *CodeView) LoadNoSymbol(filename string, line int) error {
 	return code.LoadAndCb(filename, func() {
-		code.gotoline_not_open(line)
+		code.goto_plaintext_line(line)
 	})
 }
 func (code *CodeView) LoadAndCb(filename string, onload func()) error {
@@ -1491,7 +1502,7 @@ func is_lsppos_ok(pos lsp.Position) bool {
 	}
 	return true
 }
-func (code *CodeView) goto_loation(loc lsp.Range, update bool, option *lspcore.OpenOption) {
+func (code *CodeView) goto_symbol_location(loc lsp.Range, update bool, option *lspcore.OpenOption) {
 	shouldReturn := is_lsprange_ok(loc)
 	if shouldReturn {
 		return
@@ -1555,7 +1566,7 @@ func is_lsprange_ok(loc lsp.Range) bool {
 	}
 	return false
 }
-func (code *CodeView) gotoline_not_open(line int) {
+func (code *CodeView) goto_plaintext_line(line int) {
 	if line == -1 {
 		code.view.EndOfLine()
 		return
