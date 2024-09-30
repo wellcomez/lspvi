@@ -37,7 +37,7 @@ import (
 	//"github.com/smacker/go-tree-sitter/markdown"
 )
 
-type t_symbol_line map[int][]TreeSitterSymbol
+type TreesiterSymbolLine map[int][]TreeSitterSymbol
 type Point struct {
 	Row    uint32
 	Column uint32
@@ -54,7 +54,7 @@ type TreeSitter struct {
 	parser     *sitter.Parser
 	tree       *sitter.Tree
 	sourceCode []byte
-	HlLine     t_symbol_line
+	HlLine     TreesiterSymbolLine
 	Outline    []*Symbol
 	tsdef      *ts_lang_def
 }
@@ -518,15 +518,15 @@ func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (t TreeSitter) query(queryname string) (t_symbol_line, error) {
+func (t TreeSitter) query(queryname string) (TreesiterSymbolLine, error) {
 	if queryname == query_highlights {
 		return t.query_buf(t.tsdef.hl)
 	}
-	return make(t_symbol_line), nil
+	return make(TreesiterSymbolLine), nil
 }
 
-func (t *TreeSitter) query_buf(q *sitter.Query) (t_symbol_line, error) {
-	var SymbolsLine t_symbol_line = make(t_symbol_line)
+func (t *TreeSitter) query_buf(q *sitter.Query) (TreesiterSymbolLine, error) {
+	var SymbolsLine TreesiterSymbolLine = make(TreesiterSymbolLine)
 	if q == nil {
 		return SymbolsLine, fmt.Errorf("query not found")
 	}
@@ -690,7 +690,7 @@ func (ts *TreeSitter) callback_to_ui(cb func(*TreeSitter)) {
 	}
 }
 
-func get_ts_symbol(ret t_symbol_line, ts *TreeSitter) []lsp.SymbolInformation {
+func get_ts_symbol(ret TreesiterSymbolLine, ts *TreeSitter) []lsp.SymbolInformation {
 	prefix := "local.definition."
 	symbols := []lsp.SymbolInformation{}
 	scopes := []TreeSitterSymbol{}
