@@ -256,7 +256,7 @@ func (m mainui) Recent_open() *recent_open_file {
 func (m mainui) OutLineView() *SymbolTreeView {
 	return m.symboltree
 }
-func (m mainui)Term() *Term{
+func (m mainui) Term() *Term {
 	return m.term
 }
 func (m mainui) FileExplore() *file_tree_view {
@@ -400,7 +400,7 @@ func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
 	if err != nil {
 		return
 	}
-	lsp.CallinTask(loc, 3)
+	lsp.CallinTask(loc, 2)
 }
 func (m *mainui) get_callin_stack_by_cursor(loc lsp.Location, filepath string) {
 	m.get_callin_stack(loc, filepath)
@@ -942,6 +942,9 @@ func (main *mainui) current_editor() CodeEditor {
 			return v
 		}
 	}
+	if SplitCode.active_codeview != nil {
+		return SplitCode.active_codeview
+	}
 	return main.codeviewmain
 }
 func (main *mainui) create_menu_bar(tab_area *tview.Flex) *tview.Button {
@@ -1030,7 +1033,7 @@ func create_edit_area(main *mainui) *flex_area {
 	main.fileexplorer.Width = 20
 	main.fileexplorer.Init()
 	main.fileexplorer.openfile = func(filename string) {
-		var s MainService=main
+		var s MainService = main
 		s.OpenFileHistory(filename, nil)
 	}
 

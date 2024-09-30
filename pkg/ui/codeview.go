@@ -556,6 +556,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		case tview.MouseLeftDown, tview.MouseRightClick:
 			code.main.set_viewid_focus(code.id)
 			code.view.Focus(func(p tview.Primitive) {})
+			SplitCode.SetActive(code)
 			if code.id >= view_code {
 				symboltree := code.main.OutLineView()
 				if symboltree.editor != code {

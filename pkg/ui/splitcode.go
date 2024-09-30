@@ -6,6 +6,7 @@ type CodeSplit struct {
 	layout          *flex_area
 	main            *mainui
 	index           []view_id
+	active_codeview *CodeView
 }
 
 func (s *CodeSplit) AddCode(d *CodeView) {
@@ -16,6 +17,9 @@ func (s *CodeSplit) AddCode(d *CodeView) {
 	s.index = append(s.index, d.id)
 	s.last = max(d.id, s.last)
 	s.layout.AddItem(d.view, 0, 1, false)
+}
+func (s *CodeSplit) SetActive(v* CodeView) {
+	s.active_codeview = v
 }
 func (s *CodeSplit) New() *CodeView {
 	a := NewCodeView(s.main)
