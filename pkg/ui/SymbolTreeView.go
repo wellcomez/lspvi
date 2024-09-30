@@ -4,6 +4,7 @@ import (
 	// "log"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -472,7 +473,8 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 	if root != nil {
 		root.ClearChildren()
 	}
-	root_node := tview.NewTreeNode("symbol")
+	name := filepath.Base(file.Filename)
+	root_node := tview.NewTreeNode(name)
 	root_node.SetReference("1")
 	query := global_theme
 	for _, v := range file.Class_object {
