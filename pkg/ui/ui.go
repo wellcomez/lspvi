@@ -94,10 +94,17 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 }
 
 type MainService interface {
+	Close()
+	quit()
+
+	helpkey(bool) []string
+
 	Dialog() *fzfmain
 	toggle_view(id view_id)
 	zoom(zoomin bool)
 	ZoomWeb(zoom bool)
+
+	to_view_link(viewid view_id) *view_link
 
 	FileExplore() *file_tree_view
 	OutLineView() *SymbolTreeView
@@ -133,7 +140,20 @@ type MainService interface {
 	open_in_tabview(keys []qf_history_data, i int)
 
 	open_colorescheme()
+	open_qfh_query()
+	open_wks_query()
+	open_document_symbol_picker()
+	open_picker_bookmark()
+	open_picker_history()
+	open_picker_livegrep()
+	open_picker_ctrlp()
+
+	move_to_window(direction)
 	
+	switch_tab_view()
+	GoBack()
+	GoForward()
+
 	create_menu_item(id command_id, handle func()) context_menu_item
 	Navigation() *BackForward
 

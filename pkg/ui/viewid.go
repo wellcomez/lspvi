@@ -67,6 +67,11 @@ func (viewid view_id) to_view_link(m *mainui) *view_link {
 	_, _, link, _ := viewid.view_info(m)
 	return link
 }
+func (m *mainui) to_view_link(viewid view_id) *view_link {
+	_, _, link, _ := viewid.view_info(m)
+	return link
+}
+
 func find_name_to_viewid(m string) view_id {
 	for _, v := range all_view_list {
 		if v.getname() == m {

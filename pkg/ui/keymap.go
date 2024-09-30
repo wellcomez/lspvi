@@ -78,7 +78,7 @@ func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_ite
 		item: cmditem{cmd: get_cmd_actor(m, id)}, handle: handle,
 	}
 }
-func get_cmd_actor(m *mainui, id command_id) cmdactor {
+func get_cmd_actor(m MainService, id command_id) cmdactor {
 	switch id {
 	case zoomout:
 		return cmdactor{id, "zoom out", func() bool {
@@ -118,7 +118,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case open_picker_workspace:
 		return cmdactor{id, "workspace", func() bool {
-			m.layout.dialog.OpenWorkspaceFzf()
+			m.Dialog().OpenWorkspaceFzf()
 			return true
 		}}
 	case open_picker_refs:
@@ -193,11 +193,11 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		{
 			return cmdactor{id, "goto file explorer", func() bool {
 				dir := filepath.Dir(m.current_editor().Path())
-				if view_file.to_view_link(m).Hide {
+				if m.to_view_link(view_file).Hide {
 					m.toggle_view(view_file)
 				}
-				m.fileexplorer.ChangeDir(dir)
-				m.fileexplorer.FocusFile(m.current_editor().Path())
+				m.FileExplore().ChangeDir(dir)
+				m.FileExplore().FocusFile(m.current_editor().Path())
 				return true
 			}}
 		}
@@ -250,13 +250,13 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case file_in_file:
 		return cmdactor{id, "file in file", func() bool {
 			w := m.current_editor().OnFindInfile(true, true)
-			m.cmdline.set_escape_search_mode(w)
+			m.CmdLine().set_escape_search_mode(w)
 			return true
 		}}
 	case file_in_file_vi_word:
 		return cmdactor{id, "file in file vi", func() bool {
 			word := m.current_editor().OnFindInfileWordOption(false, false, true)
-			cmdline := m.cmdline
+			cmdline := m.CmdLine()
 			cmdline.set_escape_search_mode(word)
 			return true
 		}}
@@ -347,14 +347,14 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 	case vi_quick_prev:
 		{
 			return cmdactor{id, "prev", func() bool {
-				m.quickview.go_prev()
+				// m.quickview.go_prev()
 				return true
 			}}
 		}
 	case vi_quick_next:
 		{
 			return cmdactor{id, "quick_next", func() bool {
-				m.quickview.go_next()
+				// m.quickview.go_next()
 				return true
 			}}
 		}
@@ -378,7 +378,7 @@ func get_cmd_actor(m *mainui, id command_id) cmdactor {
 		}}
 	case open_picker_help:
 		return cmdactor{id, "help", func() bool {
-			m.layout.dialog.OpenKeymapFzf()
+			m.Dialog().OpenKeymapFzf()
 			return true
 		}}
 	default:
