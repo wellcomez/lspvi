@@ -138,7 +138,7 @@ func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	list := sym.impl.symview.view
 	list.SetBorder(true)
 	code := sym.impl.codeprev.Primitive()
-	sym.impl.codeprev.openfile(sym.impl.file.Filename, nil)
+	sym.impl.codeprev.LoadFileNoLsp(sym.impl.file.Filename,0)
 	layout := layout_list_edit(list, code, input)
 	sym.impl.click = NewGridTreeClickCheck(layout, sym.impl.symview.view)
 	sym.impl.click.click = func(event *tcell.EventMouse) {

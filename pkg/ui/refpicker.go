@@ -104,13 +104,7 @@ type prev_picker_impl struct {
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
-	imp.codeprev.openfile(filename, func() {
-		if line == -1 {
-			return
-		}
-		p := lsp.Position{Line: line, Character: 0}
-		imp.codeprev.goto_symbol_location(lsp.Range{Start: p, End: p}, false, nil)
-	})
+	imp.codeprev.LoadFileNoLsp(filename, line)
 }
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
 	impl.listview = l.List

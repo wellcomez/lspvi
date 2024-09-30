@@ -41,7 +41,7 @@ type CodeEditor interface {
 	action_get_refer()
 	action_goto_define(line *lspcore.OpenOption)
 
-	openfile(filename string, onload func()) error
+	// openfile(filename string, onload func()) error
 
 	LoadBuffer(data []byte, filename string)
 	LoadFileNoLsp(filename string, line int) error
