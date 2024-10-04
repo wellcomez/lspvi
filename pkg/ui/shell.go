@@ -218,8 +218,9 @@ func (t *Term) ListTerm() []string {
 func (ret *Term) new_pty(shellname string, cb func(bool)) *terminal_pty {
 	cmdline := ""
 	switch shellname {
-	case "bash":
-		cmdline = "/usr/bin/bash"
+	case "bash":{
+		cmdline = "bash"
+	}
 	case "zsh":
 		cmdline = "/usr/bin/zsh"
 	case "sh":
