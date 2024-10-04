@@ -427,6 +427,7 @@ const chr_bookmark = "B"
 const chr_goto_callin = "c"
 const key_goto_define = "gd"
 const key_goto_decl = "D"
+const key_goto_impl = "I"
 const key_goto_first_line = "gg"
 const key_goto_last_line = "G"
 
@@ -484,6 +485,8 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, vi_undo).esc_key(split("u")),
 		get_cmd_actor(main, goto_define).esc_key(split(key_goto_define)),
 		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),
+		get_cmd_actor(main, goto_decl).esc_key(split(key_goto_decl)),
+		get_cmd_actor(main, goto_implement).esc_key(split(key_goto_impl)),
 		get_cmd_actor(main, goto_first_line).esc_key(split(key_goto_first_line)),
 		get_cmd_actor(main, goto_last_line).esc_key(split(key_goto_last_line)),
 		get_cmd_actor(main, bookmark_it).esc_key(split(chr_bookmark)),

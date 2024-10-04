@@ -149,6 +149,7 @@ type MainService interface {
 	open_picker_history()
 	open_picker_livegrep()
 	open_picker_ctrlp()
+	open_picker_refs()
 
 	move_to_window(direction)
 
@@ -167,7 +168,6 @@ type MainService interface {
 
 	Mode() mode
 
-	open_picker_refs()
 
 	open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker
 	OnCodeLineChange(x, y int, file string)
