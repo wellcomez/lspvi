@@ -67,6 +67,8 @@ func (t DateType) String() string {
 	switch t {
 	case data_search:
 		return "Search"
+	case data_implementation:
+		return "Impl"
 	case data_refs:
 		return "Refs"
 	case data_bookmark:
@@ -153,7 +155,7 @@ func (qk *qk_history_picker) open_in_qf() {
 
 func (main *mainui) open_in_tabview(keys []qf_history_data, i int) {
 	item := keys[i]
-	if item.Type == data_refs || item.Type == data_search || item.Type == data_grep_word {
+	if item.Type == data_refs || item.Type == data_search || item.Type == data_grep_word || item.Type == data_implementation {
 		main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
 		main.ActiveTab(view_quickview, false)
 	} else if item.Type == data_callin {
