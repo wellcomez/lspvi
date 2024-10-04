@@ -155,27 +155,33 @@ func (qk *qk_history_picker) open_in_qf() {
 
 func (main *mainui) open_in_tabview(keys []qf_history_data, i int) {
 	item := keys[i]
-	if item.Type == data_refs || item.Type == data_search || item.Type == data_grep_word || item.Type == data_implementation {
-		main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
-		main.ActiveTab(view_quickview, false)
-	} else if item.Type == data_callin {
-		callin := item.Key.File
-		fielname := filepath.Join(callin, "callstack.json")
-		_, err := os.Stat(fielname)
-		if err == nil {
-			buf, err := os.ReadFile(fielname)
-			if err != nil {
-				log.Println("open_in_tab", fielname, err)
-				return
+	switch item.Type {
+	case data_refs, data_search, data_grep_word, data_implementation:
+		{
+
+			main.quickview.UpdateListView(item.Type, item.Result.Refs, item.Key)
+			main.ActiveTab(view_quickview, false)
+		}
+	case data_callin:
+		{
+			callin := item.Key.File
+			fielname := filepath.Join(callin, "callstack.json")
+			_, err := os.Stat(fielname)
+			if err == nil {
+				buf, err := os.ReadFile(fielname)
+				if err != nil {
+					log.Println("open_in_tab", fielname, err)
+					return
+				}
+				var task lspcore.CallInTask
+				err = json.Unmarshal(buf, &task)
+				if err != nil {
+					log.Println("open_in_tab Unmarshal", fielname, err)
+					return
+				}
+				main.callinview.updatetask(&task)
+				main.ActiveTab(view_callin, false)
 			}
-			var task lspcore.CallInTask
-			err = json.Unmarshal(buf, &task)
-			if err != nil {
-				log.Println("open_in_tab Unmarshal", fielname, err)
-				return
-			}
-			main.callinview.updatetask(&task)
-			main.ActiveTab(view_callin, false)
 		}
 	}
 }
