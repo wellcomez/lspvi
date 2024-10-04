@@ -549,6 +549,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 			if code.id == view_code_below && code.main.Tab().activate_tab_id != code.id {
 				return false
 			}
+			return true
 		}
 		switch action {
 		case tview.MouseLeftDoubleClick:
