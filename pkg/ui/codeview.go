@@ -39,6 +39,7 @@ type CodeEditor interface {
 	key_call_in()
 	action_goto_declaration()
 	action_get_refer()
+	action_get_implementation(line *lspcore.OpenOption)
 	action_goto_define(line *lspcore.OpenOption)
 
 	// openfile(filename string, onload func()) error
@@ -1139,7 +1140,16 @@ func (code *CodeView) action_goto_declaration() {
 	loc := code.lsp_cursor_loc()
 	main.get_declare(loc, code.Path())
 }
-
+func (code *CodeView) action_get_implementation(line* lspcore.OpenOption) {
+	main := code.main
+	if main == nil {
+		return
+	}
+	code.view.Cursor.SelectWord()
+	//warning xxxxxxxxxxxxxxxxxxxxxxxxx
+	loc := code.lsp_cursor_loc()
+	main.get_implementation(loc, code.Path(),line)
+}
 func (code *CodeView) action_get_refer() {
 	main := code.main
 	if main == nil {

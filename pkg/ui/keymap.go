@@ -30,6 +30,7 @@ const (
 	goto_to_fileview
 	goto_define
 	goto_refer
+	goto_implement
 	goto_decl
 	goto_callin
 	goto_forward
@@ -186,7 +187,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}
 	case goto_first_line:
 		return cmdactor{id, "goto first line", func() bool {
-			m.current_editor().goto_line_history(0,true)
+			m.current_editor().goto_line_history(0, true)
 			return true
 		}}
 	case goto_to_fileview:
@@ -203,12 +204,17 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}
 	case goto_last_line:
 		return cmdactor{id, "goto first line", func() bool {
-			m.current_editor().goto_line_history(-1,true)
+			m.current_editor().goto_line_history(-1, true)
 			return true
 		}}
 	case goto_define:
 		return cmdactor{id, "goto define", func() bool {
 			m.current_editor().action_goto_define(nil)
+			return true
+		}}
+	case goto_implement:
+		return cmdactor{id, "goto implementation", func() bool {
+			m.current_editor().action_get_implementation(nil)
 			return true
 		}}
 	case goto_refer:

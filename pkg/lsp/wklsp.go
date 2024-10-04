@@ -364,6 +364,7 @@ type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)
 	OnLspRefenceChanged(ranges SymolSearchKey, file []lsp.Location)
+	OnGetImplement(SymolSearchKey, ImplementationResult,error,*OpenOption)
 	OnFileChange(file []lsp.Location,line *OpenOption)
 	OnLspCaller(search string, c lsp.CallHierarchyItem, stacks []CallStack)
 	OnLspCallTaskInViewChanged(stacks *CallInTask)

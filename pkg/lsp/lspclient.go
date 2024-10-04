@@ -18,6 +18,7 @@ type lspclient interface {
 	DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error
 	GetDocumentSymbol(file string) (*document_symbol, error)
 	GetReferences(file string, pos lsp.Position) ([]lsp.Location, error)
+	GetImplement(file string, pos lsp.Position) (ImplementationResult, error)
 	GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
 	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
 	GetDefine(file string, pos lsp.Position) ([]lsp.Location, error)
@@ -119,6 +120,13 @@ func (l lsp_base) GetDeclareByLocation(loc lsp.Location) ([]lsp.Location, error)
 func (l lsp_base) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
 
 	ret, err := l.core.GetDeclare(file, pos)
+	if err != nil {
+		log.Println("error", file, err)
+	}
+	return ret, err
+}
+func (l lsp_base) GetImplement(file string, pos lsp.Position) (ImplementationResult, error) {
+	ret, err := l.core.GetImplement(file, pos)
 	if err != nil {
 		log.Println("error", file, err)
 	}

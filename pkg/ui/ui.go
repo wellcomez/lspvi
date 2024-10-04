@@ -133,6 +133,7 @@ type MainService interface {
 	get_callin_stack(loc lsp.Location, filepath string)
 	get_callin_stack_by_cursor(loc lsp.Location, filepath string)
 	get_refer(pos lsp.Range, filepath string)
+	get_implementation(pos lsp.Range, filepath string, line *lspcore.OpenOption)
 	get_define(pos lsp.Range, filepath string, line *lspcore.OpenOption)
 	get_declare(pos lsp.Range, filepath string)
 
@@ -358,6 +359,25 @@ func (m *mainui) is_tab(tabname string) bool {
 	return m.tab.is_tab(tabname)
 }
 
+// OnGetImplement implements lspcore.lsp_data_changed.
+func (m *mainui) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.ImplementationResult, err error, option *lspcore.OpenOption) {
+	code := m.codeview
+	go func() {
+		m.app.QueueUpdateDraw(func() {
+			m.quickview.view.Key = code.view.Cursor.GetSelection()
+			if len(ranges.Key) > 0 {
+				m.quickview.view.Key = ranges.Key
+			}
+			if len(file.Loc) > 0 {
+				m.ActiveTab(view_quickview, false)
+			} else {
+				return
+			}
+			m.quickview.OnLspRefenceChanged(file.Loc, data_implementation, ranges)
+			m.tab.update_tab_title(view_quickview)
+		})
+	}()
+}
 func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
 	code := m.codeview
 	go func() {
@@ -375,7 +395,6 @@ func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.L
 			m.tab.update_tab_title(view_quickview)
 		})
 	}()
-
 }
 
 // OnLspCallTaskInViewChanged
@@ -426,6 +445,13 @@ func (m *mainui) get_declare(pos lsp.Range, filepath string) {
 		return
 	}
 	lsp.Declare(pos, nil)
+}
+func (m *mainui) get_implementation(pos lsp.Range, filepath string, option *lspcore.OpenOption) {
+	lsp, err := m.lspmgr.Open(filepath)
+	if err != nil {
+		return
+	}
+	lsp.GetImplement(pos, option)
 }
 func (m *mainui) get_refer(pos lsp.Range, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)

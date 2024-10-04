@@ -269,6 +269,52 @@ func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Locatio
 	return ret, nil
 }
 
+type ImplementationResult struct {
+	Loc     []lsp.Location
+	LocLink []lsp.LocationLink
+}
+
+func (core *lspcore) GetImplement(file string, pos lsp.Position) (ImplementationResult, error) {
+	var referenced = lsp.ImplementationParams{
+		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+			// WorkDoneToken: jsonrpc.ProgressToken(file + "refer"),
+		},
+		PartialResultParams: &lsp.PartialResultParams{
+			// PartialResultToken: jsonrpc.ProgressToken(file + "refer"),
+		},
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{
+				URI: lsp.NewDocumentURI(file),
+			},
+			Position: pos,
+		},
+	}
+	var ret ImplementationResult
+	var result []interface{}
+	var method = "textDocument/implementation"
+	err := core.conn.Call(context.Background(), method, referenced, &result)
+	if err != nil {
+		return ret, err
+	}
+	buf, err := json.Marshal(result)
+	if err != nil {
+		return ret, err
+	}
+
+	if err := json.Unmarshal(buf, &ret.Loc); err == nil {
+		return ret, nil
+	}
+	var loc lsp.Location
+	if err := json.Unmarshal(buf, &loc); err == nil {
+		ret.Loc = append(ret.Loc, loc)
+		return ret, nil
+	}
+	if err := json.Unmarshal(buf, &ret.LocLink); err == nil {
+		return ret, nil
+	}
+	return ret, fmt.Errorf("not implemented found")
+}
+
 func convert_result_to_lsp_location(result []interface{}) ([]lsp.Location, error) {
 	var ret []lsp.Location
 	data, err := json.Marshal(result)

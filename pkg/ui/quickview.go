@@ -30,7 +30,7 @@ func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
 	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line)
 	UpdateTitleAndColor(pk.frame.Box, title)
-	pk.codeprev.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line,false)
+	pk.codeprev.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line, false)
 }
 func new_quick_preview() *quick_preview {
 	codeprev := NewCodeView(nil)
@@ -585,6 +585,7 @@ const (
 	data_callin
 	data_bookmark
 	data_grep_word
+	data_implementation
 )
 
 func search_key_uid(key lspcore.SymolSearchKey) string {
@@ -598,7 +599,18 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	qk.view.Clear()
 
 	m := qk.main
-	Refs := get_loc_caller(qk.main, refs, m.Lspmgr().Current)
+
+	var Refs []ref_with_caller
+	switch t {
+	case data_implementation:
+		for _, v := range refs {
+			Refs = append(Refs, ref_with_caller{Loc: v})
+		}
+	case data_refs:
+		Refs = get_loc_caller(qk.main, refs, m.Lspmgr().Current)
+	default:
+		break
+	}
 
 	qk.UpdateListView(t, Refs, key)
 	qk.save()

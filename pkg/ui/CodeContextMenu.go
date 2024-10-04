@@ -88,6 +88,13 @@ func update_selection_menu(code *CodeView) {
 				main.ActiveTab(view_quickview, false)
 			}
 		}},
+		{item: create_menu_item("Implementation"), handle: func() {
+
+			if menudata.SelectInEditor(code.view.Cursor) {
+				main.get_implementation(menudata.selection_range, code.Path(), nil)
+				main.ActiveTab(view_quickview, false)
+			}
+		}},
 		{item: create_menu_item("Goto define"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
 			main.get_define(menudata.selection_range, code.Path(), nil)
