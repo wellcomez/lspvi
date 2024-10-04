@@ -132,6 +132,24 @@ func (sym *Symbol_file) WorkspaceQuery(query string) ([]lsp.SymbolInformation, e
 	}
 	return sym.lsp.WorkSpaceSymbol(query)
 }
+func (sym *Symbol_file) GetImplement(ranges lsp.Range,option *OpenOption) {
+	if sym.lsp == nil {
+		return
+	}
+	loc, err := sym.lsp.GetImplement(sym.Filename, ranges.Start)
+	key := ""
+	if err != nil {
+		return
+	} else {
+		body, err := NewBody(lsp.Location{URI: lsp.NewDocumentURI(sym.Filename), Range: ranges})
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		key = body.String()
+	}
+	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key}, loc, err,option)
+}
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if sym.lsp == nil {
 		return

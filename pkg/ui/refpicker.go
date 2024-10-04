@@ -104,7 +104,7 @@ type prev_picker_impl struct {
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
-	imp.codeprev.LoadFileNoLsp(filename, line,false)
+	imp.codeprev.LoadFileNoLsp(filename, line, false)
 }
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
 	impl.listview = l.List
@@ -127,6 +127,11 @@ type refpicker_impl struct {
 }
 type refpicker struct {
 	impl *refpicker_impl
+}
+
+// OnGetImplement implements lspcore.lsp_data_changed.
+func (pk refpicker) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.ImplementationResult, err error,option *lspcore.OpenOption) {
+	panic("unimplemented")
 }
 
 // close implements picker.
