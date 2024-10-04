@@ -222,7 +222,7 @@ func (code CodeView) LspSymbol() *lspcore.Symbol_file {
 }
 
 // OnFileChange implements change_reciever.
-func (code *CodeView) OnFileChange(file string) bool {
+func (code *CodeView) OnWatchFileChange(file string) bool {
 	if code.file.SamePath(file) {
 		go code.lspsymbol.DidSave()
 		code.openfile(code.Path(), func() {

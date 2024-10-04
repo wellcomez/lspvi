@@ -72,7 +72,7 @@ func (s *Set) Difference(other *Set) *Set {
 }
 
 type change_reciever interface {
-	OnFileChange(file string) bool
+	OnWatchFileChange(file string) bool
 }
 type FileWatch struct {
 	watcher  *fsnotify.Watcher
@@ -134,7 +134,7 @@ func (f *FileWatch) Run(root string) error {
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					// log.Printf("modified file: %s", event.Name)
 					for _, v := range f.recieved {
-						if v.OnFileChange(event.Name) {
+						if v.OnWatchFileChange(event.Name) {
 							break
 						}
 					}
