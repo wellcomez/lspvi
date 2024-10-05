@@ -107,12 +107,8 @@ func new_callview(main MainService) *callinview {
 		{item: cmditem{cmd: cmdactor{desc: "Call incoming"}}, handle: func() {
 			node := ret.view.GetCurrentNode()
 			value := node.GetReference()
-			nodepath := ret.view.GetPath(node)
 			if value != nil {
-				// child := callroot.GetChildren()
-				// sym := ref.call
-				// main.get_callin_stack(, sym.URI.AsPath().String())
-				go newFunction1(nodepath, node, value, main, ret)
+				go ret.get_next_callin(value, main)
 			}
 		}},
 		{item: create_menu_item("-"), handle: func() {}},
@@ -132,7 +128,9 @@ func new_callview(main MainService) *callinview {
 
 }
 
-func newFunction1(nodepath []*tview.TreeNode, node *tview.TreeNode, value interface{}, main MainService, ret *callinview) bool {
+func (ret *callinview) get_next_callin(value interface{}, main MainService) bool {
+	node := ret.view.GetCurrentNode()
+	nodepath := ret.view.GetPath(node)
 	if len(nodepath) >= 3 && node == nodepath[2] {
 		root := nodepath[0]
 		callroot := nodepath[1]
@@ -181,6 +179,9 @@ func newFunction1(nodepath []*tview.TreeNode, node *tview.TreeNode, value interf
 			}
 
 		}
+	} else if ref, ok := value.(dom_node); ok {
+		sym := ref.call
+		main.get_callin_stack(lsp.Location{URI: sym.URI, Range: sym.Range}, sym.URI.AsPath().String())
 	}
 	return false
 }
