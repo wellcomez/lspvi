@@ -22,7 +22,7 @@ func (menu callin_view_context) on_mouse(action tview.MouseAction, event *tcell.
 
 // getbox implements context_menu_handle.
 func (menu callin_view_context) getbox() *tview.Box {
-	yes := menu.qk.main.Tab().activate_tab_id==view_callin 
+	yes := menu.qk.main.Tab().activate_tab_id == view_callin
 	if yes {
 		return menu.qk.view.Box
 	}
@@ -107,11 +107,12 @@ func new_callview(main MainService) *callinview {
 		{item: cmditem{cmd: cmdactor{desc: "Call incoming"}}, handle: func() {
 			node := ret.view.GetCurrentNode()
 			value := node.GetReference()
+			nodepath := ret.view.GetPath(node)
 			if value != nil {
-				if ref, ok := value.(dom_node); ok {
-					sym := ref.call
-					main.get_callin_stack(lsp.Location{URI: sym.URI, Range: sym.Range}, sym.URI.AsPath().String())
-				}
+				// child := callroot.GetChildren()
+				// sym := ref.call
+				// main.get_callin_stack(, sym.URI.AsPath().String())
+				go newFunction1(nodepath, node, value, main, ret)
 			}
 		}},
 		{item: create_menu_item("-"), handle: func() {}},
@@ -129,6 +130,59 @@ func new_callview(main MainService) *callinview {
 	})
 	return ret
 
+}
+
+func newFunction1(nodepath []*tview.TreeNode, node *tview.TreeNode, value interface{}, main MainService, ret *callinview) bool {
+	if len(nodepath) >= 3 && node == nodepath[2] {
+		root := nodepath[0]
+		callroot := nodepath[1]
+		function_index_in_callroot := -1
+		callin_index_in_root := -1
+		for i, v := range callroot.GetChildren() {
+			if v == node {
+				function_index_in_callroot = i
+				break
+			}
+		}
+		for i, v := range root.GetChildren() {
+			if v == callroot {
+				callin_index_in_root = i
+				break
+			}
+		}
+		if ref, ok := value.(dom_node); ok {
+			sym := ref.call
+			loc := lsp.Location{URI: sym.URI, Range: sym.Range}
+			filepath := sym.URI.AsPath().String()
+			symbolfile, err := main.Lspmgr().Open(filepath)
+			if err != nil {
+				return true
+			}
+			call_hiera, err := symbolfile.PrepareCallHierarchy(loc)
+			if err != nil {
+				return true
+			}
+			calls := []lsp.CallHierarchyIncomingCall{}
+			call_hiera_0 := call_hiera[0]
+			for _, v := range call_hiera {
+				if a, err := symbolfile.CallHierarchyIncomingCall(v); err == nil {
+					calls = append(calls, a...)
+				}
+			}
+			log.Println(call_hiera)
+
+			if function_index_in_callroot != -1 && callin_index_in_root != -1 {
+				item := calls[0]
+				callroot_task := &ret.task_list[callin_index_in_root].call
+				stacks := &callroot_task.Allstack
+				stack := (*stacks)[function_index_in_callroot]
+				stack.Insert(call_hiera_0, item)
+				ret.updatetask(callroot_task)
+			}
+
+		}
+	}
+	return false
 }
 
 func (ret *callinview) DeleteCurrentNode() {
@@ -236,17 +290,17 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 				}
 			}
 			sym := ref.call
-			if ref.fromrange != nil {
-				r := ref.fromrange
-				view.main.current_editor().LoadFileWithLsp(r.URI.AsPath().String(),&lsp.Location{
+			if r := ref.fromrange; r != nil {
+				// r := ref.fromrange
+				view.main.current_editor().LoadFileWithLsp(r.URI.AsPath().String(), &lsp.Location{
 					URI:   r.URI,
 					Range: r.Range,
-				},false)
+				}, false)
 			} else {
 				view.main.current_editor().LoadFileWithLsp(sym.URI.AsPath().String(), &lsp.Location{
 					URI:   sym.URI,
 					Range: sym.SelectionRange,
-				},false)
+				}, false)
 			}
 			view.update_node_color()
 			return
@@ -360,6 +414,20 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 			if ref, ok := value.(dom_node); ok {
 				if ref.id == stack.UID {
 					parent = v
+					n := parent
+					level := 1
+					for {
+						cc := n.GetChildren()
+						if len(cc) == 1 {
+							n = cc[0]
+							level++
+						} else {
+							break
+						}
+					}
+					if len(stack.Items) != level {
+						parent.SetReference(NewRootNode(c.Item, nil, true, stack.UID))
+					}
 					parent.ClearChildren()
 					parent.SetText("+" + callin.itemdisp(c))
 					break

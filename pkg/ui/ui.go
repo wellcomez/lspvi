@@ -419,7 +419,7 @@ func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
 	if err != nil {
 		return
 	}
-	lsp.CallinTask(loc, 2)
+	lsp.CallinTask(loc, 1)
 }
 func (m *mainui) get_callin_stack_by_cursor(loc lsp.Location, filepath string) {
 	m.get_callin_stack(loc, filepath)

@@ -132,7 +132,7 @@ func (sym *Symbol_file) WorkspaceQuery(query string) ([]lsp.SymbolInformation, e
 	}
 	return sym.lsp.WorkSpaceSymbol(query)
 }
-func (sym *Symbol_file) GetImplement(ranges lsp.Range,option *OpenOption) {
+func (sym *Symbol_file) GetImplement(ranges lsp.Range, option *OpenOption) {
 	if sym.lsp == nil {
 		return
 	}
@@ -148,7 +148,7 @@ func (sym *Symbol_file) GetImplement(ranges lsp.Range,option *OpenOption) {
 		}
 		key = body.String()
 	}
-	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key}, loc, err,option)
+	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key}, loc, err, option)
 }
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if sym.lsp == nil {
@@ -236,6 +236,18 @@ func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 		}
 	}
 	return ret, nil
+}
+func (sym *Symbol_file) CallHierarchyIncomingCall(callitem lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
+	if sym.lsp == nil {
+		return nil, fmt.Errorf("lsp is null")
+	}
+	return sym.lsp.CallHierarchyIncomingCalls(callitem)
+}
+func (sym *Symbol_file) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
+	if sym.lsp == nil {
+		return nil, fmt.Errorf("lsp is null")
+	}
+	return sym.lsp.PrepareCallHierarchy(loc)
 }
 func (sym *Symbol_file) CallinTask(loc lsp.Location, level int) (*CallInTask, error) {
 	task := NewCallInTask(loc, sym.lsp, level)

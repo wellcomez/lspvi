@@ -89,12 +89,12 @@ func NewCallStackEntry(item lsp.CallHierarchyItem, fromRanges []lsp.Range, refer
 var callstack_task_id = 0
 
 type CallInTask struct {
-	Name         string
-	Allstack     []*CallStack
-	Loc          lsp.Location
-	lsp          lspclient
-	set          map[string]bool
-	UID          int
+	Name       string
+	Allstack   []*CallStack
+	Loc        lsp.Location
+	lsp        lspclient
+	set        map[string]bool
+	UID        int
 	TraceLevel int
 	// cb       *func(task CallInTask)
 }
@@ -151,6 +151,23 @@ func (c *CallStack) InRange(loc lsp.Location) *CallStackEntry {
 	}
 	return ret
 }
+func (c *CallStack) Insert(item lsp.CallHierarchyItem ,cc lsp.CallHierarchyIncomingCall) {
+	new_one:=NewCallStackEntry(cc.From, cc.FromRanges, []lsp.Location{})
+	if len(c.Items) > 0 {
+		a := c.Items[0]
+		locations := []lsp.Location{}
+		for i := range cc.FromRanges {
+			locations = append(locations, lsp.Location{
+				Range: cc.FromRanges[i],
+				URI:   cc.From.URI,
+			})
+		}
+		a.ReferencePlace = append(a.ReferencePlace, locations...)
+		c.Items = append([]*CallStackEntry{new_one, a}, c.Items[1:]...)
+	} else {
+		c.Items = append([]*CallStackEntry{new_one}, c.Items...)
+	}
+}
 func (c *CallStack) Add(item *CallStackEntry) {
 	// c.Items = append([]*CallStackEntry{item}, c.Items...)
 	c.Items = append(c.Items, item)
@@ -160,7 +177,7 @@ func NewCallStack() *CallStack {
 	ret := CallStack{Resovled: false}
 	return &ret
 }
-func NewCallInTask(loc lsp.Location, lsp lspclient,level int) *CallInTask {
+func NewCallInTask(loc lsp.Location, lsp lspclient, level int) *CallInTask {
 	name := ""
 	if body, err := NewBody(loc); err == nil {
 		name = body.String()
@@ -169,10 +186,10 @@ func NewCallInTask(loc lsp.Location, lsp lspclient,level int) *CallInTask {
 	}
 	callstack_task_id++
 	task := &CallInTask{
-		Name: name,
-		Loc:  loc,
-		lsp:  lsp,
-		UID:  callstack_task_id,
+		Name:       name,
+		Loc:        loc,
+		lsp:        lsp,
+		UID:        callstack_task_id,
 		TraceLevel: level,
 	}
 	task.set = make(map[string]bool)
@@ -203,7 +220,7 @@ var CallMaxLevel = 5
 
 func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 	child, err := task.lsp.CallHierarchyIncomingCalls(parent.data)
-	if err != nil || parent.level > task.TraceLevel{
+	if err != nil || parent.level >= task.TraceLevel {
 		leaf.set = append(leaf.set, parent)
 		return err
 	}
