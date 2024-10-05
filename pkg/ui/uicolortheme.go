@@ -2,6 +2,8 @@ package mainui
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
@@ -79,11 +81,41 @@ func (mgr *symbol_colortheme) set_currsor_line() *tcell.Style {
 	return ret
 
 }
+
+func hexToRGB(hex string) (int32, int32, int32, error) {
+	if len(hex) != 7 || hex[0] != '#' {
+		return 0, 0, 0, fmt.Errorf("invalid hex color code")
+	}
+
+	r, err := strconv.ParseInt(hex[1:3], 16, 0)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	g, err := strconv.ParseInt(hex[3:5], 16, 0)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	b, err := strconv.ParseInt(hex[5:7], 16, 0)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	return int32(r), int32(g), int32(b), nil
+}
+
 func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
 	// if color := mgr.get_color("function"); color != nil {
 	// 	a, _, _ := color.Decompose()
 	// 	return a
 	// }
+	if rgb := global_config.Color.Highlight.Search; rgb != "" {
+		if r, g, b, err := hexToRGB(rgb); err == nil {
+			return tcell.NewRGBColor(r, g, b)
+		}
+		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
+	}
 	return tcell.ColorYellow
 }
 

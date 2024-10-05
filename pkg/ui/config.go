@@ -1,15 +1,22 @@
 package mainui
 
 import (
-	"os"
 	"gopkg.in/yaml.v2"
+	"os"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
+type highlight struct {
+	Search string `yaml:"search"`
+}
+type color struct {
+	Highlight highlight `yaml:"highlight"`
+}
 type LspviConfig struct {
 	Colorscheme string            `yaml:"colorscheme"`
 	Wrap        bool              `yaml:"wrap"`
 	Lsp         lspcore.LspConfig `yaml:"lsp"`
+	Color       color             `yaml:"color"`
 }
 
 func (config LspviConfig) Load() (*LspviConfig, error) {
@@ -17,6 +24,7 @@ func (config LspviConfig) Load() (*LspviConfig, error) {
 	default_ret := LspviConfig{
 		Colorscheme: "darcula",
 		Wrap:        false,
+		Color:       color{},
 	}
 	if err != nil {
 		return &default_ret, err
