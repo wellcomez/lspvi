@@ -175,10 +175,10 @@ func (ret *callinview) get_next_callin(value interface{}, main MainService) bool
 				stacks := &callroot_task.Allstack
 				stack := (*stacks)[function_index_in_callroot]
 				stack.Insert(call_hiera_0, item)
-				symbolfile.Async_resolve_stacksymbol(callroot_task, func() {
-					// callroot_task.Save(lspviroot.uml)
+				stack.Resolve(symbolfile, func() {
+					callroot_task.Save(lspviroot.root)
 					ret.updatetask(callroot_task)
-				})
+				}, nil, callroot_task)
 			}
 
 		}
@@ -482,7 +482,7 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 
 func (call *callinview) itemdisp(c *lspcore.CallStackEntry) string {
 	x := c.DisplayName()
-	return strings.ReplaceAll(x,global_prj_root,".")
+	return strings.ReplaceAll(x, global_prj_root, ".")
 	// return trim_project_filename(x, global_prj_root)
 }
 
