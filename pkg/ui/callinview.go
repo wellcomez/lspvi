@@ -399,7 +399,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 		qf_index_view_update(view_callin)
 	}
 	root_node := tview.NewTreeNode(
-		fmt.Sprintf("[%d]", len(callin.task_list)))
+		fmt.Sprintf("[%d]", len(callin.task_list))).SetIndent(1)
 	var current *tview.TreeNode
 	for i := range callin.task_list {
 		v := &callin.task_list[i]
@@ -435,7 +435,7 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 		}
 	}
 	if root_node == nil {
-		root_node = tview.NewTreeNode(task.Dir())
+		root_node = tview.NewTreeNode(task.Dir()).SetIndent(1)
 		root_node.SetReference(task.TreeNodeid())
 	}
 	for _, stack := range task.Allstack {
@@ -474,7 +474,7 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 			}
 		}
 		if parent == nil {
-			parent = tview.NewTreeNode("+" + callin.itemdisp(c))
+			parent = tview.NewTreeNode("+" + callin.itemdisp(c)).SetIndent(1)
 			parent.Collapse()
 
 			parent.SetReference(NewRootNode(c.Item, nil, true, stack.UID))
@@ -482,7 +482,7 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 		}
 		for i = 1; i < len(stack.Items); i++ {
 			c := stack.Items[i]
-			parent1 := tview.NewTreeNode(callin.itemdisp(c))
+			parent1 := tview.NewTreeNode(callin.itemdisp(c)).SetIndent(1)
 
 			parent_call_define := stack.Items[i-1].Item
 			refranges := c.ReferencePlace
