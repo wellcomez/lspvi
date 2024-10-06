@@ -54,7 +54,6 @@ type callinview struct {
 	Name           string
 	main           MainService
 	task_list      []CallNode
-	menuitem       []context_menu_item
 	right_context  callin_view_context
 	cmd_search_key string
 }
@@ -195,10 +194,14 @@ func (ret *callinview) get_next_callin(value interface{}, main MainService) erro
 						}
 						for _, item := range calls {
 							stack.Insert(v, item)
-							ret.updatetask(callroot_task)
+							go ret.main.App().QueueUpdateDraw(func() {
+								ret.updatetask(callroot_task)
+							})
 							stack.Resolve(symbolfile, func() {
 								callroot_task.Save(lspviroot.root)
-								ret.updatetask(callroot_task)
+								go ret.main.App().QueueUpdateDraw(func() {
+									ret.updatetask(callroot_task)
+								})
 							}, nil, callroot_task)
 							break
 						}
