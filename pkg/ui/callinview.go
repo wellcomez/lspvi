@@ -458,11 +458,17 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 							break
 						}
 					}
+					yes := parent.IsExpanded()
 					if len(stack.Items) != level {
 						parent.SetReference(NewRootNode(c.Item, nil, true, stack.UID))
 					}
 					parent.ClearChildren()
 					parent.SetText("+" + callin.itemdisp(c))
+					if yes {
+						parent.Expand()
+					} else {
+						parent.Collapse()
+					}
 					break
 				}
 			}
