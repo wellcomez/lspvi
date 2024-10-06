@@ -123,6 +123,32 @@ func (core *lspcore) WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) err
 	}
 	return core.conn.Notify(context.Background(), "workspace/didChangeWatchedFiles", param)
 }
+func (core *lspcore) WorkSpaceDocumentSymbol(query string) ([]lsp.SymbolInformation, error) {
+	var parameter = lsp.WorkspaceSymbolParams{
+		Query: query,
+	}
+	var res []lsp.SymbolInformation
+	err := core.conn.Call(context.Background(), "workspace/symbol", parameter, &res)
+	return res, err
+}
+func (client *lspcore) WorkspaceSemanticTokensRefresh() error {
+	ctx := context.Background()
+	var result interface{}
+	err := client.conn.Call(ctx, "workspace/semanticTokens/refresh", NullResult,&result)
+	return err
+}
+func (client *lspcore) SetTrace() error {
+	param := &lsp.SetTraceParams{}
+	return client.conn.Notify(context.Background(), "$/setTrace", param)
+}
+func (client *lspcore) TextDocumentDidClose(file string) error {
+	param := &lsp.DidCloseTextDocumentParams{
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: lsp.NewDocumentURI(file),
+		},
+	}
+	return client.conn.Notify(context.Background(), "textDocument/didClose", param)
+}
 func (core *lspcore) DidOpen(file string) error {
 	x, err := core.newTextDocument(file)
 	if err != nil {
@@ -222,6 +248,21 @@ func (core lspcore) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.Ca
 	}
 	return result, nil
 }
+func (client *lspcore) CallHierarchyOutgoingCalls(Item lsp.CallHierarchyItem) ([]lsp.CallHierarchyOutgoingCall, error) {
+	param := lsp.CallHierarchyOutgoingCallsParams{
+		Item: Item,
+	}
+	var result []lsp.CallHierarchyOutgoingCall
+	if err := client.conn.Call(context.Background(), "callHierarchy/outgoingCalls", param, &result); err == nil {
+		return result, nil
+	} else {
+		return nil, err
+	}
+}
+
+var NullResult = []byte("null")
+
+
 func (core *lspcore) CallHierarchyIncomingCalls(param lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
 	var referenced = param
 	var result []lsp.CallHierarchyIncomingCall
@@ -407,14 +448,7 @@ func (core *lspcore) TextDocumentDeclaration(file string, pos lsp.Position) (*sy
 	}
 	return &ret, nil
 }
-func (core *lspcore) WorkSpaceDocumentSymbol(query string) ([]lsp.SymbolInformation, error) {
-	var parameter = lsp.WorkspaceSymbolParams{
-		Query: query,
-	}
-	var res []lsp.SymbolInformation
-	err := core.conn.Call(context.Background(), "workspace/symbol", parameter, &res)
-	return res, err
-}
+
 func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 	uri := lsp.NewDocumentURI(file)
 	var parameter = lsp.DocumentSymbolParams{
