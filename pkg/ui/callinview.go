@@ -31,7 +31,7 @@ func (menu callin_view_context) getbox() *tview.Box {
 
 // menuitem implements context_menu_handle.
 func (menu callin_view_context) menuitem() []context_menu_item {
-	return menu.qk.menuitem
+	return menu.qk.get_menu(menu.qk.main)
 }
 
 type CallNode struct {
@@ -81,43 +81,8 @@ func new_callview(main MainService) *callinview {
 	}
 	right_context := callin_view_context{qk: ret}
 	ret.right_context = right_context
-	menuitem := []context_menu_item{
-		{item: cmditem{cmd: cmdactor{desc: "GotoDefine"}}, handle: func() {
-			node := ret.view.GetCurrentNode()
-			value := node.GetReference()
-			if value != nil {
-				if ref, ok := value.(dom_node); ok {
-					sym := ref.call
-					main.get_define(sym.Range, sym.URI.AsPath().String(), nil)
-					// main.ActiveTab(view_quickview, false)
-				}
-			}
-		}},
-		{item: cmditem{cmd: cmdactor{desc: "GotoReference"}}, handle: func() {
-			node := ret.view.GetCurrentNode()
-			value := node.GetReference()
-			if value != nil {
-				if ref, ok := value.(dom_node); ok {
-					sym := ref.call
-					main.get_refer(sym.Range, sym.URI.AsPath().String())
-					main.ActiveTab(view_quickview, false)
-				}
-			}
-		}},
-		{item: cmditem{cmd: cmdactor{desc: "Call incoming"}}, handle: func() {
-			node := ret.view.GetCurrentNode()
-			value := node.GetReference()
-			if value != nil {
-				go ret.get_next_callin(value, main)
-			}
-		}},
-		{item: create_menu_item("-"), handle: func() {}},
-		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
-		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
-			ret.DeleteCurrentNode()
-		}},
-	}
-	ret.menuitem = addjust_menu_width(menuitem)
+	// main.ActiveTab(view_quickview, false)
+	// ret.get_menu(main)
 
 	view.SetSelectedFunc(ret.node_selected)
 	view.SetInputCapture(ret.KeyHandle)
@@ -128,7 +93,58 @@ func new_callview(main MainService) *callinview {
 
 }
 
-func (ret *callinview) get_next_callin(value interface{}, main MainService) bool {
+func (ret *callinview) get_menu(main MainService) []context_menu_item {
+	node := ret.view.GetCurrentNode()
+	nodepath := ret.view.GetPath(node)
+	hidecallin := false
+	if len(nodepath) > 0 {
+		rootnode := nodepath[0]
+		hidecallin = hidecallin || rootnode == node
+	}
+	if len(nodepath) > 1 {
+		callroot := nodepath[1]
+		hidecallin = (hidecallin || callroot == node)
+	}
+
+	menuitem := []context_menu_item{
+		{item: cmditem{cmd: cmdactor{desc: "GotoDefine"}}, handle: func() {
+			node := ret.view.GetCurrentNode()
+			value := node.GetReference()
+			if value != nil {
+				if ref, ok := value.(dom_node); ok {
+					sym := ref.call
+					main.get_define(sym.Range, sym.URI.AsPath().String(), nil)
+
+				}
+			}
+		}, hide: hidecallin},
+		{item: cmditem{cmd: cmdactor{desc: "GotoReference"}}, handle: func() {
+			node := ret.view.GetCurrentNode()
+			value := node.GetReference()
+			if value != nil {
+				if ref, ok := value.(dom_node); ok {
+					sym := ref.call
+					main.get_refer(sym.Range, sym.URI.AsPath().String())
+					main.ActiveTab(view_quickview, false)
+				}
+			}
+		}, hide: hidecallin},
+		{item: cmditem{cmd: cmdactor{desc: "Call incoming"}}, handle: func() {
+			value := node.GetReference()
+			if value != nil {
+				go ret.get_next_callin(value, main)
+			}
+		}, hide: hidecallin},
+		{item: create_menu_item("-"), handle: func() {}, hide: hidecallin},
+		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
+		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
+			ret.DeleteCurrentNode()
+		}},
+	}
+	return addjust_menu_width(menuitem)
+}
+
+func (ret *callinview) get_next_callin(value interface{}, main MainService) error {
 	node := ret.view.GetCurrentNode()
 	nodepath := ret.view.GetPath(node)
 	if len(nodepath) >= 3 && node == nodepath[2] {
@@ -148,37 +164,47 @@ func (ret *callinview) get_next_callin(value interface{}, main MainService) bool
 				break
 			}
 		}
-		if ref, ok := value.(dom_node); ok {
-			sym := ref.call
-			loc := lsp.Location{URI: sym.URI, Range: sym.Range}
-			filepath := sym.URI.AsPath().String()
-			symbolfile, err := main.Lspmgr().Open(filepath)
-			if err != nil {
-				return true
-			}
-			call_hiera, err := symbolfile.PrepareCallHierarchy(loc)
-			if err != nil {
-				return true
-			}
-			calls := []lsp.CallHierarchyIncomingCall{}
-			call_hiera_0 := call_hiera[0]
-			for _, v := range call_hiera {
-				if a, err := symbolfile.CallHierarchyIncomingCall(v); err == nil {
-					calls = append(calls, a...)
-				}
-			}
-			log.Println(call_hiera)
+		if function_index_in_callroot != -1 && callin_index_in_root != -1 {
 
-			if function_index_in_callroot != -1 && callin_index_in_root != -1 {
-				item := calls[0]
-				callroot_task := &ret.task_list[callin_index_in_root].call
-				stacks := &callroot_task.Allstack
-				stack := (*stacks)[function_index_in_callroot]
-				stack.Insert(call_hiera_0, item)
-				stack.Resolve(symbolfile, func() {
-					callroot_task.Save(lspviroot.root)
-					ret.updatetask(callroot_task)
-				}, nil, callroot_task)
+			callroot_task := &ret.task_list[callin_index_in_root].call
+			stacks := &callroot_task.Allstack
+			stack := (*stacks)[function_index_in_callroot]
+			if len(stack.Items) == 0 {
+				return fmt.Errorf("stack %d is empty", function_index_in_callroot)
+			}
+			top := stack.Items[0]
+			// log.Println(top)
+			if ref, ok := value.(dom_node); ok {
+				sym := ref.call
+				loc := lsp.Location{URI: sym.URI, Range: sym.Range}
+				filepath := sym.URI.AsPath().String()
+				symbolfile, err := main.Lspmgr().Open(filepath)
+				if err != nil {
+					return err
+				}
+				call_hiera, err := symbolfile.PrepareCallHierarchy(loc)
+				if err != nil {
+					return err
+				}
+				calls := []lsp.CallHierarchyIncomingCall{}
+				// call_hiera_0 := call_hiera[0]
+				for _, v := range call_hiera {
+					if v.URI == top.Item.URI {
+						if a, err := symbolfile.CallHierarchyIncomingCall(v); err == nil {
+							calls = append(calls, a...)
+						}
+						for _, item := range calls {
+							stack.Insert(v, item)
+							ret.updatetask(callroot_task)
+							stack.Resolve(symbolfile, func() {
+								callroot_task.Save(lspviroot.root)
+								ret.updatetask(callroot_task)
+							}, nil, callroot_task)
+							break
+						}
+					}
+				}
+				// log.Println(call_hiera)
 			}
 
 		}
@@ -186,7 +212,7 @@ func (ret *callinview) get_next_callin(value interface{}, main MainService) bool
 		sym := ref.call
 		main.get_callin_stack(lsp.Location{URI: sym.URI, Range: sym.Range}, sym.URI.AsPath().String())
 	}
-	return false
+	return nil
 }
 
 func (ret *callinview) DeleteCurrentNode() {
