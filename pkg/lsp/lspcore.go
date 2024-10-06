@@ -117,6 +117,12 @@ func (core *lspcore) Progress_notify() error {
 	params := &lsp.ProgressParams{}
 	return core.conn.Notify(context.Background(), "$/progress", params)
 }
+func (core *lspcore) WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error {
+	param := lsp.DidChangeWatchedFilesParams{
+		Changes: Changes,
+	}
+	return core.conn.Notify(context.Background(), "workspace/didChangeWatchedFiles", param)
+}
 func (core *lspcore) DidOpen(file string) error {
 	x, err := core.newTextDocument(file)
 	if err != nil {
