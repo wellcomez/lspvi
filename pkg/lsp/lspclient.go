@@ -23,6 +23,7 @@ type lspclient interface {
 	GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error)
 	GetDefine(file string, pos lsp.Position) ([]lsp.Location, error)
 	PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error)
+	CallHierarchyOutcomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyOutgoingCall, error)
 	CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error)
 	IsMe(filename string) bool
 	IsSource(filename string) bool
@@ -101,6 +102,9 @@ func (l lsp_base) GetDefine(file string, pos lsp.Position) ([]lsp.Location, erro
 		log.Println("error", file, err)
 	}
 	return ret, err
+}
+func (l lsp_base) CallHierarchyOutcomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyOutgoingCall, error) {
+	return l.core.CallHierarchyOutgoingCalls(param)
 }
 
 func (l lsp_base) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {

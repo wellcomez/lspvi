@@ -237,6 +237,12 @@ func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 	}
 	return ret, nil
 }
+func (sym *Symbol_file) CallHierarchyOutcomingCall(callitem lsp.CallHierarchyItem) ([]lsp.CallHierarchyOutgoingCall, error) {
+	if sym.lsp == nil {
+		return nil, fmt.Errorf("lsp is null")
+	}
+	return sym.lsp.CallHierarchyOutcomingCalls(callitem)
+}
 func (sym *Symbol_file) CallHierarchyIncomingCall(callitem lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
 	if sym.lsp == nil {
 		return nil, fmt.Errorf("lsp is null")

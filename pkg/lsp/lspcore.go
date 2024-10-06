@@ -131,15 +131,19 @@ func (core *lspcore) WorkSpaceDocumentSymbol(query string) ([]lsp.SymbolInformat
 	err := core.conn.Call(context.Background(), "workspace/symbol", parameter, &res)
 	return res, err
 }
+
 func (client *lspcore) WorkspaceSemanticTokensRefresh() error {
 	ctx := context.Background()
 	var result interface{}
-	err := client.conn.Call(ctx, "workspace/semanticTokens/refresh", NullResult,&result)
+	err := client.conn.Call(ctx, "workspace/semanticTokens/refresh", NullResult, &result)
 	return err
 }
 func (client *lspcore) SetTrace() error {
 	param := &lsp.SetTraceParams{}
 	return client.conn.Notify(context.Background(), "$/setTrace", param)
+}
+func (client *lspcore) Exit() error {
+	return client.conn.Notify(context.Background(), "exit", NullResult)
 }
 func (client *lspcore) TextDocumentDidClose(file string) error {
 	param := &lsp.DidCloseTextDocumentParams{
@@ -149,6 +153,7 @@ func (client *lspcore) TextDocumentDidClose(file string) error {
 	}
 	return client.conn.Notify(context.Background(), "textDocument/didClose", param)
 }
+
 func (core *lspcore) DidOpen(file string) error {
 	x, err := core.newTextDocument(file)
 	if err != nil {
@@ -261,7 +266,6 @@ func (client *lspcore) CallHierarchyOutgoingCalls(Item lsp.CallHierarchyItem) ([
 }
 
 var NullResult = []byte("null")
-
 
 func (core *lspcore) CallHierarchyIncomingCalls(param lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
 	var referenced = param
