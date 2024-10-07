@@ -50,13 +50,13 @@ func (node *CallNode) Ignore(uid int) bool {
 
 type callinview struct {
 	*view_link
-	view             *tview.TreeView
-	Name             string
-	main             MainService
-	task_list        []CallNode
-	right_context    callin_view_context
-	cmd_search_key   string
-	callee_at_top bool
+	view           *tview.TreeView
+	Name           string
+	main           MainService
+	task_list      []CallNode
+	right_context  callin_view_context
+	cmd_search_key string
+	callee_at_root bool
 }
 type dom_click_state int
 
@@ -84,16 +84,16 @@ func new_callview(main MainService) *callinview {
 			up:    view_code,
 			left:  view_quickview,
 		},
-		view:             view,
-		Name:             "callin",
-		main:             main,
-		callee_at_top: true,
+		view:           view,
+		Name:           "callin",
+		main:           main,
+		callee_at_root: true,
 	}
 	right_context := callin_view_context{qk: ret}
 	ret.right_context = right_context
 	// main.ActiveTab(view_quickview, false)
 	// ret.get_menu(main)
-	if ret.callee_at_top {
+	if ret.callee_at_root {
 		view.SetSelectedFunc(ret.node_selected_callee_top)
 	} else {
 		view.SetSelectedFunc(ret.node_selected)
@@ -176,6 +176,7 @@ func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main Ma
 				break
 			}
 		}
+		// node_path_index := (len(nodepath) - 1) - 2
 		if function_index_in_callroot != -1 && callin_index_in_root != -1 {
 
 			callroot_task := &ret.task_list[callin_index_in_root].call
@@ -209,11 +210,19 @@ func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main Ma
 							stack.Insert(v, item)
 							go ret.main.App().QueueUpdateDraw(func() {
 								ret.updatetask(callroot_task)
+								if n := ret.find_callin_node(ref); n != nil {
+									ret.view.SetCurrentNode(n)
+								}
+								// node := ret.newFunction1(callin_index_in_root, function_index_in_callroot, node_path_index)
 							})
 							stack.Resolve(symbolfile, func() {
 								callroot_task.Save(lspviroot.root)
 								go ret.main.App().QueueUpdateDraw(func() {
 									ret.updatetask(callroot_task)
+									if n := ret.find_callin_node(ref); n != nil {
+										ret.view.SetCurrentNode(n)
+									}
+									// node := ret.newFunction1(callin_index_in_root, function_index_in_callroot, node_path_index)
 								})
 							}, nil, callroot_task)
 							break
@@ -230,8 +239,33 @@ func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main Ma
 	}
 	return nil
 }
+
+func (ret *callinview) find_callin_node(ref dom_node) *tview.TreeNode {
+	var newnode *tview.TreeNode
+	ret.view.GetRoot().Walk(func(node, parent *tview.TreeNode) bool {
+		value := node.GetReference()
+		if value != nil {
+			if ref1, ok := value.(dom_node); ok {
+				if ref1.id == ref.id {
+					newnode = node
+				}
+			}
+		}
+		return true
+	})
+	return newnode
+}
+
+// func (ret *callinview) newFunction1(callin_index_in_root int, function_index_in_callroot int, node_path_index int) *tview.TreeNode {
+// 	callee_root := ret.view.GetRoot().GetChildren()[callin_index_in_root]
+// 	node := callee_root.GetChildren()[function_index_in_callroot]
+// 	for i := 0; i < node_path_index; i++ {
+// 		node = node.GetChildren()[0]
+// 	}
+// 	return node
+// }
 func (ret *callinview) get_next_callin(value interface{}, main MainService) error {
-	if ret.callee_at_top{
+	if ret.callee_at_root {
 		return ret.get_next_callin_callee_at_root(value, main)
 	}
 	return ret.get_next_callin_callee_at_leaf(value, main)
@@ -403,8 +437,8 @@ func (view *callinview) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
 func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 	value := node.GetReference()
 	nodepath := view.view.GetPath(node)
-	callroot := nodepath[len(nodepath)-1]
-	is_top := callroot == node
+	caller_leaf := nodepath[len(nodepath)-1]
+	is_top := caller_leaf == node
 	if value != nil {
 		if ref, ok := value.(dom_node); ok {
 			switch ref.state {
@@ -496,12 +530,17 @@ func ExpandNodeOption(node *tview.TreeNode, text string, expand bool) {
 	Collapse := "▶"
 	Expaned := "▼"
 	text = strings.TrimLeft(text, strings.Join([]string{Collapse, Expaned, "+", " "}, ""))
+	node.SetText(text)
 	if expand {
-		node.Expand()
-		node.SetText(Expaned + " " + text)
+		if len(node.GetChildren()) > 0 {
+			node.Expand()
+			node.SetText(Expaned + " " + text)
+		}
 	} else {
 		node.Collapse()
-		node.SetText(Collapse + " " + text)
+		if len(node.GetChildren()) > 0 {
+			node.SetText(Collapse + " " + text)
+		}
 	}
 }
 func (view *callinview) update_node_color() {
@@ -559,10 +598,10 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	for i := range callin.task_list {
 		v := &callin.task_list[i]
 		var c *tview.TreeNode
-		if !callin.callee_at_top {
+		if !callin.callee_at_root {
 			c = callin.callroot(v)
 		} else {
-			c = callin.callroot_callee_fisrt(v)
+			c = callin.callroot_callee_root(v)
 		}
 		root_node.AddChild(c)
 		if task.UID == v.call.UID {
@@ -577,7 +616,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	}
 	callin.update_node_color()
 }
-func (callin *callinview) callroot_callee_fisrt(node *CallNode) *tview.TreeNode {
+func (callin *callinview) callroot_callee_root(node *CallNode) *tview.TreeNode {
 	var task *lspcore.CallInTask = &node.call
 	var children []*tview.TreeNode
 	var root_node *tview.TreeNode
@@ -599,7 +638,7 @@ func (callin *callinview) callroot_callee_fisrt(node *CallNode) *tview.TreeNode 
 		root_node = tview.NewTreeNode(task.Dir()).SetIndent(1)
 		root_node.SetReference(task.TreeNodeid())
 	}
-	for _, stack := range task.Allstack {
+	for indx, stack := range task.Allstack {
 		var i = 0
 		// c := stack.Items[0]
 		var parent *tview.TreeNode
@@ -663,7 +702,7 @@ func (callin *callinview) callroot_callee_fisrt(node *CallNode) *tview.TreeNode 
 					}
 				}
 			}
-			parent1.SetReference(NewRootNode(c.Item, r, false, -1))
+			parent1.SetReference(NewRootNode(c.Item, r, false, stack.UID*100+indx))
 			parent.AddChild(parent1)
 			parent = parent1
 		}
