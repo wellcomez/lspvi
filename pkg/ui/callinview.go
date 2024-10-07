@@ -159,7 +159,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main MainService) error {
 	node := ret.view.GetCurrentNode()
 	nodepath := ret.view.GetPath(node)
-	if len(nodepath) >= 3 && node == nodepath[len(nodepath)-1] {
+	if len(nodepath) >= 4 && node == nodepath[len(nodepath)-1] {
 		root := nodepath[0]
 		callroot := nodepath[1]
 		function_index_in_callroot := -1
@@ -256,14 +256,14 @@ func (ret *callinview) find_callin_node(ref dom_node) *tview.TreeNode {
 	return newnode
 }
 
-// func (ret *callinview) newFunction1(callin_index_in_root int, function_index_in_callroot int, node_path_index int) *tview.TreeNode {
-// 	callee_root := ret.view.GetRoot().GetChildren()[callin_index_in_root]
-// 	node := callee_root.GetChildren()[function_index_in_callroot]
-// 	for i := 0; i < node_path_index; i++ {
-// 		node = node.GetChildren()[0]
-// 	}
-// 	return node
-// }
+//	func (ret *callinview) newFunction1(callin_index_in_root int, function_index_in_callroot int, node_path_index int) *tview.TreeNode {
+//		callee_root := ret.view.GetRoot().GetChildren()[callin_index_in_root]
+//		node := callee_root.GetChildren()[function_index_in_callroot]
+//		for i := 0; i < node_path_index; i++ {
+//			node = node.GetChildren()[0]
+//		}
+//		return node
+//	}
 func (ret *callinview) get_next_callin(value interface{}, main MainService) error {
 	if ret.callee_at_root {
 		return ret.get_next_callin_callee_at_root(value, main)
@@ -681,7 +681,10 @@ func (callin *callinview) callroot_callee_root(node *CallNode) *tview.TreeNode {
 		// 	parent.SetReference(NewRootNode(c.Item, nil, true, stack.UID))
 		// 	root_node.AddChild(parent)
 		// }
-		parent = root_node
+		first := stack.Items[0]
+		last := stack.Items[len(stack.Items)-1]
+		parent = tview.NewTreeNode(fmt.Sprintf("%s <- %s", last.Name, first.Name))
+		root_node.AddChild(parent)
 		for i = len(stack.Items) - 1; i >= 0; i-- {
 			c := stack.Items[i]
 			parent1 := tview.NewTreeNode(callin.itemdisp(c)).SetIndent(1)
