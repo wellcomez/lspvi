@@ -57,11 +57,19 @@ type callinview struct {
 	right_context  callin_view_context
 	cmd_search_key string
 }
+type dom_click_state int
+
+const (
+	dom_click_init dom_click_state = iota
+	dom_click_expand
+	dom_click_callin
+)
+
 type dom_node struct {
 	call      lsp.CallHierarchyItem
 	fromrange *lsp.Location
 	id        int
-	state     int
+	state     dom_click_state
 	root      bool
 }
 
@@ -84,6 +92,18 @@ func new_callview(main MainService) *callinview {
 	// ret.get_menu(main)
 
 	view.SetSelectedFunc(ret.node_selected)
+	view.SetChangedFunc(func(node *tview.TreeNode) {
+		value := node.GetReference()
+		if value != nil {
+			if ref, ok := value.(dom_node); ok {
+				ref.state = dom_click_init
+				node.SetReference(ref)
+				// sym := ref.call
+				// main.get_define(sym.Range, sym.URI.AsPath().String(), nil)
+
+			}
+		}
+	})
 	view.SetInputCapture(ret.KeyHandle)
 	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		return action, event
@@ -309,9 +329,18 @@ func (view *callinview) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
 }
 func (view *callinview) node_selected(node *tview.TreeNode) {
 	value := node.GetReference()
+	is_top := false
+	nodepath := view.view.GetPath(node)
+	if len(nodepath) > 2 {
+		callroot := nodepath[2]
+		is_top = callroot == node
+	}
 	if value != nil {
 		if ref, ok := value.(dom_node); ok {
-			if ref.root {
+			switch ref.state {
+			case dom_click_init:
+				ref.state = dom_click_expand
+			case dom_click_expand:
 				text := node.GetText()
 				text = strings.TrimLeft(text, "+")
 				if !node.IsExpanded() {
@@ -321,7 +350,16 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 					node.Collapse()
 					node.SetText("+" + text)
 				}
+				if is_top {
+					ref.state = dom_click_callin
+				}
+			case dom_click_callin:
+				if is_top {
+					go view.get_next_callin(value, view.main)
+				}
+				ref.state = dom_click_expand
 			}
+			node.SetReference(ref)
 			sym := ref.call
 			if r := ref.fromrange; r != nil {
 				// r := ref.fromrange
@@ -337,15 +375,6 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			}
 			view.update_node_color()
 			return
-		}
-		text := node.GetText()
-		text = strings.TrimLeft(text, "+")
-		if node.IsExpanded() {
-			node.Collapse()
-			node.SetText("+" + text)
-		} else {
-			node.Expand()
-			node.SetText(text)
 		}
 	}
 }
@@ -379,7 +408,7 @@ func NewRootNode(call lsp.CallHierarchyItem, fromrange *lsp.Location, root bool,
 		fromrange: fromrange,
 		root:      root,
 		id:        id,
-		state:     0,
+		state:     dom_click_init,
 	}
 }
 
