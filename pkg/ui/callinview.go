@@ -473,6 +473,8 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 			view.update_node_color()
 			return
 		}
+	}else{
+		ExpandNode(node)
 	}
 }
 func (view *callinview) node_selected(node *tview.TreeNode) {
@@ -683,8 +685,9 @@ func (callin *callinview) callroot_callee_root(node *CallNode) *tview.TreeNode {
 		// }
 		first := stack.Items[0]
 		last := stack.Items[len(stack.Items)-1]
-		parent = tview.NewTreeNode(fmt.Sprintf("%s <- %s", last.Name, first.Name))
+		parent = tview.NewTreeNode(fmt.Sprintf("%s <-(%d) %s", last.Name, len(stack.Items), first.Name))
 		root_node.AddChild(parent)
+		callroot:=parent
 		for i = len(stack.Items) - 1; i >= 0; i-- {
 			c := stack.Items[i]
 			parent1 := tview.NewTreeNode(callin.itemdisp(c)).SetIndent(1)
@@ -709,6 +712,7 @@ func (callin *callinview) callroot_callee_root(node *CallNode) *tview.TreeNode {
 			parent.AddChild(parent1)
 			parent = parent1
 		}
+		ExpandNodeOption(callroot,callroot.GetText(),false)
 	}
 	for _, v := range root_node.GetChildren() {
 		value := v.GetReference()
