@@ -50,12 +50,13 @@ func (node *CallNode) Ignore(uid int) bool {
 
 type callinview struct {
 	*view_link
-	view           *tview.TreeView
-	Name           string
-	main           MainService
-	task_list      []CallNode
-	right_context  callin_view_context
-	cmd_search_key string
+	view             *tview.TreeView
+	Name             string
+	main             MainService
+	task_list        []CallNode
+	right_context    callin_view_context
+	cmd_search_key   string
+	callee_at_top bool
 }
 type dom_click_state int
 
@@ -83,16 +84,20 @@ func new_callview(main MainService) *callinview {
 			up:    view_code,
 			left:  view_quickview,
 		},
-		view: view,
-		Name: "callin",
-		main: main,
+		view:             view,
+		Name:             "callin",
+		main:             main,
+		callee_at_top: true,
 	}
 	right_context := callin_view_context{qk: ret}
 	ret.right_context = right_context
 	// main.ActiveTab(view_quickview, false)
 	// ret.get_menu(main)
-
-	view.SetSelectedFunc(ret.node_selected_callee_bottom)
+	if ret.callee_at_top {
+		view.SetSelectedFunc(ret.node_selected_callee_top)
+	} else {
+		view.SetSelectedFunc(ret.node_selected)
+	}
 	view.SetInputCapture(ret.KeyHandle)
 	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		return action, event
@@ -392,7 +397,7 @@ func (view *callinview) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
 	}
 	return event
 }
-func (view *callinview) node_selected_callee_bottom(node *tview.TreeNode) {
+func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 	value := node.GetReference()
 	nodepath := view.view.GetPath(node)
 	callroot := nodepath[len(nodepath)-1]
@@ -550,7 +555,12 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	var current *tview.TreeNode
 	for i := range callin.task_list {
 		v := &callin.task_list[i]
-		c := callin.callroot_callee_fisrt(v)
+		var c *tview.TreeNode
+		if !callin.callee_at_top {
+			c = callin.callroot(v)
+		} else {
+			c = callin.callroot_callee_fisrt(v)
+		}
 		root_node.AddChild(c)
 		if task.UID == v.call.UID {
 			current = c
