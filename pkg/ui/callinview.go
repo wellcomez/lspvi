@@ -642,47 +642,7 @@ func (callin *callinview) callroot_callee_root(node *CallNode) *tview.TreeNode {
 	}
 	for indx, stack := range task.Allstack {
 		var i = 0
-		// c := stack.Items[0]
 		var parent *tview.TreeNode
-		// for _, v := range root_node.GetChildren() {
-		// 	value := v.GetReference()
-		// 	if ref, ok := value.(dom_node); ok {
-		// 		if ref.id == stack.UID {
-		// 			parent = v
-		// 			n := parent
-		// 			level := 1
-		// 			for {
-		// 				cc := n.GetChildren()
-		// 				if len(cc) == 1 {
-		// 					n = cc[0]
-		// 					level++
-		// 				} else {
-		// 					break
-		// 				}
-		// 			}
-		// 			yes := parent.IsExpanded()
-		// 			if len(stack.Items) != level {
-		// 				parent.SetReference(NewRootNode(c.Item, nil, true, stack.UID))
-		// 			}
-		// 			parent.ClearChildren()
-		// 			// parent.SetText("+" + callin.itemdisp(c))
-		// 			// if yes {
-		// 			// 	parent.Expand()
-		// 			// } else {
-		// 			// 	parent.Collapse()
-		// 			// }
-		// 			ExpandNodeOption(parent, callin.itemdisp(c), yes)
-		// 			break
-		// 		}
-		// 	}
-		// }
-		// if parent == nil {
-		// 	parent = tview.NewTreeNode(fmt.Sprintf("%d", ind)).SetIndent(1)
-		// 	parent.Collapse()
-
-		// 	parent.SetReference(NewRootNode(c.Item, nil, true, stack.UID))
-		// 	root_node.AddChild(parent)
-		// }
 		first := stack.Items[0]
 		last := stack.Items[len(stack.Items)-1]
 		parent = tview.NewTreeNode(fmt.Sprintf("%s <-(%d) %s", last.Name, len(stack.Items), first.Name))
