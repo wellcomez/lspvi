@@ -63,6 +63,7 @@ const (
 	dom_click_init dom_click_state = iota
 	dom_click_expand
 	dom_click_callin
+	dom_click_callined
 )
 
 type dom_node struct {
@@ -92,18 +93,6 @@ func new_callview(main MainService) *callinview {
 	// ret.get_menu(main)
 
 	view.SetSelectedFunc(ret.node_selected)
-	view.SetChangedFunc(func(node *tview.TreeNode) {
-		value := node.GetReference()
-		if value != nil {
-			if ref, ok := value.(dom_node); ok {
-				ref.state = dom_click_init
-				node.SetReference(ref)
-				// sym := ref.call
-				// main.get_define(sym.Range, sym.URI.AsPath().String(), nil)
-
-			}
-		}
-	})
 	view.SetInputCapture(ret.KeyHandle)
 	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		return action, event
@@ -340,16 +329,9 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			switch ref.state {
 			case dom_click_init:
 				ref.state = dom_click_expand
-			case dom_click_expand:
-				text := node.GetText()
-				text = strings.TrimLeft(text, "+")
-				if !node.IsExpanded() {
-					node.Expand()
-					node.SetText(text)
-				} else {
-					node.Collapse()
-					node.SetText("+" + text)
-				}
+				ExpandNodeOption(node, node.GetText(), node.IsExpanded())
+			case dom_click_expand, dom_click_callined:
+				ExpandNode(node)
 				if is_top {
 					ref.state = dom_click_callin
 				}
@@ -357,7 +339,7 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 				if is_top {
 					go view.get_next_callin(value, view.main)
 				}
-				ref.state = dom_click_expand
+				ref.state = dom_click_callined
 			}
 			node.SetReference(ref)
 			sym := ref.call
@@ -376,6 +358,25 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			view.update_node_color()
 			return
 		}
+	}
+}
+
+func ExpandNode(node *tview.TreeNode) {
+	yes := !node.IsExpanded()
+	text := node.GetText()
+	ExpandNodeOption(node, text, yes)
+}
+
+func ExpandNodeOption(node *tview.TreeNode, text string, expand bool) {
+	Collapse := "▶"
+	Expaned := "▼"
+	text = strings.TrimLeft(text, strings.Join([]string{Collapse, Expaned, "+", " "}, ""))
+	if expand {
+		node.Expand()
+		node.SetText(Expaned + " " + text)
+	} else {
+		node.Collapse()
+		node.SetText(Collapse + " " + text)
 	}
 }
 func (view *callinview) update_node_color() {
@@ -492,12 +493,13 @@ func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 						parent.SetReference(NewRootNode(c.Item, nil, true, stack.UID))
 					}
 					parent.ClearChildren()
-					parent.SetText("+" + callin.itemdisp(c))
-					if yes {
-						parent.Expand()
-					} else {
-						parent.Collapse()
-					}
+					// parent.SetText("+" + callin.itemdisp(c))
+					// if yes {
+					// 	parent.Expand()
+					// } else {
+					// 	parent.Collapse()
+					// }
+					ExpandNodeOption(parent, callin.itemdisp(c), yes)
 					break
 				}
 			}
