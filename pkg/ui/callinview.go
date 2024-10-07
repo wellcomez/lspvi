@@ -156,7 +156,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 	}
 	return addjust_menu_width(menuitem)
 }
-func (ret *callinview) get_next_callin_callee_bottom(value interface{}, main MainService) error {
+func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main MainService) error {
 	node := ret.view.GetCurrentNode()
 	nodepath := ret.view.GetPath(node)
 	if len(nodepath) >= 3 && node == nodepath[len(nodepath)-1] {
@@ -231,9 +231,12 @@ func (ret *callinview) get_next_callin_callee_bottom(value interface{}, main Mai
 	return nil
 }
 func (ret *callinview) get_next_callin(value interface{}, main MainService) error {
-	return ret.get_next_callin_callee_bottom(value, main)
+	if ret.callee_at_top{
+		return ret.get_next_callin_callee_at_root(value, main)
+	}
+	return ret.get_next_callin_callee_at_leaf(value, main)
 }
-func (ret *callinview) get_next_callin_callee_top(value interface{}, main MainService) error {
+func (ret *callinview) get_next_callin_callee_at_leaf(value interface{}, main MainService) error {
 	node := ret.view.GetCurrentNode()
 	nodepath := ret.view.GetPath(node)
 	if len(nodepath) >= 3 && node == nodepath[2] {
