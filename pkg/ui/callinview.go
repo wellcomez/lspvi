@@ -679,9 +679,7 @@ func (callin *callinview) build_callroot_callee_at_root(node *CallNode) *tview.T
 				}
 			}
 		}
-		if parent == nil {
-			parent = callin.create_stack_root_node(indx, stack, root_node)
-		} else {
+		if parent != nil {
 			parent.SetText(get_callchain_name(stack, indx))
 			nodes := get_nodes_of_callroot(parent)
 			for idx, v := range nodes {
@@ -709,15 +707,16 @@ func (callin *callinview) build_callroot_callee_at_root(node *CallNode) *tview.T
 				}
 
 			}
-			return root_node
+		} else {
+			parent = callin.create_stack_root_node(indx, stack, root_node)
+			callroot := parent
+			for i := len(stack.Items) - 1; i >= 0; i-- {
+				c := stack.Items[i]
+				parent1 := callin.add_call_node(c, i, stack, indx, parent)
+				parent = parent1
+			}
+			ExpandNodeOption(callroot, callroot.GetText(), false)
 		}
-		callroot := parent
-		for i := len(stack.Items) - 1; i >= 0; i-- {
-			c := stack.Items[i]
-			parent1 := callin.add_call_node(c, i, stack, indx, parent)
-			parent = parent1
-		}
-		ExpandNodeOption(callroot, callroot.GetText(), false)
 	}
 	for _, v := range root_node.GetChildren() {
 		value := v.GetReference()
