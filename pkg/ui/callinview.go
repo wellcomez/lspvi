@@ -445,6 +445,7 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 			if is_top {
 				go view.get_next_callin(value, view.main)
 			} else if is_click_callroot {
+				ExpandNode(node)
 			} else {
 				switch ref.state {
 				case dom_click_init:
