@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	// "log"
 	// "strings"
@@ -135,6 +136,24 @@ type CallStack struct {
 	UID      int
 }
 
+func shortfuncitonname(c *CallStackEntry) string {
+	if c.PtrSymobl != nil {
+		if len(c.PtrSymobl.Classname) > 0 {
+			s := fmt.Sprintf("%s::%s", c.PtrSymobl.Classname, c.PtrSymobl.SymInfo.Name)
+			return fmt.Sprintf("%s :%d", s, c.Item.Range.Start.Line+1)
+		}
+	}
+	return fmt.Sprintf("%s :%d", c.Name, c.Item.Range.Start.Line+1)
+}
+func (stack *CallStack) Get_callchain_name(index int, global_prj_root string) string {
+	first := stack.Items[0]
+	last := stack.Items[len(stack.Items)-1]
+	nodename := fmt.Sprintf("%d.  [%d] %s <- %s", index,
+		len(stack.Items),
+		strings.ReplaceAll(shortfuncitonname(last), global_prj_root, ""),
+		strings.ReplaceAll(shortfuncitonname(first), global_prj_root, ""))
+	return nodename
+}
 func (c *CallStack) InRange(loc lsp.Location) *CallStackEntry {
 	var ret *CallStackEntry = nil
 	line := loc.Range.Start.Line
@@ -151,8 +170,8 @@ func (c *CallStack) InRange(loc lsp.Location) *CallStackEntry {
 	}
 	return ret
 }
-func (c *CallStack) Insert(item lsp.CallHierarchyItem ,cc lsp.CallHierarchyIncomingCall) {
-	new_one:=NewCallStackEntry(cc.From, cc.FromRanges, []lsp.Location{})
+func (c *CallStack) Insert(item lsp.CallHierarchyItem, cc lsp.CallHierarchyIncomingCall) {
+	new_one := NewCallStackEntry(cc.From, cc.FromRanges, []lsp.Location{})
 	if len(c.Items) > 0 {
 		a := c.Items[0]
 		locations := []lsp.Location{}
