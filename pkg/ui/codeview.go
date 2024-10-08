@@ -97,7 +97,7 @@ func (code *CodeView) goto_line_head() {
 	Cur := code.view.Cursor
 	Cur.Loc = femto.Loc{X: 0, Y: Cur.Loc.Y}
 }
-func (code *CodeView) EditorPosition() *EditorPosition {
+func (code CodeView) EditorPosition() *EditorPosition {
 	if !code.not_preview {
 		return nil
 	}
@@ -393,6 +393,7 @@ func NewCodeView(main MainService) *CodeView {
 	root.SetMouseCapture(ret.handle_mouse)
 	ret.view = root
 	ret.InsertMode(false)
+	root.code = &ret
 	return &ret
 }
 
@@ -1140,7 +1141,7 @@ func (code *CodeView) action_goto_declaration() {
 	loc := code.lsp_cursor_loc()
 	main.get_declare(loc, code.Path())
 }
-func (code *CodeView) action_get_implementation(line* lspcore.OpenOption) {
+func (code *CodeView) action_get_implementation(line *lspcore.OpenOption) {
 	main := code.main
 	if main == nil {
 		return
@@ -1148,7 +1149,7 @@ func (code *CodeView) action_get_implementation(line* lspcore.OpenOption) {
 	code.view.Cursor.SelectWord()
 	//warning xxxxxxxxxxxxxxxxxxxxxxxxx
 	loc := code.lsp_cursor_loc()
-	main.get_implementation(loc, code.Path(),line)
+	main.get_implementation(loc, code.Path(), line)
 }
 func (code *CodeView) action_get_refer() {
 	main := code.main

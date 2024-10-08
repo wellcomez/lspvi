@@ -37,7 +37,39 @@ var Struct = "𝓢"
 var Event = ""
 var Operator = "󰆕"
 var TypeParameter = ""
-
+var IconsRunne = map[int]rune{
+	1: '󰈙', //-- File
+	2: '', // -- Module
+	3: '󰌗', // -- Namespace
+	4: '', // -- Package
+	5: '𝓒', //-- Class
+	//5:   "󰌗 ", //-- Class
+	6: '󰆧', //-- Method
+	//6:  Method,
+	7:  '', //-- Property
+	8:  '', //-- Field
+	9:  '', //-- Constructor
+	10: '󰕘', //-- Enum
+	//11: "󰕘 ", //-- Interface
+	//11: '"' ,
+	12: '󰊕', //-- Function
+	13: '󰆧', //-- Variable
+	14: '󰏿', //-- Constant
+	15: '󰀬', //-- String
+	16: '󰎠', //-- Number
+	17: '◩', //-- Boolean
+	18: '󰅪', //-- Array
+	19: '󰅩', //-- Object
+	20: '󰌋', //-- Key
+	21: '󰟢', //-- Null
+	//22: ' ', //-- EnumMember
+	//23:  "󰌗 ", //-- Struct
+	23:  '𝓢', //-- Struct
+	24:  '', //-- Event
+	25:  '󰆕', //-- Operator
+	26:  '󰊄', //-- TypeParameter
+	255: '󰉨', //-- Macro
+}
 var icons = map[int]string{
 	1: "󰈙 ",  //-- File
 	2: " ",  // -- Module
@@ -364,8 +396,8 @@ type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)
 	OnLspRefenceChanged(ranges SymolSearchKey, file []lsp.Location)
-	OnGetImplement(SymolSearchKey, ImplementationResult,error,*OpenOption)
-	OnFileChange(file []lsp.Location,line *OpenOption)
+	OnGetImplement(SymolSearchKey, ImplementationResult, error, *OpenOption)
+	OnFileChange(file []lsp.Location, line *OpenOption)
 	OnLspCaller(search string, c lsp.CallHierarchyItem, stacks []CallStack)
 	OnLspCallTaskInViewChanged(stacks *CallInTask)
 	OnLspCallTaskInViewResovled(stacks *CallInTask)
