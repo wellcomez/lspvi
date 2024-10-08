@@ -439,9 +439,7 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 			break
 		}
 	}
-	nodepath := view.view.GetPath(node)
-	caller_leaf := nodepath[len(nodepath)-1]
-	is_top := caller_leaf == node && !is_click_callroot
+	is_top := len(node.GetChildren()) == 0
 	if value != nil {
 		if ref, ok := value.(dom_node); ok {
 			if is_top {
@@ -657,14 +655,14 @@ func (callin *callinview) build_callroot_callee_at_root(node *CallNode) *tview.T
 			if len(stack.Items) >= 1 {
 				first := stack.Items[0]
 				last := stack.Items[len(stack.Items)-1]
-				id1 = get_stack_root_id(stack, first, last)
+				id1 = get_callchain_id(stack, first, last)
 
 			}
 			id2 := ""
 			if len(stack.Items) >= 2 {
 				first := stack.Items[1]
 				last := stack.Items[len(stack.Items)-1]
-				id2 = get_stack_root_id(stack, first, last)
+				id2 = get_callchain_id(stack, first, last)
 			}
 			for _, v := range childeren {
 				if value := v.GetReference(); value != nil {
@@ -684,6 +682,7 @@ func (callin *callinview) build_callroot_callee_at_root(node *CallNode) *tview.T
 		if parent == nil {
 			parent = callin.create_stack_root_node(indx, stack, root_node)
 		} else {
+			parent.SetText(get_callchain_name(stack, indx))
 			nodes := get_nodes_of_callroot(parent)
 			for idx, v := range nodes {
 				x := len(stack.Items) - 1 - idx
@@ -697,9 +696,16 @@ func (callin *callinview) build_callroot_callee_at_root(node *CallNode) *tview.T
 			}
 			leafnode := nodes[len(nodes)-1]
 			if n := len(stack.Items) - len(nodes); n > 0 {
-				for i := n; i >= 0; i-- {
+				for i := n - 1; i >= 0; i-- {
 					c := stack.Items[i]
 					leafnode = callin.add_call_node(c, i, stack, indx, leafnode)
+					r := get_reference_range(i+1, stack)
+					if value := leafnode.GetReference(); value != nil {
+						if ref, ok := value.(dom_node); ok {
+							ref.fromrange = r
+							leafnode.SetReference(ref)
+						}
+					}
 				}
 
 			}
@@ -741,6 +747,14 @@ func get_nodes_of_callroot(parent *tview.TreeNode) []*tview.TreeNode {
 
 func (callin *callinview) add_call_node(c *lspcore.CallStackEntry, i int, stack *lspcore.CallStack, indx int, parent *tview.TreeNode) *tview.TreeNode {
 	parent1 := tview.NewTreeNode(callin.itemdisp(c)).SetIndent(1)
+	r := get_reference_range(i, stack)
+	parent1.SetReference(NewRootNode(c.Item, r, false, stack.UID*100+indx))
+	parent.AddChild(parent1)
+	return parent1
+}
+
+func get_reference_range(i int, stack *lspcore.CallStack) *lsp.Location {
+	c := stack.Items[i]
 	var r *lsp.Location
 	if i > 0 {
 		parent_call_define := stack.Items[i-1].Item
@@ -758,9 +772,7 @@ func (callin *callinview) add_call_node(c *lspcore.CallStackEntry, i int, stack 
 			}
 		}
 	}
-	parent1.SetReference(NewRootNode(c.Item, r, false, stack.UID*100+indx))
-	parent.AddChild(parent1)
-	return parent1
+	return r
 }
 func shortfuncitonname(c *lspcore.CallStackEntry) string {
 	if c.PtrSymobl != nil {
@@ -772,20 +784,27 @@ func shortfuncitonname(c *lspcore.CallStackEntry) string {
 	return fmt.Sprintf("%s :%d", c.Name, c.Item.Range.Start.Line+1)
 }
 func (callin *callinview) create_stack_root_node(index int, stack *lspcore.CallStack, root_node *tview.TreeNode) *tview.TreeNode {
+	nodename := get_callchain_name(stack, index)
+	parent := tview.NewTreeNode(nodename)
 	first := stack.Items[0]
 	last := stack.Items[len(stack.Items)-1]
-	nodename := fmt.Sprintf("%d. %s <-%d %s", index,
-		strings.ReplaceAll(shortfuncitonname(last), global_prj_root, ""),
-		len(stack.Items),
-		strings.ReplaceAll(shortfuncitonname(first), global_prj_root, ""))
-	parent := tview.NewTreeNode(nodename)
-	id := get_stack_root_id(stack, first, last)
+	id := get_callchain_id(stack, first, last)
 	parent.SetReference(id)
 	root_node.AddChild(parent)
 	return parent
 }
 
-func get_stack_root_id(stack *lspcore.CallStack, first *lspcore.CallStackEntry, last *lspcore.CallStackEntry) string {
+func get_callchain_name(stack *lspcore.CallStack, index int) string {
+	first := stack.Items[0]
+	last := stack.Items[len(stack.Items)-1]
+	nodename := fmt.Sprintf("%d.  [%d] %s <- %s", index,
+		len(stack.Items),
+		strings.ReplaceAll(shortfuncitonname(last), global_prj_root, ""),
+		strings.ReplaceAll(shortfuncitonname(first), global_prj_root, ""))
+	return nodename
+}
+
+func get_callchain_id(stack *lspcore.CallStack, first *lspcore.CallStackEntry, last *lspcore.CallStackEntry) string {
 	id := fmt.Sprintf("%d%v%v", stack.UID, CallHieraItemToString(first.Item), CallHieraItemToString(last.Item))
 	return id
 }
