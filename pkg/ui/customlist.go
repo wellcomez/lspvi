@@ -33,6 +33,17 @@ type splitresult struct {
 	b, m, a colortext
 }
 
+func parse_key_string(s string, key string) splitresult {
+	b := strings.Index(s, key)
+	if b >= 0 {
+		return splitresult{
+			b: colortext{text: s[:b]},
+			m: colortext{text: s[b : b+len(key)], color: tcell.ColorYellow},
+			a: colortext{text: s[b+len(key):]},
+		}
+	}
+	return splitresult{b: colortext{text: s}}
+}
 func pasrse_bold_color_string(s string) splitresult {
 	b := strings.Index(s, "**")
 	if b >= 0 {
@@ -40,7 +51,7 @@ func pasrse_bold_color_string(s string) splitresult {
 		if e >= 0 {
 			return splitresult{
 				b: colortext{text: s[:b]},
-				m: colortext{text: s[b+2 : b+2+e],color: tcell.ColorYellow},
+				m: colortext{text: s[b+2 : b+2+e], color: tcell.ColorYellow},
 				a: colortext{text: s[b+2+e+2:]},
 			}
 		}
@@ -58,7 +69,7 @@ func (p *colorpaser) Parse() []colortext {
 		r3 = pasrse_bold_color_string(p.data)
 	}
 	if len(r3.m.text) > 0 {
-	var before_part []colortext
+		var before_part []colortext
 		if r3.b.text != "" {
 			aa := colorpaser{data: r3.b.text}
 			result := aa.Parse()
@@ -80,7 +91,7 @@ func (p *colorpaser) Parse() []colortext {
 		}
 		before_part = append(before_part, r3.m)
 		before_part = append(before_part, after_part...)
-		return before_part 
+		return before_part
 	}
 	return []colortext{r3.a}
 }
