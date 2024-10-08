@@ -276,7 +276,7 @@ func (task *CallInTask) addchild(parent *callchain, leaf *added) error {
 	return nil
 }
 
-func (task *CallInTask) run() error {
+func (task *CallInTask) Run() error {
 	if task.lsp == nil {
 		return errors.New("lsp is nil")
 	}

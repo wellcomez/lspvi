@@ -21,7 +21,9 @@ type Symbol_file struct {
 	Wk           *LspWorkspace
 	tokens       *lsp.SemanticTokens
 }
-
+func (sym Symbol_file) LspClient() lspclient {
+	return sym.lsp
+}
 func (sym *Symbol_file) HasLsp() bool {
 	return sym.lsp != nil
 }
@@ -257,7 +259,7 @@ func (sym *Symbol_file) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierar
 }
 func (sym *Symbol_file) CallinTask(loc lsp.Location, level int) (*CallInTask, error) {
 	task := NewCallInTask(loc, sym.lsp, level)
-	task.run()
+	task.Run()
 	sym.Handle.OnLspCallTaskInViewChanged(task)
 	return task, nil
 }
