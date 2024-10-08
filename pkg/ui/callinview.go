@@ -139,7 +139,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 			children := nodepath[0].GetChildren()
 			for i := range children {
 				if children[i] == node {
-					go reload_callin(ret, i)
+					go reload_callin(ret, i, node)
 					break
 				}
 			}
@@ -181,12 +181,19 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 	return addjust_menu_width(menuitem)
 }
 
-func reload_callin(ret *callinview, i int) {
-	callnode := ret.task_list[i]
+func reload_callin(ret *callinview, taskindex int, node *tview.TreeNode) {
+	callnode := ret.task_list[taskindex]
+	callnode.reload_callin(ret, node)
+}
+
+func (callnode CallNode) reload_callin(ret *callinview, node *tview.TreeNode) {
 	if sym, err := ret.main.Lspmgr().Open(callnode.call.Loc.URI.AsPath().String()); err == nil {
 		task := lspcore.NewCallInTask(callnode.call.Loc, sym.LspClient(), callnode.call.TraceLevel)
+		if node != nil {
+			ret.DeleteNode(node)
+		}
 		task.Run()
-		ret.DeleteCurrentNode()
+
 		go ret.main.App().QueueUpdateDraw(func() {
 			ret.updatetask(task)
 		})
@@ -384,6 +391,10 @@ func (ret *callinview) get_next_callin_callee_at_leaf(value interface{}, main Ma
 
 func (ret *callinview) DeleteCurrentNode() {
 	nodecurrent := ret.view.GetCurrentNode()
+	ret.DeleteNode(nodecurrent)
+}
+
+func (ret *callinview) DeleteNode(nodecurrent *tview.TreeNode) bool {
 	root := ret.view.GetRoot()
 	children := root.GetChildren()
 	for task_index, child := range children {
@@ -440,7 +451,7 @@ func (ret *callinview) DeleteCurrentNode() {
 					if next != nil {
 						ret.view.SetCurrentNode(next)
 					}
-					return
+					return true
 				}
 			}
 
@@ -458,6 +469,7 @@ func (ret *callinview) DeleteCurrentNode() {
 		}
 	}
 	ret.main.Tab().UpdatePageTitle()
+	return false
 }
 
 func (qk *callinview) OnSearch(txt string) {
