@@ -3,6 +3,7 @@ package mainui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 var qk_index_update = make(chan view_id)
@@ -14,8 +15,8 @@ type qf_index_view struct {
 	qfh           *qf_index_view_history
 	right_context *qf_index_menu_context
 	sel           *list_multi_select
+	id            view_id
 }
-
 
 type qf_index_view_history struct {
 	*customlist
@@ -47,36 +48,13 @@ func (view *qf_index_view_history) Delete(index int) {
 	}
 }
 func (ret *qf_index_view) Load(viewid view_id) bool {
+	ret.id = viewid
 	switch viewid {
 	case view_callin, view_quickview, view_bookmark:
-		ret.right_context.menu_item = &menudata{[]context_menu_item{
-			{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
-				if len(ret.qfh.selected) > 0 && ret.qfh.selected[0] != ret.qfh.selected[1] {
-					ret.qfh.DeleteRange(ret.qfh.selected)
-					ret.sel.update_select_item()
-				} else {
-					ret.qfh.Delete(ret.GetCurrentItem())
-				}
-			}},
-		}}
 		ret.qfh.Load()
 	case view_term:
 		{
 			term := ret.main.term
-			ret.right_context.menu_item = &menudata{[]context_menu_item{
-				{item: cmditem{cmd: cmdactor{desc: "new zsh"}}, handle: func() {
-					term.addterm("zsh")
-					ret.Load(viewid)
-				}},
-				{item: cmditem{cmd: cmdactor{desc: "new bash"}}, handle: func() {
-					term.addterm("bash")
-					ret.Load(viewid)
-				}},
-				{item: cmditem{cmd: cmdactor{desc: "Exit"}}, handle: func() {
-					term.Kill()
-					ret.Load(viewid)
-				}},
-			}}
 			list := ret
 			list.Clear()
 			data := term.ListTerm()
@@ -147,7 +125,7 @@ func (view *qf_index_view_history) Load() {
 		ind := i
 		value := keymaplist[ind]
 		list.AddItem(value, "", func() {
-			main.open_in_tabview(keys, ind)
+			main.open_in_tabview(keys[ind])
 		})
 	}
 	if cur >= 0 && cur < n {
@@ -190,7 +168,86 @@ func (menu qf_index_menu_context) getbox() *tview.Box {
 }
 
 func (menu qf_index_menu_context) menuitem() []context_menu_item {
-	return menu.menu_item.menu_item
+	ret := menu.view
+	viewid := menu.view.id
+	switch viewid {
+	case view_callin, view_quickview, view_bookmark:
+		hide := viewid != view_callin
+		return []context_menu_item{
+			{item: cmditem{cmd: cmdactor{desc: "Delete "}}, handle: func() {
+				if len(ret.qfh.selected) > 0 && ret.qfh.selected[0] != ret.qfh.selected[1] {
+					ret.qfh.DeleteRange(ret.qfh.selected)
+					ret.sel.update_select_item()
+				} else {
+					switch viewid {
+					case view_callin:
+						if _, deletenode := menu.deleteitem_and_callinnode(ret); deletenode != nil {
+							menu.main.callinview.DeleteNode(deletenode)
+						}
+					default:
+						ret.qfh.Delete(ret.GetCurrentItem())
+					}
+				}
+			}},
+			{item: cmditem{cmd: cmdactor{desc: "Reload "}}, handle: func() {
+				switch viewid {
+				case view_callin:
+					if task, deletenode := menu.deleteitem_and_callinnode(ret); task != nil {
+						go reoload_callin_task(ret.main.callinview, *task, deletenode)
+					}
+				default:
+					return
+				}
+			}, hide: hide},
+		}
+	case view_term:
+		{
+			term := ret.main.term
+			return []context_menu_item{
+				{item: cmditem{cmd: cmdactor{desc: "new zsh "}}, handle: func() {
+					term.addterm("zsh")
+					ret.Load(viewid)
+				}},
+				{item: cmditem{cmd: cmdactor{desc: "new bash "}}, handle: func() {
+					term.addterm("bash")
+					ret.Load(viewid)
+				}},
+				{item: cmditem{cmd: cmdactor{desc: "Exit "}}, handle: func() {
+					term.Kill()
+					ret.Load(viewid)
+				}},
+			}
+		}
+	}
+	return []context_menu_item{}
+}
+
+func (qf_index_menu_context) deleteitem_and_callinnode(ret *qf_index_view) (*lspcore.CallInTask, *tview.TreeNode) {
+	value := ret.qfh.keys[ret.GetCurrentItem()]
+	task := ret.main.LoadQfData(value)
+	callview := ret.main.callinview
+	deletenode := callview.get_node_from_callinstack(task)
+	ret.qfh.Delete(ret.GetCurrentItem())
+	return task, deletenode
+}
+
+func (callview *callinview) get_node_from_callinstack(task *lspcore.CallInTask) *tview.TreeNode {
+	var deletenode *tview.TreeNode
+	child := callview.view.GetRoot().GetChildren()
+	for i := range child {
+		v := child[i]
+		if value := v.GetReference(); value == nil {
+			continue
+		} else {
+			if ref, ok := value.(dom_node); ok {
+				if ref.id == task.UID {
+					deletenode = v
+					break
+				}
+			}
+		}
+	}
+	return deletenode
 }
 
 func (menu qf_index_menu_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
@@ -208,7 +265,7 @@ func new_qf_index_view(main *mainui) *qf_index_view {
 		customlist: new_customlist(false),
 		main:       main,
 	}
-	ret.sel=&list_multi_select{
+	ret.sel = &list_multi_select{
 		list: ret.customlist,
 	}
 	ret.new_qfh()

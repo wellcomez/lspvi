@@ -187,8 +187,13 @@ func reload_callin(ret *callinview, taskindex int, node *tview.TreeNode) {
 }
 
 func (callnode CallNode) reload_callin(ret *callinview, node *tview.TreeNode) {
-	if sym, err := ret.main.Lspmgr().Open(callnode.call.Loc.URI.AsPath().String()); err == nil {
-		task := lspcore.NewCallInTask(callnode.call.Loc, sym.LspClient(), callnode.call.TraceLevel)
+	task := callnode.call
+	reoload_callin_task(ret, task, node)
+}
+
+func reoload_callin_task(ret *callinview, task lspcore.CallInTask, node *tview.TreeNode) {
+	if sym, err := ret.main.Lspmgr().Open(task.Loc.URI.AsPath().String()); err == nil {
+		task := lspcore.NewCallInTask(task.Loc, sym.LspClient(), task.TraceLevel)
 		if node != nil {
 			ret.DeleteNode(node)
 		}

@@ -139,7 +139,8 @@ type MainService interface {
 
 	CopyToClipboard(s string)
 	save_qf_uirefresh(data qf_history_data) error
-	open_in_tabview(keys []qf_history_data, i int)
+	LoadQfData(item qf_history_data) (task *lspcore.CallInTask)
+	open_in_tabview(keys qf_history_data)
 
 	open_colorescheme()
 	open_qfh_query()
@@ -167,7 +168,6 @@ type MainService interface {
 	qf_grep_word(rightmenu_select_text string)
 
 	Mode() mode
-
 
 	open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker
 	OnCodeLineChange(x, y int, file string)
