@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"log"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
@@ -24,4 +25,8 @@ func Test_mainui_Init(t *testing.T) {
 	}
 	r := pasrse_bold_color_string("a**123**b")
 	println(r.b.text, r.m.text, r.a.text)
+
+	s := colorpaser{data: "**123** **[123]abc**"}
+	ret := s.Parse()
+	log.Println(ret)
 }

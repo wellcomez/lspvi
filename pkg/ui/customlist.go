@@ -39,13 +39,50 @@ func pasrse_bold_color_string(s string) splitresult {
 		e := strings.Index(s[b+2:], "**")
 		if e >= 0 {
 			return splitresult{
-				b:  colortext{text: s[:b]},
-				m: colortext{text: s[b+2 : b+2+e]},
-				a:   colortext{text: s[b+2+e+2:]},
+				b: colortext{text: s[:b]},
+				m: colortext{text: s[b+2 : b+2+e],color: tcell.ColorYellow},
+				a: colortext{text: s[b+2+e+2:]},
 			}
 		}
 	}
 	return splitresult{b: colortext{text: s}}
+}
+
+type colorpaser struct {
+	data string
+}
+
+func (p *colorpaser) Parse() []colortext {
+	r3 := pasrse_color_string(p.data)
+	if r3.m.text == "" {
+		r3 = pasrse_bold_color_string(p.data)
+	}
+	if len(r3.m.text) > 0 {
+	var before_part []colortext
+		if r3.b.text != "" {
+			aa := colorpaser{data: r3.b.text}
+			result := aa.Parse()
+			for _, v := range result {
+				if len(v.text) > 0 {
+					before_part = append(before_part, v)
+				}
+			}
+		}
+		var after_part []colortext
+		if r3.a.text != "" {
+			aa := colorpaser{data: r3.a.text}
+			result := aa.Parse()
+			for _, v := range result {
+				if len(v.text) > 0 {
+					after_part = append(after_part, v)
+				}
+			}
+		}
+		before_part = append(before_part, r3.m)
+		before_part = append(before_part, after_part...)
+		return before_part 
+	}
+	return []colortext{r3.a}
 }
 func pasrse_color_string(s string) splitresult {
 	b := strings.Index(s, "**[")
