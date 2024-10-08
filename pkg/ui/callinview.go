@@ -682,7 +682,7 @@ func (callin *callinview) build_callroot_callee_at_root(node *CallNode) *tview.T
 			}
 		}
 		if parent == nil {
-			parent = create_stack_root_node(indx, stack, root_node)
+			parent = callin.create_stack_root_node(indx, stack, root_node)
 		} else {
 			nodes := get_nodes_of_callroot(parent)
 			for idx, v := range nodes {
@@ -762,11 +762,22 @@ func (callin *callinview) add_call_node(c *lspcore.CallStackEntry, i int, stack 
 	parent.AddChild(parent1)
 	return parent1
 }
-
-func create_stack_root_node(index int, stack *lspcore.CallStack, root_node *tview.TreeNode) *tview.TreeNode {
+func shortfuncitonname(c *lspcore.CallStackEntry) string {
+	if c.PtrSymobl != nil {
+		if len(c.PtrSymobl.Classname) > 0 {
+			s := fmt.Sprintf("%s::%s", c.PtrSymobl.Classname, c.PtrSymobl.SymInfo.Name)
+			return fmt.Sprintf("%s :%d", s, c.Item.Range.Start.Line+1)
+		}
+	}
+	return fmt.Sprintf("%s :%d", c.Name, c.Item.Range.Start.Line+1)
+}
+func (callin *callinview) create_stack_root_node(index int, stack *lspcore.CallStack, root_node *tview.TreeNode) *tview.TreeNode {
 	first := stack.Items[0]
 	last := stack.Items[len(stack.Items)-1]
-	nodename := fmt.Sprintf("%d. %s <-(%d) %s", index, last.Name, len(stack.Items), first.Name)
+	nodename := fmt.Sprintf("%d. %s <-%d %s", index,
+		strings.ReplaceAll(shortfuncitonname(last), global_prj_root, ""),
+		len(stack.Items),
+		strings.ReplaceAll(shortfuncitonname(first), global_prj_root, ""))
 	parent := tview.NewTreeNode(nodename)
 	id := get_stack_root_id(stack, first, last)
 	parent.SetReference(id)
