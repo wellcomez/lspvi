@@ -20,25 +20,49 @@ type customlist struct {
 	default_color tcell.Color
 	selected      []int
 }
+type colortext struct {
+	text  string
+	color tcell.Color
+}
 
 func fmt_color_string(s string, color tcell.Color) string {
 	return fmt.Sprintf("**[%d]%s**", color, s)
 }
-func pasrse_color_string(s string) (ret string, color tcell.Color,pos Pos) {
+
+type splitresult struct {
+	b, m, a colortext
+}
+
+func pasrse_bold_color_string(s string) splitresult {
+	b := strings.Index(s, "**")
+	if b >= 0 {
+		e := strings.Index(s[b+2:], "**")
+		if e >= 0 {
+			return splitresult{
+				b:  colortext{text: s[:b]},
+				m: colortext{text: s[b+2 : b+2+e]},
+				a:   colortext{text: s[b+2+e+2:]},
+			}
+		}
+	}
+	return splitresult{b: colortext{text: s}}
+}
+func pasrse_color_string(s string) splitresult {
 	b := strings.Index(s, "**[")
 	if b >= 0 {
 		e := strings.Index(s, "]")
 		if e >= 0 {
+			var color tcell.Color
 			if c, err := strconv.Atoi(s[b+3 : e]); err == nil {
 				color = tcell.Color(c)
-			}
-			if e2 := strings.Index(s[e+1:], "**"); e2 > 0 {
-				x := e + 1
-				return s[x : x+e2], color,Pos{b,x+e2+2}
+				if e2 := strings.Index(s[e+1:], "**"); e2 > 0 {
+					x := e + 1
+					return splitresult{b: colortext{text: s[:b]}, m: colortext{text: s[x : x+e2], color: color}, a: colortext{text: s[x+e2+2:]}}
+				}
 			}
 		}
 	}
-	return ret, tcell.Color100,Pos{}
+	return splitresult{b: colortext{text: s}}
 }
 
 func (l *customlist) Clear() *customlist {

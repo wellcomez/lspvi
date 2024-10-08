@@ -1,22 +1,27 @@
 package mainui
 
 import (
-	"log"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
 )
 
 func Test_mainui_Init(t *testing.T) {
-	sss := fmt_color_string("123", tcell.ColorDarkGray)
+	sss := fmt_color_string("abc", tcell.ColorDarkGray)
 	x1 := "123" + sss + "456"
-	s, c,pos := pasrse_color_string(x1)
-	if s != "123" {
+	r0 := pasrse_color_string(x1)
+	if r0.m.text != "abc" {
 		t.Error("s!=123")
 	}
-	if c != tcell.ColorDarkGray {
+	if r0.m.color != tcell.ColorDarkGray {
 		t.Error("c!=tcell.ColorDarkGray")
 	}
-	x := x1[pos.X:pos.Y]
-	log.Println(x)
+	if r0.a.text != "456" {
+		t.Error("e!=456")
+	}
+	if r0.b.text != "123" {
+		t.Error("b!=123")
+	}
+	r := pasrse_bold_color_string("a**123**b")
+	println(r.b.text, r.m.text, r.a.text)
 }
