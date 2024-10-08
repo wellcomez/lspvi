@@ -70,7 +70,39 @@ type colorpaser struct {
 	data string
 }
 
-func (p *colorpaser) Parse() []colortext {
+func (p colorpaser) ParseKey(keys []string) []colortext {
+	for _, v := range keys {
+		r3 := parse_key_string(p.data, v)
+		if len(r3.m.text) > 0 {
+			var before_part []colortext
+			if r3.b.text != "" {
+				aa := colorpaser{data: r3.b.text}
+				result := aa.ParseKey(keys)
+				for _, v := range result {
+					if len(v.text) > 0 {
+						before_part = append(before_part, v)
+					}
+				}
+			}
+			var after_part []colortext
+			if r3.a.text != "" {
+				aa := colorpaser{data: r3.a.text}
+				result := aa.ParseKey(keys)
+				for _, v := range result {
+					if len(v.text) > 0 {
+						after_part = append(after_part, v)
+					}
+				}
+			}
+			before_part = append(before_part, r3.m)
+			before_part = append(before_part, after_part...)
+			return before_part
+		}
+	}
+	b:=colortext{text: p.data}
+	return []colortext{b}
+}
+func (p colorpaser) Parse() []colortext {
 	r3 := pasrse_color_string(p.data)
 	if r3.m.text == "" {
 		r3 = pasrse_bold_color_string(p.data)
