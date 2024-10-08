@@ -182,11 +182,7 @@ func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main Ma
 			callroot_task := &ret.task_list[callin_index_in_root].call
 			stacks := &callroot_task.Allstack
 			stack := (*stacks)[function_index_in_callroot]
-			// if len(stack.Items) == 0 {
-			// 	return fmt.Errorf("stack %d is empty", function_index_in_callroot)
-			// }
 			top := stack.Items[0]
-			// log.Println(top)
 			if ref, ok := value.(dom_node); ok {
 				sym := ref.call
 				loc := lsp.Location{URI: sym.URI, Range: sym.Range}
@@ -436,25 +432,29 @@ func (view *callinview) KeyHandle(event *tcell.EventKey) *tcell.EventKey {
 }
 func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 	value := node.GetReference()
+	is_click_callroot := false
+	for _, v := range view.view.GetRoot().GetChildren() {
+		if v == node {
+			is_click_callroot = true
+			break
+		}
+	}
 	nodepath := view.view.GetPath(node)
 	caller_leaf := nodepath[len(nodepath)-1]
-	is_top := caller_leaf == node
+	is_top := caller_leaf == node && !is_click_callroot
 	if value != nil {
 		if ref, ok := value.(dom_node); ok {
-			switch ref.state {
-			case dom_click_init:
-				ref.state = dom_click_expand
-				ExpandNodeOption(node, node.GetText(), node.IsExpanded())
-			case dom_click_expand, dom_click_callined:
-				ExpandNode(node)
-				if is_top {
-					ref.state = dom_click_callin
+			if is_top {
+				go view.get_next_callin(value, view.main)
+			} else if is_click_callroot {
+			} else {
+				switch ref.state {
+				case dom_click_init:
+					ref.state = dom_click_expand
+					ExpandNodeOption(node, node.GetText(), node.IsExpanded())
+				default:
+					ExpandNode(node)
 				}
-			case dom_click_callin:
-				if is_top {
-					go view.get_next_callin(value, view.main)
-				}
-				ref.state = dom_click_callined
 			}
 			node.SetReference(ref)
 			sym := ref.call
@@ -472,8 +472,10 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 			}
 			view.update_node_color()
 			return
+		} else {
+			ExpandNode(node)
 		}
-	}else{
+	} else {
 		ExpandNode(node)
 	}
 }
@@ -603,7 +605,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 		if !callin.callee_at_root {
 			c = callin.callroot(v)
 		} else {
-			c = callin.callroot_callee_root(v)
+			c = callin.build_callroot_callee_at_root(v)
 		}
 		root_node.AddChild(c)
 		if task.UID == v.call.UID {
@@ -618,7 +620,7 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	}
 	callin.update_node_color()
 }
-func (callin *callinview) callroot_callee_root(node *CallNode) *tview.TreeNode {
+func (callin *callinview) build_callroot_callee_at_root(node *CallNode) *tview.TreeNode {
 	var task *lspcore.CallInTask = &node.call
 	var children []*tview.TreeNode
 	var root_node *tview.TreeNode
@@ -626,53 +628,90 @@ func (callin *callinview) callroot_callee_root(node *CallNode) *tview.TreeNode {
 	if root != nil {
 		children = root.GetChildren()
 		for _, v := range children {
-			if v.GetReference() == task.TreeNodeid() {
-				root_node = v
-				name := task.Dir()
-				root_node.SetText(name)
-				root_node.ClearChildren()
-				break
+			if value := v.GetReference(); value != nil {
+				if ref, ok := value.(dom_node); ok && ref.id == task.UID {
+					root_node = v
+					name := task.Dir()
+					root_node.SetText(name)
+					break
+				}
 				// v.ClearChildren()
 			}
 		}
 	}
 	if root_node == nil {
 		root_node = tview.NewTreeNode(task.Dir()).SetIndent(1)
-		root_node.SetReference(task.TreeNodeid())
+		ref := NewRootNode(lsp.CallHierarchyItem{
+			Name:           task.Name,
+			URI:            task.Loc.URI,
+			Range:          task.Loc.Range,
+			SelectionRange: task.Loc.Range}, nil, true, task.UID)
+		root_node.SetReference(ref)
 	}
 	for indx, stack := range task.Allstack {
-		var i = 0
+		// var i = 0
 		var parent *tview.TreeNode
-		first := stack.Items[0]
-		last := stack.Items[len(stack.Items)-1]
-		parent = tview.NewTreeNode(fmt.Sprintf("%s <-(%d) %s", last.Name, len(stack.Items), first.Name))
-		root_node.AddChild(parent)
-		callroot:=parent
-		for i = len(stack.Items) - 1; i >= 0; i-- {
-			c := stack.Items[i]
-			parent1 := tview.NewTreeNode(callin.itemdisp(c)).SetIndent(1)
-			var r *lsp.Location
-			if i > 0 {
-				parent_call_define := stack.Items[i-1].Item
-				refranges := c.ReferencePlace
-				for i := range refranges {
-					ref := refranges[i]
-					if ref.URI.AsPath().String() == parent_call_define.URI.AsPath().String() {
-						if ref.Range.Start.AfterOrEq(parent_call_define.Range.End) {
-							if r == nil {
-								r = &ref
-							} else if ref.Range.Start.BeforeOrEq(r.Range.Start) {
-								r = &ref
-							}
+		childeren := root_node.GetChildren()
+		if len(childeren) > 0 {
+			id1 := ""
+			if len(stack.Items) >= 1 {
+				first := stack.Items[0]
+				last := stack.Items[len(stack.Items)-1]
+				id1 = get_stack_root_id(stack, first, last)
+
+			}
+			id2 := ""
+			if len(stack.Items) >= 2 {
+				first := stack.Items[1]
+				last := stack.Items[len(stack.Items)-1]
+				id2 = get_stack_root_id(stack, first, last)
+			}
+			for _, v := range childeren {
+				if value := v.GetReference(); value != nil {
+					if ref, ok := value.(string); ok {
+						if ref == id1 {
+							parent = v
+							break
+						} else if ref == id2 {
+							parent = v
+							parent.SetReference(id1)
+							break
 						}
 					}
 				}
 			}
-			parent1.SetReference(NewRootNode(c.Item, r, false, stack.UID*100+indx))
-			parent.AddChild(parent1)
+		}
+		if parent == nil {
+			parent = create_stack_root_node(indx, stack, root_node)
+		} else {
+			nodes := get_nodes_of_callroot(parent)
+			for idx, v := range nodes {
+				x := len(stack.Items) - 1 - idx
+				if x >= 0 {
+					c := stack.Items[x]
+					text := callin.itemdisp(c)
+					v.SetText(text)
+				} else {
+					break
+				}
+			}
+			leafnode := nodes[len(nodes)-1]
+			if n := len(stack.Items) - len(nodes); n > 0 {
+				for i := n; i >= 0; i-- {
+					c := stack.Items[i]
+					leafnode = callin.add_call_node(c, i, stack, indx, leafnode)
+				}
+
+			}
+			return root_node
+		}
+		callroot := parent
+		for i := len(stack.Items) - 1; i >= 0; i-- {
+			c := stack.Items[i]
+			parent1 := callin.add_call_node(c, i, stack, indx, parent)
 			parent = parent1
 		}
-		ExpandNodeOption(callroot,callroot.GetText(),false)
+		ExpandNodeOption(callroot, callroot.GetText(), false)
 	}
 	for _, v := range root_node.GetChildren() {
 		value := v.GetReference()
@@ -683,6 +722,66 @@ func (callin *callinview) callroot_callee_root(node *CallNode) *tview.TreeNode {
 		}
 	}
 	return root_node
+}
+
+func get_nodes_of_callroot(parent *tview.TreeNode) []*tview.TreeNode {
+	childnode := []*tview.TreeNode{}
+	p := parent
+	for {
+		child := p.GetChildren()
+		if len(child) > 0 {
+			p = child[0]
+			childnode = append(childnode, p)
+		} else {
+			break
+		}
+	}
+	return childnode
+}
+
+func (callin *callinview) add_call_node(c *lspcore.CallStackEntry, i int, stack *lspcore.CallStack, indx int, parent *tview.TreeNode) *tview.TreeNode {
+	parent1 := tview.NewTreeNode(callin.itemdisp(c)).SetIndent(1)
+	var r *lsp.Location
+	if i > 0 {
+		parent_call_define := stack.Items[i-1].Item
+		refranges := c.ReferencePlace
+		for i := range refranges {
+			ref := refranges[i]
+			if ref.URI.AsPath().String() == parent_call_define.URI.AsPath().String() {
+				if ref.Range.Start.AfterOrEq(parent_call_define.Range.End) {
+					if r == nil {
+						r = &ref
+					} else if ref.Range.Start.BeforeOrEq(r.Range.Start) {
+						r = &ref
+					}
+				}
+			}
+		}
+	}
+	parent1.SetReference(NewRootNode(c.Item, r, false, stack.UID*100+indx))
+	parent.AddChild(parent1)
+	return parent1
+}
+
+func create_stack_root_node(index int, stack *lspcore.CallStack, root_node *tview.TreeNode) *tview.TreeNode {
+	first := stack.Items[0]
+	last := stack.Items[len(stack.Items)-1]
+	nodename := fmt.Sprintf("%d. %s <-(%d) %s", index, last.Name, len(stack.Items), first.Name)
+	parent := tview.NewTreeNode(nodename)
+	id := get_stack_root_id(stack, first, last)
+	parent.SetReference(id)
+	root_node.AddChild(parent)
+	return parent
+}
+
+func get_stack_root_id(stack *lspcore.CallStack, first *lspcore.CallStackEntry, last *lspcore.CallStackEntry) string {
+	id := fmt.Sprintf("%d%v%v", stack.UID, CallHieraItemToString(first.Item), CallHieraItemToString(last.Item))
+	return id
+}
+
+func CallHieraItemToString(item lsp.CallHierarchyItem) string {
+	sss := fmt.Sprint(item.Name, item.URI, item.Range)
+	return sss
 }
 func (callin *callinview) callroot(node *CallNode) *tview.TreeNode {
 	var task *lspcore.CallInTask = &node.call
