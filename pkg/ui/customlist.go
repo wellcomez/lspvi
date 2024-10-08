@@ -3,6 +3,7 @@ package mainui
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -18,6 +19,26 @@ type customlist struct {
 	fuzz          bool
 	default_color tcell.Color
 	selected      []int
+}
+
+func fmt_color_string(s string, color tcell.Color) string {
+	return fmt.Sprintf("**[%d]%s**", color, s)
+}
+func pasrse_color_string(s string) (ret string, color tcell.Color,pos Pos) {
+	b := strings.Index(s, "**[")
+	if b >= 0 {
+		e := strings.Index(s, "]")
+		if e >= 0 {
+			if c, err := strconv.Atoi(s[b+3 : e]); err == nil {
+				color = tcell.Color(c)
+			}
+			if e2 := strings.Index(s[e+1:], "**"); e2 > 0 {
+				x := e + 1
+				return s[x : x+e2], color,Pos{b,x+e2+2}
+			}
+		}
+	}
+	return ret, tcell.Color100,Pos{}
 }
 
 func (l *customlist) Clear() *customlist {
@@ -207,12 +228,12 @@ func (l *customlist) Draw(screen tcell.Screen) {
 
 func get_hl_postion(MainText string, keys []colorkey, l *customlist, keys2 []colorkey) (string, []keypattern) {
 	k, MainText := l.find_hl_key(MainText)
-	for i := range k{
+	for i := range k {
 		k[i].str = strings.ToLower(k[i].str)
 	}
 	hlkey := k
 	for _, v := range k {
-		k1 :=v.str
+		k1 := v.str
 		for _, v2 := range keys {
 			k2 := strings.ToLower(v2.str)
 			if k1 == k2 {
