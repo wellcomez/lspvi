@@ -37,6 +37,43 @@ func (t *TreeViewLoadding) Draw(screen tcell.Screen) {
 		t.Box.DrawForSubclass(screen, t.waiter)
 	}
 }
+func GetClosestSymbol(symfile *lspcore.Symbol_file, rand lsp.Range) *lspcore.Symbol {
+	var ret *lspcore.Symbol
+	syms := symfile.Class_object
+	for i := range syms {
+		v:=syms[i]
+		var find *lspcore.Symbol
+		if len(v.Members) > 0 {
+			for i := range v.Members {
+				m:= &v.Members[i]
+				if is_symbol_inside(m, rand) {
+					find = m
+				}
+			}
+		} else {
+			if is_symbol_inside(v, rand) {
+				find = v
+			}
+		}
+		if find != nil {
+			if ret == nil {
+				ret = find
+			} else {
+				if ret.SymInfo.Location.Range.Start.Line < find.SymInfo.Location.Range.Start.Line {
+					ret = find
+				}
+			}
+		}
+
+	}
+	return ret
+}
+
+func is_symbol_inside(m *lspcore.Symbol, r lsp.Range) bool {
+	yes := m.SymInfo.Location.Range.Start.BeforeOrEq(r.Start)
+	yes = m.SymInfo.Location.Range.End.AfterOrEq(r.End) && yes
+	return yes
+}
 
 type SymbolTreeView struct {
 	*view_link
