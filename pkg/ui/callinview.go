@@ -110,13 +110,24 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 	node := ret.view.GetCurrentNode()
 	nodepath := ret.view.GetPath(node)
 	hidecallin := false
-	if len(nodepath) > 0 {
-		rootnode := nodepath[0]
-		hidecallin = hidecallin || rootnode == node
-	}
-	if len(nodepath) > 1 {
-		callroot := nodepath[1]
-		hidecallin = (hidecallin || callroot == node)
+	hide_define := false
+	if ret.callee_at_root {
+		hidecallin = len(node.GetChildren()) > 0
+		for idx, v := range nodepath {
+			if v == node {
+				hide_define = idx < 3
+				break
+			}
+		}
+	} else {
+		if len(nodepath) > 0 {
+			rootnode := nodepath[0]
+			hidecallin = hidecallin || rootnode == node
+		}
+		if len(nodepath) > 1 {
+			callroot := nodepath[1]
+			hidecallin = (hidecallin || callroot == node)
+		}
 	}
 
 	menuitem := []context_menu_item{
@@ -130,7 +141,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 
 				}
 			}
-		}, hide: hidecallin},
+		}, hide: hide_define},
 		{item: cmditem{cmd: cmdactor{desc: "GotoReference"}}, handle: func() {
 			node := ret.view.GetCurrentNode()
 			value := node.GetReference()
@@ -141,7 +152,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 					main.ActiveTab(view_quickview, false)
 				}
 			}
-		}, hide: hidecallin},
+		}, hide: hide_define},
 		{item: cmditem{cmd: cmdactor{desc: "Call incoming"}}, handle: func() {
 			value := node.GetReference()
 			if value != nil {
