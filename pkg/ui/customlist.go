@@ -44,6 +44,13 @@ func parse_key_string(s string, key string) splitresult {
 	}
 	return splitresult{b: colortext{text: s}}
 }
+func color_maintext(sss []colortext) string {
+	ss := ""
+	for _, s := range sss {
+		ss += s.text
+	}
+	return ss
+}
 func pasrse_bold_color_string(s string) splitresult {
 	b := strings.Index(s, "**")
 	if b >= 0 {
@@ -93,7 +100,7 @@ func (p *colorpaser) Parse() []colortext {
 		before_part = append(before_part, after_part...)
 		return before_part
 	}
-	return []colortext{r3.a}
+	return []colortext{r3.b}
 }
 func pasrse_color_string(s string) splitresult {
 	b := strings.Index(s, "**[")

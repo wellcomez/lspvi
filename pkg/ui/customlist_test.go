@@ -27,7 +27,9 @@ func Test_mainui_Init(t *testing.T) {
 	println(r.b.text, r.m.text, r.a.text)
 	r3 := parse_key_string("ab123cd", "123")
 	log.Println(r3)
-	s := colorpaser{data: "**123** **[123]abc**"}
+	s := colorpaser{data: "**123**a**[123]abc**"}
 	ret := s.Parse()
+	x := color_maintext(ret)
+	log.Println(x)
 	log.Println(ret)
 }
