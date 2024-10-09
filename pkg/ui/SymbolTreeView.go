@@ -344,6 +344,10 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 	symview.view.SetCurrentNode(node)
 }
 
+func expand_node_option(node *tview.TreeNode, expand bool) {
+	node.SetExpanded(!expand)
+	expand_node(node)
+}
 func expand_node(node *tview.TreeNode) {
 	const openmark = " + "
 	if node.IsExpanded() {
@@ -532,6 +536,9 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 					add_memeber_child(sub_member, &memeber)
 				}
 			}
+			if len(v.Members) > 20 {
+				expand_node_option(c, false)
+			}
 		} else {
 			c := tview.NewTreeNode(v.SymbolListStrint())
 			c.SetReference(v.SymInfo)
@@ -553,9 +560,8 @@ func add_memeber_child(parent *tview.TreeNode, sym *lspcore.Symbol) {
 		root_sub.AddChild(c)
 		add_memeber_child(c, &member)
 	}
-	if len(sym.Members)>0{
-		parent.Expand()
-		expand_node(parent)
+	if len(sym.Members) > 0 {
+		expand_node_option(parent, false)
 	}
 }
 
@@ -572,7 +578,8 @@ func add_symbol_node_color(c *lspcore.Symbol, cc *tview.TreeNode) {
 type OutLineView interface {
 	update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file
 }
-func member_is_added(m lspcore.Symbol,class_symbol *lspcore.Symbol)  bool{
+
+func member_is_added(m lspcore.Symbol, class_symbol *lspcore.Symbol) bool {
 	for _, member := range class_symbol.Members {
 		if member.SymInfo.Name == m.SymInfo.Name {
 			return true
@@ -580,12 +587,12 @@ func member_is_added(m lspcore.Symbol,class_symbol *lspcore.Symbol)  bool{
 	}
 	return false
 }
-func find_in_outline(outline []*lspcore.Symbol,class_symbol *lspcore.Symbol)  bool{
+func find_in_outline(outline []*lspcore.Symbol, class_symbol *lspcore.Symbol) bool {
 	for _, cls := range outline {
-		if cls.SymInfo.Location.Range.Overlaps(class_symbol.SymInfo.Location.Range){
+		if cls.SymInfo.Location.Range.Overlaps(class_symbol.SymInfo.Location.Range) {
 			for _, m := range cls.Members {
-				if m.SymInfo.Location.Range.Overlaps(class_symbol.SymInfo.Location.Range)	{
-					if !member_is_added(m, class_symbol){
+				if m.SymInfo.Location.Range.Overlaps(class_symbol.SymInfo.Location.Range) {
+					if !member_is_added(m, class_symbol) {
 						class_symbol.Members = append(class_symbol.Members, m)
 					}
 				}
@@ -602,7 +609,7 @@ func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol 
 		}
 	}
 	if symbol != nil {
-		if Current!= nil {
+		if Current != nil {
 			merge_ts_to_lsp(symbol, Current)
 		}
 		symboltree.update(symbol)
