@@ -1397,14 +1397,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 			code.tree_sitter = ts
 			code.set_color()
 			if code.main != nil {
-				if len(ts.Outline) > 0 {
-					if ts.DefaultOutline() {
-                          code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-						//code.main.Lspmgr().Current = lsp
-					} else {
-						code.main.OnSymbolistChanged(nil, nil)
-					}
-				}
+				code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
 			}
 		})
 	})

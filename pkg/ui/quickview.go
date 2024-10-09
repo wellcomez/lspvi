@@ -598,7 +598,6 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	// panic("unimplemented")
 	qk.view.Clear()
 
-	m := qk.main
 
 	var Refs []ref_with_caller
 	switch t {
@@ -607,7 +606,7 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 			Refs = append(Refs, ref_with_caller{Loc: v})
 		}
 	case data_refs:
-		Refs = get_loc_caller(qk.main, refs, m.current_editor().LspSymbol())
+		Refs = get_loc_caller(qk.main, refs, key.Symbol())
 	default:
 		break
 	}

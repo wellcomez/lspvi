@@ -175,7 +175,7 @@ func (sym *Symbol_file) GetImplement(ranges lsp.Range, option *OpenOption) {
 		}
 		key = body.String()
 	}
-	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key}, loc, err, option)
+	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc, err, option)
 }
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if sym.lsp == nil {
@@ -191,7 +191,7 @@ func (sym *Symbol_file) Reference(ranges lsp.Range) {
 		return
 	}
 	key := body.String()
-	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key,sym: sym}, loc)
+	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc)
 }
 func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	if sym.lsp == nil {
