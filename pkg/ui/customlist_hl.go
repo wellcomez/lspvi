@@ -173,8 +173,9 @@ func substring(s string, b, e int) (string, error) {
 func pasrse_color_string(s string) splitresult {
 	b := strings.Index(s, "**[")
 	if b >= 0 {
-		e := strings.Index(s[b:], "]") + b
+		e := strings.Index(s[b:], "]")
 		if e >= 0 {
+			e += b
 			var color tcell.Color
 			if sub, err := substring(s, b+3, e); err == nil {
 				if c, err := strconv.Atoi(sub); err == nil {
