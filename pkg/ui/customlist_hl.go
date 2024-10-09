@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -155,17 +156,34 @@ func (p colorpaser) Parse() []colortext {
 	}
 	return []colortext{r3.b}
 }
+func substring(s string, b, e int) (string, error) {
+	if b < len(s) {
+		if e == -1 {
+			return s[b:], nil
+		}
+		if e < len(s) {
+			return s[b:e], nil
+		}
+	}
+	return s, errors.New("invalid range")
+}
 func pasrse_color_string(s string) splitresult {
 	b := strings.Index(s, "**[")
 	if b >= 0 {
 		e := strings.Index(s, "]")
 		if e >= 0 {
 			var color tcell.Color
-			if c, err := strconv.Atoi(s[b+3 : e]); err == nil {
-				color = tcell.Color(c)
-				if e2 := strings.Index(s[e+1:], "**"); e2 > 0 {
-					x := e + 1
-					return splitresult{b: colortext{text: s[:b]}, m: colortext{text: s[x : x+e2], color: color}, a: colortext{text: s[x+e2+2:]}}
+			if sub, err := substring(s, b+3, e); err == nil {
+				if c, err := strconv.Atoi(sub); err == nil {
+					color = tcell.Color(c)
+					if sub, err := substring(s, e+1, -1); err == nil {
+						if e2 := strings.Index(sub, "**"); e2 > 0 {
+							x := e + 1
+							if sub, err := substring(s, x+e2+2, -1); err == nil {
+								return splitresult{b: colortext{text: s[:b]}, m: colortext{text: s[x : x+e2], color: color}, a: colortext{text: sub}}
+							}
+						}
+					}
 				}
 			}
 		}
