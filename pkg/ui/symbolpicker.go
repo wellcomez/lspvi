@@ -179,7 +179,7 @@ func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 			codeprev: NewCodeView(v.main),
 		},
 	}
-	symbol.update_with_ts(nil, code.LspSymbol())
+	symbol.update_with_ts(code.TreeSitter(), code.LspSymbol())
 	return sym
 }
 
