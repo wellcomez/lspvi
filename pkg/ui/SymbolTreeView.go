@@ -235,6 +235,11 @@ func (m *SymbolTreeView) OnCodeLineChange(x, y int, file string) {
 		m.view.GetRoot().Walk(ss.compare)
 	}
 	if ss.ret != nil {
+		nodes := m.view.GetPath(ss.ret)
+		if len(nodes) > 1 {
+			expand_node_option(
+				nodes[len(nodes)-2], true)
+		}
 		m.view.SetCurrentNode(ss.ret)
 	}
 }
