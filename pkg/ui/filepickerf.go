@@ -392,12 +392,22 @@ func (wk *DirWalk) asyncWalk(task *querytask, root string) {
 	cout := 0
 	t.match_count = len(result.Matches)
 	log.Println(t.match_count, len(wk.hayStack))
-	if len(result.Matches) < 1000 {
-		sort.Slice(result.Matches, func(i, j int) bool {
-			return result.Matches[i].Score < result.Matches[j].Score
+	matched := result.Matches
+	if len(matched) < 1000 {
+		sort.Slice(matched, func(i, j int) bool {
+			return matched[i].Score > matched[j].Score
 		})
+	} else {
+		matched = matched[:1000]
 	}
-	for _, v := range result.Matches {
+	for _, v := range matched {
+		// ss:=""
+		// sort.Slice(v.Positions,func(i, j int) bool {
+		// 	return i < j
+		// })
+		// for _, i := range v.Positions {
+		// 	ss=ss+fmt.Sprintf("%c", v.Key[i])
+		// }
 		task.ret = append(task.ret, file_picker_item{
 			name:      strings.TrimLeft(strings.ReplaceAll(v.Key, root, ""), "/"),
 			path:      v.Key,

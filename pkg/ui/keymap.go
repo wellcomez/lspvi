@@ -25,6 +25,8 @@ const (
 	open_picker_grep_word
 	open_picker_global_search
 	open_picker_ctrlp
+	open_picker_help
+	open_lspvi_configfile
 	goto_first_line
 	goto_last_line
 	goto_to_fileview
@@ -41,10 +43,13 @@ const (
 	zoomout
 	copy_data
 	vi_copy_text
+	vi_del_text
 	vi_undo
 	vi_save
 	vi_copy_line
+	vi_paste_line
 	vi_del_line
+	vi_del_word
 	vi_pageup
 	vi_pagedown
 	copy_path
@@ -68,7 +73,6 @@ const (
 	vi_search_mode
 	vi_line_head
 	vi_line_end
-	open_picker_help
 	handle_ctrl_c
 	handle_ctrl_v
 	cmd_quit
@@ -329,15 +333,29 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.current_editor().copyline(false)
 			return true
 		}}
+	case vi_del_text:
+		return cmdactor{id, "Del", func() bool {
+			m.current_editor().deltext()
+			return true
+		}}
 	case vi_del_line:
 		return cmdactor{id, "Delete", func() bool {
 			m.current_editor().deleteline()
 			return true
 		}}
-
+	case vi_del_word:
+		return cmdactor{id, "Delete word", func() bool {
+			m.current_editor().deleteword()
+			return true
+		}}
 	case vi_copy_line:
 		return cmdactor{id, "Copy", func() bool {
 			m.current_editor().copyline(true)
+			return true
+		}}
+	case vi_paste_line:
+		return cmdactor{id, "Paste line", func() bool {
+			m.current_editor().pasteline(true)
 			return true
 		}}
 	case vi_line_end:
@@ -380,6 +398,11 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}}
 	case handle_ctrl_v:
 		return cmdactor{id, "ctrl-v paste", func() bool {
+			return true
+		}}
+	case open_lspvi_configfile:
+		return cmdactor{id, "lspvi config file", func() bool {
+			m.OpenFileHistory(lspviroot.configfile, nil)
 			return true
 		}}
 	case open_picker_help:
@@ -481,7 +504,10 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, vi_pagedown).tcell_key(tcell.KeyCtrlD),
 		get_cmd_actor(m, vi_pageup).tcell_key(tcell.KeyCtrlU),
 		get_cmd_actor(m, vi_copy_text).esc_key(split("y")),
+		get_cmd_actor(m, vi_paste_line).esc_key(split("p")),
+		get_cmd_actor(m, vi_del_text).esc_key(split("d")),
 		get_cmd_actor(m, vi_del_line).esc_key(split("dd")),
+		get_cmd_actor(m, vi_del_word).esc_key(split("dw")),
 		get_cmd_actor(m, vi_undo).esc_key(split("u")),
 		get_cmd_actor(main, goto_define).esc_key(split(key_goto_define)),
 		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),
@@ -509,6 +535,7 @@ func (m *mainui) key_map_space_menu() []cmditem {
 		get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
 		get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
 		get_cmd_actor(m, open_picker_wkq).menu_key(split(key_workspace_symbol_query)),
+		get_cmd_actor(m, open_lspvi_configfile).menu_key(split("")),
 		get_cmd_actor(m, cmd_quit).menu_key(split("Q")),
 	}
 }

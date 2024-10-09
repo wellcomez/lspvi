@@ -79,7 +79,7 @@ type ts_lang_def struct {
 	filedetect      lsplang
 	tslang          *sitter.Language
 	def_ext         []string
-	parser          func(*TreeSitter)
+	parser          func(*TreeSitter, outlinecb)
 	hl              *sitter.Query
 	local           *sitter.Query
 	outline         *sitter.Query
@@ -168,7 +168,7 @@ func (s *ts_lang_def) set_default_outline() *ts_lang_def {
 	s.default_outline = true
 	return s
 }
-func (s *ts_lang_def) setparser(parser func(*TreeSitter)) *ts_lang_def {
+func (s *ts_lang_def) setparser(parser func(*TreeSitter, outlinecb)) *ts_lang_def {
 	s.parser = parser
 	return s
 }
@@ -257,7 +257,7 @@ func ts_to_symbol(s TreeSitterSymbol, ts *TreeSitter) lsp.SymbolInformation {
 	}
 	return ss
 }
-func java_outline(ts *TreeSitter) {
+func java_outline(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {
 		return
 	}
@@ -286,7 +286,6 @@ func java_outline(ts *TreeSitter) {
 				switch item.SymbolName {
 				case "definition.method", "definition.class", "definition.interface":
 					{
-						code = item.PositionInfo()
 						c := ts_to_symbol(item, ts)
 						switch item.Symbol {
 						case "interface_declaration":
@@ -338,7 +337,10 @@ func java_outline(ts *TreeSitter) {
 	s.build_class_symbol(document_symbol, 0, nil)
 	ts.Outline = s.Class_object
 }
-func rs_outline(ts *TreeSitter) {
+
+type outlinecb func([]*lsp.SymbolInformation) []*lsp.SymbolInformation
+
+func rs_outline(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {
 		return
 	}
@@ -377,7 +379,7 @@ func rs_outline(ts *TreeSitter) {
 							c.Kind = lsp.SymbolKindField
 						case "enum_specifier":
 							c.Kind = lsp.SymbolKindEnum
-						case "method_declaration":
+						case "method_elem", "method_declaration":
 							c.Kind = lsp.SymbolKindMethod
 						case "struct_specifier":
 							c.Kind = lsp.SymbolKindStruct
@@ -428,6 +430,9 @@ func rs_outline(ts *TreeSitter) {
 	}
 	var s = Symbol_file{lsp: lsp_base{core: &lspcore{lang: lsp_dummy{}}}}
 	document_symbol := []lsp.SymbolInformation{}
+	if cb != nil {
+		items = cb(items)
+	}
 	for _, v := range items {
 		document_symbol = append(document_symbol, *v)
 	}
@@ -440,13 +445,13 @@ func foreach_check(items []*lsp.SymbolInformation, Range lsp.Range, item *TreeSi
 	for i := range items {
 		v := items[i]
 		r := v.Location.Range
-		if Range.Start.In(r) && Range.End.In(r) {
+		if Range.Overlaps(r) {
 			if matched == nil {
 				matched = v
 			} else {
 				prev_range := matched.Location.Range
 				new_range := v.Location.Range
-				if new_range.Start.In(prev_range) && new_range.End.In(prev_range) {
+				if new_range.Overlaps(prev_range) {
 					matched = v
 				}
 			}
@@ -457,7 +462,7 @@ func foreach_check(items []*lsp.SymbolInformation, Range lsp.Range, item *TreeSi
 	}
 	check(matched, item)
 }
-func bash_parser(ts *TreeSitter) {
+func bash_parser(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {
 		return
 	}
@@ -485,7 +490,37 @@ func bash_parser(ts *TreeSitter) {
 var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("lua", lsp_dummy{}, ts_lua.GetLanguage()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
-	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(rs_outline),
+	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
+		rs_outline(ts, func(si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
+			items := si
+			sort.Slice(items, func(i, j int) bool {
+				return items[i].Location.Range.Start.Line < items[j].Location.Range.Start.Line
+			})
+			ret := []*lsp.SymbolInformation{}
+			for _, newone := range items {
+				var find *lsp.SymbolInformation
+				for _, prev := range ret {
+					if newone.Location.Range.Overlaps(prev.Location.Range) {
+						if find == nil {
+							find = prev
+						} else {
+							if prev.Location.Range.Overlaps(find.Location.Range) {
+								find = prev
+							}
+						}
+					}
+				}
+				if find == nil {
+					ret = append(ret, newone)
+				} else {
+					find.Kind = lsp.SymbolKindInterface
+					newone.Kind = lsp.SymbolKindField
+					ret = append(ret, newone)
+				}
+			}
+			return ret
+		})
+	}),
 	new_tsdef("proto", lsp_dummy{}, ts_protobuf.GetLanguage()).set_ext([]string{"proto"}).setparser(rs_outline),
 	new_tsdef("css", lsp_dummy{}, ts_css.GetLanguage()).set_ext([]string{"css"}).setparser(rs_outline),
 	new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),
@@ -493,7 +528,29 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("toml", lsp_dummy{}, ts_toml.GetLanguage()).set_ext([]string{"toml"}).setparser(rs_outline),
 	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(java_outline),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
-	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(rs_outline).set_default_outline(),
+	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(func(ts *TreeSitter, o outlinecb) {
+		rs_outline(ts, func(si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
+			if len(si) > 0 {
+				if content, err := os.ReadFile(si[0].Location.URI.AsPath().String()); err == nil {
+					lines := strings.Split(string(content), "\n")
+					ret := si
+					for _, v := range ret {
+						if is_class(v.Kind) {
+							line := lines[v.Location.Range.Start.Line]
+							if strings.Index(line, "interface") > 0 {
+								v.Kind = lsp.SymbolKindInterface
+							}else if strings.Index(line, "struct") > 0 {
+								v.Kind = lsp.SymbolKindStruct
+							}
+							continue
+						}
+					}
+					return ret
+				}
+			}
+			return si
+		})
+	}).set_default_outline(),
 	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}).setparser(rs_outline),
 	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()).setparser(rs_outline),
 	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()).setparser(rs_outline),
@@ -687,7 +744,7 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 
 func (ts *TreeSitter) callback_to_ui(cb func(*TreeSitter)) {
 	if ts.tsdef.parser != nil {
-		ts.tsdef.parser(ts)
+		ts.tsdef.parser(ts, nil)
 	}
 	if cb != nil {
 		cb(ts)
@@ -794,7 +851,7 @@ func (s TreeSitterSymbol) PositionInfo() string {
 
 func newFunction(scopes []TreeSitterSymbol, Range lsp.Range, add bool) bool {
 	for _, v := range scopes {
-		if Range.Start.AfterOrEq(v.lsprange().Start) && Range.End.BeforeOrEq(v.lsprange().End) {
+		if Range.Overlaps(v.lsprange()) {
 			// if v.Symbol == "method_declaration" || v.Symbol == "function_definition" {
 			// 	add = false
 			// }

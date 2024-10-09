@@ -332,7 +332,7 @@ func (m *mainui) get_focus_view_id() view_id {
 	return focus_viewid(m)
 }
 func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
-	m.lspmgr.Current.Async_resolve_stacksymbol(call_in_task, func() {
+	call_in_task.SymbolFile().Async_resolve_stacksymbol(call_in_task, func() {
 		m.app.QueueUpdate(func() {
 			m.callinview.updatetask(call_in_task)
 			m.app.ForceDraw()
@@ -491,12 +491,7 @@ func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	if err != nil {
 		m.logerr(err)
 	}
-	m.symboltree.update(file)
-	if file == nil || !file.HasLsp() {
-		if code.tree_sitter != nil {
-			m.symboltree.upate_with_ts(code.tree_sitter)
-		}
-	}
+	m.symboltree.update_with_ts(code.tree_sitter, file)
 }
 
 func (m *mainui) logerr(err error) {

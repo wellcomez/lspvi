@@ -130,7 +130,7 @@ type refpicker struct {
 }
 
 // OnGetImplement implements lspcore.lsp_data_changed.
-func (pk refpicker) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.ImplementationResult, err error,option *lspcore.OpenOption) {
+func (pk refpicker) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.ImplementationResult, err error, option *lspcore.OpenOption) {
 	panic("unimplemented")
 }
 
@@ -171,10 +171,15 @@ func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
 	if caller == nil {
 		return ""
 	}
-	callerstr := fmt.Sprintf("%s:%d **%-20s**",
+	caller_color := global_theme.search_highlight_color()
+	if c, err := global_theme.get_lsp_color(lsp.SymbolKindFunction); err == nil {
+		f, _, _ := c.Decompose()
+		caller_color = f
+	}
+	callerstr := fmt.Sprintf("%s:%d %-20s",
 		trim_project_filename(
 			caller.Item.URI.AsPath().String(), root),
-		caller.Item.Range.Start.Line+1, caller.Name)
+		caller.Item.Range.Start.Line+1, fmt_color_string(caller.Name, caller_color))
 	return callerstr
 }
 
@@ -215,8 +220,7 @@ type ref_with_caller struct {
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
 	pk.impl.listview.Clear()
 	listview := pk.impl.listview
-	lsp := pk.impl.parent.main.Lspmgr().Current
-	pk.impl.refs = get_loc_caller(pk.impl.parent.main, file, lsp)
+	pk.impl.refs = get_loc_caller(pk.impl.parent.main, file, key.Symbol())
 	for i := range pk.impl.refs {
 		caller := pk.impl.refs[i]
 		v := caller.Loc
@@ -230,9 +234,9 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 		if len(line) == 0 {
 			continue
 		}
-		gap := 40
-		begin := max(0, v.Range.Start.Character-gap)
-		end := min(len(line), v.Range.Start.Character+gap)
+		// gap := 40
+		// begin := max(0, v.Range.Start.Character-gap)
+		// end := min(len(line), v.Range.Start.Character+gap)
 		path := trim_project_filename(v.URI.AsPath().String(), global_prj_root)
 		callinfo := ""
 		if caller.Caller != nil {
@@ -247,7 +251,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 		}
 		pk.impl.listdata = append(pk.impl.listdata, r)
 		impl := pk.impl
-		listview.AddItem(secondline, line[begin:end], 0, func() {
+		listview.AddItem(secondline, line, 0, func() {
 			impl.open_location(v)
 		})
 	}

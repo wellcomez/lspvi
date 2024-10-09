@@ -493,7 +493,7 @@ func highlight_search_key(old_query string, view *customlist, new_query string) 
 	sss := [][2]string{}
 	ptn := ""
 	if old_query != "" {
-		ptn = fmt.Sprintf("**%s**", old_query)
+		ptn = fmt_bold_string(old_query)
 	}
 	for i := 0; i < view.GetItemCount(); i++ {
 		m, s := view.GetItemText(i)
@@ -505,7 +505,7 @@ func highlight_search_key(old_query string, view *customlist, new_query string) 
 	}
 	if len(new_query) > 0 {
 		if new_query != "" {
-			ptn = fmt.Sprintf("**%s**", new_query)
+			ptn = fmt_bold_string(new_query)
 		}
 		for i := range sss {
 			v := &sss[i]
@@ -598,8 +598,6 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	// panic("unimplemented")
 	qk.view.Clear()
 
-	m := qk.main
-
 	var Refs []ref_with_caller
 	switch t {
 	case data_implementation:
@@ -607,7 +605,7 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 			Refs = append(Refs, ref_with_caller{Loc: v})
 		}
 	case data_refs:
-		Refs = get_loc_caller(qk.main, refs, m.Lspmgr().Current)
+		Refs = get_loc_caller(qk.main, refs, key.Symbol())
 	default:
 		break
 	}
@@ -632,7 +630,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
 	// _, _, width, _ := qk.view.GetRect()
 	// caller.width = width
-	secondline := caller.ListItem(global_prj_root, true)
+	secondline := caller.ListItem(global_prj_root, false)
 	if len(secondline) == 0 {
 		return
 	}
@@ -682,7 +680,9 @@ func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 			s.children = append(s.children, list_tree_node{ref_index: i})
 			group[x] = s
 		} else {
-			group[x] = list_tree_node{ref_index: i, parent: true, expand: true}
+			s := list_tree_node{ref_index: i, parent: true, expand: true}
+			s.children = append(s.children, list_tree_node{ref_index: i})
+			group[x] = s
 		}
 	}
 	trees := []list_tree_node{}
@@ -727,20 +727,21 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 			caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
 		}
 	}
-	secondline := caller.ListItem(root, parent)
+	color := tview.Styles.BorderColor
+	list_text := caller.ListItem(root, parent)
 	if parent {
-		tree.text = fmt.Sprintf("%3d. %s", lineno, secondline)
+		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
 		if len(tree.children) > 0 {
 			if !tree.expand {
-				tree.text = "+" + tree.text
+				tree.text = fmt_color_string(fmt.Sprintf("%c", IconCollapse), color) + tree.text
 			} else {
-				tree.text = " " + tree.text
+				tree.text = fmt_color_string(fmt.Sprintf("%c", IconExpaned), color) + tree.text
 			}
 		} else {
 			tree.text = " " + tree.text
 		}
 	} else {
-		tree.text = fmt.Sprintf("     %s", secondline)
+		tree.text = fmt.Sprintf(" %s", list_text)
 	}
 }
 func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
@@ -765,15 +766,14 @@ func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace)
 }
 
 type list_tree_node struct {
-	ref_index  int
-	list_index int
-	expand     bool
-	parent     bool
-	children   []list_tree_node
-	text       string
+	ref_index int
+	expand    bool
+	parent    bool
+	children  []list_tree_node
+	text      string
 }
 
-func (caller ref_with_caller) ListItem(root string, full bool) string {
+func (caller ref_with_caller) ListItem(root string, parent bool) string {
 	v := caller.Loc
 
 	line := ""
@@ -784,7 +784,13 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 
 	source_file_path := v.URI.AsPath().String()
 	data, err := os.ReadFile(source_file_path)
-
+	funcolor := global_theme.search_highlight_color()
+	caller_color := funcolor
+	if c, err := global_theme.get_lsp_color(lsp.SymbolKindFunction); err == nil {
+		f, _, _ := c.Decompose()
+		caller_color = f
+	}
+	icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.CompletionItemKindFunction)])
 	if err != nil {
 		line = err.Error()
 	} else {
@@ -804,7 +810,7 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 					if len(a2) > 0 && a2[0] == '*' {
 						a2 = " " + a2
 					}
-					line = strings.Join([]string{a1, "**", a, "**", a2}, "")
+					line = strings.Join([]string{a1, fmt_color_string(a, funcolor), a2}, "")
 				}
 			}
 		} else {
@@ -816,16 +822,18 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 		callname := caller.Caller.Name
 		callname = strings.TrimLeft(callname, " ")
 		callname = strings.TrimRight(callname, " ")
-		if full {
-			return fmt.Sprintf("%s:%-4d **%s** %s", path, v.Range.Start.Line+1, callname, line)
+		callname = icon + callname
+		if parent {
+			return path
 		} else {
-			return fmt.Sprintf("	:%-4d **%s** %s", v.Range.Start.Line+1, callname, line)
+			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
 		}
 	} else {
-		if full {
-			return fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
+		if parent {
+			return path
+			// return fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
 		} else {
-			return fmt.Sprintf("	:%-4d %s", v.Range.Start.Line+1, line)
+			return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, strings.TrimLeft(line, "\t "))
 		}
 	}
 }

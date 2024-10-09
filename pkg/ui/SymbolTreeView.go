@@ -41,11 +41,11 @@ func GetClosestSymbol(symfile *lspcore.Symbol_file, rand lsp.Range) *lspcore.Sym
 	var ret *lspcore.Symbol
 	syms := symfile.Class_object
 	for i := range syms {
-		v:=syms[i]
+		v := syms[i]
 		var find *lspcore.Symbol
 		if len(v.Members) > 0 {
 			for i := range v.Members {
-				m:= &v.Members[i]
+				m := &v.Members[i]
 				if is_symbol_inside(m, rand) {
 					find = m
 				}
@@ -70,9 +70,7 @@ func GetClosestSymbol(symfile *lspcore.Symbol_file, rand lsp.Range) *lspcore.Sym
 }
 
 func is_symbol_inside(m *lspcore.Symbol, r lsp.Range) bool {
-	yes := m.SymInfo.Location.Range.Start.BeforeOrEq(r.Start)
-	yes = m.SymInfo.Location.Range.End.AfterOrEq(r.End) && yes
-	return yes
+	return r.Overlaps(m.SymInfo.Location.Range)
 }
 
 type SymbolTreeView struct {
@@ -237,6 +235,11 @@ func (m *SymbolTreeView) OnCodeLineChange(x, y int, file string) {
 		m.view.GetRoot().Walk(ss.compare)
 	}
 	if ss.ret != nil {
+		nodes := m.view.GetPath(ss.ret)
+		if len(nodes) > 1 {
+			expand_node_option(
+				nodes[len(nodes)-2], true)
+		}
 		m.view.SetCurrentNode(ss.ret)
 	}
 }
@@ -301,22 +304,7 @@ func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	return ret
 }
 func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
-	const openmark = " + "
-	if node.IsExpanded() {
-		if len(node.GetChildren()) > 0 {
-			s := node.GetText()
-			if !strings.HasSuffix(s, openmark) {
-				node.SetText(s + openmark)
-			}
-		}
-		node.Collapse()
-	} else {
-		node.Expand()
-		s := node.GetText()
-		if strings.HasSuffix(s, openmark) {
-			node.SetText(strings.TrimSuffix(s, openmark))
-		}
-	}
+	expand_node(node)
 	value := node.GetReference()
 	if value != nil {
 
@@ -326,6 +314,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 			if err == nil {
 				var beginline = Range.Start.Line
 				for i, v := range body.Subline {
+					v = strings.TrimLeft(v, "\t")
 					idx := strings.Index(v, sym.Name)
 					if i == 0 {
 						idx = Range.Start.Character + idx
@@ -359,6 +348,29 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 		}
 	}
 	symview.view.SetCurrentNode(node)
+}
+
+func expand_node_option(node *tview.TreeNode, expand bool) {
+	node.SetExpanded(!expand)
+	expand_node(node)
+}
+func expand_node(node *tview.TreeNode) {
+	const openmark = " + "
+	if node.IsExpanded() {
+		if len(node.GetChildren()) > 0 {
+			s := node.GetText()
+			if !strings.HasSuffix(s, openmark) {
+				node.SetText(s + openmark)
+			}
+		}
+		node.Collapse()
+	} else {
+		node.Expand()
+		s := node.GetText()
+		if strings.HasSuffix(s, openmark) {
+			node.SetText(strings.TrimSuffix(s, openmark))
+		}
+	}
 }
 func (c *SymbolTreeView) handle_commnad(cmd command_id) {
 	cur := c.view.GetCurrentNode()
@@ -513,45 +525,112 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 	name := filepath.Base(file.Filename)
 	root_node := tview.NewTreeNode(name)
 	root_node.SetReference("1")
-	query := global_theme
+	// query := global_theme
 	for _, v := range file.Class_object {
 		if v.Is_class() {
 			c := tview.NewTreeNode(v.SymbolListStrint())
-			add_symbol_node_color(query, v, c)
+			add_symbol_node_color(v, c)
 			root_node.AddChild(c)
 			c.SetReference(v.SymInfo)
 			if len(v.Members) > 0 {
 				childnode := c
-				for _, c := range v.Members {
-					cc := tview.NewTreeNode(c.SymbolListStrint())
-					add_symbol_node_color(query, &c, cc)
-					cc.SetReference(c.SymInfo)
-					childnode.AddChild(cc)
+				for _, memeber := range v.Members {
+					sub_member := tview.NewTreeNode(memeber.SymbolListStrint())
+					add_symbol_node_color(&memeber, sub_member)
+					sub_member.SetReference(memeber.SymInfo)
+					childnode.AddChild(sub_member)
+					add_memeber_child(sub_member, &memeber)
 				}
+			}
+			if len(v.Members) > 20 {
+				expand_node_option(c, false)
 			}
 		} else {
 			c := tview.NewTreeNode(v.SymbolListStrint())
 			c.SetReference(v.SymInfo)
-			add_symbol_node_color(query, v, c)
+			add_symbol_node_color(v, c)
 			root_node.AddChild(c)
+			add_memeber_child(c, v)
 		}
 	}
 	v.view.SetRoot(root_node)
 	v.editor.update_with_line_changed()
 }
 
-func add_symbol_node_color(query *symbol_colortheme, c *lspcore.Symbol, cc *tview.TreeNode) {
+func add_memeber_child(parent *tview.TreeNode, sym *lspcore.Symbol) {
+	root_sub := parent
+	for _, member := range sym.Members {
+		c := tview.NewTreeNode(member.SymbolListStrint())
+		c.SetReference(member.SymInfo)
+		add_symbol_node_color(&member, c)
+		root_sub.AddChild(c)
+		add_memeber_child(c, &member)
+	}
+	if len(sym.Members) > 0 {
+		expand_node_option(parent, false)
+	}
+}
+
+func add_symbol_node_color(c *lspcore.Symbol, cc *tview.TreeNode) {
+	query := global_theme
 	if query != nil {
-		if style, err := query.get_color_style(c.SymInfo.Kind); err == nil {
+		if style, err := query.get_lsp_color(c.SymInfo.Kind); err == nil {
 			fg, _, _ := style.Decompose()
 			cc.SetColor(fg)
 		}
 	}
 }
-func (symboltree *SymbolTreeView) upate_with_ts(ts *lspcore.TreeSitter) *lspcore.Symbol_file {
-	Current := &lspcore.Symbol_file{
-		Class_object: ts.Outline,
+
+type OutLineView interface {
+	update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file
+}
+
+func member_is_added(m lspcore.Symbol, class_symbol *lspcore.Symbol) bool {
+	for _, member := range class_symbol.Members {
+		if member.SymInfo.Name == m.SymInfo.Name {
+			return true
+		}
 	}
-	symboltree.update(Current)
-	return Current
+	return false
+}
+func find_in_outline(outline []*lspcore.Symbol, class_symbol *lspcore.Symbol) bool {
+	for _, cls := range outline {
+		if cls.SymInfo.Location.Range.Overlaps(class_symbol.SymInfo.Location.Range) {
+			for _, m := range cls.Members {
+				if m.SymInfo.Location.Range.Overlaps(class_symbol.SymInfo.Location.Range) {
+					if !member_is_added(m, class_symbol) {
+						class_symbol.Members = append(class_symbol.Members, m)
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file {
+	var Current *lspcore.Symbol_file
+	if ts != nil {
+		Current = &lspcore.Symbol_file{
+			Class_object: ts.Outline,
+		}
+	}
+	if symbol != nil {
+		if Current != nil {
+			merge_ts_to_lsp(symbol, Current)
+		}
+		symboltree.update(symbol)
+		return symbol
+	} else if Current != nil {
+		symboltree.update(Current)
+		return Current
+	}
+	return nil
+}
+
+func merge_ts_to_lsp(symbol *lspcore.Symbol_file, Current *lspcore.Symbol_file) {
+	for _, v := range symbol.Class_object {
+		if v.Is_class() {
+			find_in_outline(Current.Class_object, v)
+		}
+	}
 }

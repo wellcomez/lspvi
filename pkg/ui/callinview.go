@@ -36,10 +36,10 @@ func (menu callin_view_context) menuitem() []context_menu_item {
 
 type CallNode struct {
 	call      lspcore.CallInTask
-	DeltedUID []int
+	DeltedUID []int64
 }
 
-func (node *CallNode) Ignore(uid int) bool {
+func (node *CallNode) Ignore(uid int64) bool {
 	for _, v := range node.DeltedUID {
 		if v == uid {
 			return true
@@ -70,7 +70,7 @@ const (
 type dom_node struct {
 	call      lsp.CallHierarchyItem
 	fromrange *lsp.Location
-	id        int
+	id        int64
 	state     dom_click_state
 	root      bool
 }
@@ -249,6 +249,7 @@ func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main Ma
 					return err
 				}
 				calls := []lsp.CallHierarchyIncomingCall{}
+				rename:=lspcore.NewRenameRecord()
 				// call_hiera_0 := call_hiera[0]
 				for _, v := range call_hiera {
 					if v.URI == top.Item.URI {
@@ -273,7 +274,7 @@ func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main Ma
 									}
 									// node := ret.newFunction1(callin_index_in_root, function_index_in_callroot, node_path_index)
 								})
-							}, nil, callroot_task)
+							}, rename, callroot_task)
 							break
 						}
 					}
@@ -362,6 +363,7 @@ func (ret *callinview) get_next_callin_callee_at_leaf(value interface{}, main Ma
 					return err
 				}
 				calls := []lsp.CallHierarchyIncomingCall{}
+				rename:=lspcore.NewRenameRecord()
 				// call_hiera_0 := call_hiera[0]
 				for _, v := range call_hiera {
 					if v.URI == top.Item.URI {
@@ -378,7 +380,7 @@ func (ret *callinview) get_next_callin_callee_at_leaf(value interface{}, main Ma
 								go ret.main.App().QueueUpdateDraw(func() {
 									ret.updatetask(callroot_task)
 								})
-							}, nil, callroot_task)
+							}, rename, callroot_task)
 							break
 						}
 					}
@@ -587,20 +589,21 @@ func ExpandNode(node *tview.TreeNode) {
 	ExpandNodeOption(node, text, yes)
 }
 
+var IconCollapse = '▶'
+var IconExpaned = '▼'
+
 func ExpandNodeOption(node *tview.TreeNode, text string, expand bool) {
-	Collapse := "▶"
-	Expaned := "▼"
-	text = strings.TrimLeft(text, strings.Join([]string{Collapse, Expaned, "+", " "}, ""))
+	text = strings.TrimLeft(text, strings.Join([]string{fmt.Sprintf("%c", IconCollapse), fmt.Sprintf("%c", IconExpaned), "+", " "}, ""))
 	node.SetText(text)
 	if expand {
 		if len(node.GetChildren()) > 0 {
 			node.Expand()
-			node.SetText(Expaned + " " + text)
+			node.SetText(fmt.Sprintf("%c",IconExpaned) + " " + text)
 		}
 	} else {
 		node.Collapse()
 		if len(node.GetChildren()) > 0 {
-			node.SetText(Collapse + " " + text)
+			node.SetText(fmt.Sprintf("%c",IconCollapse) + " " + text)
 		}
 	}
 }
@@ -628,7 +631,7 @@ func (view *callinview) update_node_color() {
 		return true
 	})
 }
-func NewRootNode(call lsp.CallHierarchyItem, fromrange *lsp.Location, root bool, id int) dom_node {
+func NewRootNode(call lsp.CallHierarchyItem, fromrange *lsp.Location, root bool, id int64) dom_node {
 	return dom_node{
 		call:      call,
 		fromrange: fromrange,
@@ -645,12 +648,12 @@ func (callin *callinview) updatetask(task *lspcore.CallInTask) {
 	for i, v := range callin.task_list {
 		if v.call.UID == task.UID {
 			found = true
-			callin.task_list[i] = CallNode{*task, []int{}}
+			callin.task_list[i] = CallNode{*task, []int64{}}
 			break
 		}
 	}
 	if !found {
-		callin.task_list = append(callin.task_list, CallNode{*task, []int{}})
+		callin.task_list = append(callin.task_list, CallNode{*task, []int64{}})
 		qf_index_view_update(view_callin)
 	}
 	root_node := tview.NewTreeNode(
@@ -816,7 +819,7 @@ func (callin *callinview) add_call_node(c *lspcore.CallStackEntry, i int, stack 
 
 func new_callnode_ref(i int, stack *lspcore.CallStack, c *lspcore.CallStackEntry, indx int) dom_node {
 	r := get_reference_range(i, stack)
-	ref := NewRootNode(c.Item, r, false, stack.UID*100+indx)
+	ref := NewRootNode(c.Item, r, false, stack.UID*100+int64(indx))
 	return ref
 }
 

@@ -104,10 +104,10 @@ func (tab *TabItem) Draw(screen tcell.Screen, x, y int, style, hl tcell.Style, p
 	return x
 }
 func (tab *TabItem) draw_btn_mode(screen tcell.Screen, x, y int, style, hl tcell.Style, prevactive bool) int {
-	if !tab.first {
-		screen.SetContent(x, y, ' ', nil, style)
-		x++
-	}
+	// if !tab.first {
+	screen.SetContent(x, y, ' ', nil, style)
+	x++
+	// }
 	s := style
 	if tab.active {
 		s = hl

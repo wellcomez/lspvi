@@ -21,6 +21,7 @@ type Symbol_file struct {
 	Wk           *LspWorkspace
 	tokens       *lsp.SemanticTokens
 }
+
 func (sym Symbol_file) LspClient() lspclient {
 	return sym.lsp
 }
@@ -48,7 +49,7 @@ func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
 
 func (*Symbol_file) newMethod(v *Symbol, rang lsp.Range) *Symbol {
 	if v.SymInfo.Kind == lsp.SymbolKindFunction || v.SymInfo.Kind == lsp.SymbolKindMethod {
-		if rang.Start.Line > v.SymInfo.Location.Range.Start.Line && rang.End.Line <= v.SymInfo.Location.Range.End.Line {
+		if rang.Overlaps(v.SymInfo.Location.Range) {
 			return v
 		}
 	}
@@ -90,19 +91,43 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 			SymInfo: v,
 		}
 		if is_class(v.Kind) {
-			var found = false
-			for _, c := range sym.Class_object {
-				if s.SymInfo.Name == c.SymInfo.Name {
-					i = sym.build_class_symbol(symbols, i+1, &s)
-					c.Members = append(c.Members, s.Members...)
-					found = true
-					break
+			inparent := false
+			if parent != nil {
+				if !parent.contain(s) {
+					return i
+				} else {
+					inparent = true
 				}
 			}
-			if !found {
-				sym.Class_object = append(sym.Class_object, &s)
-				i = sym.build_class_symbol(symbols, i+1, &s)
+			if !inparent {
+				var found = false
+				for _, c := range sym.Class_object {
+					if s.SymInfo.Name == c.SymInfo.Name {
+						i = sym.build_class_symbol(symbols, i+1, &s)
+						c.Members = append(c.Members, s.Members...)
+						found = true
+						break
+					}
+				}
+				if !found {
+					sym.Class_object = append(sym.Class_object, &s)
+					if i+1 < len(symbols) {
+						next := symbols[i]
+						if next.Location.Range.Overlaps(s.SymInfo.Location.Range) {
+							i = sym.build_class_symbol(symbols, i+1, &s)
+						}
+					}
+				}
+			} else {
+				if i+1 < len(symbols) {
+					next := symbols[i]
+					if next.Location.Range.Overlaps(s.SymInfo.Location.Range) {
+						i = sym.build_class_symbol(symbols, i+1, &s)
+					}
+				}
+				parent.Members = append(parent.Members, s)
 			}
+
 			continue
 		}
 		if parent != nil {
@@ -150,7 +175,7 @@ func (sym *Symbol_file) GetImplement(ranges lsp.Range, option *OpenOption) {
 		}
 		key = body.String()
 	}
-	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key}, loc, err, option)
+	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc, err, option)
 }
 func (sym *Symbol_file) Reference(ranges lsp.Range) {
 	if sym.lsp == nil {
@@ -166,7 +191,7 @@ func (sym *Symbol_file) Reference(ranges lsp.Range) {
 		return
 	}
 	key := body.String()
-	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key}, loc)
+	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc)
 }
 func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	if sym.lsp == nil {
@@ -259,20 +284,26 @@ func (sym *Symbol_file) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierar
 }
 func (sym *Symbol_file) CallinTask(loc lsp.Location, level int) (*CallInTask, error) {
 	task := NewCallInTask(loc, sym.lsp, level)
+	task.sym = sym
 	task.Run()
 	sym.Handle.OnLspCallTaskInViewChanged(task)
 	return task, nil
 }
 
-type rename_record struct {
+type Rename_record struct {
 	rename map[string]int
 }
 
+func NewRenameRecord() *Rename_record {
+	return &Rename_record{
+		rename: make(map[string]int),
+	}
+}
 func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func()) {
 	export_root, _ := NewExportRoot(&sym.Wk.Wk)
 	dir_to_remvoe := filepath.Join(export_root.Dir, task.Dir())
 	os.RemoveAll(dir_to_remvoe)
-	rename := rename_record{rename: make(map[string]int)}
+	rename := Rename_record{rename: make(map[string]int)}
 	for _, s := range task.Allstack {
 		// for i := range s.Items {
 		// 	index := len(s.Items)
@@ -288,7 +319,11 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 	task.Save(export_root.Dir)
 }
 
-func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *rename_record, task *CallInTask) {
+func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_record, task *CallInTask) {
+	os.Remove(s.MdName)
+	os.Remove(s.UmlPngName)
+	os.Remove(s.UtxtName)
+	os.Remove(s.UmlName)
 	var xx = class_resolve_task{
 		wklsp:     sym.Wk,
 		callstack: s,
@@ -300,7 +335,7 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *rename_reco
 		name := "callin"
 		if len(s.Items) > 0 {
 			if rename != nil {
-				name = s.Items[0].Name
+				name = s.Items[0].DirName()
 				if d, ok := rename.rename[name]; ok {
 					rename.rename[name] = d + 1
 					name = fmt.Sprintf("%d_%s", d, name)
@@ -312,11 +347,14 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *rename_reco
 		}
 		if binerr == nil && export_err == nil && len(name) > 0 {
 			content := s.Uml(true)
-			export_root.SaveMD(task.Dir(), name, content)
+			if name, err := export_root.SaveMD(task.Dir(), name, content); err == nil {
+				s.MdName = name
+			}
 			content = s.Uml(false)
 			fileuml, err := export_root.SavePlanUml(task.Dir(), name, content)
 			if err == nil {
-				err = bin.Convert(fileuml)
+				s.UmlName = fileuml
+				err, s.UtxtName, s.UmlPngName = bin.Convert(fileuml)
 				if err != nil {
 					log.Println(err)
 				}

@@ -48,17 +48,18 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		}
 		if len(sym.Classname) > 0 {
 			s := style
-			if ss, err := global_theme.get_color_style(lsp.SymbolKindClass); err == nil {
+			if ss, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
 				s = &ss
 			}
 			f, _, _ := s.Decompose()
 			if run, ok := lspcore.IconsRunne[int(lsp.SymbolKindClass)]; ok {
-				screen.SetContent(begin, y, run, nil, textStyle.Foreground(f))
-				begin++
-
-				screen.SetContent(begin, y, ' ', nil, textStyle.Foreground(f))
-				begin++
+				keys := []rune{run, ' '}
+				for _, run := range keys {
+					screen.SetContent(begin, y, run, nil, textStyle.Foreground(f))
+					begin++
+				}
 			}
+
 			for _, v := range sym.Classname {
 				screen.SetContent(begin, y, v, nil, textStyle.Foreground(f))
 				begin++
@@ -71,15 +72,24 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		}
 		if len(sym.SymInfo.Name) > 0 {
 			s := style
-			if ss, err := global_theme.get_color_style(sym.SymInfo.Kind); err == nil {
+			if ss, err := global_theme.get_lsp_color(sym.SymInfo.Kind); err == nil {
 				s = &ss
 			}
 			f, _, _ := s.Decompose()
 			if run, ok := lspcore.IconsRunne[int(sym.SymInfo.Kind)]; ok {
-				screen.SetContent(begin, y, run, nil, textStyle.Foreground(f))
-				begin++
-				screen.SetContent(begin, y, ' ', nil, textStyle.Foreground(f))
-				begin++
+				keys := []rune{run, ' '}
+				for _, run := range keys {
+					screen.SetContent(begin, y, run, nil, textStyle.Foreground(f))
+					begin++
+				}
+			} else {
+				x1 := sym.Icon() + " "
+				if len(x1) > 0 {
+					for _, v := range x1 {
+						screen.SetContent(begin, y, v, nil, textStyle.Foreground(f))
+						begin++
+					}
+				}
 			}
 			for _, v := range sym.SymInfo.Name {
 				screen.SetContent(begin, y, v, nil, textStyle.Foreground(f))

@@ -53,6 +53,8 @@ type CodeEditor interface {
 
 	get_symbol_range(sym lspcore.Symbol) lsp.Range
 	LspSymbol() *lspcore.Symbol_file
+
+	TreeSitter() *lspcore.TreeSitter
 	Match()
 
 	action_key_up()
@@ -65,7 +67,10 @@ type CodeEditor interface {
 
 	Undo()
 	deleteline()
+	deleteword()
 	copyline(bool)
+	pasteline(bool)
+	deltext()
 
 	goto_line_end()
 	goto_line_head()
@@ -215,6 +220,9 @@ type CodeView struct {
 	diff   *Differ
 }
 
+func (c CodeView) TreeSitter() *lspcore.TreeSitter {
+	return c.tree_sitter
+}
 func (code CodeView) Primitive() tview.Primitive {
 	return code.view
 }
@@ -225,7 +233,9 @@ func (code CodeView) LspSymbol() *lspcore.Symbol_file {
 // OnFileChange implements change_reciever.
 func (code *CodeView) OnWatchFileChange(file string) bool {
 	if code.file.SamePath(file) {
-		go code.lspsymbol.DidSave()
+		if sym := code.LspSymbol(); sym != nil {
+			go sym.DidSave()
+		}
 		code.openfile(code.Path(), func() {
 			// go code.on_content_changed()
 		})
@@ -286,10 +296,11 @@ func (code *CodeView) OnFindInfileWordOption(fzf bool, noloop bool, whole bool) 
 		return ""
 	}
 	codetext := code.view
-	word := codetext.Cursor.GetSelection()
+	cursor := *codetext.Cursor
+	word := cursor.GetSelection()
 	if len(word) < 2 {
-		codetext.Cursor.SelectWord()
-		sel := codetext.Cursor.CurSelection
+		cursor.SelectWord()
+		sel := cursor.CurSelection
 		Buf := codetext.Buf
 		if sel[0].Y == sel[1].Y {
 			word = Buf.Line(sel[0].Y)[sel[0].X:sel[1].X]
@@ -565,13 +576,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 				if symboltree.editor != code {
 					symboltree.editor = code
 					symboltree.Clear()
-					if code.lspsymbol == nil || code.lspsymbol.Class_object == nil {
-						if code.tree_sitter != nil {
-							symboltree.upate_with_ts(code.tree_sitter)
-						}
-					} else {
-						symboltree.update(code.lspsymbol)
-					}
+					symboltree.update_with_ts(code.tree_sitter, code.LspSymbol())
 				}
 			}
 
@@ -985,13 +990,32 @@ func (code *CodeView) Undo() {
 	checker.after(code)
 	go code.on_content_changed()
 }
+func (code *CodeView) deleteword() {
+	code.view.DeleteWordRight()
+	go code.on_content_changed()
+}
 func (code *CodeView) deleteline() {
 	checker := new_linechange_checker(code)
 	code.view.CutLine()
 	checker.after(code)
 	go code.on_content_changed()
 }
-
+func (code *CodeView) deltext() {
+	code.view.Delete()
+	go code.on_content_changed()
+}
+func (code *CodeView) pasteline(line bool) {
+	if line {
+		if _, err := clipboard.ReadAll(); err == nil {
+			x := code.view
+			lineno := x.Cursor.Loc.Y
+			x.Buf.LineArray.NewlineBelow(lineno)
+			x.Cursor.Loc = femto.Loc{X: 0, Y: lineno + 1}
+			x.Paste()
+			go code.on_content_changed()
+		}
+	}
+}
 func (code *CodeView) copyline(line bool) {
 	cmd := code.main.CmdLine()
 	if !cmd.Vim.vi.VMap {
@@ -1298,6 +1322,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 		}
 		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
 			code.lspsymbol = sym
+			code.main.OutLineView().update_with_ts(code.tree_sitter, sym)
 			if focus && code.id != view_code_below {
 				if sym == nil {
 					main.OutLineView().Clear()
@@ -1365,8 +1390,8 @@ func (code *CodeView) on_content_changed() {
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
 					if ts.DefaultOutline() {
-						lsp := code.main.OutLineView().upate_with_ts(ts)
-						code.main.Lspmgr().Current = lsp
+						code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+						// code.main.Lspmgr().Current = lsp
 					} else {
 						code.main.OnSymbolistChanged(nil, nil)
 					}
@@ -1385,14 +1410,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 			code.tree_sitter = ts
 			code.set_color()
 			if code.main != nil {
-				if len(ts.Outline) > 0 {
-					if ts.DefaultOutline() {
-						lsp := code.main.OutLineView().upate_with_ts(ts)
-						code.main.Lspmgr().Current = lsp
-					} else {
-						code.main.OnSymbolistChanged(nil, nil)
-					}
-				}
+				code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
 			}
 		})
 	})
@@ -1522,7 +1540,7 @@ func (code *CodeView) goto_location_no_history(loc lsp.Range, update bool, optio
 	if shouldReturn {
 		return
 	}
-	x := 0
+	// x := 0
 	loc.Start.Line = min(code.view.Buf.LinesNum(), loc.Start.Line)
 	loc.End.Line = min(code.view.Buf.LinesNum(), loc.End.Line)
 
@@ -1541,16 +1559,17 @@ func (code *CodeView) goto_location_no_history(loc lsp.Range, update bool, optio
 		}
 	}
 	Cur := code.view.Cursor
-	Cur.SetSelectionStart(femto.Loc{
-		X: loc.Start.Character + x,
+	start := femto.Loc{
+		X: loc.Start.Character,
 		Y: loc.Start.Line,
-	})
+	}
+	Cur.SetSelectionStart(start)
 	end := femto.Loc{
-		X: loc.End.Character + x,
+		X: loc.End.Character,
 		Y: loc.End.Line,
 	}
 	Cur.SetSelectionEnd(end)
-	code.set_loc(end)
+	code.set_loc(start)
 	if update && code.id >= view_code {
 		code.update_with_line_changed()
 	}

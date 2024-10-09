@@ -111,23 +111,24 @@ type Symbol struct {
 }
 
 func inside_location(bigger lsp.Location, smaller lsp.Location) bool {
-	if smaller.Range.Start.Line < bigger.Range.Start.Line {
-		return false
-	}
-	if smaller.Range.Start.Line == bigger.Range.Start.Line {
-		if smaller.Range.Start.Character < bigger.Range.Start.Character {
-			return false
-		}
-	}
-	if smaller.Range.End.Line == bigger.Range.End.Line {
-		if smaller.Range.End.Character > bigger.Range.End.Character {
-			return false
-		}
-	}
-	if smaller.Range.End.Line > bigger.Range.End.Line {
-		return false
-	}
-	return true
+	return smaller.Range.Overlaps(bigger.Range)
+	// if smaller.Range.Start.Line < bigger.Range.Start.Line {
+	// 	return false
+	// }
+	// if smaller.Range.Start.Line == bigger.Range.Start.Line {
+	// 	if smaller.Range.Start.Character < bigger.Range.Start.Character {
+	// 		return false
+	// 	}
+	// }
+	// if smaller.Range.End.Line == bigger.Range.End.Line {
+	// 	if smaller.Range.End.Character > bigger.Range.End.Character {
+	// 		return false
+	// 	}
+	// }
+	// if smaller.Range.End.Line > bigger.Range.End.Line {
+	// 	return false
+	// }
+	// return true
 
 }
 func (S Symbol) match(calr *CallStackEntry) bool {
@@ -177,6 +178,9 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 }
 
 func (s Symbol) Icon() string {
+	if v, ok := IconsRunne[int(s.SymInfo.Kind)]; ok {
+		return fmt.Sprintf("%c", v)
+	}
 	if v, ok := icons[int(s.SymInfo.Kind)]; ok {
 		return v
 	}
@@ -191,31 +195,40 @@ func (sym Symbol) Is_class() bool {
 }
 
 func is_class(kind lsp.SymbolKind) bool {
-	return kind == lsp.SymbolKindClass || kind == lsp.SymbolKindStruct || kind == lsp.SymbolKindInterface
+	switch kind {
+	case lsp.SymbolKindClass, lsp.SymbolKindStruct, lsp.SymbolKindInterface, lsp.SymbolKindEnum:
+		return true
+	}
+	return false
 }
 func is_memeber(kind lsp.SymbolKind) bool {
-	return kind == lsp.SymbolKindMethod || kind == lsp.SymbolKindField || kind == lsp.SymbolKindConstructor
+	switch kind {
+	case lsp.SymbolKindMethod, lsp.SymbolKindField, lsp.SymbolKindConstructor, lsp.SymbolKindEnumMember:
+		return true
+	}
+	return false
 }
 
 func (sym Symbol) contain(a Symbol) bool {
 	return symbol_contain(sym.SymInfo, a.SymInfo)
 }
 func symbol_contain(a lsp.SymbolInformation, b lsp.SymbolInformation) bool {
-	if a.Location.Range.End.Line > b.Location.Range.End.Line {
-		return true
-	}
-	if a.Location.Range.End.Line == b.Location.Range.End.Line {
-		if a.Location.Range.End.Character > b.Location.Range.End.Character {
-			return true
-		}
-	}
-	return false
+	return b.Location.Range.Overlaps(a.Location.Range)
+	// if a.Location.Range.End.Line > b.Location.Range.End.Line {
+	// return true
+	// }
+	// if a.Location.Range.End.Line == b.Location.Range.End.Line {
+	// 	if a.Location.Range.End.Character > b.Location.Range.End.Character {
+	// 		return true
+	// 	}
+	// }
+	// return false
 }
 
 type LspWorkspace struct {
 	clients []lspclient
 	Wk      WorkSpace
-	Current *Symbol_file
+	current *Symbol_file
 	filemap map[string]*Symbol_file
 	Handle  lsp_data_changed
 }
@@ -278,7 +291,7 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 	val, ok := wk.filemap[filename]
 	is_new := false
 	if ok {
-		wk.Current = val
+		wk.current = val
 		return val, is_new, nil
 	}
 	wk.filemap[filename] = &Symbol_file{
@@ -331,7 +344,7 @@ func (wk *LspWorkspace) Get(filename string) (*Symbol_file, error) {
 }
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)
-	wk.Current = wk.filemap[filename]
+	wk.current = wk.filemap[filename]
 	return ret, err
 
 }
@@ -391,7 +404,13 @@ type SymolSearchKey struct {
 	File   string
 	Ranges lsp.Range
 	Key    string
+	sym    *Symbol_file
 }
+
+func (key SymolSearchKey) Symbol() *Symbol_file {
+	return key.sym
+}
+
 type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)

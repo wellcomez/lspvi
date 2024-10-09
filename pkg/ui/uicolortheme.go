@@ -24,7 +24,7 @@ type symbol_colortheme struct {
 	name        string
 }
 
-func (mgr symbol_colortheme) get_color_style(kind lsp.SymbolKind) (tcell.Style, error) {
+func (mgr symbol_colortheme) get_lsp_color(kind lsp.SymbolKind) (tcell.Style, error) {
 	switch kind {
 	case lsp.SymbolKindClass, lsp.SymbolKindInterface:
 		return mgr.colorscheme.GetColor("@type.class"), nil
@@ -106,15 +106,15 @@ func hexToRGB(hex string) (int32, int32, int32, error) {
 }
 
 func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
-	// if color := mgr.get_color("function"); color != nil {
-	// 	a, _, _ := color.Decompose()
-	// 	return a
-	// }
 	if rgb := global_config.Color.Highlight.Search; rgb != "" {
 		if r, g, b, err := hexToRGB(rgb); err == nil {
 			return tcell.NewRGBColor(r, g, b)
 		}
 		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
+	}
+	if color := mgr.get_color("keyword"); color != nil {
+		a, _, _ := color.Decompose()
+		return a
 	}
 	return tcell.ColorYellow
 }
@@ -175,7 +175,8 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.statusbar.SetBackgroundColor(bg)
 	main.console_index_list.SetBackgroundColor(bg)
 	main.layout.dialog.Frame.SetBackgroundColor(bg)
-	main.symboltree.update(main.lspmgr.Current)
+	x := main.current_editor()
+	main.symboltree.update_with_ts(x.TreeSitter(),x.LspSymbol())
 	main.symboltree.waiter.SetBackgroundColor(bg)
 	main.symboltree.waiter.SetTextColor(fg)
 

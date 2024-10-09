@@ -249,6 +249,8 @@ func (view *file_tree_view) node_selected(node *tview.TreeNode) {
 			view.openfile(filename)
 		}
 		view.view.SetCurrentNode(node)
+	} else if node == view.view.GetRoot() {
+		view.dir_expand_children(node, view.rootdir)
 	}
 }
 func (view *file_tree_view) dir_expand_children(node *tview.TreeNode, filename string) {
@@ -256,11 +258,12 @@ func (view *file_tree_view) dir_expand_children(node *tview.TreeNode, filename s
 		node.Collapse()
 		return
 	}
-	empty := len(node.GetChildren()) == 0
-	if !empty {
-		node.Expand()
-		return
-	}
+	// empty := len(node.GetChildren()) == 0
+	// if !empty {
+	// 	node.Expand()
+	// 	return
+	// }
+	node.ClearChildren()
 	view.opendir(node, filename)
 	node.Expand()
 }
@@ -279,7 +282,7 @@ func (view *file_tree_view) dir_replace(node *tview.TreeNode, filename string) {
 		}
 		title := dirname
 		if len(title) > len(global_prj_root) {
-			title = trim_project_filename(title,global_prj_root)
+			title = trim_project_filename(title, global_prj_root)
 		}
 		UpdateTitleAndColor(view.view.Box, title)
 		// x := node.GetText(A)
