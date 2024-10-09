@@ -178,6 +178,9 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 }
 
 func (s Symbol) Icon() string {
+	if v, ok := IconsRunne[int(s.SymInfo.Kind)]; ok {
+		return fmt.Sprintf("%c", v)
+	}
 	if v, ok := icons[int(s.SymInfo.Kind)]; ok {
 		return v
 	}
@@ -204,7 +207,7 @@ func (sym Symbol) contain(a Symbol) bool {
 func symbol_contain(a lsp.SymbolInformation, b lsp.SymbolInformation) bool {
 	return b.Location.Range.Overlaps(a.Location.Range)
 	// if a.Location.Range.End.Line > b.Location.Range.End.Line {
-		// return true
+	// return true
 	// }
 	// if a.Location.Range.End.Line == b.Location.Range.End.Line {
 	// 	if a.Location.Range.End.Character > b.Location.Range.End.Character {
