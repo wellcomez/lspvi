@@ -130,7 +130,7 @@ type refpicker struct {
 }
 
 // OnGetImplement implements lspcore.lsp_data_changed.
-func (pk refpicker) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.ImplementationResult, err error,option *lspcore.OpenOption) {
+func (pk refpicker) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.ImplementationResult, err error, option *lspcore.OpenOption) {
 	panic("unimplemented")
 }
 
@@ -171,10 +171,15 @@ func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
 	if caller == nil {
 		return ""
 	}
-	callerstr := fmt.Sprintf("%s:%d **%-20s**",
+	caller_color := global_theme.search_highlight_color()
+	if c, err := global_theme.get_color_style(lsp.SymbolKindFunction); err == nil {
+		f, _, _ := c.Decompose()
+		caller_color = f
+	}
+	callerstr := fmt.Sprintf("%s:%d %-20s",
 		trim_project_filename(
 			caller.Item.URI.AsPath().String(), root),
-		caller.Item.Range.Start.Line+1, caller.Name)
+		caller.Item.Range.Start.Line+1, fmt_color_string(caller.Name, caller_color))
 	return callerstr
 }
 

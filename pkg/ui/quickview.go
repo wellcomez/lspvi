@@ -493,7 +493,7 @@ func highlight_search_key(old_query string, view *customlist, new_query string) 
 	sss := [][2]string{}
 	ptn := ""
 	if old_query != "" {
-		ptn = fmt.Sprintf("**%s**", old_query)
+		ptn = fmt_bold_string(old_query)
 	}
 	for i := 0; i < view.GetItemCount(); i++ {
 		m, s := view.GetItemText(i)
@@ -505,7 +505,7 @@ func highlight_search_key(old_query string, view *customlist, new_query string) 
 	}
 	if len(new_query) > 0 {
 		if new_query != "" {
-			ptn = fmt.Sprintf("**%s**", new_query)
+			ptn = fmt_bold_string(new_query)
 		}
 		for i := range sss {
 			v := &sss[i]
@@ -784,7 +784,12 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 
 	source_file_path := v.URI.AsPath().String()
 	data, err := os.ReadFile(source_file_path)
-
+	funcolor := global_theme.search_highlight_color()
+	caller_color := funcolor
+	if c, err := global_theme.get_color_style(lsp.SymbolKindFunction); err == nil {
+		f, _, _ := c.Decompose()
+		caller_color = f
+	}
 	if err != nil {
 		line = err.Error()
 	} else {
@@ -804,7 +809,7 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 					if len(a2) > 0 && a2[0] == '*' {
 						a2 = " " + a2
 					}
-					line = strings.Join([]string{a1, "**", a, "**", a2}, "")
+					line = strings.Join([]string{a1, fmt_color_string(a, funcolor), a2}, "")
 				}
 			}
 		} else {
@@ -817,9 +822,9 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 		callname = strings.TrimLeft(callname, " ")
 		callname = strings.TrimRight(callname, " ")
 		if full {
-			return fmt.Sprintf("%s:%-4d **%s** %s", path, v.Range.Start.Line+1, callname, line)
+			return fmt.Sprintf("%s:%-4d %s %s", path, v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
 		} else {
-			return fmt.Sprintf("	:%-4d **%s** %s", v.Range.Start.Line+1, callname, line)
+			return fmt.Sprintf("	:%-4d %s %s", v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
 		}
 	} else {
 		if full {

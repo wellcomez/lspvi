@@ -13,6 +13,9 @@ type colortext struct {
 	color tcell.Color
 }
 
+func fmt_bold_string(s string) string {
+	return fmt.Sprintf("**%s**", s)
+}
 func fmt_color_string(s string, color tcell.Color) string {
 	return fmt.Sprintf("**[%d]%s**", color, s)
 }
@@ -21,12 +24,13 @@ type splitresult struct {
 	b, m, a colortext
 }
 
-func parse_key_string(s string, key string) splitresult {
+func parse_key_string(s string, ptn colortext) splitresult {
+	key := ptn.text
 	b := strings.Index(s, key)
 	if b >= 0 {
 		return splitresult{
 			b: colortext{text: s[:b]},
-			m: colortext{text: s[b : b+len(key)], color: tcell.ColorYellow},
+			m: colortext{text: s[b : b+len(key)], color: ptn.color},
 			a: colortext{text: s[b+len(key):]},
 		}
 	}
@@ -58,12 +62,38 @@ type colorpaser struct {
 	data string
 }
 
-func (p colorpaser) ParseKey(keys []string) []colortext {
-	for _, v := range keys {
-		if len(v) == 0 {
+func GetColorText(t string, keys []colortext) []colortext {
+	mark_keys := colorpaser{data: t}.Parse()
+	keys_result := []colortext{}
+	for _, v := range mark_keys {
+		if v.color != 0 {
+			keys_result = append(keys_result, v)
+		} else {
+			a := colorpaser{data: v.text}.ParseKey(keys)
+			keys_result = append(keys_result, a...)
+		}
+	}
+	return keys_result
+}
+func (p colorpaser) ParseKey(keys []colortext) []colortext {
+	for _, key := range keys {
+		if len(key.text) == 0 {
 			continue
 		}
-		r3 := parse_key_string(p.data, v)
+		r3 := parse_key_string(p.data, key)
+		if len(r3.m.text) == 0 {
+			splitkeys := strings.Split(key.text, " ")
+			if len(splitkeys) > 1 {
+				split_keyword := []colortext{}
+				for _, v := range splitkeys {
+					split_keyword = append(split_keyword, colortext{text: v, color: key.color})
+				}
+				result := colorpaser{data: p.data}.ParseKey(split_keyword)
+				if len(result) > 0 {
+					return result
+				}
+			}
+		}
 		if len(r3.m.text) > 0 {
 			var before_part []colortext
 			if r3.b.text != "" {
