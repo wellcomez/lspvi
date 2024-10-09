@@ -299,22 +299,7 @@ func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	return ret
 }
 func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
-	const openmark = " + "
-	if node.IsExpanded() {
-		if len(node.GetChildren()) > 0 {
-			s := node.GetText()
-			if !strings.HasSuffix(s, openmark) {
-				node.SetText(s + openmark)
-			}
-		}
-		node.Collapse()
-	} else {
-		node.Expand()
-		s := node.GetText()
-		if strings.HasSuffix(s, openmark) {
-			node.SetText(strings.TrimSuffix(s, openmark))
-		}
-	}
+	expand_node(node)
 	value := node.GetReference()
 	if value != nil {
 
@@ -357,6 +342,25 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 		}
 	}
 	symview.view.SetCurrentNode(node)
+}
+
+func expand_node(node *tview.TreeNode) {
+	const openmark = " + "
+	if node.IsExpanded() {
+		if len(node.GetChildren()) > 0 {
+			s := node.GetText()
+			if !strings.HasSuffix(s, openmark) {
+				node.SetText(s + openmark)
+			}
+		}
+		node.Collapse()
+	} else {
+		node.Expand()
+		s := node.GetText()
+		if strings.HasSuffix(s, openmark) {
+			node.SetText(strings.TrimSuffix(s, openmark))
+		}
+	}
 }
 func (c *SymbolTreeView) handle_commnad(cmd command_id) {
 	cur := c.view.GetCurrentNode()
@@ -548,6 +552,10 @@ func add_memeber_child(parent *tview.TreeNode, sym *lspcore.Symbol) {
 		add_symbol_node_color(&member, c)
 		root_sub.AddChild(c)
 		add_memeber_child(c, &member)
+	}
+	if len(sym.Members)>0{
+		parent.Expand()
+		expand_node(parent)
 	}
 }
 

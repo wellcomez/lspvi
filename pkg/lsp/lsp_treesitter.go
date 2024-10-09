@@ -514,7 +514,7 @@ var tree_sitter_lang_map = []*ts_lang_def{
 				if find == nil {
 					ret = append(ret, newone)
 				} else {
-					find.Kind = lsp.SymbolKindClass
+					find.Kind = lsp.SymbolKindInterface
 					newone.Kind = lsp.SymbolKindField
 					ret = append(ret, newone)
 				}
