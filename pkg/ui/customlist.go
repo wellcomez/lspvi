@@ -20,137 +20,7 @@ type customlist struct {
 	default_color tcell.Color
 	selected      []int
 }
-type colortext struct {
-	text  string
-	color tcell.Color
-}
 
-func fmt_color_string(s string, color tcell.Color) string {
-	return fmt.Sprintf("**[%d]%s**", color, s)
-}
-
-type splitresult struct {
-	b, m, a colortext
-}
-
-func parse_key_string(s string, key string) splitresult {
-	b := strings.Index(s, key)
-	if b >= 0 {
-		return splitresult{
-			b: colortext{text: s[:b]},
-			m: colortext{text: s[b : b+len(key)], color: tcell.ColorYellow},
-			a: colortext{text: s[b+len(key):]},
-		}
-	}
-	return splitresult{b: colortext{text: s}}
-}
-func color_maintext(sss []colortext) string {
-	ss := ""
-	for _, s := range sss {
-		ss += s.text
-	}
-	return ss
-}
-func pasrse_bold_color_string(s string) splitresult {
-	b := strings.Index(s, "**")
-	if b >= 0 {
-		e := strings.Index(s[b+2:], "**")
-		if e >= 0 {
-			return splitresult{
-				b: colortext{text: s[:b]},
-				m: colortext{text: s[b+2 : b+2+e], color: tcell.ColorYellow},
-				a: colortext{text: s[b+2+e+2:]},
-			}
-		}
-	}
-	return splitresult{b: colortext{text: s}}
-}
-
-type colorpaser struct {
-	data string
-}
-
-func (p colorpaser) ParseKey(keys []string) []colortext {
-	for _, v := range keys {
-		r3 := parse_key_string(p.data, v)
-		if len(r3.m.text) > 0 {
-			var before_part []colortext
-			if r3.b.text != "" {
-				aa := colorpaser{data: r3.b.text}
-				result := aa.ParseKey(keys)
-				for _, v := range result {
-					if len(v.text) > 0 {
-						before_part = append(before_part, v)
-					}
-				}
-			}
-			var after_part []colortext
-			if r3.a.text != "" {
-				aa := colorpaser{data: r3.a.text}
-				result := aa.ParseKey(keys)
-				for _, v := range result {
-					if len(v.text) > 0 {
-						after_part = append(after_part, v)
-					}
-				}
-			}
-			before_part = append(before_part, r3.m)
-			before_part = append(before_part, after_part...)
-			return before_part
-		}
-	}
-	b:=colortext{text: p.data}
-	return []colortext{b}
-}
-func (p colorpaser) Parse() []colortext {
-	r3 := pasrse_color_string(p.data)
-	if r3.m.text == "" {
-		r3 = pasrse_bold_color_string(p.data)
-	}
-	if len(r3.m.text) > 0 {
-		var before_part []colortext
-		if r3.b.text != "" {
-			aa := colorpaser{data: r3.b.text}
-			result := aa.Parse()
-			for _, v := range result {
-				if len(v.text) > 0 {
-					before_part = append(before_part, v)
-				}
-			}
-		}
-		var after_part []colortext
-		if r3.a.text != "" {
-			aa := colorpaser{data: r3.a.text}
-			result := aa.Parse()
-			for _, v := range result {
-				if len(v.text) > 0 {
-					after_part = append(after_part, v)
-				}
-			}
-		}
-		before_part = append(before_part, r3.m)
-		before_part = append(before_part, after_part...)
-		return before_part
-	}
-	return []colortext{r3.b}
-}
-func pasrse_color_string(s string) splitresult {
-	b := strings.Index(s, "**[")
-	if b >= 0 {
-		e := strings.Index(s, "]")
-		if e >= 0 {
-			var color tcell.Color
-			if c, err := strconv.Atoi(s[b+3 : e]); err == nil {
-				color = tcell.Color(c)
-				if e2 := strings.Index(s[e+1:], "**"); e2 > 0 {
-					x := e + 1
-					return splitresult{b: colortext{text: s[:b]}, m: colortext{text: s[x : x+e2], color: color}, a: colortext{text: s[x+e2+2:]}}
-				}
-			}
-		}
-	}
-	return splitresult{b: colortext{text: s}}
-}
 
 func (l *customlist) Clear() *customlist {
 	l.List.Clear()
@@ -269,8 +139,89 @@ type colorkey struct {
 func (l *customlist) NewDefaultColorKey(key string) colorkey {
 	return colorkey{str: key, color: l.default_color}
 }
-
 func (l *customlist) Draw(screen tcell.Screen) {
+	l.Box.DrawForSubclass(screen, l.Box)
+	offset_x, y, width, height := l.GetInnerRect()
+
+	bottomLimit := y + height
+	select_color := global_theme.search_highlight_color()
+	selected_style := tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor)
+
+	style := tcell.StyleDefault.Foreground(tview.Styles.PrimaryTextColor).Background(tview.Styles.PrimitiveBackgroundColor)
+	stylehl := tcell.StyleDefault.Foreground(select_color).Background(tview.Styles.PrimitiveBackgroundColor)
+	theme_style := stylehl
+	if s := global_theme.get_color("selection"); s != nil {
+		theme_style = *s
+	}
+
+	itemoffset, _ := l.GetOffset()
+	// keys := []colorkey{}
+	// for _, v := range l.get_hl_keys() {
+	// 	keys = append(keys, l.NewDefaultColorKey(v))
+	// }
+	// keys2 := []colorkey{}
+	// for _, v := range l.Key {
+	// 	keys2 = append(keys2, l.NewDefaultColorKey(string(v)))
+	// }
+	for index := itemoffset; index < len(l.hlitems); index++ {
+		MainText, SecondText := l.List.GetItemText(index)
+		// MainText, main_postion := get_hl_postion(MainText, keys, l, keys2)
+
+		main_text := GetColorText(MainText, []string{l.Key})
+		second_text := GetColorText(SecondText, []string{l.Key})
+
+		selected := index == l.List.GetCurrentItem()
+		multiselected := false
+		if len(l.selected) > 0 {
+			if index >= l.selected[0] && index <= l.selected[1] {
+				multiselected = true
+			}
+		}
+		if y >= bottomLimit {
+			break
+		}
+		if len(MainText) > 0 {
+			if multiselected {
+				l.draw_item_color_new(main_text, screen, offset_x, y, width, theme_style)
+			} else if selected {
+				l.draw_item_color_new(main_text, screen, offset_x, y, width, selected_style)
+			} else {
+				l.draw_item_color_new(main_text, screen, offset_x, y, width, style)
+			}
+			y += 1
+		}
+		if y >= bottomLimit {
+			break
+		}
+		if l.showSecondaryText() && len(SecondText) > 0 {
+			if selected {
+				l.draw_item_color_new(second_text, screen, offset_x, y, width, selected_style)
+			} else {
+				l.draw_item_color_new(main_text, screen, offset_x, y, width, style)
+			}
+			y += 1
+			if y >= bottomLimit {
+				break
+			}
+		}
+	}
+
+}
+
+func GetColorText(t string, keys []string) []colortext {
+	mark_keys := colorpaser{data: t}.Parse()
+	keys_result := []colortext{}
+	for _, v := range mark_keys {
+		if v.color != 0 {
+			keys_result = append(keys_result, v)
+		} else {
+			a := colorpaser{data: v.text}.ParseKey(keys)
+			keys_result = append(keys_result, a...)
+		}
+	}
+	return keys_result
+}
+func (l *customlist) DrawOld(screen tcell.Screen) {
 	l.Box.DrawForSubclass(screen, l.Box)
 	offset_x, y, _, height := l.GetInnerRect()
 
@@ -376,6 +327,20 @@ func (l *customlist) get_hl_keys() []string {
 		}
 	}
 	return keys
+}
+func (l *customlist) draw_item_color_new(segment []colortext, screen tcell.Screen, offset_x int, y int, width int, normal_style tcell.Style) {
+	x := offset_x
+	max := x + width
+	for _, e := range segment {
+		for _, r := range e.text {
+			if x < max {
+				screen.SetContent(x, y, r, nil, normal_style.Foreground(e.color))
+				x++
+			} else {
+				break
+			}
+		}
+	}
 }
 
 func (l *customlist) draw_item_color(Positions []keypattern, MainText string, screen tcell.Screen, offset_x int, y int, normal_style tcell.Style, hlStyle tcell.Style) {
