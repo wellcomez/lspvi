@@ -172,7 +172,7 @@ func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
 		return ""
 	}
 	caller_color := global_theme.search_highlight_color()
-	if c, err := global_theme.get_color_style(lsp.SymbolKindFunction); err == nil {
+	if c, err := global_theme.get_lsp_color(lsp.SymbolKindFunction); err == nil {
 		f, _, _ := c.Decompose()
 		caller_color = f
 	}

@@ -542,7 +542,7 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 
 func add_symbol_node_color(query *symbol_colortheme, c *lspcore.Symbol, cc *tview.TreeNode) {
 	if query != nil {
-		if style, err := query.get_color_style(c.SymInfo.Kind); err == nil {
+		if style, err := query.get_lsp_color(c.SymInfo.Kind); err == nil {
 			fg, _, _ := style.Decompose()
 			cc.SetColor(fg)
 		}

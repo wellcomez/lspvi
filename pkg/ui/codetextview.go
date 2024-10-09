@@ -48,7 +48,7 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		}
 		if len(sym.Classname) > 0 {
 			s := style
-			if ss, err := global_theme.get_color_style(lsp.SymbolKindClass); err == nil {
+			if ss, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
 				s = &ss
 			}
 			f, _, _ := s.Decompose()
@@ -71,7 +71,7 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		}
 		if len(sym.SymInfo.Name) > 0 {
 			s := style
-			if ss, err := global_theme.get_color_style(sym.SymInfo.Kind); err == nil {
+			if ss, err := global_theme.get_lsp_color(sym.SymInfo.Kind); err == nil {
 				s = &ss
 			}
 			f, _, _ := s.Decompose()

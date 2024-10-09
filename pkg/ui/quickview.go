@@ -786,7 +786,7 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 	data, err := os.ReadFile(source_file_path)
 	funcolor := global_theme.search_highlight_color()
 	caller_color := funcolor
-	if c, err := global_theme.get_color_style(lsp.SymbolKindFunction); err == nil {
+	if c, err := global_theme.get_lsp_color(lsp.SymbolKindFunction); err == nil {
 		f, _, _ := c.Decompose()
 		caller_color = f
 	}
