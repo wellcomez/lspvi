@@ -25,6 +25,8 @@ const (
 	open_picker_grep_word
 	open_picker_global_search
 	open_picker_ctrlp
+	open_picker_help
+	open_lspvi_configfile
 	goto_first_line
 	goto_last_line
 	goto_to_fileview
@@ -68,7 +70,6 @@ const (
 	vi_search_mode
 	vi_line_head
 	vi_line_end
-	open_picker_help
 	handle_ctrl_c
 	handle_ctrl_v
 	cmd_quit
@@ -382,6 +383,11 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		return cmdactor{id, "ctrl-v paste", func() bool {
 			return true
 		}}
+	case open_lspvi_configfile:
+		return cmdactor{id, "lspvi config file", func() bool {
+			m.OpenFileHistory(lspviroot.configfile, nil)
+			return true
+		}}
 	case open_picker_help:
 		return cmdactor{id, "help", func() bool {
 			m.Dialog().OpenKeymapFzf()
@@ -509,6 +515,7 @@ func (m *mainui) key_map_space_menu() []cmditem {
 		get_cmd_actor(m, open_picker_ctrlp).menu_key(split(key_picker_ctrlp)),
 		get_cmd_actor(m, open_picker_help).menu_key(split(key_picker_help)),
 		get_cmd_actor(m, open_picker_wkq).menu_key(split(key_workspace_symbol_query)),
+		get_cmd_actor(m, open_lspvi_configfile).menu_key(split("")),
 		get_cmd_actor(m, cmd_quit).menu_key(split("Q")),
 	}
 }

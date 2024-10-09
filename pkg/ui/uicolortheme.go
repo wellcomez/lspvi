@@ -106,15 +106,15 @@ func hexToRGB(hex string) (int32, int32, int32, error) {
 }
 
 func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
-	// if color := mgr.get_color("function"); color != nil {
-	// 	a, _, _ := color.Decompose()
-	// 	return a
-	// }
 	if rgb := global_config.Color.Highlight.Search; rgb != "" {
 		if r, g, b, err := hexToRGB(rgb); err == nil {
 			return tcell.NewRGBColor(r, g, b)
 		}
 		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
+	}
+	if color := mgr.get_color("keyword"); color != nil {
+		a, _, _ := color.Decompose()
+		return a
 	}
 	return tcell.ColorYellow
 }
