@@ -491,12 +491,7 @@ func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	if err != nil {
 		m.logerr(err)
 	}
-	m.symboltree.update(file)
-	if file == nil || !file.HasLsp() {
-		if code.tree_sitter != nil {
-			m.symboltree.upate_with_ts(code.tree_sitter)
-		}
-	}
+	m.symboltree.update_with_ts(code.tree_sitter, file)
 }
 
 func (m *mainui) logerr(err error) {

@@ -175,7 +175,8 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.statusbar.SetBackgroundColor(bg)
 	main.console_index_list.SetBackgroundColor(bg)
 	main.layout.dialog.Frame.SetBackgroundColor(bg)
-	main.symboltree.update(main.lspmgr.Current)
+	x := main.current_editor()
+	main.symboltree.update_with_ts(x.TreeSitter(),x.LspSymbol())
 	main.symboltree.waiter.SetBackgroundColor(bg)
 	main.symboltree.waiter.SetTextColor(fg)
 

@@ -560,10 +560,24 @@ func add_symbol_node_color(c *lspcore.Symbol, cc *tview.TreeNode) {
 		}
 	}
 }
-func (symboltree *SymbolTreeView) upate_with_ts(ts *lspcore.TreeSitter) *lspcore.Symbol_file {
-	Current := &lspcore.Symbol_file{
-		Class_object: ts.Outline,
+
+type OutLineView interface {
+	update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file
+}
+
+func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file {
+	var Current *lspcore.Symbol_file
+	if ts != nil {
+		Current = &lspcore.Symbol_file{
+			Class_object: ts.Outline,
+		}
 	}
-	symboltree.update(Current)
-	return Current
+	if symbol != nil {
+		symboltree.update(symbol)
+		return symbol
+	} else if Current != nil {
+		symboltree.update(Current)
+		return Current
+	}
+	return nil
 }

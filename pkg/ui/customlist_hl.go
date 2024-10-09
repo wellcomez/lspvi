@@ -157,6 +157,9 @@ func (p colorpaser) Parse() []colortext {
 	return []colortext{r3.b}
 }
 func substring(s string, b, e int) (string, error) {
+	if e != -1 && b > e {
+		return "", errors.New("b>e")
+	}
 	if b < len(s) {
 		if e == -1 {
 			return s[b:], nil

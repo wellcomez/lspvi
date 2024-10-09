@@ -53,6 +53,8 @@ type CodeEditor interface {
 
 	get_symbol_range(sym lspcore.Symbol) lsp.Range
 	LspSymbol() *lspcore.Symbol_file
+
+	TreeSitter() *lspcore.TreeSitter
 	Match()
 
 	action_key_up()
@@ -215,6 +217,9 @@ type CodeView struct {
 	diff   *Differ
 }
 
+func (c CodeView) TreeSitter() *lspcore.TreeSitter {
+	return c.tree_sitter
+}
 func (code CodeView) Primitive() tview.Primitive {
 	return code.view
 }
@@ -567,13 +572,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 				if symboltree.editor != code {
 					symboltree.editor = code
 					symboltree.Clear()
-					if code.lspsymbol == nil || code.lspsymbol.Class_object == nil {
-						if code.tree_sitter != nil {
-							symboltree.upate_with_ts(code.tree_sitter)
-						}
-					} else {
-						symboltree.update(code.lspsymbol)
-					}
+					symboltree.update_with_ts(code.tree_sitter, code.LspSymbol())
 				}
 			}
 
@@ -1300,6 +1299,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 		}
 		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
 			code.lspsymbol = sym
+			code.main.OutLineView().update_with_ts(code.tree_sitter, sym)
 			if focus && code.id != view_code_below {
 				if sym == nil {
 					main.OutLineView().Clear()
@@ -1367,7 +1367,7 @@ func (code *CodeView) on_content_changed() {
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
 					if ts.DefaultOutline() {
-						lsp := code.main.OutLineView().upate_with_ts(ts)
+						lsp := code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
 						code.main.Lspmgr().Current = lsp
 					} else {
 						code.main.OnSymbolistChanged(nil, nil)
@@ -1389,7 +1389,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
 					if ts.DefaultOutline() {
-						lsp := code.main.OutLineView().upate_with_ts(ts)
+						lsp := code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
 						code.main.Lspmgr().Current = lsp
 					} else {
 						code.main.OnSymbolistChanged(nil, nil)

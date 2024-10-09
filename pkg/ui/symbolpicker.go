@@ -138,7 +138,7 @@ func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 	list := sym.impl.symview.view
 	list.SetBorder(true)
 	code := sym.impl.codeprev.Primitive()
-	sym.impl.codeprev.LoadFileNoLsp(sym.impl.file.Filename, 0,false)
+	sym.impl.codeprev.LoadFileNoLsp(sym.impl.file.Filename, 0, false)
 	layout := layout_list_edit(list, code, input)
 	sym.impl.click = NewGridTreeClickCheck(layout, sym.impl.symview.view)
 	sym.impl.click.click = func(event *tcell.EventMouse) {
@@ -179,7 +179,7 @@ func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 			codeprev: NewCodeView(v.main),
 		},
 	}
-	symbol.update(code.LspSymbol())
+	symbol.update_with_ts(nil, code.LspSymbol())
 	return sym
 }
 
@@ -228,7 +228,7 @@ func (wk symbolpicker) update_preview() {
 		value := cur.GetReference()
 		if value != nil {
 			if sym, ok := value.(lsp.SymbolInformation); ok {
-				wk.impl.codeprev.goto_line_history(sym.Location.Range.Start.Line,false)
+				wk.impl.codeprev.goto_line_history(sym.Location.Range.Start.Line, false)
 			}
 		}
 	}
@@ -247,7 +247,7 @@ func (wk symbolpicker) Updatequeryold(query string) {
 }
 func (wk symbolpicker) UpdateQuery(query string) {
 	file := wk.impl.file.Filter(strings.ToLower(query))
-	wk.impl.symview.update(file)
+	wk.impl.symview.update_with_ts(nil, file)
 	root := wk.impl.symview.view.GetRoot()
 	if root != nil {
 		children := root.GetChildren()
