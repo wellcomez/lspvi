@@ -511,34 +511,48 @@ func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
 	name := filepath.Base(file.Filename)
 	root_node := tview.NewTreeNode(name)
 	root_node.SetReference("1")
-	query := global_theme
+	// query := global_theme
 	for _, v := range file.Class_object {
 		if v.Is_class() {
 			c := tview.NewTreeNode(v.SymbolListStrint())
-			add_symbol_node_color(query, v, c)
+			add_symbol_node_color(v, c)
 			root_node.AddChild(c)
 			c.SetReference(v.SymInfo)
 			if len(v.Members) > 0 {
 				childnode := c
-				for _, c := range v.Members {
-					cc := tview.NewTreeNode(c.SymbolListStrint())
-					add_symbol_node_color(query, &c, cc)
-					cc.SetReference(c.SymInfo)
-					childnode.AddChild(cc)
+				for _, memeber := range v.Members {
+					sub_member := tview.NewTreeNode(memeber.SymbolListStrint())
+					add_symbol_node_color(&memeber, sub_member)
+					sub_member.SetReference(memeber.SymInfo)
+					childnode.AddChild(sub_member)
+					add_memeber_child(sub_member, &memeber)
 				}
 			}
 		} else {
 			c := tview.NewTreeNode(v.SymbolListStrint())
 			c.SetReference(v.SymInfo)
-			add_symbol_node_color(query, v, c)
+			add_symbol_node_color(v, c)
 			root_node.AddChild(c)
+			add_memeber_child(c, v)
 		}
 	}
 	v.view.SetRoot(root_node)
 	v.editor.update_with_line_changed()
 }
 
-func add_symbol_node_color(query *symbol_colortheme, c *lspcore.Symbol, cc *tview.TreeNode) {
+func add_memeber_child(parent *tview.TreeNode, sym *lspcore.Symbol) {
+	root_sub := parent
+	for _, member := range sym.Members {
+		c := tview.NewTreeNode(member.SymbolListStrint())
+		c.SetReference(member.SymInfo)
+		add_symbol_node_color(&member, c)
+		root_sub.AddChild(c)
+		add_memeber_child(c, &member)
+	}
+}
+
+func add_symbol_node_color(c *lspcore.Symbol, cc *tview.TreeNode) {
+	query := global_theme
 	if query != nil {
 		if style, err := query.get_lsp_color(c.SymInfo.Kind); err == nil {
 			fg, _, _ := style.Decompose()

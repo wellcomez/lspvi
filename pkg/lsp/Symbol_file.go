@@ -91,19 +91,43 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 			SymInfo: v,
 		}
 		if is_class(v.Kind) {
-			var found = false
-			for _, c := range sym.Class_object {
-				if s.SymInfo.Name == c.SymInfo.Name {
-					i = sym.build_class_symbol(symbols, i+1, &s)
-					c.Members = append(c.Members, s.Members...)
-					found = true
-					break
+			inparent := false
+			if parent != nil {
+				if !parent.contain(s) {
+					return i
+				} else {
+					inparent = true
 				}
 			}
-			if !found {
-				sym.Class_object = append(sym.Class_object, &s)
-				i = sym.build_class_symbol(symbols, i+1, &s)
+			if !inparent {
+				var found = false
+				for _, c := range sym.Class_object {
+					if s.SymInfo.Name == c.SymInfo.Name {
+						i = sym.build_class_symbol(symbols, i+1, &s)
+						c.Members = append(c.Members, s.Members...)
+						found = true
+						break
+					}
+				}
+				if !found {
+					sym.Class_object = append(sym.Class_object, &s)
+					if i+1 < len(symbols) {
+						next := symbols[i]
+						if next.Location.Range.Overlaps(s.SymInfo.Location.Range) {
+							i = sym.build_class_symbol(symbols, i+1, &s)
+						}
+					}
+				}
+			} else {
+				if i+1 < len(symbols) {
+					next := symbols[i]
+					if next.Location.Range.Overlaps(s.SymInfo.Location.Range) {
+						i = sym.build_class_symbol(symbols, i+1, &s)
+					}
+				}
+				parent.Members = append(parent.Members, s)
 			}
+
 			continue
 		}
 		if parent != nil {
