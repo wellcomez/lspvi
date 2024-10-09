@@ -286,7 +286,6 @@ func java_outline(ts *TreeSitter, cb outlinecb) {
 				switch item.SymbolName {
 				case "definition.method", "definition.class", "definition.interface":
 					{
-						code = item.PositionInfo()
 						c := ts_to_symbol(item, ts)
 						switch item.Symbol {
 						case "interface_declaration":
@@ -380,7 +379,7 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 							c.Kind = lsp.SymbolKindField
 						case "enum_specifier":
 							c.Kind = lsp.SymbolKindEnum
-						case "method_declaration":
+						case "method_elem", "method_declaration":
 							c.Kind = lsp.SymbolKindMethod
 						case "struct_specifier":
 							c.Kind = lsp.SymbolKindStruct
@@ -529,7 +528,29 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("toml", lsp_dummy{}, ts_toml.GetLanguage()).set_ext([]string{"toml"}).setparser(rs_outline),
 	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(java_outline),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
-	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(rs_outline).set_default_outline(),
+	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(func(ts *TreeSitter, o outlinecb) {
+		rs_outline(ts, func(si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
+			if len(si) > 0 {
+				if content, err := os.ReadFile(si[0].Location.URI.AsPath().String()); err == nil {
+					lines := strings.Split(string(content), "\n")
+					ret := si
+					for _, v := range ret {
+						if is_class(v.Kind) {
+							line := lines[v.Location.Range.Start.Line]
+							if strings.Index(line, "interface") > 0 {
+								v.Kind = lsp.SymbolKindInterface
+							}else if strings.Index(line, "struct") > 0 {
+								v.Kind = lsp.SymbolKindStruct
+							}
+							continue
+						}
+					}
+					return ret
+				}
+			}
+			return si
+		})
+	}).set_default_outline(),
 	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}).setparser(rs_outline),
 	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()).setparser(rs_outline),
 	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()).setparser(rs_outline),
