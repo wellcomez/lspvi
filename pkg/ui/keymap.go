@@ -47,6 +47,7 @@ const (
 	vi_undo
 	vi_save
 	vi_copy_line
+	vi_paste_line
 	vi_del_line
 	vi_del_word
 	vi_pageup
@@ -352,6 +353,11 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.current_editor().copyline(true)
 			return true
 		}}
+	case vi_paste_line:
+		return cmdactor{id, "Paste line", func() bool {
+			m.current_editor().pasteline(true)
+			return true
+		}}
 	case vi_line_end:
 		return cmdactor{id, "goto line end", func() bool {
 			m.current_editor().goto_line_end()
@@ -498,6 +504,7 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, vi_pagedown).tcell_key(tcell.KeyCtrlD),
 		get_cmd_actor(m, vi_pageup).tcell_key(tcell.KeyCtrlU),
 		get_cmd_actor(m, vi_copy_text).esc_key(split("y")),
+		get_cmd_actor(m, vi_paste_line).esc_key(split("p")),
 		get_cmd_actor(m, vi_del_text).esc_key(split("d")),
 		get_cmd_actor(m, vi_del_line).esc_key(split("dd")),
 		get_cmd_actor(m, vi_del_word).esc_key(split("dw")),

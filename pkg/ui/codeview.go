@@ -69,6 +69,7 @@ type CodeEditor interface {
 	deleteline()
 	deleteword()
 	copyline(bool)
+	pasteline(bool)
 	deltext()
 
 	goto_line_end()
@@ -1002,6 +1003,18 @@ func (code *CodeView) deleteline() {
 func (code *CodeView) deltext() {
 	code.view.Delete()
 	go code.on_content_changed()
+}
+func (code *CodeView) pasteline(line bool) {
+	if line {
+		if _, err := clipboard.ReadAll(); err == nil {
+			x := code.view
+			lineno := x.Cursor.Loc.Y
+			x.Buf.LineArray.NewlineBelow(lineno)
+			x.Cursor.Loc = femto.Loc{X: 0, Y: lineno + 1}
+			x.Paste()
+			go code.on_content_changed()
+		}
+	}
 }
 func (code *CodeView) copyline(line bool) {
 	cmd := code.main.CmdLine()
