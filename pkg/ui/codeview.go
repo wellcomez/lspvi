@@ -295,10 +295,11 @@ func (code *CodeView) OnFindInfileWordOption(fzf bool, noloop bool, whole bool) 
 		return ""
 	}
 	codetext := code.view
-	word := codetext.Cursor.GetSelection()
+	cursor := *codetext.Cursor
+	word := cursor.GetSelection()
 	if len(word) < 2 {
-		codetext.Cursor.SelectWord()
-		sel := codetext.Cursor.CurSelection
+		cursor.SelectWord()
+		sel := cursor.CurSelection
 		Buf := codetext.Buf
 		if sel[0].Y == sel[1].Y {
 			word = Buf.Line(sel[0].Y)[sel[0].X:sel[1].X]
@@ -989,7 +990,7 @@ func (code *CodeView) Undo() {
 	go code.on_content_changed()
 }
 func (code *CodeView) deleteword() {
-	code.view.DeleteWordRight()
+	code.view.DeleteWordLeft()
 	go code.on_content_changed()
 }
 func (code *CodeView) deleteline() {
@@ -1533,7 +1534,7 @@ func (code *CodeView) goto_location_no_history(loc lsp.Range, update bool, optio
 	if shouldReturn {
 		return
 	}
-	x := 0
+	// x := 0
 	loc.Start.Line = min(code.view.Buf.LinesNum(), loc.Start.Line)
 	loc.End.Line = min(code.view.Buf.LinesNum(), loc.End.Line)
 
@@ -1552,16 +1553,17 @@ func (code *CodeView) goto_location_no_history(loc lsp.Range, update bool, optio
 		}
 	}
 	Cur := code.view.Cursor
-	Cur.SetSelectionStart(femto.Loc{
-		X: loc.Start.Character + x,
+	start := femto.Loc{
+		X: loc.Start.Character,
 		Y: loc.Start.Line,
-	})
+	}
+	Cur.SetSelectionStart(start)
 	end := femto.Loc{
-		X: loc.End.Character + x,
+		X: loc.End.Character,
 		Y: loc.End.Line,
 	}
 	Cur.SetSelectionEnd(end)
-	code.set_loc(end)
+	code.set_loc(start)
 	if update && code.id >= view_code {
 		code.update_with_line_changed()
 	}
