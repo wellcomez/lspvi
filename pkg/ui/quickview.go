@@ -630,7 +630,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
 	// _, _, width, _ := qk.view.GetRect()
 	// caller.width = width
-	secondline := caller.ListItem(global_prj_root, true)
+	secondline := caller.ListItem(global_prj_root, false)
 	if len(secondline) == 0 {
 		return
 	}
@@ -727,14 +727,15 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 			caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
 		}
 	}
+	color := tview.Styles.BorderColor 
 	list_text := caller.ListItem(root, parent)
 	if parent {
 		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
 		if len(tree.children) > 0 {
 			if !tree.expand {
-				tree.text = fmt.Sprintf("%c", IconCollapse) + tree.text
+				tree.text = fmt_color_string(fmt.Sprintf("%c", IconCollapse), color) + tree.text
 			} else {
-				tree.text = fmt.Sprintf("%c", IconExpaned) + tree.text
+				tree.text = fmt_color_string(fmt.Sprintf("%c", IconExpaned), color) + tree.text
 			}
 		} else {
 			tree.text = " " + tree.text
