@@ -29,10 +29,15 @@ func parse_key_string(s string, ptn colortext) splitresult {
 	key := ptn.text
 	b := strings.Index(s, key)
 	if b >= 0 {
+		x := b + len(key)
+		c := ""
+		if x < len(s) {
+			c = s[x:]
+		}
 		return splitresult{
 			b: colortext{text: s[:b]},
 			m: colortext{text: s[b : b+len(key)], color: ptn.color},
-			a: colortext{text: s[b+len(key):]},
+			a: colortext{text: c},
 		}
 	}
 	return splitresult{b: colortext{text: s}}
@@ -49,10 +54,17 @@ func pasrse_bold_color_string(s string) splitresult {
 	if b >= 0 {
 		e := strings.Index(s[b+2:], "**")
 		if e >= 0 {
+			c := ""
+			b1 := b + 2
+			b2 := b1 + e
+			c1 := b2 + 2
+			if c1<len(s){
+				c=s[c1:]
+			}
 			return splitresult{
 				b: colortext{text: s[:b]},
-				m: colortext{text: s[b+2 : b+2+e], color: tcell.ColorYellow},
-				a: colortext{text: s[b+2+e+2:]},
+				m: colortext{text: s[b1 : b2], color: tcell.ColorYellow},
+				a: colortext{text: c},
 			}
 		}
 	}
@@ -185,7 +197,7 @@ func pasrse_color_string(s string) splitresult {
 							x := e + 1
 							if sub, err := substring(s, x+e2+2, -1); err == nil {
 								return splitresult{b: colortext{text: s[:b]}, m: colortext{text: s[x : x+e2], color: color}, a: colortext{text: sub}}
-							}else {
+							} else {
 								return splitresult{b: colortext{text: s[:b]}, m: colortext{text: s[x : x+e2], color: color}, a: colortext{text: ""}}
 							}
 						}
