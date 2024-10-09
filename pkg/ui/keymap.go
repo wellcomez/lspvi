@@ -43,10 +43,12 @@ const (
 	zoomout
 	copy_data
 	vi_copy_text
+	vi_del_text
 	vi_undo
 	vi_save
 	vi_copy_line
 	vi_del_line
+	vi_del_word
 	vi_pageup
 	vi_pagedown
 	copy_path
@@ -330,12 +332,21 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.current_editor().copyline(false)
 			return true
 		}}
+	case vi_del_text:
+		return cmdactor{id, "Del", func() bool {
+			m.current_editor().deltext()
+			return true
+		}}
 	case vi_del_line:
 		return cmdactor{id, "Delete", func() bool {
 			m.current_editor().deleteline()
 			return true
 		}}
-
+	case vi_del_word:
+		return cmdactor{id, "Delete word", func() bool {
+			m.current_editor().deleteword()
+			return true
+		}}
 	case vi_copy_line:
 		return cmdactor{id, "Copy", func() bool {
 			m.current_editor().copyline(true)
@@ -487,7 +498,9 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, vi_pagedown).tcell_key(tcell.KeyCtrlD),
 		get_cmd_actor(m, vi_pageup).tcell_key(tcell.KeyCtrlU),
 		get_cmd_actor(m, vi_copy_text).esc_key(split("y")),
+		get_cmd_actor(m, vi_del_text).esc_key(split("d")),
 		get_cmd_actor(m, vi_del_line).esc_key(split("dd")),
+		get_cmd_actor(m, vi_del_word).esc_key(split("dw")),
 		get_cmd_actor(m, vi_undo).esc_key(split("u")),
 		get_cmd_actor(main, goto_define).esc_key(split(key_goto_define)),
 		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),

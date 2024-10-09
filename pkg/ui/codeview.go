@@ -67,7 +67,9 @@ type CodeEditor interface {
 
 	Undo()
 	deleteline()
+	deleteword()
 	copyline(bool)
+	deltext()
 
 	goto_line_end()
 	goto_line_head()
@@ -986,13 +988,20 @@ func (code *CodeView) Undo() {
 	checker.after(code)
 	go code.on_content_changed()
 }
+func (code *CodeView) deleteword() {
+	code.view.DeleteWordRight()
+	go code.on_content_changed()
+}
 func (code *CodeView) deleteline() {
 	checker := new_linechange_checker(code)
 	code.view.CutLine()
 	checker.after(code)
 	go code.on_content_changed()
 }
-
+func (code *CodeView) deltext() {
+	code.view.Delete()
+	go code.on_content_changed()
+}
 func (code *CodeView) copyline(line bool) {
 	cmd := code.main.CmdLine()
 	if !cmd.Vim.vi.VMap {
