@@ -446,13 +446,13 @@ func foreach_check(items []*lsp.SymbolInformation, Range lsp.Range, item *TreeSi
 	for i := range items {
 		v := items[i]
 		r := v.Location.Range
-		if Range.Start.In(r) && Range.End.In(r) {
+		if Range.Overlaps(r) {
 			if matched == nil {
 				matched = v
 			} else {
 				prev_range := matched.Location.Range
 				new_range := v.Location.Range
-				if new_range.Start.In(prev_range) && new_range.End.In(prev_range) {
+				if new_range.Overlaps(prev_range) {
 					matched = v
 				}
 			}
@@ -514,12 +514,12 @@ var tree_sitter_lang_map = []*ts_lang_def{
 				if find == nil {
 					ret = append(ret, newone)
 				} else {
-					find.Kind =lsp.SymbolKindClass
+					find.Kind = lsp.SymbolKindClass
 					newone.Kind = lsp.SymbolKindField
 					ret = append(ret, newone)
 				}
 			}
-			return ret 
+			return ret
 		})
 	}),
 	new_tsdef("proto", lsp_dummy{}, ts_protobuf.GetLanguage()).set_ext([]string{"proto"}).setparser(rs_outline),
@@ -830,7 +830,7 @@ func (s TreeSitterSymbol) PositionInfo() string {
 
 func newFunction(scopes []TreeSitterSymbol, Range lsp.Range, add bool) bool {
 	for _, v := range scopes {
-		if Range.Start.AfterOrEq(v.lsprange().Start) && Range.End.BeforeOrEq(v.lsprange().End) {
+		if Range.Overlaps(v.lsprange()) {
 			// if v.Symbol == "method_declaration" || v.Symbol == "function_definition" {
 			// 	add = false
 			// }

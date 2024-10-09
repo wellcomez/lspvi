@@ -21,6 +21,7 @@ type Symbol_file struct {
 	Wk           *LspWorkspace
 	tokens       *lsp.SemanticTokens
 }
+
 func (sym Symbol_file) LspClient() lspclient {
 	return sym.lsp
 }
@@ -48,7 +49,7 @@ func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
 
 func (*Symbol_file) newMethod(v *Symbol, rang lsp.Range) *Symbol {
 	if v.SymInfo.Kind == lsp.SymbolKindFunction || v.SymInfo.Kind == lsp.SymbolKindMethod {
-		if rang.Start.Line > v.SymInfo.Location.Range.Start.Line && rang.End.Line <= v.SymInfo.Location.Range.End.Line {
+		if rang.Overlaps(v.SymInfo.Location.Range) {
 			return v
 		}
 	}

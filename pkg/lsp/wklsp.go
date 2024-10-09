@@ -111,23 +111,24 @@ type Symbol struct {
 }
 
 func inside_location(bigger lsp.Location, smaller lsp.Location) bool {
-	if smaller.Range.Start.Line < bigger.Range.Start.Line {
-		return false
-	}
-	if smaller.Range.Start.Line == bigger.Range.Start.Line {
-		if smaller.Range.Start.Character < bigger.Range.Start.Character {
-			return false
-		}
-	}
-	if smaller.Range.End.Line == bigger.Range.End.Line {
-		if smaller.Range.End.Character > bigger.Range.End.Character {
-			return false
-		}
-	}
-	if smaller.Range.End.Line > bigger.Range.End.Line {
-		return false
-	}
-	return true
+	return smaller.Range.Overlaps(bigger.Range)
+	// if smaller.Range.Start.Line < bigger.Range.Start.Line {
+	// 	return false
+	// }
+	// if smaller.Range.Start.Line == bigger.Range.Start.Line {
+	// 	if smaller.Range.Start.Character < bigger.Range.Start.Character {
+	// 		return false
+	// 	}
+	// }
+	// if smaller.Range.End.Line == bigger.Range.End.Line {
+	// 	if smaller.Range.End.Character > bigger.Range.End.Character {
+	// 		return false
+	// 	}
+	// }
+	// if smaller.Range.End.Line > bigger.Range.End.Line {
+	// 	return false
+	// }
+	// return true
 
 }
 func (S Symbol) match(calr *CallStackEntry) bool {
@@ -203,7 +204,7 @@ func (sym Symbol) contain(a Symbol) bool {
 func symbol_contain(a lsp.SymbolInformation, b lsp.SymbolInformation) bool {
 	return b.Location.Range.Overlaps(a.Location.Range)
 	// if a.Location.Range.End.Line > b.Location.Range.End.Line {
-	// 	return true
+		// return true
 	// }
 	// if a.Location.Range.End.Line == b.Location.Range.End.Line {
 	// 	if a.Location.Range.End.Character > b.Location.Range.End.Character {

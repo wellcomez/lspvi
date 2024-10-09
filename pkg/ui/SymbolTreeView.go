@@ -41,11 +41,11 @@ func GetClosestSymbol(symfile *lspcore.Symbol_file, rand lsp.Range) *lspcore.Sym
 	var ret *lspcore.Symbol
 	syms := symfile.Class_object
 	for i := range syms {
-		v:=syms[i]
+		v := syms[i]
 		var find *lspcore.Symbol
 		if len(v.Members) > 0 {
 			for i := range v.Members {
-				m:= &v.Members[i]
+				m := &v.Members[i]
 				if is_symbol_inside(m, rand) {
 					find = m
 				}
@@ -70,9 +70,7 @@ func GetClosestSymbol(symfile *lspcore.Symbol_file, rand lsp.Range) *lspcore.Sym
 }
 
 func is_symbol_inside(m *lspcore.Symbol, r lsp.Range) bool {
-	yes := m.SymInfo.Location.Range.Start.BeforeOrEq(r.Start)
-	yes = m.SymInfo.Location.Range.End.AfterOrEq(r.End) && yes
-	return yes
+	return r.Overlaps(m.SymInfo.Location.Range)
 }
 
 type SymbolTreeView struct {
