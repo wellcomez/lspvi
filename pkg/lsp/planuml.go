@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 type PlanUmlBin struct {
@@ -29,23 +30,28 @@ func NewPlanUmlBin() (*PlanUmlBin, error) {
 	return &PlanUmlBin{jarPath: jarPath, javaCmd: javaCmd}, nil
 }
 
-func (p *PlanUmlBin) Convert(uml string) error {
+func (p *PlanUmlBin) Convert(uml string) (ret error, output_utxt, output_uml string) {
 
 	if p.javaCmd == "" {
-		return fmt.Errorf("exception java not found")
+		return fmt.Errorf("exception java not found"), "", ""
 	}
+	root := filepath.Dir(uml)
 	// if _, err := os.Stat(p.javaCmd); os.IsNotExist(err) {
 	// 	return fmt.Errorf("exception java not found")
 	// }
 	cmd := exec.Command(p.javaCmd, "-jar", p.jarPath, uml)
-	if err := cmd.Run(); err != nil {
-		return err
+	if err := cmd.Run(); err == nil {
+		output_uml = filepath.Join(root, strings.Split(filepath.Base(uml), ".")[0]+".png")
+	} else {
+		ret = err
 	}
 	cmd = exec.Command(p.javaCmd, "-jar", p.jarPath, uml, "-utxt")
-	if err := cmd.Run(); err != nil {
-		return err
+	if err := cmd.Run(); err == nil {
+		output_utxt = filepath.Join(root, strings.Split(filepath.Base(uml), ".")[0]+".utxt")
+	} else {
+		ret = err
 	}
-	return nil
+	return ret, output_utxt, output_uml
 }
 
 // findJavaBinary is a placeholder function to find the Java binary.

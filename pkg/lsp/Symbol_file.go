@@ -290,15 +290,20 @@ func (sym *Symbol_file) CallinTask(loc lsp.Location, level int) (*CallInTask, er
 	return task, nil
 }
 
-type rename_record struct {
+type Rename_record struct {
 	rename map[string]int
 }
 
+func NewRenameRecord() *Rename_record {
+	return &Rename_record{
+		rename: make(map[string]int),
+	}
+}
 func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func()) {
 	export_root, _ := NewExportRoot(&sym.Wk.Wk)
 	dir_to_remvoe := filepath.Join(export_root.Dir, task.Dir())
 	os.RemoveAll(dir_to_remvoe)
-	rename := rename_record{rename: make(map[string]int)}
+	rename := Rename_record{rename: make(map[string]int)}
 	for _, s := range task.Allstack {
 		// for i := range s.Items {
 		// 	index := len(s.Items)
@@ -314,7 +319,11 @@ func (sym *Symbol_file) Async_resolve_stacksymbol(task *CallInTask, hanlde func(
 	task.Save(export_root.Dir)
 }
 
-func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *rename_record, task *CallInTask) {
+func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_record, task *CallInTask) {
+	os.Remove(s.MdName)
+	os.Remove(s.UmlPngName)
+	os.Remove(s.UtxtName)
+	os.Remove(s.UmlName)
 	var xx = class_resolve_task{
 		wklsp:     sym.Wk,
 		callstack: s,
@@ -338,11 +347,14 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *rename_reco
 		}
 		if binerr == nil && export_err == nil && len(name) > 0 {
 			content := s.Uml(true)
-			export_root.SaveMD(task.Dir(), name, content)
+			if name, err := export_root.SaveMD(task.Dir(), name, content); err == nil {
+				s.MdName = name
+			}
 			content = s.Uml(false)
 			fileuml, err := export_root.SavePlanUml(task.Dir(), name, content)
 			if err == nil {
-				err = bin.Convert(fileuml)
+				s.UmlName = fileuml
+				err, s.UtxtName, s.UmlPngName = bin.Convert(fileuml)
 				if err != nil {
 					log.Println(err)
 				}

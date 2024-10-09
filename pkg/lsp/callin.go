@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	// "log"
 	// "strings"
@@ -87,7 +88,7 @@ func NewCallStackEntry(item lsp.CallHierarchyItem, fromRanges []lsp.Range, refer
 	}
 }
 
-var callstack_task_id = 0
+var callstack_task_id = time.Now().Unix()
 
 type CallInTask struct {
 	Name       string
@@ -95,7 +96,7 @@ type CallInTask struct {
 	Loc        lsp.Location
 	lsp        lspclient
 	set        map[string]bool
-	UID        int
+	UID        int64
 	TraceLevel int
 	sym        *Symbol_file
 	// cb       *func(task CallInTask)
@@ -133,12 +134,16 @@ func (task *CallInTask) get_call_json_filename(root string) string {
 	return fielname
 }
 
-var callstack_id = 0
+var callstack_id = time.Now().Unix()
 
 type CallStack struct {
-	Items    []*CallStackEntry
-	Resovled bool
-	UID      int
+	Items      []*CallStackEntry
+	Resovled   bool
+	UID        int64
+	MdName     string
+	UmlPngName string
+	UmlName string
+	UtxtName   string
 }
 
 func shortfuncitonname(c *CallStackEntry) string {

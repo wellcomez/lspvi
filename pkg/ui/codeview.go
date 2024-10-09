@@ -991,7 +991,7 @@ func (code *CodeView) Undo() {
 	go code.on_content_changed()
 }
 func (code *CodeView) deleteword() {
-	code.view.DeleteWordLeft()
+	code.view.DeleteWordRight()
 	go code.on_content_changed()
 }
 func (code *CodeView) deleteline() {

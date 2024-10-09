@@ -727,7 +727,7 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 			caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
 		}
 	}
-	color := tview.Styles.BorderColor 
+	color := tview.Styles.BorderColor
 	list_text := caller.ListItem(root, parent)
 	if parent {
 		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
@@ -833,7 +833,7 @@ func (caller ref_with_caller) ListItem(root string, parent bool) string {
 			return path
 			// return fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
 		} else {
-			return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, line)
+			return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, strings.TrimLeft(line, "\t "))
 		}
 	}
 }
