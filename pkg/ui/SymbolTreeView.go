@@ -309,6 +309,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 			if err == nil {
 				var beginline = Range.Start.Line
 				for i, v := range body.Subline {
+					v = strings.TrimLeft(v, "\t")
 					idx := strings.Index(v, sym.Name)
 					if i == 0 {
 						idx = Range.Start.Character + idx
