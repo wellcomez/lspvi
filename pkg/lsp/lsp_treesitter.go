@@ -79,7 +79,7 @@ type ts_lang_def struct {
 	filedetect      lsplang
 	tslang          *sitter.Language
 	def_ext         []string
-	parser          func(*TreeSitter)
+	parser          func(*TreeSitter, outlinecb)
 	hl              *sitter.Query
 	local           *sitter.Query
 	outline         *sitter.Query
@@ -168,7 +168,7 @@ func (s *ts_lang_def) set_default_outline() *ts_lang_def {
 	s.default_outline = true
 	return s
 }
-func (s *ts_lang_def) setparser(parser func(*TreeSitter)) *ts_lang_def {
+func (s *ts_lang_def) setparser(parser func(*TreeSitter, outlinecb)) *ts_lang_def {
 	s.parser = parser
 	return s
 }
@@ -257,7 +257,7 @@ func ts_to_symbol(s TreeSitterSymbol, ts *TreeSitter) lsp.SymbolInformation {
 	}
 	return ss
 }
-func java_outline(ts *TreeSitter) {
+func java_outline(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {
 		return
 	}
@@ -338,7 +338,10 @@ func java_outline(ts *TreeSitter) {
 	s.build_class_symbol(document_symbol, 0, nil)
 	ts.Outline = s.Class_object
 }
-func rs_outline(ts *TreeSitter) {
+
+type outlinecb func([]*lsp.SymbolInformation) []*lsp.SymbolInformation
+
+func rs_outline(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {
 		return
 	}
@@ -428,6 +431,9 @@ func rs_outline(ts *TreeSitter) {
 	}
 	var s = Symbol_file{lsp: lsp_base{core: &lspcore{lang: lsp_dummy{}}}}
 	document_symbol := []lsp.SymbolInformation{}
+	if cb != nil {
+		items = cb(items)
+	}
 	for _, v := range items {
 		document_symbol = append(document_symbol, *v)
 	}
@@ -457,7 +463,7 @@ func foreach_check(items []*lsp.SymbolInformation, Range lsp.Range, item *TreeSi
 	}
 	check(matched, item)
 }
-func bash_parser(ts *TreeSitter) {
+func bash_parser(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {
 		return
 	}
@@ -485,7 +491,37 @@ func bash_parser(ts *TreeSitter) {
 var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("lua", lsp_dummy{}, ts_lua.GetLanguage()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
-	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(rs_outline),
+	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
+		rs_outline(ts, func(si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
+			items := si
+			sort.Slice(items, func(i, j int) bool {
+				return items[i].Location.Range.Start.Line < items[j].Location.Range.Start.Line
+			})
+			ret := []*lsp.SymbolInformation{}
+			for _, newone := range items {
+				var find *lsp.SymbolInformation
+				for _, prev := range ret {
+					if newone.Location.Range.Overlaps(prev.Location.Range) {
+						if find == nil {
+							find = prev
+						} else {
+							if prev.Location.Range.Overlaps(find.Location.Range) {
+								find = prev
+							}
+						}
+					}
+				}
+				if find == nil {
+					ret = append(ret, newone)
+				} else {
+					find.Kind =lsp.SymbolKindClass
+					newone.Kind = lsp.SymbolKindField
+					ret = append(ret, newone)
+				}
+			}
+			return ret 
+		})
+	}),
 	new_tsdef("proto", lsp_dummy{}, ts_protobuf.GetLanguage()).set_ext([]string{"proto"}).setparser(rs_outline),
 	new_tsdef("css", lsp_dummy{}, ts_css.GetLanguage()).set_ext([]string{"css"}).setparser(rs_outline),
 	new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),
@@ -687,7 +723,7 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 
 func (ts *TreeSitter) callback_to_ui(cb func(*TreeSitter)) {
 	if ts.tsdef.parser != nil {
-		ts.tsdef.parser(ts)
+		ts.tsdef.parser(ts, nil)
 	}
 	if cb != nil {
 		cb(ts)

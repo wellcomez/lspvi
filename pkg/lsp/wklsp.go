@@ -201,15 +201,16 @@ func (sym Symbol) contain(a Symbol) bool {
 	return symbol_contain(sym.SymInfo, a.SymInfo)
 }
 func symbol_contain(a lsp.SymbolInformation, b lsp.SymbolInformation) bool {
-	if a.Location.Range.End.Line > b.Location.Range.End.Line {
-		return true
-	}
-	if a.Location.Range.End.Line == b.Location.Range.End.Line {
-		if a.Location.Range.End.Character > b.Location.Range.End.Character {
-			return true
-		}
-	}
-	return false
+	return b.Location.Range.Overlaps(a.Location.Range)
+	// if a.Location.Range.End.Line > b.Location.Range.End.Line {
+	// 	return true
+	// }
+	// if a.Location.Range.End.Line == b.Location.Range.End.Line {
+	// 	if a.Location.Range.End.Character > b.Location.Range.End.Character {
+	// 		return true
+	// 	}
+	// }
+	// return false
 }
 
 type LspWorkspace struct {
