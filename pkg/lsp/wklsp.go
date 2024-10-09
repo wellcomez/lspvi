@@ -195,10 +195,18 @@ func (sym Symbol) Is_class() bool {
 }
 
 func is_class(kind lsp.SymbolKind) bool {
-	return kind == lsp.SymbolKindClass || kind == lsp.SymbolKindStruct || kind == lsp.SymbolKindInterface
+	switch kind {
+	case lsp.SymbolKindClass, lsp.SymbolKindStruct, lsp.SymbolKindInterface, lsp.SymbolKindEnum:
+		return true
+	}
+	return false
 }
 func is_memeber(kind lsp.SymbolKind) bool {
-	return kind == lsp.SymbolKindMethod || kind == lsp.SymbolKindField || kind == lsp.SymbolKindConstructor
+	switch kind {
+	case lsp.SymbolKindMethod, lsp.SymbolKindField, lsp.SymbolKindConstructor, lsp.SymbolKindEnumMember:
+		return true
+	}
+	return false
 }
 
 func (sym Symbol) contain(a Symbol) bool {
