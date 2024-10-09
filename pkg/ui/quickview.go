@@ -598,7 +598,6 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 	// panic("unimplemented")
 	qk.view.Clear()
 
-
 	var Refs []ref_with_caller
 	switch t {
 	case data_implementation:
@@ -681,7 +680,9 @@ func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 			s.children = append(s.children, list_tree_node{ref_index: i})
 			group[x] = s
 		} else {
-			group[x] = list_tree_node{ref_index: i, parent: true, expand: true}
+			s := list_tree_node{ref_index: i, parent: true, expand: true}
+			s.children = append(s.children, list_tree_node{ref_index: i})
+			group[x] = s
 		}
 	}
 	trees := []list_tree_node{}
@@ -726,9 +727,9 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 			caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
 		}
 	}
-	secondline := caller.ListItem(root, parent)
+	list_text := caller.ListItem(root, parent)
 	if parent {
-		tree.text = fmt.Sprintf("%3d. %s", lineno, secondline)
+		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
 		if len(tree.children) > 0 {
 			if !tree.expand {
 				tree.text = "+" + tree.text
@@ -739,7 +740,7 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 			tree.text = " " + tree.text
 		}
 	} else {
-		tree.text = fmt.Sprintf("     %s", secondline)
+		tree.text = fmt.Sprintf("     %s", list_text)
 	}
 }
 func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
@@ -772,7 +773,7 @@ type list_tree_node struct {
 	text       string
 }
 
-func (caller ref_with_caller) ListItem(root string, full bool) string {
+func (caller ref_with_caller) ListItem(root string, parent bool) string {
 	v := caller.Loc
 
 	line := ""
@@ -822,14 +823,15 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 		callname = strings.TrimLeft(callname, " ")
 		callname = strings.TrimRight(callname, " ")
 		callname = icon + callname
-		if full {
-			return fmt.Sprintf("%s:%-4d %s %s", path, v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
+		if parent {
+			return path
 		} else {
 			return fmt.Sprintf("	:%-4d %s %s", v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
 		}
 	} else {
-		if full {
-			return fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
+		if parent {
+			return path
+			// return fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
 		} else {
 			return fmt.Sprintf("	:%-4d %s", v.Range.Start.Line+1, line)
 		}
