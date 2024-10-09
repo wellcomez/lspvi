@@ -732,15 +732,15 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
 		if len(tree.children) > 0 {
 			if !tree.expand {
-				tree.text = "+" + tree.text
+				tree.text = fmt.Sprintf("%c", IconCollapse) + tree.text
 			} else {
-				tree.text = " " + tree.text
+				tree.text = fmt.Sprintf("%c", IconExpaned) + tree.text
 			}
 		} else {
 			tree.text = " " + tree.text
 		}
 	} else {
-		tree.text = fmt.Sprintf("     %s", list_text)
+		tree.text = fmt.Sprintf(" %s", list_text)
 	}
 }
 func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
@@ -765,12 +765,11 @@ func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace)
 }
 
 type list_tree_node struct {
-	ref_index  int
-	list_index int
-	expand     bool
-	parent     bool
-	children   []list_tree_node
-	text       string
+	ref_index int
+	expand    bool
+	parent    bool
+	children  []list_tree_node
+	text      string
 }
 
 func (caller ref_with_caller) ListItem(root string, parent bool) string {
@@ -826,14 +825,14 @@ func (caller ref_with_caller) ListItem(root string, parent bool) string {
 		if parent {
 			return path
 		} else {
-			return fmt.Sprintf("	:%-4d %s %s", v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
+			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
 		}
 	} else {
 		if parent {
 			return path
 			// return fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
 		} else {
-			return fmt.Sprintf("	:%-4d %s", v.Range.Start.Line+1, line)
+			return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, line)
 		}
 	}
 }

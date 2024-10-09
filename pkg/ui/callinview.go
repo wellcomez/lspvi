@@ -587,20 +587,21 @@ func ExpandNode(node *tview.TreeNode) {
 	ExpandNodeOption(node, text, yes)
 }
 
+var IconCollapse = '▶'
+var IconExpaned = '▼'
+
 func ExpandNodeOption(node *tview.TreeNode, text string, expand bool) {
-	Collapse := "▶"
-	Expaned := "▼"
-	text = strings.TrimLeft(text, strings.Join([]string{Collapse, Expaned, "+", " "}, ""))
+	text = strings.TrimLeft(text, strings.Join([]string{fmt.Sprintf("%c", IconCollapse), fmt.Sprintf("%c", IconExpaned), "+", " "}, ""))
 	node.SetText(text)
 	if expand {
 		if len(node.GetChildren()) > 0 {
 			node.Expand()
-			node.SetText(Expaned + " " + text)
+			node.SetText(fmt.Sprintf("%c", IconExpaned) + " " + text)
 		}
 	} else {
 		node.Collapse()
 		if len(node.GetChildren()) > 0 {
-			node.SetText(Collapse + " " + text)
+			node.SetText(fmt.Sprintf("%c", IconCollapse) + " " + text)
 		}
 	}
 }
