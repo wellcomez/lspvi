@@ -191,7 +191,7 @@ func (sym *Symbol_file) Reference(ranges lsp.Range) {
 		return
 	}
 	key := body.String()
-	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key}, loc)
+	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key,sym: sym}, loc)
 }
 func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	if sym.lsp == nil {
@@ -284,6 +284,7 @@ func (sym *Symbol_file) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierar
 }
 func (sym *Symbol_file) CallinTask(loc lsp.Location, level int) (*CallInTask, error) {
 	task := NewCallInTask(loc, sym.lsp, level)
+	task.sym = sym
 	task.Run()
 	sym.Handle.OnLspCallTaskInViewChanged(task)
 	return task, nil

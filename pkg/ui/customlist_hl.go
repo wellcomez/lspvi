@@ -185,6 +185,8 @@ func pasrse_color_string(s string) splitresult {
 							x := e + 1
 							if sub, err := substring(s, x+e2+2, -1); err == nil {
 								return splitresult{b: colortext{text: s[:b]}, m: colortext{text: s[x : x+e2], color: color}, a: colortext{text: sub}}
+							}else {
+								return splitresult{b: colortext{text: s[:b]}, m: colortext{text: s[x : x+e2], color: color}, a: colortext{text: ""}}
 							}
 						}
 					}

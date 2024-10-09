@@ -1377,8 +1377,8 @@ func (code *CodeView) on_content_changed() {
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
 					if ts.DefaultOutline() {
-						lsp := code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-						code.main.Lspmgr().Current = lsp
+						code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+						// code.main.Lspmgr().Current = lsp
 					} else {
 						code.main.OnSymbolistChanged(nil, nil)
 					}
@@ -1399,8 +1399,8 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 			if code.main != nil {
 				if len(ts.Outline) > 0 {
 					if ts.DefaultOutline() {
-						lsp := code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-						code.main.Lspmgr().Current = lsp
+                          code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+						//code.main.Lspmgr().Current = lsp
 					} else {
 						code.main.OnSymbolistChanged(nil, nil)
 					}

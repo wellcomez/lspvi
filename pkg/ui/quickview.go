@@ -607,7 +607,7 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 			Refs = append(Refs, ref_with_caller{Loc: v})
 		}
 	case data_refs:
-		Refs = get_loc_caller(qk.main, refs, m.Lspmgr().Current)
+		Refs = get_loc_caller(qk.main, refs, m.current_editor().LspSymbol())
 	default:
 		break
 	}
@@ -790,6 +790,7 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 		f, _, _ := c.Decompose()
 		caller_color = f
 	}
+	icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.CompletionItemKindFunction)])
 	if err != nil {
 		line = err.Error()
 	} else {
@@ -821,6 +822,7 @@ func (caller ref_with_caller) ListItem(root string, full bool) string {
 		callname := caller.Caller.Name
 		callname = strings.TrimLeft(callname, " ")
 		callname = strings.TrimRight(callname, " ")
+		callname = icon + callname
 		if full {
 			return fmt.Sprintf("%s:%-4d %s %s", path, v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
 		} else {

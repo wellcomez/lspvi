@@ -97,7 +97,12 @@ type CallInTask struct {
 	set        map[string]bool
 	UID        int
 	TraceLevel int
+	sym        *Symbol_file
 	// cb       *func(task CallInTask)
+}
+
+func (task CallInTask) SymbolFile() *Symbol_file {
+	return task.sym
 }
 
 func (task CallInTask) TreeNodeid() string {

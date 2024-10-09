@@ -228,7 +228,7 @@ func symbol_contain(a lsp.SymbolInformation, b lsp.SymbolInformation) bool {
 type LspWorkspace struct {
 	clients []lspclient
 	Wk      WorkSpace
-	Current *Symbol_file
+	current *Symbol_file
 	filemap map[string]*Symbol_file
 	Handle  lsp_data_changed
 }
@@ -291,7 +291,7 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 	val, ok := wk.filemap[filename]
 	is_new := false
 	if ok {
-		wk.Current = val
+		wk.current = val
 		return val, is_new, nil
 	}
 	wk.filemap[filename] = &Symbol_file{
@@ -344,7 +344,7 @@ func (wk *LspWorkspace) Get(filename string) (*Symbol_file, error) {
 }
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)
-	wk.Current = wk.filemap[filename]
+	wk.current = wk.filemap[filename]
 	return ret, err
 
 }
@@ -404,7 +404,13 @@ type SymolSearchKey struct {
 	File   string
 	Ranges lsp.Range
 	Key    string
+	sym    *Symbol_file
 }
+
+func (key SymolSearchKey) Symbol() *Symbol_file {
+	return key.sym
+}
+
 type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)

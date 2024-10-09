@@ -332,7 +332,7 @@ func (m *mainui) get_focus_view_id() view_id {
 	return focus_viewid(m)
 }
 func (m *mainui) __resolve_task(call_in_task *lspcore.CallInTask) {
-	m.lspmgr.Current.Async_resolve_stacksymbol(call_in_task, func() {
+	call_in_task.SymbolFile().Async_resolve_stacksymbol(call_in_task, func() {
 		m.app.QueueUpdate(func() {
 			m.callinview.updatetask(call_in_task)
 			m.app.ForceDraw()

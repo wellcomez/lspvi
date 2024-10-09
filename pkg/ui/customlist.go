@@ -102,7 +102,7 @@ func (l *customlist) Draw(screen tcell.Screen) {
 			if selected {
 				l.draw_item_color_new(second_text, screen, offset_x, y, width, selected_style)
 			} else {
-				l.draw_item_color_new(main_text, screen, offset_x, y, width, style)
+				l.draw_item_color_new(second_text, screen, offset_x, y, width, style)
 			}
 			y += 1
 			if y >= bottomLimit {
