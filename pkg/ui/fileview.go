@@ -256,11 +256,12 @@ func (view *file_tree_view) dir_expand_children(node *tview.TreeNode, filename s
 		node.Collapse()
 		return
 	}
-	empty := len(node.GetChildren()) == 0
-	if !empty {
-		node.Expand()
-		return
-	}
+	// empty := len(node.GetChildren()) == 0
+	// if !empty {
+	// 	node.Expand()
+	// 	return
+	// }
+	node.ClearChildren()
 	view.opendir(node, filename)
 	node.Expand()
 }
