@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
@@ -29,8 +31,17 @@ type file_tree_view struct {
 	dir_mode      dir_open_mode
 	right_context filetree_context
 	menu_item     []context_menu_item
-	listen        chan bool
-	// uiresize      ui_reszier
+	monitor       bool
+}
+
+// OnWatchFileChange implements change_reciever.
+func (file *file_tree_view) OnWatchFileChange(filename string, event fsnotify.Event) bool {
+	// panic("unimplemented")
+	if strings.HasPrefix(filename, file.rootdir) {
+		file.ChangeDir(file.rootdir)
+		return true
+	}
+	return false
 }
 
 type filetree_context struct {
@@ -39,15 +50,17 @@ type filetree_context struct {
 	main      *mainui
 }
 
-func (file *file_tree_view) monitor() {
-	file.listen = make(chan bool)
-	for {
-		<-file.listen
-		file.opendir(file.view.GetRoot(), file.rootdir)
-	}
-}
-func (file *file_tree_view) StartMonitor() {
-	go file.monitor()
+//	func (file *file_tree_view) monitor() {
+//		file.listen = make(chan bool)
+//		for {
+//			<-file.listen
+//			file.opendir(file.view.GetRoot(), file.rootdir)
+//		}
+//	}
+func (tree *file_tree_view) StartMonitor() {
+	tree.monitor = true
+	global_file_watch.Add(tree.rootdir)
+	global_file_watch.AddReciever(tree)
 }
 func (menu filetree_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if action == tview.MouseRightClick {
@@ -341,6 +354,9 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return
+	}
+	if view.monitor {
+		global_file_watch.Add(dir)
 	}
 	list_dirs := []os.DirEntry{}
 	list_files := []os.DirEntry{}

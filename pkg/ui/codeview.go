@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
+	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
 	"github.com/pgavlin/femto/runtime"
@@ -231,7 +232,10 @@ func (code CodeView) LspSymbol() *lspcore.Symbol_file {
 }
 
 // OnFileChange implements change_reciever.
-func (code *CodeView) OnWatchFileChange(file string) bool {
+func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool {
+	if event.Op&fsnotify.Write != fsnotify.Write {
+		return false
+	}
 	if code.file.SamePath(file) {
 		if sym := code.LspSymbol(); sym != nil {
 			go sym.DidSave()
@@ -239,6 +243,7 @@ func (code *CodeView) OnWatchFileChange(file string) bool {
 		code.openfile(code.Path(), func() {
 			// go code.on_content_changed()
 		})
+		return true
 	}
 	return false
 }
