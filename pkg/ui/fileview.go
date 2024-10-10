@@ -179,17 +179,11 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 			value := node.GetReference()
 			if value != nil {
 				filename := value.(string)
-				yes, err := isDirectory(filename)
-				if err != nil {
-					return
-				}
 				log.Println("external open tty=", ret.main.tty)
 				if proxy != nil {
 					proxy.open_in_web(filename)
 				} else {
-					if !yes {
-						openfile(filename)
-					}
+					openfile(filename)
 				}
 			}
 		},
