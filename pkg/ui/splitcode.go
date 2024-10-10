@@ -27,6 +27,7 @@ func (s *CodeSplit) New() *CodeView {
 	global_file_watch.AddReciever(a)
 	a.id = s.last + 1
 	s.AddCode(a)
+	set_view_focus_cb([]view_id{a.id}, s.main)
 	return a
 }
 func NewCodeSplit(d *CodeView) *CodeSplit {

@@ -93,53 +93,51 @@ func focus_viewid(m *mainui) view_id {
 	}
 	return view_none
 }
+func (v view_id) is_tab() bool {
+	switch v {
+	case view_quickview, view_callin, view_uml, view_log, view_term, view_code_below:
+		return true
+	default:
+		return false
+	}
+
+}
 func view_id_init(m *mainui) {
 	config_main_tab_order(m)
-	for _, v := range all_view_list {
+	aa := all_view_list
+	set_view_focus_cb(aa, m)
+}
+
+func set_view_focus_cb(aa []view_id, m *mainui) {
+	for i := range aa {
+		v := aa[i]
 		box := v.to_box(m)
 		if box != nil {
-			switch v {
-			case view_code, view_code_below:
-				{
-					box.SetFocusFunc(func() {
-						// m.editor_area_fouched()
-						change_after_focused(box, m)
-						if m.cmdline.Vim.vi.String() == "none" {
-							m.cmdline.Vim.EnterEscape()
-						}
-					})
-				}
-			case view_quickview, view_callin, view_uml, view_term:
-				{
-					box.SetFocusFunc(func() {
-						change_after_focused(box, m)
-						m.page.SetBorderColor(tview.Styles.BorderColor)
-					})
-				}
-			default:
-				{
-					box.SetFocusFunc(func() {
-						change_after_focused(box, m)
-					})
-				}
-			}
+			box.SetBlurFunc(func() {
+				box.SetBorderColor(tview.Styles.BorderColor)
+			})
 
-			switch v {
-			case view_quickview, view_callin, view_uml, view_log, view_term, view_code_below:
-				{
-					box.SetBlurFunc(func() {
-						box.SetBorderColor(tview.Styles.BorderColor)
-						m.page.SetBorderColor(tview.Styles.BorderColor)
-					})
-				}
-			default:
-				{
-					box.SetBlurFunc(func() {
-						box.SetBorderColor(tview.Styles.BorderColor)
-					})
-				}
+			if v.is_tab() {
+				box.SetFocusFunc(func() {
+					change_after_focused(box, m)
+					m.page.SetBorderColor(tview.Styles.BorderColor)
+				})
+				box.SetBlurFunc(func() {
+					box.SetBorderColor(tview.Styles.BorderColor)
+					m.page.SetBorderColor(tview.Styles.BorderColor)
+				})
+			} else if v.is_editor() {
+				box.SetFocusFunc(func() {
+					change_after_focused(box, m)
+					if m.cmdline.Vim.vi.String() == "none" {
+						m.cmdline.Vim.EnterEscape()
+					}
+				})
+			} else {
+				box.SetFocusFunc(func() {
+					change_after_focused(box, m)
+				})
 			}
-
 		}
 	}
 }
