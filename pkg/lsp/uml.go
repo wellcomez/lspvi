@@ -44,48 +44,36 @@ func (entry CallStackEntry) symboldefine_name() string {
 	return entry.Item.Name
 }
 func (call CallStack) newuml() (ret []string, title string) {
-	var caller *CallStackEntry = nil
-	ret = make([]string, 0)
+	pre := []string{"actor 0 #red"}
+	ret = []string{}
+	added := make(map[string]bool)
+	actor := "0"
 	for _, s := range call.Items {
-		rightPrefix := ""
-		s_is_class := !s.isFunction()
-		if s_is_class {
-
-			if len(s.uml_class_name()) > 0 {
-				rightPrefix = s.uml_class_name() + "::"
+		right := ""
+		current_actor := ""
+		if current_actor = s.uml_class_name(); len(current_actor) == 0 {
+			current_actor = s.Item.URI.AsPath().Base()
+			if _, ok := added[current_actor]; !ok {
+				s := fmt.Sprintf("collections  %s", current_actor)
+				pre = append(pre, s)
+				added[current_actor] = true
 			}
+
 		}
-		right := rightPrefix + s.symboldefine_name()
-		if strings.Index(right, "ProcessInternal") > 0 {
-			log.Println(right, s.symboldefine_name(), s.uml_class_name())
-		}
+		right = fmt.Sprint(current_actor, ":", s.symboldefine_name())
+
 		if len(ret) == 0 {
 			title = fmt.Sprintf("==%s==", right)
 		}
-		if caller != nil {
-			if s_is_class {
-				left := caller.symboldefine_name()
-				if len(caller.uml_class_name()) > 0 {
-					left = caller.uml_class_name()
-				}
-
-				ret = append(ret, fmt.Sprintf("%s -> %s", left, right))
-			} else {
-				left := caller.uml_class_name()
-				if caller.isFunction() || len(left) == 0 {
-					left = caller.symboldefine_name()
-				}
-				ret = append(ret, fmt.Sprintf("%s -> %s", left, right))
-			}
-		}
-		caller = s
+		ret = append(ret, fmt.Sprintf("%s -> %s", actor, right))
+		actor = current_actor
 	}
-	return ret, title
+	return append(pre, ret...), title
 }
 
 func (call CallStack) Uml(markdown bool) string {
 	//go use function as method because treate package as object
-	ret, title := call.olduml()
+	ret, title := call.newuml()
 	markBegin := ""
 	if markdown {
 		markBegin = "```plantuml"
