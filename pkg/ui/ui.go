@@ -1051,7 +1051,7 @@ func create_edit_area(main *mainui) *flex_area {
 	codeview.view.SetBorder(true)
 
 	main.quickview = new_quikview(main)
-	main.bookmark_view = new_bookmark_view(main.bookmark, codeview, func() bool { return view_bookmark == main.tab.activate_tab_id })
+	main.bookmark_view = new_bookmark_view(main.bookmark, main, func() bool { return view_bookmark == main.tab.activate_tab_id })
 	main.callinview = new_callview(main)
 
 	main.fileexplorer = new_file_tree(main, "FileExplore", global_prj_root, func(filename string) bool { return true })
