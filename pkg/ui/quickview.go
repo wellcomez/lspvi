@@ -569,6 +569,7 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 		}
 		refindex := node.ref_index
 		vvv := qk.Refs.Refs[refindex]
+		qk.currentIndex = refindex
 		qk.main.Tab().UpdatePageTitle()
 		qk.main.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 		if need_draw {
