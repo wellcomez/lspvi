@@ -195,7 +195,7 @@ func (menu qf_index_menu_context) menuitem() []context_menu_item {
 				switch value.Type {
 				case data_callin:
 					if task, deletenode := menu.deleteitem_and_callinnode(ret); task != nil {
-						go reoload_callin_task(ret.main.callinview, *task, deletenode)
+						go reload_callin_task(ret.main.callinview, *task, deletenode)
 					}
 				case data_refs:
 					ret.qfh.Delete(ret.GetCurrentItem())

@@ -178,6 +178,9 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case goto_tab:
 		{
 			return cmdactor{id, "tab", func() bool {
+				if m.CmdLine().Vim.vi.Insert{
+					return false
+				}
 				m.switch_tab_view()
 				return true
 			}}

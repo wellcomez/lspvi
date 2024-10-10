@@ -361,10 +361,10 @@ func (m *mainui) is_tab(tabname string) bool {
 
 // OnGetImplement implements lspcore.lsp_data_changed.
 func (m *mainui) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.ImplementationResult, err error, option *lspcore.OpenOption) {
-	code := m.codeview
+	code := m.current_editor()
 	go func() {
 		m.app.QueueUpdateDraw(func() {
-			m.quickview.view.Key = code.view.Cursor.GetSelection()
+			m.quickview.view.Key = code.GetSelection()
 			if len(ranges.Key) > 0 {
 				m.quickview.view.Key = ranges.Key
 			}
@@ -379,10 +379,10 @@ func (m *mainui) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.Impl
 	}()
 }
 func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
-	code := m.codeview
+	code := m.current_editor()
 	go func() {
 		m.app.QueueUpdateDraw(func() {
-			m.quickview.view.Key = code.view.Cursor.GetSelection()
+			m.quickview.view.Key = code.GetSelection()
 			if len(ranges.Key) > 0 {
 				m.quickview.view.Key = ranges.Key
 			}
@@ -482,7 +482,7 @@ func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
-	code := m.codeview
+	code := m.current_editor()
 	if file != nil {
 		if file.Filename != code.Path() {
 			return
@@ -491,7 +491,7 @@ func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	if err != nil {
 		m.logerr(err)
 	}
-	m.symboltree.update_with_ts(code.tree_sitter, file)
+	m.symboltree.update_with_ts(code.TreeSitter(), file)
 }
 
 func (m *mainui) logerr(err error) {
@@ -558,9 +558,11 @@ type navigation_loc struct {
 }
 
 func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhistory bool, option *lspcore.OpenOption) {
-	// dirname := filepath.Dir(file)
-	// m.fileexplorer.ChangeDir(dirname)
 	var code = m.codeview
+	vid := m.current_editor().vid()
+	if c, yes := SplitCode.code_collection[vid]; yes {
+		code = c
+	}
 	var loc *lsp.Location
 	if navi != nil {
 		loc = navi.loc
@@ -570,13 +572,12 @@ func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhist
 		return
 	}
 	if addhistory {
+		var pos *EditorPosition
 		if loc != nil {
-			m.bf.history.SaveToHistory(code)
-			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line))
-		} else {
-			m.bf.history.SaveToHistory(code)
-			m.bf.history.AddToHistory(file, nil)
+			pos = NewEditorPosition(loc.Range.Start.Line)
 		}
+		m.bf.history.SaveToHistory(code)
+		m.bf.history.AddToHistory(file, pos)
 	}
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
@@ -773,7 +774,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					code.openfile(code.Path(), nil)
+					// code.openfile(code.Path(), nil)
 				})
 			}()
 		}
@@ -830,6 +831,19 @@ func (main *mainui) on_change_color(name string) {
 	global_theme.update_controller_theme()
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
+	if main.current_editor().vid() >= view_code {
+		x, y, w, _ := main.codeview.view.GetInnerRect()
+		left := x
+		right := x + w
+		for _, v := range SplitCode.code_collection {
+			if v.vid() >= view_code {
+				x, _, w, _ := v.view.GetInnerRect()
+				left = min(left, x)
+				right = max(right, x+w)
+			}
+		}
+		main.current_editor().DrawNavigationBar(x, y, right-left, screen)
+	}
 	if main.right_context_menu.visible {
 		main.right_context_menu.Draw(screen)
 	}
@@ -897,7 +911,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 }
 
 func load_from_history(main *mainui) {
-	code := main.codeview
+	var code CodeEditor = main.current_editor()
 	filearg := main.bf.Last()
 	main.quickview.view.Clear()
 	main.symboltree.Clear()
@@ -912,7 +926,7 @@ func load_from_history(main *mainui) {
 			},
 		}, offset: 0}, false, nil)
 	} else {
-		code.openfile("", nil)
+		code.LoadBuffer([]byte{}, "")
 	}
 }
 
@@ -958,13 +972,15 @@ func (main *mainui) current_editor() CodeEditor {
 	if main.codeview2.view.HasFocus() {
 		return main.codeview2
 	}
+
+	if SplitCode.active_codeview != nil {
+		return SplitCode.active_codeview
+	}
+
 	for _, v := range SplitCode.code_collection {
 		if v.view.HasFocus() {
 			return v
 		}
-	}
-	if SplitCode.active_codeview != nil {
-		return SplitCode.active_codeview
 	}
 	return main.codeviewmain
 }
@@ -1047,7 +1063,7 @@ func create_edit_area(main *mainui) *flex_area {
 	codeview.view.SetBorder(true)
 
 	main.quickview = new_quikview(main)
-	main.bookmark_view = new_bookmark_view(main.bookmark, codeview, func() bool { return view_bookmark == main.tab.activate_tab_id })
+	main.bookmark_view = new_bookmark_view(main.bookmark, main, func() bool { return view_bookmark == main.tab.activate_tab_id })
 	main.callinview = new_callview(main)
 
 	main.fileexplorer = new_file_tree(main, "FileExplore", global_prj_root, func(filename string) bool { return true })
@@ -1095,11 +1111,9 @@ func (main *mainui) OnSearch(option search_option) {
 var leadkey = ' '
 
 func (main *mainui) set_viewid_focus(v view_id) {
-	for _, tab := range main.tab.tab_id {
-		if v == tab {
-			main.ActiveTab(tab, true)
-			return
-		}
+	if v.is_tab() {
+		main.ActiveTab(v, true)
+		return
 	}
 	main.lost_focus(main.get_view_from_id(main.get_focus_view_id()))
 	main.set_focus(main.get_view_from_id(v))
@@ -1229,7 +1243,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (main *mainui) GoForward() {
-	main.bf.history.SaveToHistory(main.codeview)
+	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoForward()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go forward %v", i)
@@ -1245,7 +1259,7 @@ func (main *mainui) CanGoFoward() bool {
 	return main.bf.history.index != 0
 }
 func (main *mainui) GoBack() {
-	main.bf.history.SaveToHistory(main.codeview)
+	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoBack()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go %v", i)
@@ -1270,7 +1284,7 @@ func (main *mainui) open_picker_refs() {
 	main.current_editor().open_picker_refs()
 }
 func (main *mainui) open_picker_ctrlp() {
-	main.layout.dialog.OpenFileFzf(global_prj_root, main.current_editor())
+	main.layout.dialog.OpenFileFzf(global_prj_root)
 }
 func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker {
 	return main.layout.dialog.OpenGrepWordFzf(word, qf)

@@ -70,7 +70,7 @@ func new_history_picker(v *fzfmain, edit CodeEditor) history_picker {
 		v := sym.impl.listdata[data_index]
 		path := v.filepath
 		parent := sym.impl.parent
-		parent.openfile(path, edit)
+		parent.openfile(path)
 	}
 	for i, h := range history.history_files() {
 

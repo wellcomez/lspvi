@@ -300,7 +300,7 @@ type bookmark_view struct {
 	menuitem      []context_menu_item
 	right_context bk_menu_context
 	bookmark      *proj_bookmark
-	code          *CodeView
+	code          MainService
 	yes           func() bool
 }
 
@@ -322,10 +322,10 @@ func (bk *bookmark_view) OnSearch(txt string) {
 	}
 	bk.fzf.selected = func(dataindex int, listindex int) {
 		loc := bk.data[dataindex].loc
-		bk.code.LoadFileWithLsp(loc.URI.AsPath().String(), &loc, true)
+		bk.code.OpenFileHistory(loc.URI.AsPath().String(), &loc)
 	}
 }
-func new_bookmark_view(bookmark *proj_bookmark, code *CodeView, yes func() bool) *bookmark_view {
+func new_bookmark_view(bookmark *proj_bookmark, code MainService, yes func() bool) *bookmark_view {
 	ret := &bookmark_view{
 		view_link: &view_link{id: view_bookmark, up: view_code, left: view_uml, right: view_outline_list},
 		Name:      view_bookmark.getname(),
@@ -367,7 +367,7 @@ func (ret *bookmark_view) loaddata() {
 	})
 	ret.list.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
-		ret.code.LoadFileWithLsp(loc.URI.AsPath().String(), &loc, true)
+		ret.code.OpenFileHistory(loc.URI.AsPath().String(), &loc)
 	})
 
 	if ret.bookmark.changed == nil {
@@ -405,5 +405,5 @@ func (menu bk_menu_context) menuitem() []context_menu_item {
 func (ret *bookmark_view) onclick(i int) {
 	loc := ret.data[i].loc
 	ret.list.SetCurrentItem(i)
-	ret.code.LoadFileWithLsp(loc.URI.AsPath().String(), &loc, true)
+	ret.code.OpenFileHistory(loc.URI.AsPath().String(), &loc)
 }

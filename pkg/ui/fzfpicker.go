@@ -10,10 +10,10 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
-func (parent *fzfmain) openfile(path string, code CodeEditor) {
-	code.LoadFileWithLsp(path, nil, true)
+func (parent *fzfmain) openfile(path string) {
+	parent.main.OpenFileHistory(path,nil)
 	parent.hide()
-	parent.main.set_viewid_focus(code.vid())
+	// parent.main.set_viewid_focus(code.vid())
 	parent.main.CmdLine().Vim.EnterEscape()
 }
 
@@ -175,8 +175,8 @@ func (v *fzfmain) OpenDocumntSymbolFzf(code CodeEditor) {
 }
 
 // OpenFileFzf
-func (v *fzfmain) OpenFileFzf(root string, code CodeEditor) {
-	filewalk := NewDirWalk(root, v, code)
+func (v *fzfmain) OpenFileFzf(root string) {
+	filewalk := NewDirWalk(root, v)
 	v.Frame = tview.NewFrame(filewalk.grid(v.input))
 	v.input.SetLabel(">")
 	v.app.SetFocus(v.input)

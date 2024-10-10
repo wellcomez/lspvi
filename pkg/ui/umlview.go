@@ -142,6 +142,7 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 	ret.file_right_context = uml_filetree_context{qk: file, main: main}
 	// update_filetree_menu(ret)
 	file.openfile = ret.openfile
+	file.StartMonitor()
 	return ret, nil
 }
 

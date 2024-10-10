@@ -188,10 +188,10 @@ func reload_callin(ret *callinview, taskindex int, node *tview.TreeNode) {
 
 func (callnode CallNode) reload_callin(ret *callinview, node *tview.TreeNode) {
 	task := callnode.call
-	reoload_callin_task(ret, task, node)
+	reload_callin_task(ret, task, node)
 }
 
-func reoload_callin_task(ret *callinview, task lspcore.CallInTask, node *tview.TreeNode) {
+func reload_callin_task(ret *callinview, task lspcore.CallInTask, node *tview.TreeNode) {
 	if sym, err := ret.main.Lspmgr().Open(task.Loc.URI.AsPath().String()); err == nil {
 		task := lspcore.NewCallInTask(task.Loc, sym.LspClient(), task.TraceLevel)
 		if node != nil {
@@ -249,7 +249,7 @@ func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main Ma
 					return err
 				}
 				calls := []lsp.CallHierarchyIncomingCall{}
-				rename:=lspcore.NewRenameRecord()
+				rename := lspcore.NewRenameRecord()
 				// call_hiera_0 := call_hiera[0]
 				for _, v := range call_hiera {
 					if v.URI == top.Item.URI {
@@ -363,7 +363,7 @@ func (ret *callinview) get_next_callin_callee_at_leaf(value interface{}, main Ma
 					return err
 				}
 				calls := []lsp.CallHierarchyIncomingCall{}
-				rename:=lspcore.NewRenameRecord()
+				rename := lspcore.NewRenameRecord()
 				// call_hiera_0 := call_hiera[0]
 				for _, v := range call_hiera {
 					if v.URI == top.Item.URI {
@@ -519,15 +519,15 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 			sym := ref.call
 			if r := ref.fromrange; r != nil {
 				// r := ref.fromrange
-				view.main.current_editor().LoadFileWithLsp(r.URI.AsPath().String(), &lsp.Location{
+				view.main.OpenFileHistory(r.URI.AsPath().String(), &lsp.Location{
 					URI:   r.URI,
 					Range: r.Range,
-				}, false)
+				})
 			} else {
-				view.main.current_editor().LoadFileWithLsp(sym.URI.AsPath().String(), &lsp.Location{
+				view.main.OpenFileHistory(sym.URI.AsPath().String(), &lsp.Location{
 					URI:   sym.URI,
 					Range: sym.SelectionRange,
-				}, false)
+				})
 			}
 			view.update_node_color()
 			return
@@ -567,15 +567,15 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			sym := ref.call
 			if r := ref.fromrange; r != nil {
 				// r := ref.fromrange
-				view.main.current_editor().LoadFileWithLsp(r.URI.AsPath().String(), &lsp.Location{
+				view.main.OpenFileHistory(r.URI.AsPath().String(), &lsp.Location{
 					URI:   r.URI,
 					Range: r.Range,
-				}, false)
+				})
 			} else {
-				view.main.current_editor().LoadFileWithLsp(sym.URI.AsPath().String(), &lsp.Location{
+				view.main.OpenFileHistory(sym.URI.AsPath().String(), &lsp.Location{
 					URI:   sym.URI,
 					Range: sym.SelectionRange,
-				}, false)
+				})
 			}
 			view.update_node_color()
 			return
@@ -598,12 +598,12 @@ func ExpandNodeOption(node *tview.TreeNode, text string, expand bool) {
 	if expand {
 		if len(node.GetChildren()) > 0 {
 			node.Expand()
-			node.SetText(fmt.Sprintf("%c",IconExpaned) + " " + text)
+			node.SetText(fmt.Sprintf("%c", IconExpaned) + " " + text)
 		}
 	} else {
 		node.Collapse()
 		if len(node.GetChildren()) > 0 {
-			node.SetText(fmt.Sprintf("%c",IconCollapse) + " " + text)
+			node.SetText(fmt.Sprintf("%c", IconCollapse) + " " + text)
 		}
 	}
 }

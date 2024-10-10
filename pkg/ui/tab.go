@@ -158,9 +158,7 @@ func (bar *Tabbar) Add(name string) int {
 		tab := &bar.tabs[i]
 		width := len(tab.name)
 		if space {
-			if !tab.first {
-				width = len(tab.name) + 1
-			}
+			width = len(tab.name) + 1
 		}
 		tab.SetRect(x, y, width, 1)
 		ret += width

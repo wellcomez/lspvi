@@ -4,6 +4,7 @@ import (
 	// "log"
 
 	"fmt"
+	"log"
 
 	// "github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -93,57 +94,72 @@ func focus_viewid(m *mainui) view_id {
 	}
 	return view_none
 }
+func (v view_id) is_tab() bool {
+	switch v {
+	case view_quickview, view_callin, view_uml, view_log, view_term, view_code_below:
+		return true
+	default:
+		return false
+	}
+
+}
 func view_id_init(m *mainui) {
 	config_main_tab_order(m)
-	for _, v := range all_view_list {
+	aa := all_view_list
+	set_view_focus_cb(aa, m)
+}
+
+const viewtag = "debug_viewidtag"
+
+func debug_view_id(prefix string, v view_id, m *mainui) {
+	log.Printf("%s  %10s %20s is_editor %7v %20s", viewtag, prefix, v.getname(), v.is_editor(), m.current_editor().vid().getname())
+}
+func set_view_focus_cb(aa []view_id, m *mainui) {
+	for i := range aa {
+		v := aa[i]
 		box := v.to_box(m)
 		if box != nil {
-			switch v {
-			case view_code, view_code_below:
-				{
-					box.SetFocusFunc(func() {
-						// m.editor_area_fouched()
-						change_after_focused(box, m)
-						if m.cmdline.Vim.vi.String() == "none" {
-							m.cmdline.Vim.EnterEscape()
-						}
-					})
+			box.SetBlurFunc(func() {
+				debug_view_id("blur", v, m)
+				box.SetBorderColor(tview.Styles.BorderColor)
+				if v.is_tab() {
+					box.SetBorderColor(tview.Styles.BorderColor)
+					m.page.SetBorderColor(tview.Styles.BorderColor)
+				} else if v.is_editor() {
+					if m.current_editor().vid() != v {
+						box.SetTitleColor(tview.Styles.TitleColor)
+					} else {
+						// if SplitCode.active_codeview != nil {
+						// 	log.Println(viewtag, "---------", SplitCode.active_codeview.id.getname())
+						// }else{
+						// 	log.Println(viewtag, "---------", SplitCode.active_codeview)
+						// }
+					}
+				} else {
 				}
-			case view_quickview, view_callin, view_uml, view_term:
-				{
-					box.SetFocusFunc(func() {
-						change_after_focused(box, m)
-						m.page.SetBorderColor(tview.Styles.BorderColor)
-					})
-				}
-			default:
-				{
-					box.SetFocusFunc(func() {
-						change_after_focused(box, m)
-					})
-				}
-			}
+			})
 
-			switch v {
-			case view_quickview, view_callin, view_uml, view_log, view_term, view_code_below:
-				{
-					box.SetBlurFunc(func() {
-						box.SetBorderColor(tview.Styles.BorderColor)
-						m.page.SetBorderColor(tview.Styles.BorderColor)
-					})
-				}
-			default:
-				{
-					box.SetBlurFunc(func() {
-						box.SetBorderColor(tview.Styles.BorderColor)
-					})
-				}
-			}
+			box.SetFocusFunc(func() {
 
+				debug_view_id("focus", v, m)
+
+				box.SetBorderColor(tview.Styles.BorderColor)
+				if !(v == view_cmd || v.is_editor()) {
+					m.cmdline.Vim.ExitEnterEscape()
+				}
+				if v.is_tab() {
+					m.page.SetBorderColor(tview.Styles.BorderColor)
+				} else if v.is_editor() {
+					box.SetTitleColor(tview.Styles.BorderColor)
+					if m.cmdline.Vim.vi.String() == "none" {
+						m.cmdline.Vim.EnterEscape()
+					}
+				} else {
+				}
+			})
 		}
 	}
 }
-
 func change_after_focused(box *tview.Box, m *mainui) {
 	box.SetBorderColor(tview.Styles.BorderColor)
 	vid := m.get_focus_view_id()

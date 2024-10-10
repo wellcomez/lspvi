@@ -72,7 +72,7 @@ func (s *Set) Difference(other *Set) *Set {
 }
 
 type change_reciever interface {
-	OnWatchFileChange(file string) bool
+	OnWatchFileChange(file string, event fsnotify.Event) bool
 }
 type FileWatch struct {
 	watcher  *fsnotify.Watcher
@@ -82,6 +82,11 @@ type FileWatch struct {
 }
 
 func (f *FileWatch) AddReciever(reciever change_reciever) {
+	for _, v := range f.recieved {
+		if v == reciever {
+			return
+		}
+	}
 	f.recieved = append(f.recieved, reciever)
 }
 func (f *FileWatch) Remove(reciever change_reciever) {
@@ -100,7 +105,7 @@ func NewFileWatch() *FileWatch {
 	if err != nil {
 		return nil
 	}
-	return &FileWatch{watcher: watcher,files: NewSet()}
+	return &FileWatch{watcher: watcher, files: NewSet()}
 }
 
 func (f *FileWatch) Add(s string) error {
@@ -131,14 +136,14 @@ func (f *FileWatch) Run(root string) error {
 					return
 				}
 				// log.Printf("Watched file %s", event.Name)
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					// log.Printf("modified file: %s", event.Name)
-					for _, v := range f.recieved {
-						if v.OnWatchFileChange(event.Name) {
-							break
-						}
+				// if event.Op&fsnotify.Write == fsnotify.Write {
+				// log.Printf("modified file: %s", event.Name)
+				for _, v := range f.recieved {
+					if v.OnWatchFileChange(event.Name, event) {
+						break
 					}
 				}
+				// }
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return

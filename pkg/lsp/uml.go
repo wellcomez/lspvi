@@ -43,8 +43,57 @@ func (entry CallStackEntry) uml_class_name() string {
 func (entry CallStackEntry) symboldefine_name() string {
 	return entry.Item.Name
 }
+func (call CallStack) newuml() (ret []string, title string) {
+	// "hide footbox"
+	pre := []string{"autonumber", "actor 0 #red"}
+	ret = []string{}
+	added := make(map[string]bool)
+	actor := "0"
+	for _, s := range call.Items {
+		right := ""
+		current_actor := ""
+		if current_actor = s.uml_class_name(); len(current_actor) == 0 {
+			current_actor = s.Item.URI.AsPath().Base()
+			if _, ok := added[current_actor]; !ok {
+				s := fmt.Sprintf("collections  %s", current_actor)
+				pre = append(pre, s)
+				added[current_actor] = true
+			}
+
+		}
+		right = fmt.Sprint(current_actor, ":", s.symboldefine_name())
+
+		if len(ret) == 0 {
+			title = fmt.Sprintf("==%s==", right)
+		}
+		ret = append(ret, fmt.Sprintf("%s -> %s", actor, right))
+		actor = current_actor
+	}
+	return append(pre, ret...), title
+}
 
 func (call CallStack) Uml(markdown bool) string {
+	//go use function as method because treate package as object
+	ret, title := call.newuml()
+	markBegin := ""
+	if markdown {
+		markBegin = "```plantuml"
+	}
+	var black = "skinparam monochrome true"
+
+	sss := []string{markBegin, "@startuml", black, "autoactivate on", title}
+	sss = append(sss, ret...)
+	markEnd := ""
+	if markdown {
+
+		markEnd = "```\n\n\n"
+	}
+	sss = append(sss, "@enduml", markEnd)
+
+	return strings.Join(sss, "\n")
+}
+
+func (call CallStack) olduml() ([]string, string) {
 	ret := make([]string, 0)
 	var caller *CallStackEntry = nil
 
@@ -52,7 +101,7 @@ func (call CallStack) Uml(markdown bool) string {
 	for _, s := range call.Items {
 		rightPrefix := ""
 		if !s.isFunction() {
-			//go use function as method because treate package as object
+
 			if len(s.uml_class_name()) > 0 {
 				rightPrefix = s.uml_class_name() + "::"
 			}
@@ -87,22 +136,7 @@ func (call CallStack) Uml(markdown bool) string {
 		}
 		caller = s
 	}
-	markBegin := ""
-	if markdown {
-		markBegin = "```plantuml"
-	}
-	var black = "skinparam monochrome true"
-
-	sss := []string{markBegin, "@startuml", black, "autoactivate on", title}
-	sss = append(sss, ret...)
-	markEnd := ""
-	if markdown {
-
-		markEnd = "```\n\n\n"
-	}
-	sss = append(sss, "@enduml", markEnd)
-
-	return strings.Join(sss, "\n")
+	return ret, title
 }
 
 // 假设applyFix函数被定义为应用fix函数到stack中的每个元素

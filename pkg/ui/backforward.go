@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"encoding/json"
+	"log"
 	// "log"
 	"os"
 )
@@ -95,6 +96,7 @@ func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
 	if newdata == "" {
 		return
 	}
+	debug_print_bf("add before", h)
 	lll := h.datalist[h.index:]
 	pos := EditorPosition{
 		Line: 0,
@@ -105,13 +107,29 @@ func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
 	newhistory := backforwarditem{Path: newdata, Pos: pos}
 	h.datalist = append([]backforwarditem{newhistory}, lll...)
 	h.index = 0
+	debug_print_bf("add after", h)
 	h.save_to_file()
 }
 
-func (h *History) insertAtFront(slice []backforwarditem, element backforwarditem) []backforwarditem {
-	slice = append([]backforwarditem{element}, slice...)
-	return slice
+func debug_print_bf(prefix string, h *History) {
+	if len(h.datalist) > 0 {
+		tag := "HISTORY"
+		item := h.datalist[h.index]
+		log.Println("index:", h.index, tag, prefix, "len", len(h.datalist), item.Path, ":", item.Pos.Line)
+		for i := range h.datalist {
+			flag := ""
+			if i == h.index {
+				flag = "*"
+			}
+			log.Println("	", tag, flag, "<", i, ">", h.datalist[i].Path, h.datalist[i].Pos.Line)
+		}
+	}
 }
+
+// func (h *History) insertAtFront(slice []backforwarditem, element backforwarditem) []backforwarditem {
+// 	slice = append([]backforwarditem{element}, slice...)
+// 	return slice
+// }
 
 type BackForward struct {
 	history *History
@@ -131,7 +149,9 @@ func (bf *BackForward) GoBack() backforwarditem {
 	if len(bf.history.datalist) > 0 {
 		bf.history.index++
 		bf.history.index = min(len(bf.history.datalist)-1, bf.history.index)
-		return bf.history.datalist[bf.history.index]
+		ret := bf.history.datalist[bf.history.index]
+		debug_print_bf("Goback", bf.history)
+		return ret
 	}
 	return backforwarditem{}
 }
@@ -142,5 +162,7 @@ func (bf *BackForward) GoForward() backforwarditem {
 	}
 	bf.history.index--
 	bf.history.index = max(0, bf.history.index)
-	return bf.history.datalist[bf.history.index]
+	ret := bf.history.datalist[bf.history.index]
+	debug_print_bf("GoForward", bf.history)
+	return ret
 }

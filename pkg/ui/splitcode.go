@@ -1,5 +1,6 @@
 package mainui
 
+
 type CodeSplit struct {
 	code_collection map[view_id]*CodeView
 	last            view_id
@@ -18,7 +19,7 @@ func (s *CodeSplit) AddCode(d *CodeView) {
 	s.last = max(d.id, s.last)
 	s.layout.AddItem(d.view, 0, 1, false)
 }
-func (s *CodeSplit) SetActive(v* CodeView) {
+func (s *CodeSplit) SetActive(v *CodeView) {
 	s.active_codeview = v
 }
 func (s *CodeSplit) New() *CodeView {
@@ -26,6 +27,7 @@ func (s *CodeSplit) New() *CodeView {
 	global_file_watch.AddReciever(a)
 	a.id = s.last + 1
 	s.AddCode(a)
+	set_view_focus_cb([]view_id{a.id}, s.main)
 	return a
 }
 func NewCodeSplit(d *CodeView) *CodeSplit {
@@ -101,6 +103,7 @@ func SplitRight(code *CodeView) context_menu_item {
 
 		codeview2 := SplitCode.New()
 		codeview2.view.SetBorder(true)
+		SplitCode.SetActive(codeview2)
 		main.Right_context_menu().add(codeview2.rightmenu)
 		codeview2.LoadFileWithLsp(code.Path(), nil, true)
 	}}

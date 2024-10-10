@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
@@ -26,7 +27,15 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		return
 	}
 	x, y, w, _ := v.GetInnerRect()
-	symbol := v.code.LspSymbol()
+	if v.code.vid() == view_code_below {
+		v.code.DrawNavigationBar(x, y, w, screen)
+	}
+	// newFunction1(v, x, y, w,screen)
+}
+
+func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen) {
+	var v = code.view
+	var symbol = code.LspSymbol()
 	if symbol == nil {
 		return
 	}
@@ -41,11 +50,15 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 	textStyle := global_theme.get_color("selection")
 
 	if sym != nil {
-		for _, v := range " " {
-			screen.SetContent(begin, y, v, nil, *textStyle)
-			begin++
+		begin = code_navbar_draw_runne(screen, begin, y, ' ', *textStyle)
 
+		x1 := code.FileName()
+		x1 = strings.ReplaceAll(x1, "/", " > ")+" > "
+		for _, v := range x1 {
+			begin = code_navbar_draw_runne(
+				screen, begin, y, v, *textStyle)
 		}
+
 		if len(sym.Classname) > 0 {
 			s := style
 			if ss, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
@@ -55,19 +68,17 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 			if run, ok := lspcore.IconsRunne[int(lsp.SymbolKindClass)]; ok {
 				keys := []rune{run, ' '}
 				for _, run := range keys {
-					screen.SetContent(begin, y, run, nil, textStyle.Foreground(f))
-					begin++
+					begin = code_navbar_draw_runne(screen, begin, y, run, textStyle.Foreground(f))
 				}
 			}
 
 			for _, v := range sym.Classname {
-				screen.SetContent(begin, y, v, nil, textStyle.Foreground(f))
-				begin++
+				begin = code_navbar_draw_runne(
+					screen, begin, y, v, textStyle.Foreground(f))
 			}
-			for _, v := range " > " {
-				screen.SetContent(begin, y, v, nil, *textStyle)
-				begin++
-
+			for _, v := range " >" {
+				begin = code_navbar_draw_runne(screen,
+					begin, y, v, *textStyle)
 			}
 		}
 		if len(sym.SymInfo.Name) > 0 {
@@ -79,33 +90,38 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 			if run, ok := lspcore.IconsRunne[int(sym.SymInfo.Kind)]; ok {
 				keys := []rune{run, ' '}
 				for _, run := range keys {
-					screen.SetContent(begin, y, run, nil, textStyle.Foreground(f))
-					begin++
+					begin = code_navbar_draw_runne(screen,
+						begin, y, run, textStyle.Foreground(f))
 				}
 			} else {
 				x1 := sym.Icon() + " "
 				if len(x1) > 0 {
 					for _, v := range x1 {
-						screen.SetContent(begin, y, v, nil, textStyle.Foreground(f))
-						begin++
+						begin = code_navbar_draw_runne(screen,
+							begin, y, v, textStyle.Foreground(f))
 					}
 				}
 			}
 			for _, v := range sym.SymInfo.Name {
-				screen.SetContent(begin, y, v, nil, textStyle.Foreground(f))
-				begin++
+				begin = code_navbar_draw_runne(screen,
+					begin, y, v, textStyle.Foreground(f))
 			}
 		}
 		for {
 			if begin < x+w {
-				screen.SetContent(begin, y, ' ', nil, *textStyle)
-				begin++
+				begin = code_navbar_draw_runne(screen,
+					begin, y, ' ', *textStyle)
 			} else {
 				break
 			}
 		}
 	}
+}
 
+func code_navbar_draw_runne(screen tcell.Screen, begin int, y int, v rune, textStyle tcell.Style) int {
+	screen.SetContent(begin, y, v, nil, textStyle)
+	begin++
+	return begin
 }
 func (view *codetextview) has_bookmark() bool {
 	var line = view.Cursor.Loc.Y + 1
