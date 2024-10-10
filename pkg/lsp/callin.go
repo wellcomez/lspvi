@@ -101,7 +101,24 @@ type CallInTask struct {
 	sym        *Symbol_file
 	// cb       *func(task CallInTask)
 }
-
+func NewCallInTaskFromFile(fielname string) (*CallInTask, error) {
+	if _, err := os.Stat(fielname); err == nil {
+		buf, err := os.ReadFile(fielname)
+		if err != nil {
+			log.Println("open_in_tab", fielname, err)
+			return nil, err
+		}
+		var result CallInTask
+		err = json.Unmarshal(buf, &result)
+		if err != nil {
+			log.Println("open_in_tab Unmarshal", fielname, err)
+			return nil, err
+		}
+		return &result, nil
+	} else {
+		return nil, err
+	}
+}
 func (task CallInTask) SymbolFile() *Symbol_file {
 	return task.sym
 }

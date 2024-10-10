@@ -152,7 +152,7 @@ func (qk *qk_history_picker) open_in_qf() {
 	main.open_in_tabview(keys[i])
 
 }
-func (main *mainui) LoadQfData(item qf_history_data)(task *lspcore.CallInTask ) {
+func (main *mainui) LoadQfData(item qf_history_data) (task *lspcore.CallInTask) {
 	// item := keys[i]
 	switch item.Type {
 	case data_refs, data_search, data_grep_word, data_implementation:
@@ -164,24 +164,12 @@ func (main *mainui) LoadQfData(item qf_history_data)(task *lspcore.CallInTask ) 
 		{
 			callin := item.Key.File
 			fielname := filepath.Join(callin, "callstack.json")
-			_, err := os.Stat(fielname)
-			if err == nil {
-				buf, err := os.ReadFile(fielname)
-				if err != nil {
-					log.Println("open_in_tab", fielname, err)
-					return task
-				}
-				var result lspcore.CallInTask
-				err = json.Unmarshal(buf, &result)
-				if err != nil {
-					log.Println("open_in_tab Unmarshal", fielname, err)
-					return task 
-				}
-				task = &result
+			if task, err := lspcore.NewCallInTaskFromFile(fielname); err == nil {
+				return task
 			}
 		}
 	}
-	return task
+	return nil
 }
 
 func (main *mainui) open_in_tabview(item qf_history_data) {
