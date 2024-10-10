@@ -452,8 +452,8 @@ func (main *mainui) qf_grep_word(rightmenu_select_text string) {
 					for _, s := range buf {
 						add++
 						main.quickview.AddResult(end, data_grep_word, s, key)
-						main.page.update_title(main.quickview.String())
 					}
+					main.page.update_title(main.quickview.String())
 					buf = []ref_with_caller{}
 					coping = false
 				})

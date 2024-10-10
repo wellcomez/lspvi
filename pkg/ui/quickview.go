@@ -635,6 +635,9 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	}
 	if end {
 		qk.save()
+		if len(qk.Refs.Refs) < 250 {
+			qk.UpdateListView(t, qk.Refs.Refs, key)
+		}
 		return
 	}
 	qk.reset_tree()
@@ -821,7 +824,7 @@ func (caller ref_with_caller) ListItem(root string, parent bool) string {
 	}
 }
 
-func (caller ref_with_caller) get_code(funcolor tcell.Color) string {
+func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
 	v := caller.Loc
 	line := ""
 	source_file_path := v.URI.AsPath().String()
@@ -848,6 +851,7 @@ func (caller ref_with_caller) get_code(funcolor tcell.Color) string {
 					line = strings.Join([]string{a1, fmt_color_string(a, funcolor), a2}, "")
 				}
 			}
+			caller.CodeLine = line
 		} else {
 			line = "File changed lines not exsited"
 		}
