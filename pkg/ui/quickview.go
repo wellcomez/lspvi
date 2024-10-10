@@ -787,21 +787,45 @@ type list_tree_node struct {
 func (caller ref_with_caller) ListItem(root string, parent bool) string {
 	v := caller.Loc
 
-	line := ""
 	path := v.URI.AsPath().String()
 	if len(root) > 0 {
 		path = trim_project_filename(path, root)
 	}
 
-	source_file_path := v.URI.AsPath().String()
-	data, err := os.ReadFile(source_file_path)
 	funcolor := global_theme.search_highlight_color()
 	caller_color := funcolor
 	if c, err := global_theme.get_lsp_color(lsp.SymbolKindFunction); err == nil {
 		f, _, _ := c.Decompose()
 		caller_color = f
 	}
-	icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.CompletionItemKindFunction)])
+
+	line := caller.get_code(funcolor)
+
+	if caller.Caller != nil {
+		icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.CompletionItemKindFunction)])
+		callname := caller.Caller.Name
+		callname = strings.TrimLeft(callname, " ")
+		callname = strings.TrimRight(callname, " ")
+		callname = icon + callname
+		if parent {
+			return path
+		} else {
+			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
+		}
+	} else {
+		if parent {
+			return path
+		} else {
+			return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, strings.TrimLeft(line, "\t "))
+		}
+	}
+}
+
+func (caller ref_with_caller) get_code(funcolor tcell.Color) string {
+	v := caller.Loc
+	line := ""
+	source_file_path := v.URI.AsPath().String()
+	data, err := os.ReadFile(source_file_path)
 	if err != nil {
 		line = err.Error()
 	} else {
@@ -828,25 +852,7 @@ func (caller ref_with_caller) ListItem(root string, parent bool) string {
 			line = "File changed lines not exsited"
 		}
 	}
-
-	if caller.Caller != nil {
-		callname := caller.Caller.Name
-		callname = strings.TrimLeft(callname, " ")
-		callname = strings.TrimRight(callname, " ")
-		callname = icon + callname
-		if parent {
-			return path
-		} else {
-			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
-		}
-	} else {
-		if parent {
-			return path
-			// return fmt.Sprintf("%s:%-4d %s", path, v.Range.Start.Line+1, line)
-		} else {
-			return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, strings.TrimLeft(line, "\t "))
-		}
-	}
+	return line
 }
 
 func new_qf_history(main MainService) (*quickfix_history, error) {
