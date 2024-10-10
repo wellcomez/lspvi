@@ -831,6 +831,19 @@ func (main *mainui) on_change_color(name string) {
 	global_theme.update_controller_theme()
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
+	if main.current_editor().vid() >= view_code {
+		x, y, w, _ := main.codeview.view.GetInnerRect()
+		left := x
+		right := x + w
+		for _, v := range SplitCode.code_collection {
+			if v.vid() >= view_code {
+				x, _, w, _ := v.view.GetInnerRect()
+				left = min(left, x)
+				right = max(right, x+w)
+			}
+		}
+		main.current_editor().DrawNavigationBar(x, y, right-left, screen)
+	}
 	if main.right_context_menu.visible {
 		main.right_context_menu.Draw(screen)
 	}

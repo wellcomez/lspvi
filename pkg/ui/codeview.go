@@ -85,6 +85,8 @@ type CodeEditor interface {
 	OnFindInfileWordOption(fzf bool, noloop bool, whole bool) string
 
 	EditorPosition() *EditorPosition
+
+	DrawNavigationBar(x int, y int, w int, screen tcell.Screen)
 }
 
 func (editor *CodeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
