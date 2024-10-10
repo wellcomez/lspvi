@@ -205,8 +205,8 @@ func update_selection_menu(code *CodeView) {
 func SplitDown(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitDown"), handle: func() {
-		if code.id >= view_code {
+		if code.id.is_editor_main() {
 			main.Codeview2().LoadFileWithLsp(code.Path(), nil, false)
 		}
-	}}
+	}, hide: !code.id.is_editor_main()}
 }

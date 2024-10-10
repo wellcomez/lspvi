@@ -102,7 +102,7 @@ func search_on_ui(option search_option, main *mainui) {
 			prefocused = main.prefocused
 		}
 	default:
-		prefocused = view_code
+		prefocused = main.current_editor().vid() 
 	}
 	changed := true
 	if main.searchcontext == nil {

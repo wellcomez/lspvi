@@ -1,6 +1,5 @@
 package mainui
 
-
 type CodeSplit struct {
 	code_collection map[view_id]*CodeView
 	last            view_id
@@ -94,17 +93,13 @@ func (SplitCode *CodeSplit) Remove(code *CodeView) {
 func SplitRight(code *CodeView) context_menu_item {
 	main := code.main
 	return context_menu_item{item: create_menu_item("SplitRight"), handle: func() {
-		if code.id == view_code_below {
+		if !code.id.is_editor_main() {
 			return
 		}
-		if code.id < view_code {
-			return
-		}
-
 		codeview2 := SplitCode.New()
 		codeview2.view.SetBorder(true)
 		SplitCode.SetActive(codeview2)
 		main.Right_context_menu().add(codeview2.rightmenu)
 		codeview2.LoadFileWithLsp(code.Path(), nil, true)
-	}}
+	}, hide: !code.id.is_editor_main()}
 }

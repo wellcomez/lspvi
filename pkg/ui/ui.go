@@ -831,12 +831,12 @@ func (main *mainui) on_change_color(name string) {
 	global_theme.update_controller_theme()
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
-	if main.current_editor().vid() >= view_code {
+	if main.current_editor().vid().is_editor_main()  {
 		x, y, w, _ := main.codeview.view.GetInnerRect()
 		left := x
 		right := x + w
 		for _, v := range SplitCode.code_collection {
-			if v.vid() >= view_code {
+			if v.vid().is_editor_main()  {
 				x, _, w, _ := v.view.GetInnerRect()
 				left = min(left, x)
 				right = max(right, x+w)
