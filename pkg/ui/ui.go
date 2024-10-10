@@ -560,28 +560,32 @@ type navigation_loc struct {
 func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhistory bool, option *lspcore.OpenOption) {
 	// dirname := filepath.Dir(file)
 	// m.fileexplorer.ChangeDir(dirname)
-	var code = m.codeview
-	var loc *lsp.Location
-	if navi != nil {
-		loc = navi.loc
-	}
-	if info, err := os.Stat(file); err == nil && info.IsDir() {
-		m.fileexplorer.ChangeDir(file)
-		return
-	}
-	if addhistory {
-		if loc != nil {
-			m.bf.history.SaveToHistory(code)
-			m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line))
-		} else {
-			m.bf.history.SaveToHistory(code)
-			m.bf.history.AddToHistory(file, nil)
+	if m.current_editor() == m.codeview {
+		var code = m.codeview
+		var loc *lsp.Location
+		if navi != nil {
+			loc = navi.loc
 		}
+		if info, err := os.Stat(file); err == nil && info.IsDir() {
+			m.fileexplorer.ChangeDir(file)
+			return
+		}
+		if addhistory {
+			if loc != nil {
+				m.bf.history.SaveToHistory(code)
+				m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line))
+			} else {
+				m.bf.history.SaveToHistory(code)
+				m.bf.history.AddToHistory(file, nil)
+			}
+		}
+		// title := strings.Replace(file, m.root, "", -1)
+		// m.layout.parent.SetTitle(title)
+		m.symboltree.Clear()
+		code.open_file_lspon_line_option(file, loc, true, option)
+	} else {
+		m.current_editor().LoadFileWithLsp(file, navi.loc, true)
 	}
-	// title := strings.Replace(file, m.root, "", -1)
-	// m.layout.parent.SetTitle(title)
-	m.symboltree.Clear()
-	code.open_file_lspon_line_option(file, loc, true, option)
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
@@ -1270,7 +1274,7 @@ func (main *mainui) open_picker_refs() {
 	main.current_editor().open_picker_refs()
 }
 func (main *mainui) open_picker_ctrlp() {
-	main.layout.dialog.OpenFileFzf(global_prj_root, main.current_editor())
+	main.layout.dialog.OpenFileFzf(global_prj_root)
 }
 func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker {
 	return main.layout.dialog.OpenGrepWordFzf(word, qf)
