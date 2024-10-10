@@ -558,34 +558,31 @@ type navigation_loc struct {
 }
 
 func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhistory bool, option *lspcore.OpenOption) {
-	// dirname := filepath.Dir(file)
-	// m.fileexplorer.ChangeDir(dirname)
-	if m.current_editor() == m.codeview {
-		var code = m.codeview
-		var loc *lsp.Location
-		if navi != nil {
-			loc = navi.loc
-		}
-		if info, err := os.Stat(file); err == nil && info.IsDir() {
-			m.fileexplorer.ChangeDir(file)
-			return
-		}
-		if addhistory {
-			if loc != nil {
-				m.bf.history.SaveToHistory(code)
-				m.bf.history.AddToHistory(file, NewEditorPosition(loc.Range.Start.Line))
-			} else {
-				m.bf.history.SaveToHistory(code)
-				m.bf.history.AddToHistory(file, nil)
-			}
-		}
-		// title := strings.Replace(file, m.root, "", -1)
-		// m.layout.parent.SetTitle(title)
-		m.symboltree.Clear()
-		code.open_file_lspon_line_option(file, loc, true, option)
-	} else {
-		m.current_editor().LoadFileWithLsp(file, navi.loc, true)
+	var code = m.codeview
+	vid := m.current_editor().vid()
+	if c, yes := SplitCode.code_collection[vid]; yes {
+		code = c
 	}
+	var loc *lsp.Location
+	if navi != nil {
+		loc = navi.loc
+	}
+	if info, err := os.Stat(file); err == nil && info.IsDir() {
+		m.fileexplorer.ChangeDir(file)
+		return
+	}
+	if addhistory {
+		var pos *EditorPosition
+		if loc != nil {
+			pos = NewEditorPosition(loc.Range.Start.Line)
+		}
+		m.bf.history.SaveToHistory(code)
+		m.bf.history.AddToHistory(file, pos)
+	}
+	// title := strings.Replace(file, m.root, "", -1)
+	// m.layout.parent.SetTitle(title)
+	m.symboltree.Clear()
+	code.open_file_lspon_line_option(file, loc, true, option)
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
 	symbolfile, err := m.lspmgr.Open(file)
@@ -962,13 +959,15 @@ func (main *mainui) current_editor() CodeEditor {
 	if main.codeview2.view.HasFocus() {
 		return main.codeview2
 	}
+
+	if SplitCode.active_codeview != nil {
+		return SplitCode.active_codeview
+	}
+
 	for _, v := range SplitCode.code_collection {
 		if v.view.HasFocus() {
 			return v
 		}
-	}
-	if SplitCode.active_codeview != nil {
-		return SplitCode.active_codeview
 	}
 	return main.codeviewmain
 }
@@ -1233,7 +1232,7 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (main *mainui) GoForward() {
-	main.bf.history.SaveToHistory(main.codeview)
+	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoForward()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go forward %v", i)
@@ -1249,7 +1248,7 @@ func (main *mainui) CanGoFoward() bool {
 	return main.bf.history.index != 0
 }
 func (main *mainui) GoBack() {
-	main.bf.history.SaveToHistory(main.codeview)
+	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoBack()
 	start := lsp.Position{Line: i.Pos.Line}
 	log.Printf("go %v", i)
