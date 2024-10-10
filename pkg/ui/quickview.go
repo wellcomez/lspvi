@@ -878,7 +878,7 @@ func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
 			s := v.Range.Start.Character
 			e := v.Range.End.Character
 			if v.Range.Start.Line == v.Range.End.Line {
-				if len(line) > s && len(line) > e && s < e {
+				if len(line) > s && len(line) >= e && s < e {
 					a1 := line[:s]
 					a := line[s:e]
 					a2 := line[e:]
