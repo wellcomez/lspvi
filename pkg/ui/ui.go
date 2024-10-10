@@ -916,7 +916,7 @@ func load_from_history(main *mainui) {
 			},
 		}, offset: 0}, false, nil)
 	} else {
-		code.LoadFileNoLsp("", 0)
+		code.LoadBuffer([]byte{}, "")
 	}
 }
 
