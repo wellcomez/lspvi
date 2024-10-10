@@ -10,10 +10,10 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
-func (parent *fzfmain) openfile(path string, code CodeEditor) {
-	code.LoadFileWithLsp(path, nil, true)
+func (parent *fzfmain) openfile(path string) {
+	parent.main.OpenFileHistory(path,nil)
 	parent.hide()
-	parent.main.set_viewid_focus(code.vid())
+	// parent.main.set_viewid_focus(code.vid())
 	parent.main.CmdLine().Vim.EnterEscape()
 }
 
