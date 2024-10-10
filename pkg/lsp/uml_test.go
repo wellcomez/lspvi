@@ -1,12 +1,15 @@
 package lspcore
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+)
 
 func TestUMLTask(t *testing.T) {
-
-	file := "/home/z/.lspvi/goui/export/uml/CallInTask::get_call_json_filename/callstack.json"
+	root:="/home/z/.lspvi/goui/export/uml/get_call_json_filename"
+	file := filepath.Join(root, "callstack.json")
 	if task, err := NewCallInTaskFromFile(file); err == nil {
-		task.Allstack[1].Uml(true)
+		task.Allstack[0].Uml(true)
 	}
 
 }
