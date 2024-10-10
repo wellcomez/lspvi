@@ -224,7 +224,7 @@ func (pk *bookmark_edit) grid(input *tview.InputField) *tview.Grid {
 // new_bookmark_picker
 func new_bookmark_picker(v *fzfmain, code CodeEditor, bookmark *proj_bookmark) bookmark_picker {
 	impl := &bookmark_picker_impl{
-		prev_picker_impl: new_preview_picker(v, code),
+		prev_picker_impl: new_preview_picker(v),
 	}
 	sym := bookmark_picker{
 		impl: impl,

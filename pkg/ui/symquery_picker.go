@@ -90,7 +90,7 @@ func (pk *workspace_query_picker) handle() func(event *tcell.EventKey, setFocus 
 func new_workspace_symbol_picker(v *fzfmain, code CodeEditor) *workspace_query_picker {
 	ret := &workspace_query_picker{
 		impl: &workspace_query_picker_impl{
-			prev_picker_impl: new_preview_picker(v, code),
+			prev_picker_impl: new_preview_picker(v),
 			file:             code.LspSymbol(),
 			list:             new_customlist(false),
 		},

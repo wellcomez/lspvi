@@ -307,7 +307,7 @@ func (ref refpicker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 }
 
 func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code CodeEditor) refpicker {
-	x := new_preview_picker(v, code)
+	x := new_preview_picker(v)
 	sym := refpicker{
 		impl: &refpicker_impl{
 			prev_picker_impl: x,
@@ -319,7 +319,7 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code CodeEditor) re
 	return sym
 }
 
-func new_preview_picker(v *fzfmain, editor CodeEditor) *prev_picker_impl {
+func new_preview_picker(v *fzfmain) *prev_picker_impl {
 	x := &prev_picker_impl{
 		listview: tview.NewList(),
 		codeprev: NewCodeView(v.main),

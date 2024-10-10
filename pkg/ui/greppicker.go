@@ -130,7 +130,7 @@ func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
 }
 func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	main := v.main
-	x := new_preview_picker(v, code)
+	x := new_preview_picker(v)
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
 		grep_list_view:   new_customlist(false),

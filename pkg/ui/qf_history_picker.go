@@ -87,7 +87,7 @@ func new_qk_history_picker(v *fzfmain, code CodeEditor) qk_history_picker {
 	main := v.main
 	keys, keymaplist := load_qf_history(main)
 
-	x := new_preview_picker(v, code)
+	x := new_preview_picker(v)
 	x.use_cusutom_list(list)
 
 	ret := qk_history_picker{
