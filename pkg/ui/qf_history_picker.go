@@ -221,7 +221,7 @@ func (qk *qk_history_picker) updateprev() {
 			dataprev := []string{}
 			for _, call := range caller {
 				// call.width = width
-				dataprev = append(dataprev, call.ListItem(global_prj_root, true))
+				dataprev = append(dataprev, call.ListItem(global_prj_root, true, nil))
 			}
 			qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
 		}

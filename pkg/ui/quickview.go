@@ -644,7 +644,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	qk.Refs.Refs = append(qk.Refs.Refs, caller)
 	// _, _, width, _ := qk.view.GetRect()
 	// caller.width = width
-	secondline := caller.ListItem(global_prj_root, false)
+	secondline := caller.ListItem(global_prj_root, false, nil)
 	if len(secondline) == 0 {
 		return
 	}
@@ -715,12 +715,13 @@ func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root str
 	lineno := 1
 	for i := range qk.tree {
 		a := &qk.tree[i]
-		a.quickfix_listitem_string(view, lspmgr, lineno)
+		a.quickfix_listitem_string(view, lspmgr, lineno, nil)
 		data = append(data, a)
 		if a.expand {
+			var prev *ref_with_caller
 			for i := range a.children {
 				c := &a.children[i]
-				c.quickfix_listitem_string(view, lspmgr, lineno)
+				prev = c.quickfix_listitem_string(view, lspmgr, lineno, prev)
 				data = append(data, c)
 			}
 		}
@@ -730,8 +731,8 @@ func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root str
 	return data
 }
 
-func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lspcore.LspWorkspace, lineno int) {
-	caller := &qk.Refs.Refs[tree.ref_index]
+func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lspcore.LspWorkspace, lineno int, prev *ref_with_caller) *ref_with_caller {
+	caller := tree.get_caller(qk)
 	parent := tree.parent
 	root := lspmgr.Wk.Path
 	switch qk.Type {
@@ -743,7 +744,7 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 		}
 	}
 	color := tview.Styles.BorderColor
-	list_text := caller.ListItem(root, parent)
+	list_text := caller.ListItem(root, parent, prev)
 	if parent {
 		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
 		if len(tree.children) > 0 {
@@ -758,6 +759,15 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 	} else {
 		tree.text = fmt.Sprintf(" %s", list_text)
 	}
+	if caller.Caller == nil {
+		return nil
+	}
+	return caller
+}
+
+func (tree *list_tree_node) get_caller(qk *quick_view) *ref_with_caller {
+	caller := &qk.Refs.Refs[tree.ref_index]
+	return caller
 }
 func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
 	var data = []string{}
@@ -770,7 +780,7 @@ func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace)
 				caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
 			}
 		}
-		secondline := caller.ListItem(root, true)
+		secondline := caller.ListItem(root, true, nil)
 		if len(secondline) == 0 {
 			continue
 		}
@@ -788,7 +798,7 @@ type list_tree_node struct {
 	text      string
 }
 
-func (caller ref_with_caller) ListItem(root string, parent bool) string {
+func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) string {
 	v := caller.Loc
 
 	path := v.URI.AsPath().String()
@@ -801,36 +811,48 @@ func (caller ref_with_caller) ListItem(root string, parent bool) string {
 	funcolor := global_theme.search_highlight_color()
 	line := caller.get_code(funcolor)
 	if caller.Caller != nil {
-		funcolor := global_theme.search_highlight_color()
 		c1 := ""
-		if len(caller.Caller.ClassName) > 0 {
-			if c, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
-				f, _, _ := c.Decompose()
-				icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindClass)])
-				c1 = fmt_color_string(fmt.Sprint(icon, caller.Caller.ClassName), f)
-			}
-		}
-		kind := caller.Caller.Item.Kind
-		caller_color := funcolor
-		if c, err := global_theme.get_lsp_color(kind); err == nil {
-			f, _, _ := c.Decompose()
-			caller_color = f
-		}
-		icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindFunction)])
-		if x, ok := lspcore.IconsRunne[int(kind)]; ok {
-			icon = fmt.Sprintf("%c ", x)
-		} else if s, yes := lspcore.LspIcon[int(caller.Caller.Item.Kind)]; yes {
-			icon = s
-		}
-		callname := caller.Caller.Name
-		callname = strings.TrimLeft(callname, " ")
-		callname = strings.TrimRight(callname, " ")
-		callname = icon + callname
-		x := fmt_color_string(callname, caller_color)
-		if c1!=""{
-			return fmt.Sprintf(":%-4d %s > %s %s", v.Range.Start.Line+1, c1, x, line)
+		x := ""
+		if prev != nil && (prev.Caller.ClassName == caller.Caller.ClassName && prev.Caller.Name == caller.Caller.Name) {
+			prefix := strings.Repeat(" ", min(len(prev.Caller.Name+prev.Caller.ClassName), 4))
+			// if prev.Caller.ClassName != "" {
+			// 	c1 = strings.Repeat(" ", len(prev.Caller.ClassName)+1)
+			// }
+			// if prev.Caller.Name != "" {
+			// 	x = strings.Repeat(" ", len(prev.Caller.Name)+2)
+			// }
+			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, prefix, line)
 		} else {
-			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, x, line)
+			funcolor := global_theme.search_highlight_color()
+			if len(caller.Caller.ClassName) > 0 {
+				if c, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
+					f, _, _ := c.Decompose()
+					icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindClass)])
+					c1 = fmt_color_string(fmt.Sprint(icon, caller.Caller.ClassName), f)
+				}
+			}
+			kind := caller.Caller.Item.Kind
+			caller_color := funcolor
+			if c, err := global_theme.get_lsp_color(kind); err == nil {
+				f, _, _ := c.Decompose()
+				caller_color = f
+			}
+			icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindFunction)])
+			if x, ok := lspcore.IconsRunne[int(kind)]; ok {
+				icon = fmt.Sprintf("%c ", x)
+			} else if s, yes := lspcore.LspIcon[int(caller.Caller.Item.Kind)]; yes {
+				icon = s
+			}
+			callname := caller.Caller.Name
+			callname = strings.TrimLeft(callname, " ")
+			callname = strings.TrimRight(callname, " ")
+			callname = icon + callname
+			x = fmt_color_string(callname, caller_color)
+			if c1 != "" {
+				return fmt.Sprintf(":%-4d %s > %s %s", v.Range.Start.Line+1, c1, x, line)
+			} else {
+				return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, x, line)
+			}
 		}
 	} else {
 		return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, strings.TrimLeft(line, "\t "))
