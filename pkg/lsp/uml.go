@@ -44,7 +44,8 @@ func (entry CallStackEntry) symboldefine_name() string {
 	return entry.Item.Name
 }
 func (call CallStack) newuml() (ret []string, title string) {
-	pre := []string{"autonumber","actor 0 #red"}
+	// "hide footbox"
+	pre := []string{"autonumber", "actor 0 #red"}
 	ret = []string{}
 	added := make(map[string]bool)
 	actor := "0"
