@@ -44,6 +44,9 @@ const (
 	view_code
 )
 
+func (a view_id) is_editor_main() bool {
+	return a >= view_code
+}
 func (a view_id) is_editor() bool {
 	return a >= view_code || a == view_code_below
 }

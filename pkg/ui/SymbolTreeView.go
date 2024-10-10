@@ -331,7 +331,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 							},
 						}
 						code := symview.editor
-						if code.vid() == view_code {
+						if code.vid().is_editor_main()  {
 							symview.main.Navigation().history.SaveToHistory(code)
 							symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line))
 						}

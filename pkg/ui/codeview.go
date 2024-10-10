@@ -1134,7 +1134,7 @@ func (code *CodeView) update_with_line_changed() {
 	if main == nil {
 		return
 	}
-	if code.id == view_code {
+	if code.id.is_editor_main() {
 		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y, code.Path())
 	}
 }
@@ -1587,7 +1587,7 @@ func (code *CodeView) goto_location_no_history(loc lsp.Range, update bool, optio
 	}
 	Cur.SetSelectionEnd(end)
 	code.set_loc(start)
-	if update && code.id >= view_code {
+	if update && code.id.is_editor_main()  {
 		code.update_with_line_changed()
 	}
 }
