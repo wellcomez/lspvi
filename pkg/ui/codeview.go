@@ -1349,7 +1349,11 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 //	}
 func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
 	return code.openfile(filename, func() {
-		code.goto_line_history(line, false)
+		code.goto_location_no_history(
+			lsp.Range{
+				Start: lsp.Position{Line: line, Character: 0},
+				End:   lsp.Position{Line: line, Character: 0},
+			}, false, nil)
 	})
 }
 func (code *CodeView) openfile(filename string, onload func()) error {
@@ -1418,7 +1422,9 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 				code.tree_sitter = ts
 				code.set_color()
 				if code.main != nil {
-					code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+					if code.id.is_editor()  {
+						code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+					}
 				}
 			})
 		})
