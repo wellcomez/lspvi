@@ -831,12 +831,12 @@ func (main *mainui) on_change_color(name string) {
 	global_theme.update_controller_theme()
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
-	if main.current_editor().vid().is_editor_main()  {
+	if main.current_editor().vid().is_editor_main() {
 		x, y, w, _ := main.codeview.view.GetInnerRect()
 		left := x
 		right := x + w
 		for _, v := range SplitCode.code_collection {
-			if v.vid().is_editor_main()  {
+			if v.vid().is_editor_main() {
 				x, _, w, _ := v.view.GetInnerRect()
 				left = min(left, x)
 				right = max(right, x+w)
@@ -1140,9 +1140,9 @@ func (main *mainui) switch_tab_view() {
 		}
 	}
 	if !yes {
-		main.set_viewid_focus(view_code)
+		main.codeview.SetCurrenteditor()
 	}
-	if main.get_focus_view_id() != view_code {
+	if !main.get_focus_view_id().is_editor() {
 		main.cmdline.Vim.ExitEnterEscape()
 	}
 }
