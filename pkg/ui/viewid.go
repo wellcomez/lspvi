@@ -115,33 +115,31 @@ func set_view_focus_cb(aa []view_id, m *mainui) {
 		if box != nil {
 			box.SetBlurFunc(func() {
 				box.SetBorderColor(tview.Styles.BorderColor)
-			})
-
-			if v.is_tab() {
-				box.SetFocusFunc(func() {
-					change_after_focused(box, m)
-					m.page.SetBorderColor(tview.Styles.BorderColor)
-				})
-				box.SetBlurFunc(func() {
+				if v.is_tab() {
 					box.SetBorderColor(tview.Styles.BorderColor)
 					m.page.SetBorderColor(tview.Styles.BorderColor)
-				})
-			} else if v.is_editor() {
-				box.SetFocusFunc(func() {
-					change_after_focused(box, m)
+				} else if v.is_editor() {
+				} else {
+				}
+			})
+
+			box.SetFocusFunc(func() {
+				box.SetBorderColor(tview.Styles.BorderColor)
+				if !(v == view_cmd || v.is_editor()) {
+					m.cmdline.Vim.ExitEnterEscape()
+				}
+				if v.is_tab() {
+					m.page.SetBorderColor(tview.Styles.BorderColor)
+				} else if v.is_editor() {
 					if m.cmdline.Vim.vi.String() == "none" {
 						m.cmdline.Vim.EnterEscape()
 					}
-				})
-			} else {
-				box.SetFocusFunc(func() {
-					change_after_focused(box, m)
-				})
-			}
+				} else {
+				}
+			})
 		}
 	}
 }
-
 func change_after_focused(box *tview.Box, m *mainui) {
 	box.SetBorderColor(tview.Styles.BorderColor)
 	vid := m.get_focus_view_id()
