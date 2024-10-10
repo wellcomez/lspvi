@@ -559,7 +559,7 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 		refindex := node.ref_index
 		vvv := qk.Refs.Refs[refindex]
 		qk.main.Tab().UpdatePageTitle()
-		qk.main.current_editor().LoadFileWithLsp(vvv.Loc.URI.AsPath().String(), &vvv.Loc, true)
+		qk.main.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 		if need_draw {
 			GlobalApp.ForceDraw()
 		}
@@ -570,7 +570,7 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 		same := vvv.Loc.URI.AsPath().String() == qk.main.current_editor().Path()
 		if open || same {
 			qk.main.Tab().UpdatePageTitle()
-			qk.main.current_editor().LoadFileWithLsp(vvv.Loc.URI.AsPath().String(), &vvv.Loc, true)
+			qk.main.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 		} else {
 
 		}
