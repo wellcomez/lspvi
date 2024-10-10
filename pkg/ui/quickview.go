@@ -30,7 +30,7 @@ func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
 	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line)
 	UpdateTitleAndColor(pk.frame.Box, title)
-	pk.codeprev.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line, false)
+	pk.codeprev.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line)
 }
 func new_quick_preview() *quick_preview {
 	codeprev := NewCodeView(nil)

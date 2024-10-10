@@ -901,7 +901,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 }
 
 func load_from_history(main *mainui) {
-	code := main.codeview
+	var code CodeEditor = main.codeview
 	filearg := main.bf.Last()
 	main.quickview.view.Clear()
 	main.symboltree.Clear()
@@ -916,7 +916,7 @@ func load_from_history(main *mainui) {
 			},
 		}, offset: 0}, false, nil)
 	} else {
-		code.openfile("", nil)
+		code.LoadFileNoLsp("", 0)
 	}
 }
 

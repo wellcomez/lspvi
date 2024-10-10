@@ -46,7 +46,7 @@ type CodeEditor interface {
 	// openfile(filename string, onload func()) error
 
 	LoadBuffer(data []byte, filename string)
-	LoadFileNoLsp(filename string, line int, historyin bool) error
+	LoadFileNoLsp(filename string, line int) error
 	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
 
 	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
@@ -1347,27 +1347,30 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 //	func (code *CodeView) Load(filename string) error {
 //		return code.LoadAndCb(filename, nil)
 //	}
-func (code *CodeView) LoadFileNoLsp(filename string, line int, history bool) error {
+func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
 	return code.openfile(filename, func() {
-		code.goto_line_history(line, history)
+		code.goto_line_history(line, false)
 	})
 }
 func (code *CodeView) openfile(filename string, onload func()) error {
-	if NewFile(filename).Same(code.file) {
-		if onload != nil {
-			onload()
+	if len(filename) > 0 {
+		if NewFile(filename).Same(code.file) {
+			if onload != nil {
+				onload()
+			}
+			return nil
 		}
-		return nil
-	}
-	if code.id.is_editor() {
-		global_file_watch.Add(filename)
-	}
-	if code.main != nil {
-		code.main.Recent_open().add(filename)
 	}
 	data, err := os.ReadFile(filename)
-	if err != nil {
-		return err
+	if err == nil {
+		if code.id.is_editor() {
+			global_file_watch.Add(filename)
+		}
+		if code.main != nil {
+			code.main.Recent_open().add(filename)
+		}
+	} else {
+		data = []byte{}
 	}
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
 	// "monokai"A
@@ -1409,16 +1412,17 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	b := code.view.Buf
 	b.Settings["syntax"] = false
 	code.tree_sitter = nil
-	var tree_sitter = lspcore.GetNewTreeSitter(filename, []byte{})
-	tree_sitter.Init(func(ts *lspcore.TreeSitter) {
-		go GlobalApp.QueueUpdate(func() {
-			code.tree_sitter = ts
-			code.set_color()
-			if code.main != nil {
-				code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-			}
+	if tree_sitter := lspcore.GetNewTreeSitter(filename, []byte{}); tree_sitter != nil {
+		tree_sitter.Init(func(ts *lspcore.TreeSitter) {
+			go GlobalApp.QueueUpdate(func() {
+				code.tree_sitter = ts
+				code.set_color()
+				if code.main != nil {
+					code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+				}
+			})
 		})
-	})
+	}
 	code.LoadBuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
 	code.file = NewFile(filename)
