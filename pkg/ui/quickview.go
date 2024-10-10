@@ -401,9 +401,17 @@ func new_quikview(main *mainui) *quick_view {
 				}
 			}
 			if len(ss) > 0 {
-
 				sss := data[ss[0]:ss[1]]
-				data := strings.Join(sss, "\n")
+				aa := []string{}
+				for i := range sss {
+					r := GetColorText(sss[i], []colortext{})
+					text := ""
+					for _, v := range r {
+						text = text + v.text
+					}
+					aa = append(aa, text)
+				}
+				data := strings.Join(aa, "\n")
 				main.CopyToClipboard(data)
 				ret.sel.clear()
 				main.app.ForceDraw()
