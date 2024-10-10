@@ -1258,10 +1258,12 @@ func (code CodeView) String() string {
 		posfix := sel
 		if len < n {
 			posfix = sel[0:(len-3)/2] + "..." + sel[n-(len-3)/2:n]
-			return fmt.Sprintf("%-20s %d |%s", posfix, n, vim_x_y)
+			posfix = fmt.Sprintf("%-20s %d |%s", posfix, n, vim_x_y)
 		} else {
-			return fmt.Sprintf("%s %d |%s", posfix, n, vim_x_y)
+			posfix = strings.ReplaceAll(posfix, "\n", "")
+			posfix = fmt.Sprintf("%s %d |%s", posfix, n, vim_x_y)
 		}
+		return strings.ReplaceAll(posfix, "\n", "")
 	}
 	return vim_x_y
 }
@@ -1587,7 +1589,7 @@ func (code *CodeView) goto_location_no_history(loc lsp.Range, update bool, optio
 	}
 	Cur.SetSelectionEnd(end)
 	code.set_loc(start)
-	if update && code.id.is_editor_main()  {
+	if update && code.id.is_editor_main() {
 		code.update_with_line_changed()
 	}
 }

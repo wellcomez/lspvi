@@ -1018,10 +1018,10 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 	main.statusbar = tview.NewTextView()
 	main.statusbar.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 
-		viewname := main.getfocusviewname()
-		if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
-			viewname = main.searchcontext.view.getname()
-		}
+		// viewname := main.getfocusviewname()
+		// if main.cmdline.Vim.vi.Find && main.searchcontext != nil {
+		// 	viewname = main.searchcontext.view.getname()
+		// }
 		titlename := fmt.Sprintf("%s ", main.codeview.Path())
 		if main.layout.mainlayout.GetTitle() != titlename {
 			go func(viewname string) {
@@ -1031,7 +1031,8 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 			}(titlename)
 		}
 		cursor := main.codeview.String()
-		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|%8s| ::%5d ", cursor, main.cmdline.Vim.String(), viewname, httport))
+		x1 := main.cmdline.Vim.String()
+		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|::%5d ", cursor, x1,httport))
 		return main.statusbar.GetInnerRect()
 	})
 
