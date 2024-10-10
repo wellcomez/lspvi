@@ -799,10 +799,9 @@ func (caller ref_with_caller) ListItem(root string, parent bool) string {
 		return path
 	}
 	funcolor := global_theme.search_highlight_color()
-
 	line := caller.get_code(funcolor)
-
 	if caller.Caller != nil {
+		funcolor := global_theme.search_highlight_color()
 		c1 := ""
 		if len(caller.Caller.ClassName) > 0 {
 			if c, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
@@ -827,11 +826,11 @@ func (caller ref_with_caller) ListItem(root string, parent bool) string {
 		callname = strings.TrimLeft(callname, " ")
 		callname = strings.TrimRight(callname, " ")
 		callname = icon + callname
+		x := fmt_color_string(callname, caller_color)
 		if c1!=""{
-			return fmt.Sprintf(":%-4d %s > %s %s", v.Range.Start.Line+1, c1, fmt_color_string(callname, caller_color), line)
+			return fmt.Sprintf(":%-4d %s > %s %s", v.Range.Start.Line+1, c1, x, line)
 		} else {
-
-			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
+			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, x, line)
 		}
 	} else {
 		return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, strings.TrimLeft(line, "\t "))
