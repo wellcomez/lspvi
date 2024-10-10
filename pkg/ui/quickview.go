@@ -664,7 +664,12 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.Type = t
 	qk.Refs.Refs = Refs
 	qk.searchkey = key
-	qk.view.Key = key.Key
+	switch t {
+	case data_grep_word, data_search:
+		qk.view.Key = key.Key
+	default:
+		qk.view.Key = ""
+	}
 	qk.view.Clear()
 	qk.view.SetCurrentItem(-1)
 	qk.currentIndex = 0
@@ -847,7 +852,7 @@ func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_
 			callname = strings.TrimLeft(callname, " ")
 			callname = strings.TrimRight(callname, " ")
 			callname = icon + callname
-			x = fmt_color_string(callname, caller_color)
+			x = fmt_color_string(callname+" > ", caller_color)
 			if c1 != "" {
 				return fmt.Sprintf(":%-4d %s > %s %s", v.Range.Start.Line+1, c1, x, line)
 			} else {
