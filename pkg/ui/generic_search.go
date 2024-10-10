@@ -143,10 +143,11 @@ func search_on_ui(option search_option, main *mainui) {
 		}
 	default:
 		{
+			var code =main.current_editor()
 			if changed {
-				gs.indexList = main.codeview.OnSearch(txt, whole)
+				gs.indexList = code.OnSearch(txt, whole)
 				pos := gs.GetIndex()
-				main.codeview.goto_location_no_history(convert_search_pos_lsprange(pos, gs), true, nil)
+				code.goto_location_no_history(convert_search_pos_lsprange(pos, gs), true, nil)
 				if tofzf {
 					locs := convert_to_fzfsearch(gs, main)
 					main.ActiveTab(view_quickview, false)
@@ -165,7 +166,7 @@ func search_on_ui(option search_option, main *mainui) {
 				} else {
 					pos = gs.GetPrev()
 				}
-				main.codeview.goto_location_no_history(convert_search_pos_lsprange(pos, gs), true, nil)
+				code.goto_location_no_history(convert_search_pos_lsprange(pos, gs), true, nil)
 			}
 			main.page.update_title(gs.String())
 		}

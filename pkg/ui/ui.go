@@ -361,10 +361,10 @@ func (m *mainui) is_tab(tabname string) bool {
 
 // OnGetImplement implements lspcore.lsp_data_changed.
 func (m *mainui) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.ImplementationResult, err error, option *lspcore.OpenOption) {
-	code := m.codeview
+	code := m.current_editor()
 	go func() {
 		m.app.QueueUpdateDraw(func() {
-			m.quickview.view.Key = code.view.Cursor.GetSelection()
+			m.quickview.view.Key = code.GetSelection()
 			if len(ranges.Key) > 0 {
 				m.quickview.view.Key = ranges.Key
 			}
@@ -379,10 +379,10 @@ func (m *mainui) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.Impl
 	}()
 }
 func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
-	code := m.codeview
+	code := m.current_editor()
 	go func() {
 		m.app.QueueUpdateDraw(func() {
-			m.quickview.view.Key = code.view.Cursor.GetSelection()
+			m.quickview.view.Key = code.GetSelection()
 			if len(ranges.Key) > 0 {
 				m.quickview.view.Key = ranges.Key
 			}
@@ -482,7 +482,7 @@ func (m *mainui) OnCodeViewChanged(file *lspcore.Symbol_file) {
 
 // OnSymbolistChanged implements lspcore.lsp_data_changed.
 func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
-	code := m.codeview
+	code := m.current_editor()
 	if file != nil {
 		if file.Filename != code.Path() {
 			return
@@ -491,7 +491,7 @@ func (m *mainui) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	if err != nil {
 		m.logerr(err)
 	}
-	m.symboltree.update_with_ts(code.tree_sitter, file)
+	m.symboltree.update_with_ts(code.TreeSitter(), file)
 }
 
 func (m *mainui) logerr(err error) {
@@ -911,7 +911,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 }
 
 func load_from_history(main *mainui) {
-	var code CodeEditor = main.codeview
+	var code CodeEditor = main.current_editor()
 	filearg := main.bf.Last()
 	main.quickview.view.Clear()
 	main.symboltree.Clear()

@@ -821,7 +821,7 @@ func (v *Vim) EnterEscape() {
 	v.app.current_editor().ResetSelection()
 	f := v.app.get_focus_view_id()
 	if f == view_cmd || f == view_none {
-		v.app.set_viewid_focus(view_code)
+		v.app.set_viewid_focus(v.app.current_editor().vid())
 	}
 	esc := EscapeHandle{
 		main:  v.app,

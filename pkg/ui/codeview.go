@@ -21,6 +21,8 @@ import (
 )
 
 type CodeEditor interface {
+	GetSelection() string
+	OnSearch(txt string, whole bool) []SearchPos
 	vid() view_id
 	Primitive() tview.Primitive
 
@@ -1136,7 +1138,9 @@ func (code *CodeView) update_with_line_changed() {
 		main.OnCodeLineChange(root.Cursor.X, root.Cursor.Y, code.Path())
 	}
 }
-
+func (code CodeView) GetSelection() string {
+	return code.view.Cursor.GetSelection()
+}
 func (code *CodeView) action_grep_word(selected bool) {
 	main := code.main
 	if main == nil {
