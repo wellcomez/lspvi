@@ -407,6 +407,9 @@ func new_quikview(main *mainui) *quick_view {
 					r := GetColorText(sss[i], []colortext{})
 					text := ""
 					for _, v := range r {
+						for _, v := range lspcore.IconsRunne {
+							text = strings.ReplaceAll(text, fmt.Sprintf("%c", v), "")
+						}
 						text = text + v.text
 					}
 					aa = append(aa, text)
