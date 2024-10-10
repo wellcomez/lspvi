@@ -70,7 +70,7 @@ var IconsRunne = map[int]rune{
 	26:  '󰊄', //-- TypeParameter
 	255: '󰉨', //-- Macro
 }
-var icons = map[int]string{
+var LspIcon = map[int]string{
 	1: "󰈙 ",  //-- File
 	2: " ",  // -- Module
 	3: "󰌗 ",  // -- Namespace
@@ -181,7 +181,7 @@ func (s Symbol) Icon() string {
 	if v, ok := IconsRunne[int(s.SymInfo.Kind)]; ok {
 		return fmt.Sprintf("%c", v)
 	}
-	if v, ok := icons[int(s.SymInfo.Kind)]; ok {
+	if v, ok := LspIcon[int(s.SymInfo.Kind)]; ok {
 		return v
 	}
 	return ""
@@ -330,8 +330,10 @@ func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) *CallStackEnt
 			Name:  s.SymInfo.Name,
 			Range: r,
 			URI:   s.SymInfo.Location.URI,
+			Kind:  s.SymInfo.Kind,
 		},
-		Name: s.SymInfo.Name,
+		Name:      s.SymInfo.Name,
+		ClassName: s.Classname,
 	}
 }
 func (wk *LspWorkspace) Get(filename string) (*Symbol_file, error) {

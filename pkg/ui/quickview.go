@@ -738,7 +738,8 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 	case data_refs, data_search, data_grep_word:
 		v := caller.Loc
 		if caller.Caller == nil || len(caller.Caller.Name) == 0 {
-			caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+			x := v.URI.AsPath().String()
+			caller.Caller = lspmgr.GetCallEntry(x, v.Range)
 		}
 	}
 	color := tview.Styles.BorderColor
@@ -794,33 +795,46 @@ func (caller ref_with_caller) ListItem(root string, parent bool) string {
 	if len(root) > 0 {
 		path = trim_project_filename(path, root)
 	}
-
-	funcolor := global_theme.search_highlight_color()
-	caller_color := funcolor
-	if c, err := global_theme.get_lsp_color(lsp.SymbolKindFunction); err == nil {
-		f, _, _ := c.Decompose()
-		caller_color = f
+	if parent {
+		return path
 	}
+	funcolor := global_theme.search_highlight_color()
 
 	line := caller.get_code(funcolor)
 
 	if caller.Caller != nil {
-		icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.CompletionItemKindFunction)])
+		c1 := ""
+		if len(caller.Caller.ClassName) > 0 {
+			if c, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
+				f, _, _ := c.Decompose()
+				icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindClass)])
+				c1 = fmt_color_string(fmt.Sprint(icon, caller.Caller.ClassName), f)
+			}
+		}
+		kind := caller.Caller.Item.Kind
+		caller_color := funcolor
+		if c, err := global_theme.get_lsp_color(kind); err == nil {
+			f, _, _ := c.Decompose()
+			caller_color = f
+		}
+		icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindFunction)])
+		if x, ok := lspcore.IconsRunne[int(kind)]; ok {
+			icon = fmt.Sprintf("%c ", x)
+		} else if s, yes := lspcore.LspIcon[int(caller.Caller.Item.Kind)]; yes {
+			icon = s
+		}
 		callname := caller.Caller.Name
 		callname = strings.TrimLeft(callname, " ")
 		callname = strings.TrimRight(callname, " ")
 		callname = icon + callname
-		if parent {
-			return path
+		if c1!=""{
+			return fmt.Sprintf(":%-4d %s > %s %s", v.Range.Start.Line+1, c1, fmt_color_string(callname, caller_color), line)
 		} else {
+
 			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, fmt_color_string(callname, caller_color), line)
 		}
 	} else {
-		if parent {
-			return path
-		} else {
-			return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, strings.TrimLeft(line, "\t "))
-		}
+		return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, strings.TrimLeft(line, "\t "))
 	}
 }
 

@@ -27,6 +27,7 @@ type CallStackEntry struct {
 	PtrSymobl      *Symbol
 	FromRanges     []lsp.Range
 	ReferencePlace []lsp.Location
+	ClassName      string
 }
 
 func (c CallStackEntry) DirName() string {
