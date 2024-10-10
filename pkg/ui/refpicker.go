@@ -100,7 +100,7 @@ type prev_picker_impl struct {
 	list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
-	editor           CodeEditor
+	// editor           CodeEditor
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
@@ -261,7 +261,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 }
 
 func (impl *prev_picker_impl) open_location(v lsp.Location) {
-	impl.editor.LoadFileWithLsp(v.URI.AsPath().String(), &v, true)
+	impl.parent.main.OpenFileHistory(v.URI.AsPath().String(), &v)
 	impl.parent.hide()
 }
 
@@ -323,7 +323,7 @@ func new_preview_picker(v *fzfmain, editor CodeEditor) *prev_picker_impl {
 		listview: tview.NewList(),
 		codeprev: NewCodeView(v.main),
 		parent:   v,
-		editor:   editor,
+		// editor:   editor,
 	}
 	return x
 }
@@ -364,7 +364,7 @@ func (pk refpicker) onselected(data int, list int) {
 	index := data
 	v := pk.impl.listdata[index]
 
-	pk.impl.editor.LoadFileWithLsp(v.loc.URI.AsPath().String(), &v.loc, true)
+	pk.impl.parent.main.OpenFileHistory(v.loc.URI.AsPath().String(), &v.loc)
 	pk.impl.parent.hide()
 }
 
