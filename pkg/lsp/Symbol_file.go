@@ -335,7 +335,7 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_reco
 		name := "callin"
 		if len(s.Items) > 0 {
 			if rename != nil {
-				name = fmt.Sprint(s.Items[0].DirName(),"-",s.UID)
+				name = fmt.Sprint(s.Items[0].DirName(), "-", s.UID)
 				if d, ok := rename.rename[name]; ok {
 					rename.rename[name] = d + 1
 					name = fmt.Sprintf("%d_%s", d, name)
@@ -354,7 +354,7 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_reco
 			fileuml, err := export_root.SavePlanUml(task.Dir(), name, content)
 			if err == nil {
 				s.UmlName = fileuml
-				err, s.UtxtName, s.UmlPngName = bin.Convert(fileuml)
+				s.UtxtName, s.UmlPngName, err = bin.Convert(fileuml)
 				if err != nil {
 					log.Println(err)
 				}
