@@ -38,6 +38,9 @@ func (menu uml_filetree_context) on_mouse(action tview.MouseAction, event *tcell
 	}
 	return tview.MouseConsumed, nil
 }
+func (uml umlview) NotifyChanged() {
+	uml.file.listen <- true
+}
 
 // getbox implements context_menu_handle.
 func (menu uml_filetree_context) getbox() *tview.Box {

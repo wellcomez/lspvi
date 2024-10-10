@@ -29,6 +29,7 @@ type file_tree_view struct {
 	dir_mode      dir_open_mode
 	right_context filetree_context
 	menu_item     []context_menu_item
+	listen        chan bool
 	// uiresize      ui_reszier
 }
 
@@ -38,6 +39,16 @@ type filetree_context struct {
 	main      *mainui
 }
 
+func (file *file_tree_view) monitor() {
+	file.listen = make(chan bool)
+	for {
+		<-file.listen
+		file.opendir(file.view.GetRoot(), file.rootdir)
+	}
+}
+func (file *file_tree_view) StartMonitor() {
+	go file.monitor()
+}
 func (menu filetree_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if action == tview.MouseRightClick {
 		yes, focuse := menu.qk.view.MouseHandler()(tview.MouseLeftClick, event, nil)
