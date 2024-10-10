@@ -574,28 +574,25 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		switch action {
 		case tview.MouseLeftDoubleClick:
 			code.action_goto_define(&lspcore.OpenOption{LineNumber: code.view.Cursor.Loc.Y, Offset: code.view.Cursor.Loc.Y - code.view.Topline})
-		case tview.MouseLeftDown, tview.MouseRightClick:
-			code.main.set_viewid_focus(code.id)
-			code.view.Focus(func(p tview.Primitive) {})
-			SplitCode.SetActive(code)
-			if code.id >= view_code {
-				symboltree := code.main.OutLineView()
-				if symboltree.editor != code {
+		case tview.MouseLeftDown, tview.MouseRightClick, tview.MouseLeftClick:
+			if code.id.is_editor() {
+				code.SetCurrenteditor()
+				if code.id != view_code_below {
+					symboltree := code.main.OutLineView()
 					symboltree.editor = code
 					symboltree.Clear()
 					symboltree.update_with_ts(code.tree_sitter, code.LspSymbol())
+					code.update_with_line_changed()
 				}
-			}
-
-		case tview.MouseLeftClick:
-			{
-
-				code.main.set_viewid_focus(code.id)
-				code.update_with_line_changed()
 			}
 		}
 		return true
 	})
+}
+
+func (code *CodeView) SetCurrenteditor() {
+	SplitCode.SetActive(code)
+	code.main.set_viewid_focus(code.id)
 }
 
 type mouse_action_cbmode int
@@ -1313,7 +1310,6 @@ func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
 func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	b.SetTitleAlign(tview.AlignLeft)
 	b.SetTitle(title)
-	b.SetTitleColor(tview.Styles.TitleColor)
 	return b
 }
 

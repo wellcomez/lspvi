@@ -1111,11 +1111,9 @@ func (main *mainui) OnSearch(option search_option) {
 var leadkey = ' '
 
 func (main *mainui) set_viewid_focus(v view_id) {
-	for _, tab := range main.tab.tab_id {
-		if v == tab {
-			main.ActiveTab(tab, true)
-			return
-		}
+	if v.is_tab() {
+		main.ActiveTab(v, true)
+		return
 	}
 	main.lost_focus(main.get_view_from_id(main.get_focus_view_id()))
 	main.set_focus(main.get_view_from_id(v))

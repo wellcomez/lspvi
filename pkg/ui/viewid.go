@@ -4,6 +4,7 @@ import (
 	// "log"
 
 	"fmt"
+	"log"
 
 	// "github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -108,22 +109,40 @@ func view_id_init(m *mainui) {
 	set_view_focus_cb(aa, m)
 }
 
+const viewtag = "debug_viewidtag"
+
+func debug_view_id(prefix string, v view_id, m *mainui) {
+	log.Printf("%s  %10s %20s is_editor %7v %20s", viewtag, prefix, v.getname(), v.is_editor(), m.current_editor().vid().getname())
+}
 func set_view_focus_cb(aa []view_id, m *mainui) {
 	for i := range aa {
 		v := aa[i]
 		box := v.to_box(m)
 		if box != nil {
 			box.SetBlurFunc(func() {
+				debug_view_id("blur", v, m)
 				box.SetBorderColor(tview.Styles.BorderColor)
 				if v.is_tab() {
 					box.SetBorderColor(tview.Styles.BorderColor)
 					m.page.SetBorderColor(tview.Styles.BorderColor)
 				} else if v.is_editor() {
+					if m.current_editor().vid() != v {
+						box.SetTitleColor(tview.Styles.TitleColor)
+					} else {
+						// if SplitCode.active_codeview != nil {
+						// 	log.Println(viewtag, "---------", SplitCode.active_codeview.id.getname())
+						// }else{
+						// 	log.Println(viewtag, "---------", SplitCode.active_codeview)
+						// }
+					}
 				} else {
 				}
 			})
 
 			box.SetFocusFunc(func() {
+
+				debug_view_id("focus", v, m)
+
 				box.SetBorderColor(tview.Styles.BorderColor)
 				if !(v == view_cmd || v.is_editor()) {
 					m.cmdline.Vim.ExitEnterEscape()
@@ -131,6 +150,7 @@ func set_view_focus_cb(aa []view_id, m *mainui) {
 				if v.is_tab() {
 					m.page.SetBorderColor(tview.Styles.BorderColor)
 				} else if v.is_editor() {
+					box.SetTitleColor(tview.Styles.BorderColor)
 					if m.cmdline.Vim.vi.String() == "none" {
 						m.cmdline.Vim.EnterEscape()
 					}
