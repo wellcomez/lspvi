@@ -11,7 +11,7 @@ import (
 func Test_Go(t *testing.T) {
 	// filename := "/home/z/dev/lsp/goui/pkg/lsp/lsp_go.go"
 	filename := "/home/z/dev/lsp/goui/main.go"
-	ts := NewTreeSitter(filename)
+	ts := NewTreeSitter(filename,nil)
 	// ts.tsname = "go"
 	// /home/z/dev/lsp/goui/pkg/lsp/queries/go/highlights.scm
 	ts.Loadfile(treego.GetLanguage(), func(ts *TreeSitter) {
@@ -20,13 +20,13 @@ func Test_Go(t *testing.T) {
 }
 func Test_C(t *testing.T) {
 	filename := "/home/z/dev/lsp/goui/pkg/lsp/tests/cpp/d.h"
-	ts := NewTreeSitter(filename)
+	ts := NewTreeSitter(filename,nil)
 	// ts.tsname = "c"
 	ts.Loadfile(treec.GetLanguage(), func(ts *TreeSitter) {})
 }
 func Test_cpp_outline(t *testing.T) {
 	filename := "/home/z/dev/lsp/goui/pkg/lsp/tests/cpp/d.h"
-	ts := GetNewTreeSitter(filename)
+	ts := GetNewTreeSitter(filename,nil)
 	ts.Init(func(ts *TreeSitter) {
 
 	})
@@ -34,7 +34,7 @@ func Test_cpp_outline(t *testing.T) {
 
 func Test_rs_outline(t *testing.T) {
 	filename := "/home/z/dev/gnvim/ui/src/render.rs"
-	ts := GetNewTreeSitter(filename)
+	ts := GetNewTreeSitter(filename,nil)
 	ts.Init(func(ts *TreeSitter) {
 
 	})
