@@ -519,15 +519,15 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 			sym := ref.call
 			if r := ref.fromrange; r != nil {
 				// r := ref.fromrange
-				view.main.current_editor().LoadFileWithLsp(r.URI.AsPath().String(), &lsp.Location{
+				view.main.OpenFileHistory(r.URI.AsPath().String(), &lsp.Location{
 					URI:   r.URI,
 					Range: r.Range,
-				}, false)
+				})
 			} else {
-				view.main.current_editor().LoadFileWithLsp(sym.URI.AsPath().String(), &lsp.Location{
+				view.main.OpenFileHistory(sym.URI.AsPath().String(), &lsp.Location{
 					URI:   sym.URI,
 					Range: sym.SelectionRange,
-				}, false)
+				})
 			}
 			view.update_node_color()
 			return
@@ -567,15 +567,15 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			sym := ref.call
 			if r := ref.fromrange; r != nil {
 				// r := ref.fromrange
-				view.main.current_editor().LoadFileWithLsp(r.URI.AsPath().String(), &lsp.Location{
+				view.main.OpenFileHistory(r.URI.AsPath().String(), &lsp.Location{
 					URI:   r.URI,
 					Range: r.Range,
-				}, false)
+				})
 			} else {
-				view.main.current_editor().LoadFileWithLsp(sym.URI.AsPath().String(), &lsp.Location{
+				view.main.OpenFileHistory(sym.URI.AsPath().String(), &lsp.Location{
 					URI:   sym.URI,
 					Range: sym.SelectionRange,
-				}, false)
+				})
 			}
 			view.update_node_color()
 			return
