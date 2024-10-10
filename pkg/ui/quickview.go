@@ -853,7 +853,7 @@ func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_
 				if c, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
 					f, _, _ := c.Decompose()
 					icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindClass)])
-					c1 = fmt_color_string(fmt.Sprint(icon, caller.Caller.ClassName), f)
+					c1 = fmt_color_string(fmt.Sprint(icon, caller.Caller.ClassName+" > "), f)
 				}
 			}
 			kind := caller.Caller.Item.Kind
@@ -874,7 +874,7 @@ func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_
 			callname = icon + callname
 			x = fmt_color_string(callname+" > ", caller_color)
 			if c1 != "" {
-				return fmt.Sprintf(":%-4d %s > %s %s", v.Range.Start.Line+1, c1, x, line)
+				return fmt.Sprintf(":%-4d %s %s %s", v.Range.Start.Line+1, c1, x, line)
 			} else {
 				return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, x, line)
 			}
