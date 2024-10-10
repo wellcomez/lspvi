@@ -384,6 +384,10 @@ func (sym *Symbol_file) __load_symbol_impl(reload bool) error {
 		sym.Handle.OnSymbolistChanged(sym, nil)
 		return nil
 	}
+	return sym.LspLoadSymbol()
+}
+
+func (sym *Symbol_file) LspLoadSymbol() error {
 	symbols, err := sym.lsp.GetDocumentSymbol(sym.Filename)
 	if err != nil {
 		return err

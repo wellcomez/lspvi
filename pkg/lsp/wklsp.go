@@ -316,14 +316,14 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 	}
 	return ret, is_new, err
 }
-func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) *CallStackEntry {
+func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) (*CallStackEntry, *Symbol_file) {
 	sym, _ := wk.Get(filename)
 	if sym == nil {
-		return nil
+		return nil, nil
 	}
 	s := sym.Find(r)
 	if s == nil {
-		return nil
+		return nil, sym
 	}
 	return &CallStackEntry{
 		Item: lsp.CallHierarchyItem{
@@ -334,7 +334,7 @@ func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) *CallStackEnt
 		},
 		Name:      s.SymInfo.Name,
 		ClassName: s.Classname,
-	}
+	}, sym
 }
 func (wk *LspWorkspace) Get(filename string) (*Symbol_file, error) {
 	ret, ok := wk.filemap[filename]

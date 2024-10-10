@@ -735,7 +735,18 @@ func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root str
 	qk.tree_data_item = data
 	return data
 }
-
+func (qk *quick_view) async_open(file string, lspmgr *lspcore.LspWorkspace, r lsp.Range) {
+	if sym, _ := lspmgr.Open(file); sym != nil {
+		if err := sym.LspLoadSymbol(); err != nil {
+			return
+		}
+		if c, _ := lspmgr.GetCallEntry(file, r); c != nil {
+			go qk.main.App().QueueUpdateDraw(func() {
+				qk.UpdateListView(qk.Type, qk.Refs.Refs, qk.searchkey)
+			})
+		}
+	}
+}
 func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lspcore.LspWorkspace, lineno int, prev *ref_with_caller) *ref_with_caller {
 	caller := tree.get_caller(qk)
 	parent := tree.parent
@@ -744,8 +755,12 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 	case data_refs, data_search, data_grep_word:
 		v := caller.Loc
 		if caller.Caller == nil || len(caller.Caller.Name) == 0 {
-			x := v.URI.AsPath().String()
-			caller.Caller = lspmgr.GetCallEntry(x, v.Range)
+			filename := v.URI.AsPath().String()
+			if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
+				caller.Caller = c
+			} else if sym == nil {
+				go qk.async_open(filename, lspmgr, v.Range)
+			}
 		}
 	}
 	color := tview.Styles.BorderColor
@@ -782,7 +797,12 @@ func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace)
 		case data_refs:
 			v := caller.Loc
 			if caller.Caller == nil || len(caller.Caller.Name) == 0 {
-				caller.Caller = lspmgr.GetCallEntry(v.URI.AsPath().String(), v.Range)
+				filename := v.URI.AsPath().String()
+				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
+					caller.Caller = c
+				} else if sym == nil {
+					qk.async_open(filename, lspmgr, v.Range)
+				}
 			}
 		}
 		secondline := caller.ListItem(root, true, nil)
