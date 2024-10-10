@@ -30,10 +30,10 @@ func NewPlanUmlBin() (*PlanUmlBin, error) {
 	return &PlanUmlBin{jarPath: jarPath, javaCmd: javaCmd}, nil
 }
 
-func (p *PlanUmlBin) Convert(uml string) (ret error, output_utxt, output_uml string) {
+func (p *PlanUmlBin) Convert(uml string) (output_utxt, output_uml string, ret error) {
 
 	if p.javaCmd == "" {
-		return fmt.Errorf("exception java not found"), "", ""
+		return "", "", fmt.Errorf("exception java not found")
 	}
 	root := filepath.Dir(uml)
 	// if _, err := os.Stat(p.javaCmd); os.IsNotExist(err) {
@@ -51,7 +51,7 @@ func (p *PlanUmlBin) Convert(uml string) (ret error, output_utxt, output_uml str
 	} else {
 		ret = err
 	}
-	return ret, output_utxt, output_uml
+	return output_utxt, output_uml, ret
 }
 
 // findJavaBinary is a placeholder function to find the Java binary.
