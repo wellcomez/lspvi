@@ -777,7 +777,7 @@ func MainUI(arg *Arguments) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
-					code.openfile(code.Path(), nil)
+					// code.openfile(code.Path(), nil)
 				})
 			}()
 		}

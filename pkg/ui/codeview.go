@@ -1334,7 +1334,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 				}
 			}
 		})
-		if code.id == view_code_below {
+		if code.vid() == view_code_below {
 			go func() {
 				main.App().QueueUpdateDraw(func() {
 					main.Tab().ActiveTab(view_code_below, true)
