@@ -101,6 +101,7 @@ type CallInTask struct {
 	sym        *Symbol_file
 	// cb       *func(task CallInTask)
 }
+
 func NewCallInTaskFromFile(fielname string) (*CallInTask, error) {
 	if _, err := os.Stat(fielname); err == nil {
 		buf, err := os.ReadFile(fielname)
@@ -159,7 +160,7 @@ type CallStack struct {
 	UID        int64
 	MdName     string
 	UmlPngName string
-	UmlName string
+	UmlName    string
 	UtxtName   string
 }
 
@@ -242,13 +243,13 @@ func NewCallInTask(loc lsp.Location, lsp lspclient, level int) *CallInTask {
 	return task
 }
 func (c CallInTask) Dir() string {
-	for _, v := range c.Allstack {
-		if v.Resovled && len(v.Items) > 0 {
-			a := v.Items[len(v.Items)-1]
-			return a.DirName()
-		}
-	}
-	return c.Name
+	// for _, v := range c.Allstack {
+	// 	if v.Resovled && len(v.Items) > 0 {
+	// 		a := v.Items[len(v.Items)-1]
+	// 		return a.Na()
+	// 	}
+	// }
+	return fmt.Sprint(c.Name)
 }
 
 type callchain struct {
