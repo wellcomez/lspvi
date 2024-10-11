@@ -502,6 +502,9 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 		}
 	}
 	is_top := len(node.GetChildren()) == 0
+	if is_click_callroot{
+		is_top = false
+	}
 	if value != nil {
 		if ref, ok := value.(dom_node); ok {
 			if is_top {
