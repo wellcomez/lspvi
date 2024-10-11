@@ -104,8 +104,7 @@ func (editor *CodeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
 	return r
 }
 func (code *CodeView) goto_line_head() {
-	Cur := code.view.Cursor
-	Cur.Loc = femto.Loc{X: 0, Y: Cur.Loc.Y}
+	code.view.StartOfLine()
 }
 func (code CodeView) EditorPosition() *EditorPosition {
 	if !code.not_preview {
@@ -128,7 +127,7 @@ func (code *CodeView) goto_line_end() {
 		code.view.Cursor.SetSelectionStart(begin)
 		code.view.Cursor.SetSelectionEnd(end)
 	} else {
-		code.view.JumpToMatchingBrace()
+		code.view.EndOfLine()
 	}
 }
 func (code *CodeView) open_picker_refs() {
