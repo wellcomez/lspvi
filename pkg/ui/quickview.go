@@ -476,9 +476,7 @@ func (qk *quick_view) go_prev() {
 	next := (qk.view.GetCurrentItem() - 1 + qk.view.GetItemCount()) % qk.view.GetItemCount()
 	qk.view.SetCurrentItem(next)
 	qk.open_index(next)
-	if qk.Type == data_refs {
-		qk.selection_handle_impl(next, false)
-	}
+	qk.selection_handle_impl(next, false)
 }
 
 func (qk *quick_view) open_index(next int) {
