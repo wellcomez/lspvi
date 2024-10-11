@@ -12,10 +12,10 @@ import (
 
 type workspace_query_picker_impl struct {
 	*prev_picker_impl
-	file  *lspcore.Symbol_file
-	list  *customlist
-	query string
-	sym   []lsp.SymbolInformation
+	symbol *lspcore.Symbol_file
+	list   *customlist
+	query  string
+	sym    []lsp.SymbolInformation
 }
 type workspace_query_picker struct {
 	impl *workspace_query_picker_impl
@@ -56,13 +56,13 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 
 // UpdateQuery implements picker.
 func (pk *workspace_query_picker) UpdateQuery(query string) {
-	if pk.impl.file == nil {
+	if pk.impl.symbol == nil {
 		return
 	}
 	pk.impl.query = query
 	pk.impl.list.Clear()
 	go func() {
-		symbol, err := pk.impl.file.WorkspaceQuery(query)
+		symbol, err := pk.impl.symbol.WorkspaceQuery(query)
 		if pk.impl.query == query {
 			pk.on_query_ok(query, symbol, err)
 		}
@@ -91,7 +91,7 @@ func new_workspace_symbol_picker(v *fzfmain, code CodeEditor) *workspace_query_p
 	ret := &workspace_query_picker{
 		impl: &workspace_query_picker_impl{
 			prev_picker_impl: new_preview_picker(v),
-			file:             code.LspSymbol(),
+			symbol:           code.LspSymbol(),
 			list:             new_customlist(false),
 		},
 	}
