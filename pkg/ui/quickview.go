@@ -476,7 +476,7 @@ func (qk *quick_view) go_prev() {
 }
 
 func (qk *quick_view) open_index(next int) {
-	if       len(qk.Refs.Refs) > 0 {
+	if len(qk.Refs.Refs) > 0 {
 		loc := qk.get_data(next).Loc
 		qk.quickview.update_preview(loc)
 	}
@@ -537,7 +537,7 @@ func (qk *quick_view) OnSearch(txt string) {
 // String
 func (qk *quick_view) String() string {
 	var s = qk.Type.String()
-	coutn := qk.view.GetCurrentItem()
+	coutn := qk.view.GetItemCount()
 	index := qk.view.GetCurrentItem()
 	if coutn > 0 {
 		index += 1
