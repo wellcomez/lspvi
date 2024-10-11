@@ -1420,6 +1420,7 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 	} else {
 		data = []byte{}
 	}
+	code.lspsymbol = nil
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
 	// "monokai"A
 	go func() {

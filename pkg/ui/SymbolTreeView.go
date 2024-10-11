@@ -614,7 +614,7 @@ func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol 
 			Class_object: ts.Outline,
 		}
 	}
-	if symbol != nil {
+	if symbol != nil && symbol.HasLsp() {
 		if Current != nil {
 			merge_ts_to_lsp(symbol, Current)
 		}

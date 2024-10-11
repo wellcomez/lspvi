@@ -134,19 +134,19 @@ func (pk *GridClickCheck) handle_mouse(action tview.MouseAction, event *tcell.Ev
 	}
 	return action, event
 }
-func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
-	list := sym.impl.symview.view
+func (picker *symbolpicker) grid(input *tview.InputField) *tview.Grid {
+	list := picker.impl.symview.view
 	list.SetBorder(true)
-	code := sym.impl.codeprev.Primitive()
-	sym.impl.codeprev.LoadFileNoLsp(sym.impl.file.Filename, 0)
+	code := picker.impl.codeprev.Primitive()
+	picker.impl.codeprev.LoadFileNoLsp(picker.impl.filename, 0)
 	layout := layout_list_edit(list, code, input)
-	sym.impl.click = NewGridTreeClickCheck(layout, sym.impl.symview.view)
-	sym.impl.click.click = func(event *tcell.EventMouse) {
+	picker.impl.click = NewGridTreeClickCheck(layout, picker.impl.symview.view)
+	picker.impl.click.click = func(event *tcell.EventMouse) {
 		_, y := event.Position()
-		t := sym.impl.symview.view
+		t := picker.impl.symview.view
 		_, rectY, _, _ := t.GetInnerRect()
 		y += t.GetScrollOffset() - rectY
-		nodes := sym.impl.symview.nodes()
+		nodes := picker.impl.symview.nodes()
 		if y >= len(nodes) || len(nodes) == 0 {
 			return
 		}
@@ -155,10 +155,10 @@ func (sym *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 		}
 		node := nodes[y]
 		t.SetCurrentNode(node)
-		sym.update_preview()
+		picker.update_preview()
 	}
-	sym.impl.click.dobule_click = func(event *tcell.EventMouse) {
-		sym.impl.click.tree.MouseHandler()(tview.MouseLeftClick, event, nil)
+	picker.impl.click.dobule_click = func(event *tcell.EventMouse) {
+		picker.impl.click.tree.MouseHandler()(tview.MouseLeftClick, event, nil)
 		log.Println("dobule")
 
 	}
@@ -174,7 +174,8 @@ func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 
 	sym := symbolpicker{
 		impl: &SymbolWalkImpl{
-			file:     code.LspSymbol(),
+			symbol:   code.LspSymbol(),
+			filename: code.Path(),
 			symview:  symbol,
 			codeprev: NewCodeView(v.main),
 		},
@@ -196,7 +197,8 @@ func (v SymbolTreeViewExt) OnClickSymobolNode(node *tview.TreeNode) {
 }
 
 type SymbolWalkImpl struct {
-	file     *lspcore.Symbol_file
+	symbol   *lspcore.Symbol_file
+	filename string
 	symview  *SymbolTreeViewExt
 	gs       *GenericSearch
 	codeprev CodeEditor
@@ -245,15 +247,18 @@ func (wk symbolpicker) Updatequeryold(query string) {
 		wk.impl.symview.movetonode(ret[0].Y)
 	}
 }
-func (wk symbolpicker) UpdateQuery(query string) {
-	file := wk.impl.file.Filter(strings.ToLower(query))
-	wk.impl.symview.update_with_ts(nil, file)
-	root := wk.impl.symview.view.GetRoot()
-	if root != nil {
-		children := root.GetChildren()
-		if len(children) > 0 {
-			wk.impl.symview.view.SetCurrentNode(children[0])
-			wk.update_preview()
+func (picker symbolpicker) UpdateQuery(query string) {
+	symbol := picker.impl.symbol
+	if symbol != nil {
+		file := symbol.Filter(strings.ToLower(query))
+		picker.impl.symview.update_with_ts(nil, file)
+		root := picker.impl.symview.view.GetRoot()
+		if root != nil {
+			children := root.GetChildren()
+			if len(children) > 0 {
+				picker.impl.symview.view.SetCurrentNode(children[0])
+				picker.update_preview()
+			}
 		}
 	}
 }
