@@ -567,9 +567,8 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 			}
 			need_draw = true
 		}
-		refindex := node.ref_index
-		vvv := qk.Refs.Refs[refindex]
-		qk.currentIndex = refindex
+		
+		vvv := qk.get_data(index)
 		qk.main.Tab().UpdatePageTitle()
 		qk.main.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 		if need_draw {
@@ -587,6 +586,14 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 
 		}
 	}
+}
+
+func (qk *quick_view) get_data(index int) ref_with_caller {
+	node := qk.tree.tree_data_item[index]
+	refindex := node.ref_index
+	vvv := qk.Refs.Refs[refindex]
+	qk.currentIndex = refindex
+	return vvv
 }
 
 type DateType int
