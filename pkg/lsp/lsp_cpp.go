@@ -110,6 +110,7 @@ func (l lsp_lang_cpp) InitializeLsp(core *lspcore, wk WorkSpace) error {
 	if err != nil {
 		return err
 	}
+	core.get_sync_option(result)
 	if result.ServerInfo.Name == "clangd" {
 		core.inited = true
 		return nil
