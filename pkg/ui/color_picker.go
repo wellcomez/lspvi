@@ -65,6 +65,7 @@ func new_color_picker(v *fzfmain) *color_picker {
 	ret := &color_picker{impl: impl, main: v.main}
 	dirs, err := treesittertheme.GetTheme()
 	if err == nil {
+		index := 1
 		for i := range dirs {
 			d := dirs[i]
 			a := color_theme_file{
@@ -72,9 +73,10 @@ func new_color_picker(v *fzfmain) *color_picker {
 				name:       d}
 			a.name = a.name[:strings.Index(a.name, ".")]
 			ret.impl.data = append(ret.impl.data, a)
-			impl.list.AddItem(fmt.Sprintf("%-30s *ts", a.name), "", func() {
+			impl.list.AddItem(fmt.Sprintf("%-4d. %-30s *ts", index, a.name), "", func() {
 				ret.on_select(&a)
 			})
+			index++
 		}
 		files := runtime.Files.ListRuntimeFiles(femto.RTColorscheme)
 		for _, v := range files {
@@ -83,9 +85,10 @@ func new_color_picker(v *fzfmain) *color_picker {
 				treesitter: false,
 			}
 			ret.impl.data = append(ret.impl.data, a)
-			impl.list.AddItem(fmt.Sprintf("%-30s ", a.name), "", func() {
+			impl.list.AddItem(fmt.Sprintf("%-4d. %-30s ", index, a.name), "", func() {
 				ret.on_select(&a)
 			})
+			index++
 		}
 	}
 	ret.fzf = new_fzf_on_list(ret.impl.list, true)
