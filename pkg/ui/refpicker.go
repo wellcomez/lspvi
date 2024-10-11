@@ -109,7 +109,7 @@ type prev_picker_impl struct {
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
-	imp.cq.enqueue(EditorOpenArgument{filename: filename, line: line})
+	imp.cq.LoadFileNoLsp(filename, line)
 }
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
 	impl.listview = l.List
@@ -327,7 +327,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 		parent:   v,
 		// editor:   editor,
 	}
-	x.cq = NewCodeOpenQueue(x.codeprev)
+	x.cq = NewCodeOpenQueue(x.codeprev, nil)
 	return x
 }
 func (pk *refpicker) load(ranges lsp.Range) {

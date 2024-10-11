@@ -92,15 +92,23 @@ type CodeEditor interface {
 
 	DrawNavigationBar(x int, y int, w int, screen tcell.Screen)
 }
+type arg_main_openhistory struct {
+	filename string
+	line     *lsp.Location
+}
 type arg_openbuf struct {
 	data     []byte
 	filename string
 }
-type EditorOpenArgument struct {
+type arg_open_nolsp struct {
 	filename string
 	line     int
-	Range    *lsp.Range
-	openbuf  *arg_openbuf
+}
+type EditorOpenArgument struct {
+	open_no_lsp       *arg_open_nolsp
+	Range             *lsp.Range
+	openbuf           *arg_openbuf
+	main_open_history *arg_main_openhistory
 }
 type CodeOpenQueue struct {
 	mutex      sync.Mutex
@@ -110,9 +118,10 @@ type CodeOpenQueue struct {
 	editor     CodeEditor
 	open_count int
 	req_count  int
+	main       MainService
 }
 
-func NewCodeOpenQueue(editor CodeEditor) *CodeOpenQueue {
+func NewCodeOpenQueue(editor CodeEditor, main MainService) *CodeOpenQueue {
 	ret := &CodeOpenQueue{
 		close:  make(chan bool),
 		open:   make(chan bool),
@@ -124,6 +133,13 @@ func NewCodeOpenQueue(editor CodeEditor) *CodeOpenQueue {
 func (queue *CodeOpenQueue) CloseQueue() {
 	queue.dequeue()
 	queue.close <- true
+}
+
+func (q *CodeOpenQueue) LoadFileNoLsp(filename string, line int) {
+	q.enqueue(EditorOpenArgument{open_no_lsp: &arg_open_nolsp{filename, line}})
+}
+func (q *CodeOpenQueue) OpenFileHistory(filename string, line *lsp.Location) {
+	q.enqueue(EditorOpenArgument{main_open_history: &arg_main_openhistory{filename: filename, line: line}})
 }
 func (queue *CodeOpenQueue) enqueue(req EditorOpenArgument) {
 	queue.replace_data(req)
@@ -159,6 +175,8 @@ func (queue *CodeOpenQueue) Work() {
 							queue.editor.goto_location_no_history(*e.Range, false, nil)
 						} else if e.openbuf != nil {
 							queue.editor.LoadBuffer(e.openbuf.data, e.openbuf.filename)
+						} else if e.open_no_lsp != nil {
+							queue.editor.LoadFileNoLsp(e.open_no_lsp.filename, e.open_no_lsp.line)
 						}
 						queue.open_count++
 					}
