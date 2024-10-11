@@ -500,6 +500,8 @@ func (qk *quick_view) OnSearch(txt string) {
 	qk.cmd_search_key = txt
 }
 
+type color_text_line []colortext
+
 func highlight_search_key(old_query string, view *customlist, new_query string) {
 	sss := [][2]string{}
 	ptn := ""
@@ -567,7 +569,7 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 			}
 			need_draw = true
 		}
-		
+
 		vvv := qk.get_data(index)
 		qk.main.Tab().UpdatePageTitle()
 		qk.main.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)

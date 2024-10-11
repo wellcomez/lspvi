@@ -116,7 +116,7 @@ func (v *fzfmain) OpenBookMarkFzf(code CodeEditor, bookmark *proj_bookmark) {
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(code CodeEditor, ranges lsp.Range) {
 	sym := new_refer_picker(*code.LspSymbol(), v, code)
-	x := sym.grid(v.input)
+	x := sym.row(v.input)
 	v.create_dialog_content(x, sym)
 	sym.load(ranges)
 }

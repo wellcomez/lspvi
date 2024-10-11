@@ -4,7 +4,7 @@ import (
 	// "strings"
 
 	"fmt"
-	"os"
+	"log"
 	"strconv"
 	"strings"
 
@@ -70,6 +70,11 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 	}
 	return layout
 }
+func (pk *refpicker) row(input *tview.InputField) *tview.Flex {
+	ret := pk.impl.flex(input, 2)
+	pk.impl.PrevOpen(pk.impl.file.Filename, -1)
+	return ret
+}
 func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
 	ret := pk.impl.grid(input, 2)
 	pk.impl.PrevOpen(pk.impl.file.Filename, -1)
@@ -124,6 +129,7 @@ type refpicker_impl struct {
 	refs []ref_with_caller
 	fzf  *fzf_on_listview
 	key  string
+	qk   quick_view
 }
 type refpicker struct {
 	impl *refpicker_impl
@@ -219,45 +225,23 @@ type ref_with_caller struct {
 }
 
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
-	pk.impl.listview.Clear()
 	listview := pk.impl.listview
-	pk.impl.refs = get_loc_caller(pk.impl.parent.main, file, key.Symbol())
-	for i := range pk.impl.refs {
-		caller := pk.impl.refs[i]
-		v := caller.Loc
-		source_file_path := v.URI.AsPath().String()
-		data, err := os.ReadFile(source_file_path)
-		if err != nil {
-			continue
-		}
-		lines := strings.Split(string(data), "\n")
-		line := lines[v.Range.Start.Line]
-		if len(line) == 0 {
-			continue
-		}
-		// gap := 40
-		// begin := max(0, v.Range.Start.Character-gap)
-		// end := min(len(line), v.Range.Start.Character+gap)
-		path := trim_project_filename(v.URI.AsPath().String(), global_prj_root)
-		callinfo := ""
-		if caller.Caller != nil {
-			callinfo = caller_to_listitem(caller.Caller, global_prj_root)
-		}
-		secondline := fmt.Sprintf("%s:%d%s", path, v.Range.Start.Line+1, callinfo)
-		r := ref_line{
-			caller: caller_to_listitem(caller.Caller, global_prj_root),
-			loc:    v,
-			line:   line,
-			path:   path,
-		}
-		pk.impl.listdata = append(pk.impl.listdata, r)
-		impl := pk.impl
-		listview.AddItem(secondline, line, 0, func() {
-			impl.open_location(v)
-		})
-	}
+	listview.Clear()
+	refs := get_loc_caller(pk.impl.parent.main, file, key.Symbol())
+	pk.impl.refs = refs
+
+	qk := &pk.impl.qk
+	qk.main = pk.impl.parent.main
+
+	qk.view = pk.impl.listcustom
+	qk.Refs.Refs = refs
+	tree := list_view_tree_extend{}
+	tree.build_tree(pk.impl.refs)
+	qk.tree = &tree
+	data := tree.BuildListStringGroup(qk, global_prj_root, pk.impl.parent.main.Lspmgr())
+
 	pk.impl.key = key.Key
-	pk.loadlist()
+	pk.loadlist(data)
 	pk.update_preview()
 }
 
@@ -308,14 +292,22 @@ func (ref refpicker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 
 func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code CodeEditor) refpicker {
 	x := new_preview_picker(v)
-	sym := refpicker{
-		impl: &refpicker_impl{
-			prev_picker_impl: x,
-			file:             &clone,
-		},
+	impl := refpicker_impl{
+		prev_picker_impl: x,
+		file:             &clone,
 	}
-	sym.impl.use_cusutom_list(new_customlist(true))
-	// sym.impl.codeprev.view.SetBorder(true)
+	sym := refpicker{
+		impl: &impl,
+	}
+	x1 := new_customlist(true)
+	x1.SetSelectedFunc(func(index_list int, s1, s2 string, r rune) {
+		log.Println(index_list, s1, s2, r)
+		data_index := impl.fzf.get_data_index(index_list)
+		loc := impl.qk.get_data(data_index)
+		v.main.OpenFileHistory(loc.Loc.URI.AsPath().String(), &loc.Loc)
+		v.hide()
+	})
+	sym.impl.use_cusutom_list(x1)
 	return sym
 }
 
@@ -333,9 +325,16 @@ func (pk *refpicker) load(ranges lsp.Range) {
 	pk.impl.file.Reference(ranges)
 }
 func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	handle := pk.impl.listview.InputHandler()
+	handle := pk.impl.listcustom.InputHandler()
+
 	handle(event, setFocus)
-	pk.update_preview()
+	switch event.Key() {
+	case tcell.KeyUp, tcell.KeyDown:
+		data := pk.impl.qk.get_data(pk.impl.listcustom.GetCurrentItem())
+		pk.impl.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+	default:
+		break
+	}
 }
 
 func (pk *refpicker) update_preview() {
@@ -350,33 +349,25 @@ func (pk refpicker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
 	listview := pk.impl.listcustom
 	listview.Clear()
-	selected := func(data int, list int) {
-		pk.onselected(data, list)
-	}
 	if fzf := pk.impl.fzf; fzf != nil {
-		fzf.selected = selected
 		oldkey := fzf.OnSearch(query, true)
 		highlight_search_key(oldkey, listview, query)
 		pk.update_preview()
 	}
 }
 
-func (pk refpicker) onselected(data int, list int) {
-	index := data
-	v := pk.impl.listdata[index]
-
-	pk.impl.parent.main.OpenFileHistory(v.loc.URI.AsPath().String(), &v.loc)
+func (pk refpicker) onselected(data_index int, list int) {
+	v := pk.impl.qk.get_data(data_index)
+	pk.impl.parent.main.OpenFileHistory(v.Loc.URI.AsPath().String(), &v.Loc)
 	pk.impl.parent.hide()
 }
 
-func (pk *refpicker) loadlist() {
+func (pk *refpicker) loadlist(data []*list_tree_node) {
 	listview := pk.impl.listcustom
 	listview.Key = pk.impl.key
-	for i := range pk.impl.listdata {
-		v := pk.impl.listdata[i]
-		listview.AddItem(v.path, v.line, func() {
-			pk.onselected(i, i)
-		})
+	for i := range data {
+		v := data[i]
+		listview.AddItem(v.text, "", nil)
 	}
 	pk.impl.fzf = new_fzf_on_list(listview, true)
 }
