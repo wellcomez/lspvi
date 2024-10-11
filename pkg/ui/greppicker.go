@@ -167,6 +167,9 @@ func (grepx *livewgreppicker) update_title() {
 	}
 	index := grepx.grep_list_view.GetCurrentItem()
 	x := len(grepx.impl.result.data)
+	if grepx.impl.quick.tree!=nil{
+		x = grepx.impl.quick.view.GetItemCount()
+	}
 	if x > 0 {
 		index = index + 1
 	}
@@ -245,8 +248,13 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 				grepx.grep_to_list(true)
 				grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
-					o := grepx.impl.result.data[dataindex]
-					//loc := convert_grep_info_location(&o)
+					var o ref_with_caller
+					qk := grepx.impl.quick
+					if qk.tree!=nil{
+						o = qk.get_data(dataindex)
+					}else{
+						o = grepx.impl.result.data[dataindex]
+					}
 					grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
 					grepx.parent.hide()
 				}
@@ -327,7 +335,7 @@ func (pk livewgreppicker) Save() {
 		Date: time.Now().Unix(),
 	}
 	for _, v := range pk.impl.result.data {
-		Result.Refs = append(Result.Refs, v)
+         		Result.Refs = append(Result.Refs, v)
 	}
 	data.Result = Result
 	main := pk.main

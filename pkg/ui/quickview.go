@@ -51,13 +51,13 @@ type logview struct {
 type quick_view struct {
 	// *tview.Flex
 	*view_link
-	quickview    *quick_preview
-	view         *customlist
-	Name         string
-	Refs         search_reference_result
-	main         MainService
-	currentIndex int
-	Type         DateType
+	quickview *quick_preview
+	view      *customlist
+	Name      string
+	Refs      search_reference_result
+	main      MainService
+	// currentIndex int
+	Type DateType
 	// menu         *contextmenu
 	menuitem      []context_menu_item
 	searchkey     lspcore.SymolSearchKey
@@ -476,8 +476,8 @@ func (qk *quick_view) go_prev() {
 }
 
 func (qk *quick_view) open_index(next int) {
-	if len(qk.Refs.Refs) > 0 {
-		loc := qk.Refs.Refs[next].Loc
+	if       len(qk.Refs.Refs) > 0 {
+		loc := qk.get_data(next).Loc
 		qk.quickview.update_preview(loc)
 	}
 }
@@ -486,7 +486,7 @@ func (qk *quick_view) go_next() {
 		return
 	}
 	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
-	loc := qk.Refs.Refs[next].Loc
+	loc := qk.get_data(next).Loc
 	qk.quickview.update_preview(loc)
 	qk.view.SetCurrentItem(next)
 	if qk.Type == data_refs {
@@ -499,7 +499,6 @@ func (qk *quick_view) OnSearch(txt string) {
 	// highlight_search_key(old_query, view, txt)
 	qk.cmd_search_key = txt
 }
-
 
 // func highlight_search_key(old_query string, view *customlist, new_query string) {
 // 	sss := [][2]string{}
@@ -538,12 +537,13 @@ func (qk *quick_view) OnSearch(txt string) {
 // String
 func (qk *quick_view) String() string {
 	var s = qk.Type.String()
-	index := qk.currentIndex
-	if len(qk.Refs.Refs) > 0 {
-		index++
+	coutn := qk.view.GetCurrentItem()
+	index := qk.view.GetCurrentItem()
+	if coutn > 0 {
+		index += 1
 	}
 	key := qk.searchkey.Key
-	return fmt.Sprintf("%s %s %d/%d", s, key, index, len(qk.Refs.Refs))
+	return fmt.Sprintf("%s %s %d/%d", s, key, index, coutn)
 }
 
 // selection_handle
@@ -577,7 +577,6 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 		}
 	} else {
 		vvv := qk.Refs.Refs[index]
-		qk.currentIndex = index
 		qk.view.SetCurrentItem(index)
 		same := vvv.Loc.URI.AsPath().String() == qk.main.current_editor().Path()
 		if open || same {
@@ -590,11 +589,13 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 }
 
 func (qk *quick_view) get_data(index int) ref_with_caller {
-	node := qk.tree.tree_data_item[index]
-	refindex := node.ref_index
-	vvv := qk.Refs.Refs[refindex]
-	qk.currentIndex = refindex
-	return vvv
+	if qk.tree != nil {
+		node := qk.tree.tree_data_item[index]
+		refindex := node.ref_index
+		vvv := qk.Refs.Refs[refindex]
+		return vvv
+	}
+	return qk.Refs.Refs[index]
 }
 
 type DateType int
@@ -681,7 +682,6 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	}
 	qk.view.Clear()
 	qk.view.SetCurrentItem(-1)
-	qk.currentIndex = 0
 	qk.cmd_search_key = ""
 	qk.reset_tree()
 	// _, _, width, _ := qk.view.GetRect()
@@ -883,7 +883,7 @@ func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_
 			callname = icon + callname
 			x = fmt_color_string(callname+" > ", caller_color)
 			if c1 != "" {
-				return fmt.Sprintf(":%-4d %s %s %s", v.Range.Start.Line+1, c1, x, line)
+				return fmt.Sprintf(":%-4d %s%s %s", v.Range.Start.Line+1, c1, x, line)
 			} else {
 				return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, x, line)
 			}
