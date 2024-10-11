@@ -104,7 +104,16 @@ func (editor *CodeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
 	return r
 }
 func (code *CodeView) goto_line_head() {
+	vs := new_vmap_select_context(code)
 	code.view.StartOfLine()
+	if vs != nil {
+		if vs.cursor.X != 0 {
+			vs.cursor.Start()
+		} else {
+			vs.cursor.StartOfText()
+		}
+		code.move_selection(vs)
+	}
 }
 func (code CodeView) EditorPosition() *EditorPosition {
 	if !code.not_preview {
@@ -857,6 +866,52 @@ func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
+type vmap_select_context struct {
+	cursor femto.Cursor
+}
+
+func (code *CodeView) move_selection(v *vmap_select_context) {
+	if v == nil {
+		return
+	}
+	sel := v.cursor.CurSelection
+	loc := v.cursor.Loc
+	if loc.GreaterThan(sel[0]) {
+		sel[1] = loc
+	} else {
+		sel[0] = loc
+	}
+	v.cursor.CurSelection = sel
+	if v.cursor.GetSelection() != "" {
+		code.view.Cursor.CurSelection = sel
+	}
+}
+func new_vmap_select_context(c *CodeView) *vmap_select_context {
+	if c.main == nil {
+		return nil
+	}
+	if !c.main.CmdLine().Vim.vi.VMap {
+		return nil
+	}
+	cursor := *c.view.Cursor
+	has_select := c.view.Cursor.GetSelection() != ""
+	if !has_select {
+		cursor.SetSelectionStart(cursor.Loc)
+		cursor.SetSelectionEnd(cursor.Loc)
+	} else {
+		sel := cursor.CurSelection
+		if sel[0].GreaterThan(sel[1]) {
+			a := sel[0]
+			sel[0] = sel[1]
+			sel[1] = a
+		}
+		cursor.CurSelection = sel
+	}
+	return &vmap_select_context{
+		cursor,
+	}
+}
+
 type vmap_selection struct {
 	vmapBegin *VmapPosition
 	vmapEnd   *VmapPosition
@@ -923,18 +978,20 @@ func (code *CodeView) map_key_handle() {
 	code.key_map = code.key_map_arrow()
 }
 func (code *CodeView) key_right() {
-	vs := new_vmap_selection(code)
+	vs := new_vmap_select_context(code)
 	code.view.Cursor.Right()
 	if vs != nil {
-		vs.update_vi_selection(code)
+		vs.cursor.Right()
+		code.move_selection(vs)
 	}
 }
 
 func (code *CodeView) key_left() {
-	vs := new_vmap_selection(code)
+	vs := new_vmap_select_context(code)
 	code.view.Cursor.Left()
 	if vs != nil {
-		vs.update_vi_selection(code)
+		vs.cursor.Left()
+		code.move_selection(vs)
 	}
 }
 
@@ -956,13 +1013,14 @@ func (code *CodeView) word_left() {
 	Cur := code.view.Cursor
 	view := code.view
 	pagesize := view.Bottomline() - view.Topline
-	vs := new_vmap_selection(code)
+	vs := new_vmap_select_context(code)
 	Cur.WordLeft()
 	if Cur.Loc.Y <= view.Topline {
 		view.ScrollUp(pagesize / 2)
 	}
 	if vs != nil {
-		vs.update_vi_selection(code)
+		vs.cursor.WordLeft()
+		code.move_selection(vs)
 	}
 	code.update_with_line_changed()
 }
@@ -1027,10 +1085,11 @@ func (code *CodeView) copyline(line bool) {
 func (code *CodeView) word_right() {
 	Cur := code.view.Cursor
 	view := code.view
-	vs := new_vmap_selection(code)
+	vs := new_vmap_select_context(code)
 	Cur.WordRight()
 	if vs != nil {
-		vs.update_vi_selection(code)
+		vs.cursor.WordRight()
+		code.move_selection(vs)
 	}
 	pagesize := view.Bottomline() - view.Topline
 	if Cur.Loc.Y >= view.Bottomline() {
@@ -1083,36 +1142,27 @@ func (code *CodeView) action_key_up() {
 }
 
 func (code *CodeView) move_up_down(up bool) {
-	vs := new_vmap_selection(code)
-	if vs != nil && vs.vmapBegin != nil {
-		log.Println("up/down begin ", vs.vmapBegin.Y)
-	}
-	Cur := code.view.Cursor
+	Cursor := code.view.Cursor
 	view := code.view
+	vs := new_vmap_select_context(code)
 	pagesize := view.Bottomline() - view.Topline
 	if up {
-		code.view.Cursor.Up()
-		if vs == nil {
-			if Cur.Loc.Y <= code.view.Topline {
-				code.view.ScrollUp(pagesize / 2)
-			}
+		Cursor.Up()
+		if Cursor.Loc.Y <= view.Topline {
+			view.ScrollUp(pagesize / 2)
 		}
 	} else {
-		code.view.Cursor.Down()
-		if vs == nil {
-			if Cur.Loc.Y >= code.view.Bottomline() {
-				code.view.ScrollDown(pagesize / 2)
-			}
+		view.Cursor.Down()
+		if Cursor.Loc.Y >= view.Bottomline() {
+			view.ScrollDown(pagesize / 2)
 		}
 	}
-	// Cur.DeleteSelection()
-	// log.Printf("updown: %v %v", Cur.Loc, Cur.CurSelection)
 	if vs == nil {
-		Cur.SetSelectionStart(Cur.Loc)
-		Cur.SetSelectionEnd(Cur.Loc)
+		Cursor.SetSelectionStart(Cursor.Loc)
+		Cursor.SetSelectionEnd(Cursor.Loc)
 	} else {
-		vs.update_vi_selection(code)
-		log.Println("up/down end", vs.vmapEnd.Y)
+		vs.cursor.Loc = Cursor.Loc
+		code.move_selection(vs)
 	}
 	code.update_with_line_changed()
 }
