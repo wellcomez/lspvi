@@ -484,12 +484,12 @@ func addjust_menu_width(items []context_menu_item) []context_menu_item {
 }
 
 func (code *CodeView) get_selected_lines() editor_selection {
-	CurSelection := code.view.Cursor.CurSelection
-	b := LocToSelectionPosition(&CurSelection[0])
-	e := LocToSelectionPosition(&CurSelection[1])
-	s := vmap_selection{vmapBegin: b, vmapEnd: e}
-	s.switch_begin_end()
-	ss := s.loc()
+	ss := code.view.Cursor.CurSelection
+	if ss[0].GreaterThan(ss[0]) {
+		a := ss[0]
+		ss[0] = ss[1]
+		ss[0] = a
+	}
 	_, text := get_codeview_text_loc(code.view.View, ss[0], ss[1])
 	return editor_selection{
 		selected_text: text,
@@ -912,66 +912,67 @@ func new_vmap_select_context(c *CodeView) *vmap_select_context {
 	}
 }
 
-type vmap_selection struct {
-	vmapBegin *VmapPosition
-	vmapEnd   *VmapPosition
-}
+// type vmap_selection struct {
+// 	vmapBegin *VmapPosition
+// 	vmapEnd   *VmapPosition
+// }
 
-func get_codeview_vm_position(code *CodeView) *VmapPosition {
-	return LocToSelectionPosition(&code.view.Cursor.Loc)
-}
-func (v vmap_selection) loc() [2]femto.Loc {
-	return [2]femto.Loc{femto.Loc{v.vmapBegin.X, v.vmapBegin.Y}, femto.Loc{v.vmapEnd.X, v.vmapEnd.Y}}
-}
-func (v *vmap_selection) switch_begin_end() {
-	b := v.vmapBegin
-	e := v.vmapEnd
-	if b.Y > e.Y {
-		c := b
-		b = e
-		e = c
-	}
-	if b.Y == e.Y {
-		if b.X > e.X {
-			c := b
-			b = c
-			e = b
-		}
-	}
-	v.vmapBegin = b
-	v.vmapEnd = e
-}
-func (v *vmap_selection) update_vi_selection(code *CodeView) {
-	// if v.vmapEnd== nil {
-	v.vmapEnd = get_codeview_vm_position(code)
-	// }
-	v.switch_begin_end()
-	cmdline := code.main.CmdLine()
-	cmdline.Vim.vi.vmapBegin = v.vmapBegin
-	cmdline.Vim.vi.vmapEnd = v.vmapEnd
-	code.view.Cursor.SetSelectionStart(femto.Loc{
-		X: cmdline.Vim.vi.vmapBegin.X,
-		Y: cmdline.Vim.vi.vmapBegin.Y,
-	})
-	code.view.Cursor.SetSelectionEnd(femto.Loc{X: cmdline.Vim.vi.vmapEnd.X, Y: cmdline.Vim.vi.vmapEnd.Y})
-}
+// func get_codeview_vm_position(code *CodeView) *VmapPosition {
+// 	return LocToSelectionPosition(&code.view.Cursor.Loc)
+// }
 
-func new_vmap_selection(code *CodeView) *vmap_selection {
-	cmdline := code.main.CmdLine()
-	if !cmdline.Vim.vi.VMap {
-		return nil
-	}
-	var b, e *VmapPosition
-	b = cmdline.Vim.vi.vmapBegin
-	e = cmdline.Vim.vi.vmapEnd
-	view := code.view
-	Cur := view.Cursor
-	origin := Cur.Loc
-	if b == nil {
-		b = LocToSelectionPosition(&origin)
-	}
-	return &vmap_selection{b, e}
-}
+// func (v vmap_selection) loc() [2]femto.Loc {
+// 	return [2]femto.Loc{femto.Loc{v.vmapBegin.X, v.vmapBegin.Y}, femto.Loc{v.vmapEnd.X, v.vmapEnd.Y}}
+// }
+// func (v *vmap_selection) switch_begin_end() {
+// 	b := v.vmapBegin
+// 	e := v.vmapEnd
+// 	if b.Y > e.Y {
+// 		c := b
+// 		b = e
+// 		e = c
+// 	}
+// 	if b.Y == e.Y {
+// 		if b.X > e.X {
+// 			c := b
+// 			b = c
+// 			e = b
+// 		}
+// 	}
+// 	v.vmapBegin = b
+// 	v.vmapEnd = e
+// }
+// func (v *vmap_selection) update_vi_selection(code *CodeView) {
+// 	// if v.vmapEnd== nil {
+// 	v.vmapEnd = get_codeview_vm_position(code)
+// 	// }
+// 	v.switch_begin_end()
+// 	cmdline := code.main.CmdLine()
+// 	cmdline.Vim.vi.vmapBegin = v.vmapBegin
+// 	cmdline.Vim.vi.vmapEnd = v.vmapEnd
+// 	code.view.Cursor.SetSelectionStart(femto.Loc{
+// 		X: cmdline.Vim.vi.vmapBegin.X,
+// 		Y: cmdline.Vim.vi.vmapBegin.Y,
+// 	})
+// 	code.view.Cursor.SetSelectionEnd(femto.Loc{X: cmdline.Vim.vi.vmapEnd.X, Y: cmdline.Vim.vi.vmapEnd.Y})
+// }
+
+// func new_vmap_selection(code *CodeView) *vmap_selection {
+// 	cmdline := code.main.CmdLine()
+// 	if !cmdline.Vim.vi.VMap {
+// 		return nil
+// 	}
+// 	var b, e *VmapPosition
+// 	b = cmdline.Vim.vi.vmapBegin
+// 	e = cmdline.Vim.vi.vmapEnd
+// 	view := code.view
+// 	Cur := view.Cursor
+// 	origin := Cur.Loc
+// 	if b == nil {
+// 		b = LocToSelectionPosition(&origin)
+// 	}
+// 	return &vmap_selection{b, e}
+// }
 
 func (code *CodeView) map_key_handle() {
 	// code.basic_vi_command = code.key_map_command()
