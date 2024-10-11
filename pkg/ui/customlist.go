@@ -1,9 +1,9 @@
 package mainui
 
 import (
-	"reflect"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"reflect"
 )
 
 type hlItem struct {
@@ -125,7 +125,11 @@ func (l *customlist) draw_item_color_new(segment []colortext, screen tcell.Scree
 	for _, e := range segment {
 		for _, r := range e.text {
 			if x < max {
-				screen.SetContent(x, y, r, nil, normal_style.Foreground(e.color))
+				if e.color == 0 {
+					screen.SetContent(x, y, r, nil, normal_style)
+				} else {
+					screen.SetContent(x, y, r, nil, normal_style.Foreground(e.color))
+				}
 				x++
 			} else {
 				break
