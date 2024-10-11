@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/atotto/clipboard"
@@ -240,7 +241,7 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 	}
 	if code.file.SamePath(file) {
 		if sym := code.LspSymbol(); sym != nil {
-			go sym.NotifyCodeChange()
+			go sym.NotifyCodeChange(nil)
 			offset := code.view.Topline
 			code.openfile(code.Path(), func() {
 				code.view.Topline = offset
@@ -1438,28 +1439,93 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 	}()
 	return nil
 }
+
+type lspchange struct {
+	code *CodeView
+}
+type lspchange_queue struct {
+	wait_queue []lspchange
+	lspchange  chan int
+	lock       sync.Mutex
+	start      bool
+}
+
+var lsp_queue = lspchange_queue{
+	lspchange: make(chan int),
+}
+
+func (q *lspchange_queue) AddQuery(c *CodeView) {
+	if !q.start {
+		q.start = true
+		go q.Worker()
+	}
+	q.lock.Lock()
+	defer q.lock.Unlock()
+	for _, v := range q.wait_queue {
+		if v.code == c {
+			log.Println("skip")
+			return
+		}
+	}
+	q.wait_queue = append(q.wait_queue, lspchange{c})
+	if len(q.wait_queue) > 0 {
+		q.lspchange <- len(q.wait_queue)
+	}
+
+}
+func (q *lspchange_queue) Worker() {
+	for {
+		select {
+		case <-q.lspchange:
+			data := empty_queue(q)
+			for _, v := range data {
+				v.code.update_ts()
+			}
+		}
+	}
+}
+
 func (code *CodeView) on_content_changed() {
+	lsp_queue.AddQuery(code)
+}
+func (code *CodeView) update_ts() {
 	data := []byte{}
 	for i := 0; i < code.view.Buf.LinesNum(); i++ {
 		data = append(data, code.view.Buf.LineBytes(i)...)
 		data = append(data, '\n')
 	}
+	if code.lspsymbol != nil {
+		code.lspsymbol.NotifyCodeChange(data)
+	}
 	var new_ts = lspcore.GetNewTreeSitter(code.Path(), data)
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
-		go GlobalApp.QueueUpdateDraw(func() {
-			code.tree_sitter = ts
-			code.set_color()
-			if code.main != nil {
-				if len(ts.Outline) > 0 {
-					if ts.DefaultOutline() {
-						code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-						// code.main.Lspmgr().Current = lsp
-					} else {
-						code.main.OnSymbolistChanged(nil, nil)
-					}
+		on_treesitter_update(code, ts)
+	})
+}
+
+func empty_queue(q *lspchange_queue) []lspchange {
+	var ret []lspchange
+	q.lock.Lock()
+	ret = q.wait_queue
+	q.wait_queue = []lspchange{}
+	q.lock.Unlock()
+	return ret
+}
+
+func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
+	go GlobalApp.QueueUpdateDraw(func() {
+		code.tree_sitter = ts
+		code.set_color()
+		if code.main != nil {
+			if len(ts.Outline) > 0 {
+				if ts.DefaultOutline() {
+					code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+
+				} else {
+					code.main.OnSymbolistChanged(nil, nil)
 				}
 			}
-		})
+		}
 	})
 }
 func (code *CodeView) __load_in_main(filename string, data []byte) error {
