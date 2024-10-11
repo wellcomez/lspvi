@@ -605,7 +605,6 @@ func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhist
 	}
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
-	m.symboltree.Clear()
 	code.open_file_lspon_line_option(file, loc, true, option)
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {

@@ -119,6 +119,7 @@ type CodeOpenQueue struct {
 	open_count int
 	req_count  int
 	main       MainService
+	is_close   bool
 }
 
 func NewCodeOpenQueue(editor CodeEditor, main MainService) *CodeOpenQueue {
@@ -132,6 +133,14 @@ func NewCodeOpenQueue(editor CodeEditor, main MainService) *CodeOpenQueue {
 	return ret
 }
 func (queue *CodeOpenQueue) CloseQueue() {
+	go close_queue(queue)
+}
+
+func close_queue(queue *CodeOpenQueue) {
+	if queue.is_close {
+		return
+	}
+	queue.is_close = true
 	queue.dequeue()
 	queue.close <- true
 }
@@ -1527,7 +1536,7 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 			return nil
 		}
 	}
-	if code.main!=nil{
+	if code.main != nil {
 		code.main.OutLineView().Clear()
 	}
 	code.loading = true
