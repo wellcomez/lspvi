@@ -1262,10 +1262,10 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 func (main *mainui) GoForward() {
 	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoForward()
-	start := lsp.Position{Line: i.Pos.Line}
+	loc := i.GetLocation()
 	log.Printf("go forward %v", i)
 	main.open_file_to_history(i.Path, &navigation_loc{
-		loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
+		loc:    &loc,
 		offset: i.Pos.Offset,
 	}, false, nil)
 }
@@ -1278,11 +1278,11 @@ func (main *mainui) CanGoFoward() bool {
 func (main *mainui) GoBack() {
 	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoBack()
-	start := lsp.Position{Line: i.Pos.Line}
+	loc := i.GetLocation()
 	log.Printf("go %v", i)
 	main.open_file_to_history(i.Path,
 		&navigation_loc{
-			loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
+			loc:    &loc,
 			offset: i.Pos.Offset,
 		},
 		false, nil)

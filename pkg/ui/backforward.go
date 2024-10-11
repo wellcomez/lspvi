@@ -3,9 +3,20 @@ package mainui
 import (
 	"encoding/json"
 	"log"
+
 	// "log"
 	"os"
+
+	"github.com/tectiv3/go-lsp"
 )
+
+func (path backforwarditem) GetLocation() lsp.Location {
+	return lsp.Location{URI: lsp.NewDocumentURI(path.Path), Range: lsp.Range{
+		Start: lsp.Position{Line: path.Pos.Line, Character: 0},
+		End:   lsp.Position{Line: path.Pos.Line, Character: 0},
+	},
+	}
+}
 
 type backforwarditem struct {
 	Path string
@@ -43,18 +54,18 @@ func NewHistory(file string) *History {
 //			}
 //		}
 //	}
-func (h *History) history_files() []string {
-	ret := []string{}
+func (h *History) history_files() []backforwarditem {
+	ret := []backforwarditem{}
 	for _, r := range h.datalist {
 		added := false
 		for _, s := range ret {
-			if r.Path == s {
+			if r.Path == s.Path {
 				added = true
 				break
 			}
 		}
 		if !added {
-			ret = append(ret, r.Path)
+			ret = append(ret, r)
 		}
 	}
 	return ret

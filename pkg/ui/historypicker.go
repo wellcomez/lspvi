@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -51,7 +52,7 @@ func (ref history_picker) OnSymbolistChanged(file *lspcore.Symbol_file, err erro
 }
 
 type history_item struct {
-	filepath string
+	filepath backforwarditem
 	dispname string
 }
 
@@ -64,20 +65,22 @@ func new_history_picker(v *fzfmain, edit CodeEditor) history_picker {
 		},
 	}
 	sym.impl.set_fuzz(true)
-	history := NewHistory(lspviroot.history)
+	history := v.main.Navigation().history
 	items := []history_item{}
 	close := func(data_index int, listIndex int) {
 		v := sym.impl.listdata[data_index]
-		path := v.filepath
 		parent := sym.impl.parent
-		parent.openfile(path)
+		path := v.filepath
+		loc := v.filepath.GetLocation()
+		parent.main.OpenFileHistory(path.Path, &loc)
+		parent.hide()
 	}
 	for i, h := range history.history_files() {
 
-		dispname := trim_project_filename(h, global_prj_root)
+		dispname := trim_project_filename(h.Path, global_prj_root)
 		h := history_item{
 			filepath: h,
-			dispname: dispname,
+			dispname: fmt.Sprintln(dispname,":",h.Pos.Line+1),
 		}
 		index := i
 		// fzf_item_strings = append(fzf_item_strings, dispname)
@@ -86,11 +89,16 @@ func new_history_picker(v *fzfmain, edit CodeEditor) history_picker {
 		})
 		items = append(items, h)
 	}
+	if history.index<sym.impl.list.GetItemCount(){
+		sym.impl.list.SetCurrentItem(history.index)
+	}
 	sym.impl.listdata = items
 	sym.fzf = new_fzf_on_list(sym.impl.list, true)
 	sym.fzf.selected = close
 	return sym
 }
+
+
 func (pk history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.impl.list.InputHandler()
 	handle(event, setFocus)
