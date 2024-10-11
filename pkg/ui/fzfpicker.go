@@ -72,6 +72,9 @@ const (
 )
 
 func InRect(event *tcell.EventMouse, primitive tview.Primitive) bool {
+	if event == nil {
+		return false
+	}
 	px, py := event.Position()
 	x, y, w, h := primitive.GetRect()
 	return px >= x && px < x+w && py >= y && py < y+h
@@ -117,8 +120,8 @@ func (v *fzfmain) OpenBookMarkFzf(bookmark *proj_bookmark) {
 func (v *fzfmain) OpenRefFzf(code CodeEditor, ranges lsp.Range) {
 	sym := new_refer_picker(*code.LspSymbol(), v)
 	w, h := v.main.ScreenSize()
-	w=w*3/4
-	h=h*3/4
+	w = w * 3 / 4
+	h = h * 3 / 4
 	if w > h && w > 160 {
 		x := sym.grid(v.input)
 		v.create_dialog_content(x, sym)
