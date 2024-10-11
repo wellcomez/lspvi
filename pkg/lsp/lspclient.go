@@ -10,6 +10,7 @@ import (
 
 type lspclient interface {
 	WorkSpaceSymbol(query string) ([]lsp.SymbolInformation, error)
+	WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error
 	Semantictokens_full(file string) (*lsp.SemanticTokens, error)
 	InitializeLsp(wk WorkSpace) error
 	Launch_Lsp_Server() error
@@ -161,4 +162,8 @@ func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
 
 func (l lsp_base) WorkSpaceSymbol(query string) ([]lsp.SymbolInformation, error) {
 	return l.core.WorkSpaceDocumentSymbol(query)
+}
+
+func (l lsp_base) WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error {
+	return l.core.WorkspaceDidChangeWatchedFiles(Changes)
 }
