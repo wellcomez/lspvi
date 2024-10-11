@@ -223,7 +223,7 @@ func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		v.currentpicker.UpdateQuery(query)
 		return nil
 	}
-	  				v.currentpicker.handle()(event, nil)
+	 		v.currentpicker.handle()(event, nil)
 	return nil
 }
 

@@ -240,7 +240,7 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 	}
 	if code.file.SamePath(file) {
 		if sym := code.LspSymbol(); sym != nil {
-			go sym.DidSave()
+			go sym.NotifyCodeChange()
 			offset := code.view.Topline
 			code.openfile(code.Path(), func() {
 				code.view.Topline = offset

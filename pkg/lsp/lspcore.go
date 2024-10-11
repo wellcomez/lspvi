@@ -146,7 +146,7 @@ func (client *lspcore) SetTrace() error {
 func (client *lspcore) Exit() error {
 	return client.conn.Notify(context.Background(), "exit", NullResult)
 }
-func (client *lspcore) TextDocumentDidClose(file string) error {
+func (client *lspcore) DidClose(file string) error {
 	param := &lsp.DidCloseTextDocumentParams{
 		TextDocument: lsp.TextDocumentIdentifier{
 			URI: lsp.NewDocumentURI(file),

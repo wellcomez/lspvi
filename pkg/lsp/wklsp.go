@@ -344,6 +344,11 @@ func (wk *LspWorkspace) Get(filename string) (*Symbol_file, error) {
 	return ret, fmt.Errorf("not loaded")
 
 }
+func (wk *LspWorkspace) CloseSymbolFile(sym *Symbol_file) error {
+	err := sym.lsp.DidClose(sym.Filename)
+	delete(wk.filemap, sym.Filename)
+	return err
+}
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)
 	wk.current = wk.filemap[filename]

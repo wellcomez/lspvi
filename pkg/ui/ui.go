@@ -230,8 +230,17 @@ func (main *mainui) OnWatchFileChange(file string, event fsnotify.Event) bool {
 		return false
 	}
 	if strings.HasPrefix(file, global_prj_root) {
+		if main.codeview.OnWatchFileChange(file, event) {
+			return true
+		}
+		for _, v := range SplitCode.code_collection {
+			if v.OnWatchFileChange(file, event) {
+				return true
+			}
+		}
 		if sym, _ := main.lspmgr.Get(file); sym != nil {
-			sym.DidSave()
+			sym.NotifyCodeChange()
+			return true
 		}
 	}
 	return false
@@ -1066,7 +1075,6 @@ func create_edit_area(main *mainui) *flex_area {
 	SplitCode.main = main
 	codeview := NewCodeView(main)
 	codeview.id = view_code
-	global_file_watch.AddReciever(codeview)
 	codeview.not_preview = true
 	codeview.Width = 80
 	main.codeviewmain = codeview
