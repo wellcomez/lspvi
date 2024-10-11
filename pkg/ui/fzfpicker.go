@@ -186,7 +186,7 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 
 func (v *fzfmain) OpenDocumntSymbolFzf(code CodeEditor) {
 	sym := new_outline_picker(v, code)
-	if row, col := sym.layout(v.input, v.use_col()); row != nil {
+	if row, col := sym.layout(v.input, !v.use_col()); row != nil {
 		v.create_dialog_content(row, sym)
 	} else {
 		v.create_dialog_content(col, sym)
