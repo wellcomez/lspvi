@@ -241,10 +241,15 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 	if code.file.SamePath(file) {
 		if sym := code.LspSymbol(); sym != nil {
 			go sym.DidSave()
+			offset := code.view.Topline
+			code.openfile(code.Path(), func() {
+				code.view.Topline = offset
+				if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
+					code.lspsymbol = s
+					s.LspLoadSymbol()
+				}
+			})
 		}
-		code.openfile(code.Path(), func() {
-			// go code.on_content_changed()
-		})
 		return true
 	}
 	return false
