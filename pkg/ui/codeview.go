@@ -217,11 +217,8 @@ type CodeView struct {
 	rightmenu       CodeContextMenu
 	// LineNumberUnderMouse int
 	not_preview bool
-	// bgcolor     tcell.Color
-	// colorscheme *symbol_colortheme
-	// ts          *lspcore.TreeSitter
-	insert bool
-	diff   *Differ
+	insert      bool
+	diff        *Differ
 }
 
 func (c CodeView) TreeSitter() *lspcore.TreeSitter {
@@ -776,7 +773,7 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 		code.view.HandleEvent(event)
-		go code.on_content_changed()
+		code.on_content_changed()
 		return nil
 	} else {
 		event = code.handle_key_impl(event)
@@ -1048,21 +1045,21 @@ func (code *CodeView) Undo() {
 	checker := new_linechange_checker(code)
 	code.view.Undo()
 	checker.after(code)
-	go code.on_content_changed()
+	code.on_content_changed()
 }
 func (code *CodeView) deleteword() {
 	code.view.DeleteWordRight()
-	go code.on_content_changed()
+	code.on_content_changed()
 }
 func (code *CodeView) deleteline() {
 	checker := new_linechange_checker(code)
 	code.view.CutLine()
 	checker.after(code)
-	go code.on_content_changed()
+	code.on_content_changed()
 }
 func (code *CodeView) deltext() {
 	code.view.Delete()
-	go code.on_content_changed()
+	code.on_content_changed()
 }
 func (code *CodeView) pasteline(line bool) {
 	if line {
@@ -1072,7 +1069,7 @@ func (code *CodeView) pasteline(line bool) {
 			x.Buf.LineArray.NewlineBelow(lineno)
 			x.Cursor.Loc = femto.Loc{X: 0, Y: lineno + 1}
 			x.Paste()
-			go code.on_content_changed()
+			code.on_content_changed()
 		}
 	}
 }
