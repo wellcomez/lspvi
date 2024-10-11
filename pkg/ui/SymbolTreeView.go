@@ -507,11 +507,11 @@ func (v *SymbolTreeView) Clear() {
 func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 	go func() {
 		v.main.App().QueueUpdateDraw(func() {
-			v.__update(file)
+			v.update_in_main_sync(file)
 		})
 	}()
 }
-func (v *SymbolTreeView) __update(file *lspcore.Symbol_file) {
+func (v *SymbolTreeView) update_in_main_sync(file *lspcore.Symbol_file) {
 	if file == nil {
 		v.waiter.SetText("no lsp client").SetTextColor(tcell.ColorDarkRed)
 		return
@@ -608,6 +608,12 @@ func find_in_outline(outline []*lspcore.Symbol, class_symbol *lspcore.Symbol) bo
 	return false
 }
 func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file {
+	ret := symboltree.merge_symbol(ts, symbol)
+	symboltree.update(ret)
+	return nil
+}
+
+func (symboltree *SymbolTreeView) merge_symbol(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file)  *lspcore.Symbol_file {
 	var Current *lspcore.Symbol_file
 	if ts != nil {
 		Current = &lspcore.Symbol_file{
@@ -618,13 +624,12 @@ func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol 
 		if Current != nil {
 			merge_ts_to_lsp(symbol, Current)
 		}
-		symboltree.update(symbol)
 		return symbol
 	} else if Current != nil {
 		symboltree.update(Current)
 		return Current
 	}
-	return nil
+	return nil 
 }
 
 func merge_ts_to_lsp(symbol *lspcore.Symbol_file, Current *lspcore.Symbol_file) {

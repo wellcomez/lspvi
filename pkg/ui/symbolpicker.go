@@ -178,7 +178,11 @@ func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 			codeprev: NewCodeView(v.main),
 		},
 	}
-	sym.impl.symbol = symbolview.update_with_ts(code.TreeSitter(), code.LspSymbol())
+	sym.impl.symbol = symbolview.merge_symbol(code.TreeSitter(), code.LspSymbol())
+	if sym.impl.symbol!=nil{
+		symbolview.update_in_main_sync(sym.impl.symbol)
+		symbolview.view.GetRoot().ExpandAll()
+	}
 	return sym
 }
 
@@ -235,7 +239,7 @@ func (wk symbolpicker) update_preview() {
 }
 
 func (sym symbolpicker) Filter(key string) *lspcore.Symbol_file {
-	if len(key) == 0 ||sym.impl.symbol == nil {
+	if len(key) == 0 || sym.impl.symbol == nil {
 		return nil
 	}
 	ret := []*lspcore.Symbol{}
@@ -275,8 +279,12 @@ func (wk symbolpicker) Updatequeryold(query string) {
 }
 func (picker symbolpicker) UpdateQuery(query string) {
 	file := picker.Filter(strings.ToLower(query))
-	picker.impl.symview.update(file)
+	picker.impl.symview.update_in_main_sync(file)
 	root := picker.impl.symview.view.GetRoot()
+	root.ExpandAll()
+	for _, v := range root.GetChildren() {
+		v.Expand()	
+	}
 	if root != nil {
 		children := root.GetChildren()
 		if len(children) > 0 {
