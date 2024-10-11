@@ -8,8 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
-
 	"github.com/tectiv3/go-lsp"
 )
 
@@ -55,33 +53,6 @@ func (*Symbol_file) newMethod(v *Symbol, rang lsp.Range) *Symbol {
 	}
 	return nil
 
-}
-func (sym *Symbol_file) Filter(key string) *Symbol_file {
-	if len(key) == 0 {
-		return sym
-	}
-	ret := []*Symbol{}
-	for _, v := range sym.Class_object {
-		member := []Symbol{}
-		for i, vv := range v.Members {
-			if strings.Contains(strings.ToLower(vv.SymInfo.Name), key) {
-				member = append(member, v.Members[i])
-			}
-		}
-		var sss = *v
-		root := &sss
-		if strings.Contains(strings.ToLower(v.SymInfo.Name), key) {
-			root.Members = member
-			ret = append(ret, root)
-		} else if len(member) > 0 {
-			root.Members = member
-			ret = append(ret, root)
-		}
-
-	}
-	return &Symbol_file{
-		Class_object: ret,
-	}
 }
 func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begin int, parent *Symbol) int {
 	var i = begin

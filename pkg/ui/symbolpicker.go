@@ -167,20 +167,18 @@ func (picker *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 }
 
 func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
-	symbol := &SymbolTreeViewExt{}
-	symbol.SymbolTreeView = NewSymbolTreeView(v.main, code)
-	symbol.parent = v
-	symbol.SymbolTreeView.view.SetSelectedFunc(symbol.OnClickSymobolNode)
-
+	symbolview := &SymbolTreeViewExt{}
+	symbolview.SymbolTreeView = NewSymbolTreeView(v.main, code)
+	symbolview.parent = v
+	symbolview.SymbolTreeView.view.SetSelectedFunc(symbolview.OnClickSymobolNode)
 	sym := symbolpicker{
 		impl: &SymbolWalkImpl{
-			symbol:   code.LspSymbol(),
 			filename: code.Path(),
-			symview:  symbol,
+			symview:  symbolview,
 			codeprev: NewCodeView(v.main),
 		},
 	}
-	symbol.update_with_ts(code.TreeSitter(), code.LspSymbol())
+	sym.impl.symbol = symbolview.update_with_ts(code.TreeSitter(), code.LspSymbol())
 	return sym
 }
 
@@ -236,6 +234,34 @@ func (wk symbolpicker) update_preview() {
 	}
 }
 
+func (sym symbolpicker) Filter(key string) *lspcore.Symbol_file {
+	if len(key) == 0 ||sym.impl.symbol == nil {
+		return nil
+	}
+	ret := []*lspcore.Symbol{}
+	for _, v := range sym.impl.symbol.Class_object {
+		member := []lspcore.Symbol{}
+		for i, vv := range v.Members {
+			if strings.Contains(strings.ToLower(vv.SymInfo.Name), key) {
+				member = append(member, v.Members[i])
+			}
+		}
+		var sss = *v
+		root := &sss
+		if strings.Contains(strings.ToLower(v.SymInfo.Name), key) {
+			root.Members = member
+			ret = append(ret, root)
+		} else if len(member) > 0 {
+			root.Members = member
+			ret = append(ret, root)
+		}
+
+	}
+	return &lspcore.Symbol_file{
+		Class_object: ret,
+	}
+}
+
 // handle implements picker.
 func (wk symbolpicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return wk.handle_key_override
@@ -248,17 +274,14 @@ func (wk symbolpicker) Updatequeryold(query string) {
 	}
 }
 func (picker symbolpicker) UpdateQuery(query string) {
-	symbol := picker.impl.symbol
-	if symbol != nil {
-		file := symbol.Filter(strings.ToLower(query))
-		picker.impl.symview.update_with_ts(nil, file)
-		root := picker.impl.symview.view.GetRoot()
-		if root != nil {
-			children := root.GetChildren()
-			if len(children) > 0 {
-				picker.impl.symview.view.SetCurrentNode(children[0])
-				picker.update_preview()
-			}
+	file := picker.Filter(strings.ToLower(query))
+	picker.impl.symview.update(file)
+	root := picker.impl.symview.view.GetRoot()
+	if root != nil {
+		children := root.GetChildren()
+		if len(children) > 0 {
+			picker.impl.symview.view.SetCurrentNode(children[0])
+			picker.update_preview()
 		}
 	}
 }
