@@ -230,8 +230,17 @@ func (main *mainui) OnWatchFileChange(file string, event fsnotify.Event) bool {
 		return false
 	}
 	if strings.HasPrefix(file, global_prj_root) {
+		if main.codeview.OnWatchFileChange(file, event) {
+			return true
+		}
+		for _, v := range SplitCode.code_collection {
+			if v.OnWatchFileChange(file, event) {
+				return true
+			}
+		}
 		if sym, _ := main.lspmgr.Get(file); sym != nil {
-			sym.DidSave()
+			sym.NotifyCodeChange(nil)
+			return true
 		}
 	}
 	return false
@@ -596,7 +605,6 @@ func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhist
 	}
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
-	m.symboltree.Clear()
 	code.open_file_lspon_line_option(file, loc, true, option)
 }
 func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
@@ -1066,7 +1074,6 @@ func create_edit_area(main *mainui) *flex_area {
 	SplitCode.main = main
 	codeview := NewCodeView(main)
 	codeview.id = view_code
-	global_file_watch.AddReciever(codeview)
 	codeview.not_preview = true
 	codeview.Width = 80
 	main.codeviewmain = codeview

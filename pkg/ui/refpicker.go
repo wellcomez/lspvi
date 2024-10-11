@@ -100,6 +100,7 @@ type prev_picker_impl struct {
 	listview         *tview.List
 	listcustom       *customlist
 	codeprev         CodeEditor
+	cq               *CodeOpenQueue
 	parent           *fzfmain
 	list_click_check *GridListClickCheck
 	on_list_selected func()
@@ -108,7 +109,7 @@ type prev_picker_impl struct {
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
-	imp.codeprev.LoadFileNoLsp(filename, line)
+	imp.cq.LoadFileNoLsp(filename, line)
 }
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
 	impl.listview = l.List
@@ -141,6 +142,7 @@ func (pk refpicker) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.I
 
 // close implements picker.
 func (pk refpicker) close() {
+	pk.impl.cq.CloseQueue()
 }
 
 // name implements picker.
@@ -325,6 +327,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 		parent:   v,
 		// editor:   editor,
 	}
+	x.cq = NewCodeOpenQueue(x.codeprev, nil)
 	return x
 }
 func (pk *refpicker) load(ranges lsp.Range) {
@@ -355,7 +358,9 @@ func remove_hl(mc []colortext, new_query string) string {
 		item := mc[i]
 		maintext += item.text
 	}
-	maintext = strings.ReplaceAll(maintext, new_query, fmt_bold_string(new_query))
+	if new_query != "" {
+		maintext = strings.ReplaceAll(maintext, new_query, fmt_bold_string(new_query))
+	}
 	return maintext
 }
 func highlight_listitem_search_key(old_query string, view *customlist, new_query string) {

@@ -57,6 +57,7 @@ type callinview struct {
 	right_context  callin_view_context
 	cmd_search_key string
 	callee_at_root bool
+	cq             *CodeOpenQueue
 }
 type dom_click_state int
 
@@ -102,6 +103,7 @@ func new_callview(main MainService) *callinview {
 	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		return action, event
 	})
+	ret.cq = NewCodeOpenQueue(nil, main)
 	return ret
 
 }
@@ -519,12 +521,12 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 			sym := ref.call
 			if r := ref.fromrange; r != nil {
 				// r := ref.fromrange
-				view.main.OpenFileHistory(r.URI.AsPath().String(), &lsp.Location{
+				view.cq.OpenFileHistory(r.URI.AsPath().String(), &lsp.Location{
 					URI:   r.URI,
 					Range: r.Range,
 				})
 			} else {
-				view.main.OpenFileHistory(sym.URI.AsPath().String(), &lsp.Location{
+				view.cq.OpenFileHistory(sym.URI.AsPath().String(), &lsp.Location{
 					URI:   sym.URI,
 					Range: sym.SelectionRange,
 				})
@@ -567,12 +569,12 @@ func (view *callinview) node_selected(node *tview.TreeNode) {
 			sym := ref.call
 			if r := ref.fromrange; r != nil {
 				// r := ref.fromrange
-				view.main.OpenFileHistory(r.URI.AsPath().String(), &lsp.Location{
+				view.cq.OpenFileHistory(r.URI.AsPath().String(), &lsp.Location{
 					URI:   r.URI,
 					Range: r.Range,
 				})
 			} else {
-				view.main.OpenFileHistory(sym.URI.AsPath().String(), &lsp.Location{
+				view.cq.OpenFileHistory(sym.URI.AsPath().String(), &lsp.Location{
 					URI:   sym.URI,
 					Range: sym.SelectionRange,
 				})

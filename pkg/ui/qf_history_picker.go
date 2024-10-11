@@ -32,6 +32,7 @@ type qk_history_picker struct {
 
 // close implements picker.
 func (pk qk_history_picker) close() {
+	pk.cq.CloseQueue()
 }
 
 // name implements picker.
@@ -217,7 +218,7 @@ func (qk *qk_history_picker) updateprev() {
 	case data_refs, data_grep_word, data_search:
 		{
 			caller := keys[index].Result.Refs
-			name :=keys[index].Key.File
+			name := keys[index].Key.File
 			qkv := quick_view{main: qk.parent.main}
 			qkv.Refs.Refs = caller
 			qkv.tree = &list_view_tree_extend{}
@@ -228,7 +229,7 @@ func (qk *qk_history_picker) updateprev() {
 				aa = append(aa, v.text)
 			}
 			aa = remove_color(aa)
-			qk.codeprev.LoadBuffer([]byte(strings.Join(aa, "\n")), name)
+			qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte(strings.Join(aa, "\n")), name}})
 		}
 	case data_callin:
 		{
@@ -257,7 +258,7 @@ func (qk *qk_history_picker) updateprev() {
 					}
 				}
 				data := strings.Join(content, "\n")
-				qk.codeprev.LoadBuffer([]byte(data), "")
+				qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte(data), ""}})
 			} else {
 				dirs, err := os.ReadDir(callin)
 				content := []string{}
@@ -266,13 +267,13 @@ func (qk *qk_history_picker) updateprev() {
 				}
 				data := strings.Join(content, "\n")
 				if err == nil {
-					qk.codeprev.LoadBuffer([]byte(data), "")
+					qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte(data), ""}})
 				}
 			}
 		}
 	default:
 		{
-			qk.codeprev.LoadBuffer([]byte("????"), "")
+			qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte("?????????????"), ""}})
 		}
 	}
 }

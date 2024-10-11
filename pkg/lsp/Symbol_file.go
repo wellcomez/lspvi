@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
 	"github.com/tectiv3/go-lsp"
 )
 
@@ -358,13 +360,82 @@ func (sym *Symbol_file) __load_symbol_impl(reload bool) error {
 	return sym.LspLoadSymbol()
 }
 
+const LSP_DEBUG_TAG = "LSPDEBUG"
+
 func (sym *Symbol_file) LspLoadSymbol() error {
+	if sym.lsp == nil {
+		return fmt.Errorf("lsp empty")
+	}
 	symbols, err := sym.lsp.GetDocumentSymbol(sym.Filename)
 	if err != nil {
 		return err
 	}
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
 	return nil
+}
+func (sym *Symbol_file) NotifyCodeChange(data []byte) error {
+	if sym.lsp != nil {
+		if opt := sym.lsp.syncOption(); opt != nil {
+			endline := 0
+			if data != nil {
+				endline = len(data)
+			} else if data, err := os.ReadFile(sym.Filename); err == nil {
+				endline = len(strings.Split(string(data), "\n"))
+			} else {
+				return err
+			}
+			if data == nil {
+				return fmt.Errorf("data is nil")
+			}
+			if opt.Change != lsp.TextDocumentSyncKindNone {
+				return sym.lsp.DidChange(sym.Filename, 1, []lsp.TextDocumentContentChangeEvent{
+					{
+						Range: &lsp.Range{
+							Start: lsp.Position{
+								Line:      0,
+								Character: 0,
+							},
+							End: lsp.Position{
+								Line:      endline - 1,
+								Character: 0,
+							},
+						},
+						Text: string(data),
+					},
+				})
+			} else {
+				return fmt.Errorf("TextDocumentSyncKindNone is None")
+			}
+		}
+		return fmt.Errorf("sync option is None")
+	}
+	return fmt.Errorf("sym lsp is nil")
+}
+
+func newFunction1(DidSave bool, sym *Symbol_file, OpenClose bool) {
+	if DidSave {
+		buf, err := os.ReadFile(sym.Filename)
+		var text string
+		if err == nil {
+			text = string(buf)
+		}
+		sym.lsp.DidSave(sym.Filename, text)
+	} else if OpenClose {
+		wk := sym.Wk
+		if err := wk.CloseSymbolFile(sym); err != nil {
+			log.Println(LSP_DEBUG_TAG, "OpenClose close symbol file failed", err)
+		} else if sym, err := sym.Wk.Open(sym.Filename); sym != nil {
+			if err != nil {
+				log.Println(LSP_DEBUG_TAG, "OpenClose open symbol file failed", err)
+			}
+			if err := sym.LspLoadSymbol(); err != nil {
+				log.Println(LSP_DEBUG_TAG, "OpenClose load symbol failed", err, sym.Filename)
+			} else {
+				log.Println(LSP_DEBUG_TAG, "OpenClose load symbol success", sym.Filename)
+			}
+		}
+
+	}
 }
 func (sym *Symbol_file) DidSave() {
 	if sym.lsp != nil {

@@ -123,6 +123,7 @@ func (h *History) AddToHistory(newdata string, loc *EditorPosition) {
 }
 
 func debug_print_bf(prefix string, h *History) {
+	return
 	if len(h.datalist) > 0 {
 		tag := "HISTORY"
 		item := h.datalist[h.index]

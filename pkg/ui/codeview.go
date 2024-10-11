@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/atotto/clipboard"
@@ -21,6 +22,7 @@ import (
 )
 
 type CodeEditor interface {
+	IsLoading() bool
 	GetSelection() string
 	OnSearch(txt string, whole bool) []SearchPos
 	vid() view_id
@@ -89,6 +91,124 @@ type CodeEditor interface {
 	EditorPosition() *EditorPosition
 
 	DrawNavigationBar(x int, y int, w int, screen tcell.Screen)
+}
+type arg_main_openhistory struct {
+	filename string
+	line     *lsp.Location
+}
+type arg_openbuf struct {
+	data     []byte
+	filename string
+}
+type arg_open_nolsp struct {
+	filename string
+	line     int
+}
+type EditorOpenArgument struct {
+	open_no_lsp       *arg_open_nolsp
+	Range             *lsp.Range
+	openbuf           *arg_openbuf
+	main_open_history *arg_main_openhistory
+}
+type CodeOpenQueue struct {
+	mutex      sync.Mutex
+	close      chan bool
+	open       chan bool
+	data       *EditorOpenArgument
+	editor     CodeEditor
+	open_count int
+	req_count  int
+	main       MainService
+	is_close   bool
+}
+
+func NewCodeOpenQueue(editor CodeEditor, main MainService) *CodeOpenQueue {
+	ret := &CodeOpenQueue{
+		close:  make(chan bool),
+		open:   make(chan bool),
+		editor: editor,
+		main:   main,
+	}
+	go ret.Work()
+	return ret
+}
+func (queue *CodeOpenQueue) CloseQueue() {
+	go close_queue(queue)
+}
+
+func close_queue(queue *CodeOpenQueue) {
+	if queue.is_close {
+		return
+	}
+	queue.is_close = true
+	queue.dequeue()
+	queue.close <- true
+}
+
+func (q *CodeOpenQueue) LoadFileNoLsp(filename string, line int) {
+	q.enqueue(EditorOpenArgument{open_no_lsp: &arg_open_nolsp{filename, line}})
+}
+func (q *CodeOpenQueue) OpenFileHistory(filename string, line *lsp.Location) {
+	q.enqueue(EditorOpenArgument{main_open_history: &arg_main_openhistory{filename: filename, line: line}})
+}
+func (queue *CodeOpenQueue) enqueue(req EditorOpenArgument) {
+	queue.replace_data(req)
+	queue.open <- true
+	log.Println("cqdebug", "enqueue", ":", queue.skip(), "open", queue.open_count, "req", queue.req_count)
+}
+func (queue *CodeOpenQueue) dequeue() *EditorOpenArgument {
+	queue.mutex.Lock()
+	defer queue.mutex.Unlock()
+	d := queue.data
+	queue.data = nil
+	return d
+}
+func (queue *CodeOpenQueue) replace_data(req EditorOpenArgument) {
+	queue.mutex.Lock()
+	defer queue.mutex.Unlock()
+	queue.data = &req
+	queue.req_count++
+}
+func (queue *CodeOpenQueue) Work() {
+	for {
+		select {
+		case <-queue.close:
+			log.Println("cqdebug", "cq Close-------")
+			return
+		case <-queue.open:
+			{
+				skip := queue.skip()
+				log.Println("cqdebug", "denqueue", ":", skip, "open", queue.open_count, "req", queue.req_count)
+				if !skip {
+					e := queue.dequeue()
+					if e != nil {
+						if e.Range != nil {
+							queue.editor.goto_location_no_history(*e.Range, false, nil)
+						} else if e.openbuf != nil {
+							queue.editor.LoadBuffer(e.openbuf.data, e.openbuf.filename)
+						} else if e.open_no_lsp != nil {
+							queue.editor.LoadFileNoLsp(e.open_no_lsp.filename, e.open_no_lsp.line)
+						} else if e.main_open_history != nil {
+							queue.main.OpenFileHistory(e.main_open_history.filename, e.main_open_history.line)
+						}
+						queue.open_count++
+					}
+				}
+
+			}
+		}
+	}
+}
+
+func (queue *CodeOpenQueue) skip() bool {
+	skip := false
+	if queue.editor != nil && queue.editor.IsLoading() {
+		skip = true
+	}
+	if queue.main != nil && queue.main.current_editor().IsLoading() {
+		skip = true
+	}
+	return skip
 }
 
 func (editor *CodeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
@@ -216,11 +336,9 @@ type CodeView struct {
 	rightmenu       CodeContextMenu
 	// LineNumberUnderMouse int
 	not_preview bool
-	// bgcolor     tcell.Color
-	// colorscheme *symbol_colortheme
-	// ts          *lspcore.TreeSitter
-	insert bool
-	diff   *Differ
+	insert      bool
+	diff        *Differ
+	loading     bool
 }
 
 func (c CodeView) TreeSitter() *lspcore.TreeSitter {
@@ -240,7 +358,7 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 	}
 	if code.file.SamePath(file) {
 		if sym := code.LspSymbol(); sym != nil {
-			go sym.DidSave()
+			go sym.NotifyCodeChange(nil)
 			offset := code.view.Topline
 			code.openfile(code.Path(), func() {
 				code.view.Topline = offset
@@ -775,7 +893,7 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 		code.view.HandleEvent(event)
-		go code.on_content_changed()
+		code.on_content_changed()
 		return nil
 	} else {
 		event = code.handle_key_impl(event)
@@ -875,6 +993,9 @@ type vmap_select_context struct {
 	cursor femto.Cursor
 }
 
+func (c CodeView) IsLoading() bool {
+	return c.loading
+}
 func (code *CodeView) move_selection(v *vmap_select_context) {
 	if v == nil {
 		return
@@ -1047,21 +1168,21 @@ func (code *CodeView) Undo() {
 	checker := new_linechange_checker(code)
 	code.view.Undo()
 	checker.after(code)
-	go code.on_content_changed()
+	code.on_content_changed()
 }
 func (code *CodeView) deleteword() {
 	code.view.DeleteWordRight()
-	go code.on_content_changed()
+	code.on_content_changed()
 }
 func (code *CodeView) deleteline() {
 	checker := new_linechange_checker(code)
 	code.view.CutLine()
 	checker.after(code)
-	go code.on_content_changed()
+	code.on_content_changed()
 }
 func (code *CodeView) deltext() {
 	code.view.Delete()
-	go code.on_content_changed()
+	code.on_content_changed()
 }
 func (code *CodeView) pasteline(line bool) {
 	if line {
@@ -1071,7 +1192,7 @@ func (code *CodeView) pasteline(line bool) {
 			x.Buf.LineArray.NewlineBelow(lineno)
 			x.Cursor.Loc = femto.Loc{X: 0, Y: lineno + 1}
 			x.Paste()
-			go code.on_content_changed()
+			code.on_content_changed()
 		}
 	}
 }
@@ -1370,6 +1491,7 @@ func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus
 func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
 	main := code.main
 	code.openfile(filename, func() {
+		code.loading = false
 		code.view.SetTitle(trim_project_filename(code.Path(), global_prj_root))
 		if line != nil {
 			code.goto_location_no_history(line.Range, code.id != view_code_below, option)
@@ -1414,6 +1536,10 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 			return nil
 		}
 	}
+	if code.main != nil {
+		code.main.OutLineView().Clear()
+	}
+	code.loading = true
 	data, err := os.ReadFile(filename)
 	if err == nil {
 		if code.id.is_editor() {
@@ -1431,6 +1557,7 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 	go func() {
 		GlobalApp.QueueUpdate(func() {
 			code.__load_in_main(filename, data)
+			code.loading = false
 			if onload != nil {
 				onload()
 			}
@@ -1438,28 +1565,93 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 	}()
 	return nil
 }
+
+type lspchange struct {
+	code *CodeView
+}
+type lspchange_queue struct {
+	wait_queue []lspchange
+	lspchange  chan int
+	lock       sync.Mutex
+	start      bool
+}
+
+var lsp_queue = lspchange_queue{
+	lspchange: make(chan int),
+}
+
+func (q *lspchange_queue) AddQuery(c *CodeView) {
+	if !q.start {
+		q.start = true
+		go q.Worker()
+	}
+	q.lock.Lock()
+	defer q.lock.Unlock()
+	for _, v := range q.wait_queue {
+		if v.code == c {
+			log.Println("skip")
+			return
+		}
+	}
+	q.wait_queue = append(q.wait_queue, lspchange{c})
+	if len(q.wait_queue) > 0 {
+		q.lspchange <- len(q.wait_queue)
+	}
+
+}
+func (q *lspchange_queue) Worker() {
+	for {
+		select {
+		case <-q.lspchange:
+			data := empty_queue(q)
+			for _, v := range data {
+				v.code.update_ts()
+			}
+		}
+	}
+}
+
 func (code *CodeView) on_content_changed() {
+	lsp_queue.AddQuery(code)
+}
+func (code *CodeView) update_ts() {
 	data := []byte{}
 	for i := 0; i < code.view.Buf.LinesNum(); i++ {
 		data = append(data, code.view.Buf.LineBytes(i)...)
 		data = append(data, '\n')
 	}
+	if code.lspsymbol != nil {
+		code.lspsymbol.NotifyCodeChange(data)
+	}
 	var new_ts = lspcore.GetNewTreeSitter(code.Path(), data)
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
-		go GlobalApp.QueueUpdateDraw(func() {
-			code.tree_sitter = ts
-			code.set_color()
-			if code.main != nil {
-				if len(ts.Outline) > 0 {
-					if ts.DefaultOutline() {
-						code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-						// code.main.Lspmgr().Current = lsp
-					} else {
-						code.main.OnSymbolistChanged(nil, nil)
-					}
+		on_treesitter_update(code, ts)
+	})
+}
+
+func empty_queue(q *lspchange_queue) []lspchange {
+	var ret []lspchange
+	q.lock.Lock()
+	ret = q.wait_queue
+	q.wait_queue = []lspchange{}
+	q.lock.Unlock()
+	return ret
+}
+
+func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
+	go GlobalApp.QueueUpdateDraw(func() {
+		code.tree_sitter = ts
+		code.set_color()
+		if code.main != nil {
+			if len(ts.Outline) > 0 {
+				if ts.DefaultOutline() {
+					code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+
+				} else {
+					code.main.OnSymbolistChanged(nil, nil)
 				}
 			}
-		})
+		}
 	})
 }
 func (code *CodeView) __load_in_main(filename string, data []byte) error {

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/tectiv3/go-lsp"
 	"gopkg.in/yaml.v2"
@@ -231,6 +232,7 @@ type LspWorkspace struct {
 	current *Symbol_file
 	filemap map[string]*Symbol_file
 	Handle  lsp_data_changed
+	lock    *sync.Mutex
 }
 
 func (wk LspWorkspace) IsSource(filename string) bool {
@@ -288,20 +290,19 @@ func (wk LspWorkspace) new_client(c lspclient, filename string) lspclient {
 }
 
 func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
-	val, ok := wk.filemap[filename]
+	val, ok := wk.get(filename)
 	is_new := false
 	if ok {
 		wk.current = val
 		return val, is_new, nil
 	}
-	wk.filemap[filename] = &Symbol_file{
+	ret := &Symbol_file{
 		Filename: filename,
 		lsp:      wk.getClient(filename),
 		Handle:   wk.Handle,
 		Wk:       wk,
 	}
-
-	ret := wk.filemap[filename]
+	wk.set(filename, ret)
 	if ret.lsp == nil {
 		return nil, is_new, fmt.Errorf("fail to open %s", filename)
 	}
@@ -315,6 +316,19 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 		ret.tokens = token
 	}
 	return ret, is_new, err
+}
+
+func (wk *LspWorkspace) set(filename string, ret *Symbol_file) {
+	wk.lock.Lock()
+	defer wk.lock.Unlock()
+	wk.filemap[filename] = ret
+}
+
+func (wk *LspWorkspace) get(filename string) (*Symbol_file, bool) {
+	wk.lock.Lock()
+	defer wk.lock.Unlock()
+	val, ok := wk.filemap[filename]
+	return val, ok
 }
 func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) (*CallStackEntry, *Symbol_file) {
 	sym, _ := wk.Get(filename)
@@ -337,16 +351,23 @@ func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) (*CallStackEn
 	}, sym
 }
 func (wk *LspWorkspace) Get(filename string) (*Symbol_file, error) {
-	ret, ok := wk.filemap[filename]
+	ret, ok := wk.get(filename)
 	if ok {
 		return ret, nil
 	}
 	return ret, fmt.Errorf("not loaded")
 
 }
+func (wk *LspWorkspace) CloseSymbolFile(sym *Symbol_file) error {
+	err := sym.lsp.DidClose(sym.Filename)
+	wk.lock.Lock()
+	delete(wk.filemap, sym.Filename)
+	wk.lock.Unlock()
+	return err
+}
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)
-	wk.current = wk.filemap[filename]
+	wk.current = ret
 	return ret, err
 
 }
@@ -396,7 +417,8 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 		clients: []lspclient{
 			cpp, py, golang, ts, js,
 		},
-		Wk: wk,
+		Wk:   wk,
+		lock: &sync.Mutex{},
 	}
 	ret.filemap = make(map[string]*Symbol_file)
 	return ret

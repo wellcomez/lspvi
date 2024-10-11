@@ -10,10 +10,12 @@ import (
 
 type lspclient interface {
 	WorkSpaceSymbol(query string) ([]lsp.SymbolInformation, error)
+	WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error
 	Semantictokens_full(file string) (*lsp.SemanticTokens, error)
 	InitializeLsp(wk WorkSpace) error
 	Launch_Lsp_Server() error
 	DidOpen(file string) error
+	DidClose(file string) error
 	DidSave(file string, text string) error
 	DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error
 	GetDocumentSymbol(file string) (*document_symbol, error)
@@ -29,12 +31,16 @@ type lspclient interface {
 	IsSource(filename string) bool
 	Resolve(sym lsp.SymbolInformation, symbolfile *Symbol_file) bool
 	Close()
+	syncOption() *TextDocumentSyncOptions
 }
 type lsp_base struct {
 	core *lspcore
 	wk   *WorkSpace
 }
 
+func (l lsp_base) syncOption() *TextDocumentSyncOptions {
+	return l.core.sync
+}
 func (l lsp_base) Semantictokens_full(file string) (*lsp.SemanticTokens, error) {
 	return l.core.document_semantictokens_full(file)
 }
@@ -80,6 +86,9 @@ func IsMe(filename string, file_extensions []string) bool {
 }
 func (l lsp_base) IsMe(filename string) bool {
 	return l.core.lang.IsMe(filename)
+}
+func (l lsp_base) DidClose(file string) error {
+	return l.core.DidClose(file)
 }
 
 // Initialize implements lspclient.
@@ -153,4 +162,8 @@ func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
 
 func (l lsp_base) WorkSpaceSymbol(query string) ([]lsp.SymbolInformation, error) {
 	return l.core.WorkSpaceDocumentSymbol(query)
+}
+
+func (l lsp_base) WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error {
+	return l.core.WorkspaceDidChangeWatchedFiles(Changes)
 }

@@ -23,6 +23,7 @@ type workspace_query_picker struct {
 
 // close implements picker.
 func (pk *workspace_query_picker) close() {
+	pk.impl.cq.CloseQueue()
 }
 
 // name implements picker.

@@ -46,6 +46,9 @@ type greppicker struct {
 
 // close implements picker.
 func (g *greppicker) close() {
+	if g.qf == nil {
+		g.cq.CloseQueue()
+	}
 	g.livewgreppicker.close()
 }
 
@@ -167,7 +170,7 @@ func (grepx *livewgreppicker) update_title() {
 	}
 	index := grepx.grep_list_view.GetCurrentItem()
 	x := len(grepx.impl.result.data)
-	if grepx.impl.quick.tree!=nil{
+	if grepx.impl.quick.tree != nil {
 		x = grepx.impl.quick.view.GetItemCount()
 	}
 	if x > 0 {
@@ -250,9 +253,9 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
 					var o ref_with_caller
 					qk := grepx.impl.quick
-					if qk.tree!=nil{
+					if qk.tree != nil {
 						o = qk.get_data(dataindex)
-					}else{
+					} else {
 						o = grepx.impl.result.data[dataindex]
 					}
 					grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
@@ -335,7 +338,7 @@ func (pk livewgreppicker) Save() {
 		Date: time.Now().Unix(),
 	}
 	for _, v := range pk.impl.result.data {
-         		Result.Refs = append(Result.Refs, v)
+		Result.Refs = append(Result.Refs, v)
 	}
 	data.Result = Result
 	main := pk.main
@@ -349,6 +352,9 @@ func (pk livewgreppicker) UpdateQuery(query string) {
 
 // close implements picker.
 func (pk *livewgreppicker) close() {
+	if pk.qf == nil {
+		pk.cq.CloseQueue()
+	}
 	pk.stop_grep()
 }
 

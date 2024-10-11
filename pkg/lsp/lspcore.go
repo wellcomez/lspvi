@@ -118,6 +118,11 @@ func (core *lspcore) Progress_notify() error {
 	params := &lsp.ProgressParams{}
 	return core.conn.Notify(context.Background(), "$/progress", params)
 }
+
+const FileChangeTypeCreated = 1
+const FileChangeTypeChanged = 2
+const FileChangeTypeDeleted = 3
+
 func (core *lspcore) WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error {
 	param := lsp.DidChangeWatchedFilesParams{
 		Changes: Changes,
@@ -146,7 +151,7 @@ func (client *lspcore) SetTrace() error {
 func (client *lspcore) Exit() error {
 	return client.conn.Notify(context.Background(), "exit", NullResult)
 }
-func (client *lspcore) TextDocumentDidClose(file string) error {
+func (client *lspcore) DidClose(file string) error {
 	param := &lsp.DidCloseTextDocumentParams{
 		TextDocument: lsp.TextDocumentIdentifier{
 			URI: lsp.NewDocumentURI(file),
