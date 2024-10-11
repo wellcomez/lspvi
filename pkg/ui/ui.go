@@ -868,9 +868,10 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 		main.layout.dialog.Draw(screen)
 	} else {
 		if main.get_focus_view_id() == view_quickview {
-			l, t, w, _ := main.layout.console.GetRect()
-			_, _, _, h := main.quickview.view.GetRect()
-			main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
+			l, t, w, h := main.layout.editor_area.GetInnerRect()
+			_, _, _, height := main.quickview.view.GetRect()
+			height = height / 2
+			main.quickview.quickview.draw(l, t+h-height, w, height, screen)
 		}
 	}
 	main.code_navigation_bar.Draw(screen)
@@ -1262,10 +1263,10 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 func (main *mainui) GoForward() {
 	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoForward()
-	loc := i.GetLocation()
+	start := i.GetLocation()
 	log.Printf("go forward %v", i)
 	main.open_file_to_history(i.Path, &navigation_loc{
-		loc:    &loc,
+		loc:    &start,
 		offset: i.Pos.Offset,
 	}, false, nil)
 }

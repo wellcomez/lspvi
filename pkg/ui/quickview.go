@@ -28,7 +28,7 @@ type quick_preview struct {
 // update_preview
 func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
-	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line)
+	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line+1)
 	UpdateTitleAndColor(pk.frame.Box, title)
 	pk.codeprev.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line)
 }
@@ -447,20 +447,17 @@ func checkDirExists(dirPath string) bool {
 	// 其他类型的错误
 	return false
 }
-func (qk *quick_view) DrawPreview(screen tcell.Screen, top, left, width, height int) bool {
-	qk.quickview.draw(width, height, screen)
+func (qk *quick_view) DrawPreview(screen tcell.Screen, left, top, width, height int) bool {
+	qk.quickview.draw(left, top, width, height, screen)
 	return false
 }
 
-func (qk *quick_preview) draw(width int, height int, screen tcell.Screen) {
+func (qk *quick_preview) draw(left, top, width, height int, screen tcell.Screen) {
 	if !qk.visisble {
 		return
 	}
-	width, height = screen.Size()
-	w := width
-	h := height * 1 / 4
 	frame := qk.frame
-	frame.SetRect(0, height/3, w, h)
+	frame.SetRect(left, top, width, height)
 	frame.Draw(screen)
 }
 func (qk *quick_view) go_prev() {
