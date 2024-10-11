@@ -355,7 +355,9 @@ func remove_hl(mc []colortext, new_query string) string {
 		item := mc[i]
 		maintext += item.text
 	}
-	maintext = strings.ReplaceAll(maintext, new_query, fmt_bold_string(new_query))
+	if new_query != "" {
+		maintext = strings.ReplaceAll(maintext, new_query, fmt_bold_string(new_query))
+	}
 	return maintext
 }
 func highlight_listitem_search_key(old_query string, view *customlist, new_query string) {
