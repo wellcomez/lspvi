@@ -92,9 +92,9 @@ func get_grid_list_index(list *tview.List, em *tcell.EventMouse, line int) (int,
 	log.Println("mouseY", moustY, "listY=", y, "list offset", offsetY, "idnex", index)
 	return index, nil
 }
-func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
+func NewTreeClickCheck(grid *tview.Box, tree *tview.TreeView) *GridTreeClickCheck {
 	ret := &GridTreeClickCheck{
-		GridClickCheck: NewGridClickCheck(grid.Box, tree.Box),
+		GridClickCheck: NewGridClickCheck(grid, tree.Box),
 		tree:           tree,
 	}
 	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
@@ -106,6 +106,20 @@ func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClic
 	}
 	return ret
 }
+// func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
+// 	ret := &GridTreeClickCheck{
+// 		GridClickCheck: NewGridClickCheck(grid.Box, tree.Box),
+// 		tree:           tree,
+// 	}
+// 	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
+// 		if action == tview.MouseScrollUp {
+// 			tree.MouseHandler()(action, event, nil)
+// 		} else if action == tview.MouseScrollDown {
+// 			tree.MouseHandler()(action, event, nil)
+// 		}
+// 	}
+// 	return ret
+// }
 func NewGridClickCheck(grid *tview.Box, target tview.Primitive) *GridClickCheck {
 	ret := &GridClickCheck{
 		clickdetector: &clickdetector{lastMouseClick: time.Time{}},
@@ -134,13 +148,20 @@ func (pk *GridClickCheck) handle_mouse(action tview.MouseAction, event *tcell.Ev
 	}
 	return action, event
 }
-func (picker *symbolpicker) grid(input *tview.InputField) *tview.Grid {
+func (picker *symbolpicker) layout(input *tview.InputField, isflex bool) (row *tview.Flex, col *tview.Grid) {
 	list := picker.impl.symview.view
 	list.SetBorder(true)
 	code := picker.impl.codeprev.Primitive()
 	picker.impl.codeprev.LoadFileNoLsp(picker.impl.filename, 0)
-	layout := layout_list_edit(list, code, input)
-	picker.impl.click = NewGridTreeClickCheck(layout, picker.impl.symview.view)
+	if isflex {
+		layout := layout_list_row_edit(list, code, input)
+		picker.impl.click = NewTreeClickCheck(layout.Box, picker.impl.symview.view)
+		row = layout
+	} else {
+		layout := layout_list_edit(list, code, input)
+		picker.impl.click = NewTreeClickCheck(layout.Box, picker.impl.symview.view)
+		col = layout
+	}
 	picker.impl.click.click = func(event *tcell.EventMouse) {
 		_, y := event.Position()
 		t := picker.impl.symview.view
@@ -163,8 +184,39 @@ func (picker *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 
 	}
 
-	return layout
+	return row, col
 }
+// func (picker *symbolpicker) grid(input *tview.InputField) *tview.Grid {
+// 	list := picker.impl.symview.view
+// 	list.SetBorder(true)
+// 	code := picker.impl.codeprev.Primitive()
+// 	picker.impl.codeprev.LoadFileNoLsp(picker.impl.filename, 0)
+// 	layout := layout_list_edit(list, code, input)
+// 	picker.impl.click = NewGridTreeClickCheck(layout, picker.impl.symview.view)
+// 	picker.impl.click.click = func(event *tcell.EventMouse) {
+// 		_, y := event.Position()
+// 		t := picker.impl.symview.view
+// 		_, rectY, _, _ := t.GetInnerRect()
+// 		y += t.GetScrollOffset() - rectY
+// 		nodes := picker.impl.symview.nodes()
+// 		if y >= len(nodes) || len(nodes) == 0 {
+// 			return
+// 		}
+// 		if y < 0 {
+// 			return
+// 		}
+// 		node := nodes[y]
+// 		t.SetCurrentNode(node)
+// 		picker.update_preview()
+// 	}
+// 	picker.impl.click.dobule_click = func(event *tcell.EventMouse) {
+// 		picker.impl.click.tree.MouseHandler()(tview.MouseLeftClick, event, nil)
+// 		log.Println("dobule")
+
+// 	}
+
+// 	return layout
+// }
 
 func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 	symbolview := &SymbolTreeViewExt{}

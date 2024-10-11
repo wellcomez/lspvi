@@ -119,10 +119,8 @@ func (v *fzfmain) OpenBookMarkFzf(bookmark *proj_bookmark) {
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(code CodeEditor, ranges lsp.Range) {
 	sym := new_refer_picker(*code.LspSymbol(), v)
-	w, h := v.main.ScreenSize()
-	w = w * 3 / 4
-	h = h * 3 / 4
-	if w > h && w > 160 {
+	x := v.use_col()
+	if x {
 		x := sym.grid(v.input)
 		v.create_dialog_content(x, sym)
 	} else {
@@ -130,6 +128,14 @@ func (v *fzfmain) OpenRefFzf(code CodeEditor, ranges lsp.Range) {
 		v.create_dialog_content(x, sym)
 	}
 	sym.load(ranges)
+}
+
+func (v *fzfmain) use_col() bool {
+	w, h := v.main.ScreenSize()
+	w = w * 3 / 4
+	h = h * 3 / 4
+	x := w > h && w > 160
+	return x
 }
 func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bool) *greppicker {
 	sym := new_grep_picker(v, v.main.current_editor())
@@ -180,8 +186,11 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 
 func (v *fzfmain) OpenDocumntSymbolFzf(code CodeEditor) {
 	sym := new_outline_picker(v, code)
-	layout := sym.grid(v.input)
-	v.create_dialog_content(layout, sym)
+	if row, col := sym.layout(v.input, v.use_col()); row != nil {
+		v.create_dialog_content(row, sym)
+	} else {
+		v.create_dialog_content(col, sym)
+	}
 	v.currentpicker = sym
 }
 
@@ -223,7 +232,7 @@ func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		v.currentpicker.UpdateQuery(query)
 		return nil
 	}
-	 		v.currentpicker.handle()(event, nil)
+	v.currentpicker.handle()(event, nil)
 	return nil
 }
 
