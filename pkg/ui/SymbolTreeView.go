@@ -77,13 +77,14 @@ type SymbolTreeView struct {
 	*view_link
 	view *tview.TreeView
 	// symbols       []SymbolListItem
-	main          MainService
-	searcheresult *TextFilter
-	show_wait     bool
-	waiter        *tview.TextView
-	right_context symboltree_view_context
-	file          string
-	editor        CodeEditor
+	main              MainService
+	searcheresult     *TextFilter
+	show_wait         bool
+	waiter            *tview.TextView
+	right_context     symboltree_view_context
+	file              string
+	editor            CodeEditor
+	collapse_children bool
 }
 type symboltree_view_context struct {
 	qk        *SymbolTreeView
@@ -247,10 +248,11 @@ func (m *SymbolTreeView) OnCodeLineChange(x, y int, file string) {
 func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	symbol_tree := tview.NewTreeView()
 	ret := &SymbolTreeView{
-		view_link: &view_link{id: view_outline_list, left: view_code, down: view_quickview},
-		main:      main,
-		view:      symbol_tree,
-		editor:    codeview,
+		view_link:         &view_link{id: view_outline_list, left: view_code, down: view_quickview},
+		main:              main,
+		view:              symbol_tree,
+		editor:            codeview,
+		collapse_children: true,
 	}
 
 	menu_item := []context_menu_item{}
@@ -331,7 +333,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 							},
 						}
 						code := symview.editor
-						if code.vid().is_editor_main()  {
+						if code.vid().is_editor_main() {
 							symview.main.Navigation().history.SaveToHistory(code)
 							symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line))
 						}
@@ -511,14 +513,14 @@ func (v *SymbolTreeView) update(file *lspcore.Symbol_file) {
 		})
 	}()
 }
-func (v *SymbolTreeView) update_in_main_sync(file *lspcore.Symbol_file) {
+func (tree *SymbolTreeView) update_in_main_sync(file *lspcore.Symbol_file) {
 	if file == nil {
-		v.waiter.SetText("no lsp client").SetTextColor(tcell.ColorDarkRed)
+		tree.waiter.SetText("no lsp client").SetTextColor(tcell.ColorDarkRed)
 		return
 	}
-	v.file = file.Filename
-	v.show_wait = false
-	root := v.view.GetRoot()
+	tree.file = file.Filename
+	tree.show_wait = false
+	root := tree.view.GetRoot()
 	if root != nil {
 		root.ClearChildren()
 	}
@@ -542,7 +544,7 @@ func (v *SymbolTreeView) update_in_main_sync(file *lspcore.Symbol_file) {
 					add_memeber_child(sub_member, &memeber)
 				}
 			}
-			if len(v.Members) > 20 {
+			if len(v.Members) > 20 && tree.collapse_children {
 				expand_node_option(c, false)
 			}
 		} else {
@@ -553,8 +555,8 @@ func (v *SymbolTreeView) update_in_main_sync(file *lspcore.Symbol_file) {
 			add_memeber_child(c, v)
 		}
 	}
-	v.view.SetRoot(root_node)
-	v.editor.update_with_line_changed()
+	tree.view.SetRoot(root_node)
+	tree.editor.update_with_line_changed()
 }
 
 func add_memeber_child(parent *tview.TreeNode, sym *lspcore.Symbol) {
@@ -613,7 +615,7 @@ func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol 
 	return nil
 }
 
-func (symboltree *SymbolTreeView) merge_symbol(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file)  *lspcore.Symbol_file {
+func (symboltree *SymbolTreeView) merge_symbol(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file {
 	var Current *lspcore.Symbol_file
 	if ts != nil {
 		Current = &lspcore.Symbol_file{
@@ -629,7 +631,7 @@ func (symboltree *SymbolTreeView) merge_symbol(ts *lspcore.TreeSitter, symbol *l
 		symboltree.update(Current)
 		return Current
 	}
-	return nil 
+	return nil
 }
 
 func merge_ts_to_lsp(symbol *lspcore.Symbol_file, Current *lspcore.Symbol_file) {

@@ -171,6 +171,7 @@ func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 	symbolview.SymbolTreeView = NewSymbolTreeView(v.main, code)
 	symbolview.parent = v
 	symbolview.SymbolTreeView.view.SetSelectedFunc(symbolview.OnClickSymobolNode)
+	symbolview.collapse_children = false
 	sym := symbolpicker{
 		impl: &SymbolWalkImpl{
 			filename: code.Path(),
@@ -179,7 +180,7 @@ func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 		},
 	}
 	sym.impl.symbol = symbolview.merge_symbol(code.TreeSitter(), code.LspSymbol())
-	if sym.impl.symbol!=nil{
+	if sym.impl.symbol != nil {
 		symbolview.update_in_main_sync(sym.impl.symbol)
 		symbolview.view.GetRoot().ExpandAll()
 	}
@@ -283,7 +284,7 @@ func (picker symbolpicker) UpdateQuery(query string) {
 	root := picker.impl.symview.view.GetRoot()
 	root.ExpandAll()
 	for _, v := range root.GetChildren() {
-		v.Expand()	
+		v.Expand()
 	}
 	if root != nil {
 		children := root.GetChildren()
