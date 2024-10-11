@@ -239,7 +239,7 @@ func (main *mainui) OnWatchFileChange(file string, event fsnotify.Event) bool {
 			}
 		}
 		if sym, _ := main.lspmgr.Get(file); sym != nil {
-			sym.NotifyCodeChange()
+			sym.NotifyCodeChange(nil)
 			return true
 		}
 	}

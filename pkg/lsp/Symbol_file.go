@@ -370,13 +370,22 @@ func (sym *Symbol_file) LspLoadSymbol() error {
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
 	return nil
 }
-func (sym *Symbol_file) NotifyCodeChange() {
+func (sym *Symbol_file) NotifyCodeChange(data []byte) error {
 	if sym.lsp != nil {
 		if opt := sym.lsp.syncOption(); opt != nil {
-			buf, _ := os.ReadFile(sym.Filename)
-			endline:=len(strings.Split(string(buf),"\n"))
-			if opt.Change!=lsp.TextDocumentSyncKindNone{
-				sym.lsp.DidChange(sym.Filename, 1, []lsp.TextDocumentContentChangeEvent{
+			endline := 0
+			if data != nil {
+				endline = len(data)
+			} else if data, err := os.ReadFile(sym.Filename); err == nil {
+				endline = len(strings.Split(string(data), "\n"))
+			} else {
+				return err
+			}
+			if data == nil {
+				return fmt.Errorf("data is nil")
+			}
+			if opt.Change != lsp.TextDocumentSyncKindNone {
+				return sym.lsp.DidChange(sym.Filename, 1, []lsp.TextDocumentContentChangeEvent{
 					{
 						Range: &lsp.Range{
 							Start: lsp.Position{
@@ -384,17 +393,20 @@ func (sym *Symbol_file) NotifyCodeChange() {
 								Character: 0,
 							},
 							End: lsp.Position{
-								Line:      endline-1,
+								Line:      endline - 1,
 								Character: 0,
 							},
 						},
-						Text: string(buf),
+						Text: string(data),
 					},
-				})	
+				})
+			} else {
+				return fmt.Errorf("TextDocumentSyncKindNone is None")
 			}
-			return
 		}
+		return fmt.Errorf("sync option is None")
 	}
+	return fmt.Errorf("sym lsp is nil")
 }
 
 func newFunction1(DidSave bool, sym *Symbol_file, OpenClose bool) {
