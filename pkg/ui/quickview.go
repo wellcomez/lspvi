@@ -495,9 +495,7 @@ func (qk *quick_view) go_next() {
 	loc := qk.get_data(next).Loc
 	qk.quickview.update_preview(loc)
 	qk.view.SetCurrentItem(next)
-	if qk.Type == data_refs {
-		qk.selection_handle_impl(next, false)
-	}
+	qk.selection_handle_impl(next, false)
 }
 func (qk *quick_view) OnSearch(txt string) {
 	// old_query := qk.cmd_search_key

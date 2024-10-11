@@ -1512,6 +1512,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 				})
 			}()
 		}
+		code.main.App().ForceDraw()
 	})
 }
 
