@@ -4,7 +4,7 @@ import (
 	// "log"
 
 	"fmt"
-	"log"
+	// "log"
 
 	// "github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -115,7 +115,7 @@ func view_id_init(m *mainui) {
 const viewtag = "debug_viewidtag"
 
 func debug_view_id(prefix string, v view_id, m *mainui) {
-	log.Printf("%s  %10s %20v is_editor %7v %20s", viewtag, prefix, v, v.is_editor(), m.current_editor().vid().getname())
+	// log.Printf("%s  %10s %20v is_editor %7v %20s", viewtag, prefix, v, v.is_editor(), m.current_editor().vid().getname())
 }
 func set_view_focus_cb(aa []view_id, m *mainui) {
 	for i := range aa {
