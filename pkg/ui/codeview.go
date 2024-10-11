@@ -118,17 +118,7 @@ func (code CodeView) EditorPosition() *EditorPosition {
 	return pos
 }
 func (code *CodeView) goto_line_end() {
-	m := code.main
-	if m.CmdLine().Vim.vi.VMap {
-		begin := code.view.Cursor.Loc
-		code.view.JumpToMatchingBrace()
-		end := code.view.Cursor.Loc
-		end.X += 1
-		code.view.Cursor.SetSelectionStart(begin)
-		code.view.Cursor.SetSelectionEnd(end)
-	} else {
-		code.view.EndOfLine()
-	}
+	code.view.EndOfLine()
 }
 func (code *CodeView) open_picker_refs() {
 	code.view.Cursor.SelectWord()
