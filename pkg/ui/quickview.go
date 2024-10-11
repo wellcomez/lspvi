@@ -28,7 +28,7 @@ type quick_preview struct {
 // update_preview
 func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
-	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line)
+	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line+1)
 	UpdateTitleAndColor(pk.frame.Box, title)
 	pk.codeprev.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line)
 }
@@ -51,13 +51,13 @@ type logview struct {
 type quick_view struct {
 	// *tview.Flex
 	*view_link
-	quickview    *quick_preview
-	view         *customlist
-	Name         string
-	Refs         search_reference_result
-	main         MainService
-	currentIndex int
-	Type         DateType
+	quickview *quick_preview
+	view      *customlist
+	Name      string
+	Refs      search_reference_result
+	main      MainService
+	// currentIndex int
+	Type DateType
 	// menu         *contextmenu
 	menuitem      []context_menu_item
 	searchkey     lspcore.SymolSearchKey
@@ -447,20 +447,17 @@ func checkDirExists(dirPath string) bool {
 	// 其他类型的错误
 	return false
 }
-func (qk *quick_view) DrawPreview(screen tcell.Screen, top, left, width, height int) bool {
-	qk.quickview.draw(width, height, screen)
+func (qk *quick_view) DrawPreview(screen tcell.Screen, left, top, width, height int) bool {
+	qk.quickview.draw(left, top, width, height, screen)
 	return false
 }
 
-func (qk *quick_preview) draw(width int, height int, screen tcell.Screen) {
+func (qk *quick_preview) draw(left, top, width, height int, screen tcell.Screen) {
 	if !qk.visisble {
 		return
 	}
-	width, height = screen.Size()
-	w := width
-	h := height * 1 / 4
 	frame := qk.frame
-	frame.SetRect(0, height/3, w, h)
+	frame.SetRect(left, top, width, height)
 	frame.Draw(screen)
 }
 func (qk *quick_view) go_prev() {
@@ -477,7 +474,7 @@ func (qk *quick_view) go_prev() {
 
 func (qk *quick_view) open_index(next int) {
 	if len(qk.Refs.Refs) > 0 {
-		loc := qk.Refs.Refs[next].Loc
+		loc := qk.get_data(next).Loc
 		qk.quickview.update_preview(loc)
 	}
 }
@@ -486,7 +483,7 @@ func (qk *quick_view) go_next() {
 		return
 	}
 	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
-	loc := qk.Refs.Refs[next].Loc
+	loc := qk.get_data(next).Loc
 	qk.quickview.update_preview(loc)
 	qk.view.SetCurrentItem(next)
 	if qk.Type == data_refs {
@@ -500,49 +497,50 @@ func (qk *quick_view) OnSearch(txt string) {
 	qk.cmd_search_key = txt
 }
 
-func highlight_search_key(old_query string, view *customlist, new_query string) {
-	sss := [][2]string{}
-	ptn := ""
-	if old_query != "" {
-		ptn = fmt_bold_string(old_query)
-	}
-	for i := 0; i < view.GetItemCount(); i++ {
-		m, s := view.GetItemText(i)
-		if len(ptn) > 0 {
-			m = strings.ReplaceAll(m, ptn, old_query)
-			s = strings.ReplaceAll(s, ptn, old_query)
-		}
-		sss = append(sss, [2]string{m, s})
-	}
-	if len(new_query) > 0 {
-		if new_query != "" {
-			ptn = fmt_bold_string(new_query)
-		}
-		for i := range sss {
-			v := &sss[i]
-			m := v[0]
-			s := v[1]
-			m = strings.ReplaceAll(m, new_query, ptn)
-			s = strings.ReplaceAll(s, new_query, ptn)
-			v[0] = m
-			v[1] = s
-		}
-	}
-	view.Clear()
-	for _, v := range sss {
-		view.AddItem(v[0], v[1], nil)
-	}
-}
+// func highlight_search_key(old_query string, view *customlist, new_query string) {
+// 	sss := [][2]string{}
+// 	ptn := ""
+// 	if old_query != "" {
+// 		ptn = fmt_bold_string(old_query)
+// 	}
+// 	for i := 0; i < view.GetItemCount(); i++ {
+// 		m, s := view.GetItemText(i)
+// 		if len(ptn) > 0 {
+// 			m = strings.ReplaceAll(m, ptn, old_query)
+// 			s = strings.ReplaceAll(s, ptn, old_query)
+// 		}
+// 		sss = append(sss, [2]string{m, s})
+// 	}
+// 	if len(new_query) > 0 {
+// 		if new_query != "" {
+// 			ptn = fmt_bold_string(new_query)
+// 		}
+// 		for i := range sss {
+// 			v := &sss[i]
+// 			m := v[0]
+// 			s := v[1]
+// 			m = strings.ReplaceAll(m, new_query, ptn)
+// 			s = strings.ReplaceAll(s, new_query, ptn)
+// 			v[0] = m
+// 			v[1] = s
+// 		}
+// 	}
+// 	view.Clear()
+// 	for _, v := range sss {
+// 		view.AddItem(v[0], v[1], nil)
+// 	}
+// }
 
 // String
 func (qk *quick_view) String() string {
 	var s = qk.Type.String()
-	index := qk.currentIndex
-	if len(qk.Refs.Refs) > 0 {
-		index++
+	coutn := qk.view.GetItemCount()
+	index := qk.view.GetCurrentItem()
+	if coutn > 0 {
+		index += 1
 	}
 	key := qk.searchkey.Key
-	return fmt.Sprintf("%s %s %d/%d", s, key, index, len(qk.Refs.Refs))
+	return fmt.Sprintf("%s %s %d/%d", s, key, index, coutn)
 }
 
 // selection_handle
@@ -567,9 +565,8 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 			}
 			need_draw = true
 		}
-		refindex := node.ref_index
-		vvv := qk.Refs.Refs[refindex]
-		qk.currentIndex = refindex
+
+		vvv := qk.get_data(index)
 		qk.main.Tab().UpdatePageTitle()
 		qk.main.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 		if need_draw {
@@ -577,7 +574,6 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 		}
 	} else {
 		vvv := qk.Refs.Refs[index]
-		qk.currentIndex = index
 		qk.view.SetCurrentItem(index)
 		same := vvv.Loc.URI.AsPath().String() == qk.main.current_editor().Path()
 		if open || same {
@@ -587,6 +583,16 @@ func (qk *quick_view) selection_handle_impl(index int, open bool) {
 
 		}
 	}
+}
+
+func (qk *quick_view) get_data(index int) ref_with_caller {
+	if qk.tree != nil {
+		node := qk.tree.tree_data_item[index]
+		refindex := node.ref_index
+		vvv := qk.Refs.Refs[refindex]
+		return vvv
+	}
+	return qk.Refs.Refs[index]
 }
 
 type DateType int
@@ -673,7 +679,6 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	}
 	qk.view.Clear()
 	qk.view.SetCurrentItem(-1)
-	qk.currentIndex = 0
 	qk.cmd_search_key = ""
 	qk.reset_tree()
 	// _, _, width, _ := qk.view.GetRect()
@@ -875,7 +880,7 @@ func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_
 			callname = icon + callname
 			x = fmt_color_string(callname+" > ", caller_color)
 			if c1 != "" {
-				return fmt.Sprintf(":%-4d %s %s %s", v.Range.Start.Line+1, c1, x, line)
+				return fmt.Sprintf(":%-4d %s%s %s", v.Range.Start.Line+1, c1, x, line)
 			} else {
 				return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, x, line)
 			}

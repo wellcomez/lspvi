@@ -222,9 +222,9 @@ func (pk *bookmark_edit) grid(input *tview.InputField) *tview.Grid {
 // }
 
 // new_bookmark_picker
-func new_bookmark_picker(v *fzfmain, code CodeEditor, bookmark *proj_bookmark) bookmark_picker {
+func new_bookmark_picker(v *fzfmain,  bookmark *proj_bookmark) bookmark_picker {
 	impl := &bookmark_picker_impl{
-		prev_picker_impl: new_preview_picker(v, code),
+		prev_picker_impl: new_preview_picker(v),
 	}
 	sym := bookmark_picker{
 		impl: impl,
@@ -318,7 +318,7 @@ func (bk *bookmark_view) OnSearch(txt string) {
 	bk.list.Key = txt
 	old := bk.fzf.OnSearch(txt, true)
 	if len(txt) > 0 {
-		highlight_search_key(old, bk.list, txt)
+		highlight_listitem_search_key(old, bk.list, txt)
 	}
 	bk.fzf.selected = func(dataindex int, listindex int) {
 		loc := bk.data[dataindex].loc

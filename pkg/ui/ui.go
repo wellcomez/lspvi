@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/sourcegraph/jsonrpc2"
@@ -96,6 +97,8 @@ func new_recent_openfile(m *mainui) *recent_open_file {
 type MainService interface {
 	Close()
 	quit()
+
+	ScreenSize() (w, h int)
 
 	helpkey(bool) []string
 
@@ -219,6 +222,19 @@ type mainui struct {
 	tty bool
 	ws  string
 	tab *tabmgr
+}
+
+// OnWatchFileChange implements change_reciever.
+func (main *mainui) OnWatchFileChange(file string, event fsnotify.Event) bool {
+	if event.Op&fsnotify.Write != fsnotify.Write {
+		return false
+	}
+	if strings.HasPrefix(file, global_prj_root) {
+		if sym, _ := main.lspmgr.Get(file); sym != nil {
+			sym.DidSave()
+		}
+	}
+	return false
 }
 
 // new_bookmark_editor implements MainService.
@@ -514,8 +530,7 @@ func (m *mainui) quit() {
 	m.Close()
 }
 func (m *mainui) open_qfh_query() {
-	code := m.codeview
-	m.layout.dialog.open_qfh_picker(code)
+	m.layout.dialog.open_qfh_picker()
 }
 func (m *mainui) open_wks_query() {
 	code := m.codeview
@@ -693,6 +708,7 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{sel: selectarea{nottext: true}}
 	prj.Load(arg, main)
+	global_file_watch.AddReciever(main)
 	main.code_navigation_bar = new_small_icon(main)
 	main.quickbar = new_quick_toolbar(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
@@ -852,9 +868,10 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 		main.layout.dialog.Draw(screen)
 	} else {
 		if main.get_focus_view_id() == view_quickview {
-			l, t, w, _ := main.layout.console.GetRect()
-			_, _, _, h := main.quickview.view.GetRect()
-			main.quickview.DrawPreview(screen, l, t-h/2, w, h/2)
+			l, t, w, h := main.layout.editor_area.GetInnerRect()
+			_, _, _, height := main.quickview.view.GetRect()
+			height = height / 2
+			main.quickview.quickview.draw(l, t+h-height, w, height, screen)
 		}
 	}
 	main.code_navigation_bar.Draw(screen)
@@ -1032,7 +1049,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		}
 		cursor := main.codeview.String()
 		x1 := main.cmdline.Vim.String()
-		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|::%5d ", cursor, x1,httport))
+		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|::%5d ", cursor, x1, httport))
 		return main.statusbar.GetInnerRect()
 	})
 
@@ -1246,10 +1263,10 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 func (main *mainui) GoForward() {
 	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoForward()
-	start := lsp.Position{Line: i.Pos.Line}
+	start := i.GetLocation()
 	log.Printf("go forward %v", i)
 	main.open_file_to_history(i.Path, &navigation_loc{
-		loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
+		loc:    &start,
 		offset: i.Pos.Offset,
 	}, false, nil)
 }
@@ -1262,11 +1279,11 @@ func (main *mainui) CanGoFoward() bool {
 func (main *mainui) GoBack() {
 	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoBack()
-	start := lsp.Position{Line: i.Pos.Line}
+	loc := i.GetLocation()
 	log.Printf("go %v", i)
 	main.open_file_to_history(i.Path,
 		&navigation_loc{
-			loc:    &lsp.Location{Range: lsp.Range{Start: start, End: start}},
+			loc:    &loc,
 			offset: i.Pos.Offset,
 		},
 		false, nil)
@@ -1275,8 +1292,12 @@ func (main *mainui) GoBack() {
 //	func (main *mainui) open_file_picker() {
 //		main.layout.dialog.OpenFileFzf(global_prj_root)
 //	}
+func (m mainui) ScreenSize() (w, h int) {
+	_, _, w, h = m.layout.mainlayout.GetRect()
+	return w, h
+}
 func (main *mainui) open_picker_bookmark() {
-	main.layout.dialog.OpenBookMarkFzf(main.codeview, main.bookmark)
+	main.layout.dialog.OpenBookMarkFzf(main.bookmark)
 }
 func (main mainui) Dialog() *fzfmain {
 	return main.layout.dialog

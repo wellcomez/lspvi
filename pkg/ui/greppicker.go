@@ -13,7 +13,7 @@ import (
 )
 
 type grepresult struct {
-	data []grep_output
+	data []ref_with_caller
 }
 type grep_impl struct {
 	result        *grepresult
@@ -22,6 +22,7 @@ type grep_impl struct {
 	taskid        int
 	key           string
 	fzf_on_result *fzf_on_listview
+	quick         quick_view
 }
 type livewgreppicker struct {
 	*prev_picker_impl
@@ -84,7 +85,20 @@ func (g *greppicker) name() string {
 	return "grep word"
 }
 
+func (pk livewgreppicker) update_preview_tree() {
+	qk := &pk.impl.quick
+	ind := qk.view.GetCurrentItem()
+	data := qk.get_data(ind)
+	pk.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+}
 func (pk livewgreppicker) update_preview() {
+	if pk.impl.quick.tree != nil {
+		pk.update_preview_tree()
+	} else {
+		pk.update_preview_no_tree()
+	}
+}
+func (pk livewgreppicker) update_preview_no_tree() {
 	cur := pk.grep_list_view.GetCurrentItem()
 	if pk.impl.fzf_on_result != nil {
 		cur = pk.impl.fzf_on_result.get_data_index(cur)
@@ -97,7 +111,9 @@ func (pk livewgreppicker) update_preview() {
 	}
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
-		pk.PrevOpen(item.fpath, item.lineNumber-1)
+		fpath := item.Loc.URI.AsPath().String()
+		lineNumber := item.Loc.Range.Start.Line
+		pk.PrevOpen(fpath, lineNumber-1)
 	}
 }
 
@@ -130,15 +146,18 @@ func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
 }
 func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	main := v.main
-	x := new_preview_picker(v, code)
+	x := new_preview_picker(v)
+	impl := &grep_impl{}
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
 		grep_list_view:   new_customlist(false),
 		main:             main,
-		impl:             &grep_impl{},
+		impl:             impl,
 		not_live:         false,
 	}
 	x.use_cusutom_list(grep.grep_list_view)
+	impl.quick.view = grep.grep_list_view
+	impl.quick.main = v.main
 	v.Visible = true
 	return grep
 }
@@ -148,6 +167,9 @@ func (grepx *livewgreppicker) update_title() {
 	}
 	index := grepx.grep_list_view.GetCurrentItem()
 	x := len(grepx.impl.result.data)
+	if grepx.impl.quick.tree!=nil{
+		x = grepx.impl.quick.view.GetItemCount()
+	}
 	if x > 0 {
 		index = index + 1
 	}
@@ -158,7 +180,37 @@ func (grepx *livewgreppicker) update_title() {
 func (parent *fzfmain) update_dialog_title(s string) {
 	UpdateTitleAndColor(parent.Frame.Box, s)
 }
-func (grepx *livewgreppicker) grep_to_list() {
+func (grepx *livewgreppicker) grep_to_list(end bool) {
+	if !end {
+		grepx.update_list_druring_grep()
+	} else {
+		grepx.update_list_druring_final()
+	}
+}
+func (grepx *livewgreppicker) update_list_druring_final() {
+	grep := grepx.impl
+	tmp := grep.temp
+	if tmp != nil {
+		grep.temp = nil
+		grep.result.data = append(grep.result.data, tmp.data...)
+	}
+	Refs := grep.result.data
+	qk := &grep.quick
+	qk.view.Clear()
+	qk.Refs.Refs = grep.result.data
+	qk.tree = &list_view_tree_extend{filename: qk.main.current_editor().Path()}
+	qk.tree.build_tree(Refs)
+	data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.Lspmgr())
+	for _, v := range data {
+		qk.view.AddItem(v.text, "", func() {
+		})
+	}
+	grepx.update_preview()
+	grepx.update_title()
+	grepx.main.App().ForceDraw()
+}
+
+func (grepx *livewgreppicker) update_list_druring_grep() {
 	grep := grepx.impl
 	openpreview := len(grep.result.data) == 0
 	tmp := grep.temp
@@ -168,11 +220,13 @@ func (grepx *livewgreppicker) grep_to_list() {
 	grep.temp = nil
 	grep.result.data = append(grep.result.data, tmp.data...)
 	for _, o := range tmp.data {
-		path := trim_project_filename(o.fpath, global_prj_root)
-		data := fmt.Sprintf("%s:%d %s", path, o.lineNumber, o.line)
+		fpath := o.Loc.URI.AsPath().String()
+		line := o.get_code(0)
+		lineNumber := o.Loc.Range.Start.Line
+		path := trim_project_filename(fpath, global_prj_root)
+		data := fmt.Sprintf("%s:%d %s", path, lineNumber, line)
 		grepx.grep_list_view.AddItem(data, "", func() {
-			loc := convert_grep_info_location(&o)
-			grepx.main.OpenFileHistory(o.fpath, &loc)
+			grepx.main.OpenFileHistory(path, &o.Loc)
 			grepx.parent.hide()
 		})
 	}
@@ -191,12 +245,17 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			grepx.qf(true, ref_with_caller{})
 		} else if grepx.not_live {
 			grepx.main.App().QueueUpdate(func() {
-				grepx.grep_to_list()
+				grepx.grep_to_list(true)
 				grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
-					o := grepx.impl.result.data[dataindex]
-					loc := convert_grep_info_location(&o)
-					grepx.main.OpenFileHistory(o.fpath, &loc)
+					var o ref_with_caller
+					qk := grepx.impl.quick
+					if qk.tree!=nil{
+						o = qk.get_data(dataindex)
+					}else{
+						o = grepx.impl.result.data[dataindex]
+					}
+					grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
 					grepx.parent.hide()
 				}
 			})
@@ -206,12 +265,12 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 	grep := grepx.impl
 	if grep.result == nil {
 		grep.result = &grepresult{
-			data: []grep_output{},
+			data: []ref_with_caller{},
 		}
 	}
 	if grep.temp == nil {
 		grep.temp = &grepresult{
-			data: []grep_output{},
+			data: []ref_with_caller{},
 		}
 	}
 	// log.Printf("end %d %s", task, o.destor)
@@ -220,14 +279,14 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			grep.grep.abort()
 			return
 		}
-		grep.temp.data = append(grep.temp.data, *o)
+		grep.temp.data = append(grep.temp.data, o.to_ref_caller(grepx.impl.key))
 		if len(grep.result.data) > 10 {
 			if len(grep.temp.data) < 50 {
 				return
 			}
 		}
 		grepx.main.App().QueueUpdate(func() {
-			grepx.grep_to_list()
+			grepx.grep_to_list(false)
 		})
 	} else {
 		ref := o.to_ref_caller(grepx.impl.key)
@@ -276,7 +335,7 @@ func (pk livewgreppicker) Save() {
 		Date: time.Now().Unix(),
 	}
 	for _, v := range pk.impl.result.data {
-		Result.Refs = append(Result.Refs, v.to_ref_caller(pk.impl.key))
+         		Result.Refs = append(Result.Refs, v)
 	}
 	data.Result = Result
 	main := pk.main
