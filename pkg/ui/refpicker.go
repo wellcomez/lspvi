@@ -100,6 +100,7 @@ type prev_picker_impl struct {
 	listview         *tview.List
 	listcustom       *customlist
 	codeprev         CodeEditor
+	cq               *CodeOpenQueue
 	parent           *fzfmain
 	list_click_check *GridListClickCheck
 	on_list_selected func()
@@ -108,7 +109,7 @@ type prev_picker_impl struct {
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
-	imp.codeprev.LoadFileNoLsp(filename, line)
+	imp.cq.enqueue(EditorOpenArgument{filename: filename, line: line})
 }
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
 	impl.listview = l.List
@@ -325,6 +326,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 		parent:   v,
 		// editor:   editor,
 	}
+	x.cq = NewCodeOpenQueue(x.codeprev)
 	return x
 }
 func (pk *refpicker) load(ranges lsp.Range) {

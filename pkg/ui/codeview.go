@@ -22,6 +22,7 @@ import (
 )
 
 type CodeEditor interface {
+	IsLoading() bool
 	GetSelection() string
 	OnSearch(txt string, whole bool) []SearchPos
 	vid() view_id
@@ -90,6 +91,68 @@ type CodeEditor interface {
 	EditorPosition() *EditorPosition
 
 	DrawNavigationBar(x int, y int, w int, screen tcell.Screen)
+}
+type EditorOpenArgument struct {
+	filename string
+	line     int
+	Range    *lsp.Range
+}
+type CodeOpenQueue struct {
+	mutex  sync.Mutex
+	close  chan bool
+	open   chan bool
+	data   *EditorOpenArgument
+	editor CodeEditor
+}
+
+func NewCodeOpenQueue(editor CodeEditor) *CodeOpenQueue {
+	ret := &CodeOpenQueue{
+		close:  make(chan bool),
+		open:   make(chan bool),
+		editor: editor,
+	}
+	go ret.Work()
+	return ret
+}
+func (queue *CodeOpenQueue) Close() {
+	queue.dequeue()
+	queue.close <- true
+}
+func (queue *CodeOpenQueue) enqueue(req EditorOpenArgument) {
+	queue.replace_data(req)
+	queue.open <- true
+}
+func (queue *CodeOpenQueue) dequeue() *EditorOpenArgument {
+	queue.mutex.Lock()
+	defer queue.mutex.Unlock()
+	d := queue.data
+	queue.data = nil
+	return d
+}
+func (queue *CodeOpenQueue) replace_data(req EditorOpenArgument) {
+	queue.mutex.Lock()
+	defer queue.mutex.Unlock()
+	queue.data = &req
+}
+func (queue *CodeOpenQueue) Work() {
+	for {
+		select {
+		case <-queue.close:
+			return
+		case <-queue.open:
+			{
+				e := queue.dequeue()
+				if e != nil {
+					if e.Range != nil {
+						queue.editor.goto_location_no_history(*e.Range, false, nil)
+					} else {
+						queue.editor.LoadFileNoLsp(e.filename, e.line)
+					}
+				}
+
+			}
+		}
+	}
 }
 
 func (editor *CodeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
@@ -219,6 +282,7 @@ type CodeView struct {
 	not_preview bool
 	insert      bool
 	diff        *Differ
+	loading     bool
 }
 
 func (c CodeView) TreeSitter() *lspcore.TreeSitter {
@@ -873,6 +937,9 @@ type vmap_select_context struct {
 	cursor femto.Cursor
 }
 
+func (c CodeView) IsLoading() bool {
+	return c.loading
+}
 func (code *CodeView) move_selection(v *vmap_select_context) {
 	if v == nil {
 		return
@@ -1412,6 +1479,7 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 			return nil
 		}
 	}
+	code.loading = true
 	data, err := os.ReadFile(filename)
 	if err == nil {
 		if code.id.is_editor() {
@@ -1429,6 +1497,7 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 	go func() {
 		GlobalApp.QueueUpdate(func() {
 			code.__load_in_main(filename, data)
+			code.loading = false
 			if onload != nil {
 				onload()
 			}
