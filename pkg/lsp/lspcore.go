@@ -118,6 +118,11 @@ func (core *lspcore) Progress_notify() error {
 	params := &lsp.ProgressParams{}
 	return core.conn.Notify(context.Background(), "$/progress", params)
 }
+
+const FileChangeTypeCreated = 1
+const FileChangeTypeChanged = 2
+const FileChangeTypeDeleted = 3
+
 func (core *lspcore) WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error {
 	param := lsp.DidChangeWatchedFilesParams{
 		Changes: Changes,
