@@ -92,10 +92,15 @@ type CodeEditor interface {
 
 	DrawNavigationBar(x int, y int, w int, screen tcell.Screen)
 }
+type arg_openbuf struct {
+	data     []byte
+	filename string
+}
 type EditorOpenArgument struct {
 	filename string
 	line     int
 	Range    *lsp.Range
+	openbuf  *arg_openbuf
 }
 type CodeOpenQueue struct {
 	mutex      sync.Mutex
@@ -152,8 +157,8 @@ func (queue *CodeOpenQueue) Work() {
 					if e != nil {
 						if e.Range != nil {
 							queue.editor.goto_location_no_history(*e.Range, false, nil)
-						} else {
-							queue.editor.LoadFileNoLsp(e.filename, e.line)
+						} else if e.openbuf != nil {
+							queue.editor.LoadBuffer(e.openbuf.data, e.openbuf.filename)
 						}
 						queue.open_count++
 					}
