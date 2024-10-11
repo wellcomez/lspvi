@@ -23,6 +23,7 @@ type quick_preview struct {
 	codeprev CodeEditor
 	frame    *tview.Frame
 	visisble bool
+	cq       *CodeOpenQueue
 }
 
 // update_preview
@@ -30,7 +31,7 @@ func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
 	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line+1)
 	UpdateTitleAndColor(pk.frame.Box, title)
-	pk.codeprev.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line)
+	pk.cq.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line)
 }
 func new_quick_preview() *quick_preview {
 	codeprev := NewCodeView(nil)
@@ -39,6 +40,7 @@ func new_quick_preview() *quick_preview {
 	return &quick_preview{
 		codeprev: codeprev,
 		frame:    frame,
+		cq:       NewCodeOpenQueue(codeprev, nil),
 	}
 }
 
@@ -68,6 +70,7 @@ type quick_view struct {
 	sel            *list_multi_select
 
 	tree *list_view_tree_extend
+	cq   *CodeOpenQueue
 }
 type list_view_tree_extend struct {
 	tree           []list_tree_node
@@ -351,6 +354,7 @@ func new_quikview(main *mainui) *quick_view {
 		view:      view,
 		main:      main,
 		quickview: new_quick_preview(),
+		cq:        NewCodeOpenQueue(nil, main),
 	}
 
 	// ret.Flex = layout
@@ -554,39 +558,36 @@ func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 	qk.quickview.visisble = false
 }
 
-func (qk *quick_view) selection_handle_impl(index int, open bool) {
+func (qk *quick_view) selection_handle_impl(index int, click bool) {
 	if qk.tree != nil {
 		qk.view.SetCurrentItem(index)
 		node := qk.tree.tree_data_item[index]
 		need_draw := false
-		if node.parent {
-			node.expand = !node.expand
-			data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.Lspmgr())
-			qk.view.Clear()
-			for _, v := range data {
-				qk.view.AddItem(v.text, "", func() {
+		if click {
+			if node.parent {
+				node.expand = !node.expand
+				data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.Lspmgr())
+				qk.view.Clear()
+				for _, v := range data {
+					qk.view.AddItem(v.text, "", func() {
 
-				})
+					})
+				}
+				need_draw = true
 			}
-			need_draw = true
 		}
 
 		vvv := qk.get_data(index)
 		qk.main.Tab().UpdatePageTitle()
-		qk.main.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
+		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 		if need_draw {
 			GlobalApp.ForceDraw()
 		}
 	} else {
 		vvv := qk.Refs.Refs[index]
 		qk.view.SetCurrentItem(index)
-		same := vvv.Loc.URI.AsPath().String() == qk.main.current_editor().Path()
-		if open || same {
-			qk.main.Tab().UpdatePageTitle()
-			qk.main.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
-		} else {
-
-		}
+		qk.main.Tab().UpdatePageTitle()
+		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 	}
 }
 
