@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/sourcegraph/jsonrpc2"
@@ -219,6 +220,19 @@ type mainui struct {
 	tty bool
 	ws  string
 	tab *tabmgr
+}
+
+// OnWatchFileChange implements change_reciever.
+func (main *mainui) OnWatchFileChange(file string, event fsnotify.Event) bool {
+	if event.Op&fsnotify.Write != fsnotify.Write {
+		return false
+	}
+	if strings.HasPrefix(file, global_prj_root) {
+		if sym, _ := main.lspmgr.Get(file); sym != nil {
+			sym.DidSave()
+		}
+	}
+	return false
 }
 
 // new_bookmark_editor implements MainService.
@@ -693,6 +707,7 @@ func MainUI(arg *Arguments) {
 	// }
 	main := &mainui{sel: selectarea{nottext: true}}
 	prj.Load(arg, main)
+	global_file_watch.AddReciever(main)
 	main.code_navigation_bar = new_small_icon(main)
 	main.quickbar = new_quick_toolbar(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
@@ -1032,7 +1047,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 		}
 		cursor := main.codeview.String()
 		x1 := main.cmdline.Vim.String()
-		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|::%5d ", cursor, x1,httport))
+		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|::%5d ", cursor, x1, httport))
 		return main.statusbar.GetInnerRect()
 	})
 
