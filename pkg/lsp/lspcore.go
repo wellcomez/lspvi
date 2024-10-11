@@ -41,6 +41,7 @@ type lspcore struct {
 	inited_called bool
 
 	lang lsplang
+	sync *TextDocumentSyncOptions
 }
 
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
