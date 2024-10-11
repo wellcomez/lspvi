@@ -11,7 +11,7 @@ import (
 )
 
 func (parent *fzfmain) openfile(path string) {
-	parent.main.OpenFileHistory(path,nil)
+	parent.main.OpenFileHistory(path, nil)
 	parent.hide()
 	// parent.main.set_viewid_focus(code.vid())
 	parent.main.CmdLine().Vim.EnterEscape()
@@ -96,8 +96,8 @@ func (v *fzfmain) hide() {
 	v.input.SetText("")
 	v.input.SetLabel("")
 }
-func (v *fzfmain) open_qfh_picker(code CodeEditor) {
-	sym := new_qk_history_picker(v, code)
+func (v *fzfmain) open_qfh_picker() {
+	sym := new_qk_history_picker(v)
 	x := sym.grid()
 	v.create_dialog_content(x, sym)
 }
@@ -107,15 +107,15 @@ func (v *fzfmain) open_wks_query(code CodeEditor) {
 	v.create_dialog_content(x, sym)
 }
 
-func (v *fzfmain) OpenBookMarkFzf(code CodeEditor, bookmark *proj_bookmark) {
-	sym := new_bookmark_picker(v, code, bookmark)
+func (v *fzfmain) OpenBookMarkFzf(bookmark *proj_bookmark) {
+	sym := new_bookmark_picker(v, bookmark)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
 
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(code CodeEditor, ranges lsp.Range) {
-	sym := new_refer_picker(*code.LspSymbol(), v, code)
+	sym := new_refer_picker(*code.LspSymbol(), v)
 	x := sym.row(v.input)
 	v.create_dialog_content(x, sym)
 	sym.load(ranges)

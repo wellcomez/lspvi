@@ -289,7 +289,7 @@ func (ref refpicker) OnSymbolistChanged(file *lspcore.Symbol_file, err error) {
 	panic("unimplemented")
 }
 
-func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain, code CodeEditor) refpicker {
+func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 	x := new_preview_picker(v)
 	impl := refpicker_impl{
 		prev_picker_impl: x,

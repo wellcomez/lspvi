@@ -528,8 +528,7 @@ func (m *mainui) quit() {
 	m.Close()
 }
 func (m *mainui) open_qfh_query() {
-	code := m.codeview
-	m.layout.dialog.open_qfh_picker(code)
+	m.layout.dialog.open_qfh_picker()
 }
 func (m *mainui) open_wks_query() {
 	code := m.codeview
@@ -1291,7 +1290,7 @@ func (main *mainui) GoBack() {
 //		main.layout.dialog.OpenFileFzf(global_prj_root)
 //	}
 func (main *mainui) open_picker_bookmark() {
-	main.layout.dialog.OpenBookMarkFzf(main.codeview, main.bookmark)
+	main.layout.dialog.OpenBookMarkFzf(main.bookmark)
 }
 func (main mainui) Dialog() *fzfmain {
 	return main.layout.dialog
