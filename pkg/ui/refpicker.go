@@ -145,7 +145,10 @@ func (pk refpicker) close() {
 
 // name implements picker.
 func (pk refpicker) name() string {
-	return "refs"
+	if pk.impl.listcustom.GetItemCount() == 0 {
+		return fmt.Sprint("Reference", " ", "0/0")
+	}
+	return fmt.Sprint("Reference", " ", pk.impl.listcustom.GetCurrentItem()+1, "/", pk.impl.listcustom.GetItemCount())
 }
 
 // OnLspCaller implements lspcore.lsp_data_changed.
@@ -172,21 +175,26 @@ func (pk refpicker) OnCodeViewChanged(file *lspcore.Symbol_file) {
 func (pk refpicker) OnFileChange([]lsp.Location, *lspcore.OpenOption) {
 	panic("unimplemented")
 }
-func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
-	if caller == nil {
-		return ""
-	}
-	caller_color := global_theme.search_highlight_color()
-	if c, err := global_theme.get_lsp_color(lsp.SymbolKindFunction); err == nil {
-		f, _, _ := c.Decompose()
-		caller_color = f
-	}
-	callerstr := fmt.Sprintf("%s:%d %-20s",
-		trim_project_filename(
-			caller.Item.URI.AsPath().String(), root),
-		caller.Item.Range.Start.Line+1, fmt_color_string(caller.Name, caller_color))
-	return callerstr
+func (pk refpicker) update_title() {
+	s := pk.name()
+	pk.impl.parent.update_dialog_title(s)
 }
+
+// func caller_to_listitem(caller *lspcore.CallStackEntry, root string) string {
+// 	if caller == nil {
+// 		return ""
+// 	}
+// 	caller_color := global_theme.search_highlight_color()
+// 	if c, err := global_theme.get_lsp_color(lsp.SymbolKindFunction); err == nil {
+// 		f, _, _ := c.Decompose()
+// 		caller_color = f
+// 	}
+// 	callerstr := fmt.Sprintf("%s:%d %-20s",
+// 		trim_project_filename(
+// 			caller.Item.URI.AsPath().String(), root),
+// 		caller.Item.Range.Start.Line+1, fmt_color_string(caller.Name, caller_color))
+// 	return callerstr
+// }
 
 type ref_line struct {
 	caller string
@@ -331,6 +339,7 @@ func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p t
 	case tcell.KeyUp, tcell.KeyDown:
 		data := pk.impl.qk.get_data(pk.impl.listcustom.GetCurrentItem())
 		pk.impl.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+		pk.update_title()
 	default:
 		break
 	}
@@ -340,24 +349,24 @@ func (pk *refpicker) update_preview() {
 	pk.impl.update_preview()
 }
 
-func remove_hl(mc []colortext, new_query string,) string{
+func remove_hl(mc []colortext, new_query string) string {
 	maintext := ""
 	for i := range mc {
 		item := mc[i]
 		maintext += item.text
 	}
-	maintext = strings.ReplaceAll(maintext,new_query, fmt_bold_string(new_query))
+	maintext = strings.ReplaceAll(maintext, new_query, fmt_bold_string(new_query))
 	return maintext
 }
 func highlight_listitem_search_key(old_query string, view *customlist, new_query string) {
 	sss := [][2]string{}
 	for i := 0; i < view.GetItemCount(); i++ {
 		m, s := view.GetItemText(i)
-		mc:=GetColorText(m, []colortext{})
-		m=remove_hl(mc,new_query)
-		
-		mc=GetColorText(s, []colortext{})
-		s=remove_hl(mc,new_query)
+		mc := GetColorText(m, []colortext{})
+		m = remove_hl(mc, new_query)
+
+		mc = GetColorText(s, []colortext{})
+		s = remove_hl(mc, new_query)
 
 		sss = append(sss, [2]string{m, s})
 	}
