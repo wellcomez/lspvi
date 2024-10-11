@@ -360,7 +360,7 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 		if sym := code.LspSymbol(); sym != nil {
 			go sym.NotifyCodeChange(nil)
 			offset := code.view.Topline
-			code.openfile(code.Path(), func() {
+			code.openfile(code.Path(), func(bool) {
 				code.view.Topline = offset
 				if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
 					code.lspsymbol = s
@@ -1490,21 +1490,31 @@ func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus
 }
 func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
 	main := code.main
-	code.openfile(filename, func() {
-		code.loading = false
+	code.openfile(filename, func(oldfile bool) {
 		code.view.SetTitle(trim_project_filename(code.Path(), global_prj_root))
 		if line != nil {
 			code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 		}
-		go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
-			code.lspsymbol = sym
-			code.main.OutLineView().update_with_ts(code.tree_sitter, sym)
-			if focus && code.id != view_code_below {
-				if sym == nil {
-					main.OutLineView().Clear()
-				}
+		if oldfile {
+			code.loading = false
+			if line != nil {
+				code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 			}
-		})
+		} else {
+			go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
+				code.loading = false
+				code.lspsymbol = sym
+				code.main.OutLineView().update_with_ts(code.tree_sitter, sym)
+				if line != nil {
+					code.goto_location_no_history(line.Range, code.id != view_code_below, option)
+				}
+				if focus && code.id != view_code_below {
+					if sym == nil {
+						main.OutLineView().Clear()
+					}
+				}
+			})
+		}
 		if code.vid() == view_code_below {
 			go func() {
 				main.App().QueueUpdateDraw(func() {
@@ -1520,7 +1530,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 //		return code.LoadAndCb(filename, nil)
 //	}
 func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
-	return code.openfile(filename, func() {
+	return code.openfile(filename, func(bool) {
 		code.goto_location_no_history(
 			lsp.Range{
 				Start: lsp.Position{Line: line, Character: 0},
@@ -1528,11 +1538,11 @@ func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
 			}, false, nil)
 	})
 }
-func (code *CodeView) openfile(filename string, onload func()) error {
+func (code *CodeView) openfile(filename string, onload func(newfile bool)) error {
 	if len(filename) > 0 {
 		if NewFile(filename).Same(code.file) {
 			if onload != nil {
-				onload()
+				onload(true)
 			}
 			return nil
 		}
@@ -1560,7 +1570,7 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 			code.__load_in_main(filename, data)
 			code.loading = false
 			if onload != nil {
-				onload()
+				onload(false)
 			}
 		})
 	}()
