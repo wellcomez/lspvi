@@ -51,6 +51,7 @@ func (l lsp_lang_py) InitializeLsp(core *lspcore, wk WorkSpace) error {
 	}
 	if result.ServerInfo.Name == "pylsp" {
 		core.inited = true
+		core.get_sync_option(result)
 		return nil
 	}
 	return fmt.Errorf("%s", result.ServerInfo.Name)
