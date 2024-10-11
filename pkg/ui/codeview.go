@@ -126,6 +126,7 @@ func NewCodeOpenQueue(editor CodeEditor, main MainService) *CodeOpenQueue {
 		close:  make(chan bool),
 		open:   make(chan bool),
 		editor: editor,
+		main:   main,
 	}
 	go ret.Work()
 	return ret
@@ -144,7 +145,7 @@ func (q *CodeOpenQueue) OpenFileHistory(filename string, line *lsp.Location) {
 func (queue *CodeOpenQueue) enqueue(req EditorOpenArgument) {
 	queue.replace_data(req)
 	queue.open <- true
-	log.Println("cqdebug", "enqueue", ":", queue.editor.IsLoading(), "open", queue.open_count, "req", queue.req_count)
+	log.Println("cqdebug", "enqueue", ":", queue.skip(), "open", queue.open_count, "req", queue.req_count)
 }
 func (queue *CodeOpenQueue) dequeue() *EditorOpenArgument {
 	queue.mutex.Lock()
@@ -167,8 +168,9 @@ func (queue *CodeOpenQueue) Work() {
 			return
 		case <-queue.open:
 			{
-				log.Println("cqdebug", "denqueue", ":", queue.editor.IsLoading(), "open", queue.open_count, "req", queue.req_count)
-				if !queue.editor.IsLoading() {
+				skip := queue.skip()
+				log.Println("cqdebug", "denqueue", ":", skip, "open", queue.open_count, "req", queue.req_count)
+				if !skip {
 					e := queue.dequeue()
 					if e != nil {
 						if e.Range != nil {
@@ -177,6 +179,8 @@ func (queue *CodeOpenQueue) Work() {
 							queue.editor.LoadBuffer(e.openbuf.data, e.openbuf.filename)
 						} else if e.open_no_lsp != nil {
 							queue.editor.LoadFileNoLsp(e.open_no_lsp.filename, e.open_no_lsp.line)
+						} else if e.main_open_history != nil {
+							queue.main.OpenFileHistory(e.main_open_history.filename, e.main_open_history.line)
 						}
 						queue.open_count++
 					}
@@ -185,6 +189,17 @@ func (queue *CodeOpenQueue) Work() {
 			}
 		}
 	}
+}
+
+func (queue *CodeOpenQueue) skip() bool {
+	skip := false
+	if queue.editor != nil && queue.editor.IsLoading() {
+		skip = true
+	}
+	if queue.main != nil && queue.main.current_editor().IsLoading() {
+		skip = true
+	}
+	return skip
 }
 
 func (editor *CodeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
@@ -1467,6 +1482,7 @@ func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus
 func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
 	main := code.main
 	code.openfile(filename, func() {
+		code.loading = false
 		code.view.SetTitle(trim_project_filename(code.Path(), global_prj_root))
 		if line != nil {
 			code.goto_location_no_history(line.Range, code.id != view_code_below, option)
@@ -1510,6 +1526,9 @@ func (code *CodeView) openfile(filename string, onload func()) error {
 			}
 			return nil
 		}
+	}
+	if code.main!=nil{
+		code.main.OutLineView().Clear()
 	}
 	code.loading = true
 	data, err := os.ReadFile(filename)
