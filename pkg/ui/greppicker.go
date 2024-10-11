@@ -46,6 +46,7 @@ type greppicker struct {
 
 // close implements picker.
 func (g *greppicker) close() {
+	g.cq.CloseQueue()
 	g.livewgreppicker.close()
 }
 

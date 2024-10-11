@@ -363,6 +363,9 @@ func (sym *Symbol_file) __load_symbol_impl(reload bool) error {
 const LSP_DEBUG_TAG = "LSPDEBUG"
 
 func (sym *Symbol_file) LspLoadSymbol() error {
+	if sym.lsp == nil {
+		return fmt.Errorf("lsp empty")
+	}
 	symbols, err := sym.lsp.GetDocumentSymbol(sym.Filename)
 	if err != nil {
 		return err

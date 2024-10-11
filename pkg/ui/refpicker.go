@@ -142,6 +142,7 @@ func (pk refpicker) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.I
 
 // close implements picker.
 func (pk refpicker) close() {
+	pk.impl.cq.CloseQueue()
 }
 
 // name implements picker.

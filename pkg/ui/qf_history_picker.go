@@ -32,6 +32,7 @@ type qk_history_picker struct {
 
 // close implements picker.
 func (pk qk_history_picker) close() {
+	pk.cq.CloseQueue()
 }
 
 // name implements picker.

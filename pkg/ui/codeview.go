@@ -98,11 +98,13 @@ type EditorOpenArgument struct {
 	Range    *lsp.Range
 }
 type CodeOpenQueue struct {
-	mutex  sync.Mutex
-	close  chan bool
-	open   chan bool
-	data   *EditorOpenArgument
-	editor CodeEditor
+	mutex      sync.Mutex
+	close      chan bool
+	open       chan bool
+	data       *EditorOpenArgument
+	editor     CodeEditor
+	open_count int
+	req_count  int
 }
 
 func NewCodeOpenQueue(editor CodeEditor) *CodeOpenQueue {
@@ -114,13 +116,14 @@ func NewCodeOpenQueue(editor CodeEditor) *CodeOpenQueue {
 	go ret.Work()
 	return ret
 }
-func (queue *CodeOpenQueue) Close() {
+func (queue *CodeOpenQueue) CloseQueue() {
 	queue.dequeue()
 	queue.close <- true
 }
 func (queue *CodeOpenQueue) enqueue(req EditorOpenArgument) {
 	queue.replace_data(req)
 	queue.open <- true
+	log.Println("cqdebug", "enqueue", ":", queue.editor.IsLoading(), "open", queue.open_count, "req", queue.req_count)
 }
 func (queue *CodeOpenQueue) dequeue() *EditorOpenArgument {
 	queue.mutex.Lock()
@@ -133,20 +136,26 @@ func (queue *CodeOpenQueue) replace_data(req EditorOpenArgument) {
 	queue.mutex.Lock()
 	defer queue.mutex.Unlock()
 	queue.data = &req
+	queue.req_count++
 }
 func (queue *CodeOpenQueue) Work() {
 	for {
 		select {
 		case <-queue.close:
+			log.Println("cqdebug", "cq Close-------")
 			return
 		case <-queue.open:
 			{
-				e := queue.dequeue()
-				if e != nil {
-					if e.Range != nil {
-						queue.editor.goto_location_no_history(*e.Range, false, nil)
-					} else {
-						queue.editor.LoadFileNoLsp(e.filename, e.line)
+				log.Println("cqdebug", "denqueue", ":", queue.editor.IsLoading(), "open", queue.open_count, "req", queue.req_count)
+				if !queue.editor.IsLoading() {
+					e := queue.dequeue()
+					if e != nil {
+						if e.Range != nil {
+							queue.editor.goto_location_no_history(*e.Range, false, nil)
+						} else {
+							queue.editor.LoadFileNoLsp(e.filename, e.line)
+						}
+						queue.open_count++
 					}
 				}
 
