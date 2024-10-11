@@ -98,6 +98,8 @@ type MainService interface {
 	Close()
 	quit()
 
+	ScreenSize() (w, h int)
+
 	helpkey(bool) []string
 
 	Dialog() *fzfmain
@@ -1289,6 +1291,10 @@ func (main *mainui) GoBack() {
 //	func (main *mainui) open_file_picker() {
 //		main.layout.dialog.OpenFileFzf(global_prj_root)
 //	}
+func (m mainui) ScreenSize() (w, h int) {
+	_, _, w, h = m.layout.mainlayout.GetRect()
+	return w, h
+}
 func (main *mainui) open_picker_bookmark() {
 	main.layout.dialog.OpenBookMarkFzf(main.bookmark)
 }

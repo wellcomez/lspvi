@@ -116,8 +116,16 @@ func (v *fzfmain) OpenBookMarkFzf(bookmark *proj_bookmark) {
 // NewSymboWalk
 func (v *fzfmain) OpenRefFzf(code CodeEditor, ranges lsp.Range) {
 	sym := new_refer_picker(*code.LspSymbol(), v)
-	x := sym.row(v.input)
-	v.create_dialog_content(x, sym)
+	w, h := v.main.ScreenSize()
+	w=w*3/4
+	h=h*3/4
+	if w > h && w > 160 {
+		x := sym.grid(v.input)
+		v.create_dialog_content(x, sym)
+	} else {
+		x := sym.row(v.input)
+		v.create_dialog_content(x, sym)
+	}
 	sym.load(ranges)
 }
 func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bool) *greppicker {
