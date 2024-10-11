@@ -217,13 +217,18 @@ func (qk *qk_history_picker) updateprev() {
 	case data_refs, data_grep_word, data_search:
 		{
 			caller := keys[index].Result.Refs
-			// _, _, width, _ := qk.prev_picker_impl.listview.GetInnerRect()
-			dataprev := []string{}
-			for _, call := range caller {
-				// call.width = width
-				dataprev = append(dataprev, call.ListItem(global_prj_root, true, nil))
+			name :=keys[index].Key.File
+			qkv := quick_view{main: qk.parent.main}
+			qkv.Refs.Refs = caller
+			qkv.tree = &list_view_tree_extend{}
+			qkv.tree.build_tree(qkv.Refs.Refs)
+			data := qkv.tree.BuildListStringGroup(&qkv, global_prj_root, qkv.main.Lspmgr())
+			aa := []string{}
+			for _, v := range data {
+				aa = append(aa, v.text)
 			}
-			qk.codeprev.LoadBuffer([]byte(strings.Join(dataprev, "\n")), "")
+			aa = remove_color(aa)
+			qk.codeprev.LoadBuffer([]byte(strings.Join(aa, "\n")), name)
 		}
 	case data_callin:
 		{

@@ -402,18 +402,7 @@ func new_quikview(main *mainui) *quick_view {
 			}
 			if len(ss) > 0 {
 				sss := data[ss[0]:ss[1]]
-				aa := []string{}
-				for i := range sss {
-					r := GetColorText(sss[i], []colortext{})
-					text := ""
-					for _, v := range r {
-						for _, v := range lspcore.IconsRunne {
-							text = strings.ReplaceAll(text, fmt.Sprintf("%c", v), "")
-						}
-						text = text + v.text
-					}
-					aa = append(aa, text)
-				}
+				aa := remove_color(sss)
 				data := strings.Join(aa, "\n")
 				main.CopyToClipboard(data)
 				ret.sel.clear()
@@ -426,6 +415,22 @@ func new_quikview(main *mainui) *quick_view {
 	ret.sel = &list_multi_select{list: view}
 	main.sel.Add(ret.sel)
 	return ret
+}
+
+func remove_color(sss []string) []string {
+	aa := []string{}
+	for i := range sss {
+		r := GetColorText(sss[i], []colortext{})
+		text := ""
+		for _, v := range r {
+			for _, v := range lspcore.IconsRunne {
+				text = strings.ReplaceAll(text, fmt.Sprintf("%c", v), "")
+			}
+			text = text + v.text
+		}
+		aa = append(aa, text)
+	}
+	return aa
 }
 func (qf *quickfix_history) InitDir() (string, error) {
 	Dir := filepath.Join(qf.Wk.Export, "qf")
@@ -742,6 +747,9 @@ func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root str
 	return data
 }
 func (qk *quick_view) async_open(file string, lspmgr *lspcore.LspWorkspace, r lsp.Range) {
+	if qk.view == nil {
+		return
+	}
 	if sym, _ := lspmgr.Open(file); sym != nil {
 		if err := sym.LspLoadSymbol(); err != nil {
 			return
