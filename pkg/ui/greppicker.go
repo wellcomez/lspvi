@@ -22,6 +22,7 @@ type grep_impl struct {
 	taskid        int
 	key           string
 	fzf_on_result *fzf_on_listview
+	quick         quick_view
 }
 type livewgreppicker struct {
 	*prev_picker_impl
@@ -131,14 +132,16 @@ func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
 func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v)
+	impl := &grep_impl{}
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
 		grep_list_view:   new_customlist(false),
 		main:             main,
-		impl:             &grep_impl{},
+		impl:             impl,
 		not_live:         false,
 	}
 	x.use_cusutom_list(grep.grep_list_view)
+	impl.quick.view = grep.grep_list_view
 	v.Visible = true
 	return grep
 }

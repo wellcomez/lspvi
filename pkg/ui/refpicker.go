@@ -5,7 +5,6 @@ import (
 
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -197,22 +196,22 @@ type ref_line struct {
 	path   string
 }
 
-func (ref ref_line) fzf_tring() string {
-	return ref.String() + ref.caller
-}
-func (v ref_line) get_loc() (lsp.Location, error) {
-	line, err := strconv.Atoi(v.line)
-	if err != nil {
-		return lsp.Location{}, err
-	}
-	loc := lsp.Location{
-		URI: lsp.NewDocumentURI(v.path),
-		Range: lsp.Range{Start: lsp.Position{Line: line},
-			End: lsp.Position{Line: line},
-		},
-	}
-	return loc, nil
-}
+// func (ref ref_line) fzf_tring() string {
+// 	return ref.String() + ref.caller
+// }
+// func (v ref_line) get_loc() (lsp.Location, error) {
+// 	line, err := strconv.Atoi(v.line)
+// 	if err != nil {
+// 		return lsp.Location{}, err
+// 	}
+// 	loc := lsp.Location{
+// 		URI: lsp.NewDocumentURI(v.path),
+// 		Range: lsp.Range{Start: lsp.Position{Line: line},
+// 			End: lsp.Position{Line: line},
+// 		},
+// 	}
+// 	return loc, nil
+// }
 
 func (ref ref_line) String() string {
 	return fmt.Sprintf("%s %s:%d", ref.line, ref.path, ref.loc.Range.Start.Line)
@@ -341,6 +340,33 @@ func (pk *refpicker) update_preview() {
 	pk.impl.update_preview()
 }
 
+func remove_hl(mc []colortext, new_query string,) string{
+	maintext := ""
+	for i := range mc {
+		item := mc[i]
+		maintext += item.text
+	}
+	maintext = strings.ReplaceAll(maintext,new_query, fmt_bold_string(new_query))
+	return maintext
+}
+func highlight_listitem_search_key(old_query string, view *customlist, new_query string) {
+	sss := [][2]string{}
+	for i := 0; i < view.GetItemCount(); i++ {
+		m, s := view.GetItemText(i)
+		mc:=GetColorText(m, []colortext{})
+		m=remove_hl(mc,new_query)
+		
+		mc=GetColorText(s, []colortext{})
+		s=remove_hl(mc,new_query)
+
+		sss = append(sss, [2]string{m, s})
+	}
+	view.Clear()
+	for _, v := range sss {
+		view.AddItem(v[0], v[1], nil)
+	}
+}
+
 // handle implements picker.
 func (pk refpicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return pk.handle_key_override
@@ -351,16 +377,16 @@ func (pk refpicker) UpdateQuery(query string) {
 	listview.Clear()
 	if fzf := pk.impl.fzf; fzf != nil {
 		oldkey := fzf.OnSearch(query, true)
-		highlight_search_key(oldkey, listview, query)
+		highlight_listitem_search_key(oldkey, listview, query)
 		pk.update_preview()
 	}
 }
 
-func (pk refpicker) onselected(data_index int, list int) {
-	v := pk.impl.qk.get_data(data_index)
-	pk.impl.parent.main.OpenFileHistory(v.Loc.URI.AsPath().String(), &v.Loc)
-	pk.impl.parent.hide()
-}
+// func (pk refpicker) onselected(data_index int, list int) {
+// 	v := pk.impl.qk.get_data(data_index)
+// 	pk.impl.parent.main.OpenFileHistory(v.Loc.URI.AsPath().String(), &v.Loc)
+// 	pk.impl.parent.hide()
+// }
 
 func (pk *refpicker) loadlist(data []*list_tree_node) {
 	listview := pk.impl.listcustom
