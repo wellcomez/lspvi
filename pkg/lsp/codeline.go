@@ -17,14 +17,20 @@ type Body struct {
 // 定义一个结构体来表示行和字符的位置
 
 // SubLine 函数用于从多行文本中提取子集
-func SubLine(begin, end lsp.Position, lines []string) []string {
+func SubLine(begin, end lsp.Position, lines []string) ([]string, error) {
+	if begin.Line > len(lines) {
+		return nil, fmt.Errorf("begin line out of range")
+	}
+	if end.Line > len(lines) {
+		return nil, fmt.Errorf("end line out of range")
+	}
 	subline := lines[begin.Line : end.Line+1]
 	e := end.Character
 	if begin.Character >= len(subline[0]) {
-		return subline
+		return subline, nil
 	}
 	if e >= len(subline[0]) {
-		return subline
+		return subline, nil
 	}
 	if begin.Line == end.Line {
 		if e < 0 {
@@ -47,7 +53,7 @@ func SubLine(begin, end lsp.Position, lines []string) []string {
 		subline[len(subline)-1] = line
 	}
 
-	return subline
+	return subline, nil
 }
 
 var use_uri = []string{".txt", ".json"} // 示例值，根据实际情况调整
@@ -87,12 +93,14 @@ func NewBody(location lsp.Location) (*Body, error) {
 	lines := strings.Split(string(content), "\n")
 
 	// 提取子行
-	subline := SubLine(begin, end, lines)
-
-	return &Body{
-		Subline:  subline,
-		Location: location,
-	}, nil
+	subline, err := SubLine(begin, end, lines)
+	if err == nil {
+		return &Body{
+			Subline:  subline,
+			Location: location,
+		}, nil
+	}
+	return nil, err
 }
 
 // String 方法返回 Body 的字符串表示
@@ -108,8 +116,9 @@ func main() {
 	lines := []string{"This is line one", "This is line two", "This is line three"}
 	begin := lsp.Position{0, 5}
 	end := lsp.Position{1, 10}
-	sublines := SubLine(begin, end, lines)
-	for _, line := range sublines {
-		fmt.Println(line)
+	if sublines, err := SubLine(begin, end, lines); err == nil {
+		for _, line := range sublines {
+			fmt.Println(line)
+		}
 	}
 }
