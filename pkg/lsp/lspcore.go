@@ -196,8 +196,8 @@ func (client *lspcore) DidClose(file string) error {
 	return client.conn.Notify(context.Background(), "textDocument/didClose", param)
 }
 
-func (core *lspcore) DidOpen(file string, version int) error {
-	x, err := core.newTextDocument(file, version)
+func (core *lspcore) DidOpen(file SourceCode, version int) error {
+	x, err := core.newTextDocument(file.Path, version, file.Cotent)
 	if err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func (core *lspcore) DidChange(file string, verion int, ContentChanges []lsp.Tex
 		ContentChanges: ContentChanges,
 	}
 	err := core.conn.Notify(context.Background(), Method, data)
-	log.Println("cqdebug",data)
+	log.Println("cqdebug", data.TextDocument)
 	return err
 }
 func (core *lspcore) DidSave(file string, text string) error {
@@ -227,18 +227,21 @@ func (core *lspcore) DidSave(file string, text string) error {
 	return err
 }
 
-func (core *lspcore) newTextDocument(file string, version int) (lsp.TextDocumentItem, error) {
-	content, err := os.ReadFile(file)
-	if err != nil {
-		return lsp.TextDocumentItem{}, err
+func (core *lspcore) newTextDocument(file string, version int, content string) (lsp.TextDocumentItem, error) {
+	if content == "" {
+		if c, err := os.ReadFile(file); err != nil {
+			return lsp.TextDocumentItem{}, err
+		} else {
+			content = string(c)
+		}
 	}
 	x := lsp.TextDocumentItem{
 		URI:        lsp.NewDocumentURI(file),
 		LanguageID: core.LanguageID,
-		Text:       string(content),
+		Text:       content,
 		Version:    version,
 	}
-	return x, err
+	return x,nil 
 }
 func (core *lspcore) document_semantictokens_full(file string) (*lsp.SemanticTokens, error) {
 	params := lsp.SemanticTokensParams{

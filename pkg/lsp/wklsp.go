@@ -290,6 +290,9 @@ func (wk LspWorkspace) new_client(c lspclient, filename string) lspclient {
 }
 
 func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
+	return wk.openbuffer(filename,"")
+}
+func (wk *LspWorkspace) openbuffer(filename string, content string) (*Symbol_file, bool, error) {
 	val, ok := wk.get(filename)
 	is_new := false
 	if ok {
@@ -307,7 +310,7 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 		return nil, is_new, fmt.Errorf("fail to open %s", filename)
 	}
 	is_new = true
-	err := ret.lsp.DidOpen(filename,ret.verison)
+	err := ret.lsp.DidOpen(SourceCode{filename,content}, ret.verison)
 	if err != nil {
 		return ret, is_new, err
 	}
@@ -365,6 +368,14 @@ func (wk *LspWorkspace) CloseSymbolFile(sym *Symbol_file) error {
 	wk.lock.Unlock()
 	return err
 }
+
+func (wk *LspWorkspace) OpenBuffer(filename string,buffer string) (*Symbol_file, error) {
+	ret, _, err := wk.openbuffer(filename,buffer)
+	wk.current = ret
+	return ret, err
+
+}
+
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)
 	wk.current = ret

@@ -14,7 +14,7 @@ type lspclient interface {
 	Semantictokens_full(file string) (*lsp.SemanticTokens, error)
 	InitializeLsp(wk WorkSpace) error
 	Launch_Lsp_Server() error
-	DidOpen(file string,version int) error
+	DidOpen(file SourceCode, version int) error
 	DidClose(file string) error
 	DidSave(file string, text string) error
 	DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error
@@ -91,9 +91,14 @@ func (l lsp_base) DidClose(file string) error {
 	return l.core.DidClose(file)
 }
 
+type SourceCode struct {
+	Path   string
+	Cotent string
+}
+
 // Initialize implements lspclient.
-func (l lsp_base) DidOpen(file string,version int) error {
-	return l.core.DidOpen(file,version)
+func (l lsp_base) DidOpen(file SourceCode, version int) error {
+	return l.core.DidOpen(file, version)
 }
 func (l lsp_base) DidSave(file, text string) error {
 	return l.core.DidSave(file, text)

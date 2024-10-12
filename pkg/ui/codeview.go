@@ -23,6 +23,7 @@ import (
 
 type CodeEditor interface {
 	IsLoading() bool
+	GetLines(begin, end int) []string
 	GetSelection() string
 	OnSearch(txt string, whole bool) []SearchPos
 	vid() view_id
@@ -51,6 +52,7 @@ type CodeEditor interface {
 
 	LoadBuffer(data []byte, filename string)
 	LoadFileNoLsp(filename string, line int) error
+
 	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
 
 	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
@@ -375,6 +377,14 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 
 func (code CodeView) Path() string {
 	return code.file.filepathname
+}
+
+func (e CodeView) GetLines(begin, end int) (ret []string) {
+	for i := begin; i <= end; i++ {
+		l := e.view.Buf.Line(i)
+		ret = append(ret, l)
+	}
+	return ret
 }
 func (code CodeView) FileName() string {
 	return code.file.filename
@@ -1437,7 +1447,32 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	b.SetTitle(title)
 	return b
 }
-
+func (c CodeView) async_lsp_open(cb func(sym *lspcore.Symbol_file)) {
+	file := c.Path()
+	var buffer []string
+	for i := 0; i < c.view.Buf.NumLines; i++ {
+		buffer = append(buffer, c.view.Buf.Line(i))
+	}
+	m := c.main
+	symbolfile, err := m.Lspmgr().OpenBuffer(file, strings.Join(buffer, "\n"))
+	if err == nil {
+		symbolfile.LoadSymbol(false)
+		m.App().QueueUpdate(func() {
+			if cb != nil {
+				cb(symbolfile)
+			}
+			m.App().ForceDraw()
+		})
+	} else {
+		m.App().QueueUpdate(func() {
+			m.OnSymbolistChanged(symbolfile, nil)
+			m.App().ForceDraw()
+			if cb != nil {
+				cb(symbolfile)
+			}
+		})
+	}
+}
 func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus bool) {
 	code.open_file_lspon_line_option(filename, line, focus, nil)
 }
@@ -1454,7 +1489,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 				code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 			}
 		} else {
-			go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
+			go code.async_lsp_open(func(sym *lspcore.Symbol_file) {
 				code.loading = false
 				code.lspsymbol = sym
 				code.main.OutLineView().update_with_ts(code.tree_sitter, sym)
@@ -1535,14 +1570,7 @@ func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 		code.tree_sitter = ts
 		code.set_color()
 		if code.main != nil {
-			if len(ts.Outline) > 0 {
-				if ts.DefaultOutline() {
-					code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-
-				} else {
-					code.main.OnSymbolistChanged(nil, nil)
-				}
-			}
+			code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
 		}
 	})
 }

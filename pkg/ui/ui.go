@@ -182,7 +182,6 @@ type MainService interface {
 	Searchcontext() *GenericSearch
 	Codeview2() *CodeView
 
-	async_lsp_open(file string, cb func(sym *lspcore.Symbol_file))
 
 	// new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit
 	set_perfocus_view(viewid view_id)
@@ -607,27 +606,7 @@ func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhist
 	// m.layout.parent.SetTitle(title)
 	code.open_file_lspon_line_option(file, loc, true, option)
 }
-func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
-	symbolfile, err := m.lspmgr.Open(file)
-	if err == nil {
-		symbolfile.LoadSymbol(false)
-		m.app.QueueUpdate(func() {
-			if cb != nil {
-				cb(symbolfile)
-			}
-			m.app.ForceDraw()
-		})
-	} else {
-		m.app.QueueUpdate(func() {
-			m.OnSymbolistChanged(symbolfile, nil)
-			m.app.ForceDraw()
-			if cb != nil {
-				cb(symbolfile)
-			}
-		})
-	}
 
-}
 
 type Arguments struct {
 	File string
