@@ -49,6 +49,15 @@ type lspcore struct {
 
 const DebugTag = "LSPCORE"
 
+type error_log struct {
+}
+
+// Write implements io.Writer.
+func (e error_log) Write(p []byte) (n int, err error) {
+	debug.ErrorLog(DebugTag, string(p))
+	return len(p), nil
+}
+
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 
 	// cmd := exec.Command("clangd", "--log=verbose")
@@ -62,8 +71,10 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 		return err
 		// log.Fatal(err)
 	}
+	var ee = error_log{}
+	cmd.Stderr = ee
 	if err := cmd.Start(); err != nil {
-		log.Println("failed to start", err)
+		debug.ErrorLog("failed to start", err)
 		return err
 		// log.Fatal(err)
 	}

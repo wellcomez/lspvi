@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"zen108.com/lspvi/pkg/debug"
 	// "strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -339,7 +340,7 @@ func java_outline(ts *TreeSitter, cb outlinecb) {
 						case "function_definition", "function_declaration", "function_item":
 							c.Kind = lsp.SymbolKindFunction
 						default:
-							log.Printf("query_result:%s| symbol:%20s    | code:%20s", item.SymbolName, item.Symbol, item.Code)
+							debug.TraceLogf("query_result:%s| symbol:%20s    | code:%20s", item.SymbolName, item.Symbol, item.Code)
 						}
 						items = append(items, &c)
 					}
@@ -358,7 +359,7 @@ func java_outline(ts *TreeSitter, cb outlinecb) {
 						items = append(items, &c)
 					}
 				default:
-					log.Printf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
+					debug.TraceLogf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
 				}
 			}
 		}
@@ -457,7 +458,7 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 						})
 					}
 				default:
-					log.Printf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
+					debug.TraceLogf("-----| %20s | %20s | %20s  |%s", item.PositionInfo(), item.SymbolName, item.Symbol, code)
 				}
 			}
 		}
@@ -809,7 +810,7 @@ func get_ts_symbol(ret TreesiterSymbolLine, ts *TreeSitter) []lsp.SymbolInformat
 						scopes = append(scopes, s)
 					}
 				default:
-					log.Println("=====================", s.SymbolName, s.Symbol, pos)
+					debug.TraceLog("=====================", s.SymbolName, s.Symbol, pos)
 				}
 			}
 		}
@@ -842,7 +843,7 @@ func get_ts_symbol(ret TreesiterSymbolLine, ts *TreeSitter) []lsp.SymbolInformat
 						}
 					}
 					if !add {
-						log.Println("unhandled skip symboltype:", symboltype, s.Code, pos, s.Symbol)
+						debug.DebugLog("unhandled skip symboltype:", symboltype, s.Code, pos, s.Symbol)
 						continue
 					}
 
@@ -856,7 +857,7 @@ func get_ts_symbol(ret TreesiterSymbolLine, ts *TreeSitter) []lsp.SymbolInformat
 					}
 					symbols = append(symbols, s)
 				} else {
-					log.Println("unhandled-symboltype:", symboltype, s.Code, pos, s.Symbol)
+					debug.DebugLog("unhandled-symboltype:", symboltype, s.Code, pos, s.Symbol)
 				}
 			} else if s.SymbolName == "local.scope" {
 				continue
