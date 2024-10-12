@@ -307,7 +307,7 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 		return nil, is_new, fmt.Errorf("fail to open %s", filename)
 	}
 	is_new = true
-	err := ret.lsp.DidOpen(filename)
+	err := ret.lsp.DidOpen(filename,ret.verison)
 	if err != nil {
 		return ret, is_new, err
 	}
