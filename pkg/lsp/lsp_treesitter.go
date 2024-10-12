@@ -372,7 +372,7 @@ func java_outline(ts *TreeSitter, cb outlinecb) {
 	ts.Outline = s.Class_object
 }
 
-type outlinecb func([]*lsp.SymbolInformation) []*lsp.SymbolInformation
+type outlinecb func(*TreeSitter, []*lsp.SymbolInformation) []*lsp.SymbolInformation
 
 func rs_outline(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {
@@ -465,7 +465,7 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 	var s = Symbol_file{lsp: lsp_base{core: &lspcore{lang: lsp_dummy{}}}}
 	document_symbol := []lsp.SymbolInformation{}
 	if cb != nil {
-		items = cb(items)
+		items = cb(ts, items)
 	}
 	for _, v := range items {
 		document_symbol = append(document_symbol, *v)
@@ -523,24 +523,25 @@ func bash_parser(ts *TreeSitter, cb outlinecb) {
 
 var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(func(ts *TreeSitter, o outlinecb) {
-		rs_outline(ts, func(si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
+		rs_outline(ts, func(ts *TreeSitter, si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
 			if len(si) > 0 {
-				if content, err := os.ReadFile(si[0].Location.URI.AsPath().String()); err == nil {
-					lines := strings.Split(string(content), "\n")
-					ret := si
-					for _, v := range ret {
-						if is_class(v.Kind) {
-							line := lines[v.Location.Range.Start.Line]
-							if strings.Index(line, "interface") > 0 {
-								v.Kind = lsp.SymbolKindInterface
-							} else if strings.Index(line, "struct") > 0 {
-								v.Kind = lsp.SymbolKindStruct
-							}
-							continue
-						}
-					}
-					return ret
+				lines := []string{}
+				if len(ts.sourceCode) > 0 {
+					lines = strings.Split(string(ts.sourceCode), "\n")
 				}
+				ret := si
+				for _, v := range ret {
+					if is_class(v.Kind) {
+						line := lines[v.Location.Range.Start.Line]
+						if strings.Index(line, "interface") > 0 {
+							v.Kind = lsp.SymbolKindInterface
+						} else if strings.Index(line, "struct") > 0 {
+							v.Kind = lsp.SymbolKindStruct
+						}
+						continue
+					}
+				}
+				return ret
 			}
 			return si
 		})
@@ -551,7 +552,7 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("lua", lsp_dummy{}, ts_lua.GetLanguage()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
-		rs_outline(ts, func(si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
+		rs_outline(ts, func(ts *TreeSitter, si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
 			items := si
 			sort.Slice(items, func(i, j int) bool {
 				return items[i].Location.Range.Start.Line < items[j].Location.Range.Start.Line
