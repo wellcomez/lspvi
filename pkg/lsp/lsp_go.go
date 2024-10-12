@@ -24,6 +24,8 @@ func (l lsp_lang_go) IsSource(filename string) bool {
 
 // Launch_Lsp_Server implements lsplang.
 func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
+	core.lock.Lock()
+	defer core.lock.Unlock()
 	if core.started {
 		return nil
 	}
@@ -123,11 +125,6 @@ type TextDocumentSyncOptions2 struct {
 
 // InitializeLsp implements lsplang.
 func (l lsp_lang_go) InitializeLsp(core *lspcore, wk WorkSpace) error {
-	if core.inited {
-		return nil
-	}
-	core.lock.Lock()
-	defer core.lock.Unlock()
 	if core.inited {
 		return nil
 	}
