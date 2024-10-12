@@ -12,6 +12,7 @@ const (
 	log_level_warn
 	log_level_info
 	log_level_debug
+	log_level_trace
 )
 
 var loglevel log_level = log_level_debug
@@ -25,11 +26,23 @@ func DebugLog(tag string, v ...any) {
 		commonprintln(tag, "DEBUG", v...)
 	}
 }
+func TraceLogf(tag, format string, v ...any) {
+	if loglevel >= log_level_trace {
+		CommonLogf(tag, "TRACE", format, v...)
+	}
+}
+
+func TraceLog(tag string, v ...any) {
+	if loglevel >= log_level_trace {
+		commonprintln(tag, "TRACE", v...)
+	}
+}
 func InfoLogf(tag, format string, v ...any) {
 	if loglevel >= log_level_info {
 		CommonLogf(tag, "INFO ", format, v...)
 	}
 }
+
 func InfoLog(tag string, v ...any) {
 	if loglevel >= log_level_info {
 		commonprintln(tag, "INFO ", v...)
