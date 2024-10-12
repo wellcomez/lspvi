@@ -175,7 +175,9 @@ func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	if err != nil {
 		return
 	}
-	sym.Handle.OnFileChange(loc, line)
+	if len(loc)>0{
+		sym.Handle.OnFileChange(loc, line)
+	}
 }
 
 type OpenOption struct {
@@ -371,6 +373,7 @@ func (sym *Symbol_file) LspLoadSymbol() error {
 	if err != nil {
 		return err
 	}
+	sym.Class_object = []*Symbol{}
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
 	return nil
 }
@@ -418,6 +421,7 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 			}
 			if opt.Change != lsp.TextDocumentSyncKindNone {
 				sym.verison++
+				log.Println("cqdebug", "didchange", changeevents[0].String())
 				return sym.lsp.DidChange(sym.Filename, sym.verison, changeevents)
 			} else {
 				return fmt.Errorf("TextDocumentSyncKindNone is None")
