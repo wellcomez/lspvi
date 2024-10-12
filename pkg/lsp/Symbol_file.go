@@ -20,6 +20,7 @@ type Symbol_file struct {
 	Class_object []*Symbol
 	Wk           *LspWorkspace
 	tokens       *lsp.SemanticTokens
+	verison      int
 }
 
 func (sym Symbol_file) LspClient() lspclient {
@@ -373,36 +374,43 @@ func (sym *Symbol_file) LspLoadSymbol() error {
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
 	return nil
 }
-func (sym *Symbol_file) NotifyCodeChange(data []byte) error {
+func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 	if sym.lsp != nil {
 		if opt := sym.lsp.syncOption(); opt != nil {
-			endline := 0
-			if data != nil {
-				endline = len(data)
-			} else if data, err := os.ReadFile(sym.Filename); err == nil {
-				endline = len(strings.Split(string(data), "\n"))
-			} else {
-				return err
-			}
-			if data == nil {
-				return fmt.Errorf("data is nil")
+			var Start, End lsp.Position
+			changeevents := []lsp.TextDocumentContentChangeEvent{}
+			var data []byte
+			if event.Full {
+				endline := len(event.Data)
+				if endline == 0 {
+					if d, err := os.ReadFile(sym.Filename); err == nil {
+						endline = len(strings.Split(string(data), "\n"))
+						data = d
+					} else {
+						return err
+					}
+				} else {
+					data = event.Data
+				}
+				Start = lsp.Position{
+					Line:      0,
+					Character: 0,
+				}
+				End = lsp.Position{
+					Line:      endline - 1,
+					Character: 0,
+				}
+				changeevents = []lsp.TextDocumentContentChangeEvent{{
+					Range: &lsp.Range{
+						Start: Start,
+						End:   End,
+					},
+					Text: string(data),
+				}}
 			}
 			if opt.Change != lsp.TextDocumentSyncKindNone {
-				return sym.lsp.DidChange(sym.Filename, 1, []lsp.TextDocumentContentChangeEvent{
-					{
-						Range: &lsp.Range{
-							Start: lsp.Position{
-								Line:      0,
-								Character: 0,
-							},
-							End: lsp.Position{
-								Line:      endline - 1,
-								Character: 0,
-							},
-						},
-						Text: string(data),
-					},
-				})
+				sym.verison++
+				return sym.lsp.DidChange(sym.Filename, sym.verison, changeevents)
 			} else {
 				return fmt.Errorf("TextDocumentSyncKindNone is None")
 			}

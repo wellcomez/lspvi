@@ -44,22 +44,24 @@ func (check *code_change_cheker) after(code *CodeView) lspcore.CodeChangeEvent {
 		switch event.EventType {
 		case femto.TextEventInsert:
 			name = "insert"
-			ret = newFunction1(lspcore.TextChangeTypeInsert, event, ret)
+			newFunction1(&ret, lspcore.TextChangeTypeInsert, event)
 		case femto.TextEventRemove:
 			name = "remove"
-			ret = newFunction1(lspcore.TextChangeTypeDeleted, event, ret)
+			newFunction1(&ret, lspcore.TextChangeTypeDeleted, event)
 		case femto.TextEventReplace:
 			name = "replace"
-			ret = newFunction1(lspcore.TextChangeTypeReplace, event, ret)
+			newFunction1(&ret, lspcore.TextChangeTypeReplace, event)
 		default:
-			return ret
+		}
+		if len(ret.Events) > 0 {
+			code.on_content_changed(ret)
 		}
 		log.Println("editor event", name, event.Deltas)
 	}
 	return ret
 }
 
-func newFunction1(changetype lspcore.TextChangeType, event *femto.TextEvent, ret lspcore.CodeChangeEvent) lspcore.CodeChangeEvent {
+func newFunction1(ret *lspcore.CodeChangeEvent, changetype lspcore.TextChangeType, event *femto.TextEvent) {
 	for _, v := range event.Deltas {
 		a := lspcore.TextChangeEvent{
 			Type: changetype,
@@ -71,9 +73,8 @@ func newFunction1(changetype lspcore.TextChangeType, event *femto.TextEvent, ret
 					Line: v.End.Y, Character: v.End.X},
 			},
 		}
-		ret = append(ret, a)
+		ret.Events = append(ret.Events, a)
 	}
-	return ret
 }
 func (check *code_change_cheker) newMethod(code *CodeView) (bool, int) {
 	after_lineno := code.view.Cursor.Loc.Y
@@ -101,7 +102,8 @@ func (check *code_change_cheker) newMethod(code *CodeView) (bool, int) {
 }
 
 type lspchange struct {
-	code *CodeView
+	code  *CodeView
+	event lspcore.CodeChangeEvent
 }
 type lspchange_queue struct {
 	wait_queue []lspchange
@@ -114,20 +116,22 @@ var lsp_queue = lspchange_queue{
 	lspchange: make(chan int),
 }
 
-func (q *lspchange_queue) AddQuery(c *CodeView,event lspcore.CodeChangeEvent) {
+func (q *lspchange_queue) AddQuery(c *CodeView, event lspcore.CodeChangeEvent) {
 	if !q.start {
 		q.start = true
 		go q.Worker()
 	}
 	q.lock.Lock()
 	defer q.lock.Unlock()
-	for _, v := range q.wait_queue {
+	for i := range q.wait_queue {
+		v := q.wait_queue[i]
 		if v.code == c {
 			log.Println("skip")
+			v.event.Full = true
 			return
 		}
 	}
-	q.wait_queue = append(q.wait_queue, lspchange{c})
+	q.wait_queue = append(q.wait_queue, lspchange{c, event})
 	if len(q.wait_queue) > 0 {
 		q.lspchange <- len(q.wait_queue)
 	}
@@ -139,7 +143,7 @@ func (q *lspchange_queue) Worker() {
 		case <-q.lspchange:
 			data := empty_queue(q)
 			for _, v := range data {
-				v.code.update_ts()
+				v.code.update_ts(v.event)
 			}
 		}
 	}
@@ -154,19 +158,25 @@ func empty_queue(q *lspchange_queue) []lspchange {
 	return ret
 }
 
-func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
-	go GlobalApp.QueueUpdateDraw(func() {
-		code.tree_sitter = ts
-		code.set_color()
-		if code.main != nil {
-			if len(ts.Outline) > 0 {
-				if ts.DefaultOutline() {
-					code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-
-				} else {
-					code.main.OnSymbolistChanged(nil, nil)
-				}
-			}
-		}
+func (code *CodeView) on_content_changed(event lspcore.CodeChangeEvent) {
+	lsp_queue.AddQuery(code, event)
+}
+func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
+	data := []byte{}
+	for i := 0; i < code.view.Buf.LinesNum(); i++ {
+		data = append(data, code.view.Buf.LineBytes(i)...)
+		data = append(data, '\n')
+	}
+	if event.Full {
+		event.Data = data
+	}
+	if code.lspsymbol != nil {
+		code.lspsymbol.NotifyCodeChange(event)
+	}
+	var ts = event
+	ts.Data = data
+	var new_ts = lspcore.GetNewTreeSitter(code.Path(), ts)
+	new_ts.Init(func(ts *lspcore.TreeSitter) {
+		on_treesitter_update(code, ts)
 	})
 }

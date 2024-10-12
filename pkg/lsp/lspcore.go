@@ -114,7 +114,25 @@ const (
 	TextChangeTypeReplace = 3
 )
 
-type CodeChangeEvent []TextChangeEvent
+type TsPoint struct {
+	Row    uint32
+	Column uint32
+}
+type EditInput struct {
+	StartIndex  uint32
+	OldEndIndex uint32
+	NewEndIndex uint32
+	StartPoint  TsPoint
+	OldEndPoint TsPoint
+	NewEndPoint TsPoint
+}
+type CodeChangeEvent struct {
+	Events   []TextChangeEvent
+	TsEvents []EditInput
+	Full     bool
+	File     string
+	Data     []byte
+}
 type TextChangeEvent struct {
 	Text  string
 	Type  TextChangeType

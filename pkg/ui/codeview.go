@@ -358,7 +358,7 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 	}
 	if code.file.SamePath(file) {
 		if sym := code.LspSymbol(); sym != nil {
-			go sym.NotifyCodeChange(nil)
+			go sym.NotifyCodeChange(lspcore.CodeChangeEvent{Full: true})
 			offset := code.view.Topline
 			code.openfile(code.Path(), func(bool) {
 				code.view.Topline = offset
@@ -1535,28 +1535,29 @@ func (code *CodeView) openfile(filename string, onload func(newfile bool)) error
 	return nil
 }
 
-func (code *CodeView) on_content_changed(event lspcore.CodeChangeEvent) {
-	lsp_queue.AddQuery(code,event)
-}
-func (code *CodeView) update_ts() {
-	data := []byte{}
-	for i := 0; i < code.view.Buf.LinesNum(); i++ {
-		data = append(data, code.view.Buf.LineBytes(i)...)
-		data = append(data, '\n')
-	}
-	if code.lspsymbol != nil {
-		code.lspsymbol.NotifyCodeChange(data)
-	}
-	var new_ts = lspcore.GetNewTreeSitter(code.Path(), data)
-	new_ts.Init(func(ts *lspcore.TreeSitter) {
-		on_treesitter_update(code, ts)
+
+
+func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
+	go GlobalApp.QueueUpdateDraw(func() {
+		code.tree_sitter = ts
+		code.set_color()
+		if code.main != nil {
+			if len(ts.Outline) > 0 {
+				if ts.DefaultOutline() {
+					code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+
+				} else {
+					code.main.OnSymbolistChanged(nil, nil)
+				}
+			}
+		}
 	})
 }
 func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	b := code.view.Buf
 	b.Settings["syntax"] = false
 	code.tree_sitter = nil
-	if tree_sitter := lspcore.GetNewTreeSitter(filename, []byte{}); tree_sitter != nil {
+	if tree_sitter := lspcore.GetNewTreeSitter(filename, lspcore.CodeChangeEvent{}); tree_sitter != nil {
 		tree_sitter.Init(func(ts *lspcore.TreeSitter) {
 			go GlobalApp.QueueUpdate(func() {
 				code.tree_sitter = ts

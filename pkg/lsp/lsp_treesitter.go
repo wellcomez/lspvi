@@ -60,6 +60,36 @@ type TreeSitter struct {
 	tsdef      *ts_lang_def
 }
 
+// tree.Edit(sitter.EditInput{
+//     StartIndex:  32,  // Byte offset where the change starts
+//     OldEndIndex: 37,  // Byte offset where the old text ends
+//     NewEndIndex: 34,  // Byte offset where the new text ends
+// })
+
+// - `StartIndex` is 32, marking the start of the change.
+// - `OldEndIndex` is 37, marking the end of the original text `"Hello"`.
+// - `NewEndIndex` is 34, marking the end of the new text `"Hi"`.
+func (t *TreeSitter) EditChange(event CodeChangeEvent) {
+	for _, v := range event.TsEvents {
+		t.tree.Edit(sitter.EditInput{
+			StartIndex:  uint32(v.StartIndex),
+			OldEndIndex: uint32(v.OldEndIndex),
+			NewEndIndex: uint32(v.NewEndIndex),
+			StartPoint: sitter.Point{
+				Row:    v.StartPoint.Row,
+				Column: v.StartPoint.Column,
+			},
+			NewEndPoint: sitter.Point{
+				Row:    v.NewEndPoint.Row,
+				Column: v.NewEndPoint.Column,
+			},
+			OldEndPoint: sitter.Point{
+				Row:    v.OldEndPoint.Row,
+				Column: v.OldEndPoint.Column,
+			},
+		})
+	}
+}
 func TreesitterCheckIsSourceFile(filename string) bool {
 	for _, v := range tree_sitter_lang_map {
 		if v.filedetect.IsMe(filename) {
@@ -84,6 +114,7 @@ type ts_lang_def struct {
 	local           *sitter.Query
 	outline         *sitter.Query
 	default_outline bool
+	scm_loaded      bool
 }
 
 const query_highlights = "highlights"
@@ -106,14 +137,17 @@ func new_tsdef(
 		nil,
 		nil,
 		true,
+		false,
 	}
-	go func() {
-		ret.load_scm()
-	}()
+	// ret.load_scm()
 	return ret
 }
 
 func (ret *ts_lang_def) load_scm() {
+	if ret.scm_loaded {
+		return
+	}
+	ret.scm_loaded = true
 	if h, er := ret.query(query_highlights); er == nil {
 		ret.hl = h
 	} else {
@@ -488,6 +522,32 @@ func bash_parser(ts *TreeSitter, cb outlinecb) {
 }
 
 var tree_sitter_lang_map = []*ts_lang_def{
+	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(func(ts *TreeSitter, o outlinecb) {
+		rs_outline(ts, func(si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
+			if len(si) > 0 {
+				if content, err := os.ReadFile(si[0].Location.URI.AsPath().String()); err == nil {
+					lines := strings.Split(string(content), "\n")
+					ret := si
+					for _, v := range ret {
+						if is_class(v.Kind) {
+							line := lines[v.Location.Range.Start.Line]
+							if strings.Index(line, "interface") > 0 {
+								v.Kind = lsp.SymbolKindInterface
+							} else if strings.Index(line, "struct") > 0 {
+								v.Kind = lsp.SymbolKindStruct
+							}
+							continue
+						}
+					}
+					return ret
+				}
+			}
+			return si
+		})
+	}).set_default_outline(),
+	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}).setparser(rs_outline),
+	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()).setparser(rs_outline),
+	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()).setparser(rs_outline),
 	new_tsdef("lua", lsp_dummy{}, ts_lua.GetLanguage()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
@@ -528,32 +588,6 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("toml", lsp_dummy{}, ts_toml.GetLanguage()).set_ext([]string{"toml"}).setparser(rs_outline),
 	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(java_outline),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
-	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(func(ts *TreeSitter, o outlinecb) {
-		rs_outline(ts, func(si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
-			if len(si) > 0 {
-				if content, err := os.ReadFile(si[0].Location.URI.AsPath().String()); err == nil {
-					lines := strings.Split(string(content), "\n")
-					ret := si
-					for _, v := range ret {
-						if is_class(v.Kind) {
-							line := lines[v.Location.Range.Start.Line]
-							if strings.Index(line, "interface") > 0 {
-								v.Kind = lsp.SymbolKindInterface
-							}else if strings.Index(line, "struct") > 0 {
-								v.Kind = lsp.SymbolKindStruct
-							}
-							continue
-						}
-					}
-					return ret
-				}
-			}
-			return si
-		})
-	}).set_default_outline(),
-	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}).setparser(rs_outline),
-	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()).setparser(rs_outline),
-	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()).setparser(rs_outline),
 	new_tsdef(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}).setparser(rs_outline).set_default_outline(),
 	new_tsdef(ts_name_javascript, lsp_ts{LanguageID: string(JAVASCRIPT)}, ts_js.GetLanguage()).set_ext([]string{"js"}).setparser(rs_outline),
 	new_tsdef(ts_name_typescript, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, ts_ts.GetLanguage()).set_ext([]string{"ts"}).setparser(rs_outline),
@@ -571,6 +605,7 @@ func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	for i := range tree_sitter_lang_map {
 		v := tree_sitter_lang_map[i]
 		if ts_name := v.get_ts_name(t.filename.Path()); len(ts_name) > 0 {
+			v.load_scm()
 			t.tsdef = v
 			t.Loadfile(v.tslang, cb)
 			return nil
@@ -701,18 +736,21 @@ func (s SourceFile) Same(s1 SourceFile) bool {
 
 var loaded_files = make(map[string]*TreeSitter)
 
-func GetNewTreeSitter(name string, content []byte) *TreeSitter {
+func GetNewTreeSitter(name string, event CodeChangeEvent) *TreeSitter {
 	if len(name) == 0 {
 		return nil
 	}
-	if len(content) == 0 {
+	if len(event.Data) == 0 {
 		if ts, ok := loaded_files[name]; ok {
-			if ts.filename.Same(NewFile(name)) {
-				return ts
+			if !event.Full && len(event.TsEvents) > 0 {
+			} else {
+				if ts.filename.Same(NewFile(name)) {
+					return ts
+				}
 			}
 		}
 	}
-	v := NewTreeSitter(name, content)
+	v := NewTreeSitter(name, event.Data)
 	loaded_files[name] = v
 	return v
 }
