@@ -10,6 +10,7 @@ type log_level int
 const (
 	log_level_error log_level = iota
 	log_level_warn
+	log_level_info
 	log_level_debug
 )
 
@@ -17,14 +18,24 @@ var loglevel log_level = log_level_debug
 
 func commonprintln(debug, tag string, args ...interface{}) {
 	s := fmt.Sprint(args...)
-	log.Println(debug, tag, s)
+	log.Println(fmt.Sprintf("[%s][%s]", debug, tag), s)
 }
-func DebugLog(tag, format string, v ...any) {
+func DebugLog(tag string, v ...any) {
 	if loglevel >= log_level_debug {
 		commonprintln(tag, "DEBUG", v...)
 	}
 }
-func ErrorLog(tag, format string, v ...any) {
+func InfoLogf(tag, format string, v ...any) {
+	if loglevel >= log_level_info {
+		CommonLogf(tag, "INFO ", format, v...)
+	}
+}
+func InfoLog(tag string, v ...any) {
+	if loglevel >= log_level_info {
+		commonprintln(tag, "INFO ", v...)
+	}
+}
+func ErrorLog(tag string, v ...any) {
 	if loglevel >= log_level_error {
 		commonprintln(tag, "ERROR", v...)
 	}
