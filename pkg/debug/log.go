@@ -1,0 +1,55 @@
+package debug
+
+import (
+	"fmt"
+	"log"
+)
+
+type log_level int
+
+const (
+	log_level_error log_level = iota
+	log_level_warn
+	log_level_debug
+)
+
+var loglevel log_level = log_level_debug
+
+func commonprintln(debug, tag string, args ...interface{}) {
+	s := fmt.Sprint(args...)
+	log.Println(debug, tag, s)
+}
+func DebugLog(tag, format string, v ...any) {
+	if loglevel >= log_level_debug {
+		commonprintln(tag, "DEBUG", v...)
+	}
+}
+func ErrorLog(tag, format string, v ...any) {
+	if loglevel >= log_level_error {
+		commonprintln(tag, "ERROR", v...)
+	}
+}
+func WarnLog(tag string, v ...interface{}) {
+	if loglevel >= log_level_warn {
+		commonprintln(tag, "WARN ", v...)
+	}
+}
+func CommonLogf(debug, tag, format string, v ...any) {
+	s := fmt.Sprintf(format, v...)
+	log.Println(debug, tag, s)
+}
+func DebugLogf(tag, format string, v ...any) {
+	if loglevel >= log_level_debug {
+		CommonLogf(tag, "DEBUG", format, v...)
+	}
+}
+func ErrorLogf(tag, format string, v ...any) {
+	if loglevel >= log_level_error {
+		CommonLogf(tag, "ERROR", format, v...)
+	}
+}
+func WarnLogf(tag, format string, v ...any) {
+	if loglevel >= log_level_warn {
+		CommonLogf(tag, "WARN ", format, v...)
+	}
+}
