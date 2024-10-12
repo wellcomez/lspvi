@@ -360,7 +360,8 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 	}
 	if code.file.SamePath(file) {
 		if sym := code.LspSymbol(); sym != nil {
-			go sym.NotifyCodeChange(lspcore.CodeChangeEvent{Full: true})
+			x := code.LspContentFullChangeEvent()
+			go sym.NotifyCodeChange(x)
 			offset := code.view.Topline
 			code.openfile(code.Path(), func(bool) {
 				code.view.Topline = offset
@@ -373,6 +374,11 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 		return true
 	}
 	return false
+}
+
+func (c CodeView) LspContentFullChangeEvent() lspcore.CodeChangeEvent {
+	x := lspcore.CodeChangeEvent{Full: true, File: c.Path()}
+	return x
 }
 
 func (code CodeView) Path() string {
@@ -1155,7 +1161,7 @@ func (code *CodeView) pasteline(line bool) {
 			x.Buf.LineArray.NewlineBelow(lineno)
 			x.Cursor.Loc = femto.Loc{X: 0, Y: lineno + 1}
 			x.Paste()
-			code.on_content_changed(lspcore.CodeChangeEvent{})
+			code.on_content_changed(code.LspContentFullChangeEvent())
 		}
 	}
 }
@@ -1449,12 +1455,15 @@ func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 }
 func (c CodeView) async_lsp_open(cb func(sym *lspcore.Symbol_file)) {
 	file := c.Path()
-	var buffer []string
-	for i := 0; i < c.view.Buf.NumLines; i++ {
-		buffer = append(buffer, c.view.Buf.Line(i))
-	}
+	// var buffer []string
+	// for i := 0; i < c.view.Buf.NumLines; i++ {
+	// 	buffer = append(buffer, c.view.Buf.Line(i))
+	// }
 	m := c.main
-	symbolfile, err := m.Lspmgr().OpenBuffer(file, strings.Join(buffer, "\n"))
+	symbolfile, err := m.Lspmgr().Open(file)
+	if symbolfile==nil{
+		log.Println(err)
+	}
 	if err == nil {
 		symbolfile.LoadSymbol(false)
 		m.App().QueueUpdate(func() {
@@ -1578,7 +1587,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	b := code.view.Buf
 	b.Settings["syntax"] = false
 	code.tree_sitter = nil
-	if tree_sitter := lspcore.GetNewTreeSitter(filename, lspcore.CodeChangeEvent{}); tree_sitter != nil {
+	if tree_sitter := lspcore.GetNewTreeSitter(filename, code.LspContentFullChangeEvent()); tree_sitter != nil {
 		tree_sitter.Init(func(ts *lspcore.TreeSitter) {
 			go GlobalApp.QueueUpdate(func() {
 				code.tree_sitter = ts

@@ -35,7 +35,8 @@ func new_code_change_checker(code *CodeView) code_change_cheker {
 func (check *code_change_cheker) after(code *CodeView) lspcore.CodeChangeEvent {
 	event := code.view.Buf.UndoStack.Peek()
 	check.new = event
-	ret := lspcore.CodeChangeEvent{}
+	ret := code.LspContentFullChangeEvent()
+	ret.Full = false
 	if check.old != check.new {
 		if event == nil {
 			return ret
@@ -117,6 +118,9 @@ var lsp_queue = lspchange_queue{
 }
 
 func (q *lspchange_queue) AddQuery(c *CodeView, event lspcore.CodeChangeEvent) {
+	if len(event.File) == 0 {
+		log.Println("lsp_queue.AddQuery: empty filename")
+	}
 	if !q.start {
 		q.start = true
 		go q.Worker()
@@ -162,6 +166,7 @@ func (code *CodeView) on_content_changed(event lspcore.CodeChangeEvent) {
 	lsp_queue.AddQuery(code, event)
 }
 func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
+	// event.Full = true
 	data := []byte{}
 	for i := 0; i < code.view.Buf.LinesNum(); i++ {
 		data = append(data, code.view.Buf.LineBytes(i)...)
@@ -177,7 +182,7 @@ func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
 	ts.Data = data
 	var new_ts = lspcore.GetNewTreeSitter(code.Path(), ts)
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
-		if code.lspsymbol!=nil{
+		if code.lspsymbol != nil {
 			code.lspsymbol.LspLoadSymbol()
 		}
 		on_treesitter_update(code, ts)

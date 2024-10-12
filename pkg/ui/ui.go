@@ -238,7 +238,7 @@ func (main *mainui) OnWatchFileChange(file string, event fsnotify.Event) bool {
 			}
 		}
 		if sym, _ := main.lspmgr.Get(file); sym != nil {
-			sym.NotifyCodeChange(lspcore.CodeChangeEvent{Full: true})
+			sym.NotifyCodeChange(lspcore.CodeChangeEvent{Full: true,File: file})
 			return true
 		}
 	}
