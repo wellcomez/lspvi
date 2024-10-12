@@ -121,6 +121,11 @@ func (l lsp_lang_go) InitializeLsp(core *lspcore, wk WorkSpace) error {
 	if core.inited {
 		return nil
 	}
+	core.lock.Lock()
+	defer core.lock.Unlock()
+	if core.inited {
+		return nil
+	}
 	defaultCapabilities := map[string]interface{}{
 		"textDocument": map[string]interface{}{
 			"completion": map[string]interface{}{
