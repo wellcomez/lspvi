@@ -878,21 +878,25 @@ func (code *codetextview) xOffset() int64 {
 //		x := field.Int()
 //		return x
 //	}
-type linechange_checker struct {
+type code_change_cheker struct {
 	lineno int
 	next   string
 	cur    string
+	old    *femto.TextEvent
+	new    *femto.TextEvent
 }
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// prev := get_line_content(lineno, code)
-	var status1 = new_linechange_checker(code)
+	var status1 = new_code_change_checker(code)
 	if code.insert {
 		if h, ok := code.key_map[event.Key()]; ok {
 			h(code)
 			return nil
 		}
+		checker := new_code_change_checker(code)
 		code.view.HandleEvent(event)
+		checker.after(code)
 		code.on_content_changed()
 		return nil
 	} else {
@@ -902,7 +906,7 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
-func new_linechange_checker(code *CodeView) linechange_checker {
+func new_code_change_checker(code *CodeView) code_change_cheker {
 	lineno := code.view.Cursor.Loc.Y
 	next := get_line_content(lineno+1, code.view.Buf)
 	cur := get_line_content(lineno, code.view.Buf)
@@ -913,10 +917,26 @@ func new_linechange_checker(code *CodeView) linechange_checker {
 			code.diff = &Differ{Buf.Lines(0, end), -1}
 		}
 	}
-	return linechange_checker{lineno: lineno, next: next, cur: cur}
+	event := code.view.Buf.UndoStack.Peek()
+	return code_change_cheker{lineno: lineno, next: next, cur: cur, old: event}
 }
 
-func (check *linechange_checker) after(code *CodeView) int {
+func (check *code_change_cheker) after(code *CodeView) int {
+	event := code.view.Buf.UndoStack.Peek()
+	check.new = event
+	if check.old != check.new {
+		if event == nil {
+			return -1
+		}
+		switch event.EventType {
+		case femto.TextEventInsert:
+
+		}
+	}
+	return -1
+}
+
+func (check *code_change_cheker) newMethod(code *CodeView) (bool, int) {
 	after_lineno := code.view.Cursor.Loc.Y
 	next := check.next
 	lineno := check.lineno
@@ -924,21 +944,21 @@ func (check *linechange_checker) after(code *CodeView) int {
 	if after_lineno+1 == lineno {
 		code.view.bookmark.after_line_changed(lineno, false)
 		code.udpate_modified_lines(lineno)
-		return lineno
+		return true, lineno
 	} else if after_lineno == lineno {
-		if after_cur == next { //delete line
+		if after_cur == next {
 			code.view.bookmark.after_line_changed(lineno+1, false)
 			code.udpate_modified_lines(lineno)
 		} else if after_cur != check.cur {
 			code.udpate_modified_lines(lineno)
-			return lineno
+			return true, lineno
 		}
 	} else if after_lineno == lineno+1 {
 		code.view.bookmark.after_line_changed(lineno+1, true)
 		code.udpate_modified_lines(lineno + 1)
-		return after_lineno
+		return true, after_lineno
 	}
-	return -1
+	return false, 0
 }
 
 func (code *CodeView) udpate_modified_lines(lineno int) {
@@ -1165,7 +1185,7 @@ func (code *CodeView) Save() error {
 	return os.WriteFile(code.Path(), []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
-	checker := new_linechange_checker(code)
+	checker := new_code_change_checker(code)
 	code.view.Undo()
 	checker.after(code)
 	code.on_content_changed()
@@ -1175,7 +1195,7 @@ func (code *CodeView) deleteword() {
 	code.on_content_changed()
 }
 func (code *CodeView) deleteline() {
-	checker := new_linechange_checker(code)
+	checker := new_code_change_checker(code)
 	code.view.CutLine()
 	checker.after(code)
 	code.on_content_changed()
