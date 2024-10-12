@@ -18,6 +18,8 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+
+	"zen108.com/lspvi/pkg/debug"
 	// "github.com/gdamore/tcell"
 )
 
@@ -156,7 +158,7 @@ func (q *CodeOpenQueue) OpenFileHistory(filename string, line *lsp.Location) {
 func (queue *CodeOpenQueue) enqueue(req EditorOpenArgument) {
 	queue.replace_data(req)
 	queue.open <- true
-	log.Println("cqdebug", "enqueue", ":", queue.skip(), "open", queue.open_count, "req", queue.req_count)
+	debug.DebugLog("cqdebug", "enqueue", ":", queue.skip(), "open", queue.open_count, "req", queue.req_count)
 }
 func (queue *CodeOpenQueue) dequeue() *EditorOpenArgument {
 	queue.mutex.Lock()
@@ -175,12 +177,12 @@ func (queue *CodeOpenQueue) Work() {
 	for {
 		select {
 		case <-queue.close:
-			log.Println("cqdebug", "cq Close-------")
+			debug.DebugLog("cqdebug", "cq Close-------")
 			return
 		case <-queue.open:
 			{
 				skip := queue.skip()
-				log.Println("cqdebug", "denqueue", ":", skip, "open", queue.open_count, "req", queue.req_count)
+				debug.DebugLog("cqdebug", "denqueue", ":", skip, "open", queue.open_count, "req", queue.req_count)
 				if !skip {
 					e := queue.dequeue()
 					if e != nil {
@@ -1448,6 +1450,8 @@ func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
 	return r, nil
 }
 
+// Println calls Output to print to the standard logger.
+// Arguments are handled in the manner of fmt.Println.
 func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	b.SetTitleAlign(tview.AlignLeft)
 	b.SetTitle(title)
@@ -1461,8 +1465,8 @@ func (c CodeView) async_lsp_open(cb func(sym *lspcore.Symbol_file)) {
 	// }
 	m := c.main
 	symbolfile, err := m.Lspmgr().Open(file)
-	if symbolfile==nil{
-		log.Println(err)
+	if symbolfile == nil {
+		debug.ErrorLog(lspcore.DebugTag, "no symbol file ", err)
 	}
 	if err == nil {
 		symbolfile.LoadSymbol(false)
