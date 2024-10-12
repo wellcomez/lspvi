@@ -155,7 +155,7 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 		}
 		log.Println(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
 		var r2 TextDocumentSyncOptions2
-		if err = json.Unmarshal(data, &r); err == nil {
+		if err = json.Unmarshal(data, &r2); err == nil {
 			core.sync = &TextDocumentSyncOptions{
 				OpenClose: r2.OpenClose,
 				save_bool: r2.Save,
@@ -164,7 +164,6 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 			return
 
 		}
-	} else {
 		log.Println(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
 	}
 }
