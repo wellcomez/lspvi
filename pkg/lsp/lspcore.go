@@ -196,8 +196,8 @@ func (client *lspcore) DidClose(file string) error {
 	return client.conn.Notify(context.Background(), "textDocument/didClose", param)
 }
 
-func (core *lspcore) DidOpen(file string,version int) error {
-	x, err := core.newTextDocument(file,version)
+func (core *lspcore) DidOpen(file string, version int) error {
+	x, err := core.newTextDocument(file, version)
 	if err != nil {
 		return err
 	}
@@ -208,13 +208,15 @@ func (core *lspcore) DidOpen(file string,version int) error {
 }
 func (core *lspcore) DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error {
 	Method := "textDocument/didChange"
-	err := core.conn.Notify(context.Background(), Method, lsp.DidChangeTextDocumentParams{
+	data := lsp.DidChangeTextDocumentParams{
 		TextDocument: lsp.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(file)},
 			Version:                verion,
 		},
 		ContentChanges: ContentChanges,
-	})
+	}
+	err := core.conn.Notify(context.Background(), Method, data)
+	log.Println("cqdebug",data)
 	return err
 }
 func (core *lspcore) DidSave(file string, text string) error {
@@ -225,7 +227,7 @@ func (core *lspcore) DidSave(file string, text string) error {
 	return err
 }
 
-func (core *lspcore) newTextDocument(file string,version int) (lsp.TextDocumentItem, error) {
+func (core *lspcore) newTextDocument(file string, version int) (lsp.TextDocumentItem, error) {
 	content, err := os.ReadFile(file)
 	if err != nil {
 		return lsp.TextDocumentItem{}, err
