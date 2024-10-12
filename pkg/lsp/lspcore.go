@@ -14,6 +14,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 	"github.com/tectiv3/go-lsp/jsonrpc"
+	"zen108.com/lspvi/pkg/debug"
 
 	// "github.com/tectiv3/go-lsp/jsonrpc"
 	"go.bug.st/json"
@@ -45,6 +46,8 @@ type lspcore struct {
 	sync *TextDocumentSyncOptions
 	lock sync.Mutex
 }
+
+const DebugTag = "LSPCORE"
 
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 
@@ -218,7 +221,7 @@ func (core *lspcore) DidChange(file string, verion int, ContentChanges []lsp.Tex
 		ContentChanges: ContentChanges,
 	}
 	err := core.conn.Notify(context.Background(), Method, data)
-	log.Println("cqdebug", data.TextDocument)
+	debug.DebugLog(DebugTag, data.TextDocument)
 	return err
 }
 func (core *lspcore) DidSave(file string, text string) error {

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type Symbol_file struct {
@@ -404,7 +405,7 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 					Character: 0,
 				}
 				if End.Line == 0 {
-					log.Println("")
+					debug.ErrorLog(DebugTag, "notify_code_change", "empty data", event)
 				}
 				changeevents = []lsp.TextDocumentContentChangeEvent{{
 					Range: &lsp.Range{
@@ -427,7 +428,7 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 			}
 			if opt.Change != lsp.TextDocumentSyncKindNone {
 				sym.verison++
-				log.Println("cqdebug", "didchange", changeevents[0].String())
+				debug.DebugLog("cqdebug", "didchange", changeevents[0].String())
 				return sym.lsp.DidChange(sym.Filename, sym.verison, changeevents)
 			} else {
 				return fmt.Errorf("TextDocumentSyncKindNone is None")
