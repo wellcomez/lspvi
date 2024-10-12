@@ -876,15 +876,8 @@ func (code *codetextview) xOffset() int64 {
 //		v := reflect.ValueOf(code.view).Elem()
 //		field := v.FieldByName("lineNumOffset")
 //		x := field.Int()
-//		return x
+//		return xjj
 //	}
-type code_change_cheker struct {
-	lineno int
-	next   string
-	cur    string
-	old    *femto.TextEvent
-	new    *femto.TextEvent
-}
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// prev := get_line_content(lineno, code)
@@ -897,68 +890,13 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		checker := new_code_change_checker(code)
 		code.view.HandleEvent(event)
 		checker.after(code)
-		code.on_content_changed()
+		// code.on_content_changed()
 		return nil
 	} else {
 		event = code.handle_key_impl(event)
 	}
 	status1.after(code)
 	return event
-}
-
-func new_code_change_checker(code *CodeView) code_change_cheker {
-	lineno := code.view.Cursor.Loc.Y
-	next := get_line_content(lineno+1, code.view.Buf)
-	cur := get_line_content(lineno, code.view.Buf)
-	if code.diff != nil {
-		if len(code.diff.bufer) == 0 {
-			Buf := code.view.Buf
-			end := Buf.LinesNum()
-			code.diff = &Differ{Buf.Lines(0, end), -1}
-		}
-	}
-	event := code.view.Buf.UndoStack.Peek()
-	return code_change_cheker{lineno: lineno, next: next, cur: cur, old: event}
-}
-
-func (check *code_change_cheker) after(code *CodeView) int {
-	event := code.view.Buf.UndoStack.Peek()
-	check.new = event
-	if check.old != check.new {
-		if event == nil {
-			return -1
-		}
-		switch event.EventType {
-		case femto.TextEventInsert:
-
-		}
-	}
-	return -1
-}
-
-func (check *code_change_cheker) newMethod(code *CodeView) (bool, int) {
-	after_lineno := code.view.Cursor.Loc.Y
-	next := check.next
-	lineno := check.lineno
-	after_cur := get_line_content(after_lineno, code.view.Buf)
-	if after_lineno+1 == lineno {
-		code.view.bookmark.after_line_changed(lineno, false)
-		code.udpate_modified_lines(lineno)
-		return true, lineno
-	} else if after_lineno == lineno {
-		if after_cur == next {
-			code.view.bookmark.after_line_changed(lineno+1, false)
-			code.udpate_modified_lines(lineno)
-		} else if after_cur != check.cur {
-			code.udpate_modified_lines(lineno)
-			return true, lineno
-		}
-	} else if after_lineno == lineno+1 {
-		code.view.bookmark.after_line_changed(lineno+1, true)
-		code.udpate_modified_lines(lineno + 1)
-		return true, after_lineno
-	}
-	return false, 0
 }
 
 func (code *CodeView) udpate_modified_lines(lineno int) {
@@ -1188,21 +1126,21 @@ func (code *CodeView) Undo() {
 	checker := new_code_change_checker(code)
 	code.view.Undo()
 	checker.after(code)
-	code.on_content_changed()
+	code.on_content_changed(lspcore.CodeChangeEvent{})
 }
 func (code *CodeView) deleteword() {
 	code.view.DeleteWordRight()
-	code.on_content_changed()
+	// code.on_content_changed()
 }
 func (code *CodeView) deleteline() {
 	checker := new_code_change_checker(code)
 	code.view.CutLine()
 	checker.after(code)
-	code.on_content_changed()
+	// code.on_content_changed()
 }
 func (code *CodeView) deltext() {
 	code.view.Delete()
-	code.on_content_changed()
+	// code.on_content_changed()
 }
 func (code *CodeView) pasteline(line bool) {
 	if line {
@@ -1212,7 +1150,7 @@ func (code *CodeView) pasteline(line bool) {
 			x.Buf.LineArray.NewlineBelow(lineno)
 			x.Cursor.Loc = femto.Loc{X: 0, Y: lineno + 1}
 			x.Paste()
-			code.on_content_changed()
+			code.on_content_changed(lspcore.CodeChangeEvent{})
 		}
 	}
 }
@@ -1597,53 +1535,8 @@ func (code *CodeView) openfile(filename string, onload func(newfile bool)) error
 	return nil
 }
 
-type lspchange struct {
-	code *CodeView
-}
-type lspchange_queue struct {
-	wait_queue []lspchange
-	lspchange  chan int
-	lock       sync.Mutex
-	start      bool
-}
-
-var lsp_queue = lspchange_queue{
-	lspchange: make(chan int),
-}
-
-func (q *lspchange_queue) AddQuery(c *CodeView) {
-	if !q.start {
-		q.start = true
-		go q.Worker()
-	}
-	q.lock.Lock()
-	defer q.lock.Unlock()
-	for _, v := range q.wait_queue {
-		if v.code == c {
-			log.Println("skip")
-			return
-		}
-	}
-	q.wait_queue = append(q.wait_queue, lspchange{c})
-	if len(q.wait_queue) > 0 {
-		q.lspchange <- len(q.wait_queue)
-	}
-
-}
-func (q *lspchange_queue) Worker() {
-	for {
-		select {
-		case <-q.lspchange:
-			data := empty_queue(q)
-			for _, v := range data {
-				v.code.update_ts()
-			}
-		}
-	}
-}
-
-func (code *CodeView) on_content_changed() {
-	lsp_queue.AddQuery(code)
+func (code *CodeView) on_content_changed(event lspcore.CodeChangeEvent) {
+	lsp_queue.AddQuery(code,event)
 }
 func (code *CodeView) update_ts() {
 	data := []byte{}
@@ -1657,32 +1550,6 @@ func (code *CodeView) update_ts() {
 	var new_ts = lspcore.GetNewTreeSitter(code.Path(), data)
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
 		on_treesitter_update(code, ts)
-	})
-}
-
-func empty_queue(q *lspchange_queue) []lspchange {
-	var ret []lspchange
-	q.lock.Lock()
-	ret = q.wait_queue
-	q.wait_queue = []lspchange{}
-	q.lock.Unlock()
-	return ret
-}
-
-func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
-	go GlobalApp.QueueUpdateDraw(func() {
-		code.tree_sitter = ts
-		code.set_color()
-		if code.main != nil {
-			if len(ts.Outline) > 0 {
-				if ts.DefaultOutline() {
-					code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-
-				} else {
-					code.main.OnSymbolistChanged(nil, nil)
-				}
-			}
-		}
 	})
 }
 func (code *CodeView) __load_in_main(filename string, data []byte) error {

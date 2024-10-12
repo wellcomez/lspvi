@@ -99,6 +99,28 @@ func (core *lspcore) Initialized() error {
 	return core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{}, &result)
 	// return nil
 }
+
+type FileChangeType int
+type TextChangeType int
+
+const (
+	FileChangeTypeCreated = 1
+	FileChangeTypeChanged = 2
+	FileChangeTypeDeleted = 3
+)
+const (
+	TextChangeTypeInsert  = 1
+	TextChangeTypeDeleted = 2
+	TextChangeTypeReplace = 3
+)
+
+type CodeChangeEvent []TextChangeEvent
+type TextChangeEvent struct {
+	Text  string
+	Type  TextChangeType
+	Range lsp.Range
+}
+
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1
 	// 发送initialize请求
@@ -118,10 +140,6 @@ func (core *lspcore) Progress_notify() error {
 	params := &lsp.ProgressParams{}
 	return core.conn.Notify(context.Background(), "$/progress", params)
 }
-
-const FileChangeTypeCreated = 1
-const FileChangeTypeChanged = 2
-const FileChangeTypeDeleted = 3
 
 func (core *lspcore) WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error {
 	param := lsp.DidChangeWatchedFilesParams{

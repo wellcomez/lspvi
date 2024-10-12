@@ -53,7 +53,7 @@ func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen
 		begin = code_navbar_draw_runne(screen, begin, y, ' ', *textStyle)
 
 		x1 := code.FileName()
-		x1 = strings.ReplaceAll(x1, "/", " > ")+" > "
+		x1 = strings.ReplaceAll(x1, "/", " > ") + " > "
 		for _, v := range x1 {
 			begin = code_navbar_draw_runne(
 				screen, begin, y, v, *textStyle)
