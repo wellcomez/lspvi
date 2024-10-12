@@ -175,7 +175,7 @@ func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	if err != nil {
 		return
 	}
-	if len(loc)>0{
+	if len(loc) > 0 {
 		sym.Handle.OnFileChange(loc, line)
 	}
 }
@@ -387,8 +387,8 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 				endline := len(event.Data)
 				if endline == 0 {
 					if d, err := os.ReadFile(sym.Filename); err == nil {
-						endline = len(strings.Split(string(data), "\n"))
 						data = d
+						endline = len(strings.Split(string(data), "\n"))
 					} else {
 						return err
 					}
@@ -403,6 +403,9 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 					Line:      endline - 1,
 					Character: 0,
 				}
+				if End.Line == 0 {
+					log.Println("")
+				}
 				changeevents = []lsp.TextDocumentContentChangeEvent{{
 					Range: &lsp.Range{
 						Start: Start,
@@ -412,6 +415,9 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 				}}
 			} else {
 				for _, v := range event.Events {
+					if v.Range.End.Line == 0 {
+						log.Println("")
+					}
 					e := lsp.TextDocumentContentChangeEvent{
 						Range: &v.Range,
 						Text:  v.Text,
