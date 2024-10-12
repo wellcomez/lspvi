@@ -1,11 +1,11 @@
 package mainui
 
 import (
-	"log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type select_result struct {
@@ -83,7 +83,7 @@ func (sel *selectarea) handle_mouse_selection(action tview.MouseAction,
 			sel.mouse_select_area = true
 			sel.end = pos
 			sel.start = pos
-			log.Println("down", sel.start, pos)
+			debug.TraceLog("down", sel.start, pos)
 			for _, v := range sel.observer {
 				v.on_select_beigin(sel)
 			}
@@ -95,7 +95,7 @@ func (sel *selectarea) handle_mouse_selection(action tview.MouseAction,
 				sel.order()
 				sel.alloc()
 				drawit = true
-				log.Println("move", sel.start, pos)
+				debug.TraceLog("move", sel.start, pos)
 				for _, v := range sel.observer {
 					v.on_select_move(sel)
 				}
@@ -109,7 +109,7 @@ func (sel *selectarea) handle_mouse_selection(action tview.MouseAction,
 				sel.mouse_select_area = false
 				sel.alloc()
 				drawit = true
-				log.Println("up", sel.start, pos)
+				debug.TraceLog("up", sel.start, pos)
 				for _, v := range sel.observer {
 					v.on_select_end(sel)
 				}
@@ -154,7 +154,7 @@ func (l *list_multi_select) on_select_beigin(sel *selectarea) bool {
 	_, top, _, _ := view.GetInnerRect()
 	if view.InInnerRect(sel.start.X, sel.start.Y) {
 		l.sel = sel
-		log.Println("qf index begin", sel.start.Y-top)
+		debug.DebugLog("qf index begin", sel.start.Y-top)
 	} else {
 		l.sel = nil
 	}
@@ -170,7 +170,7 @@ func (l *list_multi_select) on_select_end(sel *selectarea) bool {
 		l.sel = sel
 	}
 	if l.sel != nil {
-		log.Println("qf index move", sel.start.Y-top, sel.end.Y-top)
+		debug.TraceLog("qf index move", sel.start.Y-top, sel.end.Y-top)
 	}
 	l.update_select_item()
 	return l.sel != nil
@@ -184,7 +184,7 @@ func (l *list_multi_select) on_select_move(sel *selectarea) bool {
 		l.sel = sel
 	}
 	if l.sel != nil {
-		log.Println("qf index end", sel.start.Y-top, sel.end.Y-top)
+		debug.TraceLog("qf index end", sel.start.Y-top, sel.end.Y-top)
 	}
 	l.update_select_item()
 	return l.sel != nil

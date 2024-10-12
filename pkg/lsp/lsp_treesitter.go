@@ -423,7 +423,7 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 						case "function_definition", "function_declaration", "function_item":
 							c.Kind = lsp.SymbolKindFunction
 						default:
-							log.Printf("query_result:%s| symbol:%20s    | code:%20s", item.SymbolName, item.Symbol, item.Code)
+							debug.TraceLogf("query_result:%s| symbol:%20s    | code:%20s", item.SymbolName, item.Symbol, item.Code)
 						}
 						items = append(items, &c)
 					}
