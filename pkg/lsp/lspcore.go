@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
@@ -42,6 +43,7 @@ type lspcore struct {
 
 	lang lsplang
 	sync *TextDocumentSyncOptions
+	lock sync.Mutex
 }
 
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
@@ -241,7 +243,7 @@ func (core *lspcore) newTextDocument(file string, version int, content string) (
 		Text:       content,
 		Version:    version,
 	}
-	return x,nil 
+	return x, nil
 }
 func (core *lspcore) document_semantictokens_full(file string) (*lsp.SemanticTokens, error) {
 	params := lsp.SemanticTokensParams{
