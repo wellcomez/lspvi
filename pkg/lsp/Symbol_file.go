@@ -379,8 +379,8 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 		if opt := sym.lsp.syncOption(); opt != nil {
 			var Start, End lsp.Position
 			changeevents := []lsp.TextDocumentContentChangeEvent{}
-			var data []byte
 			if event.Full {
+				var data []byte
 				endline := len(event.Data)
 				if endline == 0 {
 					if d, err := os.ReadFile(sym.Filename); err == nil {
@@ -407,6 +407,14 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 					},
 					Text: string(data),
 				}}
+			} else {
+				for _, v := range event.Events {
+					e := lsp.TextDocumentContentChangeEvent{
+						Range: &v.Range,
+						Text:  v.Text,
+					}
+					changeevents = append(changeevents, e)
+				}
 			}
 			if opt.Change != lsp.TextDocumentSyncKindNone {
 				sym.verison++
