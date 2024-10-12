@@ -530,7 +530,7 @@ func NewCodeView(main MainService) *CodeView {
 	root := new_codetext_view(buffer)
 	root.SetRuntimeFiles(runtime.Files)
 	// root.SetColorscheme(colorscheme)
-
+	root.SetInputCapture(ret.handle_key)
 	root.SetMouseCapture(ret.handle_mouse)
 	ret.view = root
 	ret.InsertMode(false)
@@ -881,22 +881,16 @@ func (code *codetextview) xOffset() int64 {
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// prev := get_line_content(lineno, code)
-	var status1 = new_code_change_checker(code)
 	if code.insert {
 		if h, ok := code.key_map[event.Key()]; ok {
 			h(code)
 			return nil
 		}
-		checker := new_code_change_checker(code)
-		code.view.HandleEvent(event)
-		checker.after(code)
-		// code.on_content_changed()
-		return nil
-	} else {
-		event = code.handle_key_impl(event)
 	}
+	var status1 = new_code_change_checker(code)
+	code.view.HandleEvent(event)
 	status1.after(code)
-	return event
+	return nil
 }
 
 func (code *CodeView) udpate_modified_lines(lineno int) {
@@ -927,25 +921,26 @@ func (code *CodeView) run_command(cmdlist []cmditem, key string) bool {
 	}
 	return false
 }
-func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
-	if code.main == nil {
-		return event
-	}
-	if code.main.get_focus_view_id() != code.id {
-		return event
-	}
-	// ch := string(event.Rune())
-	if h, ok := code.key_map[event.Key()]; ok {
-		h(code)
-		return nil
-	}
-	// cur := code.view.Cursor
-	// log.Println("selection", cur.CurSelection[0], cur.CurSelection[1])
-	// if code.run_command(code.basic_vi_command, ch) {
-	// 	return nil
-	// }
-	return event
-}
+
+// func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
+// 	if code.main == nil {
+// 		return event
+// 	}
+// 	if code.main.get_focus_view_id() != code.id {
+// 		return event
+// 	}
+// 	// ch := string(event.Rune())
+// 	if h, ok := code.key_map[event.Key()]; ok {
+// 		h(code)
+// 		return nil
+// 	}
+// 	// cur := code.view.Cursor
+// 	// log.Println("selection", cur.CurSelection[0], cur.CurSelection[1])
+// 	// if code.run_command(code.basic_vi_command, ch) {
+// 	// 	return nil
+// 	// }
+// 	return event
+// }
 
 type vmap_select_context struct {
 	cursor femto.Cursor
@@ -1534,8 +1529,6 @@ func (code *CodeView) openfile(filename string, onload func(newfile bool)) error
 	}()
 	return nil
 }
-
-
 
 func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 	go GlobalApp.QueueUpdateDraw(func() {

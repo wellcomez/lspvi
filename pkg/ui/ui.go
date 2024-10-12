@@ -1263,7 +1263,6 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	} else if event.Key() == tcell.KeyCtrlC {
 		main.Close()
 	}
-
 	return event
 }
 
