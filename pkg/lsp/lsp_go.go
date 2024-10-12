@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
+
+	// "path/filepath"
 	"strings"
 
 	lsp "github.com/tectiv3/go-lsp"
@@ -23,10 +27,18 @@ func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	if core.started {
 		return nil
 	}
+	logifle := filepath.Join(
+		filepath.Dir(wk.Export), "gopls.log")
 	if l.is_cmd_ok() {
 		core.cmd = exec.Command(l.Cmd)
 	} else {
-		core.cmd = exec.Command("gopls")
+		core.cmd = exec.Command("gopls", "-rpc.trace",
+			"-logfile", logifle,
+			"-v")
+		core.cmd.Env = append(os.Environ(),
+			fmt.Sprintf("GOPLS_LOGFILE=%s", logifle),
+			"GOPLS_LOGLEVEL=debug",
+		)
 	}
 	err := core.Lauch_Lsp_Server(core.cmd)
 	core.started = err == nil
