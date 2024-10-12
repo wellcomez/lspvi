@@ -177,6 +177,9 @@ func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
 	ts.Data = data
 	var new_ts = lspcore.GetNewTreeSitter(code.Path(), ts)
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
+		if code.lspsymbol!=nil{
+			code.lspsymbol.LspLoadSymbol()
+		}
 		on_treesitter_update(code, ts)
 	})
 }
