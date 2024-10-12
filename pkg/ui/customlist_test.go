@@ -25,7 +25,7 @@ func Test_mainui_Init(t *testing.T) {
 	}
 	r := pasrse_bold_color_string("a**123**b")
 	println(r.b.text, r.m.text, r.a.text)
-	r3 := parse_key_string("ab123cd", "123")
+	r3 := parse_key_string("ab123cd", colortext{"123",tcell.Color100})
 	log.Println(r3)
 	s := colorpaser{data: "a123**123**a**[123]abc**"}
 	ret := s.Parse()
@@ -34,7 +34,7 @@ func Test_mainui_Init(t *testing.T) {
 	log.Println(ret)
 	if ret[0].color==0{
 		ss:=colorpaser{data:ret[0].text}
-		data:= ss.ParseKey([]string{"123"})
+		data:= ss.ParseKey([]colortext{{"123",tcell.Color100}})
 		log.Println(data)
 	}
 }
