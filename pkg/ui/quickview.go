@@ -775,6 +775,12 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 		}
 	}
 	color := tview.Styles.BorderColor
+	editor := qk.main.current_editor()
+	t1 := editor.Path()
+	t2 := caller.Loc.URI.AsPath().String()
+	if t1 == t2 {
+		caller.lines = editor.GetLines(caller.Loc.Range.Start.Line, caller.Loc.Range.End.Line)
+	}
 	list_text := caller.ListItem(root, parent, prev)
 	if parent {
 		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
@@ -896,35 +902,34 @@ func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_
 }
 
 func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
-	v := caller.Loc
+	lines := caller.lines
 	line := ""
-	source_file_path := v.URI.AsPath().String()
-	data, err := os.ReadFile(source_file_path)
-	if err != nil {
-		line = err.Error()
+	v := caller.Loc
+	if len(lines) == 0 {
+		source_file_path := v.URI.AsPath().String()
+		data, err := os.ReadFile(source_file_path)
+		if err != nil {
+			return err.Error()
+		}
+		lines = strings.Split(string(data), "\n")
+		line = lines[v.Range.Start.Line]
 	} else {
-		lines := strings.Split(string(data), "\n")
-		if len(lines) > v.Range.Start.Line {
-			line = lines[v.Range.Start.Line]
-			s := v.Range.Start.Character
-			e := v.Range.End.Character
-			if v.Range.Start.Line == v.Range.End.Line {
-				if len(line) > s && len(line) >= e && s < e {
-					a1 := line[:s]
-					a := line[s:e]
-					a2 := line[e:]
-					if len(a1) > 0 && a1[len(a1)-1] == '*' {
-						a1 += " "
-					}
-					if len(a2) > 0 && a2[0] == '*' {
-						a2 = " " + a2
-					}
-					line = strings.Join([]string{a1, fmt_color_string(a, funcolor), a2}, "")
-				}
+		line = lines[0]
+	}
+	if v.Range.Start.Line == v.Range.End.Line {
+		s := v.Range.Start.Character
+		e := v.Range.End.Character
+		if len(line) > s && len(line) >= e && s < e {
+			a1 := line[:s]
+			a := line[s:e]
+			a2 := line[e:]
+			if len(a1) > 0 && a1[len(a1)-1] == '*' {
+				a1 += " "
 			}
-			caller.CodeLine = line
-		} else {
-			line = "File changed lines not exsited"
+			if len(a2) > 0 && a2[0] == '*' {
+				a2 = " " + a2
+			}
+			line = strings.Join([]string{a1, fmt_color_string(a, funcolor), a2}, "")
 		}
 	}
 	return line

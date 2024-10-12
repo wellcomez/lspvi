@@ -231,6 +231,7 @@ type ref_with_caller struct {
 	Loc      lsp.Location
 	Caller   *lspcore.CallStackEntry
 	CodeLine string
+	lines    []string
 }
 
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {

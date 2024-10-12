@@ -312,36 +312,30 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 
 		if sym, ok := value.(lsp.SymbolInformation); ok {
 			Range := sym.Location.Range
-			body, err := lspcore.NewBody(sym.Location)
-			if err == nil {
+			lines := symview.editor.GetLines(Range.Start.Line, Range.End.Line)
+			code := symview.editor
+			symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(Range.Start.Line))
+			if len(lines) > 0 {
+				line := lines[0]
 				var beginline = Range.Start.Line
-				for i, v := range body.Subline {
-					v = strings.TrimLeft(v, "\t")
-					idx := strings.Index(v, sym.Name)
-					if i == 0 {
-						idx = Range.Start.Character + idx
+				line = strings.TrimLeft(line, "\t")
+				idx := strings.Index(line, sym.Name)
+				if idx >= 0 {
+					r := lsp.Range{
+						Start: lsp.Position{
+							Line:      beginline,
+							Character: idx,
+						},
+						End: lsp.Position{
+							Line:      beginline,
+							Character: idx + len(sym.Name),
+						},
 					}
-					if idx >= 0 {
-						r := lsp.Range{
-							Start: lsp.Position{
-								Line:      beginline + i,
-								Character: idx,
-							},
-							End: lsp.Position{
-								Line:      beginline + i,
-								Character: idx + len(sym.Name),
-							},
-						}
-						code := symview.editor
-						if code.vid().is_editor_main() {
-							symview.main.Navigation().history.SaveToHistory(code)
-							symview.main.Navigation().history.AddToHistory(code.Path(), NewEditorPosition(r.Start.Line))
-						}
-						symview.editor.goto_location_no_history(r, false, nil)
-						return
-					}
+					symview.editor.goto_location_no_history(r, false, nil)
+					return
 				}
 			}
+
 			if Range.Start.Line != Range.End.Line {
 				Range.End.Line = Range.Start.Line
 				Range.End.Character = Range.Start.Character + len(sym.Name)
@@ -609,10 +603,10 @@ func find_in_outline(outline []*lspcore.Symbol, class_symbol *lspcore.Symbol) bo
 	}
 	return false
 }
-func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file)  {
+func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) {
 	ret := symboltree.merge_symbol(ts, symbol)
 	symboltree.update(ret)
-	return  
+	return
 }
 
 func (symboltree *SymbolTreeView) merge_symbol(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file {
