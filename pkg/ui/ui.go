@@ -182,7 +182,6 @@ type MainService interface {
 	Searchcontext() *GenericSearch
 	Codeview2() *CodeView
 
-
 	// new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit
 	set_perfocus_view(viewid view_id)
 }
@@ -238,7 +237,7 @@ func (main *mainui) OnWatchFileChange(file string, event fsnotify.Event) bool {
 			}
 		}
 		if sym, _ := main.lspmgr.Get(file); sym != nil {
-			sym.NotifyCodeChange(lspcore.CodeChangeEvent{Full: true,File: file})
+			sym.NotifyCodeChange(lspcore.CodeChangeEvent{Full: true, File: file})
 			return true
 		}
 	}
@@ -402,7 +401,7 @@ func (m *mainui) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.Impl
 		})
 	}()
 }
-func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
+func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location, err error) {
 	code := m.current_editor()
 	go func() {
 		m.app.QueueUpdateDraw(func() {
@@ -412,8 +411,6 @@ func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.L
 			}
 			if len(refs) > 0 {
 				m.ActiveTab(view_quickview, false)
-			} else {
-				return
 			}
 			m.quickview.OnLspRefenceChanged(refs, data_refs, ranges)
 			m.tab.update_tab_title(view_quickview)
@@ -477,12 +474,32 @@ func (m *mainui) get_implementation(pos lsp.Range, filepath string, option *lspc
 	}
 	lsp.GetImplement(pos, option)
 }
-func (m *mainui) get_refer(pos lsp.Range, filepath string) {
-	lsp, err := m.lspmgr.Open(filepath)
-	if err != nil {
-		return
+func (m *mainui) get_refer(pos lsp.Range, filename string) {
+	x := lspcore.SymolParam{Ranges: pos, File: filename}
+	n:=filepath.Base(filename)
+	x.Key=fmt.Sprintf("%s %d:%d %d:%d",n,pos.Start.Line,pos.Start.Character,pos.End.Line,pos.End.Character)
+	sym, err := m.lspmgr.Open(filename)
+	if err == nil {
+		if key, err := m.get_editor_range_text(filename, pos); err == nil {
+			x.Key = key
+		}
+		sym.Reference(x)
+	} else {
+		m.lspmgr.Handle.OnLspRefenceChanged(
+			lspcore.SymolSearchKey{Key: x.Key, File: x.File},
+			 []lsp.Location{}, err)
 	}
-	lsp.Reference(pos)
+}
+
+func (m mainui) get_editor_range_text(filepath string, pos lsp.Range) (string, error) {
+	if m.current_editor().Path() == filepath {
+		lines := m.current_editor().GetLines(pos.Start.Line, pos.End.Line)
+		return strings.Join(lines, ""), nil
+	} else if body, err := lspcore.NewBody(lsp.Location{URI: lsp.NewDocumentURI(filepath), Range: pos}); err == nil {
+		return body.String(), nil
+	} else {
+		return "", err
+	}
 }
 
 func (m *mainui) ActiveTab(id view_id, focused bool) {
@@ -606,7 +623,6 @@ func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhist
 	// m.layout.parent.SetTitle(title)
 	code.open_file_lspon_line_option(file, loc, true, option)
 }
-
 
 type Arguments struct {
 	File string

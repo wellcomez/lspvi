@@ -152,21 +152,17 @@ func (sym *Symbol_file) GetImplement(ranges lsp.Range, option *OpenOption) {
 	}
 	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc, err, option)
 }
-func (sym *Symbol_file) Reference(ranges lsp.Range) {
+func (sym *Symbol_file) Reference(req SymolParam) {
+	ranges := req.Ranges
+	key := req.Key
+	var loc []lsp.Location
+	var err error
 	if sym.lsp == nil {
-		return
+		err = fmt.Errorf("lsp is nil")
+	} else {
+		loc, err = sym.lsp.GetReferences(sym.Filename, req.Ranges.Start)
 	}
-	loc, err := sym.lsp.GetReferences(sym.Filename, ranges.Start)
-	if err != nil {
-		return
-	}
-	body, err := NewBody(lsp.Location{URI: lsp.NewDocumentURI(sym.Filename), Range: ranges})
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	key := body.String()
-	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc)
+	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc, err)
 }
 func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	if sym.lsp == nil {
@@ -181,6 +177,12 @@ func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	}
 }
 
+type SymolParam struct {
+	Ranges lsp.Range
+	Key    string
+	Line   *OpenOption
+	File   string
+}
 type OpenOption struct {
 	LineNumber int
 	Offset     int

@@ -449,7 +449,7 @@ func (key SymolSearchKey) Symbol() *Symbol_file {
 type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)
-	OnLspRefenceChanged(ranges SymolSearchKey, file []lsp.Location)
+	OnLspRefenceChanged(ranges SymolSearchKey, file []lsp.Location,err error)
 	OnGetImplement(SymolSearchKey, ImplementationResult, error, *OpenOption)
 	OnFileChange(file []lsp.Location, line *OpenOption)
 	OnLspCaller(search string, c lsp.CallHierarchyItem, stacks []CallStack)

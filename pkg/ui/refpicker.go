@@ -234,7 +234,7 @@ type ref_with_caller struct {
 	lines    []string
 }
 
-func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
+func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location, err error) {
 	listview := pk.impl.listview
 	listview.Clear()
 	refs := get_loc_caller(pk.impl.parent.main, file, key.Symbol())
@@ -333,7 +333,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 }
 func (pk *refpicker) load(ranges lsp.Range) {
 	pk.impl.file.Handle = *pk
-	pk.impl.file.Reference(ranges)
+	pk.impl.file.Reference(lspcore.SymolParam{Ranges: ranges})
 }
 func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.impl.listcustom.InputHandler()
