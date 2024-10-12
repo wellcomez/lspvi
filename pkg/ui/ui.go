@@ -4,6 +4,8 @@ package mainui
 import (
 	"context"
 	// "encoding/json"
+
+	// "encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -17,6 +19,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 
 	// femto "zen108.com/lspvi/pkg/highlight"
+	// "zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -641,22 +644,23 @@ type LspHandle struct {
 }
 
 func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
-	if h.main != nil {
-		// h.main.log.T
-		main := h.main
-		main.app.QueueUpdate(func() {
-			if main.log == nil {
-				return
-			}
-			data, err := req.MarshalJSON()
-			detail := ""
-			if err != nil {
-				detail = string(data)
-			}
-			s := fmt.Sprintf("\nlog: %s  [%s]", req.Method, detail)
-			main.update_log_view(s)
-		})
-	}
+	// if h.main != nil {
+	// 	main := h.main
+	// 	go main.app.QueueUpdate(func() {
+	// 		// if main.log == nil {
+	// 		// 	return
+	// 		// }
+	// 		// data, err := json.MarshalIndent(req, " ", " ")
+	// 		// s := ""
+	// 		// if err == nil {
+	// 		// 	s = fmt.Sprint(string(data))
+	// 		// } else {
+	// 		// 	s = fmt.Sprint(err)
+	// 		// }
+	// 		// debug.DebugLog("LspNotify", "\n", s)
+	// 		// main.update_log_view(s)
+	// 	})
+	// }
 }
 
 func (main *mainui) update_log_view(s string) {

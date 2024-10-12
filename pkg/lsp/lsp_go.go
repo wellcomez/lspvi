@@ -32,7 +32,7 @@ func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	if l.is_cmd_ok() {
 		core.cmd = exec.Command(l.Cmd)
 	} else {
-		debug := true 
+		debug := false 
 		if !debug {
 			core.cmd = exec.Command("gopls")
 		} else {

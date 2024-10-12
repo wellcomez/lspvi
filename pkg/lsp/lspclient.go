@@ -1,11 +1,11 @@
 package lspcore
 
 import (
-	"log"
 	"path/filepath"
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type lspclient interface {
@@ -113,7 +113,7 @@ func (l lsp_base) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyIte
 func (l lsp_base) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error) {
 	ret, err := l.core.GetDefine(file, pos)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }
@@ -139,28 +139,28 @@ func (l lsp_base) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, err
 
 	ret, err := l.core.GetDeclare(file, pos)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }
 func (l lsp_base) GetImplement(file string, pos lsp.Position) (ImplementationResult, error) {
 	ret, err := l.core.GetImplement(file, pos)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }
 func (l lsp_base) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
 	ret, err := l.core.GetReferences(file, pos)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }
 func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
 	ret, err := l.core.GetDocumentSymbol(file)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }

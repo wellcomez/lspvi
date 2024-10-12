@@ -14,3 +14,7 @@ type struct1 struct {
 
 func (a struct1) call1()  {}
 func (a *struct1) call2() {}
+func aa(){
+}
+func aaaaa(){
+}
