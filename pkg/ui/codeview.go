@@ -1121,7 +1121,7 @@ func (code *CodeView) Undo() {
 	checker := new_code_change_checker(code)
 	code.view.Undo()
 	checker.after(code)
-	code.on_content_changed(lspcore.CodeChangeEvent{})
+	// code.on_content_changed(lspcore.CodeChangeEvent{})
 }
 func (code *CodeView) deleteword() {
 	code.view.DeleteWordRight()
