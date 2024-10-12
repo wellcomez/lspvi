@@ -134,23 +134,21 @@ func (sym *Symbol_file) WorkspaceQuery(query string) ([]lsp.SymbolInformation, e
 	}
 	return sym.lsp.WorkSpaceSymbol(query)
 }
-func (sym *Symbol_file) GetImplement(ranges lsp.Range, option *OpenOption) {
-	if sym.lsp == nil {
-		return
-	}
-	loc, err := sym.lsp.GetImplement(sym.Filename, ranges.Start)
-	key := ""
-	if err != nil {
-		return
+func (sym *Symbol_file) GetImplement(param SymolParam, option *OpenOption) {
+	var ranges lsp.Range = param.Ranges
+	var loc ImplementationResult
+	var err error
+	var key = param.Key
+	if sym.lsp != nil {
+		loc, err = sym.lsp.GetImplement(sym.Filename, ranges.Start)
 	} else {
-		body, err := NewBody(lsp.Location{URI: lsp.NewDocumentURI(sym.Filename), Range: ranges})
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		key = body.String()
+		err = fmt.Errorf("lsp is nil")
 	}
-	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc, err, option)
+	sym.Handle.OnGetImplement(
+		SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym},
+		loc,
+		err,
+		option)
 }
 func (sym *Symbol_file) Reference(req SymolParam) {
 	ranges := req.Ranges

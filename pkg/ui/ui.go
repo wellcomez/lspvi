@@ -391,13 +391,11 @@ func (m *mainui) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.Impl
 			if len(ranges.Key) > 0 {
 				m.quickview.view.Key = ranges.Key
 			}
+			m.quickview.OnLspRefenceChanged(file.Loc, data_implementation, ranges)
 			if len(file.Loc) > 0 {
 				m.ActiveTab(view_quickview, false)
-			} else {
-				return
+				m.tab.update_tab_title(view_quickview)
 			}
-			m.quickview.OnLspRefenceChanged(file.Loc, data_implementation, ranges)
-			m.tab.update_tab_title(view_quickview)
 		})
 	}()
 }
@@ -467,38 +465,40 @@ func (m *mainui) get_declare(pos lsp.Range, filepath string) {
 	}
 	lsp.Declare(pos, nil)
 }
-func (m *mainui) get_implementation(pos lsp.Range, filepath string, option *lspcore.OpenOption) {
-	lsp, err := m.lspmgr.Open(filepath)
-	if err != nil {
+func (m *mainui) get_implementation(pos lsp.Range, filename string, option *lspcore.OpenOption) {
+	x := lspcore.SymolParam{Ranges: pos, File: filename}
+	x.Key = m.get_editor_range_text(filename, pos)
+	if lsp, err := m.lspmgr.Open(x.File); err == nil {
+		lsp.GetImplement(x, option)
 		return
+	} else {
+		m.lspmgr.Handle.OnGetImplement(
+			lspcore.SymolSearchKey{Key: x.Key, File: x.File},
+			lspcore.ImplementationResult{}, err, option)
 	}
-	lsp.GetImplement(pos, option)
 }
 func (m *mainui) get_refer(pos lsp.Range, filename string) {
 	x := lspcore.SymolParam{Ranges: pos, File: filename}
-	n:=filepath.Base(filename)
-	x.Key=fmt.Sprintf("%s %d:%d %d:%d",n,pos.Start.Line,pos.Start.Character,pos.End.Line,pos.End.Character)
 	sym, err := m.lspmgr.Open(filename)
 	if err == nil {
-		if key, err := m.get_editor_range_text(filename, pos); err == nil {
-			x.Key = key
-		}
+		x.Key = m.get_editor_range_text(filename, pos)
 		sym.Reference(x)
 	} else {
 		m.lspmgr.Handle.OnLspRefenceChanged(
 			lspcore.SymolSearchKey{Key: x.Key, File: x.File},
-			 []lsp.Location{}, err)
+			[]lsp.Location{}, err)
 	}
 }
 
-func (m mainui) get_editor_range_text(filepath string, pos lsp.Range) (string, error) {
-	if m.current_editor().Path() == filepath {
+func (m mainui) get_editor_range_text(filename string, pos lsp.Range) string {
+	if m.current_editor().Path() == filename {
 		lines := m.current_editor().GetLines(pos.Start.Line, pos.End.Line)
-		return strings.Join(lines, ""), nil
-	} else if body, err := lspcore.NewBody(lsp.Location{URI: lsp.NewDocumentURI(filepath), Range: pos}); err == nil {
-		return body.String(), nil
+		return strings.Join(lines, "")
+	} else if body, err := lspcore.NewBody(lsp.Location{URI: lsp.NewDocumentURI(filename), Range: pos}); err == nil {
+		return body.String()
 	} else {
-		return "", err
+		n := filepath.Base(filename)
+		return fmt.Sprintf("%s %d:%d %d:%d", n, pos.Start.Line, pos.Start.Character, pos.End.Line, pos.End.Character)
 	}
 }
 
