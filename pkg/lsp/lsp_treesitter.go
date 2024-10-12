@@ -152,17 +152,17 @@ func (ret *ts_lang_def) load_scm() {
 	if h, er := ret.query(query_highlights); er == nil {
 		ret.hl = h
 	} else {
-		log.Println("fail to load highlights ", ret.name, er)
+		debug.ErrorLog(DebugTag, "fail to load highlights ", ret.name, er)
 	}
 	if h, er := ret.query(query_locals); er == nil {
 		ret.local = h
 	} else {
-		log.Println("fail to load local ", ret.name, er)
+		debug.ErrorLog(DebugTag, "fail to load local ", ret.name, er)
 	}
 	if h, er := ret.query(query_outline); er == nil {
 		ret.outline = h
 	} else {
-		log.Println("fail to load outline ", ret.name, er)
+		debug.ErrorLog(DebugTag, "fail to load outline ", ret.name, er)
 	}
 }
 func (tsdef *ts_lang_def) create_treesitter(file string) *TreeSitter {
@@ -834,7 +834,7 @@ func get_ts_symbol(ret TreesiterSymbolLine, ts *TreeSitter) []lsp.SymbolInformat
 					"type":        lsp.SymbolKindClass,
 				}
 				if kind, ok := symbol_kind[symboltype]; ok {
-					log.Println("outline", s.Code, symboltype, pos)
+					debug.TraceLog("outline", s.Code, symboltype, pos)
 					add := true
 					switch kind {
 					case lsp.SymbolKindVariable:
