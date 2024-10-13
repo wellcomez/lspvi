@@ -313,8 +313,9 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 	x1.SetSelectedFunc(func(index_list int, s1, s2 string, r rune) {
 		log.Println(index_list, s1, s2, r)
 		data_index := impl.fzf.get_data_index(index_list)
-		loc := impl.qk.get_data(data_index)
-		v.main.OpenFileHistory(loc.Loc.URI.AsPath().String(), &loc.Loc)
+		if loc, err := impl.qk.get_data(data_index); err == nil {
+			v.main.OpenFileHistory(loc.Loc.URI.AsPath().String(), &loc.Loc)
+		}
 		v.hide()
 	})
 	sym.impl.use_cusutom_list(x1)
@@ -341,9 +342,10 @@ func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p t
 	handle(event, setFocus)
 	switch event.Key() {
 	case tcell.KeyUp, tcell.KeyDown:
-		data := pk.impl.qk.get_data(pk.impl.listcustom.GetCurrentItem())
-		pk.impl.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
-		pk.update_title()
+		if data, err := pk.impl.qk.get_data(pk.impl.listcustom.GetCurrentItem()); err == nil {
+			pk.impl.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+			pk.update_title()
+		}
 	default:
 		break
 	}

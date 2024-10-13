@@ -91,8 +91,9 @@ func (g *greppicker) name() string {
 func (pk livewgreppicker) update_preview_tree() {
 	qk := &pk.impl.quick
 	ind := qk.view.GetCurrentItem()
-	data := qk.get_data(ind)
-	pk.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+	if data, err := qk.get_data(ind); err == nil {
+		pk.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+	}
 }
 func (pk livewgreppicker) update_preview() {
 	if pk.impl.quick.tree != nil {
@@ -251,14 +252,18 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 				grepx.grep_to_list(true)
 				grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
-					var o ref_with_caller
+					var o *ref_with_caller
 					qk := grepx.impl.quick
 					if qk.tree != nil {
-						o = qk.get_data(dataindex)
+						if s, err := qk.get_data(dataindex); err == nil {
+							o = s
+						}
 					} else {
-						o = grepx.impl.result.data[dataindex]
+						o = &grepx.impl.result.data[dataindex]
 					}
-					grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
+					if o != nil {
+						grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
+					}
 					grepx.parent.hide()
 				}
 			})

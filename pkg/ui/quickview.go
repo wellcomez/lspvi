@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -463,8 +464,9 @@ func (qk *quick_view) go_prev() {
 
 func (qk *quick_view) open_index(next int) {
 	if len(qk.Refs.Refs) > 0 {
-		loc := qk.get_data(next).Loc
-		qk.quickview.update_preview(loc)
+		if a, e := qk.get_data(next); e == nil {
+			qk.quickview.update_preview(a.Loc)
+		}
 	}
 }
 func (qk *quick_view) go_next() {
@@ -472,10 +474,11 @@ func (qk *quick_view) go_next() {
 		return
 	}
 	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
-	loc := qk.get_data(next).Loc
-	qk.quickview.update_preview(loc)
-	qk.view.SetCurrentItem(next)
-	qk.selection_handle_impl(next, false)
+	if loc, err := qk.get_data(next); err == nil {
+		qk.quickview.update_preview(loc.Loc)
+		qk.view.SetCurrentItem(next)
+		qk.selection_handle_impl(next, false)
+	}
 }
 func (qk *quick_view) OnSearch(txt string) {
 	// old_query := qk.cmd_search_key
@@ -555,11 +558,12 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 			}
 		}
 
-		vvv := qk.get_data(index)
-		qk.main.Tab().UpdatePageTitle()
-		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
-		if need_draw {
-			GlobalApp.ForceDraw()
+		if vvv, err := qk.get_data(index); err == nil {
+			qk.main.Tab().UpdatePageTitle()
+			qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
+			if need_draw {
+				GlobalApp.ForceDraw()
+			}
 		}
 	} else {
 		vvv := qk.Refs.Refs[index]
@@ -569,14 +573,17 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 	}
 }
 
-func (qk *quick_view) get_data(index int) ref_with_caller {
+func (qk *quick_view) get_data(index int) (*ref_with_caller, error) {
 	if qk.tree != nil {
+		if index < 0 || index >= len(qk.tree.tree_data_item) {
+			return nil, errors.New("index out of range")
+		}
 		node := qk.tree.tree_data_item[index]
 		refindex := node.ref_index
 		vvv := qk.Refs.Refs[refindex]
-		return vvv
+		return &vvv, nil
 	}
-	return qk.Refs.Refs[index]
+	return &qk.Refs.Refs[index], nil
 }
 
 type DateType int
