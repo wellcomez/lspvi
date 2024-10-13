@@ -914,17 +914,17 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	return nil
 }
 
-func (code *CodeView) udpate_modified_lines(lineno int) {
-	if code.diff != nil {
-		code.diff.changed_line = femto.Max(code.diff.changed_line, lineno)
-		changed_line := code.diff.getChangedLineNumbers(code.view.Buf.Lines(0, code.view.Bottomline()))
-		bb := []LineMark{}
-		for _, v := range changed_line {
-			bb = append(bb, LineMark{Line: v + 1, Text: "", Comment: ""})
-		}
-		code.view.linechange.LineMark = bb
-	}
-}
+// func (code *CodeView) udpate_modified_lines(lineno int) {
+// 	if code.diff != nil {
+// 		code.diff.changed_line = femto.Max(code.diff.changed_line, lineno)
+// 		changed_line := code.diff.getChangedLineNumbers(code.view.Buf.Lines(0, code.view.Bottomline()))
+// 		bb := []LineMark{}
+// 		for _, v := range changed_line {
+// 			bb = append(bb, LineMark{Line: v + 1, Text: "", Comment: ""})
+// 		}
+// 		code.view.linechange.LineMark = bb
+// 	}
+// }
 
 func get_line_content(line int, Buf *femto.Buffer) string {
 	line_prev := ""

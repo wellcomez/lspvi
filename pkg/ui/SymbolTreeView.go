@@ -604,8 +604,8 @@ func find_in_outline(outline []*lspcore.Symbol, class_symbol *lspcore.Symbol) bo
 	return false
 }
 func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) {
-	// ret := symboltree.merge_symbol(ts, symbol)
-	symboltree.update(symbol)
+	ret := symboltree.merge_symbol(ts, symbol)
+	symboltree.update(ret)
 	return
 }
 

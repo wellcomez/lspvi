@@ -163,30 +163,30 @@ func (check *code_change_cheker) UpdateLineChange(code *CodeView) {
 	}
 	code.view.linechange.LineMark = marks
 }
-func (check *code_change_cheker) newMethod(code *CodeView) (bool, int) {
-	after_lineno := code.view.Cursor.Loc.Y
-	next := check.next
-	lineno := check.lineno
-	after_cur := get_line_content(after_lineno, code.view.Buf)
-	if after_lineno+1 == lineno {
-		code.view.bookmark.after_line_changed(lineno, false)
-		code.udpate_modified_lines(lineno)
-		return true, lineno
-	} else if after_lineno == lineno {
-		if after_cur == next {
-			code.view.bookmark.after_line_changed(lineno+1, false)
-			code.udpate_modified_lines(lineno)
-		} else if after_cur != check.cur {
-			code.udpate_modified_lines(lineno)
-			return true, lineno
-		}
-	} else if after_lineno == lineno+1 {
-		code.view.bookmark.after_line_changed(lineno+1, true)
-		code.udpate_modified_lines(lineno + 1)
-		return true, after_lineno
-	}
-	return false, 0
-}
+// func (check *code_change_cheker) newMethod(code *CodeView) (bool, int) {
+// 	after_lineno := code.view.Cursor.Loc.Y
+// 	next := check.next
+// 	lineno := check.lineno
+// 	after_cur := get_line_content(after_lineno, code.view.Buf)
+// 	if after_lineno+1 == lineno {
+// 		code.view.bookmark.after_line_changed(lineno, false)
+// 		code.udpate_modified_lines(lineno)
+// 		return true, lineno
+// 	} else if after_lineno == lineno {
+// 		if after_cur == next {
+// 			code.view.bookmark.after_line_changed(lineno+1, false)
+// 			code.udpate_modified_lines(lineno)
+// 		} else if after_cur != check.cur {
+// 			code.udpate_modified_lines(lineno)
+// 			return true, lineno
+// 		}
+// 	} else if after_lineno == lineno+1 {
+// 		code.view.bookmark.after_line_changed(lineno+1, true)
+// 		code.udpate_modified_lines(lineno + 1)
+// 		return true, after_lineno
+// 	}
+// 	return false, 0
+// }
 
 type lspchange struct {
 	code  *CodeView
