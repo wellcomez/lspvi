@@ -58,9 +58,9 @@ type searchScope struct {
 	// dir     bool
 	// file    bool
 	// symlink bool
-	grep    bool
-	binary  bool
-	hidden  bool
+	grep   bool
+	binary bool
+	hidden bool
 }
 
 type gorep struct {
@@ -110,84 +110,24 @@ func init() {
 	semFopenLimit = make(chan int, maxNumOfFileOpen)
 }
 
-func verifyColor() bool {
-	// fd := os.Stdout.Fd()
-	// isTerm := terminal.IsTerminal(int(fd))
-	// return isTerm
-	return false
-}
-
-// func test_main() {
-// 	runtime.GOMAXPROCS(runtime.NumCPU())
-
-// 	var opt optionSet
-// 	flag.BoolVar(&opt.v, "V", false, "show version.")
-// 	flag.BoolVar(&opt.g, "g", false, "enable grep.")
-// 	flag.BoolVar(&opt.search_binary, "search-binary", false, "search binary files for matches on grep enable.")
-// 	flag.BoolVar(&opt.grep_only, "grep-only", false, "enable grep and disable file search.")
-// 	flag.StringVar(&opt.ignore, "ignore", "", "pattern is ignored.")
-// 	flag.BoolVar(&opt.hidden, "hidden", false, "search hidden files.")
-// 	flag.BoolVar(&opt.ignorecase, "ignorecase", false, "ignore case distinctions in pattern.")
-// 	flag.Parse()
-
-// 	if opt.v {
-// 		fmt.Printf("version: %s\n", version)
-// 		os.Exit(0)
-// 	}
-
-// 	if flag.NArg() < 1 {
-// 		// usage()
-// 	}
-// 	pattern := flag.Arg(0)
-// 	fpath := "."
-// 	if flag.NArg() >= 2 {
-// 		fpath = strings.TrimRight(flag.Arg(1), separator)
-// 	}
-
-// 	g, err := newGorep(1, pattern, &opt)
-// 	if err == nil {
-// 		chans := g.kick(fpath)
-// 		g.report(chans, verifyColor())
-// 	}
-// }
-
-// const (
-// 	DIR_COLOR     = "\x1b[36m"
-// 	FILE_COLOR    = "\x1b[34m"
-// 	SYMLINK_COLOR = "\x1b[35m"
-// 	GREP_COLOR    = "\x1b[32m"
-// 	HIT_COLOR     = "\x1b[32m"
-// 	NORM_COLOR    = "\x1b[39m"
-// 	BOLD_DECO     = "\x1b[1m"
-// 	NORM_DECO     = "\x1b[0m"
-// )
-
 func (grep *gorep) end(o grep_output) {
 	if grep.cb != nil {
 		grep.cb(grep.id, &o)
 	}
 }
 func (grep *gorep) report(chans *channelSet, isColor bool) {
-	var markMatch string
-	// var markDir string
-	// var markFile string
-	// var markSymlink string
-	var markGrep string
+	// var markGrep string
 	var waitReports sync.WaitGroup
 
 	chPrint := make(chan grep_output)
 	chPrintEnd := make(chan string)
 	go func() {
-		var i = 0
+		// var i = 0
 		for {
 			msg := <-chPrintEnd
 			debug.InfoLog(GrepTag, "chPrintEnd--------->", msg)
-			i++
-			if i == 4 {
-				if grep.cb != nil {
-					grep.cb(grep.id, nil)
-				}
-				break
+			if grep.cb != nil {
+				grep.cb(grep.id, nil)
 			}
 		}
 	}()
@@ -196,11 +136,10 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 		for {
 			msg := <-chPrint
 			grep.end(msg)
-			// os.Stdout.Write(<-chPrint)
 		}
 	}()
 
-	reporter := func(mark string, accent string, chanIf interface{}) {
+	reporter := func(mark string, chanIf interface{}) {
 		defer waitReports.Done()
 		switch ch := chanIf.(type) {
 		case chan grepInfo:
@@ -230,18 +169,14 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 				}
 			}
 		default:
-			log.Printf("reporter type error!\n")
+			debug.ErrorLog("reporter type error!")
 			return
 		}
 		chPrintEnd <- mark
 	}
 
 	waitReports.Add(1)
-	// go reporter(markDir, markMatch, chans.dir)
-	// go reporter(markFile, markMatch, chans.file)
-	// go reporter(markSymlink, markMatch, chans.symlink)
-	go reporter(markGrep, markMatch, chans.grep)
-	// log.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+	go reporter("grep", chans.grep)
 	waitReports.Wait()
 }
 
@@ -250,11 +185,9 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 		pattern:       nil,
 		ignorePattern: nil,
 		scope: searchScope{
-			// file:    true,
-			// symlink: true,
-			grep:    false,
-			binary:  false,
-			hidden:  false,
+			grep:   false,
+			binary: false,
+			hidden: false,
 		},
 		id: id,
 	}
@@ -270,8 +203,7 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 	}
 	base.pattern, err = regexp.Compile(pattern)
 	if err != nil {
-		// fmt.Fprintf(os.Stderr, "%v\n", err)
-		// os.Exit(-1)
+		debug.ErrorLog(GrepTag, "regexp error", err)
 		return nil, err
 	}
 
@@ -323,9 +255,6 @@ func (grep *gorep) kick(fpath string) *channelSet {
 
 func makeChannelSet() *channelSet {
 	return &channelSet{
-		// dir:     make(chan string),
-		// file:    make(chan string),
-		// symlink: make(chan string),
 		grep: make(chan grepInfo),
 	}
 }
@@ -396,25 +325,6 @@ func (grep *gorep) mapsend(fpath string, chans *channelSet) {
 }
 
 func (grep *gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
-	// filter := func(in <-chan string, out chan<- string) {
-	// 	for msg := range in {
-	// 		if grep.pattern.MatchString(path.Base(msg)) {
-	// 			out <- msg
-	// 		}
-	// 	}
-	// 	close(out)
-	// }
-
-	// directory
-	// go filter(chsIn.dir, chsOut.dir)
-
-	// file
-	// go filter(chsIn.file, chsOut.file)
-
-	// symlink
-	// go filter(chsIn.symlink, chsOut.symlink)
-
-	// grep
 	go func(in <-chan grepInfo, out chan<- grepInfo) {
 		for msg := range in {
 			grep.waitGreps.Add(1)
