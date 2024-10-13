@@ -3,7 +3,6 @@ package lspcore
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"strings"
 
 	lsp "github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type lsp_lang_go struct {
@@ -22,19 +22,23 @@ func (l lsp_lang_go) IsSource(filename string) bool {
 	return true
 }
 
+var Launch_Lsp_Server = 0
+
 // Launch_Lsp_Server implements lsplang.
 func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
-	core.lock.Lock()
-	defer core.lock.Unlock()
 	if core.started {
 		return nil
 	}
+	if Launch_Lsp_Server > 1 {
+		debug.ErrorLog("Launch_Lsp_Server", "start twice ", Launch_Lsp_Server)
+	}
+	Launch_Lsp_Server++
 	logifle := filepath.Join(
 		filepath.Dir(wk.Export), "gopls.log")
 	if l.is_cmd_ok() {
 		core.cmd = exec.Command(l.Cmd)
 	} else {
-		debug := false 
+		debug := false
 		if !debug {
 			core.cmd = exec.Command("gopls")
 		} else {
@@ -163,16 +167,16 @@ func (l lsp_lang_go) InitializeLsp(core *lspcore, wk WorkSpace) error {
 
 func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 	var r TextDocumentSyncOptions
-	if d, e := json.MarshalIndent(result, " ", ""); e == nil {
+	/*if d, e := json.MarshalIndent(result, " ", ""); e == nil {
 		log.Println(LSP_DEBUG_TAG, string(d))
-	}
+	}*/
 	if data, err := result.Capabilities.TextDocumentSync.MarshalJSON(); err == nil {
 		if err = json.Unmarshal(data, &r); err == nil {
 			core.sync = &r
 			return
 
 		}
-		log.Println(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
+		debug.ErrorLog(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
 		var r2 TextDocumentSyncOptions2
 		if err = json.Unmarshal(data, &r2); err == nil {
 			core.sync = &TextDocumentSyncOptions{
@@ -183,7 +187,7 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 			return
 
 		}
-		log.Println(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
+		debug.ErrorLog(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
 	}
 }
 
