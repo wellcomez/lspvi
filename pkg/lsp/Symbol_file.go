@@ -5,12 +5,13 @@ import (
 	// "encoding/hex"
 	"errors"
 	"fmt"
-	"log"
+	// "log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type Symbol_file struct {
@@ -20,6 +21,7 @@ type Symbol_file struct {
 	Class_object []*Symbol
 	Wk           *LspWorkspace
 	tokens       *lsp.SemanticTokens
+	verison      int
 }
 
 func (sym Symbol_file) LspClient() lspclient {
@@ -132,39 +134,33 @@ func (sym *Symbol_file) WorkspaceQuery(query string) ([]lsp.SymbolInformation, e
 	}
 	return sym.lsp.WorkSpaceSymbol(query)
 }
-func (sym *Symbol_file) GetImplement(ranges lsp.Range, option *OpenOption) {
-	if sym.lsp == nil {
-		return
-	}
-	loc, err := sym.lsp.GetImplement(sym.Filename, ranges.Start)
-	key := ""
-	if err != nil {
-		return
+func (sym *Symbol_file) GetImplement(param SymolParam, option *OpenOption) {
+	var ranges lsp.Range = param.Ranges
+	var loc ImplementationResult
+	var err error
+	var key = param.Key
+	if sym.lsp != nil {
+		loc, err = sym.lsp.GetImplement(sym.Filename, ranges.Start)
 	} else {
-		body, err := NewBody(lsp.Location{URI: lsp.NewDocumentURI(sym.Filename), Range: ranges})
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		key = body.String()
+		err = fmt.Errorf("lsp is nil")
 	}
-	sym.Handle.OnGetImplement(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc, err, option)
+	sym.Handle.OnGetImplement(
+		SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym},
+		loc,
+		err,
+		option)
 }
-func (sym *Symbol_file) Reference(ranges lsp.Range) {
+func (sym *Symbol_file) Reference(req SymolParam) {
+	ranges := req.Ranges
+	key := req.Key
+	var loc []lsp.Location
+	var err error
 	if sym.lsp == nil {
-		return
+		err = fmt.Errorf("lsp is nil")
+	} else {
+		loc, err = sym.lsp.GetReferences(sym.Filename, req.Ranges.Start)
 	}
-	loc, err := sym.lsp.GetReferences(sym.Filename, ranges.Start)
-	if err != nil {
-		return
-	}
-	body, err := NewBody(lsp.Location{URI: lsp.NewDocumentURI(sym.Filename), Range: ranges})
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	key := body.String()
-	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc)
+	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc, err)
 }
 func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	if sym.lsp == nil {
@@ -174,9 +170,17 @@ func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	if err != nil {
 		return
 	}
-	sym.Handle.OnFileChange(loc, line)
+	if len(loc) > 0 {
+		sym.Handle.OnFileChange(loc, line)
+	}
 }
 
+type SymolParam struct {
+	Ranges lsp.Range
+	Key    string
+	Line   *OpenOption
+	File   string
+}
 type OpenOption struct {
 	LineNumber int
 	Offset     int
@@ -205,7 +209,7 @@ func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 		return ret, err
 	}
 	for _, v := range c1 {
-		log.Println("prepare", v.Name, v.URI.AsPath().String(), v.Range.Start.Line, v.Kind.String())
+		debug.DebugLog(DebugTag, "prepare", v.Name, v.URI.AsPath().String(), v.Range.Start.Line, v.Kind.String())
 	}
 	// for _, prepare := range c1 {
 	// body, err := NewBody(loc)
@@ -215,23 +219,24 @@ func (sym *Symbol_file) Caller(loc lsp.Location, cb bool) ([]CallStack, error) {
 	// }
 	if len(c1) > 0 {
 		prepare := c1[0]
-		body, err := NewBody(lsp.Location{URI: prepare.URI, Range: prepare.Range})
-		if err != nil {
-			return ret, err
-		}
-		search_txt :=
-			body.String()
+
 		c2, err := sym.lsp.CallHierarchyIncomingCalls(prepare)
 		if err == nil {
 			for _, f := range c2 {
 				var stack CallStack
 				v := f.From
-				log.Println("caller ", v.Name, v.URI.AsPath().String(), v.Range.Start.Line, v.Kind.String())
+				debug.DebugLog("caller ", v.Name, v.URI.AsPath().String(), v.Range.Start.Line, v.Kind.String())
 				stack.Add(NewCallStackEntry(f.From, f.FromRanges, []lsp.Location{}))
 				ret = append(ret, stack)
 			}
 		}
 		if cb {
+			body, err := NewBody(lsp.Location{URI: prepare.URI, Range: prepare.Range})
+			if err != nil {
+				return ret, err
+			}
+			search_txt :=
+				body.String()
 			sym.Handle.OnLspCaller(search_txt, c1[0], ret)
 		}
 	}
@@ -336,10 +341,10 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_reco
 				s.UmlName = fileuml
 				s.UtxtName, s.UmlPngName, err = bin.Convert(fileuml)
 				if err != nil {
-					log.Println(err)
+					debug.ErrorLog(DebugTag, err)
 				}
 			} else {
-				log.Println(err)
+				debug.ErrorLog(DebugTag, err)
 			}
 		}
 		task.Save(export_root.Dir)
@@ -370,39 +375,62 @@ func (sym *Symbol_file) LspLoadSymbol() error {
 	if err != nil {
 		return err
 	}
+	sym.Class_object = []*Symbol{}
 	sym.build_class_symbol(symbols.SymbolInformation, 0, nil)
 	return nil
 }
-func (sym *Symbol_file) NotifyCodeChange(data []byte) error {
+func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 	if sym.lsp != nil {
 		if opt := sym.lsp.syncOption(); opt != nil {
-			endline := 0
-			if data != nil {
-				endline = len(data)
-			} else if data, err := os.ReadFile(sym.Filename); err == nil {
-				endline = len(strings.Split(string(data), "\n"))
+			var Start, End lsp.Position
+			changeevents := []lsp.TextDocumentContentChangeEvent{}
+			if event.Full {
+				var data []byte
+				endline := len(event.Data)
+				if endline == 0 {
+					if d, err := os.ReadFile(sym.Filename); err == nil {
+						data = d
+						endline = len(strings.Split(string(data), "\n"))
+					} else {
+						return err
+					}
+				} else {
+					data = event.Data
+				}
+				Start = lsp.Position{
+					Line:      0,
+					Character: 0,
+				}
+				End = lsp.Position{
+					Line:      endline - 1,
+					Character: 0,
+				}
+				if End.Line == 0 {
+					debug.ErrorLog(DebugTag, "notify_code_change", "empty data", event)
+				}
+				changeevents = []lsp.TextDocumentContentChangeEvent{{
+					Range: &lsp.Range{
+						Start: Start,
+						End:   End,
+					},
+					Text: string(data),
+				}}
 			} else {
-				return err
-			}
-			if data == nil {
-				return fmt.Errorf("data is nil")
+				for _, v := range event.Events {
+					// if v.Range.End.Line == 0 {
+					// 	log.Println("")
+					// }
+					e := lsp.TextDocumentContentChangeEvent{
+						Range: &v.Range,
+						Text:  v.Text,
+					}
+					changeevents = append(changeevents, e)
+				}
 			}
 			if opt.Change != lsp.TextDocumentSyncKindNone {
-				return sym.lsp.DidChange(sym.Filename, 1, []lsp.TextDocumentContentChangeEvent{
-					{
-						Range: &lsp.Range{
-							Start: lsp.Position{
-								Line:      0,
-								Character: 0,
-							},
-							End: lsp.Position{
-								Line:      endline - 1,
-								Character: 0,
-							},
-						},
-						Text: string(data),
-					},
-				})
+				sym.verison++
+				debug.DebugLog("cqdebug", "didchange", changeevents[0].String())
+				return sym.lsp.DidChange(sym.Filename, sym.verison, changeevents)
 			} else {
 				return fmt.Errorf("TextDocumentSyncKindNone is None")
 			}
@@ -423,15 +451,15 @@ func newFunction1(DidSave bool, sym *Symbol_file, OpenClose bool) {
 	} else if OpenClose {
 		wk := sym.Wk
 		if err := wk.CloseSymbolFile(sym); err != nil {
-			log.Println(LSP_DEBUG_TAG, "OpenClose close symbol file failed", err)
+			debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose close symbol file failed", err)
 		} else if sym, err := sym.Wk.Open(sym.Filename); sym != nil {
 			if err != nil {
-				log.Println(LSP_DEBUG_TAG, "OpenClose open symbol file failed", err)
+				debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose open symbol file failed", err)
 			}
 			if err := sym.LspLoadSymbol(); err != nil {
-				log.Println(LSP_DEBUG_TAG, "OpenClose load symbol failed", err, sym.Filename)
+				debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose load symbol failed", err, sym.Filename)
 			} else {
-				log.Println(LSP_DEBUG_TAG, "OpenClose load symbol success", sym.Filename)
+				debug.InfoLog(LSP_DEBUG_TAG, "OpenClose load symbol success", sym.Filename)
 			}
 		}
 

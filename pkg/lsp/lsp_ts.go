@@ -22,7 +22,6 @@ func (l lsp_ts) IsSource(filename string) bool {
 
 type lsp_ts struct {
 	LanguageID string
-	config     LangConfig
 }
 
 // Launch_Lsp_Server implements lsplang.
@@ -31,10 +30,9 @@ func (l lsp_ts) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 		return nil
 	}
 	cmd := "typescript-language-server"
-	if l.config.is_cmd_ok() {
-		cmd = l.config.Cmd
+	if !core.RunComandInConfig() {
+		core.cmd = exec.Command(cmd, "--stdio")
 	}
-	core.cmd = exec.Command(cmd, "--stdio")
 	err := core.Lauch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err

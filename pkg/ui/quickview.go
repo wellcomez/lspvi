@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -42,11 +43,6 @@ func new_quick_preview() *quick_preview {
 		frame:    frame,
 		cq:       NewCodeOpenQueue(codeprev, nil),
 	}
-}
-
-type logview struct {
-	*view_link
-	log *tview.TextView
 }
 
 // quick_view
@@ -243,14 +239,6 @@ func (menu quick_view_context) menuitem() []context_menu_item {
 	return menu.qk.menuitem
 }
 
-func new_log_view(main *mainui) *logview {
-	ret := &logview{
-		view_link: &view_link{id: view_log, up: view_code, right: view_callin},
-		log:       tview.NewTextView(),
-	}
-	return ret
-}
-
 type fzf_list_item struct {
 	maintext, secondText string
 }
@@ -334,11 +322,6 @@ func (fzf *fzf_on_listview) refresh_list() {
 		})
 	}
 	fzf.listview.SetCurrentItem(0)
-}
-
-func (log *logview) update_log_view(s string) {
-	t := log.log.GetText(true)
-	log.log.SetText(t + s)
 }
 
 // new_quikview
@@ -481,8 +464,9 @@ func (qk *quick_view) go_prev() {
 
 func (qk *quick_view) open_index(next int) {
 	if len(qk.Refs.Refs) > 0 {
-		loc := qk.get_data(next).Loc
-		qk.quickview.update_preview(loc)
+		if a, e := qk.get_data(next); e == nil {
+			qk.quickview.update_preview(a.Loc)
+		}
 	}
 }
 func (qk *quick_view) go_next() {
@@ -490,10 +474,11 @@ func (qk *quick_view) go_next() {
 		return
 	}
 	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
-	loc := qk.get_data(next).Loc
-	qk.quickview.update_preview(loc)
-	qk.view.SetCurrentItem(next)
-	qk.selection_handle_impl(next, false)
+	if loc, err := qk.get_data(next); err == nil {
+		qk.quickview.update_preview(loc.Loc)
+		qk.view.SetCurrentItem(next)
+		qk.selection_handle_impl(next, false)
+	}
 }
 func (qk *quick_view) OnSearch(txt string) {
 	// old_query := qk.cmd_search_key
@@ -573,11 +558,12 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 			}
 		}
 
-		vvv := qk.get_data(index)
-		qk.main.Tab().UpdatePageTitle()
-		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
-		if need_draw {
-			GlobalApp.ForceDraw()
+		if vvv, err := qk.get_data(index); err == nil {
+			qk.main.Tab().UpdatePageTitle()
+			qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
+			if need_draw {
+				GlobalApp.ForceDraw()
+			}
 		}
 	} else {
 		vvv := qk.Refs.Refs[index]
@@ -587,14 +573,17 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 	}
 }
 
-func (qk *quick_view) get_data(index int) ref_with_caller {
+func (qk *quick_view) get_data(index int) (*ref_with_caller, error) {
 	if qk.tree != nil {
+		if index < 0 || index >= len(qk.tree.tree_data_item) {
+			return nil, errors.New("index out of range")
+		}
 		node := qk.tree.tree_data_item[index]
 		refindex := node.ref_index
 		vvv := qk.Refs.Refs[refindex]
-		return vvv
+		return &vvv, nil
 	}
-	return qk.Refs.Refs[index]
+	return &qk.Refs.Refs[index], nil
 }
 
 type DateType int
@@ -775,6 +764,12 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 		}
 	}
 	color := tview.Styles.BorderColor
+	editor := qk.main.current_editor()
+	t1 := editor.Path()
+	t2 := caller.Loc.URI.AsPath().String()
+	if t1 == t2 {
+		caller.lines = editor.GetLines(caller.Loc.Range.Start.Line, caller.Loc.Range.End.Line)
+	}
 	list_text := caller.ListItem(root, parent, prev)
 	if parent {
 		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
@@ -896,35 +891,34 @@ func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_
 }
 
 func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
-	v := caller.Loc
+	lines := caller.lines
 	line := ""
-	source_file_path := v.URI.AsPath().String()
-	data, err := os.ReadFile(source_file_path)
-	if err != nil {
-		line = err.Error()
+	v := caller.Loc
+	if len(lines) == 0 {
+		source_file_path := v.URI.AsPath().String()
+		data, err := os.ReadFile(source_file_path)
+		if err != nil {
+			return err.Error()
+		}
+		lines = strings.Split(string(data), "\n")
+		line = lines[v.Range.Start.Line]
 	} else {
-		lines := strings.Split(string(data), "\n")
-		if len(lines) > v.Range.Start.Line {
-			line = lines[v.Range.Start.Line]
-			s := v.Range.Start.Character
-			e := v.Range.End.Character
-			if v.Range.Start.Line == v.Range.End.Line {
-				if len(line) > s && len(line) >= e && s < e {
-					a1 := line[:s]
-					a := line[s:e]
-					a2 := line[e:]
-					if len(a1) > 0 && a1[len(a1)-1] == '*' {
-						a1 += " "
-					}
-					if len(a2) > 0 && a2[0] == '*' {
-						a2 = " " + a2
-					}
-					line = strings.Join([]string{a1, fmt_color_string(a, funcolor), a2}, "")
-				}
+		line = lines[0]
+	}
+	if v.Range.Start.Line == v.Range.End.Line {
+		s := v.Range.Start.Character
+		e := v.Range.End.Character
+		if len(line) > s && len(line) >= e && s < e {
+			a1 := line[:s]
+			a := line[s:e]
+			a2 := line[e:]
+			if len(a1) > 0 && a1[len(a1)-1] == '*' {
+				a1 += " "
 			}
-			caller.CodeLine = line
-		} else {
-			line = "File changed lines not exsited"
+			if len(a2) > 0 && a2[0] == '*' {
+				a2 = " " + a2
+			}
+			line = strings.Join([]string{a1, fmt_color_string(a, funcolor), a2}, "")
 		}
 	}
 	return line

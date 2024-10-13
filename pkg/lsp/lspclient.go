@@ -1,11 +1,11 @@
 package lspcore
 
 import (
-	"log"
 	"path/filepath"
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type lspclient interface {
@@ -13,8 +13,9 @@ type lspclient interface {
 	WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error
 	Semantictokens_full(file string) (*lsp.SemanticTokens, error)
 	InitializeLsp(wk WorkSpace) error
+	IsReady() bool
 	Launch_Lsp_Server() error
-	DidOpen(file string) error
+	DidOpen(file SourceCode, version int) error
 	DidClose(file string) error
 	DidSave(file string, text string) error
 	DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error
@@ -44,6 +45,9 @@ func (l lsp_base) syncOption() *TextDocumentSyncOptions {
 func (l lsp_base) Semantictokens_full(file string) (*lsp.SemanticTokens, error) {
 	return l.core.document_semantictokens_full(file)
 }
+func (l lsp_base) IsReady() bool {
+	return l.core.inited
+}
 func (l lsp_base) InitializeLsp(wk WorkSpace) error {
 	err := l.core.lang.InitializeLsp(l.core, wk)
 	if err != nil {
@@ -54,6 +58,8 @@ func (l lsp_base) InitializeLsp(wk WorkSpace) error {
 	return nil
 }
 func (l lsp_base) Launch_Lsp_Server() error {
+	l.core.lock.Lock()
+	defer l.core.lock.Unlock()
 	return l.core.lang.Launch_Lsp_Server(l.core, *l.wk)
 }
 
@@ -91,9 +97,14 @@ func (l lsp_base) DidClose(file string) error {
 	return l.core.DidClose(file)
 }
 
+type SourceCode struct {
+	Path   string
+	Cotent string
+}
+
 // Initialize implements lspclient.
-func (l lsp_base) DidOpen(file string) error {
-	return l.core.DidOpen(file)
+func (l lsp_base) DidOpen(file SourceCode, version int) error {
+	return l.core.DidOpen(file, version)
 }
 func (l lsp_base) DidSave(file, text string) error {
 	return l.core.DidSave(file, text)
@@ -108,7 +119,7 @@ func (l lsp_base) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyIte
 func (l lsp_base) GetDefine(file string, pos lsp.Position) ([]lsp.Location, error) {
 	ret, err := l.core.GetDefine(file, pos)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }
@@ -134,28 +145,28 @@ func (l lsp_base) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, err
 
 	ret, err := l.core.GetDeclare(file, pos)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }
 func (l lsp_base) GetImplement(file string, pos lsp.Position) (ImplementationResult, error) {
 	ret, err := l.core.GetImplement(file, pos)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }
 func (l lsp_base) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
 	ret, err := l.core.GetReferences(file, pos)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }
 func (l lsp_base) GetDocumentSymbol(file string) (*document_symbol, error) {
 	ret, err := l.core.GetDocumentSymbol(file)
 	if err != nil {
-		log.Println("error", file, err)
+		debug.ErrorLog(DebugTag, file, err)
 	}
 	return ret, err
 }

@@ -2,14 +2,16 @@ package mainui
 
 import (
 	"crypto/tls"
-	"log"
+	// "log"
 	"os"
 
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"strings"
-)
 
+	"github.com/gorilla/websocket"
+	"zen108.com/lspvi/pkg/debug"
+)
+const xtermtag="xterm"
 func (proxy *backend_of_xterm) set_browser_selection(s string) {
 	SendJsonMessage[Ws_on_selection](proxy.con,
 		Ws_on_selection{SelectedString: s, Call: backend_on_copy})
@@ -22,7 +24,7 @@ func (proxy *backend_of_xterm) open_in_web(filename string) {
 	if err == nil {
 		SendJsonMessage[Ws_open_file](proxy.con, Ws_open_file{Filename: filename, Call: backend_on_openfile, Buf: buf})
 	} else {
-		log.Println(backend_on_openfile, filename, err)
+		debug.ErrorLog(xtermtag,backend_on_openfile, filename, err)
 	}
 }
 
@@ -47,7 +49,7 @@ func (proxy *backend_of_xterm) Open(listen bool) error {
 	}
 	con, _, err := dial.Dial(ws, nil)
 	if err != nil {
-		log.Printf("WebSocket error :%v", err)
+		debug.ErrorLog("xterm","WebSocket error :%v", err)
 		return err
 	}
 	proxy.con = con
@@ -65,10 +67,10 @@ func (proxy *backend_of_xterm) start_listen_xterm_comand(con *websocket.Conn) er
 				msg_type, message, err := proxy.con.ReadMessage()
 				if err != nil {
 					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-						log.Println("WebSocket proxy connection close")
+						debug.DebugLog(xtermtag,"WebSocket proxy connection close",err)
 						return true
 					}
-					log.Println("WebSocket proxy connection read e:", err)
+					debug.DebugLog(xtermtag,"WebSocket proxy connection read e:", err)
 					continue
 				}
 				switch msg_type {
@@ -77,20 +79,20 @@ func (proxy *backend_of_xterm) start_listen_xterm_comand(con *websocket.Conn) er
 						var w init_call
 						err = json.Unmarshal(message, &w)
 						if err == nil {
-							log.Printf("forward call %s", w.Call)
+							debug.InfoLog(xtermtag,"forward call %s", w.Call)
 							proxy.process_xterm_command(w, message)
 						} else {
-							log.Println("recv", err, "msg len=", len(message))
+							debug.ErrorLog(xtermtag,"recv", err, "msg len=", len(message))
 						}
 
 					}
 				case websocket.BinaryMessage:
-					log.Println("recv binary message", len(message))
+					debug.InfoLog(xtermtag,"recv binary message", len(message))
 				}
 			}
 		}()
 	} else {
-		log.Println("SendJsonMessage", err)
+		debug.ErrorLog(xtermtag,"SendJsonMessage", err)
 		return err
 	}
 	return nil
@@ -112,7 +114,7 @@ func (*backend_of_xterm) process_xterm_command(w init_call, message []byte) {
 		{
 			var data xterm_forward_cmd_paste
 			if err := json.Unmarshal(message, &data); err == nil {
-				log.Println(data.Call, data.Data)
+				debug.InfoLog(xtermtag,data.Call, data.Data)
 				paste := GlobalApp.GetFocus().PasteHandler()
 				paste(data.Data, nil)
 			}
@@ -127,6 +129,6 @@ func start_lspvi_proxy(arg *Arguments, listen bool) {
 	if err := p.Open(listen); err == nil {
 		proxy = p
 	} else {
-		log.Println("start lspvi proxy failed", err)
+		debug.ErrorLog(xtermtag,"start lspvi proxy failed", err)
 	}
 }

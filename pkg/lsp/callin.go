@@ -14,6 +14,7 @@ import (
 	// "strings"
 
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 func key(call lsp.CallHierarchyItem) string {
@@ -107,13 +108,13 @@ func NewCallInTaskFromFile(fielname string) (*CallInTask, error) {
 	if _, err := os.Stat(fielname); err == nil {
 		buf, err := os.ReadFile(fielname)
 		if err != nil {
-			log.Println("open_in_tab", fielname, err)
+			debug.ErrorLog("open_in_tab", fielname, err)
 			return nil, err
 		}
 		var result CallInTask
 		err = json.Unmarshal(buf, &result)
 		if err != nil {
-			log.Println("open_in_tab Unmarshal", fielname, err)
+			debug.ErrorLog("open_in_tab Unmarshal", fielname, err)
 			return nil, err
 		}
 		return &result, nil
@@ -137,12 +138,12 @@ func (task *CallInTask) Save(root string) error {
 	fielname := task.get_call_json_filename(root)
 	buf, err := json.Marshal(task)
 	if err != nil {
-		log.Println(err)
+		debug.ErrorLog("callin",err)
 		return err
 	}
 	err = os.WriteFile(fielname, buf, os.ModePerm)
 	if err != nil {
-		log.Println(err)
+		debug.ErrorLog("callin",err)
 		return err
 	}
 	return err

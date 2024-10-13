@@ -2,13 +2,14 @@ package lspcore
 
 import (
 	"fmt"
-	"log"
+	// "log"
 	"os"
 	"strings"
 	"sync"
 
 	"github.com/tectiv3/go-lsp"
 	"gopkg.in/yaml.v2"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 var FolderEmoji = "\U0001f4c1"
@@ -141,7 +142,7 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 	irange := inside_location(S.SymInfo.Location, loc)
 	if yes {
 
-		log.Println("xxx", irange, S.SymInfo.Kind, calr.Item.Kind, calr.Name)
+		// log.Println(,"xxx", irange, S.SymInfo.Kind, calr.Item.Kind, calr.Name)
 	}
 	if S.SymInfo.Kind == lsp.SymbolKindMethod && calr.Item.Kind == lsp.SymbolKindFunction {
 		calr.Item.Kind = lsp.SymbolKindMethod
@@ -160,7 +161,7 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 				info2 = b1.Info()
 			}
 
-			log.Printf("Error Resovle failed %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
+			debug.ErrorLogf(DebugTag, "Error Resovle failed %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
 				info, info2)
 		}
 	}
@@ -173,7 +174,7 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 		if b, err := NewBody(loc); err == nil {
 			info2 = b.Info()
 		}
-		log.Printf("Error kind unmatch %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(), info, info2)
+		debug.ErrorLogf(DebugTag, "Error kind unmatch %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(), info, info2)
 	}
 	return false
 }
@@ -227,12 +228,12 @@ func symbol_contain(a lsp.SymbolInformation, b lsp.SymbolInformation) bool {
 }
 
 type LspWorkspace struct {
-	clients []lspclient
-	Wk      WorkSpace
-	current *Symbol_file
-	filemap map[string]*Symbol_file
-	Handle  lsp_data_changed
-	lock    *sync.Mutex
+	clients         []lspclient
+	Wk              WorkSpace
+	current         *Symbol_file
+	filemap         map[string]*Symbol_file
+	Handle          lsp_data_changed
+	lock_symbol_map *sync.Mutex
 }
 
 func (wk LspWorkspace) IsSource(filename string) bool {
@@ -253,7 +254,7 @@ func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, err
 		symbolfile.__load_symbol_impl(false)
 	}
 	if symbolfile == nil {
-		log.Printf("fail to loadd  %s\n", filename)
+		debug.ErrorLogf(DebugTag, "fail to loadd  %s\n", filename)
 		return nil, fmt.Errorf("fail to loadd %s", filename)
 	}
 	return symbolfile.find_stack_symbol(entry)
@@ -279,6 +280,9 @@ func (wk LspWorkspace) new_client(c lspclient, filename string) lspclient {
 	if !c.IsMe(filename) {
 		return nil
 	}
+	if c.IsReady() {
+		return c
+	}
 	err := c.Launch_Lsp_Server()
 	if err == nil {
 		err = c.InitializeLsp(wk.Wk)
@@ -290,6 +294,9 @@ func (wk LspWorkspace) new_client(c lspclient, filename string) lspclient {
 }
 
 func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
+	return wk.openbuffer(filename, "")
+}
+func (wk *LspWorkspace) openbuffer(filename string, content string) (*Symbol_file, bool, error) {
 	val, ok := wk.get(filename)
 	is_new := false
 	if ok {
@@ -307,7 +314,7 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 		return nil, is_new, fmt.Errorf("fail to open %s", filename)
 	}
 	is_new = true
-	err := ret.lsp.DidOpen(filename)
+	err := ret.lsp.DidOpen(SourceCode{filename, content}, ret.verison)
 	if err != nil {
 		return ret, is_new, err
 	}
@@ -319,14 +326,14 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 }
 
 func (wk *LspWorkspace) set(filename string, ret *Symbol_file) {
-	wk.lock.Lock()
-	defer wk.lock.Unlock()
+	wk.lock_symbol_map.Lock()
+	defer wk.lock_symbol_map.Unlock()
 	wk.filemap[filename] = ret
 }
 
 func (wk *LspWorkspace) get(filename string) (*Symbol_file, bool) {
-	wk.lock.Lock()
-	defer wk.lock.Unlock()
+	wk.lock_symbol_map.Lock()
+	defer wk.lock_symbol_map.Unlock()
 	val, ok := wk.filemap[filename]
 	return val, ok
 }
@@ -360,11 +367,19 @@ func (wk *LspWorkspace) Get(filename string) (*Symbol_file, error) {
 }
 func (wk *LspWorkspace) CloseSymbolFile(sym *Symbol_file) error {
 	err := sym.lsp.DidClose(sym.Filename)
-	wk.lock.Lock()
+	wk.lock_symbol_map.Lock()
 	delete(wk.filemap, sym.Filename)
-	wk.lock.Unlock()
+	wk.lock_symbol_map.Unlock()
 	return err
 }
+
+func (wk *LspWorkspace) OpenBuffer(filename string, buffer string) (*Symbol_file, error) {
+	ret, _, err := wk.openbuffer(filename, buffer)
+	wk.current = ret
+	return ret, err
+
+}
+
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)
 	wk.current = ret
@@ -374,6 +389,7 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 
 type LangConfig struct {
 	Cmd string `yaml:"cmd"`
+	Log string `yaml:"log"`
 }
 
 type ConfigLspPart struct {
@@ -387,11 +403,6 @@ type LspConfig struct {
 	Typescript LangConfig `yaml:"typescript"`
 }
 
-func (c LangConfig) is_cmd_ok() bool {
-	_, err := os.Stat(c.Cmd)
-	return err == nil
-}
-
 func NewLspWk(wk WorkSpace) *LspWorkspace {
 	buf, lsp_config_err := os.ReadFile(wk.ConfigFile)
 	var lsp_config LspConfig
@@ -402,23 +413,23 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 	}
 	cpp := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_cpp{lsp_config.C}, handle: wk.Callback, LanguageID: string(CPP)},
+		core: &lspcore{lang: lsp_lang_cpp{}, config: lsp_config.C, handle: wk, LanguageID: string(CPP)},
 	}
 	py := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_py{lsp_config.Py}, handle: wk.Callback, LanguageID: string(PYTHON)},
+		core: &lspcore{lang: lsp_lang_py{}, config: lsp_config.Py, handle: wk, LanguageID: string(PYTHON)},
 	}
 
-	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{lsp_config.Golang}, handle: wk.Callback, LanguageID: string(GO)}}
+	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{}, config: lsp_config.Golang, handle: wk, LanguageID: string(GO)}}
 
-	ts := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(TYPE_SCRIPT), config: lsp_config.Javascript}, handle: wk.Callback, LanguageID: string(TYPE_SCRIPT)}}
-	js := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT), config: lsp_config.Typescript}, handle: wk.Callback, LanguageID: string(JAVASCRIPT)}}
+	ts := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(TYPE_SCRIPT)}, config: lsp_config.Javascript, handle: wk, LanguageID: string(TYPE_SCRIPT)}}
+	js := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT)}, config: lsp_config.Typescript, handle: wk, LanguageID: string(JAVASCRIPT)}}
 	ret := &LspWorkspace{
 		clients: []lspclient{
 			cpp, py, golang, ts, js,
 		},
-		Wk:   wk,
-		lock: &sync.Mutex{},
+		Wk:              wk,
+		lock_symbol_map: &sync.Mutex{},
 	}
 	ret.filemap = make(map[string]*Symbol_file)
 	return ret
@@ -438,7 +449,7 @@ func (key SymolSearchKey) Symbol() *Symbol_file {
 type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)
-	OnLspRefenceChanged(ranges SymolSearchKey, file []lsp.Location)
+	OnLspRefenceChanged(ranges SymolSearchKey, file []lsp.Location, err error)
 	OnGetImplement(SymolSearchKey, ImplementationResult, error, *OpenOption)
 	OnFileChange(file []lsp.Location, line *OpenOption)
 	OnLspCaller(search string, c lsp.CallHierarchyItem, stacks []CallStack)

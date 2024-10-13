@@ -2,7 +2,10 @@
 package mainui
 
 import (
-	"context"
+	// "context"
+	// "encoding/json"
+	"time"
+
 	// "encoding/json"
 	"fmt"
 	"log"
@@ -13,10 +16,11 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/sourcegraph/jsonrpc2"
+	// "github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 
 	// femto "zen108.com/lspvi/pkg/highlight"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -98,6 +102,7 @@ type MainService interface {
 	Close()
 	quit()
 
+	cleanlog()
 	ScreenSize() (w, h int)
 
 	helpkey(bool) []string
@@ -182,8 +187,6 @@ type MainService interface {
 	Searchcontext() *GenericSearch
 	Codeview2() *CodeView
 
-	async_lsp_open(file string, cb func(sym *lspcore.Symbol_file))
-
 	// new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit
 	set_perfocus_view(viewid view_id)
 }
@@ -219,9 +222,10 @@ type mainui struct {
 	right_context_menu  *contextmenu
 	recent_open         *recent_open_file
 	// _editor_area_layout *editor_area_layout
-	tty bool
-	ws  string
-	tab *tabmgr
+	tty          bool
+	ws           string
+	tab          *tabmgr
+	lsp_log_file *os.File
 }
 
 // OnWatchFileChange implements change_reciever.
@@ -239,7 +243,7 @@ func (main *mainui) OnWatchFileChange(file string, event fsnotify.Event) bool {
 			}
 		}
 		if sym, _ := main.lspmgr.Get(file); sym != nil {
-			sym.NotifyCodeChange(nil)
+			sym.NotifyCodeChange(lspcore.CodeChangeEvent{Full: true, File: file})
 			return true
 		}
 	}
@@ -269,6 +273,24 @@ func (m mainui) Right_context_menu() *contextmenu {
 }
 func (m mainui) Mode() mode {
 	return mode{tty: m.tty}
+}
+
+func (main *mainui) LspLogOutput(s, s1 string) {
+	if main.lsp_log_file == nil {
+
+		filePath := filepath.Join(lspviroot.root, "lsp_notify.json")
+		if file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644); err == nil {
+			main.lsp_log_file = file
+		}
+	}
+	if main.lsp_log_file != nil {
+		customLayout := "2006-01-02 15:04:05.000"
+		h := fmt.Sprintf("%v\n", time.Now().Format(customLayout))
+		_, _ = main.lsp_log_file.WriteString(h + s1 + s + "\n")
+	}
+
+	// s1=fmt.Sprintf("[#8080ff]%s[#ffffff]",s1)
+	main.update_log_view(s1 + s)
 }
 func (m mainui) Tab() *tabmgr {
 	return m.tab
@@ -393,17 +415,15 @@ func (m *mainui) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.Impl
 			if len(ranges.Key) > 0 {
 				m.quickview.view.Key = ranges.Key
 			}
+			m.quickview.OnLspRefenceChanged(file.Loc, data_implementation, ranges)
 			if len(file.Loc) > 0 {
 				m.ActiveTab(view_quickview, false)
-			} else {
-				return
+				m.tab.update_tab_title(view_quickview)
 			}
-			m.quickview.OnLspRefenceChanged(file.Loc, data_implementation, ranges)
-			m.tab.update_tab_title(view_quickview)
 		})
 	}()
 }
-func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location) {
+func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.Location, err error) {
 	code := m.current_editor()
 	go func() {
 		m.app.QueueUpdateDraw(func() {
@@ -413,8 +433,6 @@ func (m *mainui) OnLspRefenceChanged(ranges lspcore.SymolSearchKey, refs []lsp.L
 			}
 			if len(refs) > 0 {
 				m.ActiveTab(view_quickview, false)
-			} else {
-				return
 			}
 			m.quickview.OnLspRefenceChanged(refs, data_refs, ranges)
 			m.tab.update_tab_title(view_quickview)
@@ -471,19 +489,41 @@ func (m *mainui) get_declare(pos lsp.Range, filepath string) {
 	}
 	lsp.Declare(pos, nil)
 }
-func (m *mainui) get_implementation(pos lsp.Range, filepath string, option *lspcore.OpenOption) {
-	lsp, err := m.lspmgr.Open(filepath)
-	if err != nil {
+func (m *mainui) get_implementation(pos lsp.Range, filename string, option *lspcore.OpenOption) {
+	x := lspcore.SymolParam{Ranges: pos, File: filename}
+	x.Key = m.get_editor_range_text(filename, pos)
+	if lsp, err := m.lspmgr.Open(x.File); err == nil {
+		lsp.GetImplement(x, option)
 		return
+	} else {
+		m.lspmgr.Handle.OnGetImplement(
+			lspcore.SymolSearchKey{Key: x.Key, File: x.File},
+			lspcore.ImplementationResult{}, err, option)
 	}
-	lsp.GetImplement(pos, option)
 }
-func (m *mainui) get_refer(pos lsp.Range, filepath string) {
-	lsp, err := m.lspmgr.Open(filepath)
-	if err != nil {
-		return
+func (m *mainui) get_refer(pos lsp.Range, filename string) {
+	x := lspcore.SymolParam{Ranges: pos, File: filename}
+	sym, err := m.lspmgr.Open(filename)
+	if err == nil {
+		x.Key = m.get_editor_range_text(filename, pos)
+		sym.Reference(x)
+	} else {
+		m.lspmgr.Handle.OnLspRefenceChanged(
+			lspcore.SymolSearchKey{Key: x.Key, File: x.File},
+			[]lsp.Location{}, err)
 	}
-	lsp.Reference(pos)
+}
+
+func (m mainui) get_editor_range_text(filename string, pos lsp.Range) string {
+	if m.current_editor().Path() == filename {
+		lines := m.current_editor().GetLines(pos.Start.Line, pos.End.Line)
+		return strings.Join(lines, "")
+	} else if body, err := lspcore.NewBody(lsp.Location{URI: lsp.NewDocumentURI(filename), Range: pos}); err == nil {
+		return body.String()
+	} else {
+		n := filepath.Base(filename)
+		return fmt.Sprintf("%s %d:%d %d:%d", n, pos.Start.Line, pos.Start.Character, pos.End.Line, pos.End.Character)
+	}
 }
 
 func (m *mainui) ActiveTab(id view_id, focused bool) {
@@ -607,27 +647,6 @@ func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhist
 	// m.layout.parent.SetTitle(title)
 	code.open_file_lspon_line_option(file, loc, true, option)
 }
-func (m *mainui) async_lsp_open(file string, cb func(sym *lspcore.Symbol_file)) {
-	symbolfile, err := m.lspmgr.Open(file)
-	if err == nil {
-		symbolfile.LoadSymbol(false)
-		m.app.QueueUpdate(func() {
-			if cb != nil {
-				cb(symbolfile)
-			}
-			m.app.ForceDraw()
-		})
-	} else {
-		m.app.QueueUpdate(func() {
-			m.OnSymbolistChanged(symbolfile, nil)
-			m.app.ForceDraw()
-			if cb != nil {
-				cb(symbolfile)
-			}
-		})
-	}
-
-}
 
 type Arguments struct {
 	File string
@@ -637,32 +656,6 @@ type Arguments struct {
 	Cert string
 }
 
-// func (m *mainui) open_file(file string) {
-// 	m.OpenFileHistory(file, nil)
-// }
-
-type LspHandle struct {
-	main *mainui
-}
-
-func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
-	if h.main != nil {
-		// h.main.log.T
-		main := h.main
-		main.app.QueueUpdate(func() {
-			if main.log == nil {
-				return
-			}
-			data, err := req.MarshalJSON()
-			detail := ""
-			if err != nil {
-				detail = string(data)
-			}
-			s := fmt.Sprintf("\nlog: %s  [%s]", req.Method, detail)
-			main.update_log_view(s)
-		})
-	}
-}
 
 func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
@@ -695,10 +688,10 @@ func MainUI(arg *Arguments) {
 	gload_workspace_list.Load()
 	prj, err := gload_workspace_list.Add(root)
 	if err != nil {
-		log.Printf("add workspace failed:%v", err)
+		debug.ErrorLogf(debug.TagUI, "add workspace failed:%v", err)
 	}
 	if prj == nil {
-		log.Printf("load failed:%v", err)
+		debug.ErrorLogf(debug.TagUI, "load failed:%v", err)
 		panic(err)
 	}
 	// lspviroot = new_workdir(root)
@@ -993,6 +986,9 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 	}
 	return main_layout
 }
+func (main *mainui) cleanlog() {
+	main.log.clean()
+}
 func (main *mainui) current_editor() CodeEditor {
 	if main.codeview2.view.HasFocus() {
 		return main.codeview2
@@ -1106,6 +1102,11 @@ func create_edit_area(main *mainui) *flex_area {
 		AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
 		AddItem(codelayout, 0, codelayout.Width, true).
 		AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
+	codeview.view.PasteHandlerImpl= func(text string, setFocus func(tview.Primitive)) {
+		if codeview.id.is_editor_main(){
+			codeview.Paste()
+		}
+	}
 	return editor_area
 }
 
@@ -1263,7 +1264,6 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	} else if event.Key() == tcell.KeyCtrlC {
 		main.Close()
 	}
-
 	return event
 }
 
@@ -1271,7 +1271,7 @@ func (main *mainui) GoForward() {
 	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoForward()
 	start := i.GetLocation()
-	log.Printf("go forward %v", i)
+	debug.DebugLogf(debug.TagUI, "go forward %v", i)
 	main.open_file_to_history(i.Path, &navigation_loc{
 		loc:    &start,
 		offset: i.Pos.Offset,
@@ -1287,7 +1287,7 @@ func (main *mainui) GoBack() {
 	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoBack()
 	loc := i.GetLocation()
-	log.Printf("go %v", i)
+	debug.DebugLog(debug.TagUI, "go ", i)
 	main.open_file_to_history(i.Path,
 		&navigation_loc{
 			loc:    &loc,

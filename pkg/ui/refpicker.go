@@ -70,12 +70,12 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 	return layout
 }
 func (pk *refpicker) row(input *tview.InputField) *tview.Flex {
-	ret := pk.impl.flex(input, 2)
+	ret := pk.impl.flex(input, 1)
 	pk.impl.PrevOpen(pk.impl.file.Filename, -1)
 	return ret
 }
 func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
-	ret := pk.impl.grid(input, 2)
+	ret := pk.impl.grid(input, 1)
 	pk.impl.PrevOpen(pk.impl.file.Filename, -1)
 	return ret
 }
@@ -231,9 +231,10 @@ type ref_with_caller struct {
 	Loc      lsp.Location
 	Caller   *lspcore.CallStackEntry
 	CodeLine string
+	lines    []string
 }
 
-func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location) {
+func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location, err error) {
 	listview := pk.impl.listview
 	listview.Clear()
 	refs := get_loc_caller(pk.impl.parent.main, file, key.Symbol())
@@ -312,8 +313,9 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 	x1.SetSelectedFunc(func(index_list int, s1, s2 string, r rune) {
 		log.Println(index_list, s1, s2, r)
 		data_index := impl.fzf.get_data_index(index_list)
-		loc := impl.qk.get_data(data_index)
-		v.main.OpenFileHistory(loc.Loc.URI.AsPath().String(), &loc.Loc)
+		if loc, err := impl.qk.get_data(data_index); err == nil {
+			v.main.OpenFileHistory(loc.Loc.URI.AsPath().String(), &loc.Loc)
+		}
 		v.hide()
 	})
 	sym.impl.use_cusutom_list(x1)
@@ -332,7 +334,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 }
 func (pk *refpicker) load(ranges lsp.Range) {
 	pk.impl.file.Handle = *pk
-	pk.impl.file.Reference(ranges)
+	pk.impl.file.Reference(lspcore.SymolParam{Ranges: ranges})
 }
 func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.impl.listcustom.InputHandler()
@@ -340,9 +342,10 @@ func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p t
 	handle(event, setFocus)
 	switch event.Key() {
 	case tcell.KeyUp, tcell.KeyDown:
-		data := pk.impl.qk.get_data(pk.impl.listcustom.GetCurrentItem())
-		pk.impl.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
-		pk.update_title()
+		if data, err := pk.impl.qk.get_data(pk.impl.listcustom.GetCurrentItem()); err == nil {
+			pk.impl.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+			pk.update_title()
+		}
 	default:
 		break
 	}

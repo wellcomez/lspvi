@@ -3,30 +3,50 @@ package lspcore
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
+
+	// "path/filepath"
 	"strings"
 
 	lsp "github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type lsp_lang_go struct {
-	LangConfig
 }
 
 func (l lsp_lang_go) IsSource(filename string) bool {
 	return true
 }
 
+var Launch_Lsp_Server = 0
+
 // Launch_Lsp_Server implements lsplang.
 func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	if core.started {
 		return nil
 	}
-	if l.is_cmd_ok() {
-		core.cmd = exec.Command(l.Cmd)
-	} else {
-		core.cmd = exec.Command("gopls")
+	if Launch_Lsp_Server > 1 {
+		debug.ErrorLog("Launch_Lsp_Server", "start twice ", Launch_Lsp_Server)
+	}
+	Launch_Lsp_Server++
+	logifle := filepath.Join(
+		filepath.Dir(wk.Export), "gopls.log")
+	if !core.RunComandInConfig() {
+		debug := false
+		if !debug {
+			core.cmd = exec.Command("gopls")
+		} else {
+			core.cmd = exec.Command("gopls", "-rpc.trace",
+				"-logfile", logifle,
+				"-v")
+			core.cmd.Env = append(os.Environ(),
+				fmt.Sprintf("GOPLS_LOGFILE=%s", logifle),
+				"GOPLS_LOGLEVEL=debug",
+			)
+		}
 	}
 	err := core.Lauch_Lsp_Server(core.cmd)
 	core.started = err == nil
@@ -144,18 +164,18 @@ func (l lsp_lang_go) InitializeLsp(core *lspcore, wk WorkSpace) error {
 
 func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 	var r TextDocumentSyncOptions
-	if d, e := json.MarshalIndent(result, " ", ""); e == nil {
+	/*if d, e := json.MarshalIndent(result, " ", ""); e == nil {
 		log.Println(LSP_DEBUG_TAG, string(d))
-	}
+	}*/
 	if data, err := result.Capabilities.TextDocumentSync.MarshalJSON(); err == nil {
 		if err = json.Unmarshal(data, &r); err == nil {
 			core.sync = &r
 			return
 
 		}
-		log.Println(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
+		debug.ErrorLog(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
 		var r2 TextDocumentSyncOptions2
-		if err = json.Unmarshal(data, &r); err == nil {
+		if err = json.Unmarshal(data, &r2); err == nil {
 			core.sync = &TextDocumentSyncOptions{
 				OpenClose: r2.OpenClose,
 				save_bool: r2.Save,
@@ -164,8 +184,7 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 			return
 
 		}
-	} else {
-		log.Println(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
+		debug.ErrorLog(LSP_DEBUG_TAG, "TextDocumentSync Marsh Failed", err)
 	}
 }
 

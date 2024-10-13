@@ -18,11 +18,14 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+
+	"zen108.com/lspvi/pkg/debug"
 	// "github.com/gdamore/tcell"
 )
 
 type CodeEditor interface {
 	IsLoading() bool
+	GetLines(begin, end int) []string
 	GetSelection() string
 	OnSearch(txt string, whole bool) []SearchPos
 	vid() view_id
@@ -48,9 +51,10 @@ type CodeEditor interface {
 	action_goto_define(line *lspcore.OpenOption)
 
 	// openfile(filename string, onload func()) error
-
+	Reload()
 	LoadBuffer(data []byte, filename string)
 	LoadFileNoLsp(filename string, line int) error
+
 	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
 
 	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
@@ -74,7 +78,7 @@ type CodeEditor interface {
 	deleteline()
 	deleteword()
 	copyline(bool)
-	pasteline(bool)
+	Paste()
 	deltext()
 
 	goto_line_end()
@@ -125,7 +129,7 @@ type CodeOpenQueue struct {
 func NewCodeOpenQueue(editor CodeEditor, main MainService) *CodeOpenQueue {
 	ret := &CodeOpenQueue{
 		close:  make(chan bool),
-		open:   make(chan bool),
+		open:   make(chan bool,5),
 		editor: editor,
 		main:   main,
 	}
@@ -154,7 +158,7 @@ func (q *CodeOpenQueue) OpenFileHistory(filename string, line *lsp.Location) {
 func (queue *CodeOpenQueue) enqueue(req EditorOpenArgument) {
 	queue.replace_data(req)
 	queue.open <- true
-	log.Println("cqdebug", "enqueue", ":", queue.skip(), "open", queue.open_count, "req", queue.req_count)
+	debug.DebugLog("cqdebug", "enqueue", ":", queue.skip(), "open", queue.open_count, "req", queue.req_count)
 }
 func (queue *CodeOpenQueue) dequeue() *EditorOpenArgument {
 	queue.mutex.Lock()
@@ -173,12 +177,12 @@ func (queue *CodeOpenQueue) Work() {
 	for {
 		select {
 		case <-queue.close:
-			log.Println("cqdebug", "cq Close-------")
+			debug.DebugLog("cqdebug", "cq Close-------")
 			return
 		case <-queue.open:
 			{
 				skip := queue.skip()
-				log.Println("cqdebug", "denqueue", ":", skip, "open", queue.open_count, "req", queue.req_count)
+				debug.DebugLog("cqdebug", "denqueue", ":", skip, "open", queue.open_count, "req", queue.req_count)
 				if !skip {
 					e := queue.dequeue()
 					if e != nil {
@@ -350,6 +354,20 @@ func (code CodeView) Primitive() tview.Primitive {
 func (code CodeView) LspSymbol() *lspcore.Symbol_file {
 	return code.lspsymbol
 }
+func (code *CodeView) Reload() {
+	if sym := code.LspSymbol(); sym != nil {
+		x := code.LspContentFullChangeEvent()
+		go sym.NotifyCodeChange(x)
+		offset := code.view.Topline
+		code.openfile(code.Path(), true, func(bool) {
+			code.view.Topline = offset
+			if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
+				code.lspsymbol = s
+				s.LspLoadSymbol()
+			}
+		})
+	}
+}
 
 // OnFileChange implements change_reciever.
 func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool {
@@ -357,24 +375,27 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 		return false
 	}
 	if code.file.SamePath(file) {
-		if sym := code.LspSymbol(); sym != nil {
-			go sym.NotifyCodeChange(nil)
-			offset := code.view.Topline
-			code.openfile(code.Path(), func(bool) {
-				code.view.Topline = offset
-				if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
-					code.lspsymbol = s
-					s.LspLoadSymbol()
-				}
-			})
-		}
+		code.Reload()
 		return true
 	}
 	return false
 }
 
+func (c CodeView) LspContentFullChangeEvent() lspcore.CodeChangeEvent {
+	x := lspcore.CodeChangeEvent{Full: true, File: c.Path()}
+	return x
+}
+
 func (code CodeView) Path() string {
 	return code.file.filepathname
+}
+
+func (e CodeView) GetLines(begin, end int) (ret []string) {
+	for i := begin; i <= end; i++ {
+		l := e.view.Buf.Line(i)
+		ret = append(ret, l)
+	}
+	return ret
 }
 func (code CodeView) FileName() string {
 	return code.file.filename
@@ -530,7 +551,7 @@ func NewCodeView(main MainService) *CodeView {
 	root := new_codetext_view(buffer)
 	root.SetRuntimeFiles(runtime.Files)
 	// root.SetColorscheme(colorscheme)
-
+	root.SetInputCapture(ret.handle_key)
 	root.SetMouseCapture(ret.handle_mouse)
 	ret.view = root
 	ret.InsertMode(false)
@@ -876,82 +897,34 @@ func (code *codetextview) xOffset() int64 {
 //		v := reflect.ValueOf(code.view).Elem()
 //		field := v.FieldByName("lineNumOffset")
 //		x := field.Int()
-//		return x
+//		return xjj
 //	}
-type linechange_checker struct {
-	lineno int
-	next   string
-	cur    string
-}
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// prev := get_line_content(lineno, code)
-	var status1 = new_linechange_checker(code)
 	if code.insert {
 		if h, ok := code.key_map[event.Key()]; ok {
 			h(code)
 			return nil
 		}
-		code.view.HandleEvent(event)
-		code.on_content_changed()
-		return nil
-	} else {
-		event = code.handle_key_impl(event)
 	}
+	var status1 = new_code_change_checker(code)
+	code.view.HandleEvent(event)
 	status1.after(code)
-	return event
+	return nil
 }
 
-func new_linechange_checker(code *CodeView) linechange_checker {
-	lineno := code.view.Cursor.Loc.Y
-	next := get_line_content(lineno+1, code.view.Buf)
-	cur := get_line_content(lineno, code.view.Buf)
-	if code.diff != nil {
-		if len(code.diff.bufer) == 0 {
-			Buf := code.view.Buf
-			end := Buf.LinesNum()
-			code.diff = &Differ{Buf.Lines(0, end), -1}
-		}
-	}
-	return linechange_checker{lineno: lineno, next: next, cur: cur}
-}
-
-func (check *linechange_checker) after(code *CodeView) int {
-	after_lineno := code.view.Cursor.Loc.Y
-	next := check.next
-	lineno := check.lineno
-	after_cur := get_line_content(after_lineno, code.view.Buf)
-	if after_lineno+1 == lineno {
-		code.view.bookmark.after_line_changed(lineno, false)
-		code.udpate_modified_lines(lineno)
-		return lineno
-	} else if after_lineno == lineno {
-		if after_cur == next { //delete line
-			code.view.bookmark.after_line_changed(lineno+1, false)
-			code.udpate_modified_lines(lineno)
-		} else if after_cur != check.cur {
-			code.udpate_modified_lines(lineno)
-			return lineno
-		}
-	} else if after_lineno == lineno+1 {
-		code.view.bookmark.after_line_changed(lineno+1, true)
-		code.udpate_modified_lines(lineno + 1)
-		return after_lineno
-	}
-	return -1
-}
-
-func (code *CodeView) udpate_modified_lines(lineno int) {
-	if code.diff != nil {
-		code.diff.changed_line = femto.Max(code.diff.changed_line, lineno)
-		changed_line := code.diff.getChangedLineNumbers(code.view.Buf.Lines(0, code.view.Bottomline()))
-		bb := []LineMark{}
-		for _, v := range changed_line {
-			bb = append(bb, LineMark{Line: v + 1, Text: "", Comment: ""})
-		}
-		code.view.linechange.LineMark = bb
-	}
-}
+// func (code *CodeView) udpate_modified_lines(lineno int) {
+// 	if code.diff != nil {
+// 		code.diff.changed_line = femto.Max(code.diff.changed_line, lineno)
+// 		changed_line := code.diff.getChangedLineNumbers(code.view.Buf.Lines(0, code.view.Bottomline()))
+// 		bb := []LineMark{}
+// 		for _, v := range changed_line {
+// 			bb = append(bb, LineMark{Line: v + 1, Text: "", Comment: ""})
+// 		}
+// 		code.view.linechange.LineMark = bb
+// 	}
+// }
 
 func get_line_content(line int, Buf *femto.Buffer) string {
 	line_prev := ""
@@ -969,25 +942,26 @@ func (code *CodeView) run_command(cmdlist []cmditem, key string) bool {
 	}
 	return false
 }
-func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
-	if code.main == nil {
-		return event
-	}
-	if code.main.get_focus_view_id() != code.id {
-		return event
-	}
-	// ch := string(event.Rune())
-	if h, ok := code.key_map[event.Key()]; ok {
-		h(code)
-		return nil
-	}
-	// cur := code.view.Cursor
-	// log.Println("selection", cur.CurSelection[0], cur.CurSelection[1])
-	// if code.run_command(code.basic_vi_command, ch) {
-	// 	return nil
-	// }
-	return event
-}
+
+// func (code *CodeView) handle_key_impl(event *tcell.EventKey) *tcell.EventKey {
+// 	if code.main == nil {
+// 		return event
+// 	}
+// 	if code.main.get_focus_view_id() != code.id {
+// 		return event
+// 	}
+// 	// ch := string(event.Rune())
+// 	if h, ok := code.key_map[event.Key()]; ok {
+// 		h(code)
+// 		return nil
+// 	}
+// 	// cur := code.view.Cursor
+// 	// log.Println("selection", cur.CurSelection[0], cur.CurSelection[1])
+// 	// if code.run_command(code.basic_vi_command, ch) {
+// 	// 	return nil
+// 	// }
+// 	return event
+// }
 
 type vmap_select_context struct {
 	cursor femto.Cursor
@@ -1165,35 +1139,45 @@ func (code *CodeView) Save() error {
 	return os.WriteFile(code.Path(), []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
-	checker := new_linechange_checker(code)
+	checker := new_code_change_checker(code)
 	code.view.Undo()
-	checker.after(code)
-	code.on_content_changed()
+	checker.CheckRedo(code)
+	// code.on_content_changed(lspcore.CodeChangeEvent{})
 }
 func (code *CodeView) deleteword() {
+	checker := new_code_change_checker(code)
 	code.view.DeleteWordRight()
-	code.on_content_changed()
+	checker.after(code)
+	// code.on_content_changed()
 }
 func (code *CodeView) deleteline() {
-	checker := new_linechange_checker(code)
+	checker := new_code_change_checker(code)
 	code.view.CutLine()
 	checker.after(code)
-	code.on_content_changed()
+	// code.on_content_changed()
 }
 func (code *CodeView) deltext() {
+	checker := new_code_change_checker(code)
 	code.view.Delete()
-	code.on_content_changed()
+	checker.after(code)
 }
-func (code *CodeView) pasteline(line bool) {
-	if line {
-		if _, err := clipboard.ReadAll(); err == nil {
-			x := code.view
-			lineno := x.Cursor.Loc.Y
-			x.Buf.LineArray.NewlineBelow(lineno)
-			x.Cursor.Loc = femto.Loc{X: 0, Y: lineno + 1}
-			x.Paste()
-			code.on_content_changed()
+
+// pasteline
+func (code *CodeView) Paste() {
+	if text, err := clipboard.ReadAll(); err == nil && len(text) > 0 {
+		has_break := false
+		if text[len(text)-1] == '\n' {
+			has_break = true
 		}
+		view := code.view
+		vs := new_code_change_checker(code)
+		if has_break {
+			code.view.Cursor.End()
+			var r rune = '\n'
+			code.view.HandleEvent(tcell.NewEventKey(tcell.KeyEnter, r, tcell.ModNone))
+		}
+		view.Paste()
+		vs.after(code)
 	}
 }
 func (code *CodeView) copyline(line bool) {
@@ -1479,18 +1463,48 @@ func (code *CodeView) get_range_of_current_seletion_1() (lsp.Range, error) {
 	return r, nil
 }
 
+// Println calls Output to print to the standard logger.
+// Arguments are handled in the manner of fmt.Println.
 func UpdateTitleAndColor(b *tview.Box, title string) *tview.Box {
 	b.SetTitleAlign(tview.AlignLeft)
 	b.SetTitle(title)
 	return b
 }
-
+func (c CodeView) async_lsp_open(cb func(sym *lspcore.Symbol_file)) {
+	file := c.Path()
+	// var buffer []string
+	// for i := 0; i < c.view.Buf.NumLines; i++ {
+	// 	buffer = append(buffer, c.view.Buf.Line(i))
+	// }
+	m := c.main
+	symbolfile, err := m.Lspmgr().Open(file)
+	if symbolfile == nil {
+		debug.ErrorLog(lspcore.DebugTag, "no symbol file ", err)
+	}
+	if err == nil {
+		symbolfile.LoadSymbol(false)
+		m.App().QueueUpdate(func() {
+			if cb != nil {
+				cb(symbolfile)
+			}
+			m.App().ForceDraw()
+		})
+	} else {
+		m.App().QueueUpdate(func() {
+			m.OnSymbolistChanged(symbolfile, nil)
+			m.App().ForceDraw()
+			if cb != nil {
+				cb(symbolfile)
+			}
+		})
+	}
+}
 func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus bool) {
 	code.open_file_lspon_line_option(filename, line, focus, nil)
 }
 func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
 	main := code.main
-	code.openfile(filename, func(oldfile bool) {
+	code.openfile(filename, false, func(oldfile bool) {
 		code.view.SetTitle(trim_project_filename(code.Path(), global_prj_root))
 		if line != nil {
 			code.goto_location_no_history(line.Range, code.id != view_code_below, option)
@@ -1501,7 +1515,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 				code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 			}
 		} else {
-			go main.async_lsp_open(filename, func(sym *lspcore.Symbol_file) {
+			go code.async_lsp_open(func(sym *lspcore.Symbol_file) {
 				code.loading = false
 				code.lspsymbol = sym
 				code.main.OutLineView().update_with_ts(code.tree_sitter, sym)
@@ -1530,7 +1544,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 //		return code.LoadAndCb(filename, nil)
 //	}
 func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
-	return code.openfile(filename, func(bool) {
+	return code.openfile(filename, false, func(bool) {
 		code.goto_location_no_history(
 			lsp.Range{
 				Start: lsp.Position{Line: line, Character: 0},
@@ -1538,8 +1552,8 @@ func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
 			}, false, nil)
 	})
 }
-func (code *CodeView) openfile(filename string, onload func(newfile bool)) error {
-	if len(filename) > 0 {
+func (code *CodeView) openfile(filename string, reload bool, onload func(newfile bool)) error {
+	if len(filename) > 0 && !reload {
 		if NewFile(filename).Same(code.file) {
 			if onload != nil {
 				onload(true)
@@ -1577,91 +1591,12 @@ func (code *CodeView) openfile(filename string, onload func(newfile bool)) error
 	return nil
 }
 
-type lspchange struct {
-	code *CodeView
-}
-type lspchange_queue struct {
-	wait_queue []lspchange
-	lspchange  chan int
-	lock       sync.Mutex
-	start      bool
-}
-
-var lsp_queue = lspchange_queue{
-	lspchange: make(chan int),
-}
-
-func (q *lspchange_queue) AddQuery(c *CodeView) {
-	if !q.start {
-		q.start = true
-		go q.Worker()
-	}
-	q.lock.Lock()
-	defer q.lock.Unlock()
-	for _, v := range q.wait_queue {
-		if v.code == c {
-			log.Println("skip")
-			return
-		}
-	}
-	q.wait_queue = append(q.wait_queue, lspchange{c})
-	if len(q.wait_queue) > 0 {
-		q.lspchange <- len(q.wait_queue)
-	}
-
-}
-func (q *lspchange_queue) Worker() {
-	for {
-		select {
-		case <-q.lspchange:
-			data := empty_queue(q)
-			for _, v := range data {
-				v.code.update_ts()
-			}
-		}
-	}
-}
-
-func (code *CodeView) on_content_changed() {
-	lsp_queue.AddQuery(code)
-}
-func (code *CodeView) update_ts() {
-	data := []byte{}
-	for i := 0; i < code.view.Buf.LinesNum(); i++ {
-		data = append(data, code.view.Buf.LineBytes(i)...)
-		data = append(data, '\n')
-	}
-	if code.lspsymbol != nil {
-		code.lspsymbol.NotifyCodeChange(data)
-	}
-	var new_ts = lspcore.GetNewTreeSitter(code.Path(), data)
-	new_ts.Init(func(ts *lspcore.TreeSitter) {
-		on_treesitter_update(code, ts)
-	})
-}
-
-func empty_queue(q *lspchange_queue) []lspchange {
-	var ret []lspchange
-	q.lock.Lock()
-	ret = q.wait_queue
-	q.wait_queue = []lspchange{}
-	q.lock.Unlock()
-	return ret
-}
-
 func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 	go GlobalApp.QueueUpdateDraw(func() {
 		code.tree_sitter = ts
 		code.set_color()
 		if code.main != nil {
-			if len(ts.Outline) > 0 {
-				if ts.DefaultOutline() {
-					code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-
-				} else {
-					code.main.OnSymbolistChanged(nil, nil)
-				}
-			}
+			code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
 		}
 	})
 }
@@ -1669,7 +1604,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	b := code.view.Buf
 	b.Settings["syntax"] = false
 	code.tree_sitter = nil
-	if tree_sitter := lspcore.GetNewTreeSitter(filename, []byte{}); tree_sitter != nil {
+	if tree_sitter := lspcore.GetNewTreeSitter(filename, code.LspContentFullChangeEvent()); tree_sitter != nil {
 		tree_sitter.Init(func(ts *lspcore.TreeSitter) {
 			go GlobalApp.QueueUpdate(func() {
 				code.tree_sitter = ts

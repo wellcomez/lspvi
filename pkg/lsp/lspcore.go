@@ -8,11 +8,14 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 	"github.com/tectiv3/go-lsp/jsonrpc"
+	"zen108.com/lspvi/pkg/debug"
 
 	// "github.com/tectiv3/go-lsp/jsonrpc"
 	"go.bug.st/json"
@@ -42,6 +45,34 @@ type lspcore struct {
 
 	lang lsplang
 	sync *TextDocumentSyncOptions
+	lock sync.Mutex
+
+	lsp_stderr lsp_server_errorlog
+
+	config LangConfig
+}
+
+func (core *lspcore) RunComandInConfig() bool {
+	x := core.config
+	if len(x.Cmd) > 0 {
+		args := strings.Split(x.Cmd, " ")
+		cmd := exec.Command(args[0], args[1:]...)
+		core.cmd = cmd
+		return true
+	}
+	return false
+}
+
+const DebugTag = "LSPCORE"
+
+type lsp_server_errorlog struct {
+	lsp_log LspLog
+}
+
+// Write implements io.Writer.
+func (e lsp_server_errorlog) Write(p []byte) (n int, err error) {
+	e.lsp_log.LspLogOutput(string(p), "stderr")
+	return len(p), nil
 }
 
 func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
@@ -57,8 +88,9 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 		return err
 		// log.Fatal(err)
 	}
+	cmd.Stderr = core.lsp_stderr
 	if err := cmd.Start(); err != nil {
-		log.Println("failed to start", err)
+		debug.ErrorLog("failed to start", err)
 		return err
 		// log.Fatal(err)
 	}
@@ -82,10 +114,15 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 	return nil
 }
 
+type LspLog interface {
+	LspLogOutput(string, string)
+}
+
+// WorkSpace
 type WorkSpace struct {
 	Path        string
 	Export      string
-	Callback    jsonrpc2.Handler
+	Callback    LspLog
 	LspCoreList []lspcore
 	ConfigFile  string
 }
@@ -99,11 +136,52 @@ func (core *lspcore) Initialized() error {
 	return core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{}, &result)
 	// return nil
 }
+
+type FileChangeType int
+type TextChangeType int
+
+const (
+	FileChangeTypeCreated = 1
+	FileChangeTypeChanged = 2
+	FileChangeTypeDeleted = 3
+)
+const (
+	TextChangeTypeInsert  = 1
+	TextChangeTypeDeleted = 2
+	TextChangeTypeReplace = 3
+)
+
+type TsPoint struct {
+	Row    uint32
+	Column uint32
+}
+type EditInput struct {
+	StartIndex  uint32
+	OldEndIndex uint32
+	NewEndIndex uint32
+	StartPoint  TsPoint
+	OldEndPoint TsPoint
+	NewEndPoint TsPoint
+}
+type CodeChangeEvent struct {
+	Events   []TextChangeEvent
+	TsEvents []EditInput
+	Full     bool
+	File     string
+	Data     []byte
+}
+type TextChangeEvent struct {
+	Text  string
+	Type  TextChangeType
+	Range lsp.Range
+	Time  time.Time
+}
+
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1
 	// 发送initialize请求
 	var result lsp.InitializeResult
-
+	core.lsp_stderr.lsp_log = wk.Callback
 	if err := core.conn.Call(context.Background(), "initialize", lsp.InitializeParams{
 		ProcessID:             &ProcessID,
 		RootURI:               lsp.NewDocumentURI(wk.Path),
@@ -114,14 +192,19 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	}
 	return result, nil
 }
+
+func (w WorkSpace) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
+
+	if data, err := json.MarshalIndent(req, " ", " "); err == nil {
+		w.Callback.LspLogOutput(string(data), "lsp-notify")
+	} else {
+		w.Callback.LspLogOutput(fmt.Sprint(err), "lsp-notify")
+	}
+}
 func (core *lspcore) Progress_notify() error {
 	params := &lsp.ProgressParams{}
 	return core.conn.Notify(context.Background(), "$/progress", params)
 }
-
-const FileChangeTypeCreated = 1
-const FileChangeTypeChanged = 2
-const FileChangeTypeDeleted = 3
 
 func (core *lspcore) WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error {
 	param := lsp.DidChangeWatchedFilesParams{
@@ -160,8 +243,8 @@ func (client *lspcore) DidClose(file string) error {
 	return client.conn.Notify(context.Background(), "textDocument/didClose", param)
 }
 
-func (core *lspcore) DidOpen(file string) error {
-	x, err := core.newTextDocument(file)
+func (core *lspcore) DidOpen(file SourceCode, version int) error {
+	x, err := core.newTextDocument(file.Path, version, file.Cotent)
 	if err != nil {
 		return err
 	}
@@ -172,13 +255,15 @@ func (core *lspcore) DidOpen(file string) error {
 }
 func (core *lspcore) DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error {
 	Method := "textDocument/didChange"
-	err := core.conn.Notify(context.Background(), Method, lsp.DidChangeTextDocumentParams{
+	data := lsp.DidChangeTextDocumentParams{
 		TextDocument: lsp.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(file)},
-			Version:                1,
+			Version:                verion,
 		},
 		ContentChanges: ContentChanges,
-	})
+	}
+	err := core.conn.Notify(context.Background(), Method, data)
+	debug.DebugLog(DebugTag, data.TextDocument)
 	return err
 }
 func (core *lspcore) DidSave(file string, text string) error {
@@ -189,18 +274,21 @@ func (core *lspcore) DidSave(file string, text string) error {
 	return err
 }
 
-func (core *lspcore) newTextDocument(file string) (lsp.TextDocumentItem, error) {
-	content, err := os.ReadFile(file)
-	if err != nil {
-		return lsp.TextDocumentItem{}, err
+func (core *lspcore) newTextDocument(file string, version int, content string) (lsp.TextDocumentItem, error) {
+	if content == "" {
+		if c, err := os.ReadFile(file); err != nil {
+			return lsp.TextDocumentItem{}, err
+		} else {
+			content = string(c)
+		}
 	}
 	x := lsp.TextDocumentItem{
 		URI:        lsp.NewDocumentURI(file),
 		LanguageID: core.LanguageID,
-		Text:       string(content),
-		Version:    2,
+		Text:       content,
+		Version:    version,
 	}
-	return x, err
+	return x, nil
 }
 func (core *lspcore) document_semantictokens_full(file string) (*lsp.SemanticTokens, error) {
 	params := lsp.SemanticTokensParams{

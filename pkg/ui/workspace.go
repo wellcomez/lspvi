@@ -32,7 +32,7 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	// 	httport = port
 	// })
 
-	handle := LspHandle{}
+	// handle := LspHandle{}
 	// var main = &mainui{
 	main.bf = NewBackForward(NewHistory(lspviroot.history))
 	main.bookmark = &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}, root: root}
@@ -43,12 +43,16 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	if main.bookmark_view != nil {
 		main.bookmark_view.update_redraw()
 	}
-	handle.main = main
+	// handle.main = main
 	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)
 	}
 	ConfigFile := lspviroot.configfile
-	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle, ConfigFile: ConfigFile})
+	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{
+		Path:       root,
+		Export:     lspviroot.export,
+		Callback:   main,
+		ConfigFile: ConfigFile})
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main
 	global_prj_root = root
@@ -58,9 +62,9 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 		global_file_watch.Add(global_prj_root)
 	}
 	theme := global_config.Colorscheme
-	if global_theme==nil{
+	if global_theme == nil {
 		global_theme = new_ui_theme(theme, main)
-	}else{
+	} else {
 		main.on_change_color(theme)
 	}
 }

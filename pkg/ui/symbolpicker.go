@@ -2,13 +2,14 @@ package mainui
 
 import (
 	"fmt"
-	"log"
+	// "log"
 	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -89,7 +90,7 @@ func get_grid_list_index(list *tview.List, em *tcell.EventMouse, line int) (int,
 	if index > list.GetItemCount()-1 || index < 0 || list.GetItemCount() == 0 {
 		return 0, fmt.Errorf("%d is out of range", index)
 	}
-	log.Println("mouseY", moustY, "listY=", y, "list offset", offsetY, "idnex", index)
+	debug.TraceLog("mouseY", moustY, "listY=", y, "list offset", offsetY, "idnex", index)
 	return index, nil
 }
 func NewTreeClickCheck(grid *tview.Box, tree *tview.TreeView) *GridTreeClickCheck {
@@ -180,7 +181,7 @@ func (picker *symbolpicker) layout(input *tview.InputField, isflex bool) (row *t
 	}
 	picker.impl.click.dobule_click = func(event *tcell.EventMouse) {
 		picker.impl.click.tree.MouseHandler()(tview.MouseLeftClick, event, nil)
-		log.Println("dobule")
+		// log.Println("dobule")
 
 	}
 

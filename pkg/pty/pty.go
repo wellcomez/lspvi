@@ -13,6 +13,7 @@ import (
 
 	"github.com/creack/pty"
 	"golang.org/x/term"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 var home, _ = os.UserHomeDir()
@@ -42,7 +43,7 @@ func test(s string) error {
 	go func() {
 		for range ch {
 			if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
-				log.Printf("error resizing pty: %s", err)
+				debug.ErrorLogf("pty", "error resizing pty: %s", err)
 			}
 		}
 	}()

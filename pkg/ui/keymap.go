@@ -2,12 +2,13 @@ package mainui
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type command_id int
@@ -178,7 +179,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case goto_tab:
 		{
 			return cmdactor{id, "tab", func() bool {
-				if m.CmdLine().Vim.vi.Insert{
+				if m.CmdLine().Vim.vi.Insert {
 					return false
 				}
 				m.switch_tab_view()
@@ -357,8 +358,8 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case vi_paste_line:
-		return cmdactor{id, "Paste line", func() bool {
-			m.current_editor().pasteline(true)
+		return cmdactor{id, "Paste", func() bool {
+			m.current_editor().Paste()
 			return true
 		}}
 	case vi_line_end:
@@ -396,11 +397,18 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case handle_ctrl_c:
 		return cmdactor{id, "ctrl-c copy", func() bool {
 			m.current_editor().copyline(false)
-			log.Printf("copy to clipboard")
+			debug.InfoLog("keymap", "copy to clipboard")
 			return true
 		}}
 	case handle_ctrl_v:
 		return cmdactor{id, "ctrl-v paste", func() bool {
+			aa := m.current_editor().Primitive().HasFocus()
+			if aa {
+				m.current_editor().Paste()
+			} else if data, err := clipboard.ReadAll(); err == nil && len(data) > 0 {
+				m.App().GetFocus().PasteHandler()(data, nil)
+
+			}
 			return true
 		}}
 	case open_lspvi_configfile:
