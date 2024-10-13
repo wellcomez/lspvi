@@ -2,13 +2,14 @@ package lspcore
 
 import (
 	"fmt"
-	"log"
+	// "log"
 	"os"
 	"strings"
 	"sync"
 
 	"github.com/tectiv3/go-lsp"
 	"gopkg.in/yaml.v2"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 var FolderEmoji = "\U0001f4c1"
@@ -141,7 +142,7 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 	irange := inside_location(S.SymInfo.Location, loc)
 	if yes {
 
-		log.Println("xxx", irange, S.SymInfo.Kind, calr.Item.Kind, calr.Name)
+		// log.Println(,"xxx", irange, S.SymInfo.Kind, calr.Item.Kind, calr.Name)
 	}
 	if S.SymInfo.Kind == lsp.SymbolKindMethod && calr.Item.Kind == lsp.SymbolKindFunction {
 		calr.Item.Kind = lsp.SymbolKindMethod
@@ -160,7 +161,7 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 				info2 = b1.Info()
 			}
 
-			log.Printf("Error Resovle failed %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
+			debug.ErrorLogf(DebugTag, "Error Resovle failed %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(),
 				info, info2)
 		}
 	}
@@ -173,7 +174,7 @@ func (S Symbol) match(calr *CallStackEntry) bool {
 		if b, err := NewBody(loc); err == nil {
 			info2 = b.Info()
 		}
-		log.Printf("Error kind unmatch %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(), info, info2)
+		debug.ErrorLogf(DebugTag, "Error kind unmatch %s %s \n>>>%s  \n>>>>%s", S.SymInfo.Name, calr.DisplayName(), info, info2)
 	}
 	return false
 }
@@ -253,7 +254,7 @@ func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, err
 		symbolfile.__load_symbol_impl(false)
 	}
 	if symbolfile == nil {
-		log.Printf("fail to loadd  %s\n", filename)
+		debug.ErrorLogf(DebugTag, "fail to loadd  %s\n", filename)
 		return nil, fmt.Errorf("fail to loadd %s", filename)
 	}
 	return symbolfile.find_stack_symbol(entry)

@@ -341,10 +341,10 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_reco
 				s.UmlName = fileuml
 				s.UtxtName, s.UmlPngName, err = bin.Convert(fileuml)
 				if err != nil {
-					debug.DebugLog(DebugTag, err)
+					debug.ErrorLog(DebugTag, err)
 				}
 			} else {
-				debug.DebugLog(DebugTag, err)
+				debug.ErrorLog(DebugTag, err)
 			}
 		}
 		task.Save(export_root.Dir)
