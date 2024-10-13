@@ -45,16 +45,19 @@ type lspcore struct {
 	lang lsplang
 	sync *TextDocumentSyncOptions
 	lock sync.Mutex
+
+	lsp_stderr lsp_server_errorlog
 }
 
 const DebugTag = "LSPCORE"
 
-type error_log struct {
+type lsp_server_errorlog struct {
+	lsp_log LspLog
 }
 
 // Write implements io.Writer.
-func (e error_log) Write(p []byte) (n int, err error) {
-	debug.ErrorLog(DebugTag, string(p))
+func (e lsp_server_errorlog) Write(p []byte) (n int, err error) {
+	e.lsp_log.LspLogOutput(string(p), "stderr")
 	return len(p), nil
 }
 
@@ -71,8 +74,7 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 		return err
 		// log.Fatal(err)
 	}
-	var ee = error_log{}
-	cmd.Stderr = ee
+	cmd.Stderr = core.lsp_stderr
 	if err := cmd.Start(); err != nil {
 		debug.ErrorLog("failed to start", err)
 		return err
@@ -99,7 +101,7 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 }
 
 type LspLog interface {
-	LspLogOutput(string)
+	LspLogOutput(string, string)
 }
 
 // WorkSpace
@@ -164,7 +166,7 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1
 	// 发送initialize请求
 	var result lsp.InitializeResult
-
+	core.lsp_stderr.lsp_log = wk.Callback
 	if err := core.conn.Call(context.Background(), "initialize", lsp.InitializeParams{
 		ProcessID:             &ProcessID,
 		RootURI:               lsp.NewDocumentURI(wk.Path),
@@ -179,9 +181,9 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 func (w WorkSpace) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
 
 	if data, err := json.MarshalIndent(req, " ", " "); err == nil {
-		w.Callback.LspLogOutput(string(data))
+		w.Callback.LspLogOutput(string(data), "lsp-notify")
 	} else {
-		w.Callback.LspLogOutput(fmt.Sprint(err))
+		w.Callback.LspLogOutput(fmt.Sprint(err), "lsp-notify")
 	}
 }
 func (core *lspcore) Progress_notify() error {

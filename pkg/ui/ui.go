@@ -273,7 +273,8 @@ func (m mainui) Mode() mode {
 	return mode{tty: m.tty}
 }
 
-func (main *mainui) LspLogOutput(s string) {
+func (main *mainui) LspLogOutput(s, s1 string) {
+	main.update_log_view(s1)
 	main.update_log_view(s)
 }
 func (m mainui) Tab() *tabmgr {
