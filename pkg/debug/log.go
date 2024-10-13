@@ -3,6 +3,7 @@ package debug
 import (
 	"fmt"
 	"log"
+	"runtime"
 )
 
 type log_level int
@@ -14,66 +15,63 @@ const (
 	log_level_debug
 	log_level_trace
 )
-
+const TagUI = "UI"
 var loglevel log_level = log_level_debug
 
-func commonprintln(debug, tag string, args ...interface{}) {
-	s := fmt.Sprint(args...)
-	log.Println(fmt.Sprintf("[%s][%s]", debug, tag), s)
+func log_prefix(debug string, tag string) string {
+	_, file, line, _ := runtime.Caller(2)
+	x := fmt.Sprintf("[%-5s][%s] %s:%d", debug, tag, file, line)
+	return x
 }
 func DebugLog(tag string, v ...any) {
 	if loglevel >= log_level_debug {
-		commonprintln(tag, "DEBUG", v...)
+		log.Println(log_prefix(tag, "DEBUG"), fmt.Sprint(v...))
 	}
 }
 func TraceLogf(tag, format string, v ...any) {
 	if loglevel >= log_level_trace {
-		CommonLogf(tag, "TRACE", format, v...)
+		log.Printf(log_prefix(tag, "TRACE")+format, v...)
 	}
 }
 
 func TraceLog(tag string, v ...any) {
 	if loglevel >= log_level_trace {
-		commonprintln(tag, "TRACE", v...)
+		log.Println(log_prefix(tag, "TRACE"), fmt.Sprint(v...))
 	}
 }
 func InfoLogf(tag, format string, v ...any) {
 	if loglevel >= log_level_info {
-		CommonLogf(tag, "INFO ", format, v...)
+		log.Printf(log_prefix(tag, "INFO ")+format, v...)
 	}
 }
 
 func InfoLog(tag string, v ...any) {
 	if loglevel >= log_level_info {
-		commonprintln(tag, "INFO ", v...)
+		log.Println(log_prefix(tag, "INFO"), fmt.Sprint(v...))
 	}
 }
 func ErrorLog(tag string, v ...any) {
 	if loglevel >= log_level_error {
-		commonprintln(tag, "ERROR", v...)
+		log.Println(log_prefix(tag, "ERROR"), fmt.Sprint(v...))
 	}
 }
 func WarnLog(tag string, v ...interface{}) {
 	if loglevel >= log_level_warn {
-		commonprintln(tag, "WARN ", v...)
+		log.Println(log_prefix(tag, "WARN"), fmt.Sprint(v...))
 	}
-}
-func CommonLogf(debug, tag, format string, v ...any) {
-	s := fmt.Sprintf(format, v...)
-	log.Println(debug, tag, s)
 }
 func DebugLogf(tag, format string, v ...any) {
 	if loglevel >= log_level_debug {
-		CommonLogf(tag, "DEBUG", format, v...)
+		log.Printf(log_prefix(tag, "DEBUG")+format, v...)
 	}
 }
 func ErrorLogf(tag, format string, v ...any) {
 	if loglevel >= log_level_error {
-		CommonLogf(tag, "ERROR", format, v...)
+		log.Printf(log_prefix(tag, "ERROR")+format, v...)
 	}
 }
 func WarnLogf(tag, format string, v ...any) {
 	if loglevel >= log_level_warn {
-		CommonLogf(tag, "WARN ", format, v...)
+		log.Printf(log_prefix(tag, "WARN ")+format, v...)
 	}
 }
