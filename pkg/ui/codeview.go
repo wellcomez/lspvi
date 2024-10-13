@@ -1142,7 +1142,9 @@ func (code *CodeView) Undo() {
 	// code.on_content_changed(lspcore.CodeChangeEvent{})
 }
 func (code *CodeView) deleteword() {
+	checker := new_code_change_checker(code)
 	code.view.DeleteWordRight()
+	checker.after(code)
 	// code.on_content_changed()
 }
 func (code *CodeView) deleteline() {
@@ -1152,8 +1154,9 @@ func (code *CodeView) deleteline() {
 	// code.on_content_changed()
 }
 func (code *CodeView) deltext() {
+	checker := new_code_change_checker(code)
 	code.view.Delete()
-	// code.on_content_changed()
+	checker.after(code)
 }
 
 // pasteline
@@ -1162,7 +1165,7 @@ func (code *CodeView) pasteline(line bool) {
 		if _, err := clipboard.ReadAll(); err == nil {
 			x := code.view
 			vs := new_code_change_checker(code)
-      code.view.Cursor.End()
+			code.view.Cursor.End()
 			var r rune = '\n'
 			code.view.HandleEvent(tcell.NewEventKey(tcell.KeyEnter, r, tcell.ModNone))
 			x.Paste()
