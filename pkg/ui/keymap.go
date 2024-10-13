@@ -357,8 +357,8 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case vi_paste_line:
-		return cmdactor{id, "Paste line", func() bool {
-			m.current_editor().pasteline(true)
+		return cmdactor{id, "Paste", func() bool {
+			m.current_editor().Paste()
 			return true
 		}}
 	case vi_line_end:

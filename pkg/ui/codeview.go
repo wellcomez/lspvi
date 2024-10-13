@@ -78,7 +78,7 @@ type CodeEditor interface {
 	deleteline()
 	deleteword()
 	copyline(bool)
-	pasteline(bool)
+	Paste()
 	deltext()
 
 	goto_line_end()
@@ -1160,18 +1160,21 @@ func (code *CodeView) deltext() {
 }
 
 // pasteline
-func (code *CodeView) pasteline(line bool) {
-	if line {
-		if _, err := clipboard.ReadAll(); err == nil {
-			x := code.view
-			vs := new_code_change_checker(code)
+func (code *CodeView) Paste() {
+	if text, err := clipboard.ReadAll(); err == nil && len(text) > 0 {
+		has_break := false
+		if text[len(text)-1] == '\n' {
+			has_break = true
+		}
+		view := code.view
+		vs := new_code_change_checker(code)
+		if has_break {
 			code.view.Cursor.End()
 			var r rune = '\n'
 			code.view.HandleEvent(tcell.NewEventKey(tcell.KeyEnter, r, tcell.ModNone))
-			x.Paste()
-			vs.after(code)
-
 		}
+		view.Paste()
+		vs.after(code)
 	}
 }
 func (code *CodeView) copyline(line bool) {
