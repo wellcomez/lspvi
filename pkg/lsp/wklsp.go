@@ -227,12 +227,12 @@ func symbol_contain(a lsp.SymbolInformation, b lsp.SymbolInformation) bool {
 }
 
 type LspWorkspace struct {
-	clients []lspclient
-	Wk      WorkSpace
-	current *Symbol_file
-	filemap map[string]*Symbol_file
-	Handle  lsp_data_changed
-	lock_symbol_map    *sync.Mutex
+	clients         []lspclient
+	Wk              WorkSpace
+	current         *Symbol_file
+	filemap         map[string]*Symbol_file
+	Handle          lsp_data_changed
+	lock_symbol_map *sync.Mutex
 }
 
 func (wk LspWorkspace) IsSource(filename string) bool {
@@ -431,7 +431,7 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 		clients: []lspclient{
 			cpp, py, golang, ts, js,
 		},
-		Wk:   wk,
+		Wk:              wk,
 		lock_symbol_map: &sync.Mutex{},
 	}
 	ret.filemap = make(map[string]*Symbol_file)
