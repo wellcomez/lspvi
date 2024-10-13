@@ -6,6 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
+	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
@@ -19,6 +20,7 @@ type codetextview struct {
 	mouse_select_area    bool
 	LineNumberUnderMouse int
 	code                 CodeEditor
+	PasteHandlerImpl     func(text string, setFocus func(tview.Primitive))
 }
 
 func (v *codetextview) Draw(screen tcell.Screen) {
@@ -32,7 +34,9 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 	}
 	// newFunction1(v, x, y, w,screen)
 }
-
+func (code *codetextview) PasteHandler() func(text string, setFocus func(tview.Primitive)) {
+	return code.PasteHandlerImpl
+}
 func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen) {
 	var v = code.view
 	var symbol = code.LspSymbol()
@@ -169,6 +173,7 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		bookmarkfile{},
 		"",
 		false, 0,
+		nil,
 		nil,
 	}
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
