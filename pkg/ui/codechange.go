@@ -1,11 +1,11 @@
 package mainui
 
 import (
-	"log"
 	"sync"
 
 	"github.com/pgavlin/femto"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -57,7 +57,7 @@ func (check *code_change_cheker) after(code *CodeView) lspcore.CodeChangeEvent {
 		if len(ret.Events) > 0 {
 			code.on_content_changed(ret)
 		}
-		log.Println("editor event", name, event.Deltas)
+		debug.DebugLog("editor event", name, event.Deltas)
 	}
 	return ret
 }
@@ -119,7 +119,7 @@ var lsp_queue = lspchange_queue{
 
 func (q *lspchange_queue) AddQuery(c *CodeView, event lspcore.CodeChangeEvent) {
 	if len(event.File) == 0 {
-		log.Println("lsp_queue.AddQuery: empty filename")
+		debug.DebugLog("lsp_queue", ".AddQuery: empty filename")
 	}
 	if !q.start {
 		q.start = true
@@ -130,7 +130,7 @@ func (q *lspchange_queue) AddQuery(c *CodeView, event lspcore.CodeChangeEvent) {
 	for i := range q.wait_queue {
 		v := q.wait_queue[i]
 		if v.code == c {
-			log.Println("skip")
+			debug.DebugLog("lspchange_queue", "skip")
 			v.event.Full = true
 			return
 		}
