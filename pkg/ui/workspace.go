@@ -32,7 +32,7 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	// 	httport = port
 	// })
 
-	handle := LspHandle{}
+	// handle := LspHandle{}
 	// var main = &mainui{
 	main.bf = NewBackForward(NewHistory(lspviroot.history))
 	main.bookmark = &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}, root: root}
@@ -43,7 +43,7 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	if main.bookmark_view != nil {
 		main.bookmark_view.update_redraw()
 	}
-	handle.main = main
+	// handle.main = main
 	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)
 	}
