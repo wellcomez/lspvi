@@ -27,7 +27,7 @@ func log_prefix(tag, debug string) string {
 }
 func DebugLog(tag string, v ...any) {
 	if loglevel >= log_level_debug {
-		log.Println(log_prefix(tag, "DEBUG"), fmt.Sprint(v...))
+		log.Println(log_prefix(tag, "DEBUG"), fmt.Sprintln(v...))
 	}
 }
 func TraceLogf(tag, format string, v ...any) {
@@ -38,7 +38,7 @@ func TraceLogf(tag, format string, v ...any) {
 
 func TraceLog(tag string, v ...any) {
 	if loglevel >= log_level_trace {
-		log.Println(log_prefix(tag, "TRACE"), fmt.Sprint(v...))
+		log.Println(log_prefix(tag, "TRACE"), fmt.Sprintln(v...))
 	}
 }
 func InfoLogf(tag, format string, v ...any) {
@@ -49,17 +49,17 @@ func InfoLogf(tag, format string, v ...any) {
 
 func InfoLog(tag string, v ...any) {
 	if loglevel >= log_level_info {
-		log.Println(log_prefix(tag, "INFO"), fmt.Sprint(v...))
+		log.Println(log_prefix(tag, "INFO"), fmt.Sprintln(v...))
 	}
 }
 func ErrorLog(tag string, v ...any) {
 	if loglevel >= log_level_error {
-		log.Println(log_prefix(tag, "ERROR"), fmt.Sprint(v...))
+		log.Println(log_prefix(tag, "ERROR"), fmt.Sprintln(v...))
 	}
 }
 func WarnLog(tag string, v ...interface{}) {
 	if loglevel >= log_level_warn {
-		log.Println(log_prefix(tag, "WARN"), fmt.Sprint(v...))
+		log.Println(log_prefix(tag, "WARN"), fmt.Sprintln(v...))
 	}
 }
 func DebugLogf(tag, format string, v ...any) {

@@ -151,7 +151,7 @@ func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
 func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v)
-	impl := &grep_impl{}
+	impl := &grep_impl{taskid: int(time.Now().Second()) * 100}
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
 		grep_list_view:   new_customlist(false),
@@ -223,6 +223,9 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 	}
 	grep.temp = nil
 	grep.result.data = append(grep.result.data, tmp.data...)
+	if len(grep.result.data)>1000{
+		return
+	}
 	for _, o := range tmp.data {
 		fpath := o.Loc.URI.AsPath().String()
 		line := o.get_code(0)

@@ -6,33 +6,37 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log"
 	"os"
+	"strings"
 	"syscall"
+
+	str "github.com/boyter/go-string"
+	"zen108.com/lspvi/pkg/debug"
 )
+
 func PosixRunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
-	if grep.bAbort{
+	if grep.bAbort {
 		return true
 	}
 	defer func() {
 		<-semFopenLimit
 		grep.waitGreps.Done()
 	}()
-
-	if yes, err := isSubdir(lspviroot.root, fpath); err != nil && yes {
-		return true
+	if strings.HasPrefix(fpath, global_prj_root) {
+		debug.InfoLog("Ignore ", fpath)
 	}
 	semFopenLimit <- 1
+	grep.filecount++
 	file, err := os.Open(fpath)
 	if err != nil {
-		log.Printf("grep open error: %v\n", err)
+		debug.ErrorLog("grep open error: ", err)
 		return true
 	}
 	defer file.Close()
 
 	fi, err := file.Stat()
 	if err != nil {
-		log.Printf("grep stat error: %v\n", err)
+		debug.ErrorLog("grep state error: ", err)
 		return true
 	}
 
@@ -56,12 +60,13 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
 	lineNumber := 0
 
 	for scanner.Scan() {
-		if grep.bAbort{
+		if grep.bAbort {
 			return true
 		}
 		lineNumber++
 		strline := scanner.Text()
-		if grep.pattern.MatchString(strline) {
+		x := grep.newFunction1(strline)
+		if x {
 			if isBinary {
 				out <- grepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath)}
 				return true
@@ -76,4 +81,11 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
 	return false
 }
 
-
+func (grep *gorep) newFunction1(strline string) bool {
+	grep.count++
+	if grep.useptnstring {
+		return len(str.IndexAll(strline, grep.ptnstring, 1)) > 0
+	} else {
+		return grep.pattern.MatchString(strline)
+	}
+}

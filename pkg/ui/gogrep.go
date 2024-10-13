@@ -2,16 +2,15 @@ package mainui
 
 import (
 	"bytes"
-	"io/ioutil"
-	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"zen108.com/lspvi/pkg/debug"
+	gi "zen108.com/lspvi/pkg/ui/gitignore"
 	// "code.google.com/p/go.crypto/ssh/terminal"
 )
 
@@ -64,14 +63,18 @@ type searchScope struct {
 }
 
 type gorep struct {
-	pattern       *regexp.Regexp
-	ignorePattern *regexp.Regexp
-	scope         searchScope
-	cb            func(taskid int, out *grep_output)
-	id            int
-	bAbort        bool
-	waitMaps      sync.WaitGroup
-	waitGreps     sync.WaitGroup
+	pattern        *regexp.Regexp
+	ignorePattern  *regexp.Regexp
+	ptnstring      string
+	useptnstring   bool
+	scope          searchScope
+	cb             func(taskid int, out *grep_output)
+	id             int
+	bAbort         bool
+	waitMaps       sync.WaitGroup
+	waitGreps      sync.WaitGroup
+	begintm, count int64
+	filecount      int
 }
 
 func (grep *gorep) abort() {
@@ -83,28 +86,6 @@ var semFopenLimit chan int
 const maxNumOfFileOpen = 10
 
 const separator = string(os.PathSeparator)
-
-// func usage() {
-// 	fmt.Fprintf(os.Stderr, `gorep is find and grep tool.
-
-// Version: %s
-
-// Usage:
-
-//     gorep [options] pattern [path]
-
-// The options are:
-
-//     -V              : print gorep version
-//     -g              : enable grep
-//     -grep-only      : enable grep and disable file search
-//     -search-binary  : search binary files for matches on grep enable
-//     -ignore pattern : pattern is ignored
-//     -hidden         : search hidden files
-//     -ignorecase     : ignore case distinctions in pattern
-// `, version)
-// 	os.Exit(-1)
-// }
 
 func init() {
 	semFopenLimit = make(chan int, maxNumOfFileOpen)
@@ -124,8 +105,8 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 	go func() {
 		// var i = 0
 		for {
-			msg := <-chPrintEnd
-			debug.InfoLog(GrepTag, "chPrintEnd--------->", msg)
+			<-chPrintEnd
+			grep.Debug("grep end")
 			if grep.cb != nil {
 				grep.cb(grep.id, nil)
 			}
@@ -144,6 +125,10 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 		switch ch := chanIf.(type) {
 		case chan grepInfo:
 			for msg := range ch {
+				if grep.bAbort {
+					grep.Debug("grep abort in report loop")
+					break
+				}
 				if msg.lineNumber != 0 {
 					// decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
 					a := grep_output{
@@ -184,13 +169,17 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 	base := &gorep{
 		pattern:       nil,
 		ignorePattern: nil,
+		ptnstring:     pattern,
 		scope: searchScope{
 			grep:   false,
 			binary: false,
 			hidden: false,
 		},
-		id: id,
+		useptnstring: true,
+		id:           id,
+		begintm:      time.Now().UnixMilli(),
 	}
+	base.Debug("NewGrep")
 
 	// config regexp
 	if opt.ignorecase {
@@ -198,13 +187,15 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 	}
 
 	var err error
-	if opt.wholeword {
-		pattern = `\b` + pattern + `\b`
-	}
-	base.pattern, err = regexp.Compile(pattern)
-	if err != nil {
-		debug.ErrorLog(GrepTag, "regexp error", err)
-		return nil, err
+	if !base.useptnstring {
+		if opt.wholeword {
+			pattern = `\b` + pattern + `\b`
+		}
+		base.pattern, err = regexp.Compile(pattern)
+		if err != nil {
+			debug.ErrorLog(GrepTag, "regexp error", err)
+			return nil, err
+		}
 	}
 
 	if len(opt.ignore) > 0 {
@@ -242,7 +233,10 @@ func (grep *gorep) kick(fpath string) *channelSet {
 
 	go func() {
 		grep.waitMaps.Add(1)
-		grep.mapsend(fpath, chsMap)
+		home, _ := os.UserHomeDir()
+		ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
+		m := gi.NewMatcher(ps)
+		grep.mapsend(fpath, chsMap, m)
 		grep.waitMaps.Wait()
 		closeChannelSet(chsMap)
 	}()
@@ -266,60 +260,58 @@ func closeChannelSet(chans *channelSet) {
 	close(chans.grep)
 }
 
-func verifyHidden(fpath string) bool {
-	byteStr := []byte(path.Base(fpath))
-	// don't consider current directory(./) and parent directory(../)
-	if '.' == byteStr[0] {
-		return true
-	}
-	return false
-}
+//	func verifyHidden(fpath string) bool {
+//		byteStr := []byte(path.Base(fpath))
+//		// don't consider current directory(./) and parent directory(../)
+//		if '.' == byteStr[0] {
+//			return true
+//		}
+//		return false
+//	}
 
-func (grep *gorep) mapsend(fpath string, chans *channelSet) {
+// isHidden checks if a file or directory is hidden.
+func (grep *gorep) Debug(s string) {
+	debug.InfoLog(GrepTag, s, "Abort=", grep.bAbort, "id=", grep.id, "Files", grep.filecount, "Line=", grep.count, grep.ptnstring, time.Now().UnixMilli()-grep.begintm)
+}
+func (grep *gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 	defer grep.waitMaps.Done()
 	if grep.bAbort {
+		grep.Debug("Abort")
+
 		return
 	}
 	/* expand dir */
-	list, err := ioutil.ReadDir(fpath)
+	list, err := os.ReadDir(fpath)
 	if err != nil {
-		log.Printf("dive error: %v\n", err)
+		debug.ErrorLog(GrepTag, "readir error: ", err)
 		return
 	}
-
-	const ignoreFlag = os.ModeDir | os.ModeAppend | os.ModeExclusive | os.ModeTemporary |
-		os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe | os.ModeSocket |
-		os.ModeSetuid | os.ModeSetgid | os.ModeCharDevice | os.ModeSticky
+	ignore_path := filepath.Join(fpath, ".gitignore")
+	ps, _ := gi.ReadIgnoreFile(ignore_path)
+	if len(ps) > 0 {
+		m = gi.NewMatcher(ps)
+		debug.InfoLog(GrepTag, "new gitignore:", ignore_path)
+	}
 
 	for _, finfo := range list {
-		mode := finfo.Mode()
 		fname := finfo.Name()
-		if !grep.scope.hidden && verifyHidden(fname) {
+		if fname[0] == '.' {
+			debug.InfoLog(GrepTag, "ignore:", filepath.Join(fpath, finfo.Name()))
 			continue
 		}
-		if grep.ignorePattern != nil && grep.ignorePattern.MatchString(fname) {
-			continue
+
+		path := filepath.Join(fpath, fname)
+		is_dir := finfo.IsDir()
+
+		ss := strings.Split(path, separator)
+		if m.Match(ss[1:], is_dir) {
+			debug.InfoLog(GrepTag, "ignore:", path)
 		}
-		switch true {
-		case mode&os.ModeDir != 0:
-			fullpath := fpath + separator + fname
-			// if grep.scope.dir {
-			// 	chans.dir <- fullpath
-			// }
+		if finfo.IsDir() {
 			grep.waitMaps.Add(1)
-			go grep.mapsend(fullpath, chans)
-		case mode&os.ModeSymlink != 0:
-			// if grep.scope.symlink {
-			// 	chans.symlink <- fpath + separator + fname
-			// }
-			continue
-		case mode&ignoreFlag == 0:
-			fullpath := fpath + separator + fname
-			if grep.scope.grep {
-				chans.grep <- grepInfo{fullpath, 0, ""}
-			}
-		default:
-			continue
+			go grep.mapsend(path, chans, m)
+		} else if finfo.Type().IsRegular() {
+			chans.grep <- grepInfo{path, 0, ""}
 		}
 	}
 }
@@ -348,18 +340,7 @@ func verifyBinary(buf []byte) bool {
 	}
 	return false
 }
-func isSubdir(parentPath, childPath string) (bool, error) {
-	cleanParent := filepath.Clean(parentPath)
-	cleanChild := filepath.Clean(childPath)
 
-	relPath, err := filepath.Rel(cleanParent, cleanChild)
-	if err != nil {
-		return false, err
-	}
-
-	// 如果相对路径以父路径开始，则表示 child 是 parent 的子目录
-	return !filepath.IsAbs(relPath) && !strings.HasPrefix(relPath, ".."), nil
-}
 func (grep *gorep) grep(fpath string, out chan<- grepInfo) {
 	//fmt.Fprintf(os.Stderr, "grep mmap error: %v\n", err)
 	RunGrep(grep, fpath, out)
