@@ -10,10 +10,12 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+
+	"zen108.com/lspvi/pkg/debug"
 	// "code.google.com/p/go.crypto/ssh/terminal"
 )
 
-const version = "0.2.5"
+var GrepTag = "Grep"
 
 type grepInfo struct {
 	fpath      string
@@ -25,22 +27,20 @@ type contenttype int
 const (
 	DIR_TYPE contenttype = iota
 	FILE_TYPE
-	SYMLINK_TYPE
 	BINARY_TYPE
-	STRING_TYPE
 )
 
 type grep_output struct {
 	*grepInfo
-	destor       string
+	// destor       string
 	content_type contenttype
 }
 
 type channelSet struct {
-	dir     chan string
-	file    chan string
-	symlink chan string
-	grep    chan grepInfo
+	// dir     chan string
+	// file    chan string
+	// symlink chan string
+	grep chan grepInfo
 }
 
 type optionSet struct {
@@ -55,9 +55,9 @@ type optionSet struct {
 }
 
 type searchScope struct {
-	dir     bool
-	file    bool
-	symlink bool
+	// dir     bool
+	// file    bool
+	// symlink bool
 	grep    bool
 	binary  bool
 	hidden  bool
@@ -151,16 +151,16 @@ func verifyColor() bool {
 // 	}
 // }
 
-const (
-	DIR_COLOR     = "\x1b[36m"
-	FILE_COLOR    = "\x1b[34m"
-	SYMLINK_COLOR = "\x1b[35m"
-	GREP_COLOR    = "\x1b[32m"
-	HIT_COLOR     = "\x1b[32m"
-	NORM_COLOR    = "\x1b[39m"
-	BOLD_DECO     = "\x1b[1m"
-	NORM_DECO     = "\x1b[0m"
-)
+// const (
+// 	DIR_COLOR     = "\x1b[36m"
+// 	FILE_COLOR    = "\x1b[34m"
+// 	SYMLINK_COLOR = "\x1b[35m"
+// 	GREP_COLOR    = "\x1b[32m"
+// 	HIT_COLOR     = "\x1b[32m"
+// 	NORM_COLOR    = "\x1b[39m"
+// 	BOLD_DECO     = "\x1b[1m"
+// 	NORM_DECO     = "\x1b[0m"
+// )
 
 func (grep *gorep) end(o grep_output) {
 	if grep.cb != nil {
@@ -169,24 +169,10 @@ func (grep *gorep) end(o grep_output) {
 }
 func (grep *gorep) report(chans *channelSet, isColor bool) {
 	var markMatch string
-	var markDir string
-	var markFile string
-	var markSymlink string
+	// var markDir string
+	// var markFile string
+	// var markSymlink string
 	var markGrep string
-	if isColor {
-		markMatch = BOLD_DECO + HIT_COLOR + "$0" + NORM_COLOR + NORM_DECO
-		markDir = DIR_COLOR + "[Dir ]" + NORM_COLOR
-		markFile = FILE_COLOR + "[File]" + NORM_COLOR
-		markSymlink = SYMLINK_COLOR + "[SymL]" + NORM_COLOR
-		markGrep = GREP_COLOR + "[Grep]" + NORM_COLOR
-	} else {
-		markMatch = "$0"
-		markDir = "[Dir ]"
-		markFile = "[File]"
-		markSymlink = "[SymL]"
-		markGrep = "[Grep]"
-	}
-
 	var waitReports sync.WaitGroup
 
 	chPrint := make(chan grep_output)
@@ -195,7 +181,7 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 		var i = 0
 		for {
 			msg := <-chPrintEnd
-			log.Println("chPrintEnd--------->", msg)
+			debug.InfoLog(GrepTag, "chPrintEnd--------->", msg)
 			i++
 			if i == 4 {
 				if grep.cb != nil {
@@ -217,21 +203,12 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 	reporter := func(mark string, accent string, chanIf interface{}) {
 		defer waitReports.Done()
 		switch ch := chanIf.(type) {
-		case chan string:
-			for msg := range ch {
-				decoStr := grep.pattern.ReplaceAllString(msg, accent)
-				a := grep_output{
-					destor:       decoStr,
-					content_type: STRING_TYPE,
-				}
-				chPrint <- a
-			}
 		case chan grepInfo:
 			for msg := range ch {
 				if msg.lineNumber != 0 {
-					decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
+					// decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
 					a := grep_output{
-						destor: decoStr,
+						// destor: decoStr,
 						grepInfo: &grepInfo{
 							lineNumber: msg.lineNumber,
 							line:       msg.line,
@@ -259,10 +236,10 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 		chPrintEnd <- mark
 	}
 
-	waitReports.Add(4)
-	go reporter(markDir, markMatch, chans.dir)
-	go reporter(markFile, markMatch, chans.file)
-	go reporter(markSymlink, markMatch, chans.symlink)
+	waitReports.Add(1)
+	// go reporter(markDir, markMatch, chans.dir)
+	// go reporter(markFile, markMatch, chans.file)
+	// go reporter(markSymlink, markMatch, chans.symlink)
 	go reporter(markGrep, markMatch, chans.grep)
 	// log.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 	waitReports.Wait()
@@ -273,9 +250,8 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 		pattern:       nil,
 		ignorePattern: nil,
 		scope: searchScope{
-			dir:     true,
-			file:    true,
-			symlink: true,
+			// file:    true,
+			// symlink: true,
 			grep:    false,
 			binary:  false,
 			hidden:  false,
@@ -314,9 +290,8 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 		base.scope.grep = true
 	}
 	if opt.grep_only {
-		base.scope.dir = false
-		base.scope.file = false
-		base.scope.symlink = false
+		// base.scope.file = false
+		// base.scope.symlink = false
 		base.scope.grep = true
 	}
 	if opt.search_binary {
@@ -348,17 +323,17 @@ func (grep *gorep) kick(fpath string) *channelSet {
 
 func makeChannelSet() *channelSet {
 	return &channelSet{
-		dir:     make(chan string),
-		file:    make(chan string),
-		symlink: make(chan string),
-		grep:    make(chan grepInfo),
+		// dir:     make(chan string),
+		// file:    make(chan string),
+		// symlink: make(chan string),
+		grep: make(chan grepInfo),
 	}
 }
 
 func closeChannelSet(chans *channelSet) {
-	close(chans.dir)
-	close(chans.file)
-	close(chans.symlink)
+	// close(chans.dir)
+	// close(chans.file)
+	// close(chans.symlink)
 	close(chans.grep)
 }
 
@@ -399,20 +374,18 @@ func (grep *gorep) mapsend(fpath string, chans *channelSet) {
 		switch true {
 		case mode&os.ModeDir != 0:
 			fullpath := fpath + separator + fname
-			if grep.scope.dir {
-				chans.dir <- fullpath
-			}
+			// if grep.scope.dir {
+			// 	chans.dir <- fullpath
+			// }
 			grep.waitMaps.Add(1)
 			go grep.mapsend(fullpath, chans)
 		case mode&os.ModeSymlink != 0:
-			if grep.scope.symlink {
-				chans.symlink <- fpath + separator + fname
-			}
+			// if grep.scope.symlink {
+			// 	chans.symlink <- fpath + separator + fname
+			// }
+			continue
 		case mode&ignoreFlag == 0:
 			fullpath := fpath + separator + fname
-			if grep.scope.file {
-				chans.file <- fullpath
-			}
 			if grep.scope.grep {
 				chans.grep <- grepInfo{fullpath, 0, ""}
 			}
@@ -423,23 +396,23 @@ func (grep *gorep) mapsend(fpath string, chans *channelSet) {
 }
 
 func (grep *gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
-	filter := func(in <-chan string, out chan<- string) {
-		for msg := range in {
-			if grep.pattern.MatchString(path.Base(msg)) {
-				out <- msg
-			}
-		}
-		close(out)
-	}
+	// filter := func(in <-chan string, out chan<- string) {
+	// 	for msg := range in {
+	// 		if grep.pattern.MatchString(path.Base(msg)) {
+	// 			out <- msg
+	// 		}
+	// 	}
+	// 	close(out)
+	// }
 
 	// directory
-	go filter(chsIn.dir, chsOut.dir)
+	// go filter(chsIn.dir, chsOut.dir)
 
 	// file
-	go filter(chsIn.file, chsOut.file)
+	// go filter(chsIn.file, chsOut.file)
 
 	// symlink
-	go filter(chsIn.symlink, chsOut.symlink)
+	// go filter(chsIn.symlink, chsOut.symlink)
 
 	// grep
 	go func(in <-chan grepInfo, out chan<- grepInfo) {
@@ -479,8 +452,5 @@ func isSubdir(parentPath, childPath string) (bool, error) {
 }
 func (grep *gorep) grep(fpath string, out chan<- grepInfo) {
 	//fmt.Fprintf(os.Stderr, "grep mmap error: %v\n", err)
-	shouldReturn := RunGrep(grep, fpath, out)
-	if shouldReturn {
-		return
-	}
+	RunGrep(grep, fpath, out)
 }
