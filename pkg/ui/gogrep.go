@@ -75,6 +75,7 @@ type gorep struct {
 	waitGreps      sync.WaitGroup
 	begintm, count int64
 	filecount      int
+	just_grep_file bool
 }
 
 func (grep *gorep) abort() {
@@ -175,9 +176,10 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 			binary: false,
 			hidden: false,
 		},
-		useptnstring: true,
-		id:           id,
-		begintm:      time.Now().UnixMilli(),
+		useptnstring:   true,
+		id:             id,
+		begintm:        time.Now().UnixMilli(),
+		just_grep_file: true,
 	}
 	base.Debug("NewGrep")
 

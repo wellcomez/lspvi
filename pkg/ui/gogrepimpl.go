@@ -60,9 +60,6 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
 	lineNumber := 0
 
 	for scanner.Scan() {
-		if grep.bAbort {
-			return true
-		}
 		lineNumber++
 		strline := scanner.Text()
 		x := grep.newFunction1(strline)
@@ -71,10 +68,13 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
 				out <- grepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath)}
 				return true
 			} else {
-				if grep.ignorePattern != nil && grep.ignorePattern.MatchString(strline) {
-					continue
-				}
+				// if grep.ignorePattern != nil && grep.ignorePattern.MatchString(strline) {
+				// 	continue
+				// }
 				out <- grepInfo{fpath, lineNumber, strline}
+			}
+			if grep.just_grep_file{
+				break
 			}
 		}
 	}

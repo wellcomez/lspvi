@@ -736,6 +736,9 @@ func (qk *quick_view) async_open(file string, lspmgr *lspcore.LspWorkspace, r ls
 	if qk.view == nil {
 		return
 	}
+	if !qk.need_async_open() {
+		return
+	}
 	if sym, _ := lspmgr.Open(file); sym != nil {
 		if err := sym.LspLoadSymbol(); err != nil {
 			return
@@ -789,6 +792,13 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 		return nil
 	}
 	return caller
+}
+
+func (qk quick_view) need_async_open() bool {
+	if qk.Refs.Refs != nil {
+		return len(qk.Refs.Refs) < 250
+	}
+	return true
 }
 
 func (tree *list_tree_node) get_caller(qk *quick_view) *ref_with_caller {
