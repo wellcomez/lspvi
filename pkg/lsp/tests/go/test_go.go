@@ -7,6 +7,9 @@ type inf interface {
 type struct0 struct {
 	a0 int
 }
+
+var a123456789 = ""
+
 type struct1 struct {
 	*struct0
 	a, b, c int
@@ -14,7 +17,11 @@ type struct1 struct {
 
 func (a struct1) call1()  {}
 func (a *struct1) call2() {}
-func aa(){
+
+func aa() {
 }
-func aaaaa(){
+func a2() {
+}
+
+func c123() {
 }

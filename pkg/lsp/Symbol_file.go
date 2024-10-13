@@ -5,7 +5,7 @@ import (
 	// "encoding/hex"
 	"errors"
 	"fmt"
-	"log"
+	// "log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -341,10 +341,10 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_reco
 				s.UmlName = fileuml
 				s.UtxtName, s.UmlPngName, err = bin.Convert(fileuml)
 				if err != nil {
-					log.Println(err)
+					debug.DebugLog(DebugTag, err)
 				}
 			} else {
-				log.Println(err)
+				debug.DebugLog(DebugTag, err)
 			}
 		}
 		task.Save(export_root.Dir)
@@ -417,9 +417,9 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 				}}
 			} else {
 				for _, v := range event.Events {
-					if v.Range.End.Line == 0 {
-						log.Println("")
-					}
+					// if v.Range.End.Line == 0 {
+					// 	log.Println("")
+					// }
 					e := lsp.TextDocumentContentChangeEvent{
 						Range: &v.Range,
 						Text:  v.Text,
@@ -451,15 +451,15 @@ func newFunction1(DidSave bool, sym *Symbol_file, OpenClose bool) {
 	} else if OpenClose {
 		wk := sym.Wk
 		if err := wk.CloseSymbolFile(sym); err != nil {
-			log.Println(LSP_DEBUG_TAG, "OpenClose close symbol file failed", err)
+			debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose close symbol file failed", err)
 		} else if sym, err := sym.Wk.Open(sym.Filename); sym != nil {
 			if err != nil {
-				log.Println(LSP_DEBUG_TAG, "OpenClose open symbol file failed", err)
+				debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose open symbol file failed", err)
 			}
 			if err := sym.LspLoadSymbol(); err != nil {
-				log.Println(LSP_DEBUG_TAG, "OpenClose load symbol failed", err, sym.Filename)
+				debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose load symbol failed", err, sym.Filename)
 			} else {
-				log.Println(LSP_DEBUG_TAG, "OpenClose load symbol success", sym.Filename)
+				debug.InfoLog(LSP_DEBUG_TAG, "OpenClose load symbol success", sym.Filename)
 			}
 		}
 

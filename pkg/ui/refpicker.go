@@ -70,12 +70,12 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 	return layout
 }
 func (pk *refpicker) row(input *tview.InputField) *tview.Flex {
-	ret := pk.impl.flex(input, 2)
+	ret := pk.impl.flex(input, 1)
 	pk.impl.PrevOpen(pk.impl.file.Filename, -1)
 	return ret
 }
 func (pk *refpicker) grid(input *tview.InputField) *tview.Grid {
-	ret := pk.impl.grid(input, 2)
+	ret := pk.impl.grid(input, 1)
 	pk.impl.PrevOpen(pk.impl.file.Filename, -1)
 	return ret
 }

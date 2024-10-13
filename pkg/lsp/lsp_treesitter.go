@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -768,14 +767,14 @@ func NewTreeSitter(name string, content []byte) *TreeSitter {
 
 func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) error {
 	if err := ts._load_file(lang); err != nil {
-		log.Println("fail to load treesitter", err)
+		debug.ErrorLog("fail to load treesitter", err)
 		return err
 	}
 	go func() {
 		ret, hlerr := ts.query(query_highlights)
 		ts.HlLine = ret
 		if hlerr != nil {
-			log.Println("fail to load highlights", hlerr)
+			debug.ErrorLog("fail to load highlights", hlerr)
 		}
 		ts.callback_to_ui(cb)
 	}()
