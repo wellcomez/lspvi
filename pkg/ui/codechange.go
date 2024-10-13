@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/pgavlin/femto"
@@ -34,22 +35,31 @@ func new_code_change_checker(code *CodeView) code_change_cheker {
 	return code_change_cheker{lineno: lineno, next: next, cur: cur, old: event, stacktop: top}
 }
 
-const tag = "editor event"
+const tag = "Triggers Event textDocument/didChange"
 
-func (check *code_change_cheker) after(code *CodeView) lspcore.CodeChangeEvent {
-	event, top := statckstatus(code)
-	debug.DebugLog(tag, " stack change top", top, check.stacktop)
+func (check *code_change_cheker) after(code *CodeView) []lspcore.CodeChangeEvent {
+	event, Size := statckstatus(code)
+	debug.DebugLog(tag, " stack change top", Size, check.stacktop)
 	check.new = event
-	ret := code.LspContentFullChangeEvent()
-	ret.Full = false
-	if check.old != check.new {
-		if event == nil {
-			return ret
+	var stack = code.view.Buf.UndoStack.Top
+	var ret []lspcore.CodeChangeEvent
+	var events []femto.TextEvent
+	ele := stack
+	for {
+		if ele != nil && ele.Value != check.old {
+			events = append([]femto.TextEvent{*ele.Value}, events...)
+			ele = ele.Next
+		} else {
+			break
 		}
-		ret = ParserEvent(ret, event)
-		if len(ret.Events) > 0 {
-			code.on_content_changed(ret)
-		}
+
+	}
+	for _, v := range events {
+		a := code.LspContentFullChangeEvent()
+		a.Full = false
+		a = ParserEvent(a, &v)
+		code.on_content_changed(a)
+		ret = append(ret, a)
 	}
 	return ret
 }
@@ -64,7 +74,6 @@ func ParserEvent(change lspcore.CodeChangeEvent, event *femto.TextEvent) lspcore
 	var name string
 	var Type lspcore.TextChangeType
 	switch event.EventType {
-
 	case femto.TextEventInsert:
 		Type = lspcore.TextChangeTypeInsert
 		name = "insert"
@@ -77,18 +86,35 @@ func ParserEvent(change lspcore.CodeChangeEvent, event *femto.TextEvent) lspcore
 	default:
 	}
 	for _, v := range event.Deltas {
+		Start := lsp.Position{
+			Line: v.Start.Y, Character: v.Start.X}
+		End := lsp.Position{
+			Line: v.End.Y, Character: v.End.X}
+		Text := v.Text
+
+		switch event.EventType {
+		case femto.TextEventInsert:
+			End = Start
+		case femto.TextEventRemove:
+			Text = ""
+		default:
+		}
+
 		a := lspcore.TextChangeEvent{
 			Type: Type,
-			Text: v.Text,
+			Text: Text,
+			Time: event.Time,
 			Range: lsp.Range{
-				Start: lsp.Position{
-					Line: v.Start.Y, Character: v.Start.X},
-				End: lsp.Position{
-					Line: v.End.Y, Character: v.End.X},
+				Start: Start,
+				End:   End,
 			},
 		}
 		change.Events = append(change.Events, a)
-		debug.DebugLog(tag, name, event.Deltas)
+		debug.DebugLog(tag, name,
+			"\nStart", a.Range.Start, " End:", a.Range.End,
+			fmt.Sprintf("\nlen=%d [%s] ", len(a.Text), a.Text),
+			a.Time.UnixMilli(),
+		)
 	}
 	return change
 }
@@ -129,7 +155,7 @@ type lspchange_queue struct {
 }
 
 var lsp_queue = lspchange_queue{
-	lspchange: make(chan int),
+	lspchange: make(chan int, 100),
 }
 
 func (q *lspchange_queue) AddQuery(c *CodeView, event lspcore.CodeChangeEvent) {
@@ -142,14 +168,14 @@ func (q *lspchange_queue) AddQuery(c *CodeView, event lspcore.CodeChangeEvent) {
 	}
 	q.lock.Lock()
 	defer q.lock.Unlock()
-	for i := range q.wait_queue {
-		v := q.wait_queue[i]
-		if v.code == c {
-			debug.DebugLog("lspchange_queue", "skip")
-			v.event.Full = true
-			return
-		}
-	}
+	// for i := range q.wait_queue {
+	// 	v := q.wait_queue[i]
+	// 	if v.code == c {
+	// 		debug.DebugLog("lspchange_queue", "skip")
+	// 		v.event.Full = true
+	// 		return
+	// 	}
+	// }
 	q.wait_queue = append(q.wait_queue, lspchange{c, event})
 	if len(q.wait_queue) > 0 {
 		q.lspchange <- len(q.wait_queue)

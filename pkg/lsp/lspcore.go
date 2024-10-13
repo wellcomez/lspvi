@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
@@ -57,7 +58,7 @@ func (core *lspcore) RunComandInConfig() bool {
 		args := strings.Split(x.Cmd, " ")
 		cmd := exec.Command(args[0], args[1:]...)
 		core.cmd = cmd
-		return true 
+		return true
 	}
 	return false
 }
@@ -173,6 +174,7 @@ type TextChangeEvent struct {
 	Text  string
 	Type  TextChangeType
 	Range lsp.Range
+	Time  time.Time
 }
 
 func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
