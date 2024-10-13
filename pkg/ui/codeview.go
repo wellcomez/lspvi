@@ -1155,15 +1155,19 @@ func (code *CodeView) deltext() {
 	code.view.Delete()
 	// code.on_content_changed()
 }
+
+// pasteline
 func (code *CodeView) pasteline(line bool) {
 	if line {
 		if _, err := clipboard.ReadAll(); err == nil {
 			x := code.view
-			lineno := x.Cursor.Loc.Y
-			x.Buf.LineArray.NewlineBelow(lineno)
-			x.Cursor.Loc = femto.Loc{X: 0, Y: lineno + 1}
+			vs := new_code_change_checker(code)
+      code.view.Cursor.End()
+			var r rune = '\n'
+			code.view.HandleEvent(tcell.NewEventKey(tcell.KeyEnter, r, tcell.ModNone))
 			x.Paste()
-			code.on_content_changed(code.LspContentFullChangeEvent())
+			vs.after(code)
+
 		}
 	}
 }
