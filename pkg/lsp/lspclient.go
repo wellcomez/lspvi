@@ -13,6 +13,7 @@ type lspclient interface {
 	WorkspaceDidChangeWatchedFiles(Changes []lsp.FileEvent) error
 	Semantictokens_full(file string) (*lsp.SemanticTokens, error)
 	InitializeLsp(wk WorkSpace) error
+	IsReady() bool
 	Launch_Lsp_Server() error
 	DidOpen(file SourceCode, version int) error
 	DidClose(file string) error
@@ -44,6 +45,9 @@ func (l lsp_base) syncOption() *TextDocumentSyncOptions {
 func (l lsp_base) Semantictokens_full(file string) (*lsp.SemanticTokens, error) {
 	return l.core.document_semantictokens_full(file)
 }
+func (l lsp_base) IsReady() bool {
+	return l.core.inited
+}
 func (l lsp_base) InitializeLsp(wk WorkSpace) error {
 	err := l.core.lang.InitializeLsp(l.core, wk)
 	if err != nil {
@@ -54,6 +58,8 @@ func (l lsp_base) InitializeLsp(wk WorkSpace) error {
 	return nil
 }
 func (l lsp_base) Launch_Lsp_Server() error {
+	l.core.lock.Lock()
+	defer l.core.lock.Unlock()
 	return l.core.lang.Launch_Lsp_Server(l.core, *l.wk)
 }
 

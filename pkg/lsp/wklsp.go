@@ -279,6 +279,9 @@ func (wk LspWorkspace) new_client(c lspclient, filename string) lspclient {
 	if !c.IsMe(filename) {
 		return nil
 	}
+	if c.IsReady() {
+		return c
+	}
 	err := c.Launch_Lsp_Server()
 	if err == nil {
 		err = c.InitializeLsp(wk.Wk)
@@ -290,7 +293,7 @@ func (wk LspWorkspace) new_client(c lspclient, filename string) lspclient {
 }
 
 func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
-	return wk.openbuffer(filename,"")
+	return wk.openbuffer(filename, "")
 }
 func (wk *LspWorkspace) openbuffer(filename string, content string) (*Symbol_file, bool, error) {
 	val, ok := wk.get(filename)
@@ -310,7 +313,7 @@ func (wk *LspWorkspace) openbuffer(filename string, content string) (*Symbol_fil
 		return nil, is_new, fmt.Errorf("fail to open %s", filename)
 	}
 	is_new = true
-	err := ret.lsp.DidOpen(SourceCode{filename,content}, ret.verison)
+	err := ret.lsp.DidOpen(SourceCode{filename, content}, ret.verison)
 	if err != nil {
 		return ret, is_new, err
 	}
@@ -369,8 +372,8 @@ func (wk *LspWorkspace) CloseSymbolFile(sym *Symbol_file) error {
 	return err
 }
 
-func (wk *LspWorkspace) OpenBuffer(filename string,buffer string) (*Symbol_file, error) {
-	ret, _, err := wk.openbuffer(filename,buffer)
+func (wk *LspWorkspace) OpenBuffer(filename string, buffer string) (*Symbol_file, error) {
+	ret, _, err := wk.openbuffer(filename, buffer)
 	wk.current = ret
 	return ret, err
 
@@ -449,7 +452,7 @@ func (key SymolSearchKey) Symbol() *Symbol_file {
 type lsp_data_changed interface {
 	OnSymbolistChanged(file *Symbol_file, err error)
 	OnCodeViewChanged(file *Symbol_file)
-	OnLspRefenceChanged(ranges SymolSearchKey, file []lsp.Location,err error)
+	OnLspRefenceChanged(ranges SymolSearchKey, file []lsp.Location, err error)
 	OnGetImplement(SymolSearchKey, ImplementationResult, error, *OpenOption)
 	OnFileChange(file []lsp.Location, line *OpenOption)
 	OnLspCaller(search string, c lsp.CallHierarchyItem, stacks []CallStack)
