@@ -48,7 +48,11 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 		root, _ = filepath.Abs(root)
 	}
 	ConfigFile := lspviroot.configfile
-	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{Path: root, Export: lspviroot.export, Callback: handle, ConfigFile: ConfigFile})
+	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{
+		Path:       root,
+		Export:     lspviroot.export,
+		Callback:   main,
+		ConfigFile: ConfigFile})
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main
 	global_prj_root = root
@@ -58,9 +62,9 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 		global_file_watch.Add(global_prj_root)
 	}
 	theme := global_config.Colorscheme
-	if global_theme==nil{
+	if global_theme == nil {
 		global_theme = new_ui_theme(theme, main)
-	}else{
+	} else {
 		main.on_change_color(theme)
 	}
 }

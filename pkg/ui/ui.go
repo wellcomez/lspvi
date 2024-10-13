@@ -272,6 +272,10 @@ func (m mainui) Right_context_menu() *contextmenu {
 func (m mainui) Mode() mode {
 	return mode{tty: m.tty}
 }
+
+func (main *mainui) LspLogOutput(s string) {
+	main.update_log_view(s)
+}
 func (m mainui) Tab() *tabmgr {
 	return m.tab
 }

@@ -98,10 +98,15 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 	return nil
 }
 
+type LspLog interface {
+	LspLogOutput(string)
+}
+
+// WorkSpace
 type WorkSpace struct {
 	Path        string
 	Export      string
-	Callback    jsonrpc2.Handler
+	Callback    LspLog
 	LspCoreList []lspcore
 	ConfigFile  string
 }
@@ -169,6 +174,15 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 		return result, err
 	}
 	return result, nil
+}
+
+func (w WorkSpace) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
+
+	if data, err := json.MarshalIndent(req, " ", " "); err == nil {
+		w.Callback.LspLogOutput(string(data))
+	} else {
+		w.Callback.LspLogOutput(fmt.Sprint(err))
+	}
 }
 func (core *lspcore) Progress_notify() error {
 	params := &lsp.ProgressParams{}
