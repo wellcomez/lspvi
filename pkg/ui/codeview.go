@@ -51,7 +51,7 @@ type CodeEditor interface {
 	action_goto_define(line *lspcore.OpenOption)
 
 	// openfile(filename string, onload func()) error
-
+	Reload()
 	LoadBuffer(data []byte, filename string)
 	LoadFileNoLsp(filename string, line int) error
 
@@ -354,6 +354,20 @@ func (code CodeView) Primitive() tview.Primitive {
 func (code CodeView) LspSymbol() *lspcore.Symbol_file {
 	return code.lspsymbol
 }
+func (code *CodeView) Reload() {
+	if sym := code.LspSymbol(); sym != nil {
+		x := code.LspContentFullChangeEvent()
+		go sym.NotifyCodeChange(x)
+		offset := code.view.Topline
+		code.openfile(code.Path(), true, func(bool) {
+			code.view.Topline = offset
+			if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
+				code.lspsymbol = s
+				s.LspLoadSymbol()
+			}
+		})
+	}
+}
 
 // OnFileChange implements change_reciever.
 func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool {
@@ -361,18 +375,7 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 		return false
 	}
 	if code.file.SamePath(file) {
-		if sym := code.LspSymbol(); sym != nil {
-			x := code.LspContentFullChangeEvent()
-			go sym.NotifyCodeChange(x)
-			offset := code.view.Topline
-			code.openfile(code.Path(), func(bool) {
-				code.view.Topline = offset
-				if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
-					code.lspsymbol = s
-					s.LspLoadSymbol()
-				}
-			})
-		}
+		code.Reload()
 		return true
 	}
 	return false
@@ -1501,7 +1504,7 @@ func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus
 }
 func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
 	main := code.main
-	code.openfile(filename, func(oldfile bool) {
+	code.openfile(filename, false, func(oldfile bool) {
 		code.view.SetTitle(trim_project_filename(code.Path(), global_prj_root))
 		if line != nil {
 			code.goto_location_no_history(line.Range, code.id != view_code_below, option)
@@ -1541,7 +1544,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 //		return code.LoadAndCb(filename, nil)
 //	}
 func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
-	return code.openfile(filename, func(bool) {
+	return code.openfile(filename, false, func(bool) {
 		code.goto_location_no_history(
 			lsp.Range{
 				Start: lsp.Position{Line: line, Character: 0},
@@ -1549,8 +1552,8 @@ func (code *CodeView) LoadFileNoLsp(filename string, line int) error {
 			}, false, nil)
 	})
 }
-func (code *CodeView) openfile(filename string, onload func(newfile bool)) error {
-	if len(filename) > 0 {
+func (code *CodeView) openfile(filename string, reload bool, onload func(newfile bool)) error {
+	if len(filename) > 0 && !reload {
 		if NewFile(filename).Same(code.file) {
 			if onload != nil {
 				onload(true)

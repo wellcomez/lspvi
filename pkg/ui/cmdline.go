@@ -59,6 +59,9 @@ func new_cmdline(main *mainui) *cmdline {
 		{[]string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string) {
 			main.Close()
 		}},
+		{[]string{"e!"}, "Reload", func(s []string) {
+			main.current_editor().Reload()
+		}},
 		{[]string{"h", "help"}, "help", func(s []string) {
 			main.helpkey(true)
 		}},
