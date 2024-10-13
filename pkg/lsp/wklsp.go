@@ -232,7 +232,7 @@ type LspWorkspace struct {
 	current *Symbol_file
 	filemap map[string]*Symbol_file
 	Handle  lsp_data_changed
-	lock    *sync.Mutex
+	lock_symbol_map    *sync.Mutex
 }
 
 func (wk LspWorkspace) IsSource(filename string) bool {
@@ -325,14 +325,14 @@ func (wk *LspWorkspace) openbuffer(filename string, content string) (*Symbol_fil
 }
 
 func (wk *LspWorkspace) set(filename string, ret *Symbol_file) {
-	wk.lock.Lock()
-	defer wk.lock.Unlock()
+	wk.lock_symbol_map.Lock()
+	defer wk.lock_symbol_map.Unlock()
 	wk.filemap[filename] = ret
 }
 
 func (wk *LspWorkspace) get(filename string) (*Symbol_file, bool) {
-	wk.lock.Lock()
-	defer wk.lock.Unlock()
+	wk.lock_symbol_map.Lock()
+	defer wk.lock_symbol_map.Unlock()
 	val, ok := wk.filemap[filename]
 	return val, ok
 }
@@ -366,9 +366,9 @@ func (wk *LspWorkspace) Get(filename string) (*Symbol_file, error) {
 }
 func (wk *LspWorkspace) CloseSymbolFile(sym *Symbol_file) error {
 	err := sym.lsp.DidClose(sym.Filename)
-	wk.lock.Lock()
+	wk.lock_symbol_map.Lock()
 	delete(wk.filemap, sym.Filename)
-	wk.lock.Unlock()
+	wk.lock_symbol_map.Unlock()
 	return err
 }
 
@@ -432,7 +432,7 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 			cpp, py, golang, ts, js,
 		},
 		Wk:   wk,
-		lock: &sync.Mutex{},
+		lock_symbol_map: &sync.Mutex{},
 	}
 	ret.filemap = make(map[string]*Symbol_file)
 	return ret
