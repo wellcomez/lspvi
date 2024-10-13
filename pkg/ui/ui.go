@@ -3,7 +3,7 @@ package mainui
 
 import (
 	"context"
-	// "encoding/json"
+	"encoding/json"
 
 	// "encoding/json"
 	"fmt"
@@ -19,7 +19,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 
 	// femto "zen108.com/lspvi/pkg/highlight"
-	// "zen108.com/lspvi/pkg/debug"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -644,23 +644,23 @@ type LspHandle struct {
 }
 
 func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
-	// if h.main != nil {
-	// 	main := h.main
-	// 	go main.app.QueueUpdate(func() {
-	// 		// if main.log == nil {
-	// 		// 	return
-	// 		// }
-	// 		// data, err := json.MarshalIndent(req, " ", " ")
-	// 		// s := ""
-	// 		// if err == nil {
-	// 		// 	s = fmt.Sprint(string(data))
-	// 		// } else {
-	// 		// 	s = fmt.Sprint(err)
-	// 		// }
-	// 		// debug.DebugLog("LspNotify", "\n", s)
-	// 		// main.update_log_view(s)
-	// 	})
-	// }
+	if h.main != nil {
+		main := h.main
+		go main.app.QueueUpdate(func() {
+			if main.log == nil {
+				return
+			}
+			data, err := json.MarshalIndent(req, " ", " ")
+			s := ""
+			if err == nil {
+				s = fmt.Sprint(string(data))
+			} else {
+				s = fmt.Sprint(err)
+			}
+			//debug.DebugLog("LspNotify", "\n", s)
+			main.update_log_view(s)
+		})
+	}
 }
 
 func (main *mainui) update_log_view(s string) {
@@ -694,10 +694,10 @@ func MainUI(arg *Arguments) {
 	gload_workspace_list.Load()
 	prj, err := gload_workspace_list.Add(root)
 	if err != nil {
-		log.Printf("add workspace failed:%v", err)
+		debug.ErrorLogf(debug.TagUI, "add workspace failed:%v", err)
 	}
 	if prj == nil {
-		log.Printf("load failed:%v", err)
+		debug.ErrorLogf(debug.TagUI, "load failed:%v", err)
 		panic(err)
 	}
 	// lspviroot = new_workdir(root)
@@ -1269,7 +1269,7 @@ func (main *mainui) GoForward() {
 	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoForward()
 	start := i.GetLocation()
-	log.Printf("go forward %v", i)
+	debug.DebugLogf(debug.TagUI, "go forward %v", i)
 	main.open_file_to_history(i.Path, &navigation_loc{
 		loc:    &start,
 		offset: i.Pos.Offset,
@@ -1285,7 +1285,7 @@ func (main *mainui) GoBack() {
 	// main.bf.history.SaveToHistory(main.codeview)
 	i := main.bf.GoBack()
 	loc := i.GetLocation()
-	log.Printf("go %v", i)
+	debug.DebugLog(debug.TagUI, "go ", i)
 	main.open_file_to_history(i.Path,
 		&navigation_loc{
 			loc:    &loc,
