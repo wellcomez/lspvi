@@ -388,6 +388,7 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 
 type LangConfig struct {
 	Cmd string `yaml:"cmd"`
+	Log string `yaml:"log"`
 }
 
 type ConfigLspPart struct {
@@ -401,11 +402,6 @@ type LspConfig struct {
 	Typescript LangConfig `yaml:"typescript"`
 }
 
-func (c LangConfig) is_cmd_ok() bool {
-	_, err := os.Stat(c.Cmd)
-	return err == nil
-}
-
 func NewLspWk(wk WorkSpace) *LspWorkspace {
 	buf, lsp_config_err := os.ReadFile(wk.ConfigFile)
 	var lsp_config LspConfig
@@ -416,17 +412,17 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 	}
 	cpp := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_cpp{lsp_config.C}, handle: wk, LanguageID: string(CPP)},
+		core: &lspcore{lang: lsp_lang_cpp{}, config: lsp_config.C, handle: wk, LanguageID: string(CPP)},
 	}
 	py := lsp_base{
 		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_py{lsp_config.Py}, handle: wk, LanguageID: string(PYTHON)},
+		core: &lspcore{lang: lsp_lang_py{}, config: lsp_config.Py, handle: wk, LanguageID: string(PYTHON)},
 	}
 
-	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{lsp_config.Golang}, handle: wk, LanguageID: string(GO)}}
+	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{}, config: lsp_config.Golang, handle: wk, LanguageID: string(GO)}}
 
-	ts := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(TYPE_SCRIPT), config: lsp_config.Javascript}, handle: wk, LanguageID: string(TYPE_SCRIPT)}}
-	js := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT), config: lsp_config.Typescript}, handle: wk, LanguageID: string(JAVASCRIPT)}}
+	ts := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(TYPE_SCRIPT)}, config: lsp_config.Javascript, handle: wk, LanguageID: string(TYPE_SCRIPT)}}
+	js := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT)}, config: lsp_config.Typescript, handle: wk, LanguageID: string(JAVASCRIPT)}}
 	ret := &LspWorkspace{
 		clients: []lspclient{
 			cpp, py, golang, ts, js,

@@ -47,6 +47,19 @@ type lspcore struct {
 	lock sync.Mutex
 
 	lsp_stderr lsp_server_errorlog
+
+	config LangConfig
+}
+
+func (core *lspcore) RunComandInConfig() bool {
+	x := core.config
+	if len(x.Cmd) > 0 {
+		args := strings.Split(x.Cmd, " ")
+		cmd := exec.Command(args[0], args[1:]...)
+		core.cmd = cmd
+		return true 
+	}
+	return false
 }
 
 const DebugTag = "LSPCORE"

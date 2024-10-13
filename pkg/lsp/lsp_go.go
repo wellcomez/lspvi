@@ -15,7 +15,6 @@ import (
 )
 
 type lsp_lang_go struct {
-	LangConfig
 }
 
 func (l lsp_lang_go) IsSource(filename string) bool {
@@ -35,9 +34,7 @@ func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	Launch_Lsp_Server++
 	logifle := filepath.Join(
 		filepath.Dir(wk.Export), "gopls.log")
-	if l.is_cmd_ok() {
-		core.cmd = exec.Command(l.Cmd)
-	} else {
+	if !core.RunComandInConfig() {
 		debug := false
 		if !debug {
 			core.cmd = exec.Command("gopls")
