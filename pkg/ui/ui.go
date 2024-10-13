@@ -2,8 +2,8 @@
 package mainui
 
 import (
-	"context"
-	"encoding/json"
+	// "context"
+	// "encoding/json"
 	"time"
 
 	// "encoding/json"
@@ -16,7 +16,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/sourcegraph/jsonrpc2"
+	// "github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 
 	// femto "zen108.com/lspvi/pkg/highlight"
@@ -289,6 +289,7 @@ func (main *mainui) LspLogOutput(s, s1 string) {
 		_, _ = main.lsp_log_file.WriteString(h + s1 + s + "\n")
 	}
 
+	// s1=fmt.Sprintf("[#8080ff]%s[#ffffff]",s1)
 	main.update_log_view(s1 + s)
 }
 func (m mainui) Tab() *tabmgr {
@@ -655,33 +656,6 @@ type Arguments struct {
 	Cert string
 }
 
-// func (m *mainui) open_file(file string) {
-// 	m.OpenFileHistory(file, nil)
-// }
-
-type LspHandle struct {
-	main *mainui
-}
-
-func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
-	if h.main != nil {
-		main := h.main
-		go main.app.QueueUpdate(func() {
-			if main.log == nil {
-				return
-			}
-			data, err := json.MarshalIndent(req, " ", " ")
-			s := ""
-			if err == nil {
-				s = fmt.Sprint(string(data))
-			} else {
-				s = fmt.Sprint(err)
-			}
-			//debug.DebugLog("LspNotify", "\n", s)
-			main.update_log_view(s)
-		})
-	}
-}
 
 func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
