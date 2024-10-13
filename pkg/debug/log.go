@@ -16,9 +16,10 @@ const (
 	log_level_trace
 )
 const TagUI = "UI"
+
 var loglevel log_level = log_level_debug
 
-func log_prefix(debug string, tag string) string {
+func log_prefix(tag, debug string) string {
 	_, file, line, _ := runtime.Caller(2)
 	x := fmt.Sprintf("[%-5s][%s] %s:%d", debug, tag, file, line)
 	return x
