@@ -14,9 +14,8 @@ type code_change_cheker struct {
 	lineno   int
 	next     string
 	cur      string
-	old      *femto.TextEvent
-	new      *femto.TextEvent
-	stacktop int
+	undo_top *femto.Element
+	redo_top *femto.Element
 }
 
 func new_code_change_checker(code *CodeView) code_change_cheker {
@@ -30,23 +29,47 @@ func new_code_change_checker(code *CodeView) code_change_cheker {
 			code.diff = &Differ{Buf.Lines(0, end), -1}
 		}
 	}
-
-	event, top := statckstatus(code)
-	return code_change_cheker{lineno: lineno, next: next, cur: cur, old: event, stacktop: top}
+	return code_change_cheker{lineno: lineno, next: next, cur: cur,
+		undo_top: code.view.Buf.UndoStack.Top,
+		redo_top: code.view.Buf.RedoStack.Top,
+	}
 }
 
 const tag = "Triggers Event textDocument/didChange"
 
+func (check *code_change_cheker) CheckRedo(code *CodeView) []lspcore.CodeChangeEvent {
+	var ret []lspcore.CodeChangeEvent
+	var events []femto.TextEvent
+	var redo = code.view.Buf.RedoStack.Top
+	debug.DebugLog(tag, " stack REDO stack  top", code.view.Buf.RedoStack.Size)
+	for {
+		if redo != nil && redo != check.redo_top {
+			events = append([]femto.TextEvent{*redo.Value}, events...)
+			redo = redo.Next
+		} else {
+			break
+		}
+
+	}
+	for _, v := range events {
+		a := code.LspContentFullChangeEvent()
+		a.Full = false
+		a = ParserEvent(a, &v)
+		code.on_content_changed(a)
+		ret = append(ret, a)
+	}
+	return ret
+}
+
 func (check *code_change_cheker) after(code *CodeView) []lspcore.CodeChangeEvent {
-	event, Size := statckstatus(code)
-	debug.DebugLog(tag, " stack change top", Size, check.stacktop)
-	check.new = event
+	undo := code.view.Buf.UndoStack
+	debug.DebugLog(tag, " stack change top", undo.Size)
 	var stack = code.view.Buf.UndoStack.Top
 	var ret []lspcore.CodeChangeEvent
 	var events []femto.TextEvent
 	ele := stack
 	for {
-		if ele != nil && ele.Value != check.old {
+		if ele != nil && ele != check.undo_top {
 			events = append([]femto.TextEvent{*ele.Value}, events...)
 			ele = ele.Next
 		} else {
