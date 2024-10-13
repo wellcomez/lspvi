@@ -44,11 +44,6 @@ func new_quick_preview() *quick_preview {
 	}
 }
 
-type logview struct {
-	*view_link
-	log *tview.TextView
-}
-
 // quick_view
 type quick_view struct {
 	// *tview.Flex
@@ -243,14 +238,6 @@ func (menu quick_view_context) menuitem() []context_menu_item {
 	return menu.qk.menuitem
 }
 
-func new_log_view(main *mainui) *logview {
-	ret := &logview{
-		view_link: &view_link{id: view_log, up: view_code, right: view_callin},
-		log:       tview.NewTextView(),
-	}
-	return ret
-}
-
 type fzf_list_item struct {
 	maintext, secondText string
 }
@@ -334,14 +321,6 @@ func (fzf *fzf_on_listview) refresh_list() {
 		})
 	}
 	fzf.listview.SetCurrentItem(0)
-}
-
-func (log *logview) clean() {
-	log.log.SetText("")
-}
-func (log *logview) update_log_view(s string) {
-	t := log.log.GetText(true)
-	log.log.SetText(t + s)
 }
 
 // new_quikview

@@ -133,7 +133,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 
 	main.term = NewTerminal(main, main.app, "bash")
 	main.log = new_log_view(main)
-	main.log.log.SetText("Started")
+	main.update_log_view("Started")
 
 	uml, err := NewUmlView(main, &main.lspmgr.Wk)
 	if err != nil {

@@ -4,6 +4,7 @@ package mainui
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	// "encoding/json"
 	"fmt"
@@ -221,9 +222,10 @@ type mainui struct {
 	right_context_menu  *contextmenu
 	recent_open         *recent_open_file
 	// _editor_area_layout *editor_area_layout
-	tty bool
-	ws  string
-	tab *tabmgr
+	tty          bool
+	ws           string
+	tab          *tabmgr
+	lsp_log_file *os.File
 }
 
 // OnWatchFileChange implements change_reciever.
@@ -274,8 +276,20 @@ func (m mainui) Mode() mode {
 }
 
 func (main *mainui) LspLogOutput(s, s1 string) {
-	main.update_log_view(s1)
-	main.update_log_view(s)
+	if main.lsp_log_file == nil {
+
+		filePath := filepath.Join(lspviroot.root, "lsp_notify.json")
+		if file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644); err == nil {
+			main.lsp_log_file = file
+		}
+	}
+	if main.lsp_log_file != nil {
+		customLayout := "2006-01-02 15:04:05.000"
+		h := fmt.Sprintf("%v\n", time.Now().Format(customLayout))
+		_, _ = main.lsp_log_file.WriteString(h + s1 + s + "\n")
+	}
+
+	main.update_log_view(s1 + s)
 }
 func (m mainui) Tab() *tabmgr {
 	return m.tab
