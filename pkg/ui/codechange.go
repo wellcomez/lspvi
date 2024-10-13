@@ -10,11 +10,12 @@ import (
 )
 
 type code_change_cheker struct {
-	lineno int
-	next   string
-	cur    string
-	old    *femto.TextEvent
-	new    *femto.TextEvent
+	lineno   int
+	next     string
+	cur      string
+	old      *femto.TextEvent
+	new      *femto.TextEvent
+	stacktop int
 }
 
 func new_code_change_checker(code *CodeView) code_change_cheker {
@@ -28,12 +29,16 @@ func new_code_change_checker(code *CodeView) code_change_cheker {
 			code.diff = &Differ{Buf.Lines(0, end), -1}
 		}
 	}
-	event := code.view.Buf.UndoStack.Peek()
-	return code_change_cheker{lineno: lineno, next: next, cur: cur, old: event}
+
+	event, top := statckstatus(code)
+	return code_change_cheker{lineno: lineno, next: next, cur: cur, old: event, stacktop: top}
 }
 
+const tag = "editor event"
+
 func (check *code_change_cheker) after(code *CodeView) lspcore.CodeChangeEvent {
-	event := code.view.Buf.UndoStack.Peek()
+	event, top := statckstatus(code)
+	debug.DebugLog(tag, " stack change top", top, check.stacktop)
 	check.new = event
 	ret := code.LspContentFullChangeEvent()
 	ret.Full = false
@@ -41,31 +46,39 @@ func (check *code_change_cheker) after(code *CodeView) lspcore.CodeChangeEvent {
 		if event == nil {
 			return ret
 		}
-		name := ""
-		switch event.EventType {
-		case femto.TextEventInsert:
-			name = "insert"
-			newFunction1(&ret, lspcore.TextChangeTypeInsert, event)
-		case femto.TextEventRemove:
-			name = "remove"
-			newFunction1(&ret, lspcore.TextChangeTypeDeleted, event)
-		case femto.TextEventReplace:
-			name = "replace"
-			newFunction1(&ret, lspcore.TextChangeTypeReplace, event)
-		default:
-		}
+		ret = ParserEvent(ret, event)
 		if len(ret.Events) > 0 {
 			code.on_content_changed(ret)
 		}
-		debug.DebugLog("editor event", name, event.Deltas)
 	}
 	return ret
 }
 
-func newFunction1(ret *lspcore.CodeChangeEvent, changetype lspcore.TextChangeType, event *femto.TextEvent) {
+func statckstatus(code *CodeView) (event *femto.TextEvent, top int) {
+	event = code.view.Buf.UndoStack.Peek()
+	top = code.view.Buf.UndoStack.Size
+	return event, top
+}
+
+func ParserEvent(change lspcore.CodeChangeEvent, event *femto.TextEvent) lspcore.CodeChangeEvent {
+	var name string
+	var Type lspcore.TextChangeType
+	switch event.EventType {
+
+	case femto.TextEventInsert:
+		Type = lspcore.TextChangeTypeInsert
+		name = "insert"
+	case femto.TextEventRemove:
+		Type = lspcore.TextChangeTypeDeleted
+		name = "remove"
+	case femto.TextEventReplace:
+		Type = lspcore.TextChangeTypeReplace
+		name = "replace"
+	default:
+	}
 	for _, v := range event.Deltas {
 		a := lspcore.TextChangeEvent{
-			Type: changetype,
+			Type: Type,
 			Text: v.Text,
 			Range: lsp.Range{
 				Start: lsp.Position{
@@ -74,8 +87,10 @@ func newFunction1(ret *lspcore.CodeChangeEvent, changetype lspcore.TextChangeTyp
 					Line: v.End.Y, Character: v.End.X},
 			},
 		}
-		ret.Events = append(ret.Events, a)
+		change.Events = append(change.Events, a)
+		debug.DebugLog(tag, name, event.Deltas)
 	}
+	return change
 }
 func (check *code_change_cheker) newMethod(code *CodeView) (bool, int) {
 	after_lineno := code.view.Cursor.Loc.Y
