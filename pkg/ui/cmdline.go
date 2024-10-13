@@ -50,6 +50,9 @@ func new_cmdline(main *mainui) *cmdline {
 				get_cmd_actor(main, vi_quick_next).handle()
 			}
 		}},
+		{[]string{"cleanlog"}, "Clear log", func(s []string) {
+			main.cleanlog()
+		}},
 		{[]string{"w"}, "save", func(s []string) {
 			main.current_editor().Save()
 		}},
@@ -121,7 +124,7 @@ func (cmd *cmdline) OnComand(commandinput string) bool {
 	command = strings.TrimRight(command, "\n")
 
 	if num, err := strconv.ParseInt(command, 10, 32); err == nil {
-		cmd.main.current_editor().goto_line_history(int(num) - 1,true)
+		cmd.main.current_editor().goto_line_history(int(num)-1, true)
 		return true
 	}
 

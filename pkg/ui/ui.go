@@ -101,6 +101,7 @@ type MainService interface {
 	Close()
 	quit()
 
+	cleanlog()
 	ScreenSize() (w, h int)
 
 	helpkey(bool) []string
@@ -991,6 +992,9 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 		dialog:      Newfuzzpicker(main, app),
 	}
 	return main_layout
+}
+func (main *mainui) cleanlog() {
+	main.log.clean()
 }
 func (main *mainui) current_editor() CodeEditor {
 	if main.codeview2.view.HasFocus() {
