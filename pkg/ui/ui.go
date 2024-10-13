@@ -656,7 +656,6 @@ type Arguments struct {
 	Cert string
 }
 
-
 func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
 }
@@ -1102,8 +1101,8 @@ func create_edit_area(main *mainui) *flex_area {
 		AddItem(main.fileexplorer.view, 0, main.fileexplorer.Width, false).
 		AddItem(codelayout, 0, codelayout.Width, true).
 		AddItem(symbol_tree.view, 0, symbol_tree.Width, false)
-	codeview.view.PasteHandlerImpl= func(text string, setFocus func(tview.Primitive)) {
-		if codeview.id.is_editor_main(){
+	codeview.view.PasteHandlerImpl = func(text string, setFocus func(tview.Primitive)) {
+		if codeview.id.is_editor_main() {
 			codeview.Paste()
 		}
 	}

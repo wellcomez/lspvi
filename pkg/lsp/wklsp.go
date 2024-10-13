@@ -411,19 +411,12 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 		yaml.Unmarshal(buf, &config)
 		lsp_config = config.Lsp
 	}
-	cpp := lsp_base{
-		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_cpp{}, config: lsp_config.C, handle: wk, LanguageID: string(CPP)},
-	}
-	py := lsp_base{
-		wk:   &wk,
-		core: &lspcore{lang: lsp_lang_py{}, config: lsp_config.Py, handle: wk, LanguageID: string(PYTHON)},
-	}
 
-	golang := lsp_base{wk: &wk, core: &lspcore{lang: lsp_lang_go{}, config: lsp_config.Golang, handle: wk, LanguageID: string(GO)}}
-
-	ts := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(TYPE_SCRIPT)}, config: lsp_config.Javascript, handle: wk, LanguageID: string(TYPE_SCRIPT)}}
-	js := lsp_base{wk: &wk, core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT)}, config: lsp_config.Typescript, handle: wk, LanguageID: string(JAVASCRIPT)}}
+	cpp := create_lang_lsp(wk, CPP, lsp_lang_cpp{}, lsp_config.C)
+	golang := create_lang_lsp(wk, GO, lsp_lang_go{}, lsp_config.Golang)
+	py := create_lang_lsp(wk, PYTHON, lsp_lang_py{}, lsp_config.Py)
+	ts := create_lang_lsp(wk, TYPE_SCRIPT, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, lsp_config.Typescript)
+	js := create_lang_lsp(wk, JAVASCRIPT, lsp_ts{LanguageID: string(JAVASCRIPT)}, lsp_config.Javascript)
 	ret := &LspWorkspace{
 		clients: []lspclient{
 			cpp, py, golang, ts, js,
@@ -433,6 +426,19 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 	}
 	ret.filemap = make(map[string]*Symbol_file)
 	return ret
+}
+
+func create_lang_lsp(wk WorkSpace, lang LanguageIdentifier, l lsplang, config LangConfig) lsp_base {
+	cpp := lsp_base{
+		wk: &wk,
+		core: &lspcore{
+			lsp_stderr: lsp_server_errorlog{lsp_log: wk.Callback, lang: string(lang)},
+			lang:       l,
+			config:     config,
+			handle:     wk,
+			LanguageID: string(lang)},
+	}
+	return cpp
 }
 
 type SymolSearchKey struct {

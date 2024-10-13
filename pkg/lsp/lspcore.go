@@ -67,11 +67,12 @@ const DebugTag = "LSPCORE"
 
 type lsp_server_errorlog struct {
 	lsp_log LspLog
+	lang    string
 }
 
 // Write implements io.Writer.
 func (e lsp_server_errorlog) Write(p []byte) (n int, err error) {
-	e.lsp_log.LspLogOutput(string(p), "stderr")
+	e.lsp_log.LspLogOutput(string(p), fmt.Sprintln("LspServer ", e.lang, "STDERR"))
 	return len(p), nil
 }
 
@@ -181,7 +182,6 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 	var ProcessID = -1
 	// 发送initialize请求
 	var result lsp.InitializeResult
-	core.lsp_stderr.lsp_log = wk.Callback
 	if err := core.conn.Call(context.Background(), "initialize", lsp.InitializeParams{
 		ProcessID:             &ProcessID,
 		RootURI:               lsp.NewDocumentURI(wk.Path),
