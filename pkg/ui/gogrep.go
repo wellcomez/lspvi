@@ -16,10 +16,11 @@ import (
 
 var GrepTag = "Grep"
 
-type grepInfo struct {
-	fpath      string
-	lineNumber int
-	line       string
+type GrepInfo struct {
+	Fpath      string
+	LineNumber int
+	Line       string
+	Matched    int
 }
 type contenttype int
 
@@ -30,7 +31,7 @@ const (
 )
 
 type grep_output struct {
-	*grepInfo
+	*GrepInfo
 	// destor       string
 	content_type contenttype
 }
@@ -39,7 +40,7 @@ type channelSet struct {
 	// dir     chan string
 	// file    chan string
 	// symlink chan string
-	grep chan grepInfo
+	grep chan GrepInfo
 }
 
 type optionSet struct {
@@ -124,30 +125,30 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 	reporter := func(mark string, chanIf interface{}) {
 		defer waitReports.Done()
 		switch ch := chanIf.(type) {
-		case chan grepInfo:
+		case chan GrepInfo:
 			for msg := range ch {
 				if grep.bAbort {
 					grep.Debug("grep abort in report loop")
 					break
 				}
-				if msg.lineNumber != 0 {
+				if msg.LineNumber != 0 {
 					// decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
 					a := grep_output{
 						// destor: decoStr,
-						grepInfo: &grepInfo{
-							lineNumber: msg.lineNumber,
-							line:       msg.line,
-							fpath:      msg.fpath,
+						GrepInfo: &GrepInfo{
+							LineNumber: msg.LineNumber,
+							Line:       msg.Line,
+							Fpath:      msg.Fpath,
 						},
 						content_type: FILE_TYPE,
 					}
 					chPrint <- a
 				} else { // binary file
 					a := grep_output{
-						grepInfo: &grepInfo{
-							lineNumber: msg.lineNumber,
-							line:       msg.line,
-							fpath:      msg.fpath,
+						GrepInfo: &GrepInfo{
+							LineNumber: msg.LineNumber,
+							Line:       msg.Line,
+							Fpath:      msg.Fpath,
 						},
 						content_type: BINARY_TYPE,
 					}
@@ -251,7 +252,7 @@ func (grep *gorep) kick(fpath string) *channelSet {
 
 func makeChannelSet() *channelSet {
 	return &channelSet{
-		grep: make(chan grepInfo),
+		grep: make(chan GrepInfo),
 	}
 }
 
@@ -313,16 +314,16 @@ func (grep *gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 			grep.waitMaps.Add(1)
 			go grep.mapsend(path, chans, m)
 		} else if finfo.Type().IsRegular() {
-			chans.grep <- grepInfo{path, 0, ""}
+			chans.grep <- GrepInfo{path, 0, "", 0}
 		}
 	}
 }
 
 func (grep *gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
-	go func(in <-chan grepInfo, out chan<- grepInfo) {
+	go func(in <-chan GrepInfo, out chan<- GrepInfo) {
 		for msg := range in {
 			grep.waitGreps.Add(1)
-			go grep.grep(msg.fpath, out)
+			go grep.grep(msg.Fpath, out)
 		}
 		grep.waitGreps.Wait()
 		close(out)
@@ -343,7 +344,7 @@ func verifyBinary(buf []byte) bool {
 	return false
 }
 
-func (grep *gorep) grep(fpath string, out chan<- grepInfo) {
+func (grep *gorep) grep(fpath string, out chan<- GrepInfo) {
 	//fmt.Fprintf(os.Stderr, "grep mmap error: %v\n", err)
 	RunGrep(grep, fpath, out)
 }

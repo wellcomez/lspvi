@@ -223,7 +223,7 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 	}
 	grep.temp = nil
 	grep.result.data = append(grep.result.data, tmp.data...)
-	if len(grep.result.data)>1000{
+	if len(grep.result.data) > 1000 {
 		return
 	}
 	for _, o := range tmp.data {
@@ -310,26 +310,26 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 
 func convert_grep_info_location(o *grep_output) lsp.Location {
 	loc := lsp.Location{
-		URI: lsp.NewDocumentURI(o.fpath),
+		URI: lsp.NewDocumentURI(o.Fpath),
 		Range: lsp.Range{
-			Start: lsp.Position{Line: o.lineNumber - 1, Character: 0},
-			End:   lsp.Position{Line: o.lineNumber - 1, Character: 0},
+			Start: lsp.Position{Line: o.LineNumber - 1, Character: 0},
+			End:   lsp.Position{Line: o.LineNumber - 1, Character: 0},
 		},
 	}
 	return loc
 }
 
 func (o *grep_output) to_ref_caller(key string) ref_with_caller {
-	b := strings.Index(o.line, key)
+	b := strings.Index(o.Line, key)
 	e := b + len(key)
-	sss := o.line[b:e]
+	sss := o.Line[b:e]
 	log.Println(sss)
-	start := lsp.Position{Line: o.lineNumber - 1, Character: b}
+	start := lsp.Position{Line: o.LineNumber - 1, Character: b}
 	end := start
 	end.Character = e
 	ref := ref_with_caller{
 		Loc: lsp.Location{
-			URI: lsp.NewDocumentURI(o.fpath),
+			URI: lsp.NewDocumentURI(o.Fpath),
 			Range: lsp.Range{
 				Start: start,
 				End:   end,

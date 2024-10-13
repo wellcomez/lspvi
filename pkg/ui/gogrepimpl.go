@@ -14,7 +14,7 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 
-func PosixRunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
+func PosixRunGrep(grep *gorep, fpath string, out chan<- GrepInfo) bool {
 	if grep.bAbort {
 		return true
 	}
@@ -59,24 +59,30 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
 	scanner.Split(bufio.ScanLines)
 	lineNumber := 0
 
+	var ret = GrepInfo{fpath, lineNumber, "", 0}
 	for scanner.Scan() {
 		lineNumber++
 		strline := scanner.Text()
-		x := grep.newFunction1(strline)
-		if x {
-			if isBinary {
-				out <- grepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath)}
-				return true
+		finded := grep.newFunction1(strline)
+		if finded {
+			if !grep.just_grep_file {
+				if isBinary {
+					out <- GrepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath), 1}
+					return true
+				} else {
+					out <- GrepInfo{fpath, lineNumber, strline, 1}
+				}
 			} else {
-				// if grep.ignorePattern != nil && grep.ignorePattern.MatchString(strline) {
-				// 	continue
-				// }
-				out <- grepInfo{fpath, lineNumber, strline}
-			}
-			if grep.just_grep_file{
-				break
+				if ret.Matched == 0 {
+					ret.LineNumber = lineNumber
+					ret.Line = strline
+				}
+				ret.Matched++
 			}
 		}
+	}
+	if ret.Matched > 0 {
+		out <- ret
 	}
 	return false
 }
