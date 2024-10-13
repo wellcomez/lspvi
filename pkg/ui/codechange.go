@@ -58,6 +58,7 @@ func (check *code_change_cheker) CheckRedo(code *CodeView) []lspcore.CodeChangeE
 		code.on_content_changed(a)
 		ret = append(ret, a)
 	}
+	check.UpdateLineChange(code)
 	return ret
 }
 
@@ -84,13 +85,8 @@ func (check *code_change_cheker) after(code *CodeView) []lspcore.CodeChangeEvent
 		code.on_content_changed(a)
 		ret = append(ret, a)
 	}
+	check.UpdateLineChange(code)
 	return ret
-}
-
-func statckstatus(code *CodeView) (event *femto.TextEvent, top int) {
-	event = code.view.Buf.UndoStack.Peek()
-	top = code.view.Buf.UndoStack.Size
-	return event, top
 }
 
 func ParserEvent(change lspcore.CodeChangeEvent, event *femto.TextEvent) lspcore.CodeChangeEvent {
@@ -140,6 +136,32 @@ func ParserEvent(change lspcore.CodeChangeEvent, event *femto.TextEvent) lspcore
 		)
 	}
 	return change
+}
+func (check *code_change_cheker) UpdateLineChange(code *CodeView) {
+	top := code.view.Buf.UndoStack.Top
+	var changeline = []int{}
+
+	seen := make(map[int]bool)
+	for {
+		if top != nil {
+			for _, v := range top.Value.Deltas {
+				for _, y := range []int{v.Start.Y, v.Start.X} {
+					if _, ok := seen[y]; !ok {
+						changeline = append(changeline, y)
+						seen[y] = true
+					}
+				}
+			}
+			top = top.Next
+		} else {
+			break
+		}
+	}
+	var marks = []LineMark{}
+	for _, v := range changeline {
+		marks = append(marks, LineMark{Line: v + 1})
+	}
+	code.view.linechange.LineMark = marks
 }
 func (check *code_change_cheker) newMethod(code *CodeView) (bool, int) {
 	after_lineno := code.view.Cursor.Loc.Y
