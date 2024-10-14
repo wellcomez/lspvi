@@ -76,9 +76,13 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 }
 func (dir *DirWalk) update_title() {
 	list := dir.fzflist_impl.list
-	list.SetTitle(fmt.Sprintf("Files %d/%d",
-		list.GetCurrentItem(),
-		len(dir.filewalk.Filelist)))
+	count := len(dir.filewalk.Filelist)
+	index := list.GetCurrentItem() + 1
+	if count == 0 {
+		index = 0
+	}
+	list.SetTitle(fmt.Sprintf("Files %d/%d", index,
+		count))
 }
 func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 	dir.filewalk = file
@@ -94,6 +98,6 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 
 func (wk *DirWalk) UpdateQuery(query string) {
 	wk.fzflist_impl.list.Clear()
-	wk.fzflist_impl.list.Key = query
+	// wk.fzflist_impl.list.Key = query
 	wk.fzf.OnSearch(query, true)
 }

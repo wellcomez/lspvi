@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -246,13 +247,14 @@ type fzf_list_item struct {
 	maintext, secondText string
 }
 type fzf_on_listview struct {
-	selected_index []int
-	fzf            *fzf.Fzf
-	listview       *customlist
-	fuzz           bool
-	list_data      []fzf_list_item
-	selected       func(dataindex int, listindex int)
-	query          string
+	selected_index   []int
+	selected_postion [][]int
+	fzf              *fzf.Fzf
+	listview         *customlist
+	fuzz             bool
+	list_data        []fzf_list_item
+	selected         func(dataindex int, listindex int)
+	query            string
 }
 
 func new_fzf_on_list(list *customlist, fuzz bool) *fzf_on_listview {
@@ -283,8 +285,10 @@ func (fzf *fzf_on_listview) OnSearch(txt string, update bool) string {
 		fzf.query = txt
 		result = <-fzf.fzf.GetResultChannel()
 		fzf.selected_index = []int{}
+		fzf.selected_postion = [][]int{}
 		for _, v := range result.Matches {
 			fzf.selected_index = append(fzf.selected_index, int(v.HayIndex))
+			fzf.selected_postion = append(fzf.selected_postion, v.Positions)
 		}
 	} else {
 		fzf.reset_selection_index()
@@ -298,8 +302,10 @@ func (fzf *fzf_on_listview) OnSearch(txt string, update bool) string {
 
 func (fzf *fzf_on_listview) reset_selection_index() {
 	fzf.selected_index = []int{}
+	fzf.selected_postion = [][]int{}
 	for i := 0; i < len(fzf.list_data); i++ {
 		fzf.selected_index = append(fzf.selected_index, i)
+		fzf.selected_postion = append(fzf.selected_postion, []int{})
 	}
 }
 func (fzf *fzf_on_listview) get_data_index(index int) int {
@@ -313,11 +319,17 @@ func (fzf *fzf_on_listview) get_data_index(index int) int {
 }
 func (fzf *fzf_on_listview) refresh_list() {
 	fzf.listview.Clear()
+	if fzf.fuzz{
+		fzf.listview.Key = ""
+	}
 	for i, v := range fzf.selected_index {
 		list := i
 		data := v
+		colors := fzf.selected_postion[i]
 		a := fzf.list_data[data]
-		fzf.listview.AddItem(a.maintext, a.secondText, func() {
+		s := a.maintext
+		s = fzf.fzf_color(colors, s)
+		fzf.listview.AddItem(s, a.secondText, func() {
 			if fzf.selected != nil {
 				fzf.listview.SetCurrentItem(list)
 				fzf.selected(data, list)
@@ -325,6 +337,47 @@ func (fzf *fzf_on_listview) refresh_list() {
 		})
 	}
 	fzf.listview.SetCurrentItem(0)
+}
+
+func (f *fzf_on_listview) fzf_color(colors []int, s string) string {
+	if !f.fuzz{
+		return s
+	}
+	if len(colors) < len(s) {
+		ss := []string{}
+		sort.Slice(colors, func(i, j int) bool {
+			return colors[i] < colors[j]
+		})
+		var colors2 = []Pos{}
+		for _, v := range colors {
+			if len(colors2) == 0 {
+				colors2 = append(colors2, Pos{v, v + 1})
+			} else {
+				last := colors2[len(colors2)-1]
+				if last.Y == v {
+					last.Y = v + 1
+					colors2[len(colors2)-1] = last
+				} else {
+					colors2 = append(colors2, Pos{v, v + 1})
+				}
+			}
+		}
+		begin := 0
+		for _, v := range colors2 {
+			ss = append(ss, s[begin:v.X])
+			x := s[v.X:v.Y]
+			x = fmt_color_string(x, tcell.ColorYellow)
+			ss = append(ss, x)
+			begin = v.Y
+		}
+		if begin < len(s) {
+			ss = append(ss, s[begin:])
+		}
+		if len(ss) > 0 {
+			s = strings.Join(ss, "")
+		}
+	}
+	return s
 }
 
 // new_quikview
@@ -781,7 +834,7 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, caller *ref
 		caller.lines = editor.GetLines(caller.Loc.Range.Start.Line, caller.Loc.Range.End.Line)
 	}
 	list_text := caller.ListItem(root, parent, prev)
-	result:=""
+	result := ""
 	if parent {
 		result = fmt.Sprintf("%3d. %s", lineno, list_text)
 		if len(tree.children) > 0 {
