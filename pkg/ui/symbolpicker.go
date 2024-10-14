@@ -107,20 +107,21 @@ func NewTreeClickCheck(grid *tview.Box, tree *tview.TreeView) *GridTreeClickChec
 	}
 	return ret
 }
-// func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
-// 	ret := &GridTreeClickCheck{
-// 		GridClickCheck: NewGridClickCheck(grid.Box, tree.Box),
-// 		tree:           tree,
-// 	}
-// 	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
-// 		if action == tview.MouseScrollUp {
-// 			tree.MouseHandler()(action, event, nil)
-// 		} else if action == tview.MouseScrollDown {
-// 			tree.MouseHandler()(action, event, nil)
-// 		}
-// 	}
-// 	return ret
-// }
+
+//	func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
+//		ret := &GridTreeClickCheck{
+//			GridClickCheck: NewGridClickCheck(grid.Box, tree.Box),
+//			tree:           tree,
+//		}
+//		ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
+//			if action == tview.MouseScrollUp {
+//				tree.MouseHandler()(action, event, nil)
+//			} else if action == tview.MouseScrollDown {
+//				tree.MouseHandler()(action, event, nil)
+//			}
+//		}
+//		return ret
+//	}
 func NewGridClickCheck(grid *tview.Box, target tview.Primitive) *GridClickCheck {
 	ret := &GridClickCheck{
 		clickdetector: &clickdetector{lastMouseClick: time.Time{}},
@@ -187,6 +188,7 @@ func (picker *symbolpicker) layout(input *tview.InputField, isflex bool) (row *t
 
 	return row, col
 }
+
 // func (picker *symbolpicker) grid(input *tview.InputField) *tview.Grid {
 // 	list := picker.impl.symview.view
 // 	list.SetBorder(true)
@@ -335,11 +337,11 @@ func (picker symbolpicker) UpdateQuery(query string) {
 	file := picker.Filter(strings.ToLower(query))
 	picker.impl.symview.update_in_main_sync(file)
 	root := picker.impl.symview.view.GetRoot()
-	root.ExpandAll()
-	for _, v := range root.GetChildren() {
-		v.Expand()
-	}
 	if root != nil {
+		root.ExpandAll()
+		for _, v := range root.GetChildren() {
+			v.Expand()
+		}
 		children := root.GetChildren()
 		if len(children) > 0 {
 			picker.impl.symview.view.SetCurrentNode(children[0])
