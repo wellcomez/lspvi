@@ -13,6 +13,7 @@ import (
 
 	// lsp "github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/grep"
 )
 
 func (grepx *prev_picker_impl) update_title(s string) {
@@ -227,11 +228,16 @@ func (ref ref_line) String() string {
 	return fmt.Sprintf("%s %s:%d", ref.line, ref.path, ref.loc.Range.Start.Line)
 }
 
+type filecache struct {
+	lines []string
+}
 type ref_with_caller struct {
-	Loc      lsp.Location
-	Caller   *lspcore.CallStackEntry
-	CodeLine string
-	lines    []string
+	Loc       lsp.Location
+	Caller    *lspcore.CallStackEntry
+	lines     []string
+	filecache *filecache
+	Grep      grep.GrepInfo
+	IsGrep    bool
 }
 
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location, err error) {

@@ -1,3 +1,4 @@
+#!/bin/bash 
 rename_binary() {
   outpname=$(basename "$1" .go)
   if [[ -n $compiler ]]; then
@@ -14,17 +15,17 @@ rename_binary() {
     mv "$outpname".exe "$outpname"_"$GOOS"_"$GOARCH".exe
   fi
 }
-if [[ -z $all ]]; then
-  git submodule init && git submodule update --recursive
-fi
+# if [[ -z $all ]]; then
+  # git submodule init && git submodule update --recursive
+# fi
 build_os() {
-  pushd pkg/lspr || exit
-  if [[ -n $web ]]; then
-    bash build.sh -w
-  else
-    bash build.sh
-  fi
-  popd || exit
+  # pushd pkg/lspr || exit
+  # if [[ -n $web ]]; then
+  #   bash build.sh -w
+  # else
+  #   bash build.sh
+  # fi
+  # popd || exit
   go build -o lspvi-$GOOS
   ls .
 }

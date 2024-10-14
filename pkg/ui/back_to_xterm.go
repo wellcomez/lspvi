@@ -49,7 +49,7 @@ func (proxy *backend_of_xterm) Open(listen bool) error {
 	}
 	con, _, err := dial.Dial(ws, nil)
 	if err != nil {
-		debug.ErrorLog("xterm","WebSocket error :%v", err)
+		debug.ErrorLog("xterm","WebSocket error ", err)
 		return err
 	}
 	proxy.con = con
@@ -79,7 +79,7 @@ func (proxy *backend_of_xterm) start_listen_xterm_comand(con *websocket.Conn) er
 						var w init_call
 						err = json.Unmarshal(message, &w)
 						if err == nil {
-							debug.InfoLog(xtermtag,"forward call %s", w.Call)
+							debug.InfoLog(xtermtag,"forward call ", w.Call)
 							proxy.process_xterm_command(w, message)
 						} else {
 							debug.ErrorLog(xtermtag,"recv", err, "msg len=", len(message))

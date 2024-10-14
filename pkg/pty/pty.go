@@ -4,16 +4,14 @@ import (
 	"io"
 	"log"
 	"path/filepath"
-	"syscall"
 
 	// "log"
 	"os"
 	"os/exec"
-	"os/signal"
 
 	"github.com/creack/pty"
 	"golang.org/x/term"
-	"zen108.com/lspvi/pkg/debug"
+	// "zen108.com/lspvi/pkg/debug"
 )
 
 var home, _ = os.UserHomeDir()
@@ -25,45 +23,45 @@ type read_out struct {
 	handle func(p []byte) (n int, err error)
 }
 
-func test(s string) error {
-	// Create arbitrary command.
-	c := exec.Command(s)
+// func test(s string) error {
+// 	// Create arbitrary command.
+// 	c := exec.Command(s)
 
-	// Start the command with a pty.
-	ptmx, err := pty.Start(c)
-	if err != nil {
-		return err
-	}
-	// Make sure to close the pty at the end.
-	defer func() { _ = ptmx.Close() }() // Best effort.
+// 	// Start the command with a pty.
+// 	ptmx, err := pty.Start(c)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// Make sure to close the pty at the end.
+// 	defer func() { _ = ptmx.Close() }() // Best effort.
 
-	// Handle pty size.
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGWINCH)
-	go func() {
-		for range ch {
-			if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
-				debug.ErrorLogf("pty", "error resizing pty: %s", err)
-			}
-		}
-	}()
-	ch <- syscall.SIGWINCH                        // Initial resize.
-	defer func() { signal.Stop(ch); close(ch) }() // Cleanup signals when done.
+// 	// Handle pty size.
+// 	ch := make(chan os.Signal, 1)
+// 	signal.Notify(ch, syscall.SIGWINCH)
+// 	go func() {
+// 		for range ch {
+// 			if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
+// 				debug.ErrorLogf("pty", "error resizing pty: %s", err)
+// 			}
+// 		}
+// 	}()
+// 	ch <- syscall.SIGWINCH                        // Initial resize.
+// 	defer func() { signal.Stop(ch); close(ch) }() // Cleanup signals when done.
 
-	// Set stdin in raw mode.
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+// 	// Set stdin in raw mode.
+// 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 
-	// Copy stdin to the pty and the pty to stdout.
-	// NOTE: The goroutine will keep reading until the next keystroke before returning.
-	go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
-	_, _ = io.Copy(os.Stdout, ptmx)
+// 	// Copy stdin to the pty and the pty to stdout.
+// 	// NOTE: The goroutine will keep reading until the next keystroke before returning.
+// 	go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
+// 	_, _ = io.Copy(os.Stdout, ptmx)
 
-	return nil
-}
+// 	return nil
+// }
 
 // Write implements io.Writer.
 func (r read_out) Write(p []byte) (n int, err error) {
@@ -90,9 +88,7 @@ type Pty struct {
 }
 
 func (pty *Pty) UpdateSize(Rows uint16, Cols uint16) {
-	pty.Rows = Rows
-	pty.Cols = Cols
-	pty.Ch <- syscall.SIGWINCH
+	pty.OsUpdateSize(Rows, Cols)
 }
 
 func Ptymain(Args []string) *Pty {
@@ -142,7 +138,7 @@ func RunCommand(Args []string) *Pty {
 		io.Copy(stdin2, os.Stdin)
 	}()
 	ret := &Pty{File: f, Ch: make(chan os.Signal, 1)}
-	signal.Notify(ret.Ch, syscall.SIGWINCH)
+	ret.Notify()
 	go func() {
 		for range ret.Ch {
 			// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {

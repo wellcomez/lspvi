@@ -12,11 +12,14 @@ import (
 	"strings"
 	"time"
 
+	// str "github.com/boyter/go-string"
 	"github.com/gdamore/tcell/v2"
 	"github.com/reinhrst/fzf-lib"
 	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+
+	// "zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -717,13 +720,17 @@ func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root str
 	lineno := 1
 	for i := range qk.tree {
 		a := &qk.tree[i]
-		a.quickfix_listitem_string(view, lspmgr, lineno, nil)
+		parent := a.get_caller(view)
+		a.quickfix_listitem_string(view, parent, lineno, nil)
+		a.get_caller(view).LoadLines()
 		data = append(data, a)
 		if a.expand {
+			caller := a.get_caller(view)
+			caller.filecache = parent.filecache
 			var prev *ref_with_caller
 			for i := range a.children {
 				c := &a.children[i]
-				prev = c.quickfix_listitem_string(view, lspmgr, lineno, prev)
+				prev = c.quickfix_listitem_string(view, caller, lineno, prev)
 				data = append(data, c)
 			}
 		}
@@ -734,6 +741,9 @@ func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root str
 }
 func (qk *quick_view) async_open(file string, lspmgr *lspcore.LspWorkspace, r lsp.Range) {
 	if qk.view == nil {
+		return
+	}
+	if !qk.need_async_open() {
 		return
 	}
 	if sym, _ := lspmgr.Open(file); sym != nil {
@@ -747,8 +757,8 @@ func (qk *quick_view) async_open(file string, lspmgr *lspcore.LspWorkspace, r ls
 		}
 	}
 }
-func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lspcore.LspWorkspace, lineno int, prev *ref_with_caller) *ref_with_caller {
-	caller := tree.get_caller(qk)
+func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, caller *ref_with_caller, lineno int, prev *ref_with_caller) *ref_with_caller {
+	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
 	parent := tree.parent
 	root := lspmgr.Wk.Path
 	switch qk.Type {
@@ -771,24 +781,39 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, lspmgr *lsp
 		caller.lines = editor.GetLines(caller.Loc.Range.Start.Line, caller.Loc.Range.End.Line)
 	}
 	list_text := caller.ListItem(root, parent, prev)
+	result:=""
 	if parent {
-		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
+		result = fmt.Sprintf("%3d. %s", lineno, list_text)
 		if len(tree.children) > 0 {
 			if !tree.expand {
-				tree.text = fmt_color_string(fmt.Sprintf("%c", IconCollapse), color) + tree.text
+				result = fmt_color_string(fmt.Sprintf("%c", IconCollapse), color) + result
 			} else {
-				tree.text = fmt_color_string(fmt.Sprintf("%c", IconExpaned), color) + tree.text
+				result = fmt_color_string(fmt.Sprintf("%c", IconExpaned), color) + result
 			}
 		} else {
-			tree.text = " " + tree.text
+			result = " " + result
 		}
 	} else {
-		tree.text = fmt.Sprintf(" %s", list_text)
+		result = fmt.Sprintf(" %s", list_text)
 	}
+	tree.text = result
 	if caller.Caller == nil {
 		return nil
 	}
 	return caller
+}
+
+func (qk quick_view) need_async_open() bool {
+	switch qk.Type {
+	case data_search, data_grep_word:
+		if qk.Refs.Refs != nil {
+			return len(qk.Refs.Refs) < 250
+		} else {
+			return false
+		}
+	default:
+		return true
+	}
 }
 
 func (tree *list_tree_node) get_caller(qk *quick_view) *ref_with_caller {
@@ -829,7 +854,7 @@ type list_tree_node struct {
 	text      string
 }
 
-func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) string {
+func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) string {
 	v := caller.Loc
 
 	path := v.URI.AsPath().String()
@@ -837,6 +862,9 @@ func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_
 		path = trim_project_filename(path, root)
 	}
 	if parent {
+		// if caller.Childrens > 1 {
+		// 	return fmt.Sprintf("%s %s", path, fmt_color_string(fmt.Sprint(caller.Childrens), tcell.ColorRed))
+		// }
 		return path
 	}
 	funcolor := global_theme.search_highlight_color()
@@ -892,18 +920,27 @@ func (caller ref_with_caller) ListItem(root string, parent bool, prev *ref_with_
 
 func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
 	lines := caller.lines
+
 	line := ""
+	if caller.IsGrep {
+		line = caller.Grep.Line
+	}
 	v := caller.Loc
-	if len(lines) == 0 {
-		source_file_path := v.URI.AsPath().String()
-		data, err := os.ReadFile(source_file_path)
-		if err != nil {
-			return err.Error()
+	if line == "" {
+		if len(lines) == 0 {
+			if line == "" {
+				if caller.filecache == nil {
+					file := caller.LoadLines()
+					if file != nil {
+						line = file.lines[v.Range.Start.Line]
+					}
+				} else {
+					line = caller.filecache.lines[v.Range.Start.Line]
+				}
+			}
+		} else {
+			line = lines[0]
 		}
-		lines = strings.Split(string(data), "\n")
-		line = lines[v.Range.Start.Line]
-	} else {
-		line = lines[0]
 	}
 	if v.Range.Start.Line == v.Range.End.Line {
 		s := v.Range.Start.Character
@@ -922,6 +959,19 @@ func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
 		}
 	}
 	return line
+}
+
+func (caller *ref_with_caller) LoadLines() *filecache {
+	var lines []string
+	v := caller.Loc
+	source_file_path := v.URI.AsPath().String()
+	data, err := os.ReadFile(source_file_path)
+	if err != nil {
+		return nil
+	}
+	lines = strings.Split(string(data), "\n")
+	caller.filecache = &filecache{lines: lines}
+	return caller.filecache
 }
 
 func new_qf_history(main MainService) (*quickfix_history, error) {
