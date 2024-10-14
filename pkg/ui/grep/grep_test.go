@@ -32,4 +32,10 @@ func TestGitIgnore(t *testing.T) {
 	if ret == false {
 		t.Errorf("not match")
 	}
+	if data,err:= os.ReadDir(root);err==nil{
+		for _, v := range data {
+			path:=filepath.Join(root, v.Name())		
+			t.Log(path, m.MatchFile(path))
+		}
+	}
 }
