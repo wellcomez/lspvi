@@ -319,7 +319,7 @@ func (fzf *fzf_on_listview) get_data_index(index int) int {
 }
 func (fzf *fzf_on_listview) refresh_list() {
 	fzf.listview.Clear()
-	if fzf.fuzz{
+	if fzf.fuzz {
 		fzf.listview.Key = ""
 	}
 	for i, v := range fzf.selected_index {
@@ -328,7 +328,7 @@ func (fzf *fzf_on_listview) refresh_list() {
 		colors := fzf.selected_postion[i]
 		a := fzf.list_data[data]
 		s := a.maintext
-		s = fzf.fzf_color(colors, s)
+		s = fzf_color(colors, s)
 		fzf.listview.AddItem(s, a.secondText, func() {
 			if fzf.selected != nil {
 				fzf.listview.SetCurrentItem(list)
@@ -338,30 +338,30 @@ func (fzf *fzf_on_listview) refresh_list() {
 	}
 	fzf.listview.SetCurrentItem(0)
 }
-
-func (f *fzf_on_listview) fzf_color(colors []int, s string) string {
-	if !f.fuzz{
-		return s
-	}
-	if len(colors) < len(s) {
-		ss := []string{}
-		sort.Slice(colors, func(i, j int) bool {
-			return colors[i] < colors[j]
-		})
-		var colors2 = []Pos{}
-		for _, v := range colors {
-			if len(colors2) == 0 {
-				colors2 = append(colors2, Pos{v, v + 1})
+func fzf_color_pos(colors []int, s string) []Pos {
+	sort.Slice(colors, func(i, j int) bool {
+		return colors[i] < colors[j]
+	})
+	var colors2 = []Pos{}
+	for _, v := range colors {
+		if len(colors2) == 0 {
+			colors2 = append(colors2, Pos{v, v + 1})
+		} else {
+			last := colors2[len(colors2)-1]
+			if last.Y == v {
+				last.Y = v + 1
+				colors2[len(colors2)-1] = last
 			} else {
-				last := colors2[len(colors2)-1]
-				if last.Y == v {
-					last.Y = v + 1
-					colors2[len(colors2)-1] = last
-				} else {
-					colors2 = append(colors2, Pos{v, v + 1})
-				}
+				colors2 = append(colors2, Pos{v, v + 1})
 			}
 		}
+	}
+	return colors2
+}
+func fzf_color(colors []int, s string) string {
+	if len(colors) < len(s) {
+		ss := []string{}
+		var colors2 = fzf_color_pos(colors, s)
 		begin := 0
 		for _, v := range colors2 {
 			ss = append(ss, s[begin:v.X])
