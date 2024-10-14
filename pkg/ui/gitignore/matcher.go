@@ -1,7 +1,6 @@
 package gitignore
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -14,7 +13,7 @@ type Matcher interface {
 
 	AddPatterns(ps []Pattern)
 	Patterns() []Pattern
-	MatchFile(filepath string) bool
+	MatchFile(string,bool) bool
 	Enter(dir string)
 }
 
@@ -36,13 +35,9 @@ func (m *matcher) Enter(dir string) {
 		m.AddPatterns(ps)
 	}
 }
-func (m *matcher) MatchFile(filepath string) bool {
+func (m *matcher) MatchFile(filepath string,isdir bool) bool {
 	ss := strings.Split(filepath, "/")
-	fi, err := os.Stat(filepath)
-	if err == nil {
-		return m.Match(ss[1:], fi.IsDir())
-	}
-	return false
+	return m.Match(ss[1:], isdir)
 }
 func (m *matcher) Match(path []string, isDir bool) bool {
 	n := len(m.patterns)

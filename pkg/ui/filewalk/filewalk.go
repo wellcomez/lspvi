@@ -118,7 +118,7 @@ func (r *Filewalk) walk(root string) {
 		}
 		skip := false
 		if r.use_git_ignore {
-			skip = matcher.MatchFile(path)
+			skip = matcher.MatchFile(path,de.IsDir())
 		}
 		if de.IsDir() {
 			if filepath.Base(path)[0] == '.' {
