@@ -16,6 +16,6 @@ func Test_grep(t *testing.T) {
 		t.Log(out.Line, out.LineNumber, out.Fpath)
 	}
 	fpath := "/Users/jialaizhu/dev/lspgo"
-	chans := g.kick(fpath)
-	g.report(chans, false)
+	chans := g.Kick(fpath)
+	g.Report(chans, false)
 }

@@ -1,5 +1,10 @@
 package gitignore
 
+import (
+	"os"
+	"strings"
+)
+
 // Matcher defines a global multi-pattern matcher for gitignore patterns
 type Matcher interface {
 	// Match matches patterns in the order of priorities. As soon as an inclusion or
@@ -8,6 +13,7 @@ type Matcher interface {
 
 	AddPatterns(ps []Pattern)
 	Patterns() []Pattern
+	MatchFile(filepath string) bool
 }
 
 // NewMatcher constructs a new global matcher. Patterns must be given in the order of
@@ -22,6 +28,14 @@ type matcher struct {
 	patterns []Pattern
 }
 
+func (m *matcher) MatchFile(filepath string) bool {
+	ss := strings.Split(filepath, "/")
+	fi, err := os.Stat(filepath)
+	if err == nil {
+		return m.Match(ss[1:], fi.IsDir())
+	}
+	return false
+}
 func (m *matcher) Match(path []string, isDir bool) bool {
 	n := len(m.patterns)
 	for i := n - 1; i >= 0; i-- {
