@@ -22,7 +22,7 @@ var loglevel log_level = log_level_debug
 
 func log_prefix(tag, debug string) string {
 	_, file, line, _ := runtime.Caller(2)
-	x := fmt.Sprintf("[%-5s][%s] %s:%d", debug, tag, filepath.Base(file), line)
+	x := fmt.Sprintf("[%-5s][%s] %s:%d ", debug, tag, filepath.Base(file), line)
 	return x
 }
 func DebugLog(tag string, v ...any) {
