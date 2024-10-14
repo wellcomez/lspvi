@@ -16,7 +16,7 @@ import (
 type Filewalk struct {
 	waitReports    sync.WaitGroup
 	Filelist       []string
-	root           string
+	Root           string
 	filereciver    chan string
 	end            chan bool
 	filecount      chan int
@@ -51,7 +51,7 @@ func (f *Filewalk) Save() error {
 func NewFilewalk(root string) *Filewalk {
 	ret := &Filewalk{
 		Filelist:       []string{},
-		root:           root,
+		Root:           root,
 		filereciver:    make(chan string, 10),
 		waitReports:    sync.WaitGroup{},
 		end:            make(chan bool),
@@ -80,7 +80,7 @@ func (r *Filewalk) Walk() {
 		}
 	}()
 	r.waitReports.Add(1)
-	go r.walk(r.root)
+	go r.walk(r.Root)
 	r.waitReports.Wait()
 	r.end <- true
 	<-exit

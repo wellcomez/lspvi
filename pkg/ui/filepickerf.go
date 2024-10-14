@@ -55,7 +55,7 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 		v.main.OpenFileHistory(file, nil)
 		v.hide()
 	})
-	if global_walk == nil {
+	if global_walk == nil || global_walk.Root != global_prj_root {
 		global_walk = filewalk.NewFilewalk(global_prj_root)
 		go func() {
 			global_walk.Walk()
@@ -74,7 +74,8 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 		impl.list.AddItem(trim_project_filename(v, global_prj_root), "", func() {})
 	}
 	dir.fzf = new_fzf_on_list(impl.list, true)
-	dir.UpdateQuery("")
+	go dir.fzflist_impl.parent.app.QueueUpdateDraw(func() {
+	})
 }
 
 func (wk *DirWalk) UpdateQuery(query string) {
