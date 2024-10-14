@@ -248,6 +248,7 @@ type fzf_list_item struct {
 }
 type fzf_on_listview struct {
 	selected_index   []int
+	selected_text    []string
 	selected_postion [][]int
 	fzf              *fzf.Fzf
 	listview         *customlist
@@ -257,6 +258,26 @@ type fzf_on_listview struct {
 	query            string
 }
 
+func new_fzf_on_list_data(list *customlist, data []string, fuzz bool) *fzf_on_listview {
+	ret := &fzf_on_listview{
+		listview:       list,
+		fuzz:           fuzz,
+		selected_index: []int{},
+	}
+	opt := fzf.DefaultOptions()
+	opt.Fuzzy = fuzz
+	key := []string{}
+	for i := 0; i < len(data); i++ {
+		a := data[i]
+		ret.list_data = append(ret.list_data, fzf_list_item{a, ""})
+		key = append(key, a)
+		ret.selected_index = append(ret.selected_index, i)
+	}
+	if len(key) > 0 {
+		ret.fzf = fzf.New(key, opt)
+	}
+	return ret
+}
 func new_fzf_on_list(list *customlist, fuzz bool) *fzf_on_listview {
 	ret := &fzf_on_listview{
 		listview:       list,
@@ -286,10 +307,13 @@ func (fzf *fzf_on_listview) OnSearch(txt string, update bool) string {
 		result = <-fzf.fzf.GetResultChannel()
 		fzf.selected_index = []int{}
 		fzf.selected_postion = [][]int{}
+		ss := []string{}
 		for _, v := range result.Matches {
 			fzf.selected_index = append(fzf.selected_index, int(v.HayIndex))
 			fzf.selected_postion = append(fzf.selected_postion, v.Positions)
+			ss = append(ss, v.Key)
 		}
+		fzf.selected_text = ss
 	} else {
 		fzf.reset_selection_index()
 
@@ -307,6 +331,7 @@ func (fzf *fzf_on_listview) reset_selection_index() {
 		fzf.selected_index = append(fzf.selected_index, i)
 		fzf.selected_postion = append(fzf.selected_postion, []int{})
 	}
+	fzf.selected_text = make([]string, len(fzf.selected_index))
 }
 func (fzf *fzf_on_listview) get_data_index(index int) int {
 	if len(fzf.selected_index) == 0 {

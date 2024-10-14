@@ -184,14 +184,30 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.currentpicker = sym
 }
 
+var modetree = 0
+
 func (v *fzfmain) OpenDocumntSymbolFzf(code CodeEditor) {
+	if modetree == 1 {
+		v.symbol_picker_tree(code)
+	} else {
+		v.symbol_picker_2(code)
+	}
+}
+
+func (v *fzfmain) symbol_picker_tree(code CodeEditor) {
 	sym := new_outline_picker(v, code)
 	if row, col := sym.layout(v.input, false); row != nil {
 		v.create_dialog_content(row, sym)
 	} else {
 		v.create_dialog_content(col, sym)
 	}
+}
+
+func (v *fzfmain) symbol_picker_2(code CodeEditor) {
+	sym := new_current_document_picker(v, code.LspSymbol())
+	x := sym.impl.grid(v.input, 1)
 	v.currentpicker = sym
+	v.create_dialog_content(x, sym)
 }
 
 // OpenFileFzf

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
@@ -266,104 +265,6 @@ func (wk symbolpicker) update_preview() {
 	}
 }
 
-type SymbolFzf struct {
-	sym    lspcore.Symbol
-	index  int
-	Member []SymbolFzf
-}
-type FzfSymbolFilter struct {
-	ClassObject      []SymbolFzf
-	names            []string
-	filter           map[int]bool
-	selected_postion map[int][]int
-	fzf              *fzf.Fzf
-}
-
-func NewSymbolListFzf(sym *lspcore.Symbol_file) *FzfSymbolFilter {
-	ret := &FzfSymbolFilter{[]SymbolFzf{}, []string{}, nil, nil, nil}
-	ret.Convert(sym)
-	ret.fzf = fzf.New(ret.names, fzf.Options{Fuzzy: true, CaseMode: fzf.CaseIgnore})
-	return ret
-}
-func (f *FzfSymbolFilter) Query(q string) {
-	f.fzf.Search(q)
-	result := <-f.fzf.GetResultChannel()
-	f.filter = make(map[int]bool)
-	f.selected_postion = make(map[int][]int)
-	q=strings.ToLower(q)
-	for _, v := range result.Matches {
-		if v.Score<50{
-			continue
-		}
-		pos := fzf_color_pos(v.Positions, v.Key)
-		l:=0
-		maxlen:=0
-		for _, e := range pos {
-			s:=(e.Y -e.X)
-			l+=s
-			maxlen=max(s,maxlen) 
-		}
-		if len(q)>l{
-			continue
-		}
-		if len(q)>1 && maxlen==1{
-			continue
-		}
-		for _, e := range pos {
-			debug.DebugLog("symboltree",v.Key, "color",v.Key [e.X:e.Y],v.Score,l )	
-		}
-		f.filter[int(v.HayIndex)] = true
-		f.selected_postion[int(v.HayIndex)] = v.Positions
-	}
-}
-func (f *FzfSymbolFilter) GetSymbolFile(key string) *lspcore.Symbol_file {
-	ret := []*lspcore.Symbol{}
-	for _, v := range f.ClassObject {
-		member := []lspcore.Symbol{}
-		for _, vv := range v.Member {
-			if _, ok := f.filter[vv.index]; ok {
-				member = append(member, v.sym)
-			}
-		}
-		var sss = v.sym
-		root := &sss
-		if _, yes := f.filter[v.index]; yes {
-			root.Members = member
-			ret = append(ret, root)
-		} else if len(member) > 0 {
-			root.Members = member
-			ret = append(ret, root)
-		}
-	}
-	return &lspcore.Symbol_file{
-		Class_object: ret,
-	}
-}
-func (f *FzfSymbolFilter) Convert(symbol *lspcore.Symbol_file) {
-	if symbol == nil {
-		return
-	}
-	id := 0
-	ret := []SymbolFzf{}
-	names := []string{}
-	classobject := symbol.Class_object
-	for _, v := range classobject {
-		member := []SymbolFzf{}
-		for i := range v.Members {
-			sym := SymbolFzf{v.Members[i], id, nil}
-			id++
-			names = append(names, sym.sym.SymInfo.Name)
-			member = append(member, sym)
-		}
-		var sss = SymbolFzf{*v, id, nil}
-		names = append(names, sss.sym.SymInfo.Name)
-		id++
-		sss.Member = member
-		ret = append(ret, sss)
-	}
-	f.ClassObject = ret
-	f.names = names
-}
 func (sym symbolpicker) Filter(key string) *lspcore.Symbol_file {
 	return sym.StringMatch(key)
 }
@@ -422,4 +323,8 @@ func (picker symbolpicker) UpdateQuery(query string) {
 			picker.update_preview()
 		}
 	}
+}
+
+func NewSymbolPick2(v *fzfmain){
+
 }

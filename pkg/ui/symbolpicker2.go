@@ -6,13 +6,16 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type symbol_picker_impl struct {
 	*prev_picker_impl
-	fzf    *fzf_on_listview
-	symbol *FzfSymbolFilter
+	fzf             *fzf_on_listview
+	symbol          *FzfSymbolFilter
+	list_index_data map[int]int
 }
 type current_document_pick struct {
 	impl *symbol_picker_impl
@@ -27,9 +30,12 @@ func (c current_document_pick) UpdateQuery(query string) {
 	for i, v := range fzf.selected_index {
 		filter[v] = true
 		selected_postion[v] = fzf.selected_postion[i]
+		debug.DebugLog("selected ", fzf.selected_text[i], v)
 	}
 	list := c.impl.listcustom
 	list.Clear()
+	var list_index_data = make(map[int]int)
+	var list_index = 0
 	for _, n := range c.impl.symbol.ClassObject {
 		mm := []SymbolFzf{}
 		for _, v := range n.Member {
@@ -39,15 +45,21 @@ func (c current_document_pick) UpdateQuery(query string) {
 		}
 		if len(mm) == 0 {
 			if _, ok := filter[n.index]; ok {
-				s := newFunction1(n, 0)
+				s := newFunction1(n, 0, selected_postion[n.index])
+				list_index_data[list_index] = n.index
+				list_index++
 				list.AddItem(s, "", nil)
 			}
 		} else {
-			s := newFunction1(n, 0)
+			s := newFunction1(n, 0, nil)
 			list.AddItem(s, "", nil)
+			list_index_data[list_index] = n.index
+			list_index++
 			for _, v := range mm {
-				s := newFunction1(v, 1)
+				s := newFunction1(v, 1, selected_postion[v.index])
 				list.AddItem(s, "", nil)
+				list_index_data[list_index] = v.index
+				list_index++
 			}
 		}
 	}
@@ -144,30 +156,34 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 		impl: impl,
 	}
 	impl.symbol = NewSymbolListFzf(symbol)
-	data := []string{}
+	var list_index_data = make(map[int]int)
+	var list_index = 0
 	for _, v := range impl.symbol.ClassObject {
-		data = append(data, newFunction1(v, 0))
+		list.AddItem(newFunction1(v, 0, nil), "", nil)
+		list_index_data[list_index] = v.index
+		list_index++
 		if len(v.Member) > 0 {
 			for _, m := range v.Member {
-				data = append(data, newFunction1(m, 1))
+				list.AddItem(newFunction1(m, 1, nil), "", nil)
+				list_index_data[list_index] = v.index
+				list_index++
 			}
 		}
 	}
+	impl.list_index_data = list_index_data
 	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
 
 	})
 	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		list.GetCurrentItem()
 	})
-	for _, v := range data {
-		list.AddItem(v, "", nil)
-	}
+
 	impl.listcustom = list
-	impl.fzf = new_fzf_on_list(list, true)
+	impl.fzf = new_fzf_on_list_data(list, impl.symbol.names, true)
 	return sym
 }
 
-func newFunction1(v SymbolFzf, prefix int) string {
+func newFunction1(v SymbolFzf, prefix int, posistion []int) string {
 	space := strings.Repeat("\t\t", prefix)
 	icon := v.sym.Icon()
 	query := global_theme
@@ -178,7 +194,13 @@ func newFunction1(v SymbolFzf, prefix int) string {
 			cc = fg
 		}
 	}
-	t := fmt.Sprintf("%s%s %s", space, icon, v.sym.SymInfo.Name)
-	t = fmt_color_string(t, cc)
-	return t
+	// if false {
+	if posistion != nil {
+		s := fzf_color(posistion, v.sym.SymInfo.Name)
+		return fmt.Sprintf("%s%s %s", space, icon, s)
+	} else {
+		t := fmt.Sprintf("%s%s %s", space, icon, v.sym.SymInfo.Name)
+		t = fmt_color_string(t, cc)
+		return t
+	}
 }
