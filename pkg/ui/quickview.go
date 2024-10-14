@@ -781,20 +781,22 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, caller *ref
 		caller.lines = editor.GetLines(caller.Loc.Range.Start.Line, caller.Loc.Range.End.Line)
 	}
 	list_text := caller.ListItem(root, parent, prev)
+	result:=""
 	if parent {
-		tree.text = fmt.Sprintf("%3d. %s", lineno, list_text)
+		result = fmt.Sprintf("%3d. %s", lineno, list_text)
 		if len(tree.children) > 0 {
 			if !tree.expand {
-				tree.text = fmt_color_string(fmt.Sprintf("%c", IconCollapse), color) + tree.text
+				result = fmt_color_string(fmt.Sprintf("%c", IconCollapse), color) + result
 			} else {
-				tree.text = fmt_color_string(fmt.Sprintf("%c", IconExpaned), color) + tree.text
+				result = fmt_color_string(fmt.Sprintf("%c", IconExpaned), color) + result
 			}
 		} else {
-			tree.text = " " + tree.text
+			result = " " + result
 		}
 	} else {
-		tree.text = fmt.Sprintf(" %s", list_text)
+		result = fmt.Sprintf(" %s", list_text)
 	}
+	tree.text = result
 	if caller.Caller == nil {
 		return nil
 	}
