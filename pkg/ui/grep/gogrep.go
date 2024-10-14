@@ -1,4 +1,4 @@
-package mainui
+package grep
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+
 	"zen108.com/lspvi/pkg/debug"
 	gi "zen108.com/lspvi/pkg/ui/gitignore"
 )
@@ -28,7 +29,7 @@ const (
 	BINARY_TYPE
 )
 
-type grep_output struct {
+type GrepOutput struct {
 	*GrepInfo
 	// destor       string
 	content_type contenttype
@@ -41,15 +42,15 @@ type channelSet struct {
 	grep chan GrepInfo
 }
 
-type optionSet struct {
+type OptionSet struct {
 	v             bool
-	g             bool
-	grep_only     bool
+	G             bool
+	Grep_only     bool
 	search_binary bool
 	ignore        string
 	hidden        bool
 	ignorecase    bool
-	wholeword     bool
+	Wholeword     bool
 }
 
 type searchScope struct {
@@ -61,23 +62,24 @@ type searchScope struct {
 	hidden bool
 }
 
-type gorep struct {
-	pattern        *regexp.Regexp
-	ignorePattern  *regexp.Regexp
-	ptnstring      string
-	useptnstring   bool
-	scope          searchScope
-	cb             func(taskid int, out *grep_output)
-	id             int
-	bAbort         bool
-	waitMaps       sync.WaitGroup
-	waitGreps      sync.WaitGroup
-	begintm, count int64
-	filecount      int
-	just_grep_file bool
+type Gorep struct {
+	pattern         *regexp.Regexp
+	ignorePattern   *regexp.Regexp
+	ptnstring       string
+	useptnstring    bool
+	scope           searchScope
+	CB              func(taskid int, out *GrepOutput)
+	id              int
+	bAbort          bool
+	waitMaps        sync.WaitGroup
+	waitGreps       sync.WaitGroup
+	begintm, count  int64
+	filecount       int
+	just_grep_file  bool
+	global_prj_root string
 }
 
-func (grep *gorep) abort() {
+func (grep *Gorep) Abort() {
 	grep.bAbort = true
 }
 
@@ -91,24 +93,24 @@ func init() {
 	semFopenLimit = make(chan int, maxNumOfFileOpen)
 }
 
-func (grep *gorep) end(o grep_output) {
-	if grep.cb != nil {
-		grep.cb(grep.id, &o)
+func (grep *Gorep) end(o GrepOutput) {
+	if grep.CB != nil {
+		grep.CB(grep.id, &o)
 	}
 }
-func (grep *gorep) report(chans *channelSet, isColor bool) {
+func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 	// var markGrep string
 	var waitReports sync.WaitGroup
 
-	chPrint := make(chan grep_output)
+	chPrint := make(chan GrepOutput)
 	chPrintEnd := make(chan string)
 	go func() {
 		// var i = 0
 		for {
 			<-chPrintEnd
 			grep.Debug("grep end")
-			if grep.cb != nil {
-				grep.cb(grep.id, nil)
+			if grep.CB != nil {
+				grep.CB(grep.id, nil)
 			}
 		}
 	}()
@@ -131,7 +133,7 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 				}
 				if msg.LineNumber != 0 {
 					// decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
-					a := grep_output{
+					a := GrepOutput{
 						// destor: decoStr,
 						GrepInfo: &GrepInfo{
 							LineNumber: msg.LineNumber,
@@ -143,7 +145,7 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 					}
 					chPrint <- a
 				} else { // binary file
-					a := grep_output{
+					a := GrepOutput{
 						GrepInfo: &GrepInfo{
 							LineNumber: msg.LineNumber,
 							Line:       msg.Line,
@@ -166,8 +168,8 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 	waitReports.Wait()
 }
 
-func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
-	base := &gorep{
+func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
+	base := &Gorep{
 		pattern:       nil,
 		ignorePattern: nil,
 		ptnstring:     pattern,
@@ -190,7 +192,7 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 
 	var err error
 	if !base.useptnstring {
-		if opt.wholeword {
+		if opt.Wholeword {
 			pattern = `\b` + pattern + `\b`
 		}
 		base.pattern, err = regexp.Compile(pattern)
@@ -211,10 +213,10 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 	}
 
 	// config search scope
-	if opt.g {
+	if opt.G {
 		base.scope.grep = true
 	}
-	if opt.grep_only {
+	if opt.Grep_only {
 		// base.scope.file = false
 		// base.scope.symlink = false
 		base.scope.grep = true
@@ -229,7 +231,7 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 	return base, nil
 }
 
-func (grep *gorep) kick(fpath string) *channelSet {
+func (grep *Gorep) Kick(fpath string) *channelSet {
 	chsMap := makeChannelSet()
 	chsReduce := makeChannelSet()
 
@@ -272,10 +274,10 @@ func closeChannelSet(chans *channelSet) {
 //	}
 
 // isHidden checks if a file or directory is hidden.
-func (grep *gorep) Debug(s string) {
+func (grep *Gorep) Debug(s string) {
 	debug.InfoLog(GrepTag, s, "Abort=", grep.bAbort, "id=", grep.id, "Files", grep.filecount, "Line=", grep.count, grep.ptnstring, time.Now().UnixMilli()-grep.begintm)
 }
-func (grep *gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
+func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 	defer grep.waitMaps.Done()
 	if grep.bAbort {
 		grep.Debug("Abort")
@@ -318,7 +320,7 @@ func (grep *gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 	}
 }
 
-func (grep *gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
+func (grep *Gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
 	go func(in <-chan GrepInfo, out chan<- GrepInfo) {
 		for msg := range in {
 			grep.waitGreps.Add(1)
@@ -343,7 +345,7 @@ func verifyBinary(buf []byte) bool {
 	return false
 }
 
-func (grep *gorep) grep(fpath string, out chan<- GrepInfo) {
+func (grep *Gorep) grep(fpath string, out chan<- GrepInfo) {
 	//fmt.Fprintf(os.Stderr, "grep mmap error: %v\n", err)
 	RunGrep(grep, fpath, out)
 }

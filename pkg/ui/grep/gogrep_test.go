@@ -1,21 +1,21 @@
-package mainui
+package grep
 
 import "testing"
 
 func Test_grep(t *testing.T) {
 	pattern := "mainui"
-	opt := optionSet{
-		grep_only: true,
-		g:         true,
+	opt := OptionSet{
+		Grep_only: true,
+		G:         true,
 	}
-	g, err := newGorep(1, pattern, &opt)
+	g, err := NewGorep(1, pattern, &opt)
 	if err != nil {
 		t.Fatal(err)
 	}
-	g.cb = func(taskid int, out *grep_output) {
+	g.CB = func(taskid int, out *GrepOutput) {
 		t.Log(out.Line, out.LineNumber, out.Fpath)
 	}
 	fpath := "/Users/jialaizhu/dev/lspgo"
 	chans := g.kick(fpath)
-	g.report(chans, verifyColor())
+	g.report(chans, false)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/grep"
 )
 
 type grepresult struct {
@@ -17,7 +18,7 @@ type grepresult struct {
 type grep_impl struct {
 	result        *grepresult
 	temp          *grepresult
-	grep          *gorep
+	grep          *grep.Gorep
 	taskid        int
 	key           string
 	fzf_on_result *fzf_on_listview
@@ -242,7 +243,7 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 	grepx.update_title()
 	grepx.main.App().ForceDraw()
 }
-func (grepx *livewgreppicker) end(task int, o *grep_output) {
+func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
 	if task != grepx.impl.taskid {
 		return
 	}
@@ -286,10 +287,10 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 	// log.Printf("end %d %s", task, o.destor)
 	if grepx.qf == nil {
 		if !grepx.parent.Visible {
-			grep.grep.abort()
+			grep.grep.Abort()
 			return
 		}
-		grep.temp.data = append(grep.temp.data, o.to_ref_caller(grepx.impl.key))
+		grep.temp.data = append(grep.temp.data, to_ref_caller(grepx.impl.key, o))
 		if len(grep.result.data) > 10 {
 			if len(grep.temp.data) < 50 {
 				return
@@ -299,15 +300,15 @@ func (grepx *livewgreppicker) end(task int, o *grep_output) {
 			grepx.grep_to_list(false)
 		})
 	} else {
-		ref := o.to_ref_caller(grepx.impl.key)
+		ref := to_ref_caller(grepx.impl.key, o)
 		if !grepx.qf(false, ref) {
-			grep.grep.abort()
+			grep.grep.Abort()
 		}
 	}
 
 }
 
-func convert_grep_info_location(o *grep_output) lsp.Location {
+func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
 	loc := lsp.Location{
 		URI: lsp.NewDocumentURI(o.Fpath),
 		Range: lsp.Range{
@@ -318,7 +319,7 @@ func convert_grep_info_location(o *grep_output) lsp.Location {
 	return loc
 }
 
-func (o *grep_output) to_ref_caller(key string) ref_with_caller {
+func to_ref_caller(key string, o *grep.GrepOutput) ref_with_caller {
 	b := strings.Index(o.Line, key)
 	e := b + len(key)
 	// sss := o.Line[b:e]
@@ -370,33 +371,33 @@ func (pk *livewgreppicker) __updatequery(query string) {
 		pk.stop_grep()
 		return
 	}
-	opt := optionSet{
-		grep_only: true,
-		g:         true,
-		wholeword: true,
+	opt := grep.OptionSet{
+		Grep_only: true,
+		G:         true,
+		Wholeword: true,
 	}
 	pk.impl.taskid++
 	pk.impl.key = query
 	pk.grep_list_view.Key = query
 	pk.grep_list_view.Clear()
-	g, err := newGorep(pk.impl.taskid, query, &opt)
+	g, err := grep.NewGorep(pk.impl.taskid, query, &opt)
 	if err != nil {
 		return
 	}
 	impl := pk.impl
 	if impl.grep != nil {
-		impl.grep.abort()
+		impl.grep.Abort()
 	}
 	impl.grep = g
 	impl.result = &grepresult{}
-	g.cb = pk.end
-	chans := g.kick(global_prj_root)
-	go g.report(chans, false)
+	g.CB = pk.end
+	chans := g.Kick(global_prj_root)
+	go g.Report(chans, false)
 
 }
 
 func (pk livewgreppicker) stop_grep() {
 	if pk.impl != nil && pk.impl.grep != nil {
-		pk.impl.grep.abort()
+		pk.impl.grep.Abort()
 	}
 }

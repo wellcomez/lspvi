@@ -1,6 +1,6 @@
 //go:build !windows
 
-package mainui
+package grep
 
 import (
 	"bufio"
@@ -14,7 +14,7 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 
-func PosixRunGrep(grep *gorep, fpath string, out chan<- GrepInfo) {
+func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	if grep.bAbort {
 		return
 	}
@@ -22,7 +22,7 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- GrepInfo) {
 		<-semFopenLimit
 		grep.waitGreps.Done()
 	}()
-	if strings.HasPrefix(fpath, global_prj_root) {
+	if strings.HasPrefix(fpath, grep.global_prj_root) {
 		debug.InfoLog("Ignore ", fpath)
 	}
 	semFopenLimit <- 1
@@ -88,7 +88,7 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- GrepInfo) {
 	}
 }
 
-func (grep *gorep) newFunction1(strline string) bool {
+func (grep *Gorep) newFunction1(strline string) bool {
 	grep.count++
 	if grep.useptnstring {
 		return len(str.IndexAll(strline, grep.ptnstring, 1)) > 0

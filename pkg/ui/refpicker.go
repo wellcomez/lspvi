@@ -13,6 +13,7 @@ import (
 
 	// lsp "github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/grep"
 )
 
 func (grepx *prev_picker_impl) update_title(s string) {
@@ -235,7 +236,7 @@ type ref_with_caller struct {
 	Caller    *lspcore.CallStackEntry
 	lines     []string
 	filecache *filecache
-	Grep      GrepInfo
+	Grep      grep.GrepInfo
 	IsGrep    bool
 }
 
