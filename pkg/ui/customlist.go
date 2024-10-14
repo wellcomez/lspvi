@@ -71,11 +71,18 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	for index := itemoffset; index < len(l.hlitems); index++ {
 		MainText, SecondText := l.List.GetItemText(index)
 		// MainText, main_postion := get_hl_postion(MainText, keys, l, keys2)
-
+		selected := index == l.List.GetCurrentItem()
 		main_text := GetColorText(MainText, []colortext{colortext{l.Key, l.default_color}})
 		second_text := GetColorText(SecondText, []colortext{colortext{l.Key, l.default_color}})
+		if selected {
+			for i := range main_text {
+				main_text[i].color = 0
+			}
+			for i := range second_text {
+				second_text[i].color = 0
+			}
+		}
 
-		selected := index == l.List.GetCurrentItem()
 		multiselected := false
 		if len(l.selected) > 0 {
 			if index >= l.selected[0] && index <= l.selected[1] {

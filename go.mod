@@ -38,6 +38,7 @@ require (
 	github.com/boyter/go-string v1.0.5 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
+	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 )
 
@@ -52,6 +53,7 @@ require (
 	github.com/pgavlin/femto v0.0.0-20201224065653-0c9d20f9cac4
 	github.com/rivo/tview v0.0.0-20240807205129-e4c497cc59ed
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/steakknife/bloomfilter v0.0.0-20180922174646-6819c0d2a570
 	go.bug.st/json v1.15.6
 	golang.org/x/sys v0.24.0
 	golang.org/x/term v0.23.0

@@ -107,20 +107,21 @@ func NewTreeClickCheck(grid *tview.Box, tree *tview.TreeView) *GridTreeClickChec
 	}
 	return ret
 }
-// func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
-// 	ret := &GridTreeClickCheck{
-// 		GridClickCheck: NewGridClickCheck(grid.Box, tree.Box),
-// 		tree:           tree,
-// 	}
-// 	ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
-// 		if action == tview.MouseScrollUp {
-// 			tree.MouseHandler()(action, event, nil)
-// 		} else if action == tview.MouseScrollDown {
-// 			tree.MouseHandler()(action, event, nil)
-// 		}
-// 	}
-// 	return ret
-// }
+
+//	func NewGridTreeClickCheck(grid *tview.Grid, tree *tview.TreeView) *GridTreeClickCheck {
+//		ret := &GridTreeClickCheck{
+//			GridClickCheck: NewGridClickCheck(grid.Box, tree.Box),
+//			tree:           tree,
+//		}
+//		ret.handle_mouse_event = func(action tview.MouseAction, event *tcell.EventMouse) {
+//			if action == tview.MouseScrollUp {
+//				tree.MouseHandler()(action, event, nil)
+//			} else if action == tview.MouseScrollDown {
+//				tree.MouseHandler()(action, event, nil)
+//			}
+//		}
+//		return ret
+//	}
 func NewGridClickCheck(grid *tview.Box, target tview.Primitive) *GridClickCheck {
 	ret := &GridClickCheck{
 		clickdetector: &clickdetector{lastMouseClick: time.Time{}},
@@ -187,56 +188,27 @@ func (picker *symbolpicker) layout(input *tview.InputField, isflex bool) (row *t
 
 	return row, col
 }
-// func (picker *symbolpicker) grid(input *tview.InputField) *tview.Grid {
-// 	list := picker.impl.symview.view
-// 	list.SetBorder(true)
-// 	code := picker.impl.codeprev.Primitive()
-// 	picker.impl.codeprev.LoadFileNoLsp(picker.impl.filename, 0)
-// 	layout := layout_list_edit(list, code, input)
-// 	picker.impl.click = NewGridTreeClickCheck(layout, picker.impl.symview.view)
-// 	picker.impl.click.click = func(event *tcell.EventMouse) {
-// 		_, y := event.Position()
-// 		t := picker.impl.symview.view
-// 		_, rectY, _, _ := t.GetInnerRect()
-// 		y += t.GetScrollOffset() - rectY
-// 		nodes := picker.impl.symview.nodes()
-// 		if y >= len(nodes) || len(nodes) == 0 {
-// 			return
-// 		}
-// 		if y < 0 {
-// 			return
-// 		}
-// 		node := nodes[y]
-// 		t.SetCurrentNode(node)
-// 		picker.update_preview()
-// 	}
-// 	picker.impl.click.dobule_click = func(event *tcell.EventMouse) {
-// 		picker.impl.click.tree.MouseHandler()(tview.MouseLeftClick, event, nil)
-// 		log.Println("dobule")
-
-// 	}
-
-// 	return layout
-// }
 
 func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
+
+	sym := symbolpicker{
+		impl: &SymbolWalkImpl{
+			filename: code.Path(),
+			codeprev: NewCodeView(v.main),
+		},
+	}
 	symbolview := &SymbolTreeViewExt{}
 	symbolview.SymbolTreeView = NewSymbolTreeView(v.main, code)
 	symbolview.parent = v
 	symbolview.SymbolTreeView.view.SetSelectedFunc(symbolview.OnClickSymobolNode)
 	symbolview.collapse_children = false
-	sym := symbolpicker{
-		impl: &SymbolWalkImpl{
-			filename: code.Path(),
-			symview:  symbolview,
-			codeprev: NewCodeView(v.main),
-		},
-	}
 	sym.impl.symbol = symbolview.merge_symbol(code.TreeSitter(), code.LspSymbol())
 	if sym.impl.symbol != nil {
 		symbolview.update_in_main_sync(sym.impl.symbol)
 		symbolview.view.GetRoot().ExpandAll()
 	}
+	sym.impl.symview = symbolview
+	sym.impl.fzf = NewSymbolListFzf(sym.impl.symbol)
 	return sym
 }
 
@@ -259,6 +231,7 @@ type SymbolWalkImpl struct {
 	gs       *GenericSearch
 	codeprev CodeEditor
 	click    *GridTreeClickCheck
+	fzf      *FzfSymbolFilter
 }
 
 type symbolpicker struct {
@@ -293,6 +266,10 @@ func (wk symbolpicker) update_preview() {
 }
 
 func (sym symbolpicker) Filter(key string) *lspcore.Symbol_file {
+	return sym.StringMatch(key)
+}
+
+func (sym symbolpicker) StringMatch(key string) *lspcore.Symbol_file {
 	if len(key) == 0 || sym.impl.symbol == nil {
 		return nil
 	}
@@ -335,15 +312,19 @@ func (picker symbolpicker) UpdateQuery(query string) {
 	file := picker.Filter(strings.ToLower(query))
 	picker.impl.symview.update_in_main_sync(file)
 	root := picker.impl.symview.view.GetRoot()
-	root.ExpandAll()
-	for _, v := range root.GetChildren() {
-		v.Expand()
-	}
 	if root != nil {
+		root.ExpandAll()
+		for _, v := range root.GetChildren() {
+			v.Expand()
+		}
 		children := root.GetChildren()
 		if len(children) > 0 {
 			picker.impl.symview.view.SetCurrentNode(children[0])
 			picker.update_preview()
 		}
 	}
+}
+
+func NewSymbolPick2(v *fzfmain){
+
 }
