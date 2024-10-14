@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
-	"strings"
+	"sync"
 
 	"github.com/charlievieth/fastwalk"
 	"zen108.com/lspvi/pkg/debug"
@@ -12,10 +12,12 @@ import (
 )
 
 type Filewalk struct {
+	waitReports     sync.WaitGroup
 	filelist        []string
 	filelist_config string
 	root            string
 	filereciver     chan string
+	end             chan bool
 }
 
 func (f *Filewalk) load() error {
@@ -47,34 +49,72 @@ func NewFilewalk(root string) *Filewalk {
 		filelist:    []string{},
 		root:        root,
 		filereciver: make(chan string, 10),
+		waitReports: sync.WaitGroup{},
+		end:         make(chan bool),
 	}
-	var end = make(chan bool)
-	go func() {
-		for {
-			select {
-			case ss := <-ret.filereciver:
-				ret.filelist = append(ret.filelist, ss)
-			}
-			end <- true
-			break
-		}
-	}()
-	<-end
 	return ret
 }
 
-func (r Filewalk) Walk(root string, m gi.Matcher) {
-	if dirs, err := os.ReadDir(root); err == nil {
-		m.Enter(root)
-		for _, v := range dirs {
-			if !m.MatchFile(filepath.Join(root, v.Name())) {
-				continue
-			}
-			if v.IsDir() {
-				go r.Walk(filepath.Join(root, v.Name()), m)
-			} else {
-				r.filereciver <- strings.TrimLeft( filepath.Join(root, v.Name()),r.root)
+func (r *Filewalk) Walk() {
+	r.waitReports.Add(1)
+	var exit = make(chan bool)
+	go func() {
+		for {
+			select {
+			case s := <-r.filereciver:
+				println(s)
+				r.filelist = append(r.filelist, s)
+			case <-r.end:
+				debug.InfoLog("Filewalk", "report end")
+				exit <- true
+				return
 			}
 		}
+	}()
+	go r.walk(r.root)
+	r.waitReports.Wait()
+	r.end <- true
+	<-exit
+	debug.InfoLog("Filewalk", "save")
+}
+func is_git_root(path string) bool {
+	fi, err := os.Stat(filepath.Join(path, ".git"))
+	if err == nil {
+		if fi.IsDir() {
+			return true
+		}
 	}
+	return false
+}
+func (r *Filewalk) walk(root string) {
+	debug.InfoLog("Filewalk", "walk", root)
+	home, _ := os.UserHomeDir()
+	ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
+	matcher := gi.NewMatcher(ps)
+	matcher.Enter(root)
+	conf := fastwalk.Config{
+		Follow:  true,
+		ToSlash: fastwalk.DefaultToSlash(),
+		Sort:    fastwalk.SortFilesFirst,
+	}
+	fastwalk.Walk(&conf, root, func(path string, de os.DirEntry, err error) error {
+		if root == path {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if matcher.MatchFile(path) {
+			debug.InfoLogf("Filewalk", "Skip %s", path)
+			return fastwalk.ErrSkipFiles
+		}
+		if is_git_root(path) {
+			r.waitReports.Add(1)
+			go r.walk(path)
+			return fastwalk.SkipDir
+		}
+		r.filereciver <- path
+		return nil
+	})
+	r.waitReports.Done()
 }
