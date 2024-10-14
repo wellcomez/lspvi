@@ -24,6 +24,7 @@ import (
 )
 
 type CodeEditor interface {
+	
 	IsLoading() bool
 	GetLines(begin, end int) []string
 	GetSelection() string

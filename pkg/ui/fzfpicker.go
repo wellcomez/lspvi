@@ -8,6 +8,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 func (parent *fzfmain) openfile(path string) {
@@ -204,7 +205,15 @@ func (v *fzfmain) symbol_picker_tree(code CodeEditor) {
 }
 
 func (v *fzfmain) symbol_picker_2(code CodeEditor) {
-	sym := new_current_document_picker(v, code.LspSymbol())
+
+	var Current = code.LspSymbol()
+	var ts = code.TreeSitter()
+	if Current == nil {
+		Current = &lspcore.Symbol_file{
+			Class_object: ts.Outline,
+		}
+	}
+	sym := new_current_document_picker(v, Current)
 	x := sym.impl.grid(v.input, 1)
 	v.currentpicker = sym
 	v.create_dialog_content(x, sym)
