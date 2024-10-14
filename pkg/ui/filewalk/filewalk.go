@@ -14,13 +14,14 @@ import (
 )
 
 type Filewalk struct {
-	waitReports sync.WaitGroup
-	filelist    []string
-	root        string
-	filereciver chan string
-	end         chan bool
-	filecount   chan int
-	resultfile  string
+	waitReports    sync.WaitGroup
+	filelist       []string
+	root           string
+	filereciver    chan string
+	end            chan bool
+	filecount      chan int
+	resultfile     string
+	use_git_ignore bool
 }
 
 func (f *Filewalk) Load() error {
@@ -115,7 +116,10 @@ func (r *Filewalk) walk(root string) {
 			debug.ErrorLog("Filewalk", "Error ", err, path)
 			return err
 		}
-		skip := matcher.MatchFile(path)
+		skip := false
+		if r.use_git_ignore {
+			skip = matcher.MatchFile(path)
+		}
 		if de.IsDir() {
 			if filepath.Base(path)[0] == '.' {
 				skip = true
