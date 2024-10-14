@@ -1,12 +1,12 @@
 package mainui
 
 import (
-	"log"
 	"path/filepath"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type CodeContextMenu struct {
@@ -180,7 +180,7 @@ func update_selection_menu(code *CodeView) {
 				if err != nil {
 					return
 				}
-				log.Println("external open tty=", tty)
+				debug.InfoLog("external open tty=", tty)
 				if proxy != nil {
 					proxy.open_in_web(filename)
 				} else {
