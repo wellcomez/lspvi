@@ -15,7 +15,7 @@ import (
 
 type Filewalk struct {
 	waitReports    sync.WaitGroup
-	filelist       []string
+	Filelist       []string
 	root           string
 	filereciver    chan string
 	end            chan bool
@@ -31,7 +31,7 @@ func (f *Filewalk) Load() error {
 		defer fp.Close()
 		scanner := bufio.NewScanner(fp)
 		for scanner.Scan() {
-			f.filelist = append(f.filelist, scanner.Text())
+			f.Filelist = append(f.Filelist, scanner.Text())
 		}
 		return nil
 	}
@@ -43,14 +43,14 @@ func (f *Filewalk) Save() error {
 		return err
 	}
 	defer fp.Close()
-	data := strings.Join(f.filelist, "\n")
+	data := strings.Join(f.Filelist, "\n")
 	_, err = fp.WriteString(data)
 	return err
 }
 
 func NewFilewalk(root string) *Filewalk {
 	ret := &Filewalk{
-		filelist:       []string{},
+		Filelist:       []string{},
 		root:           root,
 		filereciver:    make(chan string, 10),
 		waitReports:    sync.WaitGroup{},
@@ -71,7 +71,7 @@ func (r *Filewalk) Walk() {
 				total += c
 			case s := <-r.filereciver:
 				// println(s)
-				r.filelist = append(r.filelist, s)
+				r.Filelist = append(r.Filelist, s)
 			case <-r.end:
 				debug.InfoLog("Filewalk", "report end")
 				exit <- true
