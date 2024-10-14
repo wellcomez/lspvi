@@ -1,0 +1,184 @@
+package mainui
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+	lspcore "zen108.com/lspvi/pkg/lsp"
+)
+
+type symbol_picker_impl struct {
+	*prev_picker_impl
+	fzf    *fzf_on_listview
+	symbol *FzfSymbolFilter
+}
+type current_document_pick struct {
+	impl *symbol_picker_impl
+}
+
+// UpdateQuery implements picker.
+func (c current_document_pick) UpdateQuery(query string) {
+	fzf := c.impl.fzf
+	fzf.OnSearch(query, false)
+	filter := make(map[int]bool)
+	selected_postion := make(map[int][]int)
+	for i, v := range fzf.selected_index {
+		filter[v] = true
+		selected_postion[v] = fzf.selected_postion[i]
+	}
+	list := c.impl.listcustom
+	list.Clear()
+	for _, n := range c.impl.symbol.ClassObject {
+		mm := []SymbolFzf{}
+		for _, v := range n.Member {
+			if _, ok := filter[v.index]; ok {
+				mm = append(mm, v)
+			}
+		}
+		if len(mm) == 0 {
+			if _, ok := filter[n.index]; ok {
+				s := newFunction1(n, 0)
+				list.AddItem(s, "", nil)
+			}
+		} else {
+			s := newFunction1(n, 0)
+			list.AddItem(s, "", nil)
+			for _, v := range mm {
+				s := newFunction1(v, 1)
+				list.AddItem(s, "", nil)
+			}
+		}
+	}
+}
+
+// close implements picker.
+func (c current_document_pick) close() {
+}
+
+// handle implements picker.
+func (c current_document_pick) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+		c.impl.listcustom.InputHandler()(event, setFocus)
+	}
+}
+
+type SymbolFzf struct {
+	sym    lspcore.Symbol
+	index  int
+	Member []SymbolFzf
+}
+type FzfSymbolFilter struct {
+	ClassObject      []SymbolFzf
+	names            []string
+	filter           map[int]bool
+	selected_postion map[int][]int
+}
+
+func NewSymbolListFzf(sym *lspcore.Symbol_file) *FzfSymbolFilter {
+	ret := &FzfSymbolFilter{[]SymbolFzf{}, []string{}, nil, nil}
+	ret.Convert(sym)
+	return ret
+}
+
+func (f *FzfSymbolFilter) GetSymbolFile(key string) *lspcore.Symbol_file {
+	ret := []*lspcore.Symbol{}
+	for _, v := range f.ClassObject {
+		member := []lspcore.Symbol{}
+		for _, vv := range v.Member {
+			if _, ok := f.filter[vv.index]; ok {
+				member = append(member, v.sym)
+			}
+		}
+		var sss = v.sym
+		root := &sss
+		if _, yes := f.filter[v.index]; yes {
+			root.Members = member
+			ret = append(ret, root)
+		} else if len(member) > 0 {
+			root.Members = member
+			ret = append(ret, root)
+		}
+	}
+	return &lspcore.Symbol_file{
+		Class_object: ret,
+	}
+}
+func (f *FzfSymbolFilter) Convert(symbol *lspcore.Symbol_file) {
+	if symbol == nil {
+		return
+	}
+	id := 0
+	ret := []SymbolFzf{}
+	names := []string{}
+	classobject := symbol.Class_object
+	for _, v := range classobject {
+		member := []SymbolFzf{}
+		for i := range v.Members {
+			sym := SymbolFzf{v.Members[i], id, nil}
+			id++
+			names = append(names, sym.sym.SymInfo.Name)
+			member = append(member, sym)
+		}
+		var sss = SymbolFzf{*v, id, nil}
+		names = append(names, sss.sym.SymInfo.Name)
+		id++
+		sss.Member = member
+		ret = append(ret, sss)
+	}
+	f.ClassObject = ret
+	f.names = names
+}
+
+// name implements picker.
+func (c current_document_pick) name() string {
+	return "symbol"
+}
+func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) current_document_pick {
+	impl := &symbol_picker_impl{
+		prev_picker_impl: new_preview_picker(v),
+	}
+	list := new_customlist(false)
+	sym := current_document_pick{
+		impl: impl,
+	}
+	impl.symbol = NewSymbolListFzf(symbol)
+	data := []string{}
+	for _, v := range impl.symbol.ClassObject {
+		data = append(data, newFunction1(v, 0))
+		if len(v.Member) > 0 {
+			for _, m := range v.Member {
+				data = append(data, newFunction1(m, 1))
+			}
+		}
+	}
+	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+
+	})
+	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		list.GetCurrentItem()
+	})
+	for _, v := range data {
+		list.AddItem(v, "", nil)
+	}
+	impl.listcustom = list
+	impl.fzf = new_fzf_on_list(list, true)
+	return sym
+}
+
+func newFunction1(v SymbolFzf, prefix int) string {
+	space := strings.Repeat("\t\t", prefix)
+	icon := v.sym.Icon()
+	query := global_theme
+	cc := tview.Styles.PrimaryTextColor
+	if query != nil {
+		if style, err := query.get_lsp_color(v.sym.SymInfo.Kind); err == nil {
+			fg, _, _ := style.Decompose()
+			cc = fg
+		}
+	}
+	t := fmt.Sprintf("%s%s %s", space, icon, v.sym.SymInfo.Name)
+	t = fmt_color_string(t, cc)
+	return t
+}
