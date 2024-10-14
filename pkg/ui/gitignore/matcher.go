@@ -2,6 +2,7 @@ package gitignore
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -14,6 +15,7 @@ type Matcher interface {
 	AddPatterns(ps []Pattern)
 	Patterns() []Pattern
 	MatchFile(filepath string) bool
+	Enter(dir string)
 }
 
 // NewMatcher constructs a new global matcher. Patterns must be given in the order of
@@ -28,6 +30,12 @@ type matcher struct {
 	patterns []Pattern
 }
 
+func (m *matcher) Enter(dir string) {
+	ps, _ := ReadIgnoreFile(filepath.Join(dir, ".gitignore"))
+	if len(ps) > 0 {
+		m.AddPatterns(ps)
+	}
+}
 func (m *matcher) MatchFile(filepath string) bool {
 	ss := strings.Split(filepath, "/")
 	fi, err := os.Stat(filepath)
