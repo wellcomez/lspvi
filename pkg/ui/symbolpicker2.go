@@ -63,6 +63,7 @@ func (c current_document_pick) UpdateQuery(query string) {
 			}
 		}
 	}
+	c.impl.list_index_data = list_index_data
 }
 
 // close implements picker.
@@ -86,10 +87,11 @@ type FzfSymbolFilter struct {
 	names            []string
 	filter           map[int]bool
 	selected_postion map[int][]int
+	object_index     map[int]SymbolFzf
 }
 
 func NewSymbolListFzf(sym *lspcore.Symbol_file) *FzfSymbolFilter {
-	ret := &FzfSymbolFilter{[]SymbolFzf{}, []string{}, nil, nil}
+	ret := &FzfSymbolFilter{[]SymbolFzf{}, []string{}, nil, nil, nil}
 	ret.Convert(sym)
 	return ret
 }
@@ -122,25 +124,29 @@ func (f *FzfSymbolFilter) Convert(symbol *lspcore.Symbol_file) {
 		return
 	}
 	id := 0
-	ret := []SymbolFzf{}
+	class_object := []SymbolFzf{}
 	names := []string{}
+	var ojbect_index = make(map[int]SymbolFzf)
 	classobject := symbol.Class_object
 	for _, v := range classobject {
 		member := []SymbolFzf{}
 		for i := range v.Members {
 			sym := SymbolFzf{v.Members[i], id, nil}
+			ojbect_index[sym.index] = sym
 			id++
 			names = append(names, sym.sym.SymInfo.Name)
 			member = append(member, sym)
 		}
 		var sss = SymbolFzf{*v, id, nil}
 		names = append(names, sss.sym.SymInfo.Name)
+		ojbect_index[sss.index] = sss
 		id++
 		sss.Member = member
-		ret = append(ret, sss)
+		class_object = append(class_object, sss)
 	}
-	f.ClassObject = ret
+	f.ClassObject = class_object
 	f.names = names
+	f.object_index = ojbect_index
 }
 
 // name implements picker.
@@ -171,11 +177,23 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 		}
 	}
 	impl.list_index_data = list_index_data
-	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-
+	list.SetSelectedFunc(func(int, string, string, rune) {
+		i := list.GetCurrentItem()
+		if data_index, ok := impl.list_index_data[i]; ok {
+			if sym, ok := impl.symbol.object_index[data_index]; ok {
+				file := sym.sym.SymInfo.Location.URI.AsPath().String()
+				v.main.OpenFileHistory(file, &sym.sym.SymInfo.Location)
+			}
+		}
 	})
-	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		list.GetCurrentItem()
+	list.SetChangedFunc(func(int, string, string, rune) {
+		i := list.GetCurrentItem()
+		if data_index, ok := impl.list_index_data[i]; ok {
+			if sym, ok := impl.symbol.object_index[data_index]; ok {
+				file := sym.sym.SymInfo.Location.URI.AsPath().String()
+				impl.cq.LoadFileNoLsp(file, sym.sym.SymInfo.Location.Range.Start.Line)
+			}
+		}
 	})
 
 	impl.listcustom = list
