@@ -2,7 +2,6 @@ package mainui
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -223,7 +222,7 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 	}
 	grep.temp = nil
 	grep.result.data = append(grep.result.data, tmp.data...)
-	if len(grep.result.data) > 1000 {
+	if len(grep.result.data) > 500 {
 		return
 	}
 	for _, o := range tmp.data {
@@ -322,8 +321,8 @@ func convert_grep_info_location(o *grep_output) lsp.Location {
 func (o *grep_output) to_ref_caller(key string) ref_with_caller {
 	b := strings.Index(o.Line, key)
 	e := b + len(key)
-	sss := o.Line[b:e]
-	log.Println(sss)
+	// sss := o.Line[b:e]
+	// log.Println(sss)
 	start := lsp.Position{Line: o.LineNumber - 1, Character: b}
 	end := start
 	end.Character = e
@@ -335,6 +334,8 @@ func (o *grep_output) to_ref_caller(key string) ref_with_caller {
 				End:   end,
 			},
 		},
+		Grep:   *o.GrepInfo,
+		IsGrep: true,
 	}
 	return ref
 }
@@ -345,9 +346,7 @@ func (pk livewgreppicker) Save() {
 		Key:  lspcore.SymolSearchKey{Key: pk.impl.key},
 		Date: time.Now().Unix(),
 	}
-	for _, v := range pk.impl.result.data {
-		Result.Refs = append(Result.Refs, v)
-	}
+	Result.Refs = append(Result.Refs, pk.impl.result.data...)
 	data.Result = Result
 	main := pk.main
 	main.save_qf_uirefresh(data)
