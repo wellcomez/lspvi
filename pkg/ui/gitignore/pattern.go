@@ -27,6 +27,7 @@ const (
 type Pattern interface {
 	// Match matches the given path to the pattern.
 	Match(path []string, isDir bool) MatchResult
+	BfPth() []string
 }
 
 type pattern struct {
@@ -62,7 +63,14 @@ func ParsePattern(p string, domain []string) Pattern {
 	res.pattern = strings.Split(p, patternDirSep)
 	return &res
 }
-
+func(p* pattern)BfPth() (ret []string){
+	for _, v := range p.pattern {
+		v=strings.TrimLeft(v, "*")	
+		v=strings.TrimRight(v, "*")	
+		ret= append(ret, v)
+	}
+	return ret
+}
 func (p *pattern) Match(path []string, isDir bool) MatchResult {
 	if len(path) <= len(p.domain) {
 		return NoMatch

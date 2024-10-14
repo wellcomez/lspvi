@@ -22,6 +22,7 @@ type Filewalk struct {
 	filecount      chan int
 	resultfile     string
 	use_git_ignore bool
+	skipcount      int
 }
 
 func (f *Filewalk) Load() error {
@@ -49,12 +50,13 @@ func (f *Filewalk) Save() error {
 
 func NewFilewalk(root string) *Filewalk {
 	ret := &Filewalk{
-		filelist:    []string{},
-		root:        root,
-		filereciver: make(chan string, 10),
-		waitReports: sync.WaitGroup{},
-		end:         make(chan bool),
-		filecount:   make(chan int),
+		filelist:       []string{},
+		root:           root,
+		filereciver:    make(chan string, 10),
+		waitReports:    sync.WaitGroup{},
+		end:            make(chan bool),
+		filecount:      make(chan int),
+		use_git_ignore: true,
 	}
 	return ret
 }
@@ -82,7 +84,7 @@ func (r *Filewalk) Walk() {
 	r.waitReports.Wait()
 	r.end <- true
 	<-exit
-	debug.InfoLog("Filewalk", "save", total)
+	debug.InfoLog("Filewalk", "save", total, "Filtered", r.skipcount)
 }
 func is_git_root(path string) bool {
 	fi, err := os.Stat(filepath.Join(path, ".git"))
@@ -101,7 +103,7 @@ func (r *Filewalk) walk(root string) {
 	}()
 	home, _ := os.UserHomeDir()
 	ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
-	matcher := gi.NewMatcher(ps)
+	matcher := gi.NewMatcher(ps,true)
 	matcher.Enter(root)
 	conf := fastwalk.Config{
 		Follow:  true,
@@ -118,7 +120,7 @@ func (r *Filewalk) walk(root string) {
 		}
 		skip := false
 		if r.use_git_ignore {
-			skip = matcher.MatchFile(path,de.IsDir())
+			skip = matcher.MatchFile(path, de.IsDir())
 		}
 		if de.IsDir() {
 			if filepath.Base(path)[0] == '.' {
@@ -126,6 +128,7 @@ func (r *Filewalk) walk(root string) {
 			}
 		}
 		if skip {
+			r.skipcount++
 			if de.IsDir() {
 				return fastwalk.SkipDir
 			} else {

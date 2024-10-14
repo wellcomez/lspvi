@@ -228,7 +228,7 @@ func (grep *Gorep) Kick(fpath string) *channelSet {
 	go func() {
 		home, _ := os.UserHomeDir()
 		ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
-		m := gi.NewMatcher(ps)
+		m := gi.NewMatcher(ps,true)
 		grep.mapsend(fpath, chsMap, m)
 		grep.waitMaps.Wait()
 		closeChannelSet(chsMap)
@@ -278,12 +278,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 		debug.ErrorLog(GrepTag, "readir error: ", err)
 		return
 	}
-	ignore_path := filepath.Join(fpath, ".gitignore")
-	ps, _ := gi.ReadIgnoreFile(ignore_path)
-	if len(ps) > 0 {
-		m = gi.NewMatcher(ps)
-		debug.InfoLog(GrepTag, "new gitignore:", ignore_path)
-	}
+	m.Enter(fpath)
 
 	for _, finfo := range list {
 		fname := finfo.Name()
