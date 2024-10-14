@@ -17,6 +17,7 @@ type Filewalk struct {
 	root        string
 	filereciver chan string
 	end         chan bool
+	filecount   chan int
 }
 
 // func (f *Filewalk) load() error {
@@ -50,15 +51,19 @@ func NewFilewalk(root string) *Filewalk {
 		filereciver: make(chan string, 10),
 		waitReports: sync.WaitGroup{},
 		end:         make(chan bool),
+		filecount:   make(chan int),
 	}
 	return ret
 }
 
 func (r *Filewalk) Walk() {
 	var exit = make(chan bool)
+	var total = 0
 	go func() {
 		for {
 			select {
+			case c := <-r.filecount:
+				total += c
 			case s := <-r.filereciver:
 				// println(s)
 				r.filelist = append(r.filelist, s)
@@ -74,7 +79,7 @@ func (r *Filewalk) Walk() {
 	r.waitReports.Wait()
 	r.end <- true
 	<-exit
-	debug.InfoLog("Filewalk", "save")
+	debug.InfoLog("Filewalk", "save",total)
 }
 func is_git_root(path string) bool {
 	fi, err := os.Stat(filepath.Join(path, ".git"))
@@ -86,10 +91,10 @@ func is_git_root(path string) bool {
 	return false
 }
 func (r *Filewalk) walk(root string) {
-	count:=0
+	count := 0
 	debug.InfoLog("Filewalk", "START", root)
 	defer func() {
-		debug.InfoLog("Filewalk", "END", root ,count)
+		debug.InfoLog("Filewalk", "END", root, count)
 	}()
 	home, _ := os.UserHomeDir()
 	ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
@@ -102,25 +107,35 @@ func (r *Filewalk) walk(root string) {
 	}
 	fastwalk.Walk(&conf, root, func(path string, de os.DirEntry, err error) error {
 		if root == path {
-			debug.InfoLogf("Filewalk", "Skip %s == root", path)
 			return nil
 		}
 		if err != nil {
 			debug.ErrorLog("Filewalk", "Error ", err, path)
 			return err
 		}
-		if matcher.MatchFile(path) {
-			debug.InfoLogf("Filewalk", "Skip %s", path)
-			return fastwalk.ErrSkipFiles
+		skip := matcher.MatchFile(path)
+		if de.IsDir() {
+			if filepath.Base(path)[0] == '.' {
+				skip = true
+			}
+		}
+		if skip {
+			if de.IsDir() {
+				return fastwalk.SkipDir
+			} else {
+				return nil
+			}
 		}
 		if is_git_root(path) {
+			println(path)
 			r.waitReports.Add(1)
 			go r.walk(path)
-			return fastwalk.ErrSkipFiles
+			return fastwalk.SkipDir
 		}
 		r.filereciver <- path
 		count++
 		return nil
 	})
+	r.filecount <- count 
 	r.waitReports.Done()
 }
