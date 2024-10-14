@@ -2,8 +2,10 @@ package filewalk
 
 import (
 	// "bufio"
+	"bufio"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/charlievieth/fastwalk"
@@ -18,31 +20,31 @@ type Filewalk struct {
 	filereciver chan string
 	end         chan bool
 	filecount   chan int
+	resultfile  string
 }
 
-// func (f *Filewalk) load() error {
-// 	fp, err := os.OpenFile(f.filelist_config, os.O_RDONLY, 0666)
-// 	if err == nil {
-// 		defer fp.Close()
-// 		scanner := bufio.NewScanner(fp)
-// 		for scanner.Scan() {
-// 			f.filelist = append(f.filelist, scanner.Text())
-// 		}
-// 		return nil
-// 	}
-// 	return err
-// }
-// func (f *Filewalk) save() error {
-// 	fp, err := os.OpenFile(f.filelist_config, os.O_CREATE|os.O_RDWR, 0666)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer fp.Close()
-// 	for _, v := range f.filelist {
-// 		fp.Write([]byte(v + "\n"))
-// 	}
-// 	return nil
-// }
+func (f *Filewalk) Load() error {
+	fp, err := os.OpenFile(f.resultfile, os.O_RDONLY, 0666)
+	if err == nil {
+		defer fp.Close()
+		scanner := bufio.NewScanner(fp)
+		for scanner.Scan() {
+			f.filelist = append(f.filelist, scanner.Text())
+		}
+		return nil
+	}
+	return err
+}
+func (f *Filewalk) Save() error {
+	fp, err := os.OpenFile(f.resultfile, os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		return err
+	}
+	defer fp.Close()
+	data := strings.Join(f.filelist, "\n")
+	_, err = fp.WriteString(data)
+	return err
+}
 
 func NewFilewalk(root string) *Filewalk {
 	ret := &Filewalk{
@@ -79,7 +81,7 @@ func (r *Filewalk) Walk() {
 	r.waitReports.Wait()
 	r.end <- true
 	<-exit
-	debug.InfoLog("Filewalk", "save",total)
+	debug.InfoLog("Filewalk", "save", total)
 }
 func is_git_root(path string) bool {
 	fi, err := os.Stat(filepath.Join(path, ".git"))
@@ -136,6 +138,6 @@ func (r *Filewalk) walk(root string) {
 		count++
 		return nil
 	})
-	r.filecount <- count 
+	r.filecount <- count
 	r.waitReports.Done()
 }
