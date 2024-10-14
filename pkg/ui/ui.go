@@ -591,29 +591,28 @@ func (m *mainui) ZoomWeb(zoom bool) {
 	}
 }
 func (m *mainui) OpenFileHistory(file string, loc *lsp.Location) {
+	m.open_in_tty(file)
 	m.open_file_to_history_option(file, loc, nil)
 }
 
 // OpenFile
 // OpenFile
 func (m *mainui) open_file_to_history_option(file string, loc *lsp.Location, line *lspcore.OpenOption) {
+	m.open_file_to_history(file, &navigation_loc{loc: loc}, true, line)
+}
+
+func (m *mainui) open_in_tty(file string) bool {
 	if m.tty {
 		ext := filepath.Ext(file)
 		open_in_image_set := []string{".png", ".md"}
-		image := []string{".png"}
 		for _, v := range open_in_image_set {
 			if v == ext && proxy != nil {
 				proxy.open_in_web(file)
-				for _, shouldret := range image {
-					if shouldret == ext {
-						return
-					}
-				}
 			}
 		}
 
 	}
-	m.open_file_to_history(file, &navigation_loc{loc: loc}, true, line)
+	return false
 }
 
 type navigation_loc struct {
@@ -1227,9 +1226,9 @@ func (vl *view_link) next_view(t direction) view_id {
 	return next
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
-	// eventname := event.Name()
-	// log.Println("main ui recieved ",
-	// main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
+	eventname := event.Name()
+	debug.DebugLog("main ui recieved ",
+		main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
 	//Ctrl+O
 	if main.layout.dialog.Visible {
 		main.layout.dialog.handle_key(event)
