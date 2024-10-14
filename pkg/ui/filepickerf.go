@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	"fmt"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"zen108.com/lspvi/pkg/ui/filewalk"
@@ -58,6 +60,9 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 		}
 		v.hide()
 	})
+	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		ret.update_title()
+	})
 	if global_walk == nil || global_walk.Root != global_prj_root {
 		global_walk = filewalk.NewFilewalk(global_prj_root)
 		go func() {
@@ -69,7 +74,12 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	}
 	return ret
 }
-
+func (dir *DirWalk) update_title() {
+	list := dir.fzflist_impl.list
+	list.SetTitle(fmt.Sprintf("Files %d/%d",
+		list.GetCurrentItem(),
+		len(dir.filewalk.Filelist)))
+}
 func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 	dir.filewalk = file
 	data := global_walk.Filelist
@@ -77,6 +87,7 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 		impl.list.AddItem(trim_project_filename(v, global_prj_root), "", func() {})
 	}
 	dir.fzf = new_fzf_on_list(impl.list, true)
+	dir.update_title()
 	go dir.fzflist_impl.parent.app.QueueUpdateDraw(func() {
 	})
 }
