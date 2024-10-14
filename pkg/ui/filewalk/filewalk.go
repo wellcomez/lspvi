@@ -1,7 +1,7 @@
 package filewalk
 
 import (
-	"bufio"
+	// "bufio"
 	"os"
 	"path/filepath"
 	"sync"
@@ -12,37 +12,36 @@ import (
 )
 
 type Filewalk struct {
-	waitReports     sync.WaitGroup
-	filelist        []string
-	filelist_config string
-	root            string
-	filereciver     chan string
-	end             chan bool
+	waitReports sync.WaitGroup
+	filelist    []string
+	root        string
+	filereciver chan string
+	end         chan bool
 }
 
-func (f *Filewalk) load() error {
-	fp, err := os.OpenFile(f.filelist_config, os.O_RDONLY, 0666)
-	if err == nil {
-		defer fp.Close()
-		scanner := bufio.NewScanner(fp)
-		for scanner.Scan() {
-			f.filelist = append(f.filelist, scanner.Text())
-		}
-		return nil
-	}
-	return err
-}
-func (f *Filewalk) save() error {
-	fp, err := os.OpenFile(f.filelist_config, os.O_CREATE|os.O_RDWR, 0666)
-	if err != nil {
-		return err
-	}
-	defer fp.Close()
-	for _, v := range f.filelist {
-		fp.Write([]byte(v + "\n"))
-	}
-	return nil
-}
+// func (f *Filewalk) load() error {
+// 	fp, err := os.OpenFile(f.filelist_config, os.O_RDONLY, 0666)
+// 	if err == nil {
+// 		defer fp.Close()
+// 		scanner := bufio.NewScanner(fp)
+// 		for scanner.Scan() {
+// 			f.filelist = append(f.filelist, scanner.Text())
+// 		}
+// 		return nil
+// 	}
+// 	return err
+// }
+// func (f *Filewalk) save() error {
+// 	fp, err := os.OpenFile(f.filelist_config, os.O_CREATE|os.O_RDWR, 0666)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer fp.Close()
+// 	for _, v := range f.filelist {
+// 		fp.Write([]byte(v + "\n"))
+// 	}
+// 	return nil
+// }
 
 func NewFilewalk(root string) *Filewalk {
 	ret := &Filewalk{
@@ -56,13 +55,12 @@ func NewFilewalk(root string) *Filewalk {
 }
 
 func (r *Filewalk) Walk() {
-	r.waitReports.Add(1)
 	var exit = make(chan bool)
 	go func() {
 		for {
 			select {
 			case s := <-r.filereciver:
-				println(s)
+				// println(s)
 				r.filelist = append(r.filelist, s)
 			case <-r.end:
 				debug.InfoLog("Filewalk", "report end")
@@ -71,6 +69,7 @@ func (r *Filewalk) Walk() {
 			}
 		}
 	}()
+	r.waitReports.Add(1)
 	go r.walk(r.root)
 	r.waitReports.Wait()
 	r.end <- true
@@ -87,7 +86,11 @@ func is_git_root(path string) bool {
 	return false
 }
 func (r *Filewalk) walk(root string) {
-	debug.InfoLog("Filewalk", "walk", root)
+	count:=0
+	debug.InfoLog("Filewalk", "START", root)
+	defer func() {
+		debug.InfoLog("Filewalk", "END", root ,count)
+	}()
 	home, _ := os.UserHomeDir()
 	ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
 	matcher := gi.NewMatcher(ps)
@@ -99,9 +102,11 @@ func (r *Filewalk) walk(root string) {
 	}
 	fastwalk.Walk(&conf, root, func(path string, de os.DirEntry, err error) error {
 		if root == path {
+			debug.InfoLogf("Filewalk", "Skip %s == root", path)
 			return nil
 		}
 		if err != nil {
+			debug.ErrorLog("Filewalk", "Error ", err, path)
 			return err
 		}
 		if matcher.MatchFile(path) {
@@ -111,9 +116,10 @@ func (r *Filewalk) walk(root string) {
 		if is_git_root(path) {
 			r.waitReports.Add(1)
 			go r.walk(path)
-			return fastwalk.SkipDir
+			return fastwalk.ErrSkipFiles
 		}
 		r.filereciver <- path
+		count++
 		return nil
 	})
 	r.waitReports.Done()
