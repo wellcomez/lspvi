@@ -59,7 +59,7 @@ type searchScope struct {
 
 type Gorep struct {
 	pattern         *regexp.Regexp
-	ignorePattern   *regexp.Regexp
+	// ignorePattern   *regexp.Regexp
 	ptnstring       string
 	useptnstring    bool
 	scope           searchScope
@@ -174,7 +174,6 @@ func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 	base := &Gorep{
 		pattern:       nil,
-		ignorePattern: nil,
 		ptnstring:     pattern,
 		scope: searchScope{
 			grep:   false,
@@ -203,15 +202,10 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 			debug.ErrorLog(GrepTag, "regexp error", err)
 			return nil, err
 		}
-	}
-
-	if len(opt.ignore) > 0 {
-		if opt.ignorecase {
-			opt.ignore = "(?i)" + opt.ignore
-		}
-		base.ignorePattern, err = regexp.Compile(opt.ignore)
-		if err != nil {
-			return nil, err
+		if len(opt.ignore) > 0 {
+			if opt.ignorecase {
+				opt.ignore = "(?i)" + opt.ignore
+			}
 		}
 	}
 
