@@ -45,18 +45,18 @@ func (c current_document_pick) UpdateQuery(query string) {
 		}
 		if len(mm) == 0 {
 			if _, ok := filter[n.index]; ok {
-				s := newFunction1(n, 0, selected_postion[n.index])
+				s := set_list_item(n, 0, selected_postion[n.index])
 				list_index_data[list_index] = n.index
 				list_index++
 				list.AddItem(s, "", nil)
 			}
 		} else {
-			s := newFunction1(n, 0, nil)
+			s := set_list_item(n, 0, nil)
 			list.AddItem(s, "", nil)
 			list_index_data[list_index] = n.index
 			list_index++
 			for _, v := range mm {
-				s := newFunction1(v, 1, selected_postion[v.index])
+				s := set_list_item(v, 1, selected_postion[v.index])
 				list.AddItem(s, "", nil)
 				list_index_data[list_index] = v.index
 				list_index++
@@ -165,12 +165,12 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 	var list_index_data = make(map[int]int)
 	var list_index = 0
 	for _, v := range impl.symbol.ClassObject {
-		list.AddItem(newFunction1(v, 0, nil), "", nil)
+		list.AddItem(set_list_item(v, 0, nil), "", nil)
 		list_index_data[list_index] = v.index
 		list_index++
 		if len(v.Member) > 0 {
 			for _, m := range v.Member {
-				list.AddItem(newFunction1(m, 1, nil), "", nil)
+				list.AddItem(set_list_item(m, 1, nil), "", nil)
 				list_index_data[list_index] = v.index
 				list_index++
 			}
@@ -178,30 +178,42 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 	}
 	impl.list_index_data = list_index_data
 	list.SetSelectedFunc(func(int, string, string, rune) {
-		i := list.GetCurrentItem()
-		if data_index, ok := impl.list_index_data[i]; ok {
-			if sym, ok := impl.symbol.object_index[data_index]; ok {
-				file := sym.sym.SymInfo.Location.URI.AsPath().String()
-				v.main.OpenFileHistory(file, &sym.sym.SymInfo.Location)
-			}
+		if sym := impl.get_current_item_symbol(); sym != nil {
+			file := sym.sym.SymInfo.Location.URI.AsPath().String()
+			v.main.OpenFileHistory(file, &sym.sym.SymInfo.Location)
+			v.hide()
 		}
+
 	})
 	list.SetChangedFunc(func(int, string, string, rune) {
-		i := list.GetCurrentItem()
-		if data_index, ok := impl.list_index_data[i]; ok {
-			if sym, ok := impl.symbol.object_index[data_index]; ok {
-				file := sym.sym.SymInfo.Location.URI.AsPath().String()
-				impl.cq.LoadFileNoLsp(file, sym.sym.SymInfo.Location.Range.Start.Line)
-			}
-		}
+		impl.UpdatePrev()
 	})
 
 	impl.listcustom = list
 	impl.fzf = new_fzf_on_list_data(list, impl.symbol.names, true)
+	list.SetCurrentItem(0)
+	impl.UpdatePrev()
 	return sym
 }
 
-func newFunction1(v SymbolFzf, prefix int, posistion []int) string {
+func (impl *symbol_picker_impl) UpdatePrev() {
+	if sym := impl.get_current_item_symbol(); sym != nil {
+		file := sym.sym.SymInfo.Location.URI.AsPath().String()
+		impl.cq.LoadFileNoLsp(file, sym.sym.SymInfo.Location.Range.Start.Line)
+	}
+}
+
+func (impl *symbol_picker_impl) get_current_item_symbol() *SymbolFzf {
+	i := impl.listcustom.GetCurrentItem()
+	if data_index, ok := impl.list_index_data[i]; ok {
+		if sym, ok := impl.symbol.object_index[data_index]; ok {
+			return &sym
+		}
+	}
+	return nil
+}
+
+func set_list_item(v SymbolFzf, prefix int, posistion []int) string {
 	space := strings.Repeat("\t\t", prefix)
 	icon := v.sym.Icon()
 	query := global_theme

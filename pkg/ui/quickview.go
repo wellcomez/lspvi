@@ -383,15 +383,22 @@ func fzf_color_pos(colors []int, s string) []Pos {
 	}
 	return colors2
 }
-func fzf_color(colors []int, s string) string {
+func fzf_color_with_color(colors []int, s string, normal tcell.Color, hl tcell.Color) string {
+	if hl == 0 {
+		hl = tcell.ColorYellow
+	}
 	if len(colors) < len(s) {
 		ss := []string{}
 		var colors2 = fzf_color_pos(colors, s)
 		begin := 0
 		for _, v := range colors2 {
-			ss = append(ss, s[begin:v.X])
+			normal_text := s[begin:v.X]
+			if normal != 0 {
+				normal_text = fmt_color_string(normal_text, normal)
+			}
+			ss = append(ss, normal_text)
 			x := s[v.X:v.Y]
-			x = fmt_color_string(x, tcell.ColorYellow)
+			x = fmt_color_string(x, hl)
 			ss = append(ss, x)
 			begin = v.Y
 		}
@@ -401,6 +408,25 @@ func fzf_color(colors []int, s string) string {
 		if len(ss) > 0 {
 			s = strings.Join(ss, "")
 		}
+	}
+	return s
+}
+func fzf_color(colors []int, s string) string {
+	ss := []string{}
+	var colors2 = fzf_color_pos(colors, s)
+	begin := 0
+	for _, v := range colors2 {
+		ss = append(ss, s[begin:v.X])
+		x := s[v.X:v.Y]
+		x = fmt_color_string(x, tcell.ColorYellow)
+		ss = append(ss, x)
+		begin = v.Y
+	}
+	if begin < len(s) {
+		ss = append(ss, s[begin:])
+	}
+	if len(ss) > 0 {
+		s = strings.Join(ss, "")
 	}
 	return s
 }
