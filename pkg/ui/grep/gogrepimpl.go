@@ -10,7 +10,6 @@ import (
 	"strings"
 	"syscall"
 
-	str "github.com/boyter/go-string"
 	"zen108.com/lspvi/pkg/debug"
 )
 
@@ -88,11 +87,4 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	}
 }
 
-func (grep *Gorep) newFunction1(strline string) bool {
-	grep.count++
-	if grep.useptnstring {
-		return len(str.IndexAll(strline, grep.ptnstring, 1)) > 0
-	} else {
-		return grep.pattern.MatchString(strline)
-	}
-}
+

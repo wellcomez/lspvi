@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+	str "github.com/boyter/go-string"
 	"zen108.com/lspvi/pkg/debug"
 	gi "zen108.com/lspvi/pkg/ui/gitignore"
 )
@@ -79,6 +79,14 @@ type Gorep struct {
 	global_prj_root string
 }
 
+func (grep *Gorep) newFunction1(strline string) bool {
+	grep.count++
+	if grep.useptnstring {
+		return len(str.IndexAll(strline, grep.ptnstring, 1)) > 0
+	} else {
+		return grep.pattern.MatchString(strline)
+	}
+}
 func (grep *Gorep) Abort() {
 	grep.bAbort = true
 }
