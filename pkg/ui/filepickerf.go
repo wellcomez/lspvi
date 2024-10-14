@@ -48,11 +48,14 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 		nil,
 	}
 	impl.set_fuzz(true)
-	impl.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		index := impl.list.GetCurrentItem()
-		data_index := ret.fzf.get_data_index(index)
-		file := ret.filewalk.Filelist[data_index]
-		v.main.OpenFileHistory(file, nil)
+	list := impl.list
+	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		if ret.fzf != nil {
+			index := list.GetCurrentItem()
+			data_index := ret.fzf.get_data_index(index)
+			file := ret.filewalk.Filelist[data_index]
+			v.main.OpenFileHistory(file, nil)
+		}
 		v.hide()
 	})
 	if global_walk == nil || global_walk.Root != global_prj_root {
