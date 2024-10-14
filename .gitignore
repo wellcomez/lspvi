@@ -2,3 +2,5 @@
 uml/**
 .lspvi/**
 xterm/node_modules/**
+__debug_bin**
+lspvi
