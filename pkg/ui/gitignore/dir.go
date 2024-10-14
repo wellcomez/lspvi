@@ -33,7 +33,9 @@ func ReadIgnoreFile(p string) (ps []Pattern, err error) {
 		defer f.Close()
 
 		if data, err := ioutil.ReadAll(f); err == nil {
-			for _, s := range strings.Split(string(data), eol) {
+			x := strings.Split(string(data), eol)
+			x = append([]string{gitDir, gitignoreFile}, x...)
+			for _, s := range x {
 				debug.DebugLogf("gitignore processing %v", s)
 				if !strings.HasPrefix(s, commentPrefix) && len(strings.TrimSpace(s)) > 0 {
 					ps = append(ps, ParsePattern(s, path))
