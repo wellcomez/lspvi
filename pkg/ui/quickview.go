@@ -834,6 +834,7 @@ func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root str
 			var prev *ref_with_caller
 			for i := range a.children {
 				c := &a.children[i]
+				caller := c.get_caller(view)
 				prev = c.quickfix_listitem_string(view, caller, lineno, prev)
 				data = append(data, c)
 			}
