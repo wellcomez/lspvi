@@ -1,5 +1,5 @@
-package mainui
+package grep
 
-func RunGrep(grep *gorep, fpath string, out chan<- grepInfo) bool {
-	return PosixRunGrep(grep, fpath, out)
+func RunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
+	PosixRunGrep(grep, fpath, out)
 }

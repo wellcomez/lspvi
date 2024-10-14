@@ -43,7 +43,7 @@ type OptionSet struct {
 	Grep_only     bool
 	search_binary bool
 	ignore        string
-	hidden        bool
+	// hidden        bool
 	ignorecase    bool
 	Wholeword     bool
 }
@@ -54,11 +54,10 @@ type searchScope struct {
 	// symlink bool
 	grep   bool
 	binary bool
-	hidden bool
 }
 
 type Gorep struct {
-	pattern         *regexp.Regexp
+	pattern *regexp.Regexp
 	// ignorePattern   *regexp.Regexp
 	ptnstring       string
 	useptnstring    bool
@@ -173,12 +172,11 @@ func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 
 func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 	base := &Gorep{
-		pattern:       nil,
-		ptnstring:     pattern,
+		pattern:   nil,
+		ptnstring: pattern,
 		scope: searchScope{
 			grep:   false,
 			binary: false,
-			hidden: false,
 		},
 		useptnstring:   true,
 		id:             id,
@@ -187,13 +185,11 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 	}
 	base.Debug("NewGrep")
 
-	// config regexp
-	if opt.ignorecase {
-		pattern = "(?i)" + pattern
-	}
-
 	var err error
 	if !base.useptnstring {
+		if opt.ignorecase {
+			pattern = "(?i)" + pattern
+		}
 		if opt.Wholeword {
 			pattern = `\b` + pattern + `\b`
 		}
@@ -221,10 +217,6 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 	if opt.search_binary {
 		base.scope.binary = true
 	}
-	if opt.hidden {
-		base.scope.hidden = true
-	}
-
 	return base, nil
 }
 
