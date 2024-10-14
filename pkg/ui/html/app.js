@@ -205,6 +205,10 @@ app_init = () => {
                 this.set_visible({})
             },
             on_mouse(event) {
+                if (event.type == "click" && this.isVisible) {
+                    this.onhide()
+                    return true
+                }
                 if (this.isVisibleMd) {
                     if (this.on_forward(event) == false) {
                         if (event.type == "click") {
@@ -388,9 +392,9 @@ class Term {
         })
         document.addEventListener("click", function (ev) {
             if (app.on_mouse(ev)) {
-                if (app.is_hide()) {
-                    obj.term.options.disableStdin = false
-                }
+            }
+            if (app.is_hide()) {
+                obj.term.options.disableStdin = false
             }
         })
     }
