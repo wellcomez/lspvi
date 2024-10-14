@@ -8,10 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 	"zen108.com/lspvi/pkg/debug"
 	gi "zen108.com/lspvi/pkg/ui/gitignore"
-	// "code.google.com/p/go.crypto/ssh/terminal"
 )
 
 var GrepTag = "Grep"
@@ -139,6 +137,7 @@ func (grep *gorep) report(chans *channelSet, isColor bool) {
 							LineNumber: msg.LineNumber,
 							Line:       msg.Line,
 							Fpath:      msg.Fpath,
+							Matched:    msg.Matched,
 						},
 						content_type: FILE_TYPE,
 					}
@@ -180,7 +179,7 @@ func newGorep(id int, pattern string, opt *optionSet) (*gorep, error) {
 		useptnstring:   true,
 		id:             id,
 		begintm:        time.Now().UnixMilli(),
-		just_grep_file: true,
+		just_grep_file: false,
 	}
 	base.Debug("NewGrep")
 

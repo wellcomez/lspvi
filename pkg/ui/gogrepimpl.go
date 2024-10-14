@@ -14,9 +14,9 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 
-func PosixRunGrep(grep *gorep, fpath string, out chan<- GrepInfo) bool {
+func PosixRunGrep(grep *gorep, fpath string, out chan<- GrepInfo) {
 	if grep.bAbort {
-		return true
+		return
 	}
 	defer func() {
 		<-semFopenLimit
@@ -30,27 +30,27 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- GrepInfo) bool {
 	file, err := os.Open(fpath)
 	if err != nil {
 		debug.ErrorLog("grep open error: ", err)
-		return true
+		return
 	}
 	defer file.Close()
 
 	fi, err := file.Stat()
 	if err != nil {
 		debug.ErrorLog("grep state error: ", err)
-		return true
+		return
 	}
 
 	mem, err := syscall.Mmap(int(file.Fd()), 0, int(fi.Size()),
 		syscall.PROT_READ, syscall.MAP_SHARED)
 	if err != nil {
 
-		return true
+		return
 	}
 	defer syscall.Munmap(mem)
 
 	isBinary := verifyBinary(mem)
 	if isBinary && !grep.scope.binary {
-		return true
+		return
 	}
 
 	buffer := bytes.NewBuffer(mem)
@@ -68,7 +68,7 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- GrepInfo) bool {
 			if !grep.just_grep_file {
 				if isBinary {
 					out <- GrepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath), 1}
-					return true
+					return
 				} else {
 					out <- GrepInfo{fpath, lineNumber, strline, 1}
 				}
@@ -81,10 +81,11 @@ func PosixRunGrep(grep *gorep, fpath string, out chan<- GrepInfo) bool {
 			}
 		}
 	}
-	if ret.Matched > 0 {
-		out <- ret
+	if grep.just_grep_file {
+		if ret.Matched > 0 {
+			out <- ret
+		}
 	}
-	return false
 }
 
 func (grep *gorep) newFunction1(strline string) bool {
