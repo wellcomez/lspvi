@@ -2,13 +2,13 @@ package grep
 
 import (
 	"bytes"
+	str "github.com/boyter/go-string"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
-	str "github.com/boyter/go-string"
 	"zen108.com/lspvi/pkg/debug"
 	gi "zen108.com/lspvi/pkg/ui/gitignore"
 )
@@ -31,19 +31,14 @@ const (
 
 type GrepOutput struct {
 	*GrepInfo
-	// destor       string
 	content_type contenttype
 }
 
 type channelSet struct {
-	// dir     chan string
-	// file    chan string
-	// symlink chan string
 	grep chan GrepInfo
 }
 
 type OptionSet struct {
-	v             bool
 	G             bool
 	Grep_only     bool
 	search_binary bool
@@ -240,11 +235,11 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 }
 
 func (grep *Gorep) Kick(fpath string) *channelSet {
+	grep.global_prj_root = fpath
 	chsMap := makeChannelSet()
 	chsReduce := makeChannelSet()
-
+	grep.waitMaps.Add(1)
 	go func() {
-		grep.waitMaps.Add(1)
 		home, _ := os.UserHomeDir()
 		ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
 		m := gi.NewMatcher(ps)
@@ -252,7 +247,6 @@ func (grep *Gorep) Kick(fpath string) *channelSet {
 		grep.waitMaps.Wait()
 		closeChannelSet(chsMap)
 	}()
-
 	go func() {
 		grep.reduce(chsMap, chsReduce)
 	}()
