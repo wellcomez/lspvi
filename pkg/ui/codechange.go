@@ -254,11 +254,7 @@ func (code *CodeView) on_content_changed(event lspcore.CodeChangeEvent) {
 }
 func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
 	// event.Full = true
-	data := []byte{}
-	for i := 0; i < code.view.Buf.LinesNum(); i++ {
-		data = append(data, code.view.Buf.LineBytes(i)...)
-		data = append(data, '\n')
-	}
+	data := code.GetBuffData()
 	if event.Full {
 		event.Data = data
 	}
@@ -277,4 +273,13 @@ func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
 		}
 		on_treesitter_update(code, ts)
 	})
+}
+
+func (code *CodeView) GetBuffData() []byte {
+	data := []byte{}
+	for i := 0; i < code.view.Buf.LinesNum(); i++ {
+		data = append(data, code.view.Buf.LineBytes(i)...)
+		data = append(data, '\n')
+	}
+	return data
 }

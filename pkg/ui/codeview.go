@@ -1618,7 +1618,11 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	b.Settings["syntax"] = false
 	code.tree_sitter = nil
 	code.file = NewFile(filename)
-	if tree_sitter := lspcore.GetNewTreeSitter(filename, code.LspContentFullChangeEvent()); tree_sitter != nil {
+	code.LoadBuffer(data, filename)
+
+	ts_load_event := code.LspContentFullChangeEvent()
+	ts_load_event.Data = code.GetBuffData()
+	if tree_sitter := lspcore.GetNewTreeSitter(filename, ts_load_event); tree_sitter != nil {
 		tree_sitter.Init(func(ts *lspcore.TreeSitter) {
 			if !ts.IsMe(code.Path()) {
 				return
@@ -1634,7 +1638,6 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 			})
 		})
 	}
-	code.LoadBuffer(data, filename)
 	code.set_loc(femto.Loc{X: 0, Y: 0})
 	if code.main != nil {
 		code.view.bookmark = *code.main.Bookmark().GetFileBookmark(filename)
