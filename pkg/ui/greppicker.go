@@ -72,7 +72,7 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 		focused := g.grep_list_view.HasFocus()
 		var key = event.Key()
 		if key == tcell.KeyEnter && !focused {
-			if g.impl.last != g.impl.opt{
+			if g.impl.last != g.impl.opt {
 				RunQuery(g)
 			} else {
 				g.grep_list_view.InputHandler()(event, nil)
@@ -101,38 +101,46 @@ func RunQuery(g *greppicker) {
 func (g *greppicker) name() string {
 	return "grep word"
 }
-
-func (pk livewgreppicker) update_preview_tree() {
+func (pk livewgreppicker) update_preview_tree(index int, prev bool) {
 	qk := &pk.impl.quick
-	ind := qk.view.GetCurrentItem()
-	if data, err := qk.get_data(ind); err == nil {
-		pk.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+	if data, err := qk.get_data(index); err == nil {
+		if prev {
+			pk.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+		} else {
+			pk.main.OpenFileHistory(data.Loc.URI.AsPath().String(), &data.Loc)
+
+		}
 	}
 }
-func (pk livewgreppicker) update_preview() {
+func (pk livewgreppicker) open_view(index int,prev bool) {
 	if pk.impl.quick.tree != nil {
-		pk.update_preview_tree()
+		pk.update_preview_tree(index, prev)
 	} else {
-		pk.update_preview_no_tree()
+		pk.update_view_no_tree_at(index, prev)
 	}
 }
-func (pk livewgreppicker) update_preview_no_tree() {
-	cur := pk.grep_list_view.GetCurrentItem()
+
+func (pk livewgreppicker) update_view_no_tree_at(cur int, prev bool) bool {
 	if pk.impl.fzf_on_result != nil {
 		cur = pk.impl.fzf_on_result.get_data_index(cur)
 		if cur < 0 {
-			return
+			return true
 		}
 	}
 	if pk.impl.result == nil {
-		return
+		return true
 	}
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
 		fpath := item.Loc.URI.AsPath().String()
 		lineNumber := item.Loc.Range.Start.Line
-		pk.PrevOpen(fpath, lineNumber-1)
+		if prev {
+			pk.PrevOpen(fpath, lineNumber-1)
+		} else {
+			pk.main.OpenFileHistory(fpath, &item.Loc)
+		}
 	}
+	return false
 }
 
 func (pk livewgreppicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -148,7 +156,7 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	layout := pk.prev_picker_impl.flex(input, 1)
 	pk.listview.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		pk.update_preview()
+		pk.open_view(index,true)
 		pk.update_title()
 	})
 	x := tview.NewFlex()
@@ -229,7 +237,7 @@ func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	impl.quick.cq = NewCodeOpenQueue(code, v.main)
 	impl.quick.quickview = new_quick_preview()
 	grep.listview.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		grep.impl.quick.selection_handle(i, s1, s2, r)
+		grep.open_view(i,false)
 		v.hide()
 	})
 	v.Visible = true
@@ -261,6 +269,9 @@ func (grepx *livewgreppicker) grep_to_list(end bool) {
 		grepx.update_list_druring_final()
 	}
 }
+func (impl *livewgreppicker) update_preview() {
+	impl.open_view(impl.listview.GetCurrentItem(),true)
+}
 func (grepx *livewgreppicker) update_list_druring_final() {
 	grep := grepx.impl
 	tmp := grep.temp
@@ -268,20 +279,25 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 		grep.temp = nil
 		grep.result.data = append(grep.result.data, tmp.data...)
 	}
+
 	Refs := grep.result.data
-	qk := &grep.quick
-	qk.view.Clear()
+	qk := quick_view{main: grepx.main}
 	qk.Refs.Refs = grep.result.data
 	qk.tree = &list_view_tree_extend{filename: qk.main.current_editor().Path()}
 	qk.tree.build_tree(Refs)
-	data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.Lspmgr())
-	for i := range data {
-		v := data[i]
-		qk.view.AddItem(v.text, "", nil)
-	}
-	grepx.update_preview()
-	grepx.update_title()
-	grepx.main.App().ForceDraw()
+	data := qk.tree.BuildListStringGroup(&qk, global_prj_root, qk.main.Lspmgr())
+	qk.view = grepx.impl.quick.view
+	grepx.impl.quick = qk
+	go func() {
+		qk.view.Clear()
+		for i := range data {
+			v := data[i]
+			qk.view.AddItem(v.text, "", nil)
+		}
+		grepx.update_preview()
+		grepx.update_title()
+		grepx.main.App().ForceDraw()
+	}()
 }
 
 func (grepx *livewgreppicker) update_list_druring_grep() {
@@ -320,9 +336,9 @@ func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
 	if o == nil {
 		if grepx.qf != nil {
 			grepx.qf(true, ref_with_caller{})
-		} else if grepx.not_live {
-			grepx.main.App().QueueUpdate(func() {
-				grepx.grep_to_list(true)
+		} else {
+			grepx.grep_to_list(true)
+			if grepx.not_live {
 				grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
 					var o *ref_with_caller
@@ -339,7 +355,7 @@ func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
 					}
 					grepx.parent.hide()
 				}
-			})
+			}
 		}
 		return
 	}
