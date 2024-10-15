@@ -161,10 +161,9 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	})
 	x := tview.NewFlex()
 	x.SetDirection(tview.FlexRow)
-
 	file_include := tview.NewInputField()
 	file_include.SetFieldBackgroundColor(tcell.ColorDarkGrey)
-	file_include.SetPlaceholderStyle(tcell.StyleDefault)
+	file_include.SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorDarkGrey))
 	file_include.SetLabel("include path ")
 	file_include.SetPlaceholder(global_prj_root)
 	file_include.SetChangedFunc(func(text string) {
@@ -172,22 +171,27 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 		debug.DebugLog("dialog", text)
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
-	btn := tview.NewButton("Find")
-	btn.SetSelectedFunc(func() {
+	var searchIcon = "🔍" // Magnifying glass emoji
+
+	search_btn := tview.NewButton(searchIcon)
+	set_color := func(btn *tview.Button) {
+		btn.SetTitleAlign(tview.AlignCenter)
+		btn.SetActivatedStyle(tcell.StyleDefault.Foreground(tcell.ColorDarkGray).Background(tcell.ColorDarkGrey))
+		btn.SetStyle(tcell.StyleDefault.Foreground(tcell.ColorDarkGray).Background(tview.Styles.PrimitiveBackgroundColor))
+	}
+	set_color(search_btn)
+	search_btn.SetSelectedFunc(func() {
 		pk.impl.fzf_on_result = nil
 		pk.parent.input.SetLabel(">")
 		text := pk.parent.input.GetText()
 		pk.UpdateQuery(text)
 	})
-	btn.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-		if InRect(event, btn) {
+	search_btn.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if InRect(event, search_btn) {
 			switch action {
-			case tview.MouseLeftClick:
-				debug.DebugLog("dialog", "xxxxxxxxxxxxxxxx", "lef click")
-			case tview.MouseLeftDown:
+			case tview.MouseLeftClick, tview.MouseLeftDown:
 				text := pk.parent.input.GetText()
 				pk.UpdateQuery(text)
-				debug.DebugLog("dialog", "xxxxxxxxxxxxxxxx", "down")
 			case tview.MouseLeftDoubleClick:
 				debug.DebugLog("dialog", "xxxxxxxxxxxxxxxx", "double")
 				return tview.MouseConsumed, nil
@@ -195,10 +199,19 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 		}
 		return action, event
 	})
+
+	var saveIcon = "💾" // Floppy disk emoji
+	save_btn := tview.NewButton(saveIcon)
+	save_btn.SetSelectedFunc(func() {
+		pk.Save()
+	})
+	set_color(save_btn)
+
 	input_filter := tview.NewGrid()
 	input_filter.
 		AddItem(file_include, 0, 0, 1, 20, 1, 20, false).
-		AddItem(btn, 0, 21, 1, 4, 1, 4, false)
+		AddItem(search_btn, 0, 21, 1, 1, 1, 1, false).
+		AddItem(save_btn, 0, 22, 1, 1, 1, 1, false)
 
 	x.AddItem(layout, 0, 10, false).AddItem(input_filter, 1, 1, false)
 	return x
@@ -279,8 +292,8 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 
 	main := grepx.main
 	Refs := grep.result.data
-	qk := new_quikview_data(main,data_grep_word,main.current_editor().Path(),Refs)
-	data := qk.tree_to_listemitem( global_prj_root)
+	qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
+	data := qk.tree_to_listemitem(global_prj_root)
 	go func() {
 		view := grepx.grep_list_view
 		view.Clear()
