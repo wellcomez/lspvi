@@ -93,7 +93,7 @@ var fileicons = []extset{
 	{lua_icon, []string{"lua"}},
 	{java_icon, []string{"java", "jar"}},
 	{fmt.Sprintf("%c", '\ue673'), []string{"makefile"}},
-	{fmt.Sprintf("%c", '\ue691'), []string{"sh"}},
+	{fmt.Sprintf("%c", '\uebca'), []string{"sh"}},
 	{rust_icon,[]string{"rs"}},
 	{fmt.Sprintf("%c",'\U000f0b02'),[]string{"uml"}},
 }
