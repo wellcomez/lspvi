@@ -35,6 +35,7 @@ require (
 )
 
 require (
+	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/boyter/go-string v1.0.5 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect

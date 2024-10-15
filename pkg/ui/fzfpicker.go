@@ -2,7 +2,6 @@ package mainui
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -84,9 +83,11 @@ func (pick *fzfmain) MouseHanlde(event *tcell.EventMouse, action tview.MouseActi
 	if !InRect(event, pick.Frame) {
 		return nil, tview.MouseConsumed
 	}
+	// pick.app.Mou
 	fn := pick.Frame.MouseHandler()
-	yes, ctrl := fn(action, event, func(p tview.Primitive) {})
-	log.Print(ctrl)
+	yes, _ := fn(action, event, func(p tview.Primitive) {
+		pick.app.SetFocus(p)
+	})
 	if yes {
 		return nil, tview.MouseConsumed
 	} else {
@@ -248,15 +249,18 @@ func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		v.hide()
 		return nil
 	}
-	text := v.input.GetText()
-	v.input.InputHandler()(event, nil)
-	v.input.SetLabel(">")
-	text2 := v.input.GetText()
-	if text != text2 {
-		query := v.input.GetText()
-		v.currentpicker.UpdateQuery(query)
-		return nil
-	}
+	// text := v.input.GetText()
+	// v.input.InputHandler()(event, nil)
+	// v.input.SetLabel(">")
+	// text2 := v.input.GetText()
+	// if text != text2 {
+	// 	query := v.input.GetText()
+	// 	v.currentpicker.UpdateQuery(query)
+	// 	return nil
+	// }
+	v.Frame.InputHandler()(event, func(p tview.Primitive) {
+		v.app.SetFocus(p)
+	})
 	v.currentpicker.handle()(event, nil)
 	return nil
 }
@@ -264,6 +268,7 @@ func (v *fzfmain) handle_key(event *tcell.EventKey) *tcell.EventKey {
 func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 	input := tview.NewInputField()
 	input.SetFieldBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
+
 	frame := tview.NewFrame(tview.NewBox())
 	frame.SetBorder(true)
 	frame.SetBorderPadding(0, 0, 0, 0)
@@ -279,6 +284,9 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 			mouseDownY:     -1,
 		},
 	}
+	input.SetChangedFunc(func(text string) {
+		ret.currentpicker.UpdateQuery(text)
+	})
 	// new_filewalk(global_prj_root)
 	return ret
 }
