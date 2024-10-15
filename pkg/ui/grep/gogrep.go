@@ -2,13 +2,15 @@ package grep
 
 import (
 	"bytes"
-	str "github.com/boyter/go-string"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bmatcuk/doublestar"
+	str "github.com/boyter/go-string"
 	"zen108.com/lspvi/pkg/debug"
 	gi "zen108.com/lspvi/pkg/ui/gitignore"
 )
@@ -42,10 +44,11 @@ type OptionSet struct {
 	G             bool
 	Grep_only     bool
 	search_binary bool
-	ignore        string
+	Ignore        string
 	// hidden        bool
-	ignorecase bool
-	Wholeword  bool
+	ignorecase    bool
+	Wholeword     bool
+	IcludePattern string
 }
 
 type searchScope struct {
@@ -65,6 +68,7 @@ const (
 
 type Gorep struct {
 	pattern         *regexp.Regexp
+	include_pattern string
 	ptnstring       string
 	useptnstring    bool
 	scope           searchScope
@@ -187,7 +191,6 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 		// report_end:     make(chan bool),
 	}
 	base.Debug("NewGrep")
-
 	var err error
 	if !base.useptnstring {
 		if opt.ignorecase {
@@ -201,11 +204,14 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 			debug.ErrorLog(GrepTag, "regexp error", err)
 			return nil, err
 		}
-		if len(opt.ignore) > 0 {
-			if opt.ignorecase {
-				opt.ignore = "(?i)" + opt.ignore
-			}
-		}
+		// if len(opt.ignore) > 0 {
+		// 	if opt.ignorecase {
+		// 		opt.ignore = "(?i)" + opt.ignore
+		// 	}
+		// }
+	}
+	if len(opt.IcludePattern) > 0 {
+		base.include_pattern = opt.IcludePattern
 	}
 
 	// config search scope
@@ -300,6 +306,21 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 		if m.Match(ss[1:], is_dir) {
 			debug.TraceLog(GrepTag, "ignore:", path)
 			continue
+		}
+		if finfo.Type().IsRegular() {
+			skip := false
+			if len(grep.include_pattern) > 0 {
+				skip = true
+				if yes, _ := doublestar.Match(grep.include_pattern, path); yes {
+					skip = false
+				}else if yes, _ := doublestar.Match(grep.include_pattern, finfo.Name()); yes {
+					skip = false
+				}
+			}
+			if skip {
+				debug.DebugLog(GrepTag, "ignore:"+grep.include_pattern, path)
+				continue
+			}
 		}
 		if finfo.IsDir() {
 			grep.waitMaps.Add(1)

@@ -21,6 +21,8 @@ type grep_impl struct {
 	temp          *grepresult
 	grep          *grep.Gorep
 	taskid        int
+	opt           QueryOption
+	last          QueryOption
 	key           string
 	fzf_on_result *fzf_on_listview
 	quick         quick_view
@@ -70,7 +72,7 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 		focused := g.grep_list_view.HasFocus()
 		var key = event.Key()
 		if key == tcell.KeyEnter && !focused {
-			if g.impl.key != g.query {
+			if g.impl.last != g.impl.opt{
 				RunQuery(g)
 			} else {
 				g.grep_list_view.InputHandler()(event, nil)
@@ -158,6 +160,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	file_include.SetLabel("include path ")
 	file_include.SetPlaceholder(global_prj_root)
 	file_include.SetChangedFunc(func(text string) {
+		pk.impl.opt.include_pattern = text
 		debug.DebugLog("dialog", text)
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
@@ -193,14 +196,14 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	return x
 }
 
-// func (pk *livewgreppicker) grid2(input *tview.InputField) *tview.Flex {
-// 	layout := pk.prev_picker_impl.flex(input, 1)
-// 	pk.list_click_check.on_list_selected = func() {
-// 		pk.update_preview()
-// 		pk.update_title()
-// 	}
-// 	return layout
-// }
+//	func (pk *livewgreppicker) grid2(input *tview.InputField) *tview.Flex {
+//		layout := pk.prev_picker_impl.flex(input, 1)
+//		pk.list_click_check.on_list_selected = func() {
+//			pk.update_preview()
+//			pk.update_title()
+//		}
+//		return layout
+//	}
 func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
 	grep := &greppicker{
 		livewgreppicker: new_live_grep_picker(v, code),
@@ -419,10 +422,9 @@ func (pk livewgreppicker) Save() {
 	main := pk.main
 	main.save_qf_uirefresh(data)
 }
-
 func (pk livewgreppicker) UpdateQuery(query string) {
-	// pk.defer_input.start(query)
-	pk.__updatequery(query)
+	pk.impl.opt.query = query
+	pk.__updatequery(pk.impl.opt)
 }
 
 // close implements picker.
@@ -433,15 +435,23 @@ func (pk *livewgreppicker) close() {
 	pk.stop_grep()
 }
 
-func (pk *livewgreppicker) __updatequery(query string) {
+type QueryOption struct {
+	query           string
+	include_pattern string
+}
+
+func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
+	pk.impl.last = query_option
+	query := query_option.query
 	if len(query) == 0 {
 		pk.stop_grep()
 		return
 	}
 	opt := grep.OptionSet{
-		Grep_only: true,
-		G:         true,
-		Wholeword: true,
+		Grep_only:     true,
+		G:             true,
+		Wholeword:     true,
+		IcludePattern: query_option.include_pattern,
 	}
 	pk.impl.taskid++
 	pk.impl.key = query
