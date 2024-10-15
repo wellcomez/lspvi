@@ -795,7 +795,9 @@ func NewTreeSitter(name string, content []byte) *TreeSitter {
 	ret.HlLine = make(map[int][]TreeSitterSymbol)
 	return ret
 }
-
+func (ts *TreeSitter) IsMe(filename string) bool {
+	return ts.filename.filepathname == filename
+}
 func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) error {
 	if err := ts._load_file(lang); err != nil {
 		debug.ErrorLog("fail to load treesitter", err)
