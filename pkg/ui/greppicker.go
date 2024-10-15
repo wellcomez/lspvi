@@ -170,7 +170,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 		debug.DebugLog("dialog", text)
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
-	var searchIcon =fmt.Sprintf("%c",'\ue68f')
+	var searchIcon = fmt.Sprintf("%c", '\ue68f')
 	// searchIcon = "" // Search icon from Nerd Fonts
 	// searchIcon = fmt.Sprintf("%c %c %c %c", '\uF15B','\ue731','\uf0b0','\uf15c')+fmt.Sprintf("%c",'\uea6d')
 	// pk.listcustom.AddItem(searchIcon, "", nil)
@@ -201,7 +201,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 		return action, event
 	})
 
-	var saveIcon = fmt.Sprintf("%c",'\uf0c7') // Floppy disk emoji
+	var saveIcon = fmt.Sprintf("%c", '\uf0c7') // Floppy disk emoji
 	save_btn := tview.NewButton(saveIcon)
 	save_btn.SetSelectedFunc(func() {
 		pk.Save()
@@ -213,10 +213,10 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	x1.SetTitleAlign(tview.AlignCenter)
 	set_color(x1)
 	input_filter.
-		AddItem(x1, 3,0, false).
+		AddItem(x1, 3, 0, false).
 		AddItem(file_include, 0, 9, false).
-		AddItem(search_btn, 2,0, false).
-		AddItem(save_btn, 2,0, false)
+		AddItem(search_btn, 2, 0, false).
+		AddItem(save_btn, 2, 0, false)
 
 	x.AddItem(layout, 0, 10, false).AddItem(input_filter, 1, 1, false)
 	return x
@@ -294,24 +294,42 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 		grep.temp = nil
 		grep.result.data = append(grep.result.data, tmp.data...)
 	}
-
-	main := grepx.main
-	Refs := grep.result.data
-	qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
-	data := qk.tree_to_listemitem(global_prj_root)
-	go func() {
-		view := grepx.grep_list_view
-		view.Clear()
-		for i := range data {
-			v := data[i]
-			view.AddItem(v.text, "", nil)
+	if grepx.not_live {
+		grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
+		grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
+			var o *ref_with_caller
+			qk := &grepx.impl.quick
+			if qk.tree != nil {
+				if s, err := qk.get_data(dataindex); err == nil {
+					o = s
+				}
+			} else {
+				o = &grepx.impl.result.data[dataindex]
+			}
+			if o != nil {
+				grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
+			}
+			grepx.parent.hide()
 		}
-		main.App().QueueUpdateDraw(func() {
-			grep.quick = *qk
-			grepx.update_preview()
-			grepx.update_title()
-		})
-	}()
+	} else {
+		main := grepx.main
+		Refs := grep.result.data
+		qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
+		data := qk.tree_to_listemitem(global_prj_root)
+		grep.quick = *qk
+		go func() {
+			view := grepx.grep_list_view
+			view.Clear()
+			for i := range data {
+				v := data[i]
+				view.AddItem(v.text, "", nil)
+			}
+			main.App().QueueUpdateDraw(func() {
+				grepx.update_preview()
+				grepx.update_title()
+			})
+		}()
+	}
 }
 
 func (grepx *livewgreppicker) update_list_druring_grep() {
@@ -352,24 +370,6 @@ func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
 			grepx.qf(true, ref_with_caller{})
 		} else {
 			grepx.grep_to_list(true)
-			if grepx.not_live {
-				grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
-				grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
-					var o *ref_with_caller
-					qk := &grepx.impl.quick
-					if qk.tree != nil {
-						if s, err := qk.get_data(dataindex); err == nil {
-							o = s
-						}
-					} else {
-						o = &grepx.impl.result.data[dataindex]
-					}
-					if o != nil {
-						grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
-					}
-					grepx.parent.hide()
-				}
-			}
 		}
 		return
 	}
