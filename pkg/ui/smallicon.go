@@ -102,7 +102,7 @@ func (c *smallicon) Draw(screen tcell.Screen) {
 		id := SplitCode.index[i]
 		focus := false
 		if view, ok := SplitCode.code_collection[id]; ok {
-			focus = view.view.HasFocus()||view==c.main.current_editor()
+			focus = view.view.HasFocus() || view == c.main.current_editor()
 			if focus {
 				style = style.Foreground(focus_color)
 			}
@@ -115,6 +115,9 @@ func (c *smallicon) Draw(screen tcell.Screen) {
 }
 
 func new_small_icon(main *mainui) *smallicon {
+	str_back = '\U000f0b28'
+	str_forward = '\U000f0b2a'
+
 	smallicon := &smallicon{
 		file:    icon{s: []rune{block_str}},
 		outline: icon{s: []rune{block_str}},

@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,7 +11,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type dir_open_mode int
@@ -48,6 +48,73 @@ type filetree_context struct {
 	qk        *file_tree_view
 	menu_item []context_menu_item
 	main      *mainui
+}
+
+var normal_file = fmt.Sprintf("%c", '\uf15c')
+var go_icon = fmt.Sprintf("%c", '\uf1a0')
+var c_icon = fmt.Sprintf("%c", '\U000f0671')
+var py_icon = fmt.Sprintf("%c", '\U000f03e2')
+var js_icon = fmt.Sprintf("%c", '\uf81d')
+var ts_icon = fmt.Sprintf("%c", '\U000f03e6')
+var html_icon = fmt.Sprintf("%c", '\uf13b')
+var cpp_icon = fmt.Sprintf("%c", '\U000f03e4')
+var css_icon = fmt.Sprintf("%c", '\U000f03e7')
+var png_icon = fmt.Sprintf("%c", '\U000f0e2d')
+var json_icon = fmt.Sprintf("%c", '\U000f03e9')
+var txt_icon = fmt.Sprintf("%c", '\U000f03eA')
+var go_mod_icon = fmt.Sprintf("%c", '\U000f03eB')
+var markdown_icon = fmt.Sprintf("%c", '\U000f03eC')
+var file_icon = fmt.Sprintf("%c", '\U000f03eD')
+var closed_folder_icon = fmt.Sprintf("%c", '\ue6ad')
+var lua_icon = fmt.Sprintf("%c", '\ue620')
+var java_icon = fmt.Sprintf("%c", '\U000f03eE')
+var rust_icon = fmt.Sprintf("%c", '\U000f0c20')
+type extset struct {
+	icon string
+	ext  []string
+}
+
+var fileicons = []extset{
+	{go_icon, []string{"go"}},
+	{c_icon, []string{"c", "h"}},
+	{cpp_icon, []string{"cpp", "h"}},
+	{py_icon, []string{"py"}},
+	{js_icon, []string{"js"}},
+	{ts_icon, []string{"tsx", "ts"}},
+	{html_icon, []string{"html"}},
+	{json_icon, []string{"json"}},
+	{txt_icon, []string{"txt"}},
+	{go_mod_icon, []string{"go.mod"}},
+	{markdown_icon, []string{"md"}},
+	{png_icon, []string{"png"}},
+	{css_icon, []string{"css"}},
+	{lua_icon, []string{"lua"}},
+	{java_icon, []string{"java", "jar"}},
+	{fmt.Sprintf("%c", '\ue673'), []string{"makefile"}},
+	{fmt.Sprintf("%c", '\ue691'), []string{"sh"}},
+	{rust_icon,[]string{"rs"}},
+}
+
+func get_icon_file(file string, is_dir bool) string {
+	if is_dir {
+		return closed_folder_icon
+	}
+	ext := filepath.Ext(file)
+	if len(ext) > 0 && ext[0] == '.' {
+		ext = ext[1:]
+	}
+	if ext == "" {
+		ext = filepath.Base(file)
+	}
+	ext = strings.ToLower(ext)
+	for _, v := range fileicons {
+		for _, e := range v.ext {
+			if e == ext {
+				return v.icon
+			}
+		}
+	}
+	return file_icon
 }
 
 //	func (file *file_tree_view) monitor() {
@@ -384,12 +451,9 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 			continue
 		}
 		fullpath := filepath.Join(dir, file.Name())
-		prefix := ""
+		prefix := get_icon_file(fullpath, file.IsDir())
 		yes := file.IsDir()
-		if file.IsDir() {
-			prefix = lspcore.FolderEmoji
-		}
-		c := tview.NewTreeNode(prefix + file.Name())
+		c := tview.NewTreeNode(prefix + " " + file.Name())
 		c.SetReference(fullpath)
 		if !yes {
 			// yes = lspcore.IsMe(fullpath, []string{"md", "Makefile", "json", "png", "puml", "utxt"}) || view.main.IsSource(fullpath)

@@ -21,7 +21,7 @@ func SubLine(begin, end lsp.Position, lines []string) ([]string, error) {
 	if begin.Line > len(lines) {
 		return nil, fmt.Errorf("begin line out of range")
 	}
-	if end.Line > len(lines) {
+	if end.Line+1 > len(lines) {
 		return nil, fmt.Errorf("end line out of range")
 	}
 	subline := lines[begin.Line : end.Line+1]
