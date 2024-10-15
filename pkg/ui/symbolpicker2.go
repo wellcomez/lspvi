@@ -177,34 +177,36 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 		}
 	}
 	impl.list_index_data = list_index_data
-	list.SetSelectedFunc(func(int, string, string, rune) {
-		if sym := impl.get_current_item_symbol(); sym != nil {
+	list.SetSelectedFunc(func(index int, s1 string, s2 string, r rune) {
+		if sym := impl.get_current_item_symbol(index); sym != nil {
 			file := sym.sym.SymInfo.Location.URI.AsPath().String()
 			v.main.OpenFileHistory(file, &sym.sym.SymInfo.Location)
 			v.hide()
 		}
 
 	})
-	list.SetChangedFunc(func(int, string, string, rune) {
-		impl.UpdatePrev()
+	list.SetChangedFunc(func(index int, s string, s2 string, r rune) {
+		impl.UpdatePrev(index)
 	})
 
 	impl.listcustom = list
 	impl.fzf = new_fzf_on_list_data(list, impl.symbol.names, true)
 	list.SetCurrentItem(0)
-	impl.UpdatePrev()
+	impl.UpdatePrev(-1)
 	return sym
 }
 
-func (impl *symbol_picker_impl) UpdatePrev() {
-	if sym := impl.get_current_item_symbol(); sym != nil {
+func (impl *symbol_picker_impl) UpdatePrev(index int) {
+	if sym := impl.get_current_item_symbol(index); sym != nil {
 		file := sym.sym.SymInfo.Location.URI.AsPath().String()
 		impl.cq.LoadFileNoLsp(file, sym.sym.SymInfo.Location.Range.Start.Line)
 	}
 }
 
-func (impl *symbol_picker_impl) get_current_item_symbol() *SymbolFzf {
-	i := impl.listcustom.GetCurrentItem()
+func (impl *symbol_picker_impl) get_current_item_symbol(i int) *SymbolFzf {
+	if i == -1 {
+		i = impl.listcustom.GetCurrentItem()
+	}
 	if data_index, ok := impl.list_index_data[i]; ok {
 		if sym, ok := impl.symbol.object_index[data_index]; ok {
 			return &sym
