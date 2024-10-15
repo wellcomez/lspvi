@@ -24,7 +24,7 @@ const (
 // ReadIgnoreFile reads a specific git ignore file.
 // func ReadIgnoreFile(path []string, ignoreFile string) (ps []Pattern, err error) {
 func ReadIgnoreFile(p string) (ps []Pattern, err error) {
-	debug.DebugLogf("gitignore","Loading ignore file %v", p)
+	debug.TraceLogf("gitignore","Loading ignore file %v", p)
 	parts := strings.Split(p, string(filepath.Separator))
 	path := parts[1 : len(parts)-1]
 

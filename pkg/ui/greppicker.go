@@ -3,6 +3,7 @@ package mainui
 import (
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -34,11 +35,12 @@ type livewgreppicker struct {
 	impl           *grep_impl
 	qf             func(bool, ref_with_caller) bool
 	not_live       bool
+	livekeydelay   keydelay
 }
 
 // name implements picker.
 func (pk *livewgreppicker) name() string {
-	return "live grep"
+	return "Live grep"
 }
 
 // greppicker
@@ -249,6 +251,7 @@ func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 		impl:             impl,
 		not_live:         false,
 	}
+	grep.livekeydelay.grepx = grep
 	x.use_cusutom_list(grep.grep_list_view)
 	impl.quick = quick_view_data{main: v.main}
 	grep.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
@@ -312,16 +315,31 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 			grepx.parent.hide()
 		}
 	} else {
-		main := grepx.main
+		task := grepx.impl.taskid
+		sss := grepx.impl.last.query
 		Refs := grep.result.data
-		qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
-		data := qk.tree_to_listemitem(global_prj_root)
-		grep.quick = *qk
 		go func() {
+			livegreptag := fmt.Sprint("LG-UI", sss, "-", len(Refs),task)
+			debug.DebugLog(livegreptag, "start to trelist")
+			defer debug.DebugLog(livegreptag, "end to treelist")
+			main := grepx.main
+			qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
+			debug.DebugLog(livegreptag, "treen-begin")
+			data := qk.tree_to_listemitem(global_prj_root)
+			debug.DebugLog(livegreptag, "treen-end")
+			if task != grepx.impl.taskid {
+				debug.DebugLog(livegreptag, "=======abort")
+				return
+			}
+			grep.quick = *qk
 			view := grepx.grep_list_view
 			view.Clear()
 			for i := range data {
 				v := data[i]
+				if task != grepx.impl.taskid {
+					debug.DebugLog(livegreptag, "=======abort")
+					return
+				}
 				view.AddItem(v.text, "", nil)
 			}
 			main.App().QueueUpdateDraw(func() {
@@ -330,6 +348,35 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 			})
 		}()
 	}
+}
+
+type keydelay struct {
+	grepx   *livewgreppicker
+	waiting atomic.Bool
+}
+
+func (k *keydelay) OnKey(s string) {
+	if k.waiting.Load() {
+		debug.DebugLog("LG", "Exit", s, k.grepx.impl.opt.query)
+		return
+	} else {
+		debug.DebugLog("LG", "Start", s, k.grepx.impl.opt.query)
+	}
+	go func() {
+		k.waiting.Store(true)
+		defer k.waiting.Store(false)
+		if len(s) == 1 {
+			<-time.After(time.Microsecond * 50)
+		} else {
+			<-time.After(time.Microsecond * 10)
+		}
+		if len(k.grepx.impl.opt.query) == 0 {
+			k.grepx.grep_list_view.Clear()
+		} else {
+			debug.DebugLog("LG", "run", s, k.grepx.impl.opt.query)
+			k.grepx.__updatequery(k.grepx.impl.opt)
+		}
+	}()
 }
 
 func (grepx *livewgreppicker) update_list_druring_grep() {
@@ -408,16 +455,16 @@ func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
 
 }
 
-func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
-	loc := lsp.Location{
-		URI: lsp.NewDocumentURI(o.Fpath),
-		Range: lsp.Range{
-			Start: lsp.Position{Line: o.LineNumber - 1, Character: 0},
-			End:   lsp.Position{Line: o.LineNumber - 1, Character: 0},
-		},
-	}
-	return loc
-}
+// func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
+// 	loc := lsp.Location{
+// 		URI: lsp.NewDocumentURI(o.Fpath),
+// 		Range: lsp.Range{
+// 			Start: lsp.Position{Line: o.LineNumber - 1, Character: 0},
+// 			End:   lsp.Position{Line: o.LineNumber - 1, Character: 0},
+// 		},
+// 	}
+// 	return loc
+// }
 
 func to_ref_caller(key string, o *grep.GrepOutput) ref_with_caller {
 	b := strings.Index(o.Line, key)
@@ -454,7 +501,7 @@ func (pk livewgreppicker) Save() {
 }
 func (pk livewgreppicker) UpdateQuery(query string) {
 	pk.impl.opt.query = query
-	pk.__updatequery(pk.impl.opt)
+	pk.livekeydelay.OnKey(query)
 }
 
 // close implements picker.
