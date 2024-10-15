@@ -163,6 +163,7 @@ func (check *code_change_cheker) UpdateLineChange(code *CodeView) {
 	}
 	code.view.linechange.LineMark = marks
 }
+
 // func (check *code_change_cheker) newMethod(code *CodeView) (bool, int) {
 // 	after_lineno := code.view.Cursor.Loc.Y
 // 	next := check.next
@@ -268,6 +269,9 @@ func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
 	ts.Data = data
 	var new_ts = lspcore.GetNewTreeSitter(code.Path(), ts)
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
+		if !ts.IsMe(code.Path()) {
+			return
+		}
 		if code.lspsymbol != nil {
 			code.lspsymbol.LspLoadSymbol()
 		}
