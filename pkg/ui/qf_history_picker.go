@@ -219,7 +219,7 @@ func (qk *qk_history_picker) updateprev() {
 		{
 			caller := keys[index].Result.Refs
 			name := keys[index].Key.File
-			qkv := quick_view{main: qk.parent.main}
+			qkv := quick_view_data{main: qk.parent.main}
 			qkv.Refs.Refs = caller
 			qkv.tree = &list_view_tree_extend{}
 			qkv.tree.build_tree(qkv.Refs.Refs)
