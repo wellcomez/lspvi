@@ -289,7 +289,7 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 			view.AddItem(v.text, "", nil)
 		}
 		main.App().QueueUpdateDraw(func() {
-			grep.quick = qk
+			grep.quick = *qk
 			grepx.update_preview()
 			grepx.update_title()
 		})

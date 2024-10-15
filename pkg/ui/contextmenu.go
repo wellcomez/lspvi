@@ -6,16 +6,16 @@ import (
 	"github.com/rivo/tview"
 )
 
-type MousePosition struct {
-	x, y int
-}
+// type MousePosition struct {
+	// x, y int
+// }
 type contextmenu struct {
 	table       *tview.List
 	main        *mainui
 	visible     bool
 	impl        *contextmenu_impl
 	input       *inputdelay
-	MenuPos     MousePosition
+	// MenuPos     MousePosition
 	width       int
 	menu_handle []context_menu_handle
 	mouseclick  clickdetector
@@ -75,16 +75,16 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		if v.visible {
 			mouseX, mouseY := event.Position()
 			height := len(v.impl.items) + 2
-			v.table.SetRect(mouseX, mouseY, v.width-1, height)
-			menu.MenuPos = MousePosition{mouseX, mouseY}
+			v.table.SetRect(mouseX, mouseY+1, v.width-1, height)
+			// menu.MenuPos = MousePosition{mouseX, mouseY}
 		}
 		return tview.MouseConsumed, nil
 	}
 	posX, posY := event.Position()
 	if !menu.table.InRect(posX, posY) {
-		if menu.MenuPos.x == 0 {
+		// if menu.MenuPos.x == 0 {
 			// log.Printf("xxxxxxxxx")
-		}
+		// }
 		if menu.visible {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 				menu.visible = false
