@@ -306,7 +306,7 @@ func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	return ret
 }
 func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
-	expand_node(node)
+	switch_expand_state(node)
 	value := node.GetReference()
 	if value != nil {
 
@@ -347,25 +347,41 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 }
 
 func expand_node_option(node *tview.TreeNode, expand bool) {
-	node.SetExpanded(!expand)
-	expand_node(node)
-}
-func expand_node(node *tview.TreeNode) {
-	const openmark = " + "
-	if node.IsExpanded() {
-		if len(node.GetChildren()) > 0 {
-			s := node.GetText()
-			if !strings.HasSuffix(s, openmark) {
-				node.SetText(s + openmark)
-			}
-		}
+	openmark := fmt.Sprintf("%c", '\ueab4')
+	closemark := fmt.Sprintf("%c", '\ueab6')
+	s := node.GetText()
+	s = strings.TrimPrefix(s, closemark)
+	s = strings.TrimPrefix(s, openmark)
+	s = strings.TrimPrefix(s, " ")
+	if len(node.GetChildren()) == 0 {
+		node.SetText(s)
+		return
+	}
+	if !expand {
+		node.SetText(closemark + " " + s)
 		node.Collapse()
 	} else {
+		node.SetText(openmark + " " + s)
 		node.Expand()
-		s := node.GetText()
-		if strings.HasSuffix(s, openmark) {
-			node.SetText(strings.TrimSuffix(s, openmark))
-		}
+	}
+}
+func switch_expand_state(node *tview.TreeNode) {
+	openmark := fmt.Sprintf("%c", '\ueab4')
+	closemark := fmt.Sprintf("%c", '\ueab6')
+	s := node.GetText()
+	s = strings.TrimPrefix(s, closemark)
+	s = strings.TrimPrefix(s, openmark)
+	s = strings.TrimPrefix(s, " ")
+	if len(node.GetChildren()) == 0 {
+		node.SetText(s)
+		return
+	}
+	if node.IsExpanded() {
+		node.SetText(closemark + " " + s)
+		node.Collapse()
+	} else {
+		node.SetText(openmark + " " + s)
+		node.Expand()
 	}
 }
 func (c *SymbolTreeView) handle_commnad(cmd command_id) {
@@ -537,6 +553,7 @@ func (tree *SymbolTreeView) update_in_main_sync(file *lspcore.Symbol_file) {
 					childnode.AddChild(sub_member)
 					add_memeber_child(sub_member, &memeber)
 				}
+				expand_node_option(childnode,true)
 			}
 			if len(v.Members) > 20 && tree.collapse_children {
 				expand_node_option(c, false)
