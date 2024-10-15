@@ -643,7 +643,9 @@ func (qk *quick_view) String() string {
 // selection_handle
 func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 	qk.selection_handle_impl(index, true)
-	qk.quickview.visisble = false
+	if qk.quickview != nil {
+		qk.quickview.visisble = false
+	}
 }
 
 func (qk *quick_view) selection_handle_impl(index int, click bool) {

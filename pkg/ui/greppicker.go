@@ -70,12 +70,19 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 		focused := g.grep_list_view.HasFocus()
 		var key = event.Key()
 		if key == tcell.KeyEnter && !focused {
-			RunQuery(g)
+			if g.impl.key != g.query {
+				RunQuery(g)
+			} else {
+				g.grep_list_view.InputHandler()(event, nil)
+			}
 		} else if key == tcell.KeyCtrlS {
 			g.Save()
 		} else {
-			if key == tcell.KeyDown || key == tcell.KeyUp {
+			switch key {
+			case tcell.KeyDown, tcell.KeyUp:
 				g.grep_list_view.List.Focus(nil)
+			case tcell.KeyEnter:
+				g.grep_list_view.List.InputHandler()(event, nil)
 			}
 			g.livewgreppicker.handle_key_override(event, nil)
 		}
@@ -199,6 +206,10 @@ func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
 		livewgreppicker: new_live_grep_picker(v, code),
 	}
 	grep.not_live = true
+	grep.listview.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		grep.impl.quick.selection_handle(i, s1, s2, r)
+		v.hide()
+	})
 	return grep
 }
 func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
@@ -215,6 +226,8 @@ func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	x.use_cusutom_list(grep.grep_list_view)
 	impl.quick.view = grep.grep_list_view
 	impl.quick.main = v.main
+	impl.quick.cq = NewCodeOpenQueue(code, v.main)
+	impl.quick.quickview = new_quick_preview()
 	v.Visible = true
 	return grep
 }
@@ -258,8 +271,13 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 	qk.tree = &list_view_tree_extend{filename: qk.main.current_editor().Path()}
 	qk.tree.build_tree(Refs)
 	data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.Lspmgr())
-	for _, v := range data {
+	for i := range data {
+		v := data[i]
+		if v.ref_index > 0 {
+
+		}
 		qk.view.AddItem(v.text, "", func() {
+			grepx.parent.hide()
 		})
 	}
 	grepx.update_preview()
