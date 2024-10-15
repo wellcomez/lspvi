@@ -284,7 +284,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 
 	for _, finfo := range list {
 		if grep.IsAbort() {
-			debug.DebugLog("Abort Return " + fpath)
+			debug.DebugLog(GrepTag, "Abort Return "+fpath)
 			return
 		}
 		fname := finfo.Name()

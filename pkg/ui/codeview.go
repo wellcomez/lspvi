@@ -1619,7 +1619,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 	code.tree_sitter = nil
 	if tree_sitter := lspcore.GetNewTreeSitter(filename, code.LspContentFullChangeEvent()); tree_sitter != nil {
 		tree_sitter.Init(func(ts *lspcore.TreeSitter) {
-			go GlobalApp.QueueUpdate(func() {
+			go GlobalApp.QueueUpdateDraw(func() {
 				code.tree_sitter = ts
 				code.set_color()
 				if code.main != nil {

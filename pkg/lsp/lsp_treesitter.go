@@ -595,10 +595,41 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef(ts_name_markdown, lsp_md{}, tree_sitter_markdown.GetLanguage()).setparser(rs_outline),
 }
 
+type ts_init_call struct {
+	t  *TreeSitter
+	cb func(*TreeSitter)
+}
+type TreesitterInit struct {
+	t     chan ts_init_call
+	start bool
+}
+
+var ts_init = &TreesitterInit{t: make(chan ts_init_call, 10), start: false}
+
+func (ts_int *TreesitterInit) Init(t ts_init_call) {
+	if !ts_int.start {
+		ts_int.start = true
+		go func() {
+			for {
+				select {
+				case t := <-ts_int.t:
+					t.t.init(t.cb)
+				}
+			}
+		}()
+	}
+	ts_int.t <- t
+}
+
 func (t *TreeSitter) DefaultOutline() bool {
 	return t.tsdef.default_outline
 }
 func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
+	ts_init.Init(ts_init_call{t, cb})
+	return nil
+}
+
+func (t *TreeSitter) init(cb func(*TreeSitter)) error {
 	if t.tsdef != nil {
 		t.Loadfile(t.tsdef.tslang, cb)
 		return nil
