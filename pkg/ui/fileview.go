@@ -118,13 +118,11 @@ func get_icon_file(file string, is_dir bool) string {
 	if len(ext) > 0 && ext[0] == '.' {
 		ext = ext[1:]
 	}
-	if ext == "" {
-		ext = filepath.Base(file)
-	}
+	name:= filepath.Base(file)
 	ext = strings.ToLower(ext)
 	for _, v := range fileicons {
 		for _, e := range v.ext {
-			if e == ext {
+			if e == ext ||name==ext{
 				return v.icon
 			}
 		}
