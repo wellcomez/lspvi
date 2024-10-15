@@ -53,23 +53,15 @@ func (a *clickdetector) handle(action tview.MouseAction, event *tcell.EventMouse
 }
 
 type fzfmain struct {
-	Frame   *tview.Frame
-	input   *tview.InputField
-	Visible bool
-	app     *tview.Application
-	main    MainService
-	// query   string
-	// filewalk      *DirWalkk
-	// symbolwalk    *SymbolWalk
+	Frame         *tview.Frame
+	input         *tview.InputField
+	Visible       bool
+	app           *tview.Application
+	main          MainService
 	currentpicker picker
 	clickcheck    clickdetector
 }
 type fuzzpicktype int
-
-const (
-	fuzz_picker_file = iota
-	fuzz_picker_symbol
-)
 
 func InRect(event *tcell.EventMouse, primitive tview.Primitive) bool {
 	if event == nil {

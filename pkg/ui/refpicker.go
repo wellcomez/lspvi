@@ -21,11 +21,11 @@ func (grepx *prev_picker_impl) update_title(s string) {
 }
 func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.Flex {
 	code := impl.codeprev.Primitive()
-	if impl.listcustom != nil {
-		list := impl.listcustom
+	if impl.listview != nil {
+		list := impl.listview
 		list.SetBorder(true)
 		layout := layout_list_row_edit(list, code, input)
-		impl.list_click_check = NewFlexListClickCheck(layout, list.List, linenum)
+		impl.list_click_check = NewFlexListClickCheck(layout, list, linenum)
 		impl.list_click_check.on_list_selected = func() {
 			if impl.on_list_selected != nil {
 				impl.on_list_selected()
@@ -54,9 +54,9 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 	list.SetBorder(true)
 	code := impl.codeprev.Primitive()
 	var layout *tview.Grid
-	if impl.listcustom != nil {
-		layout = layout_list_edit(impl.listcustom, code, input)
-		list = impl.listcustom.List
+	if impl.listview != nil {
+		layout = layout_list_edit(impl.listview, code, input)
+		list = impl.listview
 	} else {
 		layout = layout_list_edit(list, code, input)
 	}
@@ -98,23 +98,21 @@ func layout_list_edit(list tview.Primitive, code tview.Primitive, input *tview.I
 }
 
 type prev_picker_impl struct {
-	listview         *tview.List
-	listcustom       *customlist
+	// listview         *tview.List
+	listview         *customlist
 	codeprev         CodeEditor
 	cq               *CodeOpenQueue
 	parent           *fzfmain
 	list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
-	// editor           CodeEditor
 }
 
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
 	imp.cq.LoadFileNoLsp(filename, line)
 }
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
-	impl.listview = l.List
-	impl.listcustom = l
+	impl.listview = l
 }
 func (impl *prev_picker_impl) update_preview() {
 	cur := impl.listview.GetCurrentItem()
@@ -148,10 +146,10 @@ func (pk refpicker) close() {
 
 // name implements picker.
 func (pk refpicker) name() string {
-	if pk.impl.listcustom.GetItemCount() == 0 {
+	if pk.impl.listview.GetItemCount() == 0 {
 		return fmt.Sprint("Reference", " ", "0/0")
 	}
-	return fmt.Sprint("Reference", " ", pk.impl.listcustom.GetCurrentItem()+1, "/", pk.impl.listcustom.GetItemCount())
+	return fmt.Sprint("Reference", " ", pk.impl.listview.GetCurrentItem()+1, "/", pk.impl.listview.GetItemCount())
 }
 
 // OnLspCaller implements lspcore.lsp_data_changed.
@@ -249,7 +247,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 	qk := &pk.impl.qk
 	qk.main = pk.impl.parent.main
 
-	qk.view = pk.impl.listcustom
+	qk.view = pk.impl.listview
 	qk.Refs.Refs = refs
 	tree := list_view_tree_extend{}
 	tree.build_tree(pk.impl.refs)
@@ -330,7 +328,6 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 
 func new_preview_picker(v *fzfmain) *prev_picker_impl {
 	x := &prev_picker_impl{
-		listview: tview.NewList(),
 		codeprev: NewCodeView(v.main),
 		parent:   v,
 		// editor:   editor,
@@ -343,12 +340,12 @@ func (pk *refpicker) load(ranges lsp.Range) {
 	pk.impl.file.Reference(lspcore.SymolParam{Ranges: ranges})
 }
 func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	handle := pk.impl.listcustom.InputHandler()
+	handle := pk.impl.listview.InputHandler()
 
 	handle(event, setFocus)
 	switch event.Key() {
 	case tcell.KeyUp, tcell.KeyDown:
-		if data, err := pk.impl.qk.get_data(pk.impl.listcustom.GetCurrentItem()); err == nil {
+		if data, err := pk.impl.qk.get_data(pk.impl.listview.GetCurrentItem()); err == nil {
 			pk.impl.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
 			pk.update_title()
 		}
@@ -396,7 +393,7 @@ func (pk refpicker) handle() func(event *tcell.EventKey, setFocus func(p tview.P
 }
 func (pk refpicker) UpdateQuery(query string) {
 	query = strings.ToLower(query)
-	listview := pk.impl.listcustom
+	listview := pk.impl.listview
 	listview.Clear()
 	if fzf := pk.impl.fzf; fzf != nil {
 		oldkey := fzf.OnSearch(query, true)
@@ -412,7 +409,7 @@ func (pk refpicker) UpdateQuery(query string) {
 // }
 
 func (pk *refpicker) loadlist(data []*list_tree_node) {
-	listview := pk.impl.listcustom
+	listview := pk.impl.listview
 	listview.Key = pk.impl.key
 	for i := range data {
 		v := data[i]

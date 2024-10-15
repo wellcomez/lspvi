@@ -26,18 +26,18 @@ type GridTreeClickCheck struct {
 }
 type GridListClickCheck struct {
 	*GridClickCheck
-	tree             *tview.List
+	tree             *customlist
 	on_list_selected func()
 	moveX            int
 }
 
-func NewFlexListClickCheck(grid *tview.Flex, list *tview.List, line int) *GridListClickCheck {
+func NewFlexListClickCheck(grid *tview.Flex, list *customlist, line int) *GridListClickCheck {
 	return NewBoxListClickCheck(grid.Box, list, line)
 }
-func NewGridListClickCheck(grid *tview.Grid, list *tview.List, line int) *GridListClickCheck {
+func NewGridListClickCheck(grid *tview.Grid, list *customlist, line int) *GridListClickCheck {
 	return NewBoxListClickCheck(grid.Box, list, line)
 }
-func NewBoxListClickCheck(grid *tview.Box, list *tview.List, line int) *GridListClickCheck {
+func NewBoxListClickCheck(grid *tview.Box, list *customlist, line int) *GridListClickCheck {
 	ret := &GridListClickCheck{
 		GridClickCheck: NewGridClickCheck(grid, list.Box),
 		tree:           list,
@@ -54,7 +54,7 @@ func NewBoxListClickCheck(grid *tview.Box, list *tview.List, line int) *GridList
 				mouseX, _ := event.Position()
 				if mouseX == ret.moveX {
 					if begin <= idx && idx < begin+N {
-						list.SetCurrentItem(idx)
+						// list.SetCurrentItem(idx)
 					}
 				}
 				ret.moveX = mouseX
@@ -81,7 +81,7 @@ func NewBoxListClickCheck(grid *tview.Box, list *tview.List, line int) *GridList
 	return ret
 }
 
-func get_grid_list_index(list *tview.List, em *tcell.EventMouse, line int) (int, error) {
+func get_grid_list_index(list *customlist, em *tcell.EventMouse, line int) (int, error) {
 	_, y, _, _ := list.GetInnerRect()
 
 	_, moustY := em.Position()
