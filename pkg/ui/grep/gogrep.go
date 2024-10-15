@@ -113,12 +113,16 @@ func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 		for {
 			select {
 			case msg := <-chPrint:
-				grep.CB(grep.id, &msg)
+				if grep.grep_status == GrepRunning {
+					grep.CB(grep.id, &msg)
+				}
 			case <-chPrintEnd:
 				if grep.grep_status == GrepRunning {
 					grep.CB(grep.id, nil)
+					grep.grep_status = GrepDone
 				}
-				grep.grep_status = GrepDone
+				debug.InfoLog("Routine Report End ", "Pattern =", grep.ptnstring)
+				return
 			}
 		}
 	}()
@@ -285,7 +289,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 		}
 		fname := finfo.Name()
 		if fname[0] == '.' {
-			debug.InfoLog(GrepTag, "ignore:", filepath.Join(fpath, finfo.Name()))
+			debug.TraceLog(GrepTag, "ignore:", filepath.Join(fpath, finfo.Name()))
 			continue
 		}
 
@@ -294,7 +298,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 
 		ss := strings.Split(path, separator)
 		if m.Match(ss[1:], is_dir) {
-			debug.InfoLog(GrepTag, "ignore:", path)
+			debug.TraceLog(GrepTag, "ignore:", path)
 			continue
 		}
 		if finfo.IsDir() {
