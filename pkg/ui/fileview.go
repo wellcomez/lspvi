@@ -95,6 +95,7 @@ var fileicons = []extset{
 	{fmt.Sprintf("%c", '\ue673'), []string{"makefile"}},
 	{fmt.Sprintf("%c", '\ue691'), []string{"sh"}},
 	{rust_icon,[]string{"rs"}},
+	{fmt.Sprintf("%c",'\U000f0b02'),[]string{"uml"}},
 }
 
 func verifyBinary(buf []byte) bool {

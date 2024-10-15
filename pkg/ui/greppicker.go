@@ -164,7 +164,6 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	file_include := tview.NewInputField()
 	file_include.SetFieldBackgroundColor(tcell.ColorDarkGrey)
 	file_include.SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorDarkGrey))
-	file_include.SetLabel("include path ")
 	file_include.SetPlaceholder(global_prj_root)
 	file_include.SetChangedFunc(func(text string) {
 		pk.impl.opt.include_pattern = text
@@ -178,7 +177,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	search_btn := tview.NewButton(searchIcon)
 	set_color := func(btn *tview.Button) {
 		btn.SetTitleAlign(tview.AlignCenter)
-		btn.SetActivatedStyle(tcell.StyleDefault.Foreground(tcell.ColorDarkGray).Background(tcell.ColorDarkGrey))
+		btn.SetActivatedStyle(tcell.StyleDefault.Foreground(tview.Styles.ContrastBackgroundColor).Background(tview.Styles.PrimitiveBackgroundColor))
 		btn.SetStyle(tcell.StyleDefault.Foreground(tcell.ColorDarkGray).Background(tview.Styles.PrimitiveBackgroundColor))
 	}
 	set_color(search_btn)
@@ -208,12 +207,16 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 		pk.Save()
 	})
 	set_color(save_btn)
-
-	input_filter := tview.NewGrid()
+	input_filter := tview.NewFlex()
+	input_filter.SetDirection(tview.FlexColumn)
+	x1 := tview.NewButton(fmt.Sprintf("%c", '\ueae5'))
+	x1.SetTitleAlign(tview.AlignCenter)
+	set_color(x1)
 	input_filter.
-		AddItem(file_include, 0, 0, 1, 20, 1, 20, false).
-		AddItem(search_btn, 0, 21, 1, 1, 1, 1, false).
-		AddItem(save_btn, 0, 22, 1, 1, 1, 1, false)
+		AddItem(x1, 3,0, false).
+		AddItem(file_include, 0, 9, false).
+		AddItem(search_btn, 2,0, false).
+		AddItem(save_btn, 2,0, false)
 
 	x.AddItem(layout, 0, 10, false).AddItem(input_filter, 1, 1, false)
 	return x
