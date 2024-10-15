@@ -24,7 +24,6 @@ import (
 )
 
 type CodeEditor interface {
-	
 	IsLoading() bool
 	GetLines(begin, end int) []string
 	GetSelection() string
@@ -115,6 +114,13 @@ type EditorOpenArgument struct {
 	openbuf           *arg_openbuf
 	main_open_history *arg_main_openhistory
 }
+type CodeOpenQueueStatus int
+
+const (
+	CodeOpenQueueStatusRunning = iota
+	CodeOpenQueueStatusStop
+)
+
 type CodeOpenQueue struct {
 	mutex      sync.Mutex
 	close      chan bool
@@ -124,13 +130,13 @@ type CodeOpenQueue struct {
 	open_count int
 	req_count  int
 	main       MainService
-	is_close   bool
+	status     CodeOpenQueueStatus
 }
 
 func NewCodeOpenQueue(editor CodeEditor, main MainService) *CodeOpenQueue {
 	ret := &CodeOpenQueue{
 		close:  make(chan bool),
-		open:   make(chan bool,5),
+		open:   make(chan bool, 5),
 		editor: editor,
 		main:   main,
 	}
@@ -142,12 +148,13 @@ func (queue *CodeOpenQueue) CloseQueue() {
 }
 
 func close_queue(queue *CodeOpenQueue) {
-	if queue.is_close {
-		return
+	switch queue.status {
+	case CodeOpenQueueStatusRunning:
+		{
+			queue.status = CodeOpenQueueStatusStop
+			queue.close <- true
+		}
 	}
-	queue.is_close = true
-	queue.dequeue()
-	queue.close <- true
 }
 
 func (q *CodeOpenQueue) LoadFileNoLsp(filename string, line int) {
@@ -157,6 +164,9 @@ func (q *CodeOpenQueue) OpenFileHistory(filename string, line *lsp.Location) {
 	q.enqueue(EditorOpenArgument{main_open_history: &arg_main_openhistory{filename: filename, line: line}})
 }
 func (queue *CodeOpenQueue) enqueue(req EditorOpenArgument) {
+	if queue.status == CodeOpenQueueStatusStop {
+		return
+	}
 	queue.replace_data(req)
 	queue.open <- true
 	debug.DebugLog("cqdebug", "enqueue", ":", queue.skip(), "open", queue.open_count, "req", queue.req_count)
@@ -199,7 +209,9 @@ func (queue *CodeOpenQueue) Work() {
 						queue.open_count++
 					}
 				}
-
+				if queue.status == CodeOpenQueueStatusStop {
+					return
+				}
 			}
 		}
 	}
