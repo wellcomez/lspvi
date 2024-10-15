@@ -145,11 +145,9 @@ func (check *code_change_cheker) UpdateLineChange(code *CodeView) {
 	for {
 		if top != nil {
 			for _, v := range top.Value.Deltas {
-				for _, y := range []int{v.Start.Y} {
-					if _, ok := seen[y]; !ok {
-						changeline = append(changeline, y)
-						seen[y] = true
-					}
+				for y := v.Start.Y; y <= v.End.Y; y++ {
+					changeline = append(changeline, y)
+					seen[y] = true
 				}
 			}
 			top = top.Next
