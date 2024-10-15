@@ -52,9 +52,7 @@ func (mgr *symbol_colortheme) update_controller_theme() bool {
 }
 
 func (mgr *symbol_colortheme) get_default_style() *tcell.Style {
-	mgr.set_currsor_line()
 	if n, ok := mgr.colorscheme["normal"]; ok {
-		mgr.colorscheme["default"] = n
 		return &n
 	}
 	return nil
@@ -77,6 +75,10 @@ func (mgr *symbol_colortheme) set_currsor_line() *tcell.Style {
 	if ret := mgr.get_color("@function"); ret != nil {
 		f, _, _ := ret.Decompose()
 		mgr.colorscheme["current-line-number"] = ret.Foreground(f)
+	}
+	if n, ok := mgr.colorscheme["normal"]; ok {
+		mgr.colorscheme["default"] = n
+		return &n
 	}
 	return ret
 
@@ -130,6 +132,7 @@ func (mgr *symbol_colortheme) StatusLine() *tcell.Style {
 }
 
 func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main *mainui) {
+	colorscheme.set_currsor_line()
 	if color := colorscheme.StatusLine(); color != nil {
 		f, b, _ := color.Decompose()
 		main.statusbar.SetBackgroundColor(b)
@@ -176,7 +179,7 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.console_index_list.SetBackgroundColor(bg)
 	main.layout.dialog.Frame.SetBackgroundColor(bg)
 	x := main.current_editor()
-	main.symboltree.update_with_ts(x.TreeSitter(),x.LspSymbol())
+	main.symboltree.update_with_ts(x.TreeSitter(), x.LspSymbol())
 	main.symboltree.waiter.SetBackgroundColor(bg)
 	main.symboltree.waiter.SetTextColor(fg)
 
@@ -257,9 +260,9 @@ func new_ui_theme(theme string, main *mainui) *symbol_colortheme {
 	if len(micro_buffer) > 0 {
 		colorscheme = femto.ParseColorscheme(string(micro_buffer))
 		uicolorscheme = &symbol_colortheme{
-			colorscheme,
-			main,
-			theme,
+			colorscheme: colorscheme,
+			main:        main,
+			name:        theme,
 		}
 	}
 	return uicolorscheme
