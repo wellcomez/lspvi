@@ -121,7 +121,9 @@ func (impl *prev_picker_impl) update_preview() {
 		impl.PrevOpen(item.loc.URI.AsPath().String(), item.loc.Range.Start.Line)
 	}
 }
-
+func (qk *quick_view_data) reset_tree() {
+	qk.tree = nil
+}
 type refpicker_impl struct {
 	*prev_picker_impl
 	file *lspcore.Symbol_file

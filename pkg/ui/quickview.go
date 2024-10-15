@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -749,9 +748,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 
-func (qk *quick_view_data) reset_tree() {
-	qk.tree = nil
-}
+
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
 	if qk.grep != nil {
 		qk.grep.close()
@@ -775,58 +772,6 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 		})
 	}
 	qk.main.Tab().UpdatePageTitle()
-}
-
-func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
-	group := make(map[string]list_tree_node)
-	for i := range Refs {
-		caller := Refs[i]
-		v := caller.Loc
-		x := v.URI.AsPath().String()
-		if s, ok := group[x]; ok {
-			s.children = append(s.children, list_tree_node{ref_index: i})
-			group[x] = s
-		} else {
-			s := list_tree_node{ref_index: i, parent: true, expand: true}
-			s.children = append(s.children, list_tree_node{ref_index: i})
-			group[x] = s
-		}
-	}
-	trees := []list_tree_node{}
-	for k, v := range group {
-		if k == qk.filename {
-			aaa := []list_tree_node{v}
-			trees = append(aaa, trees...)
-			continue
-		}
-		trees = append(trees, v)
-	}
-	qk.tree = trees
-}
-func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view_data, root string, lspmgr *lspcore.LspWorkspace) []*list_tree_node {
-	var data = []*list_tree_node{}
-	lineno := 1
-	for i := range qk.tree {
-		a := &qk.tree[i]
-		parent := a.get_caller(view)
-		a.quickfix_listitem_string(view, parent, lineno, nil)
-		a.get_caller(view).LoadLines()
-		data = append(data, a)
-		if a.expand {
-			caller := a.get_caller(view)
-			caller.filecache = parent.filecache
-			var prev *ref_with_caller
-			for i := range a.children {
-				c := &a.children[i]
-				caller := c.get_caller(view)
-				prev = c.quickfix_listitem_string(view, caller, lineno, prev)
-				data = append(data, c)
-			}
-		}
-		lineno++
-	}
-	qk.tree_data_item = data
-	return data
 }
 
 
