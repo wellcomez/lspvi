@@ -8,6 +8,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	"zen108.com/lspvi/pkg/ui/grep"
 )
@@ -69,9 +70,7 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 		focused := g.grep_list_view.HasFocus()
 		var key = event.Key()
 		if key == tcell.KeyEnter && !focused {
-			g.impl.fzf_on_result = nil
-			g.parent.input.SetLabel(">")
-			g.livewgreppicker.UpdateQuery(g.query)
+			RunQuery(g)
 		} else if key == tcell.KeyCtrlS {
 			g.Save()
 		} else {
@@ -81,6 +80,12 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 			g.livewgreppicker.handle_key_override(event, nil)
 		}
 	}
+}
+
+func RunQuery(g *greppicker) {
+	g.impl.fzf_on_result = nil
+	g.parent.input.SetLabel(">")
+	g.livewgreppicker.UpdateQuery(g.query)
 }
 
 // name implements picker.
@@ -122,8 +127,6 @@ func (pk livewgreppicker) update_preview_no_tree() {
 }
 
 func (pk livewgreppicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	handle := pk.grep_list_view.InputHandler()
-	handle(event, setFocus)
 	pk.update_preview()
 	pk.update_title()
 }
@@ -134,6 +137,56 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 }
 
 func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
+	layout := pk.prev_picker_impl.flex(input, 1)
+	pk.listview.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		pk.update_preview()
+		pk.update_title()
+	})
+	x := tview.NewFlex()
+	x.SetDirection(tview.FlexRow)
+
+	file_include := tview.NewInputField()
+	file_include.SetFieldBackgroundColor(tcell.ColorDarkGrey)
+	file_include.SetPlaceholderStyle(tcell.StyleDefault)
+	file_include.SetLabel("include path ")
+	file_include.SetPlaceholder(global_prj_root)
+	file_include.SetChangedFunc(func(text string) {
+		debug.DebugLog("dialog", text)
+	})
+	file_include.SetBackgroundColor(tcell.ColorBlack)
+	btn := tview.NewButton("Find")
+	btn.SetSelectedFunc(func() {
+		pk.impl.fzf_on_result = nil
+		pk.parent.input.SetLabel(">")
+		text := pk.parent.input.GetText()
+		pk.UpdateQuery(text)
+	})
+	btn.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if InRect(event, btn) {
+			switch action {
+			case tview.MouseLeftClick:
+				debug.DebugLog("dialog", "xxxxxxxxxxxxxxxx", "lef click")
+			case tview.MouseLeftDown:
+				text := pk.parent.input.GetText()
+				pk.UpdateQuery(text)
+				debug.DebugLog("dialog", "xxxxxxxxxxxxxxxx", "down")
+			case tview.MouseLeftDoubleClick:
+				debug.DebugLog("dialog", "xxxxxxxxxxxxxxxx", "double")
+				return tview.MouseConsumed, nil
+			}
+		}
+		return action, event
+	})
+	input_filter := tview.NewGrid()
+	input_filter.
+		AddItem(file_include, 0, 0, 1, 20, 1, 20, false).
+		AddItem(btn, 0, 21, 1, 4, 1, 4, false)
+
+	x.AddItem(layout, 0, 10, false).AddItem(input_filter, 1, 1, false)
+	return x
+}
+
+func (pk *livewgreppicker) grid2(input *tview.InputField) *tview.Flex {
 	layout := pk.prev_picker_impl.flex(input, 1)
 	pk.list_click_check.on_list_selected = func() {
 		pk.update_preview()
