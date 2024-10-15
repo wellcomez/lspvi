@@ -193,23 +193,20 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	return x
 }
 
-func (pk *livewgreppicker) grid2(input *tview.InputField) *tview.Flex {
-	layout := pk.prev_picker_impl.flex(input, 1)
-	pk.list_click_check.on_list_selected = func() {
-		pk.update_preview()
-		pk.update_title()
-	}
-	return layout
-}
+// func (pk *livewgreppicker) grid2(input *tview.InputField) *tview.Flex {
+// 	layout := pk.prev_picker_impl.flex(input, 1)
+// 	pk.list_click_check.on_list_selected = func() {
+// 		pk.update_preview()
+// 		pk.update_title()
+// 	}
+// 	return layout
+// }
 func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
 	grep := &greppicker{
 		livewgreppicker: new_live_grep_picker(v, code),
 	}
 	grep.not_live = true
-	grep.listview.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		grep.impl.quick.selection_handle(i, s1, s2, r)
-		v.hide()
-	})
+
 	return grep
 }
 func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
@@ -228,6 +225,10 @@ func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	impl.quick.main = v.main
 	impl.quick.cq = NewCodeOpenQueue(code, v.main)
 	impl.quick.quickview = new_quick_preview()
+	grep.listview.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		grep.impl.quick.selection_handle(i, s1, s2, r)
+		v.hide()
+	})
 	v.Visible = true
 	return grep
 }
@@ -273,12 +274,7 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 	data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.Lspmgr())
 	for i := range data {
 		v := data[i]
-		if v.ref_index > 0 {
-
-		}
-		qk.view.AddItem(v.text, "", func() {
-			grepx.parent.hide()
-		})
+		qk.view.AddItem(v.text, "", nil)
 	}
 	grepx.update_preview()
 	grepx.update_title()
