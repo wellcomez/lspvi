@@ -657,6 +657,12 @@ func (code *CodeView) get_selected_lines() editor_selection {
 }
 
 func get_codeview_text_loc(view *femto.View, b femto.Loc, e femto.Loc) (int, string) {
+	p1 := lsp.Position{Line: b.Y, Character: b.X}
+	if p1.AfterOrEq(lsp.Position{Line: e.Y, Character: e.X}) {
+		c := b
+		b = e
+		e = c
+	}
 	b.X = femto.Max(0, b.X)
 	e.X = femto.Max(0, e.X)
 	if view.Buf == nil || view.Buf.LinesNum() == 0 || b.Y == 0 {
