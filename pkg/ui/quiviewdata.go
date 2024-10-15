@@ -10,10 +10,11 @@ import (
 )
 
 type quick_view_data struct {
-	Refs search_reference_result
-	tree *list_view_tree_extend
-	Type DateType
-	main MainService
+	Refs  search_reference_result
+	tree  *list_view_tree_extend
+	Type  DateType
+	main  MainService
+	abort bool
 }
 
 func new_quikview_data(m MainService, Type DateType, filename string, Refs []ref_with_caller) *quick_view_data {
@@ -161,7 +162,6 @@ type list_tree_node struct {
 	text      string
 }
 
-
 func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 	group := make(map[string]list_tree_node)
 	for i := range Refs {
@@ -192,6 +192,9 @@ func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view_data, roo
 	var data = []*list_tree_node{}
 	lineno := 1
 	for i := range qk.tree {
+		if view.abort {
+			return []*list_tree_node{}
+		}
 		a := &qk.tree[i]
 		parent := a.get_caller(view)
 		a.quickfix_listitem_string(view, parent, lineno, nil)
@@ -202,6 +205,9 @@ func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view_data, roo
 			caller.filecache = parent.filecache
 			var prev *ref_with_caller
 			for i := range a.children {
+				if view.abort {
+					return []*list_tree_node{}
+				}
 				c := &a.children[i]
 				caller := c.get_caller(view)
 				prev = c.quickfix_listitem_string(view, caller, lineno, prev)

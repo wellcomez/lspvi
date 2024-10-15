@@ -18,15 +18,16 @@ type grepresult struct {
 	data []ref_with_caller
 }
 type grep_impl struct {
-	result        *grepresult
-	temp          *grepresult
-	grep          *grep.Gorep
-	taskid        int
-	opt           QueryOption
-	last          QueryOption
-	key           string
-	fzf_on_result *fzf_on_listview
-	quick         quick_view_data
+	result         *grepresult
+	temp           *grepresult
+	grep           *grep.Gorep
+	taskid         int
+	opt            QueryOption
+	last           QueryOption
+	key            string
+	fzf_on_result  *fzf_on_listview
+	quick          quick_view_data
+	tmp_quick_data *quick_view_data
 }
 type livewgreppicker struct {
 	*prev_picker_impl
@@ -319,16 +320,24 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 		sss := grepx.impl.last.query
 		Refs := grep.result.data
 		go func() {
-			livegreptag := fmt.Sprint("LG-UI", sss, "-", len(Refs),task)
+			livegreptag := fmt.Sprint("LG-UI", sss, "-", len(Refs), task)
 			debug.DebugLog(livegreptag, "start to trelist")
 			defer debug.DebugLog(livegreptag, "end to treelist")
 			main := grepx.main
 			qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
+			if grepx.impl.tmp_quick_data != nil {
+				grepx.impl.tmp_quick_data.abort = true
+			}
+			grepx.impl.tmp_quick_data = qk
 			debug.DebugLog(livegreptag, "treen-begin")
 			data := qk.tree_to_listemitem(global_prj_root)
+			if qk.abort{
+				debug.DebugLog(livegreptag, "=======abort-1")
+				return
+			}
 			debug.DebugLog(livegreptag, "treen-end")
 			if task != grepx.impl.taskid {
-				debug.DebugLog(livegreptag, "=======abort")
+				debug.DebugLog(livegreptag, "=======abort-2")
 				return
 			}
 			grep.quick = *qk
@@ -337,11 +346,12 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 			for i := range data {
 				v := data[i]
 				if task != grepx.impl.taskid {
-					debug.DebugLog(livegreptag, "=======abort")
+					debug.DebugLog(livegreptag, "=======abort-3")
 					return
 				}
 				view.AddItem(v.text, "", nil)
 			}
+			grep.tmp_quick_data = nil
 			main.App().QueueUpdateDraw(func() {
 				grepx.update_preview()
 				grepx.update_title()
