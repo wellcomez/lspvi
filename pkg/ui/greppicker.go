@@ -18,19 +18,19 @@ type grepresult struct {
 	data []ref_with_caller
 }
 type grep_impl struct {
-	result         *grepresult
-	temp           *grepresult
-	grep           *grep.Gorep
-	taskid         int
-	opt            QueryOption
-	last           QueryOption
-	key            string
-	fzf_on_result  *fzf_on_listview
-	quick          quick_view_data
-	tmp_quick_data *quick_view_data
+	result        *grepresult
+	temp          *grepresult
+	grep          *grep.Gorep
+	taskid        int
+	opt           QueryOption
+	last          QueryOption
+	key           string
+	fzf_on_result *fzf_on_listview
+	quick         quick_view_data
 }
 type livewgreppicker struct {
 	*prev_picker_impl
+	tmp_quick_data *quick_view_data
 	grep_list_view *customlist
 	main           MainService
 	impl           *grep_impl
@@ -146,7 +146,6 @@ func (pk livewgreppicker) update_view_no_tree_at(cur int, prev bool) bool {
 	}
 	return false
 }
-
 
 // handle implements picker.
 func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -327,10 +326,11 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 			defer debug.DebugLog(livegreptag, "end to treelist")
 			main := grepx.main
 			qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
-			if grepx.impl.tmp_quick_data != nil {
-				grepx.impl.tmp_quick_data.abort = true
+			if grepx.tmp_quick_data != nil {
+				debug.DebugLog(livegreptag, grepx.tmp_quick_data)
+				grepx.tmp_quick_data.abort = true
 			}
-			grepx.impl.tmp_quick_data = qk
+			grepx.tmp_quick_data = qk
 			debug.DebugLog(livegreptag, "treen-begin")
 			data := qk.tree_to_listemitem(global_prj_root)
 			if qk.abort {
@@ -353,7 +353,7 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 				}
 				view.AddItem(v.text, "", nil)
 			}
-			grep.tmp_quick_data = nil
+			grepx.tmp_quick_data = nil
 			main.App().QueueUpdateDraw(func() {
 				grepx.update_preview()
 				grepx.update_title()
