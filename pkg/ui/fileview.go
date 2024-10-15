@@ -1,6 +1,7 @@
 package mainui
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -63,12 +64,13 @@ var png_icon = fmt.Sprintf("%c", '\U000f0e2d')
 var json_icon = fmt.Sprintf("%c", '\U000f03e9')
 var txt_icon = fmt.Sprintf("%c", '\U000f03eA')
 var go_mod_icon = fmt.Sprintf("%c", '\U000f03eB')
-var markdown_icon = fmt.Sprintf("%c", '\U000f03eC')
+var markdown_icon = fmt.Sprintf("%c", '\ueb1d')
 var file_icon = fmt.Sprintf("%c", '\U000f03eD')
 var closed_folder_icon = fmt.Sprintf("%c", '\ue6ad')
 var lua_icon = fmt.Sprintf("%c", '\ue620')
 var java_icon = fmt.Sprintf("%c", '\U000f03eE')
 var rust_icon = fmt.Sprintf("%c", '\U000f0c20')
+var binary_icon = fmt.Sprintf("%c", '\ueae8')
 type extset struct {
 	icon string
 	ext  []string
@@ -95,6 +97,18 @@ var fileicons = []extset{
 	{rust_icon,[]string{"rs"}},
 }
 
+func verifyBinary(buf []byte) bool {
+	var b []byte
+	if len(buf) > 256 {
+		b = buf[:256]
+	} else {
+		b = buf
+	}
+	if bytes.IndexFunc(b, func(r rune) bool { return r < 0x09 }) != -1 {
+		return true
+	}
+	return false
+}
 func get_icon_file(file string, is_dir bool) string {
 	if is_dir {
 		return closed_folder_icon
@@ -111,6 +125,13 @@ func get_icon_file(file string, is_dir bool) string {
 		for _, e := range v.ext {
 			if e == ext {
 				return v.icon
+			}
+		}
+	}
+	if len(filepath.Ext(file))==0{
+		if buf,err:=os.ReadFile(file);err==nil{
+			if verifyBinary(buf){
+				return binary_icon
 			}
 		}
 	}
