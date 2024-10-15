@@ -89,7 +89,8 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 			case tcell.KeyEnter:
 				g.grep_list_view.List.InputHandler()(event, nil)
 			}
-			g.livewgreppicker.handle_key_override(event, nil)
+			// g.update_preview()
+			// g.update_title()
 		}
 	}
 }
@@ -146,14 +147,15 @@ func (pk livewgreppicker) update_view_no_tree_at(cur int, prev bool) bool {
 	return false
 }
 
-func (pk livewgreppicker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	pk.update_preview()
-	pk.update_title()
-}
 
 // handle implements picker.
 func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return pk.handle_key_override
+	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+		switch event.Key() {
+		case tcell.KeyUp, tcell.KeyDown:
+			pk.grep_list_view.InputHandler()(event, setFocus)
+		}
+	}
 }
 
 func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
@@ -331,7 +333,7 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 			grepx.impl.tmp_quick_data = qk
 			debug.DebugLog(livegreptag, "treen-begin")
 			data := qk.tree_to_listemitem(global_prj_root)
-			if qk.abort{
+			if qk.abort {
 				debug.DebugLog(livegreptag, "=======abort-1")
 				return
 			}
