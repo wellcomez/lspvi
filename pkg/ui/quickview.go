@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -51,15 +50,15 @@ func new_quick_preview() *quick_preview {
 
 // quick_view
 type quick_view struct {
+	Type DateType
+
+	data quick_view_data
 	// *tview.Flex
 	*view_link
 	quickview *quick_preview
 	view      *customlist
 	Name      string
-	Refs      search_reference_result
 	main      MainService
-	// currentIndex int
-	Type DateType
 	// menu         *contextmenu
 	menuitem      []context_menu_item
 	searchkey     lspcore.SymolSearchKey
@@ -69,8 +68,7 @@ type quick_view struct {
 	grep           *greppicker
 	sel            *list_multi_select
 
-	tree *list_view_tree_extend
-	cq   *CodeOpenQueue
+	cq *CodeOpenQueue
 }
 type list_view_tree_extend struct {
 	tree           []list_tree_node
@@ -110,7 +108,7 @@ func (h *qf_history_data) ListItem() string {
 func (qk quick_view) save() error {
 	date := time.Now().Unix()
 	qk.main.save_qf_uirefresh(
-		qf_history_data{qk.Type, qk.searchkey, qk.Refs, date, ""})
+		qf_history_data{qk.Type, qk.searchkey, qk.data.Refs, date, ""})
 	return nil
 }
 
@@ -486,10 +484,10 @@ func new_quikview(main *mainui) *quick_view {
 		{item: cmditem{cmd: cmdactor{desc: "Copy"}}, handle: func() {
 			ss := ret.sel.list.selected
 			var data []string
-			if ret.tree == nil {
-				data = ret.BuildListString("", main.lspmgr)
+			if ret.data.tree == nil {
+				data = ret.data.BuildListString("")
 			} else {
-				x := ret.tree.tree_data_item
+				x := ret.data.tree.tree_data_item
 				for _, v := range x {
 					data = append(data, v.text)
 				}
@@ -570,8 +568,8 @@ func (qk *quick_view) go_prev() {
 }
 
 func (qk *quick_view) open_index(next int) {
-	if len(qk.Refs.Refs) > 0 {
-		if a, e := qk.get_data(next); e == nil {
+	if len(qk.data.Refs.Refs) > 0 {
+		if a, e := qk.data.get_data(next); e == nil {
 			qk.quickview.update_preview(a.Loc)
 		}
 	}
@@ -581,7 +579,7 @@ func (qk *quick_view) go_next() {
 		return
 	}
 	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
-	if loc, err := qk.get_data(next); err == nil {
+	if loc, err := qk.data.get_data(next); err == nil {
 		qk.quickview.update_preview(loc.Loc)
 		qk.view.SetCurrentItem(next)
 		qk.selection_handle_impl(next, false)
@@ -649,14 +647,14 @@ func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 }
 
 func (qk *quick_view) selection_handle_impl(index int, click bool) {
-	if qk.tree != nil {
+	if qk.data.tree != nil {
 		qk.view.SetCurrentItem(index)
-		node := qk.tree.tree_data_item[index]
+		node := qk.data.tree.tree_data_item[index]
 		need_draw := false
 		if click {
 			if node.parent {
 				node.expand = !node.expand
-				data := qk.tree.BuildListStringGroup(qk, global_prj_root, qk.main.Lspmgr())
+				data := qk.data.tree_to_listemitem(global_prj_root)
 				qk.view.Clear()
 				for _, v := range data {
 					qk.view.AddItem(v.text, "", func() {
@@ -667,7 +665,7 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 			}
 		}
 
-		if vvv, err := qk.get_data(index); err == nil {
+		if vvv, err := qk.data.get_data(index); err == nil {
 			qk.main.Tab().UpdatePageTitle()
 			qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 			if need_draw {
@@ -675,25 +673,14 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 			}
 		}
 	} else {
-		vvv := qk.Refs.Refs[index]
+		vvv := qk.data.Refs.Refs[index]
 		qk.view.SetCurrentItem(index)
 		qk.main.Tab().UpdatePageTitle()
 		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 	}
 }
 
-func (qk *quick_view) get_data(index int) (*ref_with_caller, error) {
-	if qk.tree != nil {
-		if index < 0 || index >= len(qk.tree.tree_data_item) {
-			return nil, errors.New("index out of range")
-		}
-		node := qk.tree.tree_data_item[index]
-		refindex := node.ref_index
-		vvv := qk.Refs.Refs[refindex]
-		return &vvv, nil
-	}
-	return &qk.Refs.Refs[index], nil
-}
+
 
 type DateType int
 
@@ -738,17 +725,17 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 		qk.Type = t
 		qk.searchkey = key
 		qk.grep.close()
-		qk.reset_tree()
+		qk.data.reset_tree()
 	}
 	if end {
 		qk.save()
-		if len(qk.Refs.Refs) < 250 {
-			qk.UpdateListView(t, qk.Refs.Refs, key)
+		if len(qk.data.Refs.Refs) < 250 {
+			qk.UpdateListView(t, qk.data.Refs.Refs, key)
 		}
 		return
 	}
-	qk.reset_tree()
-	qk.Refs.Refs = append(qk.Refs.Refs, caller)
+	qk.data.reset_tree()
+	qk.data.Refs.Refs = append(qk.data.Refs.Refs, caller)
 	// _, _, width, _ := qk.view.GetRect()
 	// caller.width = width
 	secondline := caller.ListItem(global_prj_root, false, nil)
@@ -761,15 +748,12 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 
-func (qk *quick_view) reset_tree() {
-	qk.tree = nil
-}
+
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
 	if qk.grep != nil {
 		qk.grep.close()
 	}
 	qk.Type = t
-	qk.Refs.Refs = Refs
 	qk.searchkey = key
 	switch t {
 	case data_grep_word, data_search:
@@ -780,13 +764,8 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.Clear()
 	qk.view.SetCurrentItem(-1)
 	qk.cmd_search_key = ""
-	qk.reset_tree()
-	// _, _, width, _ := qk.view.GetRect()
-	m := qk.main
-	lspmgr := m.Lspmgr()
-	qk.tree = &list_view_tree_extend{filename: qk.main.current_editor().Path()}
-	qk.tree.build_tree(Refs)
-	data := qk.tree.BuildListStringGroup(qk, global_prj_root, lspmgr)
+	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), Refs)
+	data := qk.data.tree_to_listemitem(global_prj_root)
 	for _, v := range data {
 		qk.view.AddItem(v.text, "", func() {
 
@@ -795,171 +774,13 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.main.Tab().UpdatePageTitle()
 }
 
-func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
-	group := make(map[string]list_tree_node)
-	for i := range Refs {
-		caller := Refs[i]
-		v := caller.Loc
-		x := v.URI.AsPath().String()
-		if s, ok := group[x]; ok {
-			s.children = append(s.children, list_tree_node{ref_index: i})
-			group[x] = s
-		} else {
-			s := list_tree_node{ref_index: i, parent: true, expand: true}
-			s.children = append(s.children, list_tree_node{ref_index: i})
-			group[x] = s
-		}
-	}
-	trees := []list_tree_node{}
-	for k, v := range group {
-		if k == qk.filename {
-			aaa := []list_tree_node{v}
-			trees = append(aaa, trees...)
-			continue
-		}
-		trees = append(trees, v)
-	}
-	qk.tree = trees
-}
-func (qk *list_view_tree_extend) BuildListStringGroup(view *quick_view, root string, lspmgr *lspcore.LspWorkspace) []*list_tree_node {
-	var data = []*list_tree_node{}
-	lineno := 1
-	for i := range qk.tree {
-		a := &qk.tree[i]
-		parent := a.get_caller(view)
-		a.quickfix_listitem_string(view, parent, lineno, nil)
-		a.get_caller(view).LoadLines()
-		data = append(data, a)
-		if a.expand {
-			caller := a.get_caller(view)
-			caller.filecache = parent.filecache
-			var prev *ref_with_caller
-			for i := range a.children {
-				c := &a.children[i]
-				caller := c.get_caller(view)
-				prev = c.quickfix_listitem_string(view, caller, lineno, prev)
-				data = append(data, c)
-			}
-		}
-		lineno++
-	}
-	qk.tree_data_item = data
-	return data
-}
-func (qk *quick_view) async_open(file string, lspmgr *lspcore.LspWorkspace, r lsp.Range) {
-	if qk.view == nil {
-		return
-	}
-	if !qk.need_async_open() {
-		return
-	}
-	if sym, _ := lspmgr.Open(file); sym != nil {
-		if err := sym.LspLoadSymbol(); err != nil {
-			return
-		}
-		if c, _ := lspmgr.GetCallEntry(file, r); c != nil {
-			go qk.main.App().QueueUpdateDraw(func() {
-				qk.UpdateListView(qk.Type, qk.Refs.Refs, qk.searchkey)
-			})
-		}
-	}
-}
-func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view, caller *ref_with_caller, lineno int, prev *ref_with_caller) *ref_with_caller {
-	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
-	parent := tree.parent
-	root := lspmgr.Wk.Path
-	switch qk.Type {
-	case data_refs, data_search, data_grep_word:
-		v := caller.Loc
-		if caller.Caller == nil || len(caller.Caller.Name) == 0 {
-			filename := v.URI.AsPath().String()
-			if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
-				caller.Caller = c
-			} else if sym == nil {
-				go qk.async_open(filename, lspmgr, v.Range)
-			}
-		}
-	}
-	color := tview.Styles.BorderColor
-	editor := qk.main.current_editor()
-	t1 := editor.Path()
-	t2 := caller.Loc.URI.AsPath().String()
-	if t1 == t2 {
-		caller.lines = editor.GetLines(caller.Loc.Range.Start.Line, caller.Loc.Range.End.Line)
-	}
-	list_text := caller.ListItem(root, parent, prev)
-	result := ""
-	if parent {
-		result = fmt.Sprintf("%3d. %s", lineno, list_text)
-		if len(tree.children) > 0 {
-			if !tree.expand {
-				result = fmt_color_string(fmt.Sprintf("%c", IconCollapse), color) + result
-			} else {
-				result = fmt_color_string(fmt.Sprintf("%c", IconExpaned), color) + result
-			}
-		} else {
-			result = " " + result
-		}
-	} else {
-		result = fmt.Sprintf(" %s", list_text)
-	}
-	tree.text = result
-	if caller.Caller == nil {
-		return nil
-	}
-	return caller
-}
 
-func (qk quick_view) need_async_open() bool {
-	switch qk.Type {
-	case data_search, data_grep_word:
-		if qk.Refs.Refs != nil {
-			return len(qk.Refs.Refs) < 250
-		} else {
-			return false
-		}
-	default:
-		return true
-	}
-}
 
-func (tree *list_tree_node) get_caller(qk *quick_view) *ref_with_caller {
-	caller := &qk.Refs.Refs[tree.ref_index]
-	return caller
-}
-func (qk *quick_view) BuildListString(root string, lspmgr *lspcore.LspWorkspace) []string {
-	var data = []string{}
-	for i, caller := range qk.Refs.Refs {
-		// caller.width = width
-		switch qk.Type {
-		case data_refs:
-			v := caller.Loc
-			if caller.Caller == nil || len(caller.Caller.Name) == 0 {
-				filename := v.URI.AsPath().String()
-				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
-					caller.Caller = c
-				} else if sym == nil {
-					qk.async_open(filename, lspmgr, v.Range)
-				}
-			}
-		}
-		secondline := caller.ListItem(root, true, nil)
-		if len(secondline) == 0 {
-			continue
-		}
-		x := fmt.Sprintf("%3d. %s", i+1, secondline)
-		data = append(data, x)
-	}
-	return data
-}
 
-type list_tree_node struct {
-	ref_index int
-	expand    bool
-	parent    bool
-	children  []list_tree_node
-	text      string
-}
+
+
+
+
 
 func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) string {
 	v := caller.Loc

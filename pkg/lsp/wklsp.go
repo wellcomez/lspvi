@@ -12,7 +12,7 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 
-var FolderEmoji = "\U0001f4c1"
+// var FolderEmoji = "\U0001f4c1"
 var FileIcon = "\U0001f4c4"
 var Text = "󰉿"
 var Method = "ƒ"
@@ -21,7 +21,8 @@ var Constructor = ""
 var Field = "󰜢"
 var Variable = "󰀫"
 var Class = "𝓒"
-var Interface = ""
+// var Interface = ""
+var Interface='\ueb61'
 var Module = ""
 var Property = "󰜢"
 var Unit = "󰑭"
@@ -86,7 +87,7 @@ var LspIcon = map[int]string{
 	9:  " ", //-- Constructor
 	10: "󰕘 ", //-- Enum
 	//11: "󰕘 ", //-- Interface
-	11: Interface,
+	11: fmt.Sprintf("%c",Interface),
 	12: "󰊕 ", //-- Function
 	13: "󰆧 ", //-- Variable
 	14: "󰏿 ", //-- Constant

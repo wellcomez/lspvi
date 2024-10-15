@@ -32,7 +32,7 @@ func (c current_document_pick) UpdateQuery(query string) {
 		selected_postion[v] = fzf.selected_postion[i]
 		debug.DebugLog("selected ", fzf.selected_text[i], v)
 	}
-	list := c.impl.listview
+	list := c.impl.listcustom
 	list.Clear()
 	var list_index_data = make(map[int]int)
 	var list_index = 0
@@ -73,7 +73,7 @@ func (c current_document_pick) close() {
 // handle implements picker.
 func (c current_document_pick) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-		c.impl.listview.InputHandler()(event, setFocus)
+		c.impl.listcustom.InputHandler()(event, setFocus)
 	}
 }
 
@@ -189,7 +189,7 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 		impl.UpdatePrev(index)
 	})
 
-	impl.listview = list
+	impl.listcustom= list
 	impl.fzf = new_fzf_on_list_data(list, impl.symbol.names, true)
 	list.SetCurrentItem(0)
 	impl.UpdatePrev(-1)
@@ -205,7 +205,7 @@ func (impl *symbol_picker_impl) UpdatePrev(index int) {
 
 func (impl *symbol_picker_impl) get_current_item_symbol(i int) *SymbolFzf {
 	if i == -1 {
-		i = impl.listview.GetCurrentItem()
+		i = impl.listcustom.GetCurrentItem()
 	}
 	if data_index, ok := impl.list_index_data[i]; ok {
 		if sym, ok := impl.symbol.object_index[data_index]; ok {

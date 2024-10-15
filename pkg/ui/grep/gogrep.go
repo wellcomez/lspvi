@@ -290,7 +290,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 
 	for _, finfo := range list {
 		if grep.IsAbort() {
-			debug.DebugLog(GrepTag, "Abort Return "+fpath)
+			debug.DebugLog(GrepTag, "Abort Return "+grep.ptnstring)
 			return
 		}
 		fname := finfo.Name()
@@ -313,7 +313,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 				skip = true
 				if yes, _ := doublestar.Match(grep.include_pattern, path); yes {
 					skip = false
-				}else if yes, _ := doublestar.Match(grep.include_pattern, finfo.Name()); yes {
+				} else if yes, _ := doublestar.Match(grep.include_pattern, finfo.Name()); yes {
 					skip = false
 				}
 			}

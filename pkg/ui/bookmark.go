@@ -148,7 +148,7 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 	pk.update_preview()
 }
 func (pk bookmark_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	handle := pk.impl.listview.InputHandler()
+	handle := pk.impl.listcustom.InputHandler()
 	handle(event, setFocus)
 	pk.update_preview()
 }
