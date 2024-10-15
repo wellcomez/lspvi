@@ -7,24 +7,21 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"strings"
 	"syscall"
 
 	"zen108.com/lspvi/pkg/debug"
 )
 
 func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
-	if grep.bAbort {
-		return
-	}
 	defer func() {
-		<-semFopenLimit
 		grep.waitGreps.Done()
 	}()
-	if strings.HasPrefix(fpath, grep.global_prj_root) {
-		debug.InfoLog("Ignore ", fpath)
+	if grep.IsAbort(){
+		return
 	}
-	semFopenLimit <- 1
+	// if strings.HasPrefix(fpath, grep.global_prj_root) {
+	// 	debug.InfoLog("Ignore ", fpath)
+	// }
 	grep.filecount++
 	file, err := os.Open(fpath)
 	if err != nil {
@@ -86,5 +83,3 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 		}
 	}
 }
-
-

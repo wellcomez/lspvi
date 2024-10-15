@@ -44,8 +44,8 @@ type OptionSet struct {
 	search_binary bool
 	ignore        string
 	// hidden        bool
-	ignorecase    bool
-	Wholeword     bool
+	ignorecase bool
+	Wholeword  bool
 }
 
 type searchScope struct {
@@ -55,22 +55,29 @@ type searchScope struct {
 	grep   bool
 	binary bool
 }
+type grep_status int
+
+const (
+	GrepRunning grep_status = iota
+	GrepAbort
+	GrepDone
+)
 
 type Gorep struct {
-	pattern *regexp.Regexp
-	// ignorePattern   *regexp.Regexp
+	pattern         *regexp.Regexp
 	ptnstring       string
 	useptnstring    bool
 	scope           searchScope
 	CB              func(taskid int, out *GrepOutput)
 	id              int
-	bAbort          bool
 	waitMaps        sync.WaitGroup
 	waitGreps       sync.WaitGroup
 	begintm, count  int64
 	filecount       int
 	just_grep_file  bool
 	global_prj_root string
+	// report_end      chan bool
+	grep_status grep_status
 }
 
 func (grep *Gorep) newFunction1(strline string) bool {
@@ -81,46 +88,38 @@ func (grep *Gorep) newFunction1(strline string) bool {
 		return grep.pattern.MatchString(strline)
 	}
 }
-func (grep *Gorep) Abort() {
-	grep.bAbort = true
+func (grep *Gorep) IsAbort() bool {
+	return grep.grep_status == GrepAbort
 }
-
-var semFopenLimit chan int
-
-const maxNumOfFileOpen = 10
+func (grep *Gorep) Abort() {
+	switch grep.grep_status {
+	case GrepRunning:
+		grep.grep_status = GrepAbort
+		// grep.report_end <- true
+		return
+	}
+}
 
 const separator = string(os.PathSeparator)
 
-func init() {
-	semFopenLimit = make(chan int, maxNumOfFileOpen)
-}
-
-func (grep *Gorep) end(o GrepOutput) {
-	if grep.CB != nil {
-		grep.CB(grep.id, &o)
-	}
-}
 func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 	// var markGrep string
 	var waitReports sync.WaitGroup
 
 	chPrint := make(chan GrepOutput)
 	chPrintEnd := make(chan string)
+
 	go func() {
-		// var i = 0
 		for {
-			<-chPrintEnd
-			grep.Debug("grep end")
-			if grep.CB != nil {
-				grep.CB(grep.id, nil)
+			select {
+			case msg := <-chPrint:
+				grep.CB(grep.id, &msg)
+			case <-chPrintEnd:
+				if grep.grep_status == GrepRunning {
+					grep.CB(grep.id, nil)
+				}
+				grep.grep_status = GrepDone
 			}
-		}
-	}()
-	// printer
-	go func() {
-		for {
-			msg := <-chPrint
-			grep.end(msg)
 		}
 	}()
 
@@ -129,9 +128,8 @@ func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 		switch ch := chanIf.(type) {
 		case chan GrepInfo:
 			for msg := range ch {
-				if grep.bAbort {
-					grep.Debug("grep abort in report loop")
-					break
+				if grep.IsAbort() {
+					continue
 				}
 				if msg.LineNumber != 0 {
 					// decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
@@ -159,9 +157,9 @@ func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 				}
 			}
 		default:
-			debug.ErrorLog("reporter type error!")
-			return
+			break
 		}
+		grep.Debug("Reporter End")
 		chPrintEnd <- mark
 	}
 
@@ -182,6 +180,7 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 		id:             id,
 		begintm:        time.Now().UnixMilli(),
 		just_grep_file: false,
+		// report_end:     make(chan bool),
 	}
 	base.Debug("NewGrep")
 
@@ -228,7 +227,7 @@ func (grep *Gorep) Kick(fpath string) *channelSet {
 	go func() {
 		home, _ := os.UserHomeDir()
 		ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
-		m := gi.NewMatcher(ps,true)
+		m := gi.NewMatcher(ps, true)
 		grep.mapsend(fpath, chsMap, m)
 		grep.waitMaps.Wait()
 		closeChannelSet(chsMap)
@@ -263,13 +262,12 @@ func closeChannelSet(chans *channelSet) {
 
 // isHidden checks if a file or directory is hidden.
 func (grep *Gorep) Debug(s string) {
-	debug.InfoLog(GrepTag, s, "Abort=", grep.bAbort, "id=", grep.id, "Files", grep.filecount, "Line=", grep.count, grep.ptnstring, time.Now().UnixMilli()-grep.begintm)
+	debug.InfoLog(GrepTag, s, "Abort=", grep.grep_status, "id=", grep.id, "Files", grep.filecount, "Line=", grep.count, grep.ptnstring, time.Now().UnixMilli()-grep.begintm)
 }
 func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 	defer grep.waitMaps.Done()
-	if grep.bAbort {
-		grep.Debug("Abort")
-
+	if grep.IsAbort() {
+		debug.DebugLog("Abort Return " + fpath)
 		return
 	}
 	/* expand dir */
@@ -281,6 +279,10 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 	m.Enter(fpath)
 
 	for _, finfo := range list {
+		if grep.IsAbort() {
+			debug.DebugLog("Abort Return " + fpath)
+			return
+		}
 		fname := finfo.Name()
 		if fname[0] == '.' {
 			debug.InfoLog(GrepTag, "ignore:", filepath.Join(fpath, finfo.Name()))
@@ -293,6 +295,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 		ss := strings.Split(path, separator)
 		if m.Match(ss[1:], is_dir) {
 			debug.InfoLog(GrepTag, "ignore:", path)
+			continue
 		}
 		if finfo.IsDir() {
 			grep.waitMaps.Add(1)
