@@ -244,14 +244,9 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 	refs := get_loc_caller(pk.impl.parent.main, file, key.Symbol())
 	pk.impl.refs = refs
 
-	qk:=quick_view_data{main: pk.impl.parent.main}
-	qk.main = pk.impl.parent.main
-	// qk.view = pk.impl.listcustom
-	qk.Refs.Refs = refs
-	tree := list_view_tree_extend{}
-	tree.build_tree(pk.impl.refs)
-	qk.tree = &tree
-	data := tree.BuildListStringGroup(&qk, global_prj_root, pk.impl.parent.main.Lspmgr())
+	qk := new_quikview_data(pk.impl.parent.main, data_refs,"", refs)
+	data := qk.tree_to_listemitem(global_prj_root)
+	pk.impl.qk = *qk
 	pk.impl.key = key.Key
 	pk.loadlist(data)
 	pk.update_preview()
