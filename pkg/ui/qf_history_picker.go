@@ -219,11 +219,8 @@ func (qk *qk_history_picker) updateprev() {
 		{
 			caller := keys[index].Result.Refs
 			name := keys[index].Key.File
-			qkv := quick_view_data{main: qk.parent.main}
-			qkv.Refs.Refs = caller
-			qkv.tree = &list_view_tree_extend{}
-			qkv.tree.build_tree(qkv.Refs.Refs)
-			data := qkv.tree.BuildListStringGroup(&qkv, global_prj_root, qkv.main.Lspmgr())
+			qkv := new_quikview_data(qk.parent.main, item.Type, "", caller)
+			data := qkv.tree_to_listemitem(global_prj_root)
 			aa := []string{}
 			for _, v := range data {
 				aa = append(aa, v.text)

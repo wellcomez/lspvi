@@ -279,11 +279,8 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 
 	main := grepx.main
 	Refs := grep.result.data
-	qk := quick_view_data{main: main}
-	qk.Refs.Refs = Refs
-	qk.tree = &list_view_tree_extend{filename: main.current_editor().Path()}
-	qk.tree.build_tree(qk.Refs.Refs)
-	data := qk.tree.BuildListStringGroup(&qk, global_prj_root, main.Lspmgr())
+	qk := new_quikview_data(main,data_grep_word,main.current_editor().Path(),Refs)
+	data := qk.tree_to_listemitem( global_prj_root)
 	go func() {
 		view := grepx.grep_list_view
 		view.Clear()
