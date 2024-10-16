@@ -1,7 +1,6 @@
 package mainui
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
