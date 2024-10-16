@@ -22,11 +22,15 @@ type grep_impl struct {
 	temp          *grepresult
 	grep          *grep.Gorep
 	taskid        int
-	opt           QueryOption
+	query_option  QueryOption
 	last          QueryOption
 	key           string
 	fzf_on_result *fzf_on_listview
 	quick         quick_view_data
+	livekeydelay  keydelay
+}
+type quick_view_delegate struct {
+	qf func(bool, ref_with_caller) bool
 }
 type livewgreppicker struct {
 	*prev_picker_impl
@@ -34,9 +38,8 @@ type livewgreppicker struct {
 	grep_list_view *customlist
 	main           MainService
 	impl           *grep_impl
-	qf             func(bool, ref_with_caller) bool
+	quick_view     *quick_view_delegate
 	not_live       bool
-	livekeydelay   keydelay
 }
 
 // name implements picker.
@@ -47,21 +50,17 @@ func (pk *livewgreppicker) name() string {
 // greppicker
 type greppicker struct {
 	*livewgreppicker
-	query string
 }
 
 // close implements picker.
 func (g *greppicker) close() {
-	if g.qf == nil {
-		g.cq.CloseQueue()
-	}
 	g.livewgreppicker.close()
 }
 
 // UpdateQuery implements picker.
 // Subtle: this method shadows the method (*livewgreppicker).UpdateQuery of greppicker.livewgreppicker.
 func (g *greppicker) UpdateQuery(query string) {
-	g.query = query
+	// g.query = query
 	if g.impl.fzf_on_result != nil {
 		g.impl.fzf_on_result.OnSearch(query, true)
 		g.grep_list_view.Key = query
@@ -75,7 +74,7 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 		focused := g.grep_list_view.HasFocus()
 		var key = event.Key()
 		if key == tcell.KeyEnter && !focused {
-			if g.impl.last != g.impl.opt {
+			if g.impl.last != g.impl.query_option {
 				RunQuery(g)
 			} else {
 				g.grep_list_view.InputHandler()(event, nil)
@@ -98,7 +97,8 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 func RunQuery(g *greppicker) {
 	g.impl.fzf_on_result = nil
 	g.parent.input.SetLabel(">")
-	g.livewgreppicker.UpdateQuery(g.query)
+	g.impl.query_option.query = g.parent.input.GetText()
+	g.livewgreppicker.__updatequery(g.impl.query_option)
 }
 
 // name implements picker.
@@ -166,11 +166,17 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	x := tview.NewFlex()
 	x.SetDirection(tview.FlexRow)
 	file_include := tview.NewInputField()
-	file_include.SetFieldBackgroundColor(tcell.ColorDarkGrey)
+	if style := global_theme.get_color("selection"); style != nil {
+		fg, bg, _ := style.Decompose()
+		file_include.SetFieldBackgroundColor(bg)
+		file_include.SetFieldTextColor(fg)
+	} else {
+		file_include.SetFieldBackgroundColor(tcell.ColorDarkGrey)
+	}
 	file_include.SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorDarkGrey))
-	file_include.SetPlaceholder(global_prj_root)
+	// file_include.SetPlaceholder(global_prj_root)
 	file_include.SetChangedFunc(func(text string) {
-		pk.impl.opt.include_pattern = text
+		pk.impl.query_option.include_pattern = text
 		debug.DebugLog("dialog", text)
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
@@ -253,7 +259,7 @@ func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 		impl:             impl,
 		not_live:         false,
 	}
-	grep.livekeydelay.grepx = grep
+	grep.impl.livekeydelay.grepx = grep
 	x.use_cusutom_list(grep.grep_list_view)
 	impl.quick = quick_view_data{main: v.main}
 	grep.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
@@ -275,13 +281,14 @@ func (grepx *livewgreppicker) update_title() {
 	if x > 0 {
 		index = index + 1
 	}
-	s := fmt.Sprintf("Grep %s %d/%d", grepx.grep_list_view.Key, index, x)
+	Type := "LiveGrep"
+	if grepx.not_live {
+		Type = "Search in Files"
+	}
+	s := fmt.Sprintf("%s %s %d/%d", Type, grepx.grep_list_view.Key, index, x)
 	grepx.parent.update_dialog_title(s)
 }
 
-func (parent *fzfmain) update_dialog_title(s string) {
-	UpdateTitleAndColor(parent.Frame.Box, s)
-}
 func (grepx *livewgreppicker) grep_to_list(end bool) {
 	if !end {
 		grepx.update_list_druring_grep()
@@ -369,10 +376,10 @@ type keydelay struct {
 
 func (k *keydelay) OnKey(s string) {
 	if k.waiting.Load() {
-		debug.DebugLog("LG", "Exit", s, k.grepx.impl.opt.query)
+		debug.DebugLog("LG", "Exit", s, k.grepx.impl.query_option.query)
 		return
 	} else {
-		debug.DebugLog("LG", "Start", s, k.grepx.impl.opt.query)
+		debug.DebugLog("LG", "Start", s, k.grepx.impl.query_option.query)
 	}
 	go func() {
 		k.waiting.Store(true)
@@ -382,11 +389,11 @@ func (k *keydelay) OnKey(s string) {
 		} else {
 			<-time.After(time.Microsecond * 10)
 		}
-		if len(k.grepx.impl.opt.query) == 0 {
+		if len(k.grepx.impl.query_option.query) == 0 {
 			k.grepx.grep_list_view.Clear()
 		} else {
-			debug.DebugLog("LG", "run", s, k.grepx.impl.opt.query)
-			k.grepx.__updatequery(k.grepx.impl.opt)
+			debug.DebugLog("LG", "run", s, k.grepx.impl.query_option.query)
+			k.grepx.__updatequery(k.grepx.impl.query_option)
 		}
 	}()
 }
@@ -425,13 +432,29 @@ func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
 		return
 	}
 	if o == nil {
-		if grepx.qf != nil {
-			grepx.qf(true, ref_with_caller{})
+		if grepx.quick_view != nil {
+			grepx.quick_view.end_of_update_ui()
 		} else {
 			grepx.grep_to_list(true)
 		}
-		return
+	} else if grepx.quick_view != nil {
+		grepx.quick_view.update_ui(o, grepx)
+	} else {
+		grepx.update_ui(o)
 	}
+
+}
+func (v quick_view_delegate) end_of_update_ui() {
+	v.qf(true, ref_with_caller{})
+}
+func (v quick_view_delegate) update_ui(o *grep.GrepOutput, grepx *livewgreppicker) {
+	ref := to_ref_caller(grepx.impl.key, o)
+	if !v.qf(false, ref) {
+		grepx.stop_grep()
+	}
+}
+
+func (grepx *livewgreppicker) update_ui(o *grep.GrepOutput) {
 	grep := grepx.impl
 	if grep.result == nil {
 		grep.result = &grepresult{
@@ -443,28 +466,19 @@ func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
 			data: []ref_with_caller{},
 		}
 	}
-	// log.Printf("end %d %s", task, o.destor)
-	if grepx.qf == nil {
-		if !grepx.parent.Visible {
-			grep.grep.Abort()
+	if !grepx.parent.Visible {
+		grepx.stop_grep()
+		return
+	}
+	grep.temp.data = append(grep.temp.data, to_ref_caller(grepx.impl.key, o))
+	if len(grep.result.data) > 10 {
+		if len(grep.temp.data) < 50 {
 			return
 		}
-		grep.temp.data = append(grep.temp.data, to_ref_caller(grepx.impl.key, o))
-		if len(grep.result.data) > 10 {
-			if len(grep.temp.data) < 50 {
-				return
-			}
-		}
-		grepx.main.App().QueueUpdate(func() {
-			grepx.grep_to_list(false)
-		})
-	} else {
-		ref := to_ref_caller(grepx.impl.key, o)
-		if !grepx.qf(false, ref) {
-			grep.grep.Abort()
-		}
 	}
-
+	grepx.main.App().QueueUpdate(func() {
+		grepx.grep_to_list(false)
+	})
 }
 
 // func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
@@ -512,13 +526,17 @@ func (pk livewgreppicker) Save() {
 	main.save_qf_uirefresh(data)
 }
 func (pk livewgreppicker) UpdateQuery(query string) {
-	pk.impl.opt.query = query
-	pk.livekeydelay.OnKey(query)
+	if len(query) == 0 {
+		pk.stop_grep()
+		pk.grep_list_view.Clear()
+	}
+	pk.impl.query_option.query = query
+	pk.impl.livekeydelay.OnKey(query)
 }
 
 // close implements picker.
 func (pk *livewgreppicker) close() {
-	if pk.qf == nil {
+	if pk.quick_view == nil {
 		pk.cq.CloseQueue()
 	}
 	pk.stop_grep()
@@ -552,7 +570,7 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 	}
 	impl := pk.impl
 	if impl.grep != nil {
-		impl.grep.Abort()
+		pk.stop_grep()
 	}
 	impl.grep = g
 	impl.result = &grepresult{}
@@ -562,7 +580,7 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 
 }
 
-func (pk livewgreppicker) stop_grep() {
+func (pk *livewgreppicker) stop_grep() {
 	if pk.impl != nil && pk.impl.grep != nil {
 		pk.impl.grep.Abort()
 	}

@@ -63,6 +63,9 @@ type fzfmain struct {
 }
 type fuzzpicktype int
 
+func (parent *fzfmain) update_dialog_title(s string) {
+	UpdateTitleAndColor(parent.Frame.Box, s)
+}
 func InRect(event *tcell.EventMouse, primitive tview.Primitive) bool {
 	if event == nil {
 		return false
@@ -134,7 +137,7 @@ func (v *fzfmain) use_col() bool {
 func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bool) *greppicker {
 	sym := new_grep_picker(v, v.main.current_editor())
 	sym.parent.Visible = qf == nil
-	sym.qf = qf
+	sym.quick_view = &quick_view_delegate{qf}
 	if qf == nil {
 		x := sym.grid(v.input)
 		v.create_dialog_content(x, sym)
