@@ -71,13 +71,13 @@ type quick_view struct {
 	cq *CodeOpenQueue
 }
 type list_view_tree_extend struct {
-	tree           []list_tree_node
+	root           []list_tree_node
 	tree_data_item []*list_tree_node
 	filename       string
 }
 
 func (l list_view_tree_extend) NeedCreate() bool {
-	return len(l.tree) == 0
+	return len(l.root) == 0
 }
 
 type qf_history_data struct {
@@ -680,8 +680,6 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 	}
 }
 
-
-
 type DateType int
 
 const (
@@ -748,7 +746,6 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 
-
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
 	if qk.grep != nil {
 		qk.grep.close()
@@ -773,14 +770,6 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	}
 	qk.main.Tab().UpdatePageTitle()
 }
-
-
-
-
-
-
-
-
 
 func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) string {
 	v := caller.Loc
