@@ -38,7 +38,21 @@ func new_quikview_data(m MainService, Type DateType, filename string, Refs []ref
 	}
 	return a
 }
-
+func (qk *quick_view_data) Add(ref ref_with_caller) (ret list_tree_node,err error){
+	idx := len(qk.Refs.Refs)
+	qk.Refs.Refs = append(qk.Refs.Refs, ref)
+	f := ref.Loc.URI.AsPath().String()
+	for _, v := range qk.tree.root {
+		if v.filename == f {
+			ret = list_tree_node{ref_index: idx}
+			v.children = append(v.children, ret)
+			return
+		}
+	}
+	ret= list_tree_node{ref_index: idx, parent: true, expand: true, filename: f}
+	qk.tree.root = append(qk.tree.root,ret)
+	return
+}
 func (qk *quick_view_data) tree_to_listemitem() []*list_tree_node {
 	data := qk.build_listview_data()
 	return data
@@ -177,6 +191,7 @@ type list_tree_node struct {
 	children  []list_tree_node
 	text      string
 	lspignore bool
+	filename  string
 }
 
 func (treeroot *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
@@ -189,7 +204,7 @@ func (treeroot *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 			s.children = append(s.children, list_tree_node{ref_index: i})
 			group[x] = s
 		} else {
-			s := list_tree_node{ref_index: i, parent: true, expand: true}
+			s := list_tree_node{ref_index: i, parent: true, expand: true, filename: x}
 			s.children = append(s.children, list_tree_node{ref_index: i})
 			group[x] = s
 		}
@@ -240,7 +255,7 @@ func (v *FlexTreeNode) ListItem() (ret []string) {
 	down := ""
 	// down := fmt.Sprintf("%c",'\U000f1464')
 	down = "▶"
-	down = fmt.Sprintf("%c",'\U000f004a')
+	down = fmt.Sprintf("%c", '\U000f004a')
 	m := v.HasMore()
 	lastIndex := len(v.child) - 1
 	for i, c := range v.child {
