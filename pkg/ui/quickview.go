@@ -765,36 +765,47 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.data.tree_to_listemitem()
 	tree := qk.data.build_flextree_data(10)
 	data := tree.ListString()
-	var loaddata = func(data []string) {
+	var loaddata = func(data []string, i int) {
 		qk.view.Clear()
 		for _, v := range data {
 			qk.view.AddItem(v, "", nil)
 		}
+		qk.view.SetCurrentItem(i)
 		qk.main.App().ForceDraw()
 	}
 	qk.flex_tree = tree
 	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		item := tree.GetNodeIndex(i)
-		if item.IsParent() {
-			if item.HasMore() {
-				tree.LoadMore(item)
-			} else {
-				tree.Toggle(item)
+		item, pos, more, parent := tree.GetNodeIndex(i)
+		switch pos {
+
+		case NodePostion_Root:
+			{
+				if false {
+					tree.LoadMore(item)
+				} else {
+					tree.Toggle(item)
+				}
+				loaddata(tree.ListItem, i)
 			}
-			loaddata(tree.ListItem)
-			if r, e := item.GetRange(tree); e == nil {
-				qk.view.SetCurrentItem(r[0])
+		case NodePostion_LastChild:
+			{
+				n := tree.GetCaller(i)
+				qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
+				if more {
+					tree.LoadMore(parent)
+					loaddata(tree.ListItem, i)
+				}
 			}
-		} else {
-			n := tree.GetCaller(i)
-			qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
+		case NodePostion_Child:
+			{
+				n := tree.GetCaller(i)
+				qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
+			}
 		}
 	})
-	loaddata(data)
+	loaddata(data, 0)
 	qk.main.Tab().UpdatePageTitle()
 }
-
-
 
 func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) string {
 	v := caller.Loc

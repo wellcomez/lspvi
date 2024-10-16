@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
@@ -209,7 +210,13 @@ type FlexTreeNode struct {
 	data      *list_tree_node
 	child     []FlexTreeNode
 	loadcount int
+	child_idx int
 }
+
+func NewFlexTreeNode(data *list_tree_node, idx int) *FlexTreeNode {
+	return &FlexTreeNode{data: data, child_idx: idx}
+}
+
 type FlexTreeNodeRoot struct {
 	*FlexTreeNode
 	qk       *quick_view_data
@@ -230,8 +237,17 @@ func (node *FlexTreeNodeRoot) ListString() (ret []string) {
 func (v *FlexTreeNode) ListItem() (ret []string) {
 	x := v.RootString()
 	ret = append(ret, x)
-	for _, c := range v.child {
-		ret = append(ret, c.data.text)
+	// down := fmt.Sprintf("%c", '\U0000f409')
+	down := "▶"
+	m := v.HasMore()
+	lastIndex := len(v.child) - 1
+	for i, c := range v.child {
+		s := c.data.text
+		if i == lastIndex && m {
+			s = fmt_color_string(down, tcell.ColorRed) + s[1:]
+		}
+		ret = append(ret, s)
+
 	}
 	return ret
 }
@@ -243,7 +259,7 @@ func (v FlexTreeNode) RootString() string {
 	} else {
 		ss = strings.Replace(ss, "▼", "▶", 1)
 	}
-	count := fmt.Sprintf("[%d/%d]", v.GetCount(), len(v.data.children)+1)
+	count := fmt.Sprintf("[%d/%d]", v.GetCount()-1, len(v.data.children))
 	x := fmt.Sprintln(ss, count)
 	return x
 }
@@ -260,25 +276,46 @@ func (node FlexTreeNode) GetRange(root *FlexTreeNodeRoot) (Range []int, err erro
 	return Range, fmt.Errorf("not found")
 }
 func (node *FlexTreeNodeRoot) GetCaller(index int) *ref_with_caller {
-	n := node.GetNodeIndex(index)
+	n, _, _, _ := node.GetNodeIndex(index)
 	return n.data.get_caller(node.qk)
 }
-func (node *FlexTreeNodeRoot) GetNodeIndex(index int) *FlexTreeNode {
+
+type NodePostion int
+
+const (
+	NodePostion_Root NodePostion = iota
+	NodePostion_Child
+	NodePostion_LastChild
+	NodePostion_None
+)
+
+func (root *FlexTreeNodeRoot) GetNodeIndex(index int) (ret *FlexTreeNode, pos NodePostion, more bool, parent *FlexTreeNode) {
 	begin := 0
-	for root_index := range node.child {
-		v := node.child[root_index]
+	pos = NodePostion_None
+	for root_index := range root.child {
+		v := root.child[root_index]
 		end := begin + v.GetCount()
 		if index >= begin && index < end {
 			if i := index - begin; i == 0 {
-				return &node.child[root_index]
+				ret = &root.child[root_index]
+				parent = ret
+				pos = NodePostion_Root
+				more = ret.HasMore()
 			} else {
-				return &node.child[root_index].child[i-1]
+				parent = &root.child[root_index]
+				more = parent.HasMore()
+				pos = NodePostion_Child
+				if i-1 == len(parent.child)-1 {
+					pos = NodePostion_LastChild
+				}
+				ret = &root.child[root_index].child[i-1]
 			}
+			return
 		} else {
 			begin = end
 		}
 	}
-	return nil
+	return
 }
 func (node *FlexTreeNodeRoot) GetIndex(index int) *list_tree_node {
 	begin := 0
@@ -306,19 +343,19 @@ func (quickview_data *quick_view_data) build_flextree_data(maxcount int) (ret *F
 	}
 	for i := range quickview_data.tree.root {
 		var a = &quickview_data.tree.root[i]
-		parent := FlexTreeNode{data: a}
+		parent := NewFlexTreeNode(a, -1)
 		var child = []FlexTreeNode{}
 		for i := range a.children {
 			if i < maxcount && maxcount > 1 {
 				vv := &a.children[i]
-				child = append(child, FlexTreeNode{data: vv})
+				child = append(child, *NewFlexTreeNode(vv, i))
 			} else {
 				break
 			}
 		}
 		parent.child = child
 		parent.loadcount = len(child)
-		ret.child = append(ret.child, parent)
+		ret.child = append(ret.child, *parent)
 	}
 	return ret
 }
@@ -335,15 +372,16 @@ func replaceSegment(original []string, start, end int, newSlice []string) []stri
 	}
 	return append(original[:start], append(newSlice, original[end:]...)...)
 }
-func (root *FlexTreeNodeRoot) Toggle(node *FlexTreeNode) {
-	if r, e := node.GetRange(root); e == nil {
-		expand := len(root.child) > 0
+func (rootnode *FlexTreeNodeRoot) Toggle(node *FlexTreeNode) {
+	if r, e := node.GetRange(rootnode); e == nil {
+		expand := len(node.child) > 0
 		n := node.loadcount
 		if expand {
 			n = 0
 		}
 		child := []FlexTreeNode{}
-		for i, v := range node.data.children {
+		for i := range node.data.children {
+			v := node.data.children[i]
 			if i < n {
 				child = append(child, FlexTreeNode{data: &v})
 			} else {
@@ -352,7 +390,7 @@ func (root *FlexTreeNodeRoot) Toggle(node *FlexTreeNode) {
 		}
 		node.child = child
 		x := node.ListItem()
-		root.ListItem = replaceSegment(root.ListItem, r[0], r[1], x)
+		rootnode.ListItem = replaceSegment(rootnode.ListItem, r[0], r[1], x)
 	}
 }
 func (root *FlexTreeNodeRoot) LoadMore(node *FlexTreeNode) {
@@ -366,13 +404,14 @@ func (item *FlexTreeNode) IsParent() bool {
 	x := item.data.parent
 	return x
 }
+
 func (n *FlexTreeNode) LoadMore() {
 	begin := len(n.child)
 	end := min(len(n.data.children), begin+10)
 	for i := begin; i < end; i++ {
 		t := n.data.children[i]
-		f := FlexTreeNode{data: &t}
-		n.child = append(n.child, f)
+		f := NewFlexTreeNode(&t, i)
+		n.child = append(n.child, *f)
 	}
 	n.loadcount = len(n.child)
 }
