@@ -142,16 +142,16 @@ func (tree *list_tree_node) get_caller(qk *quick_view_data) *ref_with_caller {
 	caller := &qk.Refs.Refs[tree.ref_index]
 	return caller
 }
-func (qk quick_view_data) need_async_open() bool {
-	return !qk.ignore_symbol_resolv
+func (quickview_data quick_view_data) need_async_open() bool {
+	return !quickview_data.ignore_symbol_resolv
 }
 
-func (qk *quick_view_data) BuildListString(root string) []string {
+func (quickview_data *quick_view_data) BuildListString(root string) []string {
 	var data = []string{}
-	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
-	for i, caller := range qk.Refs.Refs {
+	var lspmgr *lspcore.LspWorkspace = quickview_data.main.Lspmgr()
+	for i, caller := range quickview_data.Refs.Refs {
 		// caller.width = width
-		switch qk.Type {
+		switch quickview_data.Type {
 		case data_refs:
 			v := caller.Loc
 			if caller.Caller == nil || len(caller.Caller.Name) == 0 {
@@ -159,7 +159,7 @@ func (qk *quick_view_data) BuildListString(root string) []string {
 				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
 					caller.Caller = c
 				} else if sym == nil {
-					qk.async_open(&caller, func(err error, b bool) {})
+					quickview_data.async_open(&caller, func(err error, b bool) {})
 				}
 			}
 		}
@@ -183,7 +183,7 @@ type list_tree_node struct {
 	lspignore     bool
 }
 
-func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
+func (treeroot *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 	group := make(map[string]list_tree_node)
 	for i := range Refs {
 		caller := Refs[i]
@@ -200,45 +200,45 @@ func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 	}
 	trees := []list_tree_node{}
 	for k, v := range group {
-		if k == qk.filename {
+		if k == treeroot.filename {
 			aaa := []list_tree_node{v}
 			trees = append(aaa, trees...)
 			continue
 		}
 		trees = append(trees, v)
 	}
-	qk.tree = trees
+	treeroot.tree = trees
 }
-func (view *quick_view_data) BuildListStringGroup(root string, lspmgr *lspcore.LspWorkspace) []*list_tree_node {
+func (quickview_data *quick_view_data) BuildListStringGroup(root string, lspmgr *lspcore.LspWorkspace) []*list_tree_node {
 	// var qk = view.tree
-	var data = []*list_tree_node{}
+	var ret = []*list_tree_node{}
 	lineno := 1
-	for i := range view.tree.tree {
-		if view.abort {
+	for i := range quickview_data.tree.tree {
+		if quickview_data.abort {
 			return []*list_tree_node{}
 		}
-		var a *list_tree_node = &view.tree.tree[i]
-		s := view.get_tree_listitem(a, lineno)
-		data = append(data, s...)
+		var a *list_tree_node = &quickview_data.tree.tree[i]
+		s := a.get_tree_listitem(quickview_data, lineno)
+		ret = append(ret, s...)
 		lineno++
 	}
-	view.tree.tree_data_item = data
-	return data
+	quickview_data.tree.tree_data_item = ret
+	return ret
 }
 
-func (view *quick_view_data) get_tree_listitem(a *list_tree_node, lineno int) (data []*list_tree_node) {
-	parent, _ := a.quickfix_listitem_string(view, lineno, nil)
-	a.get_caller(view).LoadLines()
-	data = append(data, a)
-	if a.expand {
-		caller := a.get_caller(view)
+func (tree *list_tree_node) get_tree_listitem(view *quick_view_data, lineno int) (data []*list_tree_node) {
+	parent, _ := tree.quickfix_listitem_string(view, lineno, nil)
+	tree.get_caller(view).LoadLines()
+	data = append(data, tree)
+	if tree.expand {
+		caller := tree.get_caller(view)
 		caller.filecache = parent.filecache
 		var call_context *ref_with_caller
-		for i := range a.children {
+		for i := range tree.children {
 			if view.abort {
 				return
 			}
-			c := &a.children[i]
+			c := &tree.children[i]
 			_, call_context = c.quickfix_listitem_string(view, lineno, call_context)
 			data = append(data, c)
 		}
