@@ -782,6 +782,9 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 				tree.Toggle(item)
 			}
 			loaddata(tree.ListItem)
+			if r, e := item.GetRange(tree); e == nil {
+				qk.view.SetCurrentItem(r[0])
+			}
 		} else {
 			n := tree.GetCaller(i)
 			qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
