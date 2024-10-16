@@ -274,10 +274,3 @@ func (qk *qk_history_picker) updateprev() {
 		}
 	}
 }
-
-// func (pk qk_history_picker) grid(input *tview.InputField) *tview.Grid {
-// 	list := pk.list
-// 	layout := grid_list_whole_screen(list, input)
-// 	layout.SetBorder(true)
-// 	return layout
-// }

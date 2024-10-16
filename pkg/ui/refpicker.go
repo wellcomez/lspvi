@@ -236,6 +236,7 @@ type ref_with_caller struct {
 	filecache *filecache
 	Grep      grep.GrepInfo
 	IsGrep    bool
+	lspIgnore bool
 }
 
 func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.Location, err error) {

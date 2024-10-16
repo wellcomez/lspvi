@@ -59,15 +59,18 @@ func (qk *quick_view_data) async_open(call *ref_with_caller, cb func(error, bool
 	var r lsp.Range = call.Loc.Range
 	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
 	if !qk.need_async_open() {
+		call.lspIgnore = true
 		cb(nil, true)
 		return
 	}
 	if sym, _ := lspmgr.Open(file); sym != nil {
 		if err := sym.LspLoadSymbol(); err != nil {
 			cb(err, false)
-		}
-		if c, _ := lspmgr.GetCallEntry(file, r); c != nil {
+		} else if c, _ := lspmgr.GetCallEntry(file, r); c != nil {
+			call.Caller = c
 			cb(nil, true)
+		} else {
+			cb(fmt.Errorf("not symbol"), false)
 		}
 	}
 }
@@ -76,24 +79,16 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
 	switch qk.Type {
 	case data_refs, data_search, data_grep_word:
-		v := caller.Loc
-		if caller.Caller == nil || len(caller.Caller.Name) == 0 {
-			filename := v.URI.AsPath().String()
-			if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
-				caller.Caller = c
-			} else if sym == nil {
-				go qk.async_open(caller, func(err error, b bool) {
-					if err == nil {
-						if b {
-							tree.lspignore = true
-						} else {
-							if c, _ := lspmgr.GetCallEntry(filename, v.Range); c != nil {
-								caller.Caller = c
-								tree.text = tree.get_treenode_text(qk, caller, caller_context, lineno)
-							}
-						}
-					}
-				})
+		if !caller.lspIgnore {
+			v := caller.Loc
+			if caller.Caller == nil || len(caller.Caller.Name) == 0 {
+				filename := v.URI.AsPath().String()
+				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
+					caller.Caller = c
+				} else if sym == nil {
+					go qk.async_open(caller, func(err error, b bool) {
+					})
+				}
 			}
 		}
 	}
@@ -174,12 +169,12 @@ func (quickview_data *quick_view_data) BuildListString(root string) []string {
 }
 
 type list_tree_node struct {
-	ref_index     int
-	expand        bool
-	parent        bool
-	children      []list_tree_node
-	text          string
-	lspignore     bool
+	ref_index int
+	expand    bool
+	parent    bool
+	children  []list_tree_node
+	text      string
+	lspignore bool
 }
 
 func (treeroot *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
