@@ -47,7 +47,7 @@ func (pk *livewgreppicker) name() string {
 	return "Live grep"
 }
 
-func (pk livewgreppicker) open_view_form_tree(index int, prev bool) {
+func (pk livewgreppicker) open_view_from_tree(index int, prev bool) {
 	qk := &pk.impl.quick
 	if data, err := qk.get_data(index); err == nil {
 		if prev {

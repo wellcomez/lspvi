@@ -53,11 +53,12 @@ type filetree_context struct {
 
 var normal_file = fmt.Sprintf("%c", '\uf15c')
 var go_icon = fmt.Sprintf("%c", '\uf1a0')
-var c_icon = fmt.Sprintf("%c", '\U000f0671')
+var c_icon = fmt.Sprintf("%c", '\U000f0bf2')
+var h_icon = fmt.Sprintf("%c", '\U0000f0fd')
 var py_icon = fmt.Sprintf("%c", '\U000f03e2')
-var js_icon = fmt.Sprintf("%c", '\uf81d')
+var js_icon = fmt.Sprintf("%c", '\ue74f')
 var ts_icon = fmt.Sprintf("%c", '\U000f03e6')
-var html_icon = fmt.Sprintf("%c", '\uf13b')
+var html_icon = fmt.Sprintf("%c",'\U000f0c01')
 var cpp_icon = fmt.Sprintf("%c", '\U000f03e4')
 var css_icon = fmt.Sprintf("%c", '\U000f03e7')
 var png_icon = fmt.Sprintf("%c", '\uf1c5')
@@ -79,8 +80,8 @@ type extset struct {
 
 var fileicons = []extset{
 	{go_icon, []string{"go"}},
-	{c_icon, []string{"c", "h"}},
-	{cpp_icon, []string{"cpp", "h"}},
+	{c_icon, []string{"c", "cpp"}},
+	{h_icon, []string{"h"}},
 	{py_icon, []string{"py"}},
 	{js_icon, []string{"js"}},
 	{ts_icon, []string{"tsx", "ts"}},
