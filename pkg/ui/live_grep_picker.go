@@ -225,7 +225,7 @@ func (impl *livewgreppicker) update_preview() {
 func (grepx *livewgreppicker) update_list_druring_final() {
 	grep := grepx.impl
 	grep.get_grep_new_data()
-	
+
 	if grepx.not_live {
 		grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 		grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
@@ -317,24 +317,23 @@ func (k *keydelay) OnKey(s string) {
 		}
 	}()
 }
-func (impl *grep_impl) get_grep_new_data() (draw bool, temp *grepresult) {
+func (impl *grep_impl) get_grep_new_data() (draw bool, data []ref_with_caller) {
 	grep := impl
-	draw = false
 	tmp := grep.temp
+	draw = tmp != nil
 	if tmp != nil {
+		data = tmp.data
 		grep.temp = nil
 		grep.result.data = append(grep.result.data, tmp.data...)
 	}
-	draw = len(grep.result.data) < 500
 	return
 }
 func (grepx *livewgreppicker) update_list_druring_grep() {
 	grep := grepx.impl
 	openpreview := len(grep.result.data) == 0
-	if yes, data := grep.get_grep_new_data(); !yes {
-		return
-	} else {
-		for _, o := range data.data {
+	yes, data := grep.get_grep_new_data()
+	if yes {
+		for _, o := range data {
 			fpath := o.Loc.URI.AsPath().String()
 			line := o.get_code(0)
 			lineNumber := o.Loc.Range.Start.Line
@@ -400,12 +399,12 @@ func (grep *grep_impl) AddData(o *grep.GrepOutput) bool {
 		}
 	}
 	grep.temp.data = append(grep.temp.data, to_ref_caller(grep.key, o))
-	if len(grep.result.data) > 10 {
+	if len(grep.result.data) > 50 {
 		if len(grep.temp.data) < 50 {
-			return true
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 // func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
@@ -456,6 +455,7 @@ func (pk livewgreppicker) UpdateQuery(query string) {
 	pk.stop_grep()
 	pk.codeprev.Clear()
 	pk.grep_list_view.Clear()
+	pk.grep_list_view.SetCurrentItem(-1)
 	pk.update_title()
 	pk.impl.query_option.query = query
 	pk.impl.livekeydelay.OnKey(query)

@@ -137,7 +137,7 @@ type CodeOpenQueue struct {
 func NewCodeOpenQueue(editor CodeEditor, main MainService) *CodeOpenQueue {
 	ret := &CodeOpenQueue{
 		close:  make(chan bool),
-		open:   make(chan bool, 5),
+		open:   make(chan bool, 100),
 		editor: editor,
 		main:   main,
 	}
