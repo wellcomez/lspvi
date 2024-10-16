@@ -281,7 +281,9 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 		},
 	}
 	input.SetChangedFunc(func(text string) {
-		ret.currentpicker.UpdateQuery(text)
+		if ret.currentpicker!=nil{
+			ret.currentpicker.UpdateQuery(text)
+		}
 	})
 	// new_filewalk(global_prj_root)
 	return ret

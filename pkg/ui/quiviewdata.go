@@ -38,7 +38,7 @@ func new_quikview_data(m MainService, Type DateType, filename string, Refs []ref
 }
 
 func (qk *quick_view_data) tree_to_listemitem(a string) []*list_tree_node {
-	data := qk.BuildListStringGroup(a)
+	data := qk.build_listview_data()
 	return data
 }
 
@@ -179,7 +179,6 @@ type list_tree_node struct {
 	parent        bool
 	children      []list_tree_node
 	text          string
-	listbox_count int
 	lspignore     bool
 }
 
@@ -209,7 +208,7 @@ func (treeroot *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 	}
 	treeroot.root = trees
 }
-func (quickview_data *quick_view_data) BuildListStringGroup(root string) []*list_tree_node {
+func (quickview_data *quick_view_data) build_listview_data() []*list_tree_node {
 	// var qk = view.tree
 	var ret = []*list_tree_node{}
 	lineno := 1

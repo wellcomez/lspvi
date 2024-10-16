@@ -353,9 +353,11 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 	}
 }
 func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
-	if grepx.parent != nil && !grepx.parent.Visible {
-		grepx.stop_grep()
-		return
+	if grepx.quick_view == nil {
+		if grepx.parent != nil && !grepx.parent.Visible {
+			grepx.stop_grep()
+			return
+		}
 	}
 	if task != grepx.impl.taskid {
 		return
