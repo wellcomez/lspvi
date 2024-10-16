@@ -205,22 +205,17 @@ func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	return grep
 }
 func (grepx *livewgreppicker) update_title() {
-	if grepx.impl.result == nil {
-		return
-	}
 	index := grepx.grep_list_view.GetCurrentItem()
-	x := len(grepx.impl.result.data)
-	if grepx.impl.quick.tree != nil {
-		x = grepx.grep_list_view.GetItemCount()
-	}
+	x := grepx.grep_list_view.GetItemCount()
 	if x > 0 {
 		index = index + 1
 	}
+
 	Type := "LiveGrep"
 	if grepx.not_live {
 		Type = "Search in Files"
 	}
-	s := fmt.Sprintf("%s %s %d/%d", Type, grepx.grep_list_view.Key, index, x)
+	s := fmt.Sprintf("%s %s %d/%d", Type, grepx.parent.input.GetText(), index, x)
 	grepx.parent.update_dialog_title(s)
 }
 
@@ -464,7 +459,7 @@ func (pk livewgreppicker) UpdateQuery(query string) {
 	pk.stop_grep()
 	pk.codeprev.Clear()
 	pk.grep_list_view.Clear()
-	pk.update_preview()
+	pk.update_title()
 	pk.impl.query_option.query = query
 	pk.impl.livekeydelay.OnKey(query)
 }
