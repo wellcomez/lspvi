@@ -219,23 +219,13 @@ func (grepx *livewgreppicker) update_title() {
 	grepx.parent.update_dialog_title(s)
 }
 
-func (grepx *livewgreppicker) grep_to_list(end bool) {
-	if !end {
-		grepx.update_list_druring_grep()
-	} else {
-		grepx.update_list_druring_final()
-	}
-}
 func (impl *livewgreppicker) update_preview() {
 	impl.open_view(impl.grep_list_view.GetCurrentItem(), true)
 }
 func (grepx *livewgreppicker) update_list_druring_final() {
 	grep := grepx.impl
-	tmp := grep.temp
-	if tmp != nil {
-		grep.temp = nil
-		grep.result.data = append(grep.result.data, tmp.data...)
-	}
+	grep.get_grep_new_data()
+	
 	if grepx.not_live {
 		grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
 		grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
@@ -327,37 +317,46 @@ func (k *keydelay) OnKey(s string) {
 		}
 	}()
 }
-
+func (impl *grep_impl) get_grep_new_data() (draw bool, temp *grepresult) {
+	grep := impl
+	draw = false
+	tmp := grep.temp
+	if tmp != nil {
+		grep.temp = nil
+		grep.result.data = append(grep.result.data, tmp.data...)
+	}
+	draw = len(grep.result.data) < 500
+	return
+}
 func (grepx *livewgreppicker) update_list_druring_grep() {
 	grep := grepx.impl
 	openpreview := len(grep.result.data) == 0
-	tmp := grep.temp
-	if tmp == nil {
+	if yes, data := grep.get_grep_new_data(); !yes {
 		return
+	} else {
+		for _, o := range data.data {
+			fpath := o.Loc.URI.AsPath().String()
+			line := o.get_code(0)
+			lineNumber := o.Loc.Range.Start.Line
+			path := trim_project_filename(fpath, global_prj_root)
+			data := fmt.Sprintf("%s:%d %s", path, lineNumber, line)
+			grepx.grep_list_view.AddItem(data, "", func() {
+				grepx.main.OpenFileHistory(path, &o.Loc)
+				grepx.parent.hide()
+			})
+		}
+		if openpreview {
+			grepx.update_preview()
+		}
+		grepx.update_title()
+		grepx.main.App().ForceDraw()
 	}
-	grep.temp = nil
-	grep.result.data = append(grep.result.data, tmp.data...)
-	if len(grep.result.data) > 500 {
-		return
-	}
-	for _, o := range tmp.data {
-		fpath := o.Loc.URI.AsPath().String()
-		line := o.get_code(0)
-		lineNumber := o.Loc.Range.Start.Line
-		path := trim_project_filename(fpath, global_prj_root)
-		data := fmt.Sprintf("%s:%d %s", path, lineNumber, line)
-		grepx.grep_list_view.AddItem(data, "", func() {
-			grepx.main.OpenFileHistory(path, &o.Loc)
-			grepx.parent.hide()
-		})
-	}
-	if openpreview {
-		grepx.update_preview()
-	}
-	grepx.update_title()
-	grepx.main.App().ForceDraw()
 }
 func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
+	if grepx.parent != nil && !grepx.parent.Visible {
+		grepx.stop_grep()
+		return
+	}
 	if task != grepx.impl.taskid {
 		return
 	}
@@ -365,12 +364,17 @@ func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
 		if grepx.quick_view != nil {
 			grepx.quick_view.end_of_update_ui()
 		} else {
-			grepx.grep_to_list(true)
+			grepx.update_list_druring_final()
 		}
 	} else if grepx.quick_view != nil {
 		grepx.quick_view.update_ui(o, grepx)
 	} else {
-		grepx.update_ui(o)
+		grep := grepx.impl
+		if grep.AddData(o) {
+			grepx.main.App().QueueUpdate(func() {
+				grepx.update_list_druring_grep()
+			})
+		}
 	}
 
 }
@@ -384,8 +388,7 @@ func (v quick_view_delegate) update_ui(o *grep.GrepOutput, grepx *livewgreppicke
 	}
 }
 
-func (grepx *livewgreppicker) update_ui(o *grep.GrepOutput) {
-	grep := grepx.impl
+func (grep *grep_impl) AddData(o *grep.GrepOutput) bool {
 	if grep.result == nil {
 		grep.result = &grepresult{
 			data: []ref_with_caller{},
@@ -396,19 +399,13 @@ func (grepx *livewgreppicker) update_ui(o *grep.GrepOutput) {
 			data: []ref_with_caller{},
 		}
 	}
-	if !grepx.parent.Visible {
-		grepx.stop_grep()
-		return
-	}
-	grep.temp.data = append(grep.temp.data, to_ref_caller(grepx.impl.key, o))
+	grep.temp.data = append(grep.temp.data, to_ref_caller(grep.key, o))
 	if len(grep.result.data) > 10 {
 		if len(grep.temp.data) < 50 {
-			return
+			return true
 		}
 	}
-	grepx.main.App().QueueUpdate(func() {
-		grepx.grep_to_list(false)
-	})
+	return false
 }
 
 // func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
