@@ -47,7 +47,7 @@ func (pk *livewgreppicker) name() string {
 	return "Live grep"
 }
 
-func (pk livewgreppicker) update_preview_tree(index int, prev bool) {
+func (pk livewgreppicker) open_view_from_tree(index int, prev bool) {
 	qk := &pk.impl.quick
 	if data, err := qk.get_data(index); err == nil {
 		if prev {
@@ -60,13 +60,13 @@ func (pk livewgreppicker) update_preview_tree(index int, prev bool) {
 }
 func (pk livewgreppicker) open_view(index int, prev bool) {
 	if pk.impl.quick.tree != nil {
-		pk.update_preview_tree(index, prev)
+		pk.open_view_from_tree(index, prev)
 	} else {
-		pk.update_view_no_tree_at(index, prev)
+		pk.open_view_from_normal_list(index, prev)
 	}
 }
 
-func (pk livewgreppicker) update_view_no_tree_at(cur int, prev bool) bool {
+func (pk livewgreppicker) open_view_from_normal_list(cur int, prev bool) bool {
 	if pk.impl.fzf_on_result != nil {
 		cur = pk.impl.fzf_on_result.get_data_index(cur)
 		if cur < 0 {
