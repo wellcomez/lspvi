@@ -3,6 +3,7 @@ package mainui
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
@@ -205,12 +206,14 @@ func (treeroot *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 }
 
 type FlexTreeNode struct {
-	data  *list_tree_node
-	child []FlexTreeNode
+	data      *list_tree_node
+	child     []FlexTreeNode
+	loadcount int
 }
 type FlexTreeNodeRoot struct {
 	*FlexTreeNode
-	qk *quick_view_data
+	qk       *quick_view_data
+	ListItem []string
 }
 
 func (node *FlexTreeNode) GetCount() int {
@@ -218,21 +221,69 @@ func (node *FlexTreeNode) GetCount() int {
 }
 func (node *FlexTreeNodeRoot) ListString() (ret []string) {
 	for _, v := range node.child {
-		ret = append(ret, v.data.text)
-		for _, c := range v.child {
-			ret = append(ret, c.data.text)
-		}
+		ret = append(ret, v.ListItem()...)
+	}
+	node.ListItem = ret
+	return ret
+}
+
+func (v *FlexTreeNode) ListItem() (ret []string) {
+	x := v.RootString()
+	ret = append(ret, x)
+	for _, c := range v.child {
+		ret = append(ret, c.data.text)
 	}
 	return ret
 }
 
+func (v FlexTreeNode) RootString() string {
+	ss := v.data.text
+	if len(v.child) > 0 {
+		ss = strings.Replace(ss, "▶", "▼", 1)
+	} else {
+		ss = strings.Replace(ss, "▼", "▶", 1)
+	}
+	count := fmt.Sprintf("[%d/%d]", v.GetCount(), len(v.data.children)+1)
+	x := fmt.Sprintln(ss, count)
+	return x
+}
+func (node FlexTreeNode) GetRange(root *FlexTreeNodeRoot) (Range []int, err error) {
+	begin := 0
+	for _, v := range root.child {
+		if v.data != node.data {
+			begin += v.GetCount()
+		} else {
+			Range = []int{begin, begin + v.GetCount()}
+			return Range, nil
+		}
+	}
+	return Range, fmt.Errorf("not found")
+}
 func (node *FlexTreeNodeRoot) GetCaller(index int) *ref_with_caller {
-	return node.GetIndex(index).get_caller(node.qk)
+	n := node.GetNodeIndex(index)
+	return n.data.get_caller(node.qk)
+}
+func (node *FlexTreeNodeRoot) GetNodeIndex(index int) *FlexTreeNode {
+	begin := 0
+	for root_index := range node.child {
+		v := node.child[root_index]
+		end := begin + v.GetCount()
+		if index >= begin && index < end {
+			if i := index - begin; i == 0 {
+				return &node.child[root_index]
+			} else {
+				return &node.child[root_index].child[i-1]
+			}
+		} else {
+			begin = end
+		}
+	}
+	return nil
 }
 func (node *FlexTreeNodeRoot) GetIndex(index int) *list_tree_node {
 	begin := 0
-	for root_index:= range node.child {
-		v:=node.child[root_index]
+	for root_index := range node.child {
+		v := node.child[root_index]
 		end := begin + v.GetCount()
 		if index >= begin && index < end {
 			if i := index - begin; i == 0 {
@@ -247,24 +298,79 @@ func (node *FlexTreeNodeRoot) GetIndex(index int) *list_tree_node {
 	return nil
 }
 
-func (quickview_data *quick_view_data) build_flextree_data() (ret *FlexTreeNodeRoot) {
+func (quickview_data *quick_view_data) build_flextree_data(maxcount int) (ret *FlexTreeNodeRoot) {
 	a := FlexTreeNode{child: []FlexTreeNode{}}
 	ret = &FlexTreeNodeRoot{
 		FlexTreeNode: &a,
-		qk: quickview_data,
+		qk:           quickview_data,
 	}
 	for i := range quickview_data.tree.root {
 		var a = &quickview_data.tree.root[i]
 		parent := FlexTreeNode{data: a}
 		var child = []FlexTreeNode{}
 		for i := range a.children {
-			vv := &a.children[i]
-			child = append(child, FlexTreeNode{data: vv})
+			if i < maxcount && maxcount > 1 {
+				vv := &a.children[i]
+				child = append(child, FlexTreeNode{data: vv})
+			} else {
+				break
+			}
 		}
 		parent.child = child
+		parent.loadcount = len(child)
 		ret.child = append(ret.child, parent)
 	}
 	return ret
+}
+func (n *FlexTreeNode) HasMore() bool {
+	if !n.data.parent {
+		return false
+	}
+	return len(n.data.children) > len(n.child)
+}
+func replaceSegment(original []string, start, end int, newSlice []string) []string {
+	// Ensure the indices are within bounds
+	if start < 0 || end > len(original) || start > end {
+		return original // Return original if indices are out of bounds
+	}
+	return append(original[:start], append(newSlice, original[end:]...)...)
+}
+func (root *FlexTreeNodeRoot) Toggle(node *FlexTreeNode) {
+	if r, e := node.GetRange(root); e == nil {
+		expand := len(root.child) > 0
+		n := node.loadcount
+		if expand {
+			n = 0
+		}
+		child := []FlexTreeNode{}
+		for i, v := range node.data.children {
+			if i < n {
+				child = append(child, FlexTreeNode{data: &v})
+			} else {
+				break
+			}
+		}
+		node.child = child
+		x := node.ListItem()
+		root.ListItem = replaceSegment(root.ListItem, r[0], r[1], x)
+	}
+}
+func (root *FlexTreeNodeRoot) LoadMore(node *FlexTreeNode) {
+	if r, e := node.GetRange(root); e == nil {
+		node.LoadMore()
+		x := node.ListItem()
+		root.ListItem = replaceSegment(root.ListItem, r[0], r[1], x)
+	}
+}
+func (n *FlexTreeNode) LoadMore() {
+	begin := len(n.child)
+	end := min(len(n.data.children), begin+10)
+	for i := begin; i < end; i++ {
+		t := n.data.children[i]
+		f := FlexTreeNode{data: &t}
+		n.child = append(n.child, f)
+	}
+	n.loadcount = len(n.child)
 }
 func (quickview_data *quick_view_data) build_listview_data() []*list_tree_node {
 	// var qk = view.tree

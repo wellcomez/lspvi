@@ -763,16 +763,31 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.cmd_search_key = ""
 	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), Refs)
 	qk.data.tree_to_listemitem()
-	tree := qk.data.build_flextree_data()
+	tree := qk.data.build_flextree_data(10)
 	data := tree.ListString()
+	var loaddata = func(data []string) {
+		qk.view.Clear()
+		for _, v := range data {
+			qk.view.AddItem(v, "", nil)
+		}
+		qk.main.App().ForceDraw()
+	}
 	qk.flex_tree = tree
 	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		n:=tree.GetCaller(i)
-		qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(),&n.Loc)
+		item := tree.GetNodeIndex(i)
+		if item.data.parent {
+			if item.HasMore() {
+				tree.LoadMore(item)
+			} else {
+				tree.Toggle(item)
+			}
+			loaddata(tree.ListItem)
+		} else {
+			n := tree.GetCaller(i)
+			qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
+		}
 	})
-	for _, v := range data {
-		qk.view.AddItem(v, "", nil)
-	}
+	loaddata(data)
 	qk.main.Tab().UpdatePageTitle()
 }
 
