@@ -47,7 +47,7 @@ func (pk *livewgreppicker) name() string {
 	return "Live grep"
 }
 
-func (pk livewgreppicker) open_view_from_tree(index int, prev bool) {
+func (pk livewgreppicker) open_view_form_tree(index int, prev bool) {
 	qk := &pk.impl.quick
 	if data, err := qk.get_data(index); err == nil {
 		if prev {
@@ -224,70 +224,81 @@ func (impl *livewgreppicker) update_preview() {
 	impl.open_view(impl.grep_list_view.GetCurrentItem(), true)
 }
 func (grepx *livewgreppicker) update_list_druring_final() {
+	if grepx.not_live {
+		grepx.end_of_grep()
+	} else {
+		grepx.end_of_livegrep()
+	}
+}
+
+func (grepx *livewgreppicker) end_of_grep() {
 	grep := grepx.impl
 	grep.get_grep_new_data()
 
-	if grepx.not_live {
-		grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
-		grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
-			var o *ref_with_caller
-			qk := &grepx.impl.quick
-			if qk.tree != nil {
-				if s, err := qk.get_data(dataindex); err == nil {
-					o = s
-				}
-			} else {
-				o = &grepx.impl.result.data[dataindex]
+	grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
+	grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
+		var o *ref_with_caller
+		qk := &grepx.impl.quick
+		if qk.tree != nil {
+			if s, err := qk.get_data(dataindex); err == nil {
+				o = s
 			}
-			if o != nil {
-				grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
-			}
-			grepx.parent.hide()
+		} else {
+			o = &grepx.impl.result.data[dataindex]
 		}
-	} else {
-		task := grepx.impl.taskid
-		sss := grepx.impl.last.query
-		Refs := grep.result.data
-		go func() {
-			livegreptag := fmt.Sprint("LG-UI", sss, "-", len(Refs), task)
-			debug.DebugLog(livegreptag, "start to trelist")
-			defer debug.DebugLog(livegreptag, "end to treelist")
-			main := grepx.main
-			qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
-			if grepx.tmp_quick_data != nil {
-				debug.DebugLog(livegreptag, grepx.tmp_quick_data)
-				grepx.tmp_quick_data.abort = true
-			}
-			grepx.tmp_quick_data = qk
-			debug.DebugLog(livegreptag, "treen-begin")
-			data := qk.tree_to_listemitem()
-			if qk.abort {
-				debug.DebugLog(livegreptag, "=======abort-1")
-				return
-			}
-			debug.DebugLog(livegreptag, "treen-end")
-			if task != grepx.impl.taskid {
-				debug.DebugLog(livegreptag, "=======abort-2")
-				return
-			}
-			grep.quick = *qk
-			view := grepx.grep_list_view
-			view.Clear()
-			for i := range data {
-				v := data[i]
-				if task != grepx.impl.taskid {
-					debug.DebugLog(livegreptag, "=======abort-3")
-					return
-				}
-				view.AddItem(v.text, "", nil)
-			}
-			grepx.tmp_quick_data = nil
-			main.App().QueueUpdateDraw(func() {
-				grepx.update_preview()
-				grepx.update_title()
-			})
-		}()
+		if o != nil {
+			grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
+		}
+		grepx.parent.hide()
 	}
+}
+
+func (grepx *livewgreppicker) end_of_livegrep() {
+	grep := grepx.impl
+	grep.get_grep_new_data()
+
+	task := grepx.impl.taskid
+	sss := grepx.impl.last.query
+	Refs := grep.result.data
+	go func() {
+		livegreptag := fmt.Sprint("LG-UI", sss, "-", len(Refs), task)
+		debug.DebugLog(livegreptag, "start to trelist")
+		defer debug.DebugLog(livegreptag, "end to treelist")
+		main := grepx.main
+		qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
+		if grepx.tmp_quick_data != nil {
+			debug.DebugLog(livegreptag, grepx.tmp_quick_data)
+			grepx.tmp_quick_data.abort = true
+		}
+		grepx.tmp_quick_data = qk
+		debug.DebugLog(livegreptag, "treen-begin")
+		data := qk.tree_to_listemitem()
+		if qk.abort {
+			debug.DebugLog(livegreptag, "=======abort-1")
+			return
+		}
+		debug.DebugLog(livegreptag, "treen-end")
+		if task != grepx.impl.taskid {
+			debug.DebugLog(livegreptag, "=======abort-2")
+			return
+		}
+		grep.quick = *qk
+		view := grepx.grep_list_view
+		view.Clear()
+		for i := range data {
+			v := data[i]
+			if task != grepx.impl.taskid {
+				debug.DebugLog(livegreptag, "=======abort-3")
+				return
+			}
+			view.AddItem(v.text, "", nil)
+		}
+		grepx.tmp_quick_data = nil
+		main.App().QueueUpdateDraw(func() {
+			grepx.update_preview()
+			grepx.update_title()
+		})
+	}()
 }
 
 type keydelay struct {
