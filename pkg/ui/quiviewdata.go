@@ -362,6 +362,10 @@ func (root *FlexTreeNodeRoot) LoadMore(node *FlexTreeNode) {
 		root.ListItem = replaceSegment(root.ListItem, r[0], r[1], x)
 	}
 }
+func (item *FlexTreeNode) IsParent() bool {
+	x := item.data.parent
+	return x
+}
 func (n *FlexTreeNode) LoadMore() {
 	begin := len(n.child)
 	end := min(len(n.data.children), begin+10)

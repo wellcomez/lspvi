@@ -775,7 +775,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.flex_tree = tree
 	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
 		item := tree.GetNodeIndex(i)
-		if item.data.parent {
+		if item.IsParent() {
 			if item.HasMore() {
 				tree.LoadMore(item)
 			} else {
@@ -793,6 +793,8 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	loaddata(data)
 	qk.main.Tab().UpdatePageTitle()
 }
+
+
 
 func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) string {
 	v := caller.Loc
