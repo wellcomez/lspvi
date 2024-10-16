@@ -93,7 +93,7 @@ func (pk livewgreppicker) open_view_from_normal_list(cur int, prev bool) bool {
 func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		switch event.Key() {
-		case tcell.KeyUp, tcell.KeyDown:
+		case tcell.KeyUp, tcell.KeyDown, tcell.KeyEnter:
 			pk.grep_list_view.InputHandler()(event, setFocus)
 		}
 	}
@@ -101,10 +101,6 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 
 func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	layout := pk.prev_picker_impl.flex(input, 1)
-	pk.listcustom.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		pk.open_view(index, true)
-		pk.update_title()
-	})
 	x := tview.NewFlex()
 	x.SetDirection(tview.FlexRow)
 	file_include := tview.NewInputField()
@@ -197,10 +193,7 @@ func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	grep.impl.livekeydelay.grepx = grep
 	x.use_cusutom_list(grep.grep_list_view)
 	impl.quick = quick_view_data{main: v.main, ignore_symbol_resolv: true}
-	grep.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		grep.open_view(i, false)
-		v.hide()
-	})
+	grep.set_list_handle()
 	v.Visible = true
 	return grep
 }
@@ -272,11 +265,13 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 		}
 		grepx.tmp_quick_data = qk
 		debug.DebugLog(livegreptag, "treen-begin")
-		data := qk.tree_to_listemitem()
+		qk.tree_to_listemitem()
 		if qk.abort {
 			debug.DebugLog(livegreptag, "=======abort-1")
 			return
 		}
+		tree := qk.build_flextree_data(5)
+		data := tree.ListString()
 		debug.DebugLog(livegreptag, "treen-end")
 		if task != grepx.impl.taskid {
 			debug.DebugLog(livegreptag, "=======abort-2")
@@ -284,6 +279,40 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 		}
 		grep.quick = *qk
 		view := grepx.grep_list_view
+		view.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
+			_, pos, _, parent := tree.GetNodeIndex(index)
+			switch pos {
+			case NodePostion_Root:
+				{
+					tree.Toggle(parent)
+					go RefreshTreeList(view, tree, index)
+					grepx.update_title()
+					return
+				}
+			case NodePostion_LastChild:
+				{
+					if parent.HasMore() {
+						tree.LoadMore(parent)
+						go RefreshTreeList(view, tree, index)
+					}
+				}
+			case NodePostion_Child:
+				{
+					caller := tree.GetCaller(index)
+					loc := caller.Loc
+					grepx.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+					grepx.parent.hide()
+				}
+			}
+
+		})
+		view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+			caller := tree.GetCaller(index)
+
+			loc := caller.Loc
+			grepx.PrevOpen(loc.URI.AsPath().String(), loc.Range.Start.Line)
+			grepx.update_title()
+		})
 		view.Clear()
 		for i := range data {
 			v := data[i]
@@ -291,7 +320,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 				debug.DebugLog(livegreptag, "=======abort-3")
 				return
 			}
-			view.AddItem(v.text, "", nil)
+			view.AddItem(v, "", nil)
 		}
 		grepx.tmp_quick_data = nil
 		main.App().QueueUpdateDraw(func() {
@@ -299,6 +328,14 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			grepx.update_title()
 		})
 	}()
+}
+
+func RefreshTreeList(view *customlist, tree *FlexTreeNodeRoot, index int) {
+	view.Clear()
+	for _, v := range tree.ListItem {
+		view.AddItem(v, "", nil)
+	}
+	view.SetCurrentItem(index)
 }
 
 type keydelay struct {
@@ -466,6 +503,7 @@ func (pk livewgreppicker) Save() {
 	main.save_qf_uirefresh(data)
 }
 func (pk livewgreppicker) UpdateQuery(query string) {
+	pk.set_list_handle()
 	pk.stop_grep()
 	pk.codeprev.Clear()
 	pk.grep_list_view.Clear()
@@ -473,6 +511,16 @@ func (pk livewgreppicker) UpdateQuery(query string) {
 	pk.update_title()
 	pk.impl.query_option.query = query
 	pk.impl.livekeydelay.OnKey(query)
+}
+
+func (pk livewgreppicker) set_list_handle() {
+	pk.grep_list_view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		pk.open_view_from_normal_list(index, true)
+		pk.update_title()
+	})
+	pk.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		pk.open_view_from_normal_list(i, false)
+	})
 }
 
 // close implements picker.
