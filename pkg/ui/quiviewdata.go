@@ -218,7 +218,7 @@ func (view *quick_view_data) BuildListStringGroup(root string, lspmgr *lspcore.L
 			return []*list_tree_node{}
 		}
 		var a *list_tree_node = &view.tree.tree[i]
-		s := view.newMethod(a, lineno)
+		s := view.get_tree_listitem(a, lineno)
 		data = append(data, s...)
 		lineno++
 	}
@@ -226,7 +226,7 @@ func (view *quick_view_data) BuildListStringGroup(root string, lspmgr *lspcore.L
 	return data
 }
 
-func (view *quick_view_data) newMethod(a *list_tree_node, lineno int) (data []*list_tree_node) {
+func (view *quick_view_data) get_tree_listitem(a *list_tree_node, lineno int) (data []*list_tree_node) {
 	parent, _ := a.quickfix_listitem_string(view, lineno, nil)
 	a.get_caller(view).LoadLines()
 	data = append(data, a)
