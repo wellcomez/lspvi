@@ -137,12 +137,14 @@ func (v *fzfmain) use_col() bool {
 func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bool) *greppicker {
 	sym := new_grep_picker(v, v.main.current_editor())
 	sym.parent.Visible = qf == nil
-	sym.quick_view = &quick_view_delegate{qf}
+	if qf!=nil{
+		sym.quick_view = &quick_view_delegate{qf}
+	}
 	if qf == nil {
 		x := sym.grid(v.input)
 		v.create_dialog_content(x, sym)
-		v.update_dialog_title(fmt.Sprintf("grep %s", word))
 	}
+	v.input.SetText(word)
 	sym.livewgreppicker.UpdateQuery(word)
 	return sym
 }

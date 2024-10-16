@@ -211,11 +211,12 @@ func (grepx *livewgreppicker) update_title() {
 		index = index + 1
 	}
 
-	Type := "LiveGrep"
+	x1 := grepx.parent.input.GetText()
+	Type := fmt.Sprintf("LiveGrep [%s]", x1)
 	if grepx.not_live {
-		Type = "Search in Files"
+		Type = fmt.Sprintf("Search [%s] in Files", x1)
 	}
-	s := fmt.Sprintf("%s %s %d/%d", Type, grepx.parent.input.GetText(), index, x)
+	s := fmt.Sprintf("%s %d/%d", Type, index, x)
 	grepx.parent.update_dialog_title(s)
 }
 
