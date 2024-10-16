@@ -67,8 +67,8 @@ type quick_view struct {
 	cmd_search_key string
 	grep           *greppicker
 	sel            *list_multi_select
-
-	cq *CodeOpenQueue
+	flex_tree      *FlexTreeNodeRoot
+	cq             *CodeOpenQueue
 }
 type list_view_tree_extend struct {
 	root           []list_tree_node
@@ -654,7 +654,7 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 		if click {
 			if node.parent {
 				node.expand = !node.expand
-				data := qk.data.tree_to_listemitem(global_prj_root)
+				data := qk.data.tree_to_listemitem()
 				qk.view.Clear()
 				for _, v := range data {
 					qk.view.AddItem(v.text, "", func() {
@@ -762,11 +762,16 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.SetCurrentItem(-1)
 	qk.cmd_search_key = ""
 	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), Refs)
-	data := qk.data.tree_to_listemitem(global_prj_root)
+	qk.data.tree_to_listemitem()
+	tree := qk.data.build_flextree_data()
+	data := tree.ListString()
+	qk.flex_tree = tree
+	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		n:=tree.GetCaller(i)
+		qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(),&n.Loc)
+	})
 	for _, v := range data {
-		qk.view.AddItem(v.text, "", func() {
-
-		})
+		qk.view.AddItem(v, "", nil)
 	}
 	qk.main.Tab().UpdatePageTitle()
 }

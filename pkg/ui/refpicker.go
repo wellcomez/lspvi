@@ -246,7 +246,7 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 	pk.impl.refs = refs
 
 	qk := new_quikview_data(pk.impl.parent.main, data_refs, "", refs)
-	data := qk.tree_to_listemitem(global_prj_root)
+	data := qk.tree_to_listemitem()
 	pk.impl.quick_view_data_model = *qk
 	pk.impl.key = key.Key
 	pk.loadlist(data)

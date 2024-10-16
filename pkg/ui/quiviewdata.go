@@ -37,7 +37,7 @@ func new_quikview_data(m MainService, Type DateType, filename string, Refs []ref
 	return a
 }
 
-func (qk *quick_view_data) tree_to_listemitem(a string) []*list_tree_node {
+func (qk *quick_view_data) tree_to_listemitem() []*list_tree_node {
 	data := qk.build_listview_data()
 	return data
 }
@@ -202,6 +202,69 @@ func (treeroot *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 		trees = append(trees, v)
 	}
 	treeroot.root = trees
+}
+
+type FlexTreeNode struct {
+	data  *list_tree_node
+	child []FlexTreeNode
+}
+type FlexTreeNodeRoot struct {
+	*FlexTreeNode
+	qk *quick_view_data
+}
+
+func (node *FlexTreeNode) GetCount() int {
+	return len(node.child) + 1
+}
+func (node *FlexTreeNodeRoot) ListString() (ret []string) {
+	for _, v := range node.child {
+		ret = append(ret, v.data.text)
+		for _, c := range v.child {
+			ret = append(ret, c.data.text)
+		}
+	}
+	return ret
+}
+
+func (node *FlexTreeNodeRoot) GetCaller(index int) *ref_with_caller {
+	return node.GetIndex(index).get_caller(node.qk)
+}
+func (node *FlexTreeNodeRoot) GetIndex(index int) *list_tree_node {
+	begin := 0
+	for root_index:= range node.child {
+		v:=node.child[root_index]
+		end := begin + v.GetCount()
+		if index >= begin && index < end {
+			if i := index - begin; i == 0 {
+				return node.child[root_index].data
+			} else {
+				return node.child[root_index].child[i-1].data
+			}
+		} else {
+			begin = end
+		}
+	}
+	return nil
+}
+
+func (quickview_data *quick_view_data) build_flextree_data() (ret *FlexTreeNodeRoot) {
+	a := FlexTreeNode{child: []FlexTreeNode{}}
+	ret = &FlexTreeNodeRoot{
+		FlexTreeNode: &a,
+		qk: quickview_data,
+	}
+	for i := range quickview_data.tree.root {
+		var a = &quickview_data.tree.root[i]
+		parent := FlexTreeNode{data: a}
+		var child = []FlexTreeNode{}
+		for i := range a.children {
+			vv := &a.children[i]
+			child = append(child, FlexTreeNode{data: vv})
+		}
+		parent.child = child
+		ret.child = append(ret.child, parent)
+	}
+	return ret
 }
 func (quickview_data *quick_view_data) build_listview_data() []*list_tree_node {
 	// var qk = view.tree

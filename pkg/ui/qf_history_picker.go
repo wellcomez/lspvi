@@ -220,7 +220,7 @@ func (qk *qk_history_picker) updateprev() {
 			caller := keys[index].Result.Refs
 			name := keys[index].Key.File
 			qkv := new_quikview_data(qk.parent.main, item.Type, "", caller)
-			data := qkv.tree_to_listemitem(global_prj_root)
+			data := qkv.tree_to_listemitem()
 			aa := []string{}
 			for _, v := range data {
 				aa = append(aa, v.text)

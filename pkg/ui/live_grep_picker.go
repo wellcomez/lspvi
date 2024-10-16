@@ -260,7 +260,7 @@ func (grepx *livewgreppicker) update_list_druring_final() {
 			}
 			grepx.tmp_quick_data = qk
 			debug.DebugLog(livegreptag, "treen-begin")
-			data := qk.tree_to_listemitem(global_prj_root)
+			data := qk.tree_to_listemitem()
 			if qk.abort {
 				debug.DebugLog(livegreptag, "=======abort-1")
 				return
