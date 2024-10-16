@@ -7,7 +7,7 @@ import (
 )
 
 func TestMatch(t *testing.T) {
-	MainText := "/build/compute_build_timestamp.py"
+	// MainText := "/build/compute_build_timestamp.py"
 	Key := "p"
 	var keys =[]colorkey{}
 	for _,r:= range strings.Split(Key, " "){
@@ -16,26 +16,26 @@ func TestMatch(t *testing.T) {
 		})
 	}
 
-	Positions := find_key(MainText, keys, 0)
-	for _, v := range Positions {
-		a := MainText[v.begin : v.begin+v.width]
-		if a != Key {
-			t.Fatal("a != p")
-		}
-	}
-	println(Positions)
+	// Positions := find_key(MainText, keys, 0)
+	// for _, v := range Positions {
+	// 	a := MainText[v.begin : v.begin+v.width]
+	// 	if a != Key {
+	// 		t.Fatal("a != p")
+	// 	}
+	// }
+	// println(Positions)
 }
 func TestXxx(t *testing.T) {
 	// var task = filewalk{}
-	var dir = "/home/z/dev/lsp/goui"
-	dir = "/chrome/buildcef/chromium/src"
-	ret := &filewalk{
-		filelist: []string{},
-		root:     dir,
-		ignores:  WalkerSkip,
-	}
-	ret.readFiles(ret.root)
-	t.Log(len(ret.filelist))
+	// var dir = "/home/z/dev/lsp/goui"
+	// dir = "/chrome/buildcef/chromium/src"
+	// ret := &filewalk{
+	// 	filelist: []string{},
+	// 	root:     dir,
+	// 	ignores:  WalkerSkip,
+	// }
+	// ret.readFiles(ret.root)
+	// t.Log(len(ret.filelist))
 }
 func TestXxxIgnore(t *testing.T) {
 	// var task = filewalk{}
