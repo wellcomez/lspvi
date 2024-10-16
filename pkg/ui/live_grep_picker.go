@@ -47,8 +47,6 @@ func (pk *livewgreppicker) name() string {
 	return "Live grep"
 }
 
-
-
 func (pk livewgreppicker) update_preview_tree(index int, prev bool) {
 	qk := &pk.impl.quick
 	if data, err := qk.get_data(index); err == nil {
@@ -463,10 +461,10 @@ func (pk livewgreppicker) Save() {
 	main.save_qf_uirefresh(data)
 }
 func (pk livewgreppicker) UpdateQuery(query string) {
-	if len(query) == 0 {
-		pk.stop_grep()
-		pk.grep_list_view.Clear()
-	}
+	pk.stop_grep()
+	pk.codeprev.Clear()
+	pk.grep_list_view.Clear()
+	pk.update_preview()
 	pk.impl.query_option.query = query
 	pk.impl.livekeydelay.OnKey(query)
 }

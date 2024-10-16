@@ -24,6 +24,7 @@ import (
 )
 
 type CodeEditor interface {
+	Clear()
 	IsLoading() bool
 	GetLines(begin, end int) []string
 	GetSelection() string
@@ -358,6 +359,9 @@ type CodeView struct {
 	loading     bool
 }
 
+func (c *CodeView) Clear() {
+	c.LoadBuffer([]byte{}, "")
+}
 func (c CodeView) TreeSitter() *lspcore.TreeSitter {
 	return c.tree_sitter
 }
