@@ -196,7 +196,7 @@ func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 	}
 	grep.impl.livekeydelay.grepx = grep
 	x.use_cusutom_list(grep.grep_list_view)
-	impl.quick = quick_view_data{main: v.main}
+	impl.quick = quick_view_data{main: v.main, ignore_symbol_resolv: true}
 	grep.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
 		grep.open_view(i, false)
 		v.hide()

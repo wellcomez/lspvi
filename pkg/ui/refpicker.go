@@ -121,16 +121,14 @@ func (impl *prev_picker_impl) update_preview() {
 		impl.PrevOpen(item.loc.URI.AsPath().String(), item.loc.Range.Start.Line)
 	}
 }
-func (qk *quick_view_data) reset_tree() {
-	qk.tree = nil
-}
+
 type refpicker_impl struct {
 	*prev_picker_impl
-	file *lspcore.Symbol_file
-	refs []ref_with_caller
-	fzf  *fzf_on_listview
-	key  string
-	qk   quick_view_data
+	file                  *lspcore.Symbol_file
+	refs                  []ref_with_caller
+	fzf                   *fzf_on_listview
+	key                   string
+	quick_view_data_model quick_view_data
 }
 type refpicker struct {
 	impl *refpicker_impl
@@ -246,9 +244,9 @@ func (pk refpicker) OnLspRefenceChanged(key lspcore.SymolSearchKey, file []lsp.L
 	refs := get_loc_caller(pk.impl.parent.main, file, key.Symbol())
 	pk.impl.refs = refs
 
-	qk := new_quikview_data(pk.impl.parent.main, data_refs,"", refs)
+	qk := new_quikview_data(pk.impl.parent.main, data_refs, "", refs)
 	data := qk.tree_to_listemitem(global_prj_root)
-	pk.impl.qk = *qk
+	pk.impl.quick_view_data_model = *qk
 	pk.impl.key = key.Key
 	pk.loadlist(data)
 	pk.update_preview()
@@ -312,7 +310,7 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 	x1.SetSelectedFunc(func(index_list int, s1, s2 string, r rune) {
 		log.Println(index_list, s1, s2, r)
 		data_index := impl.fzf.get_data_index(index_list)
-		if loc, err := impl.qk.get_data(data_index); err == nil {
+		if loc, err := impl.quick_view_data_model.get_data(data_index); err == nil {
 			v.main.OpenFileHistory(loc.Loc.URI.AsPath().String(), &loc.Loc)
 		}
 		v.hide()
@@ -340,7 +338,7 @@ func (pk refpicker) handle_key_override(event *tcell.EventKey, setFocus func(p t
 	handle(event, setFocus)
 	switch event.Key() {
 	case tcell.KeyUp, tcell.KeyDown:
-		if data, err := pk.impl.qk.get_data(pk.impl.listcustom.GetCurrentItem()); err == nil {
+		if data, err := pk.impl.quick_view_data_model.get_data(pk.impl.listcustom.GetCurrentItem()); err == nil {
 			pk.impl.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
 			pk.update_title()
 		}

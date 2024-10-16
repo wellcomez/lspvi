@@ -6,17 +6,24 @@ import (
 
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
+var tag_quickview = "quickdata"
+
 type quick_view_data struct {
-	Refs  search_reference_result
-	tree  *list_view_tree_extend
-	Type  DateType
-	main  MainService
-	abort bool
+	Refs                 search_reference_result
+	tree                 *list_view_tree_extend
+	Type                 DateType
+	main                 MainService
+	abort                bool
+	ignore_symbol_resolv bool
 }
 
+func (qk *quick_view_data) reset_tree() {
+	qk.tree = nil
+}
 func new_quikview_data(m MainService, Type DateType, filename string, Refs []ref_with_caller) *quick_view_data {
 	a := &quick_view_data{
 		main: m,
@@ -47,28 +54,26 @@ func (qk *quick_view_data) get_data(index int) (*ref_with_caller, error) {
 	}
 	return &qk.Refs.Refs[index], nil
 }
-func (qk *quick_view_data) async_open(file string, lspmgr *lspcore.LspWorkspace, r lsp.Range) {
-	// if qk.view == nil {
-	// 	return
-	// }
+func (qk *quick_view_data) async_open(call *ref_with_caller, cb func(error, bool)) {
+	var file string = call.Loc.URI.AsPath().Base()
+	var r lsp.Range = call.Loc.Range
+	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
 	if !qk.need_async_open() {
+		cb(nil, true)
 		return
 	}
 	if sym, _ := lspmgr.Open(file); sym != nil {
 		if err := sym.LspLoadSymbol(); err != nil {
-			return
+			cb(err, false)
 		}
 		if c, _ := lspmgr.GetCallEntry(file, r); c != nil {
-			go qk.main.App().QueueUpdateDraw(func() {
-				// qk.UpdateListView(qk.Type, qk.Refs.Refs, qk.searchkey)
-			})
+			cb(nil, true)
 		}
 	}
 }
-func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, caller *ref_with_caller, lineno int, prev *ref_with_caller) *ref_with_caller {
+func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno int, caller_context *ref_with_caller) (caller *ref_with_caller, next_call_context *ref_with_caller) {
+	caller = tree.get_caller(qk)
 	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
-	parent := tree.parent
-	root := lspmgr.Wk.Path
 	switch qk.Type {
 	case data_refs, data_search, data_grep_word:
 		v := caller.Loc
@@ -77,10 +82,37 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, caller
 			if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
 				caller.Caller = c
 			} else if sym == nil {
-				go qk.async_open(filename, lspmgr, v.Range)
+				go qk.async_open(caller, func(err error, b bool) {
+					if err == nil {
+						if b {
+							tree.lspignore = true
+						} else {
+							if c, _ := lspmgr.GetCallEntry(filename, v.Range); c != nil {
+								caller.Caller = c
+								tree.text = tree.get_treenode_text(qk, caller, caller_context, lineno)
+							}
+						}
+					}
+				})
 			}
 		}
 	}
+	if len(tree.text) == 0 {
+		result := tree.get_treenode_text(qk, caller, caller_context, lineno)
+		tree.text = result
+	} else {
+		debug.DebugLog(tag_quickview, "text not empty")
+	}
+	if caller.Caller != nil {
+		next_call_context = caller
+	}
+	return
+}
+
+func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_with_caller, prev *ref_with_caller, lineno int) string {
+	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
+	parent := tree.parent
+	root := lspmgr.Wk.Path
 	color := tview.Styles.BorderColor
 	editor := qk.main.current_editor()
 	t1 := editor.Path()
@@ -104,27 +136,14 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, caller
 	} else {
 		result = fmt.Sprintf(" %s", list_text)
 	}
-	tree.text = result
-	if caller.Caller == nil {
-		return nil
-	}
-	return caller
+	return result
 }
 func (tree *list_tree_node) get_caller(qk *quick_view_data) *ref_with_caller {
 	caller := &qk.Refs.Refs[tree.ref_index]
 	return caller
 }
 func (qk quick_view_data) need_async_open() bool {
-	switch qk.Type {
-	case data_search, data_grep_word:
-		if qk.Refs.Refs != nil {
-			return len(qk.Refs.Refs) < 250
-		} else {
-			return false
-		}
-	default:
-		return true
-	}
+	return !qk.ignore_symbol_resolv
 }
 
 func (qk *quick_view_data) BuildListString(root string) []string {
@@ -140,7 +159,7 @@ func (qk *quick_view_data) BuildListString(root string) []string {
 				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
 					caller.Caller = c
 				} else if sym == nil {
-					qk.async_open(filename, lspmgr, v.Range)
+					qk.async_open(&caller, func(err error, b bool) {})
 				}
 			}
 		}
@@ -161,6 +180,7 @@ type list_tree_node struct {
 	children      []list_tree_node
 	text          string
 	listbox_count int
+	lspignore     bool
 }
 
 func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
@@ -207,21 +227,19 @@ func (view *quick_view_data) BuildListStringGroup(root string, lspmgr *lspcore.L
 }
 
 func (view *quick_view_data) newMethod(a *list_tree_node, lineno int) (data []*list_tree_node) {
-	parent := a.get_caller(view)
-	a.quickfix_listitem_string(view, parent, lineno, nil)
+	parent, _ := a.quickfix_listitem_string(view, lineno, nil)
 	a.get_caller(view).LoadLines()
 	data = append(data, a)
 	if a.expand {
 		caller := a.get_caller(view)
 		caller.filecache = parent.filecache
-		var prev *ref_with_caller
+		var call_context *ref_with_caller
 		for i := range a.children {
 			if view.abort {
 				return
 			}
 			c := &a.children[i]
-			caller := c.get_caller(view)
-			prev = c.quickfix_listitem_string(view, caller, lineno, prev)
+			_, call_context = c.quickfix_listitem_string(view, lineno, call_context)
 			data = append(data, c)
 		}
 	}
