@@ -190,34 +190,40 @@ func (qk *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
 	qk.tree = trees
 }
 func (view *quick_view_data) BuildListStringGroup(root string, lspmgr *lspcore.LspWorkspace) []*list_tree_node {
-	var qk = view.tree
+	// var qk = view.tree
 	var data = []*list_tree_node{}
 	lineno := 1
-	for i := range qk.tree {
+	for i := range view.tree.tree {
 		if view.abort {
 			return []*list_tree_node{}
 		}
-		a := &qk.tree[i]
-		parent := a.get_caller(view)
-		a.quickfix_listitem_string(view, parent, lineno, nil)
-		a.get_caller(view).LoadLines()
-		data = append(data, a)
-		if a.expand {
-			caller := a.get_caller(view)
-			caller.filecache = parent.filecache
-			var prev *ref_with_caller
-			for i := range a.children {
-				if view.abort {
-					return []*list_tree_node{}
-				}
-				c := &a.children[i]
-				caller := c.get_caller(view)
-				prev = c.quickfix_listitem_string(view, caller, lineno, prev)
-				data = append(data, c)
-			}
-		}
+		var a *list_tree_node = &view.tree.tree[i]
+		s := view.newMethod(a, lineno)
+		data = append(data, s...)
 		lineno++
 	}
-	qk.tree_data_item = data
+	view.tree.tree_data_item = data
+	return data
+}
+
+func (view *quick_view_data) newMethod(a *list_tree_node, lineno int) (data []*list_tree_node) {
+	parent := a.get_caller(view)
+	a.quickfix_listitem_string(view, parent, lineno, nil)
+	a.get_caller(view).LoadLines()
+	data = append(data, a)
+	if a.expand {
+		caller := a.get_caller(view)
+		caller.filecache = parent.filecache
+		var prev *ref_with_caller
+		for i := range a.children {
+			if view.abort {
+				return
+			}
+			c := &a.children[i]
+			caller := c.get_caller(view)
+			prev = c.quickfix_listitem_string(view, caller, lineno, prev)
+			data = append(data, c)
+		}
+	}
 	return data
 }
