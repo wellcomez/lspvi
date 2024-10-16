@@ -237,8 +237,9 @@ func (node *FlexTreeNodeRoot) ListString() (ret []string) {
 func (v *FlexTreeNode) ListItem() (ret []string) {
 	x := v.RootString()
 	ret = append(ret, x)
-	// down := fmt.Sprintf("%c", '\U0000f409')
-	down := "▶"
+	down := ""
+	// down := fmt.Sprintf("%c",'\U000f1464')
+	down = "▶"
 	m := v.HasMore()
 	lastIndex := len(v.child) - 1
 	for i, c := range v.child {
