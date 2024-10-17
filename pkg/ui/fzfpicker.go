@@ -136,7 +136,7 @@ func (v *fzfmain) use_col() bool {
 func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bool) *greppicker {
 	sym := new_grep_picker(v, v.main.current_editor())
 	sym.parent.Visible = qf == nil
-	if qf!=nil{
+	if qf != nil {
 		sym.quick_view = &quick_view_delegate{qf}
 	}
 	if qf == nil {
@@ -176,6 +176,7 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
 	v.Frame.SetBorder(true)
 	v.input.SetLabel(">")
+	v.input.SetText("")
 	UpdateTitleAndColor(v.Frame.Box, sym.name())
 	v.app.SetFocus(v.input)
 	v.Visible = true
@@ -281,7 +282,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 		},
 	}
 	input.SetChangedFunc(func(text string) {
-		if ret.currentpicker!=nil{
+		if ret.currentpicker != nil {
 			ret.currentpicker.UpdateQuery(text)
 		}
 	})
