@@ -67,17 +67,17 @@ func (pk qk_history_picker) handle() func(event *tcell.EventKey, setFocus func(p
 func (t DateType) Icon() string {
 	switch t {
 	case data_search:
-		return fmt.Sprintf("%c",'\uf002')
+		return fmt.Sprintf("%c", '\uf002')
 	case data_implementation:
-		return "Impl"
+		return fmt.Sprintf("%c", '\U000f0b10')
 	case data_refs:
-		return fmt.Sprintf("%c",'\ueb36')
+		return fmt.Sprintf("%c", '\ueb36')
 	case data_bookmark:
-		return fmt.Sprintf("%c",'\U000f0e15')
+		return fmt.Sprintf("%c", '\U000f0e15')
 	case data_callin:
-		return fmt.Sprintf("%c",'\uf51e')
+		return fmt.Sprintf("%c", '\uf51e')
 	case data_grep_word:
-		return fmt.Sprintf("%c",'\U000f0bff')
+		return fmt.Sprintf("%c", '\U000f0bff')
 	}
 	return ""
 }
