@@ -10,7 +10,6 @@ func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
 		livewgreppicker: new_live_grep_picker(v, code),
 	}
 	grep.not_live = true
-
 	return grep
 }
 
@@ -24,8 +23,6 @@ func (g *greppicker) close() {
 	g.livewgreppicker.close()
 }
 
-// UpdateQuery implements picker.
-// Subtle: this method shadows the method (*livewgreppicker).UpdateQuery of greppicker.livewgreppicker.
 func (g *greppicker) UpdateQuery(query string) {
 	// g.query = query
 	if g.impl.fzf_on_result != nil {
@@ -34,25 +31,23 @@ func (g *greppicker) UpdateQuery(query string) {
 	}
 }
 
-// handle implements picker.
-// Subtle: this method shadows the method (*livewgreppicker).handle of greppicker.livewgreppicker.
 func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		var key = event.Key()
-		if key == tcell.KeyEnter {
-			if g.parent.input.HasFocus() {
-				if g.impl.last != g.impl.query_option {
-					RunQuery(g)
-				}
-			} else {
-				g.grep_list_view.InputHandler()(event, nil)
-			}
-		} else if key == tcell.KeyCtrlS {
-			g.Save()
-		} else {
-			switch key {
-			case tcell.KeyDown, tcell.KeyUp:
-				g.grep_list_view.List.Focus(nil)
+		if g.parent.input.HasFocus() {
+			if key == tcell.KeyEnter {
+				RunQuery(g)
+				return
+			} 
+		}
+
+		switch key {
+		case tcell.KeyDown, tcell.KeyUp:
+			g.grep_list_view.List.Focus(nil)
+		case tcell.KeyCtrlS:
+			{
+				g.Save()
+
 			}
 		}
 	}
