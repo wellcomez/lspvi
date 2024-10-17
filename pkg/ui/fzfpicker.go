@@ -163,7 +163,7 @@ func (v *fzfmain) OpenWorkspaceFzf() {
 	v.create_dialog_content(x, sym)
 }
 func (v *fzfmain) OpenHistoryFzf() {
-	sym := new_history_picker(v, v.main.current_editor())
+	sym := new_history_picker(v)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
