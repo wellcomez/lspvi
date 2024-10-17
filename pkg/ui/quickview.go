@@ -762,7 +762,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.SetCurrentItem(-1)
 	qk.cmd_search_key = ""
 	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), Refs)
-	qk.data.tree_to_listemitem()
+	qk.data.go_build_listview_data()
 	tree := qk.data.build_flextree_data(10)
 	data := tree.ListString()
 	var loaddata = func(data []string, i int) {
@@ -789,17 +789,19 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 			}
 		case NodePostion_LastChild:
 			{
-				n := tree.GetCaller(i)
-				qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
-				if more {
-					tree.LoadMore(parent)
-					loaddata(tree.ListItem, i)
+				if n, err := tree.GetCaller(i); err == nil {
+					qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
+					if more {
+						tree.LoadMore(parent)
+						loaddata(tree.ListItem, i)
+					}
 				}
 			}
 		case NodePostion_Child:
 			{
-				n := tree.GetCaller(i)
-				qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
+				if n, err := tree.GetCaller(i); err == nil {
+					qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
+				}
 			}
 		}
 	})
