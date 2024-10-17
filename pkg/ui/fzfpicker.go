@@ -92,7 +92,8 @@ func (pick *fzfmain) MouseHanlde(event *tcell.EventMouse, action tview.MouseActi
 func (v *fzfmain) hide() {
 	v.Visible = false
 	v.currentpicker.close()
-	// v.input.SetText("")
+	v.input.SetChangedFunc(nil)
+	v.input.SetText("")
 	v.input.SetLabel("")
 }
 func (v *fzfmain) open_qfh_picker() {
@@ -147,7 +148,7 @@ func (v *fzfmain) OpenGrepWordFzf(word QueryOption, qf func(bool, ref_with_calle
 	return sym
 }
 func (v *fzfmain) OpenLiveGrepFzf() {
-	sym := new_live_grep_picker(v,DefaultQuery(""))
+	sym := new_live_grep_picker(v, DefaultQuery(""))
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
 }
@@ -180,6 +181,12 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.app.SetFocus(v.input)
 	v.Visible = true
 	v.currentpicker = sym
+	input := v.input
+	input.SetChangedFunc(func(text string) {
+		if v.currentpicker != nil {
+			v.currentpicker.UpdateQuery(text)
+		}
+	})
 }
 
 var modetree = 0
@@ -280,11 +287,7 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 			mouseDownY:     -1,
 		},
 	}
-	input.SetChangedFunc(func(text string) {
-		if ret.currentpicker != nil {
-			ret.currentpicker.UpdateQuery(text)
-		}
-	})
+
 	// new_filewalk(global_prj_root)
 	return ret
 }
