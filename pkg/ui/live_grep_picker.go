@@ -205,9 +205,9 @@ func (grepx *livewgreppicker) update_title() {
 	}
 
 	x1 := grepx.parent.input.GetText()
-	Type := fmt.Sprintf("LiveGrep [%s]", x1)
+	Type := fmt.Sprintf("LiveGrep %s", x1)
 	if grepx.not_live {
-		Type = fmt.Sprintf("Search [%s] in Files", x1)
+		Type = fmt.Sprintf("Search %s in Files", x1)
 	}
 	s := fmt.Sprintf("%s %d/%d", Type, index, x)
 	grepx.parent.update_dialog_title(s)
@@ -260,7 +260,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 		main := grepx.main
 		qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
 		if grepx.tmp_quick_data != nil {
-			debug.DebugLog(livegreptag, grepx.tmp_quick_data)
+			debug.DebugLog(livegreptag, "tmp_quick_data", grepx.tmp_quick_data.abort)
 			grepx.tmp_quick_data.abort = true
 		}
 		grepx.tmp_quick_data = qk
@@ -298,19 +298,20 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 				}
 			case NodePostion_Child:
 				{
-					caller := tree.GetCaller(index)
-					loc := caller.Loc
-					grepx.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+					if caller, err := tree.GetCaller(index); err == nil {
+						loc := caller.Loc
+						grepx.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+					}
 					grepx.parent.hide()
 				}
 			}
 
 		})
 		view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-			caller := tree.GetCaller(index)
-
-			loc := caller.Loc
-			grepx.PrevOpen(loc.URI.AsPath().String(), loc.Range.Start.Line)
+			if caller, err := tree.GetCaller(index); err == nil {
+				loc := caller.Loc
+				grepx.PrevOpen(loc.URI.AsPath().String(), loc.Range.Start.Line)
+			}
 			grepx.update_title()
 		})
 		view.Clear()
@@ -537,40 +538,45 @@ type QueryOption struct {
 }
 
 func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
-	pk.impl.last = query_option
-	query := query_option.query
-	if len(query) == 0 {
+	if query_option == pk.impl.last {
+		return
+	} else {
 		pk.stop_grep()
+	}
+
+	pk.impl.last = query_option
+	pk.impl.taskid++
+	query := pk.impl.last.query
+	pk.impl.key = query
+	pk.grep_list_view.Key = query
+	pk.grep_list_view.Clear()
+	if query == "" {
 		return
 	}
+
 	opt := grep.OptionSet{
 		Grep_only:     true,
 		G:             true,
 		Wholeword:     true,
 		IcludePattern: query_option.include_pattern,
 	}
-	pk.impl.taskid++
-	pk.impl.key = query
-	pk.grep_list_view.Key = query
-	pk.grep_list_view.Clear()
-	g, err := grep.NewGorep(pk.impl.taskid, query, &opt)
-	if err != nil {
-		return
+	if g, err := grep.NewGorep(pk.impl.taskid, query, &opt); err == nil {
+		impl := pk.impl
+		if impl.grep != nil {
+			pk.stop_grep()
+		}
+		impl.grep = g
+		impl.result = &grepresult{}
+		g.CB = pk.end
+		g.Kick(global_prj_root)
 	}
-	impl := pk.impl
-	if impl.grep != nil {
-		pk.stop_grep()
-	}
-	impl.grep = g
-	impl.result = &grepresult{}
-	g.CB = pk.end
-	chans := g.Kick(global_prj_root)
-	go g.Report(chans, false)
 
 }
 
 func (pk *livewgreppicker) stop_grep() {
 	if pk.impl != nil && pk.impl.grep != nil {
 		pk.impl.grep.Abort()
+	} else {
+		debug.DebugLog("stop_grep grep is nil")
 	}
 }
