@@ -121,6 +121,14 @@ func get_icon_file(file string, is_dir bool) string {
 	if is_dir {
 		return closed_folder_icon
 	}
+	return FileIcon(file)
+}
+
+func FileWithIcon(file string) string {
+	Icon:= FileIcon(file)
+	return fmt.Sprintf("%s %s",Icon,file)
+}
+func FileIcon(file string) string {
 	ext := filepath.Ext(file)
 	if len(ext) > 0 && ext[0] == '.' {
 		ext = ext[1:]
