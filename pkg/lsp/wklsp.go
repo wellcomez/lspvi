@@ -350,7 +350,7 @@ func (wk *LspWorkspace) GetCallEntry(filename string, r lsp.Range) (*CallStackEn
 	return &CallStackEntry{
 		Item: lsp.CallHierarchyItem{
 			Name:  s.SymInfo.Name,
-			Range: r,
+			Range: s.SymInfo.Location.Range,
 			URI:   s.SymInfo.Location.URI,
 			Kind:  s.SymInfo.Kind,
 		},

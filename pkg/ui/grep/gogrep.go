@@ -24,6 +24,7 @@ type GrepInfo struct {
 	Line       string
 	Matched    int
 	end        bool
+	X          int
 }
 type contenttype int
 
@@ -86,17 +87,24 @@ type Gorep struct {
 func (g *Gorep) IsRunning() bool {
 	return g.grep_status == GrepRunning
 }
-func (grep *Gorep) Match(strline string) bool {
+func (grep *Gorep) Match(strline string) (Index []int) {
 	grep.count++
 	if grep.pattern == nil {
 		if grep.Option.Ignorecase {
-			return len(str.IndexAllIgnoreCase(strline, grep.ptnstring, 1)) > 0
+			ret := str.IndexAllIgnoreCase(strline, grep.ptnstring, 1)
+			if len(ret) == 1 {
+				Index = append(Index, ret[0]...)
+			}
 		} else {
-			return len(str.IndexAll(strline, grep.ptnstring, 1)) > 0
+			ret := str.IndexAll(strline, grep.ptnstring, 1)
+			if len(ret) == 1 {
+				Index = append(Index, ret[0]...)
+			}
 		}
 	} else {
-		return grep.pattern.MatchString(strline)
+		Index = grep.pattern.FindStringIndex(strline)
 	}
+	return
 }
 func (grep *Gorep) IsAbort() bool {
 	return grep.grep_status == GrepAbort
@@ -338,7 +346,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 			grep.waitMaps.Add(1)
 			go grep.mapsend(path, chans, m)
 		} else if finfo.Type().IsRegular() {
-			chans.grep <- GrepInfo{path, 0, "", 0, false}
+			chans.grep <- GrepInfo{path, 0, "", 0, false,-1}
 		}
 	}
 }

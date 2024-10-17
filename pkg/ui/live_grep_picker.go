@@ -500,7 +500,14 @@ func (a QueryOption) Cap(b bool) QueryOption {
 }
 
 func to_ref_caller(key string, o *grep.GrepOutput) ref_with_caller {
-	b := strings.Index(o.Line, key)
+	b := 0
+	if o.X == -1 {
+		if ind := strings.Index(o.Line, key); ind >= 0 {
+			b = ind
+		}
+	} else {
+		b = o.X
+	}
 	e := b + len(key)
 	// sss := o.Line[b:e]
 	// log.Println(sss)
