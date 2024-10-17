@@ -44,7 +44,7 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	defer syscall.Munmap(mem)
 
 	isBinary := verifyBinary(mem)
-	if isBinary && !grep.scope.binary {
+	if isBinary  {
 		return
 	}
 
@@ -61,7 +61,7 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 		}
 		lineNumber++
 		strline := scanner.Text()
-		finded := grep.newFunction1(strline)
+		finded := grep.Match(strline)
 		if finded {
 			if !grep.just_grep_file {
 				if isBinary {
