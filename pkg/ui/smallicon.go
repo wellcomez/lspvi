@@ -81,7 +81,6 @@ func (c *smallicon) Relocated() {
 	c.forward.relocate(left, top)
 }
 
-
 func (c *smallicon) Draw(screen tcell.Screen) {
 	c.Relocated()
 	main := c.main
@@ -279,4 +278,37 @@ func new_quick_toolbar(main *mainui) *minitoolbar {
 		return x, y
 	}
 	return ret
+}
+
+type IconButton struct {
+	*tview.Box
+	r        rune
+	selected bool
+}
+
+func NewIconButton(r rune) *IconButton {
+	return &IconButton{
+		Box: tview.NewBox(),
+		r:   r,
+	}
+}
+func (icon *IconButton) Draw(screen tcell.Screen) {
+	icon.Box.DrawForSubclass(screen, icon)
+	x, y, _, _ := icon.GetRect()
+	s := get_style_hide(!icon.selected)
+	screen.SetContent(x, y, icon.r, nil, s)
+}
+func (c *IconButton) Primitive() tview.Primitive {
+	return c
+}
+
+func (c *IconButton) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+	return func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+		if InRect(event, c) {
+			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
+				c.selected = !c.selected
+			}
+		}
+		return
+	}
 }
