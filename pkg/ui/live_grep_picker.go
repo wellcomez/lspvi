@@ -223,6 +223,10 @@ func new_live_grep_picker(v *fzfmain, q QueryOption) *livewgreppicker {
 }
 func (grepx *livewgreppicker) update_title() {
 	index := grepx.grep_list_view.GetCurrentItem()
+	update_title_with_index(grepx, index)
+}
+
+func update_title_with_index(grepx *livewgreppicker, index int) {
 	x := grepx.grep_list_view.GetItemCount()
 	if x > 0 {
 		index = index + 1
@@ -545,13 +549,14 @@ func (pk livewgreppicker) UpdateQuery(query string) {
 	pk.impl.livekeydelay.OnKey(query)
 }
 
-func (pk livewgreppicker) set_list_handle() {
+func (pk *livewgreppicker) set_list_handle() {
 	pk.grep_list_view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		pk.open_view_from_normal_list(index, true)
-		pk.update_title()
+		update_title_with_index(pk,index)
 	})
 	pk.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		pk.open_view_from_normal_list(i, false)
+		idx:=pk.grep_list_view.GetCurrentItem()
+		pk.open_view_from_normal_list(idx, false)
 	})
 }
 

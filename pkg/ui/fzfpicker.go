@@ -92,7 +92,7 @@ func (pick *fzfmain) MouseHanlde(event *tcell.EventMouse, action tview.MouseActi
 func (v *fzfmain) hide() {
 	v.Visible = false
 	v.currentpicker.close()
-	v.input.SetText("")
+	// v.input.SetText("")
 	v.input.SetLabel("")
 }
 func (v *fzfmain) open_qfh_picker() {

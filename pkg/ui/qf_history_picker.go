@@ -64,6 +64,23 @@ func (pk qk_history_picker) handle_key_override(event *tcell.EventKey, setFocus 
 func (pk qk_history_picker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return pk.handle_key_override
 }
+func (t DateType) Icon() string {
+	switch t {
+	case data_search:
+		return fmt.Sprintf("%c",'\uf002')
+	case data_implementation:
+		return "Impl"
+	case data_refs:
+		return fmt.Sprintf("%c",'\ueb36')
+	case data_bookmark:
+		return fmt.Sprintf("%c",'\U000f0e15')
+	case data_callin:
+		return fmt.Sprintf("%c",'\uf51e')
+	case data_grep_word:
+		return fmt.Sprintf("%c",'\U000f0bff')
+	}
+	return ""
+}
 func (t DateType) String() string {
 	switch t {
 	case data_search:
@@ -138,7 +155,7 @@ func load_qf_history(main MainService) ([]qf_history_data, []string) {
 		if len(v.Key.File) > 0 {
 			file_info = fmt.Sprintf("%s %d:%d", strings.ReplaceAll(v.Key.File, root, ""), v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
 		}
-		keymaplist = append(keymaplist, fmt.Sprintf("%-10s %-20s  %s", v.Type.String(), v.Key.Key, file_info))
+		keymaplist = append(keymaplist, fmt.Sprintf("%-3s %-20s  %s", v.Type.Icon(), v.Key.Key, file_info))
 	}
 	return keys, keymaplist
 }
