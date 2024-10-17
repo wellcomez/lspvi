@@ -148,8 +148,15 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 
 	var saveIcon = fmt.Sprintf("%c", '\uf0c7') // Floppy disk emoji
 	save_btn := tview.NewButton(saveIcon)
-	save_btn.SetSelectedFunc(func() {
-		pk.Save()
+	save_btn.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if InRect(event, save_btn) {
+			switch action {
+			case tview.MouseLeftClick, tview.MouseLeftDown, tview.MouseLeftDoubleClick:
+				pk.Save()
+				return tview.MouseConsumed, nil
+			}
+		}
+		return action, event
 	})
 	set_color(save_btn)
 
@@ -157,16 +164,19 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	input_filter.SetDirection(tview.FlexColumn)
 
 	exclude := NewIconButton('\ueae5')
+	exclude.selected = pk.impl.query_option.Exclude
 	exclude.click = func(b bool) {
 		pk.impl.query_option.Exclude = b
 	}
 
 	cap := NewIconButton('\ueab1')
+	cap.selected = !pk.impl.query_option.Ignorecase
 	cap.click = func(b bool) {
 		pk.impl.query_option.Ignorecase = !b
 	}
 
 	word := NewIconButton('\ueb7e')
+	word.selected = pk.impl.query_option.Wholeword
 	word.click = func(b bool) {
 		pk.impl.query_option.Wholeword = b
 	}
@@ -191,10 +201,11 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 //		return layout
 //	}
 
-func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
+func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v)
 	impl := &grep_impl{taskid: int(time.Now().Second()) * 100}
+	impl.query_option.Ignorecase = true
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
 		grep_list_view:   new_customlist(false),
