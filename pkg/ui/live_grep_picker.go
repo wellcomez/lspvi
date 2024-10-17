@@ -18,8 +18,8 @@ type grepresult struct {
 	data []ref_with_caller
 }
 type grep_impl struct {
-	result        *grepresult
-	temp          *grepresult
+	result        grepresult
+	temp          grepresult
 	grep          *grep.Gorep
 	taskid        int
 	query_option  QueryOption
@@ -72,9 +72,6 @@ func (pk livewgreppicker) open_view_from_normal_list(cur int, prev bool) bool {
 		if cur < 0 {
 			return true
 		}
-	}
-	if pk.impl.result == nil {
-		return true
 	}
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
@@ -370,12 +367,10 @@ func (k *keydelay) OnKey(s string) {
 func (impl *grep_impl) get_grep_new_data() (draw bool, data []ref_with_caller) {
 	grep := impl
 	tmp := grep.temp
-	draw = tmp != nil
-	if tmp != nil {
-		data = tmp.data
-		grep.temp = nil
-		grep.result.data = append(grep.result.data, tmp.data...)
-	}
+	draw = len(tmp.data) > 0
+	data = tmp.data
+	grep.result.data = append(grep.result.data, tmp.data...)
+	grep.temp = grepresult{}
 	return
 }
 func (grepx *livewgreppicker) update_list_druring_grep() {
@@ -440,16 +435,6 @@ func (v quick_view_delegate) update_ui(o *grep.GrepOutput, grepx *livewgreppicke
 }
 
 func (grep *grep_impl) AddData(o *grep.GrepOutput) bool {
-	if grep.result == nil {
-		grep.result = &grepresult{
-			data: []ref_with_caller{},
-		}
-	}
-	if grep.temp == nil {
-		grep.temp = &grepresult{
-			data: []ref_with_caller{},
-		}
-	}
 	grep.temp.data = append(grep.temp.data, to_ref_caller(grep.key, o))
 	if len(grep.result.data) > 50 {
 		if len(grep.temp.data) < 50 {
@@ -539,10 +524,14 @@ type QueryOption struct {
 
 func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 	if query_option == pk.impl.last {
-		return
-	} else {
-		pk.stop_grep()
+		if grep := pk.impl.grep; grep != nil {
+			if grep.IsRunning() {
+				return
+			}
+		}
 	}
+
+	pk.stop_grep()
 
 	pk.impl.last = query_option
 	pk.impl.taskid++
@@ -566,7 +555,7 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 			pk.stop_grep()
 		}
 		impl.grep = g
-		impl.result = &grepresult{}
+		impl.result = grepresult{}
 		g.CB = pk.end
 		g.Kick(global_prj_root)
 	}
