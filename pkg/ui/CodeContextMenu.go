@@ -21,24 +21,39 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	code.view.get_click_line_inview(event)
 	right_menu_data := code.right_menu_data
 	pos := root.event_to_cursor_position(event) // pos = avoid_position_overflow(root, pos)
-
 	if action == tview.MouseRightClick {
 
-		//select line
+		//select li
 		selected := code.get_selected_lines()
 		right_menu_data.previous_selection = selected
+		loc_inside_select := false
 
 		Loc := code.view.tab_loc(pos)
+
+		if selected.begin.LessEqual(Loc) && selected.end.GreaterEqual(Loc) && selected.selected_text != "" {
+			loc_inside_select = true
+		}
 		right_menu_data.local_changed = root.Cursor.Loc != (Loc)
 		//save cursor loc
 		cursor_data := *root.Cursor
 		right_menu_data.rightmenu_loc = Loc
 
-		//get selected text
-		word_select_cursor := code.SelectWordFromCopyCursor(cursor_data)
-		_, s := get_codeview_text_loc(root.View, word_select_cursor.CurSelection[0], word_select_cursor.CurSelection[1])
-		menu.code.right_menu_data.select_text = s
-		menu.code.right_menu_data.selection_range = text_loc_to_range(word_select_cursor.CurSelection)
+		if loc_inside_select {
+			menu.code.right_menu_data.select_text = selected.selected_text
+			menu.code.right_menu_data.selection_range.Start = lsp.Position{
+				Line:      selected.begin.Y,
+				Character: selected.begin.X}
+			menu.code.right_menu_data.selection_range.End = lsp.Position{
+				Line:      selected.end.Y,
+				Character: selected.end.X}
+		} else {
+			//get selected text
+			word_select_cursor := code.SelectWordFromCopyCursor(cursor_data)
+			_, s := get_codeview_text_loc(root.View, word_select_cursor.CurSelection[0], word_select_cursor.CurSelection[1])
+			// selected.begin.LessEqual(femto.Loc{})
+			menu.code.right_menu_data.select_text = s
+			menu.code.right_menu_data.selection_range = text_loc_to_range(word_select_cursor.CurSelection)
+		}
 
 		// move cursor to mouse postion
 		code.set_loc(Loc)

@@ -81,6 +81,7 @@ func (c *smallicon) Relocated() {
 	c.forward.relocate(left, top)
 }
 
+
 func (c *smallicon) Draw(screen tcell.Screen) {
 	c.Relocated()
 	main := c.main
@@ -114,13 +115,28 @@ func (c *smallicon) Draw(screen tcell.Screen) {
 	c.forward.Draw(screen, get_style_hide(!c.main.CanGoFoward()).Bold(true))
 }
 
+// func newFunction1(main *mainui, c *smallicon, screen tcell.Screen, x tcell.Style) {
+// 	if view_outline_list.to_view_link(main).Hide {
+// 		c.outline.s[0] = right_close
+// 	} else {
+// 		c.outline.s[0] = right_open
+// 	}
+// 	c.outline.Draw(screen, x)
+
+// 	if view_file.to_view_link(main).Hide {
+// 		c.file.s[0] = left_close
+// 	} else {
+// 		c.file.s[0] = left_open
+// 	}
+// }
+
 func new_small_icon(main *mainui) *smallicon {
 	str_back = '\U000f0b28'
 	str_forward = '\U000f0b2a'
 
 	smallicon := &smallicon{
-		file:    icon{s: []rune{block_str}},
-		outline: icon{s: []rune{block_str}},
+		file:    icon{s: []rune{'\U000f10aa'}},
+		outline: icon{s: []rune{'\U000f10ab'}},
 		back:    icon{s: []rune{' ', str_back, ' '}},
 		forward: icon{s: []rune{str_forward}},
 		main:    main,
