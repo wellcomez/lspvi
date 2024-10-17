@@ -287,7 +287,7 @@ func new_qf_index_view(main *mainui) *qf_index_view {
 	go func() {
 		for {
 			var v = <-qk_index_update
-			main.app.QueueUpdateDraw(func() {
+			go main.app.QueueUpdateDraw(func() {
 				ret.Load(v)
 			})
 		}
