@@ -2,6 +2,7 @@ package grep
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -22,6 +23,7 @@ type GrepInfo struct {
 	LineNumber int
 	Line       string
 	Matched    int
+	end        bool
 }
 type contenttype int
 
@@ -80,6 +82,7 @@ type Gorep struct {
 	filecount       int
 	just_grep_file  bool
 	global_prj_root string
+	opened_file     int
 	// report_end      chan bool
 	grep_status grep_status
 }
@@ -99,19 +102,19 @@ func (grep *Gorep) Abort() {
 	switch grep.grep_status {
 	case GrepRunning:
 		grep.grep_status = GrepAbort
-		// grep.report_end <- true
+		grep.CB = nil
+		debug.DebugLog(GrepTag, "Run Abort", grep.String())
 		return
 	}
 }
 
 const separator = string(os.PathSeparator)
 
-func (grep *Gorep) Report(chans *channelSet, isColor bool) {
+func (grep *Gorep) Report(chans *channelSet) {
 	// var markGrep string
 	var waitReports sync.WaitGroup
 
 	chPrint := make(chan GrepOutput)
-	chPrintEnd := make(chan string)
 
 	go func() {
 		for {
@@ -120,13 +123,6 @@ func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 				if grep.grep_status == GrepRunning {
 					grep.CB(grep.id, &msg)
 				}
-			case <-chPrintEnd:
-				if grep.grep_status == GrepRunning {
-					grep.CB(grep.id, nil)
-					grep.grep_status = GrepDone
-				}
-				debug.InfoLog("Routine Report End ", "Pattern =", grep.ptnstring)
-				return
 			}
 		}
 	}()
@@ -167,8 +163,6 @@ func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 		default:
 			break
 		}
-		grep.Debug("Reporter End")
-		chPrintEnd <- mark
 	}
 
 	waitReports.Add(1)
@@ -229,7 +223,7 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 	return base, nil
 }
 
-func (grep *Gorep) Kick(fpath string) *channelSet {
+func (grep *Gorep) Kick(fpath string) {
 	grep.global_prj_root = fpath
 	chsMap := makeChannelSet()
 	chsReduce := makeChannelSet()
@@ -245,7 +239,7 @@ func (grep *Gorep) Kick(fpath string) *channelSet {
 	go func() {
 		grep.reduce(chsMap, chsReduce)
 	}()
-	return chsReduce
+	go grep.Report(chsReduce)
 }
 
 func makeChannelSet() *channelSet {
@@ -274,10 +268,22 @@ func closeChannelSet(chans *channelSet) {
 func (grep *Gorep) Debug(s string) {
 	debug.InfoLog(GrepTag, s, "Abort=", grep.grep_status, "id=", grep.id, "Files", grep.filecount, "Line=", grep.count, grep.ptnstring, time.Now().UnixMilli()-grep.begintm)
 }
+func (grep *Gorep) String() string {
+	status := ""
+	switch grep.grep_status {
+	case GrepRunning:
+		status = "Running"
+	case GrepAbort:
+		status = "Abort"
+	case GrepDone:
+		status = "Done"
+	}
+	return fmt.Sprintln(grep.id, grep.ptnstring, "Opened", grep.opened_file, "status=", status, "Files", grep.filecount, "Line=", grep.count, time.Now().UnixMilli()-grep.begintm)
+}
 func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 	defer grep.waitMaps.Done()
+	debug.TraceLog(GrepTag, "mapsend ", grep.String())
 	if grep.IsAbort() {
-		debug.DebugLog("Abort Return " + fpath)
 		return
 	}
 	/* expand dir */
@@ -290,7 +296,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 
 	for _, finfo := range list {
 		if grep.IsAbort() {
-			debug.DebugLog(GrepTag, "Abort Return "+grep.ptnstring)
+			debug.DebugLog(GrepTag, "mapsend ", grep.String())
 			return
 		}
 		fname := finfo.Name()
@@ -326,7 +332,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 			grep.waitMaps.Add(1)
 			go grep.mapsend(path, chans, m)
 		} else if finfo.Type().IsRegular() {
-			chans.grep <- GrepInfo{path, 0, "", 0}
+			chans.grep <- GrepInfo{path, 0, "", 0, false}
 		}
 	}
 }
@@ -334,11 +340,23 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 func (grep *Gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
 	go func(in <-chan GrepInfo, out chan<- GrepInfo) {
 		for msg := range in {
+			if grep.IsAbort() {
+				debug.DebugLog(GrepTag, "reduce abort ", grep.String())
+				continue
+			}
 			grep.waitGreps.Add(1)
+			grep.opened_file++
 			go grep.grep(msg.Fpath, out)
 		}
 		grep.waitGreps.Wait()
 		close(out)
+		debug.DebugLog("reduce done", grep.String())
+		if grep.grep_status == GrepRunning {
+			grep.grep_status = GrepDone
+			if grep.CB != nil {
+				grep.CB(grep.id, nil)
+			}
+		}
 	}(chsIn.grep, chsOut.grep)
 }
 
@@ -359,4 +377,5 @@ func verifyBinary(buf []byte) bool {
 func (grep *Gorep) grep(fpath string, out chan<- GrepInfo) {
 	//fmt.Fprintf(os.Stderr, "grep mmap error: %v\n", err)
 	RunGrep(grep, fpath, out)
+	grep.opened_file--
 }

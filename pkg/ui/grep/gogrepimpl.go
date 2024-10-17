@@ -16,7 +16,7 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	defer func() {
 		grep.waitGreps.Done()
 	}()
-	if grep.IsAbort(){
+	if grep.IsAbort() {
 		return
 	}
 	// if strings.HasPrefix(fpath, grep.global_prj_root) {
@@ -55,7 +55,7 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	scanner.Split(bufio.ScanLines)
 	lineNumber := 0
 
-	var ret = GrepInfo{fpath, lineNumber, "", 0}
+	var ret = GrepInfo{fpath, lineNumber, "", 0, false}
 	for scanner.Scan() {
 		lineNumber++
 		strline := scanner.Text()
@@ -63,10 +63,10 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 		if finded {
 			if !grep.just_grep_file {
 				if isBinary {
-					out <- GrepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath), 1}
+					out <- GrepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath), 1, false}
 					return
 				} else {
-					out <- GrepInfo{fpath, lineNumber, strline, 1}
+					out <- GrepInfo{fpath, lineNumber, strline, 1, false}
 				}
 			} else {
 				if ret.Matched == 0 {
