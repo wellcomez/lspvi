@@ -5,9 +5,9 @@ import (
 	"github.com/rivo/tview"
 )
 
-func new_grep_picker(v *fzfmain, code CodeEditor) *greppicker {
+func new_grep_picker(v *fzfmain) *greppicker {
 	grep := &greppicker{
-		livewgreppicker: new_live_grep_picker(v, code),
+		livewgreppicker: new_live_grep_picker(v),
 	}
 	grep.not_live = true
 	return grep
