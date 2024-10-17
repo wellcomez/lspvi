@@ -21,6 +21,7 @@ import (
 
 	// "zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/grep"
 )
 
 type quick_preview struct {
@@ -81,11 +82,12 @@ func (l list_view_tree_extend) NeedCreate() bool {
 }
 
 type qf_history_data struct {
-	Type   DateType
-	Key    lspcore.SymolSearchKey
-	Result search_reference_result
-	Date   int64
-	UID    string
+	Type         DateType
+	Key          lspcore.SymolSearchKey
+	Result       search_reference_result
+	Date         int64
+	UID          string
+	SearchOption QueryOption
 }
 
 func (main *mainui) save_qf_uirefresh(data qf_history_data) error {
@@ -108,7 +110,9 @@ func (h *qf_history_data) ListItem() string {
 func (qk quick_view) save() error {
 	date := time.Now().Unix()
 	qk.main.save_qf_uirefresh(
-		qf_history_data{qk.Type, qk.searchkey, qk.data.Refs, date, ""})
+		qf_history_data{qk.Type, qk.searchkey, qk.data.Refs, date, "", QueryOption{
+			grep.OptionSet{Ignorecase: true},
+		}})
 	return nil
 }
 
@@ -392,7 +396,7 @@ func convert_string_colortext(colors []int, s string, normal tcell.Color, hl tce
 		begin := 0
 		for _, v := range colors2 {
 			normal_text := s[begin:v.X]
-			ss = append(ss, colortext{normal_text,normal})
+			ss = append(ss, colortext{normal_text, normal})
 			x := s[v.X:v.Y]
 			ss = append(ss, colortext{x, hl})
 			begin = v.Y
@@ -920,8 +924,8 @@ func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
 		}
 	}
 	if v.Range.Start.Line == v.Range.End.Line {
-		s := max(v.Range.Start.Character,0)
-		e := max(v.Range.End.Character,0)
+		s := max(v.Range.Start.Character, 0)
+		e := max(v.Range.End.Character, 0)
 		if len(line) > s && len(line) >= e && s < e {
 			a1 := line[:s]
 			a := line[s:e]

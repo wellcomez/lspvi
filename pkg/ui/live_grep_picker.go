@@ -504,8 +504,9 @@ func to_ref_caller(key string, o *grep.GrepOutput) ref_with_caller {
 func (pk livewgreppicker) Save() {
 	Result := search_reference_result{}
 	data := qf_history_data{Type: data_grep_word,
-		Key:  lspcore.SymolSearchKey{Key: pk.impl.key},
-		Date: time.Now().Unix(),
+		Key:          lspcore.SymolSearchKey{Key: pk.impl.key},
+		Date:         time.Now().Unix(),
+		SearchOption: pk.impl.last,
 	}
 	Result.Refs = append(Result.Refs, pk.impl.result.data...)
 	data.Result = Result
