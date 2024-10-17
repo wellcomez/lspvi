@@ -130,12 +130,14 @@ func (c *smallicon) Draw(screen tcell.Screen) {
 // 	}
 // 	c.outline.Draw(screen, x)
 
-// 	if view_file.to_view_link(main).Hide {
-// 		c.file.s[0] = left_close
-// 	} else {
-// 		c.file.s[0] = left_open
-// 	}
-// }
+//		if view_file.to_view_link(main).Hide {
+//			c.file.s[0] = left_close
+//		} else {
+//			c.file.s[0] = left_open
+//		}
+//	}
+var file_rune = '\U000f10aa'
+var outline_rune = '\U000f10ab'
 
 func new_small_icon(main *mainui) *smallicon {
 	str_back = '\U000f0b28'
@@ -282,6 +284,88 @@ func new_quick_toolbar(main *mainui) *minitoolbar {
 	}
 	ret.getxy = func() (int, int) {
 		x, y, w, _ := main.page.GetRect()
+		x = x + w - ret.Width()
+		return x, y
+	}
+	return ret
+}
+func new_top_toolbar(main *mainui) *minitoolbar {
+	icons := []icon{}
+	for i := range SplitCode.index {
+		id := SplitCode.index[i]
+		if view, ok := SplitCode.code_collection[id]; ok {
+			a := icon{click: func() {
+				if id != view_code {
+					if view, ok := SplitCode.code_collection[id]; ok {
+						SplitClose(view).handle()
+					}
+				}
+			}, style: func() tcell.Style {
+				focus_color := tcell.ColorYellow
+				style := get_style_hide(false)
+				focus := false
+				focus = view.view.HasFocus() || view == main.current_editor()
+				if focus {
+					style = style.Foreground(focus_color)
+				}
+				return style
+			}}
+			for _, v := range FileIcon(view.FileName()) {
+				a.s = append(a.s, v)
+			}
+			if id == view_code {
+				icons = append([]icon{a}, icons...)
+			} else {
+				icons = append(icons, a)
+			}
+		}
+	}
+	var back = icon{
+		s: []rune{' ', str_back, ' '},
+		click: func() {
+			main.GoBack()
+		},
+		style: func() tcell.Style {
+			return get_style_hide(!main.CanGoBack())
+		},
+	}
+	var forward = icon{
+		s: []rune{str_forward, ' '},
+		click: func() {
+			main.GoForward()
+		},
+		style: func() tcell.Style {
+			return get_style_hide(!main.CanGoFoward())
+		},
+	}
+	var file = icon{
+		s: []rune{file_rune, ' '},
+		click: func() {
+			main.toggle_view(view_file)
+		},
+		style: func() tcell.Style {
+			return get_style_hide(view_file.to_view_link(main).Hide)
+		},
+	}
+	var outline = icon{
+		s: []rune{outline_rune, ' '},
+		click: func() {
+			main.toggle_view(view_outline_list)
+		},
+		style: func() tcell.Style {
+			return get_style_hide(view_outline_list.to_view_link(main).Hide)
+		},
+	}
+	icons = append(icons, []icon{back, forward, file, outline}...)
+	ret := &minitoolbar{
+		item: icons,
+	}
+	ret.getxy = func() (int, int) {
+		v := SplitCode.Last()
+		if v == nil {
+			v = main.codeview
+		}
+		x, y, w, _ := v.view.GetRect()
 		x = x + w - ret.Width()
 		return x, y
 	}

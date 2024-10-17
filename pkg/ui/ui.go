@@ -64,7 +64,6 @@ type rootlayout struct {
 	// hide_cb     func()
 }
 
-
 type MainService interface {
 	Close()
 	quit()
@@ -813,6 +812,7 @@ func (main *mainui) on_change_color(name string) {
 	global_theme.update_controller_theme()
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
+	new_top_toolbar(main).Draw(screen)
 	if main.current_editor().vid().is_editor_main() {
 		x, y, w, _ := main.codeview.view.GetInnerRect()
 		left := x
@@ -840,7 +840,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 			main.quickview.quickview.draw(l, t+h-height, w, height, screen)
 		}
 	}
-	main.code_navigation_bar.Draw(screen)
+	// main.code_navigation_bar.Draw(screen)
 	if !main.layout.dialog.Visible {
 		main.quickbar.Draw(screen)
 	}
@@ -882,7 +882,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 	}
 
 	main.sel.handle_mouse_selection(action, event)
-	main.code_navigation_bar.handle_mouse_event(action, event)
+	new_top_toolbar(main).handle_mouse_event(action, event)
 	main.quickbar.handle_mouse_event(action, event)
 
 	for _, v := range resizer {
