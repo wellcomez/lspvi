@@ -83,9 +83,11 @@ type Gorep struct {
 	just_grep_file  bool
 	global_prj_root string
 	opened_file     int
-	grep_status grep_status
+	grep_status     grep_status
+	default_gi      gi.Matcher
 }
-func(g *Gorep)IsRunning() bool {
+
+func (g *Gorep) IsRunning() bool {
 	return g.grep_status == GrepRunning
 }
 func (grep *Gorep) newFunction1(strline string) bool {
@@ -117,7 +119,7 @@ func (grep *Gorep) Report(chans *channelSet) {
 
 	chPrint := make(chan GrepOutput)
 	chEnd := make(chan bool)
-	
+
 	go func() {
 		for {
 			select {
@@ -167,7 +169,7 @@ func (grep *Gorep) Report(chans *channelSet) {
 		default:
 			break
 		}
-		chEnd <-true
+		chEnd <- true
 	}
 
 	waitReports.Add(1)
@@ -236,8 +238,8 @@ func (grep *Gorep) Kick(fpath string) {
 	go func() {
 		home, _ := os.UserHomeDir()
 		ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
-		m := gi.NewMatcher(ps, true)
-		grep.mapsend(fpath, chsMap, m)
+		grep.default_gi = gi.NewMatcher(ps, false)
+		grep.mapsend(fpath, chsMap, grep.default_gi)
 		grep.waitMaps.Wait()
 		closeChannelSet(chsMap)
 	}()
@@ -297,7 +299,10 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 		debug.ErrorLog(GrepTag, "readir error: ", err)
 		return
 	}
-	m.Enter(fpath)
+	if data, err := gi.EnterDir(fpath); err == nil && len(data) > 0 {
+		m = gi.NewMatcher(grep.default_gi.Patterns(), false)
+		m.AddPatterns(data)
+	}
 
 	for _, finfo := range list {
 		if grep.IsAbort() {

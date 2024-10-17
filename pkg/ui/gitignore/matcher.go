@@ -51,16 +51,16 @@ func (b *BloomFilter) Contains(item string) bool {
 }
 
 // Matcher defines a global multi-pattern matcher for gitignore patterns
-type Matcher interface {
-	// Match matches patterns in the order of priorities. As soon as an inclusion or
-	// exclusion is found, not further matching is performed.
-	Match(path []string, isDir bool) bool
+// type Matcher interface {
+// 	// Match matches patterns in the order of priorities. As soon as an inclusion or
+// 	// exclusion is found, not further matching is performed.
+// 	Match(path []string, isDir bool) bool
 
-	AddPatterns(ps []Pattern)
-	Patterns() []Pattern
-	MatchFile(string, bool) bool
-	Enter(dir string)
-}
+// 	AddPatterns(ps []Pattern)
+// 	Patterns() []Pattern
+// 	MatchFile(string, bool) bool
+// 	Enter(dir string)
+// }
 
 // NewMatcher constructs a new global matcher. Patterns must be given in the order of
 // increasing priority. That is most generic settings files first, then the content of
@@ -73,23 +73,26 @@ func NewMatcher(ps []Pattern, bffilter bool) Matcher {
 	if bffilter {
 		bf = NewBloomFilter(100000, 3)
 	}
-	return &matcher{ps, bf}
+	return Matcher{ps, bf}
 }
 
-type matcher struct {
+type Matcher struct {
 	patterns []Pattern
 	// bf       *bloomfilter.Filter
 	bf *BloomFilter
 }
 
-func (m *matcher) Enter(dir string) {
-	ps, _ := ReadIgnoreFile(filepath.Join(dir, ".gitignore"))
-	if len(ps) > 0 {
-		m.AddPatterns(ps)
+func (m *Matcher) Enter(dir string) {
+	if d, err := EnterDir(dir); len(d) > 0 && err == nil {
+		m.AddPatterns(d)
 	}
 }
 
-func (m *matcher) MatchFile(file string, isdir bool) bool {
+func EnterDir(dir string) ([]Pattern, error) {
+	return ReadIgnoreFile(filepath.Join(dir, ".gitignore"))
+}
+
+func (m *Matcher) MatchFile(file string, isdir bool) bool {
 	if m.bf != nil {
 		if !m.bf.Contains(file) {
 			return false
@@ -98,7 +101,7 @@ func (m *matcher) MatchFile(file string, isdir bool) bool {
 	ss := strings.Split(file, "/")
 	return m.Match(ss[1:], isdir)
 }
-func (m *matcher) Match(path []string, isDir bool) bool {
+func (m *Matcher) Match(path []string, isDir bool) bool {
 	n := len(m.patterns)
 	for i := n - 1; i >= 0; i-- {
 		if match := m.patterns[i].Match(path, isDir); match > NoMatch {
@@ -108,15 +111,17 @@ func (m *matcher) Match(path []string, isDir bool) bool {
 	return false
 }
 
-func (m *matcher) AddPatterns(ps []Pattern) {
-	for _, v := range ps {
-		for _, b := range v.BfPth() {
-			m.bf.Add(b)
+func (m *Matcher) AddPatterns(ps []Pattern) {
+	if m.bf != nil {
+		for _, v := range ps {
+			for _, b := range v.BfPth() {
+				m.bf.Add(b)
+			}
 		}
 	}
 	m.patterns = append(m.patterns, ps...)
 }
 
-func (m *matcher) Patterns() []Pattern {
+func (m *Matcher) Patterns() []Pattern {
 	return m.patterns
 }
