@@ -140,11 +140,11 @@ type MainService interface {
 	Bookmark() *proj_bookmark
 	Tab() *tabmgr
 
-	qf_grep_word(rightmenu_select_text string)
+	qf_grep_word(QueryOption)
 
 	Mode() mode
 
-	open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker
+	open_picker_grep(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker
 	OnCodeLineChange(x, y int, file string)
 
 	OnSymbolistChanged(file *lspcore.Symbol_file, err error)
@@ -1280,7 +1280,7 @@ func (main *mainui) open_picker_refs() {
 func (main *mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(global_prj_root)
 }
-func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker {
+func (main *mainui) open_picker_grep(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker {
 	return main.layout.dialog.OpenGrepWordFzf(word, qf)
 }
 func (main *mainui) open_picker_livegrep() {

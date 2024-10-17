@@ -468,16 +468,28 @@ func (grep *grep_impl) AddData(o *grep.GrepOutput) bool {
 	return true
 }
 
-// func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
-// 	loc := lsp.Location{
-// 		URI: lsp.NewDocumentURI(o.Fpath),
-// 		Range: lsp.Range{
-// 			Start: lsp.Position{Line: o.LineNumber - 1, Character: 0},
-// 			End:   lsp.Position{Line: o.LineNumber - 1, Character: 0},
-// 		},
-// 	}
-// 	return loc
-// }
+//	func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
+//		loc := lsp.Location{
+//			URI: lsp.NewDocumentURI(o.Fpath),
+//			Range: lsp.Range{
+//				Start: lsp.Position{Line: o.LineNumber - 1, Character: 0},
+//				End:   lsp.Position{Line: o.LineNumber - 1, Character: 0},
+//			},
+//		}
+//		return loc
+//	}
+func DefaultQuery(word string) QueryOption {
+	x := QueryOption{grep.OptionSet{Query: word, Wholeword: true, Ignorecase: true}}
+	return x
+}
+func (a QueryOption) Whole(b bool) QueryOption {
+	a.Wholeword = b
+	return a
+}
+func (a QueryOption) Cap(b bool) QueryOption {
+	a.Ignorecase= !b
+	return a
+}
 
 func to_ref_caller(key string, o *grep.GrepOutput) ref_with_caller {
 	b := strings.Index(o.Line, key)

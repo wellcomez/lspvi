@@ -133,7 +133,7 @@ func (v *fzfmain) use_col() bool {
 	x := w > h && w > 160
 	return x
 }
-func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bool) *greppicker {
+func (v *fzfmain) OpenGrepWordFzf(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker {
 	sym := new_grep_picker(v)
 	sym.parent.Visible = qf == nil
 	if qf != nil {
@@ -143,8 +143,10 @@ func (v *fzfmain) OpenGrepWordFzf(word string, qf func(bool, ref_with_caller) bo
 		x := sym.grid(v.input)
 		v.create_dialog_content(x, sym)
 	}
-	v.input.SetText(word)
-	sym.livewgreppicker.UpdateQuery(word)
+	v.input.SetText(word.Query)
+	sym.livewgreppicker.impl.query_option = word
+	sym.livewgreppicker.impl.last.Query = ""
+	sym.livewgreppicker.UpdateQuery(word.Query)
 	return sym
 }
 func (v *fzfmain) OpenLiveGrepFzf() {

@@ -576,8 +576,9 @@ func NewCodeView(main MainService) *CodeView {
 	return &ret
 }
 
-func (main *mainui) qf_grep_word(rightmenu_select_text string) {
+func (main *mainui) qf_grep_word(opt QueryOption) {
 	main.quickview.view.Clear()
+	rightmenu_select_text := opt.Query
 	key := lspcore.SymolSearchKey{
 		Key: rightmenu_select_text,
 	}
@@ -590,7 +591,7 @@ func (main *mainui) qf_grep_word(rightmenu_select_text string) {
 	buf := []ref_with_caller{}
 	buf2 := []ref_with_caller{}
 	coping := false
-	main.quickview.grep = main.open_picker_grep(key.Key, func(end bool, ss ref_with_caller) bool {
+	main.quickview.grep = main.open_picker_grep(opt, func(end bool, ss ref_with_caller) bool {
 		var ret = rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
 		if ret {
 			if add > 1000 {
@@ -1320,13 +1321,19 @@ func (code *CodeView) action_grep_word(selected bool) {
 		return
 	}
 	if !selected {
-		main.open_picker_grep("", nil)
+		main.open_picker_grep(QueryOption{}, nil)
 		return
 	}
 	code.view.Cursor.SelectWord()
 	word := code.view.Cursor.GetSelection()
-	main.open_picker_grep(word, nil)
+	x := DefaultQuery(word)
+	main.open_picker_grep(
+		x,
+		nil,
+	)
 }
+
+
 func (code *CodeView) action_goto_define(line *lspcore.OpenOption) {
 	main := code.main
 	if main == nil {

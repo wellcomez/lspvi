@@ -202,7 +202,7 @@ func (menu qf_index_menu_context) menuitem() []context_menu_item {
 					go main.get_refer(value.Key.Ranges, value.Key.File)
 				case data_grep_word:
 					ret.qfh.Delete(ret.GetCurrentItem())
-					main.qf_grep_word(value.Key.Key)
+					main.qf_grep_word(value.SearchOption)
 				default:
 					return
 				}

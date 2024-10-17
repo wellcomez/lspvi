@@ -7,6 +7,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
+	"zen108.com/lspvi/pkg/ui/grep"
 )
 
 type CodeContextMenu struct {
@@ -159,7 +160,7 @@ func update_selection_menu(code *CodeView) {
 		}, hide: len(menudata.select_text) == 0},
 		{item: create_menu_item("Grep word"), handle: func() {
 			rightmenu_select_text := menudata.select_text
-			main.qf_grep_word(rightmenu_select_text)
+			main.qf_grep_word(QueryOption{grep.OptionSet{Query: rightmenu_select_text, Ignorecase: true, Wholeword: true}})
 			menudata.SelectInEditor(code.view.Cursor)
 		}, hide: len(menudata.select_text) == 0},
 		{item: create_menu_item("Copy Selection"), handle: func() {
