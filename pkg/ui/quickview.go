@@ -21,6 +21,7 @@ import (
 
 	// "zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/grep"
 )
 
 type quick_preview struct {
@@ -67,25 +68,26 @@ type quick_view struct {
 	cmd_search_key string
 	grep           *greppicker
 	sel            *list_multi_select
-
-	cq *CodeOpenQueue
+	flex_tree      *FlexTreeNodeRoot
+	cq             *CodeOpenQueue
 }
 type list_view_tree_extend struct {
-	tree           []list_tree_node
+	root           []list_tree_node
 	tree_data_item []*list_tree_node
 	filename       string
 }
 
 func (l list_view_tree_extend) NeedCreate() bool {
-	return len(l.tree) == 0
+	return len(l.root) == 0
 }
 
 type qf_history_data struct {
-	Type   DateType
-	Key    lspcore.SymolSearchKey
-	Result search_reference_result
-	Date   int64
-	UID    string
+	Type         DateType
+	Key          lspcore.SymolSearchKey
+	Result       search_reference_result
+	Date         int64
+	UID          string
+	SearchOption QueryOption
 }
 
 func (main *mainui) save_qf_uirefresh(data qf_history_data) error {
@@ -108,7 +110,9 @@ func (h *qf_history_data) ListItem() string {
 func (qk quick_view) save() error {
 	date := time.Now().Unix()
 	qk.main.save_qf_uirefresh(
-		qf_history_data{qk.Type, qk.searchkey, qk.data.Refs, date, ""})
+		qf_history_data{qk.Type, qk.searchkey, qk.data.Refs, date, "", QueryOption{
+			grep.OptionSet{Ignorecase: true},
+		}})
 	return nil
 }
 
@@ -254,6 +258,7 @@ type fzf_on_listview struct {
 	list_data        []fzf_list_item
 	selected         func(dataindex int, listindex int)
 	query            string
+	data             []string
 }
 
 func new_fzf_on_list_data(list *customlist, data []string, fuzz bool) *fzf_on_listview {
@@ -261,6 +266,7 @@ func new_fzf_on_list_data(list *customlist, data []string, fuzz bool) *fzf_on_li
 		listview:       list,
 		fuzz:           fuzz,
 		selected_index: []int{},
+		data:           data,
 	}
 	opt := fzf.DefaultOptions()
 	opt.Fuzzy = fuzz
@@ -380,6 +386,26 @@ func fzf_color_pos(colors []int, s string) []Pos {
 		}
 	}
 	return colors2
+}
+func convert_string_colortext(colors []int, s string, normal tcell.Color, hl tcell.Color) (ss []colortext) {
+	if hl == 0 {
+		hl = tcell.ColorYellow
+	}
+	if len(colors) < len(s) {
+		var colors2 = fzf_color_pos(colors, s)
+		begin := 0
+		for _, v := range colors2 {
+			normal_text := s[begin:v.X]
+			ss = append(ss, colortext{normal_text, normal})
+			x := s[v.X:v.Y]
+			ss = append(ss, colortext{x, hl})
+			begin = v.Y
+		}
+		if begin < len(s) {
+			ss = append(ss, colortext{text: s[begin:]})
+		}
+	}
+	return
 }
 func fzf_color_with_color(colors []int, s string, normal tcell.Color, hl tcell.Color) string {
 	if hl == 0 {
@@ -654,7 +680,7 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 		if click {
 			if node.parent {
 				node.expand = !node.expand
-				data := qk.data.tree_to_listemitem(global_prj_root)
+				data := qk.data.tree_to_listemitem()
 				qk.view.Clear()
 				for _, v := range data {
 					qk.view.AddItem(v.text, "", func() {
@@ -679,8 +705,6 @@ func (qk *quick_view) selection_handle_impl(index int, click bool) {
 		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 	}
 }
-
-
 
 type DateType int
 
@@ -748,7 +772,6 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 
-
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
 	if qk.grep != nil {
 		qk.grep.close()
@@ -765,22 +788,52 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.SetCurrentItem(-1)
 	qk.cmd_search_key = ""
 	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), Refs)
-	data := qk.data.tree_to_listemitem(global_prj_root)
-	for _, v := range data {
-		qk.view.AddItem(v.text, "", func() {
-
-		})
+	qk.data.go_build_listview_data()
+	tree := qk.data.build_flextree_data(10)
+	data := tree.ListString()
+	var loaddata = func(data []string, i int) {
+		qk.view.Clear()
+		for _, v := range data {
+			qk.view.AddItem(v, "", nil)
+		}
+		qk.view.SetCurrentItem(i)
+		qk.main.App().ForceDraw()
 	}
+	qk.flex_tree = tree
+	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		item, pos, more, parent := tree.GetNodeIndex(i)
+		switch pos {
+
+		case NodePostion_Root:
+			{
+				if false {
+					tree.LoadMore(item)
+				} else {
+					tree.Toggle(item)
+				}
+				loaddata(tree.ListItem, i)
+			}
+		case NodePostion_LastChild:
+			{
+				if n, err := tree.GetCaller(i); err == nil {
+					qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
+					if more {
+						tree.LoadMore(parent)
+						loaddata(tree.ListItem, i)
+					}
+				}
+			}
+		case NodePostion_Child:
+			{
+				if n, err := tree.GetCaller(i); err == nil {
+					qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
+				}
+			}
+		}
+	})
+	loaddata(data, 0)
 	qk.main.Tab().UpdatePageTitle()
 }
-
-
-
-
-
-
-
-
 
 func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) string {
 	v := caller.Loc
@@ -871,8 +924,8 @@ func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
 		}
 	}
 	if v.Range.Start.Line == v.Range.End.Line {
-		s := v.Range.Start.Character
-		e := v.Range.End.Character
+		s := max(v.Range.Start.Character, 0)
+		e := max(v.Range.End.Character, 0)
 		if len(line) > s && len(line) >= e && s < e {
 			a1 := line[:s]
 			a := line[s:e]

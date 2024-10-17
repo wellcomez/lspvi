@@ -52,16 +52,19 @@ type filetree_context struct {
 }
 
 var normal_file = fmt.Sprintf("%c", '\uf15c')
-var go_icon = fmt.Sprintf("%c", '\uf1a0')
-var c_icon = fmt.Sprintf("%c", '\U000f0671')
-var py_icon = fmt.Sprintf("%c", '\U000f03e2')
-var js_icon = fmt.Sprintf("%c", '\uf81d')
+
+// var go_icon = fmt.Sprintf("%c", '\uf1a0')
+var go_icon = fmt.Sprintf("%c", '\uf0d4')
+var c_icon = fmt.Sprintf("%c", '\U000f0bf2')
+var h_icon = fmt.Sprintf("%c", '\U0000f0fd')
+var py_icon = fmt.Sprintf("%c", '\ue73c')
+var js_icon = fmt.Sprintf("%c", '\ue74f')
 var ts_icon = fmt.Sprintf("%c", '\U000f03e6')
-var html_icon = fmt.Sprintf("%c", '\uf13b')
+var html_icon = fmt.Sprintf("%c", '\U000f0c01')
 var cpp_icon = fmt.Sprintf("%c", '\U000f03e4')
 var css_icon = fmt.Sprintf("%c", '\U000f03e7')
-var png_icon = fmt.Sprintf("%c", '\U000f0e2d')
-var json_icon = fmt.Sprintf("%c", '\U000f03e9')
+var png_icon = fmt.Sprintf("%c", '\uf1c5')
+var json_icon = fmt.Sprintf("%c", '\ueb0f')
 var txt_icon = fmt.Sprintf("%c", '\U000f03eA')
 var go_mod_icon = fmt.Sprintf("%c", '\U000f03eB')
 var markdown_icon = fmt.Sprintf("%c", '\ueb1d')
@@ -71,6 +74,7 @@ var lua_icon = fmt.Sprintf("%c", '\ue620')
 var java_icon = fmt.Sprintf("%c", '\U000f03eE')
 var rust_icon = fmt.Sprintf("%c", '\U000f0c20')
 var binary_icon = fmt.Sprintf("%c", '\ueae8')
+
 type extset struct {
 	icon string
 	ext  []string
@@ -78,8 +82,8 @@ type extset struct {
 
 var fileicons = []extset{
 	{go_icon, []string{"go"}},
-	{c_icon, []string{"c", "h"}},
-	{cpp_icon, []string{"cpp", "h"}},
+	{c_icon, []string{"c", "cpp"}},
+	{h_icon, []string{"h"}},
 	{py_icon, []string{"py"}},
 	{js_icon, []string{"js"}},
 	{ts_icon, []string{"tsx", "ts"}},
@@ -94,8 +98,12 @@ var fileicons = []extset{
 	{java_icon, []string{"java", "jar"}},
 	{fmt.Sprintf("%c", '\ue673'), []string{"makefile"}},
 	{fmt.Sprintf("%c", '\uebca'), []string{"sh"}},
-	{rust_icon,[]string{"rs"}},
-	{fmt.Sprintf("%c",'\U000f0b02'),[]string{"uml"}},
+	{fmt.Sprintf("%c", '\uf1c1'), []string{"pdf"}},
+	{fmt.Sprintf("%c", '\uf1c2'), []string{"doc"}},
+	{fmt.Sprintf("%c", '\ueefc'), []string{"csv"}},
+	{fmt.Sprintf("%c", '\uf1c6'), []string{"zip", "gz", "tar", "rar", "bz2", "7z"}},
+	{rust_icon, []string{"rs"}},
+	{fmt.Sprintf("%c", '\U000f0b02'), []string{"uml"}},
 }
 
 func verifyBinary(buf []byte) bool {
@@ -114,22 +122,36 @@ func get_icon_file(file string, is_dir bool) string {
 	if is_dir {
 		return closed_folder_icon
 	}
+	return FileIcon(file)
+}
+
+func FileWithIcon(file string) string {
+	Icon := FileIcon(file)
+	return fmt.Sprintf("%s %s", Icon, file)
+}
+func FileIconRune(file string) (ret []rune) {
+	for _, v := range FileIcon(file) {
+		ret = append(ret, v)
+	}
+	return
+}
+func FileIcon(file string) string {
 	ext := filepath.Ext(file)
 	if len(ext) > 0 && ext[0] == '.' {
 		ext = ext[1:]
 	}
-	name:= filepath.Base(file)
+	name := filepath.Base(file)
 	ext = strings.ToLower(ext)
 	for _, v := range fileicons {
 		for _, e := range v.ext {
-			if e == ext ||name==ext{
+			if e == ext || name == ext {
 				return v.icon
 			}
 		}
 	}
-	if len(filepath.Ext(file))==0{
-		if buf,err:=os.ReadFile(file);err==nil{
-			if verifyBinary(buf){
+	if len(filepath.Ext(file)) == 0 {
+		if buf, err := os.ReadFile(file); err == nil {
+			if verifyBinary(buf) {
 				return binary_icon
 			}
 		}

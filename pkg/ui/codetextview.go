@@ -181,7 +181,8 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		_, topY, _, _ := root.GetInnerRect()
 		bottom := root.Bottomline()
 		mark := root.bookmark
-		root.draw_line_mark(mark, 'B', bottom, screen, x, topY, style)
+		bookmark_icon:='\uf02e'
+		root.draw_line_mark(mark, bookmark_icon, bottom, screen, x, topY, style)
 		root.draw_line_mark(root.linechange, '*', bottom, screen, x, topY, style)
 		// root.change_line_color(screen, x, topY, style)
 		return root.GetInnerRect()

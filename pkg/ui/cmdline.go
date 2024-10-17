@@ -98,7 +98,7 @@ func (cmd *cmdline) OnSearchCommand(args []string) bool {
 	if len(args) > 1 {
 		arg := args[1]
 
-		cmd.main.qf_grep_word(arg)
+		cmd.main.qf_grep_word(DefaultQuery(arg).Cap(true))
 	}
 	return true
 }

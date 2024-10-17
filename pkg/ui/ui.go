@@ -64,7 +64,6 @@ type rootlayout struct {
 	// hide_cb     func()
 }
 
-
 type MainService interface {
 	Close()
 	quit()
@@ -140,11 +139,11 @@ type MainService interface {
 	Bookmark() *proj_bookmark
 	Tab() *tabmgr
 
-	qf_grep_word(rightmenu_select_text string)
+	qf_grep_word(QueryOption)
 
 	Mode() mode
 
-	open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker
+	open_picker_grep(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker
 	OnCodeLineChange(x, y int, file string)
 
 	OnSymbolistChanged(file *lspcore.Symbol_file, err error)
@@ -162,7 +161,7 @@ type MainService interface {
 
 type mainui struct {
 	sel                 selectarea
-	code_navigation_bar *smallicon
+	// code_navigation_bar *smallicon
 	quickbar            *minitoolbar
 	term                *Term
 	fileexplorer        *file_tree_view
@@ -675,7 +674,7 @@ func MainUI(arg *Arguments) {
 	main := &mainui{sel: selectarea{nottext: true}}
 	prj.Load(arg, main)
 	global_file_watch.AddReciever(main)
-	main.code_navigation_bar = new_small_icon(main)
+	// main.code_navigation_bar = new_small_icon(main)
 	main.quickbar = new_quick_toolbar(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
 	global_theme.update_default_color()
@@ -813,6 +812,7 @@ func (main *mainui) on_change_color(name string) {
 	global_theme.update_controller_theme()
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
+	new_top_toolbar(main).Draw(screen)
 	if main.current_editor().vid().is_editor_main() {
 		x, y, w, _ := main.codeview.view.GetInnerRect()
 		left := x
@@ -840,7 +840,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 			main.quickview.quickview.draw(l, t+h-height, w, height, screen)
 		}
 	}
-	main.code_navigation_bar.Draw(screen)
+	// main.code_navigation_bar.Draw(screen)
 	if !main.layout.dialog.Visible {
 		main.quickbar.Draw(screen)
 	}
@@ -882,7 +882,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 	}
 
 	main.sel.handle_mouse_selection(action, event)
-	main.code_navigation_bar.handle_mouse_event(action, event)
+	new_top_toolbar(main).handle_mouse_event(action, event)
 	main.quickbar.handle_mouse_event(action, event)
 
 	for _, v := range resizer {
@@ -1280,7 +1280,7 @@ func (main *mainui) open_picker_refs() {
 func (main *mainui) open_picker_ctrlp() {
 	main.layout.dialog.OpenFileFzf(global_prj_root)
 }
-func (main *mainui) open_picker_grep(word string, qf func(bool, ref_with_caller) bool) *greppicker {
+func (main *mainui) open_picker_grep(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker {
 	return main.layout.dialog.OpenGrepWordFzf(word, qf)
 }
 func (main *mainui) open_picker_livegrep() {

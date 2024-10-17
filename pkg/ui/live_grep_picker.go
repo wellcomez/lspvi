@@ -18,8 +18,8 @@ type grepresult struct {
 	data []ref_with_caller
 }
 type grep_impl struct {
-	result        *grepresult
-	temp          *grepresult
+	result        grepresult
+	temp          grepresult
 	grep          *grep.Gorep
 	taskid        int
 	query_option  QueryOption
@@ -47,7 +47,7 @@ func (pk *livewgreppicker) name() string {
 	return "Live grep"
 }
 
-func (pk livewgreppicker) update_preview_tree(index int, prev bool) {
+func (pk livewgreppicker) open_view_from_tree(index int, prev bool) {
 	qk := &pk.impl.quick
 	if data, err := qk.get_data(index); err == nil {
 		if prev {
@@ -60,28 +60,25 @@ func (pk livewgreppicker) update_preview_tree(index int, prev bool) {
 }
 func (pk livewgreppicker) open_view(index int, prev bool) {
 	if pk.impl.quick.tree != nil {
-		pk.update_preview_tree(index, prev)
+		pk.open_view_from_tree(index, prev)
 	} else {
-		pk.update_view_no_tree_at(index, prev)
+		pk.open_view_from_normal_list(index, prev)
 	}
 }
 
-func (pk livewgreppicker) update_view_no_tree_at(cur int, prev bool) bool {
+func (pk livewgreppicker) open_view_from_normal_list(cur int, prev bool) bool {
 	if pk.impl.fzf_on_result != nil {
 		cur = pk.impl.fzf_on_result.get_data_index(cur)
 		if cur < 0 {
 			return true
 		}
 	}
-	if pk.impl.result == nil {
-		return true
-	}
 	if cur < len(pk.impl.result.data) {
 		item := pk.impl.result.data[cur]
 		fpath := item.Loc.URI.AsPath().String()
 		lineNumber := item.Loc.Range.Start.Line
 		if prev {
-			pk.PrevOpen(fpath, lineNumber-1)
+			pk.PrevOpen(fpath, lineNumber)
 		} else {
 			pk.main.OpenFileHistory(fpath, &item.Loc)
 		}
@@ -93,7 +90,7 @@ func (pk livewgreppicker) update_view_no_tree_at(cur int, prev bool) bool {
 func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		switch event.Key() {
-		case tcell.KeyUp, tcell.KeyDown:
+		case tcell.KeyUp, tcell.KeyDown, tcell.KeyEnter:
 			pk.grep_list_view.InputHandler()(event, setFocus)
 		}
 	}
@@ -101,10 +98,6 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 
 func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	layout := pk.prev_picker_impl.flex(input, 1)
-	pk.listcustom.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		pk.open_view(index, true)
-		pk.update_title()
-	})
 	x := tview.NewFlex()
 	x.SetDirection(tview.FlexRow)
 	file_include := tview.NewInputField()
@@ -118,7 +111,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	file_include.SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorDarkGrey))
 	// file_include.SetPlaceholder(global_prj_root)
 	file_include.SetChangedFunc(func(text string) {
-		pk.impl.query_option.include_pattern = text
+		pk.impl.query_option.PathPattern = text
 		debug.DebugLog("dialog", text)
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
@@ -155,17 +148,42 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 
 	var saveIcon = fmt.Sprintf("%c", '\uf0c7') // Floppy disk emoji
 	save_btn := tview.NewButton(saveIcon)
-	save_btn.SetSelectedFunc(func() {
-		pk.Save()
+	save_btn.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if InRect(event, save_btn) {
+			switch action {
+			case tview.MouseLeftClick, tview.MouseLeftDown, tview.MouseLeftDoubleClick:
+				pk.Save()
+				return tview.MouseConsumed, nil
+			}
+		}
+		return action, event
 	})
 	set_color(save_btn)
+
 	input_filter := tview.NewFlex()
 	input_filter.SetDirection(tview.FlexColumn)
-	x1 := tview.NewButton(fmt.Sprintf("%c", '\ueae5'))
-	x1.SetTitleAlign(tview.AlignCenter)
-	set_color(x1)
+
+	exclude := NewIconButton('\ueae5')
+	exclude.selected = pk.impl.query_option.Exclude
+	exclude.click = func(b bool) {
+		pk.impl.query_option.Exclude = b
+	}
+
+	cap := NewIconButton('\ueab1')
+	cap.selected = !pk.impl.query_option.Ignorecase
+	cap.click = func(b bool) {
+		pk.impl.query_option.Ignorecase = !b
+	}
+
+	word := NewIconButton('\ueb7e')
+	word.selected = pk.impl.query_option.Wholeword
+	word.click = func(b bool) {
+		pk.impl.query_option.Wholeword = b
+	}
 	input_filter.
-		AddItem(x1, 3, 0, false).
+		AddItem(exclude, 2, 0, false).
+		AddItem(cap, 2, 0, false).
+		AddItem(word, 2, 0, false).
 		AddItem(file_include, 0, 9, false).
 		AddItem(search_btn, 2, 0, false).
 		AddItem(save_btn, 2, 0, false)
@@ -183,10 +201,11 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 //		return layout
 //	}
 
-func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
+func new_live_grep_picker(v *fzfmain, q QueryOption) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v)
-	impl := &grep_impl{taskid: int(time.Now().Second()) * 100}
+	impl := &grep_impl{taskid: int(time.Now().Second()) * 100, query_option: q}
+	impl.query_option.Ignorecase = true
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
 		grep_list_view:   new_customlist(false),
@@ -194,114 +213,165 @@ func new_live_grep_picker(v *fzfmain, code CodeEditor) *livewgreppicker {
 		impl:             impl,
 		not_live:         false,
 	}
+	v.input.SetText(q.Query)
 	grep.impl.livekeydelay.grepx = grep
 	x.use_cusutom_list(grep.grep_list_view)
-	impl.quick = quick_view_data{main: v.main}
-	grep.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		grep.open_view(i, false)
-		v.hide()
-	})
+	impl.quick = quick_view_data{main: v.main, ignore_symbol_resolv: true}
+	grep.set_list_handle()
 	v.Visible = true
 	return grep
 }
 func (grepx *livewgreppicker) update_title() {
-	if grepx.impl.result == nil {
-		return
-	}
 	index := grepx.grep_list_view.GetCurrentItem()
-	x := len(grepx.impl.result.data)
-	if grepx.impl.quick.tree != nil {
-		x = grepx.grep_list_view.GetItemCount()
-	}
+	update_title_with_index(grepx, index)
+}
+
+func update_title_with_index(grepx *livewgreppicker, index int) {
+	x := grepx.grep_list_view.GetItemCount()
 	if x > 0 {
 		index = index + 1
 	}
-	Type := "LiveGrep"
+
+	x1 := grepx.parent.input.GetText()
+	Type := fmt.Sprintf("LiveGrep %s", x1)
 	if grepx.not_live {
-		Type = "Search in Files"
+		Type = fmt.Sprintf("Search %s in Files", x1)
 	}
-	s := fmt.Sprintf("%s %s %d/%d", Type, grepx.grep_list_view.Key, index, x)
+	s := fmt.Sprintf("%s %d/%d", Type, index, x)
 	grepx.parent.update_dialog_title(s)
 }
 
-func (grepx *livewgreppicker) grep_to_list(end bool) {
-	if !end {
-		grepx.update_list_druring_grep()
-	} else {
-		grepx.update_list_druring_final()
-	}
-}
 func (impl *livewgreppicker) update_preview() {
 	impl.open_view(impl.grep_list_view.GetCurrentItem(), true)
 }
 func (grepx *livewgreppicker) update_list_druring_final() {
-	grep := grepx.impl
-	tmp := grep.temp
-	if tmp != nil {
-		grep.temp = nil
-		grep.result.data = append(grep.result.data, tmp.data...)
-	}
 	if grepx.not_live {
-		grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
-		grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
-			var o *ref_with_caller
-			qk := &grepx.impl.quick
-			if qk.tree != nil {
-				if s, err := qk.get_data(dataindex); err == nil {
-					o = s
-				}
-			} else {
-				o = &grepx.impl.result.data[dataindex]
-			}
-			if o != nil {
-				grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
-			}
-			grepx.parent.hide()
-		}
+		grepx.end_of_grep()
 	} else {
-		task := grepx.impl.taskid
-		sss := grepx.impl.last.query
-		Refs := grep.result.data
-		go func() {
-			livegreptag := fmt.Sprint("LG-UI", sss, "-", len(Refs), task)
-			debug.DebugLog(livegreptag, "start to trelist")
-			defer debug.DebugLog(livegreptag, "end to treelist")
-			main := grepx.main
-			qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
-			if grepx.tmp_quick_data != nil {
-				debug.DebugLog(livegreptag, grepx.tmp_quick_data)
-				grepx.tmp_quick_data.abort = true
+		grepx.end_of_livegrep()
+	}
+}
+
+func (grepx *livewgreppicker) end_of_grep() {
+	grep := grepx.impl
+	grep.get_grep_new_data()
+
+	grepx.impl.fzf_on_result = new_fzf_on_list(grepx.grep_list_view, true)
+	grepx.impl.fzf_on_result.selected = func(dataindex, listindex int) {
+		var o *ref_with_caller
+		qk := &grepx.impl.quick
+		if qk.tree != nil {
+			if s, err := qk.get_data(dataindex); err == nil {
+				o = s
 			}
-			grepx.tmp_quick_data = qk
-			debug.DebugLog(livegreptag, "treen-begin")
-			data := qk.tree_to_listemitem(global_prj_root)
-			if qk.abort {
-				debug.DebugLog(livegreptag, "=======abort-1")
-				return
-			}
-			debug.DebugLog(livegreptag, "treen-end")
+		} else {
+			o = &grepx.impl.result.data[dataindex]
+		}
+		if o != nil {
+			grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
+		}
+		grepx.parent.hide()
+	}
+}
+
+func (grepx *livewgreppicker) end_of_livegrep() {
+	grep := grepx.impl
+	grep.get_grep_new_data()
+
+	task := grepx.impl.taskid
+	sss := grepx.impl.last.Query
+	Refs := grep.result.data
+	go func() {
+		livegreptag := fmt.Sprint("LG-UI", sss, "-", len(Refs), task)
+		debug.DebugLog(livegreptag, "start to trelist")
+		defer debug.DebugLog(livegreptag, "end to treelist")
+		main := grepx.main
+		qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
+		if grepx.tmp_quick_data != nil {
+			debug.DebugLog(livegreptag, "tmp_quick_data", grepx.tmp_quick_data.abort)
+			grepx.tmp_quick_data.abort = true
+		}
+		grepx.tmp_quick_data = qk
+		debug.DebugLog(livegreptag, "treen-begin")
+		qk.tree_to_listemitem()
+		if qk.abort {
+			debug.DebugLog(livegreptag, "=======abort-1")
+			return
+		}
+		tree := qk.build_flextree_data(5)
+		data := tree.ListString()
+		debug.DebugLog(livegreptag, "treen-end")
+		if task != grepx.impl.taskid {
+			debug.DebugLog(livegreptag, "=======abort-2")
+			return
+		}
+		grep.quick = *qk
+		view := grepx.grep_list_view
+		view.Clear()
+		for i := range data {
+			v := data[i]
 			if task != grepx.impl.taskid {
-				debug.DebugLog(livegreptag, "=======abort-2")
+				debug.DebugLog(livegreptag, "=======abort-3")
 				return
 			}
-			grep.quick = *qk
-			view := grepx.grep_list_view
-			view.Clear()
-			for i := range data {
-				v := data[i]
-				if task != grepx.impl.taskid {
-					debug.DebugLog(livegreptag, "=======abort-3")
+			view.AddItem(v, "", nil)
+		}
+		view.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
+			_, pos, _, parent := tree.GetNodeIndex(index)
+			if pos == NodePostion_LastChild {
+				if !parent.HasMore() {
+					pos = NodePostion_Child
+				}
+
+			}
+			switch pos {
+			case NodePostion_Root:
+				{
+					tree.Toggle(parent)
+					go RefreshTreeList(view, tree, index)
+					grepx.update_title()
 					return
 				}
-				view.AddItem(v.text, "", nil)
+			case NodePostion_LastChild:
+				{
+					if parent.HasMore() {
+						tree.LoadMore(parent)
+						go RefreshTreeList(view, tree, index)
+					}
+				}
+			case NodePostion_Child:
+				{
+					if caller, err := tree.GetCaller(index); err == nil {
+						loc := caller.Loc
+						grepx.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+					}
+					grepx.parent.hide()
+				}
 			}
-			grepx.tmp_quick_data = nil
-			main.App().QueueUpdateDraw(func() {
-				grepx.update_preview()
-				grepx.update_title()
-			})
-		}()
+
+		})
+		view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+			if caller, err := tree.GetCaller(index); err == nil {
+				loc := caller.Loc
+				grepx.PrevOpen(loc.URI.AsPath().String(), loc.Range.Start.Line)
+			}
+			grepx.update_title()
+		})
+
+		grepx.tmp_quick_data = nil
+		main.App().QueueUpdateDraw(func() {
+			grepx.update_preview()
+			grepx.update_title()
+		})
+	}()
+}
+
+func RefreshTreeList(view *customlist, tree *FlexTreeNodeRoot, index int) {
+	view.Clear()
+	for _, v := range tree.ListItem {
+		view.AddItem(v, "", nil)
 	}
+	view.SetCurrentItem(index)
 }
 
 type keydelay struct {
@@ -309,60 +379,66 @@ type keydelay struct {
 	waiting atomic.Bool
 }
 
-func (k *keydelay) OnKey(s string) {
+// OnKey
+func (k *keydelay) OnKey(query string) {
+	k.grepx.impl.query_option.Query = query
 	if k.waiting.Load() {
-		debug.DebugLog("LG", "Exit", s, k.grepx.impl.query_option.query)
+		debug.DebugLog("LG", "Exit", query, query)
 		return
 	} else {
-		debug.DebugLog("LG", "Start", s, k.grepx.impl.query_option.query)
+		debug.DebugLog("LG", "Start", query, query)
 	}
 	go func() {
 		k.waiting.Store(true)
 		defer k.waiting.Store(false)
-		if len(s) == 1 {
+		if len(query) == 1 {
 			<-time.After(time.Microsecond * 50)
 		} else {
 			<-time.After(time.Microsecond * 10)
 		}
-		if len(k.grepx.impl.query_option.query) == 0 {
-			k.grepx.grep_list_view.Clear()
-		} else {
-			debug.DebugLog("LG", "run", s, k.grepx.impl.query_option.query)
-			k.grepx.__updatequery(k.grepx.impl.query_option)
-		}
+		debug.DebugLog("LG", "run", query, query)
+		k.grepx.__updatequery(k.grepx.impl.query_option)
 	}()
 }
-
+func (impl *grep_impl) get_grep_new_data() (draw bool, data []ref_with_caller) {
+	grep := impl
+	tmp := grep.temp
+	draw = len(tmp.data) > 0
+	data = tmp.data
+	grep.result.data = append(grep.result.data, tmp.data...)
+	grep.temp = grepresult{}
+	return
+}
 func (grepx *livewgreppicker) update_list_druring_grep() {
 	grep := grepx.impl
 	openpreview := len(grep.result.data) == 0
-	tmp := grep.temp
-	if tmp == nil {
-		return
+	yes, data := grep.get_grep_new_data()
+	if yes {
+		for _, o := range data {
+			fpath := o.Loc.URI.AsPath().String()
+			line := o.get_code(0)
+			lineNumber := o.Loc.Range.Start.Line
+			path := trim_project_filename(fpath, global_prj_root)
+			data := fmt.Sprintf("%s:%d %s", path, lineNumber+1, line)
+			grepx.grep_list_view.AddItem(data, "", func() {
+				grepx.main.OpenFileHistory(path, &o.Loc)
+				grepx.parent.hide()
+			})
+		}
+		if openpreview {
+			grepx.update_preview()
+		}
+		grepx.update_title()
+		grepx.main.App().ForceDraw()
 	}
-	grep.temp = nil
-	grep.result.data = append(grep.result.data, tmp.data...)
-	if len(grep.result.data) > 500 {
-		return
-	}
-	for _, o := range tmp.data {
-		fpath := o.Loc.URI.AsPath().String()
-		line := o.get_code(0)
-		lineNumber := o.Loc.Range.Start.Line
-		path := trim_project_filename(fpath, global_prj_root)
-		data := fmt.Sprintf("%s:%d %s", path, lineNumber, line)
-		grepx.grep_list_view.AddItem(data, "", func() {
-			grepx.main.OpenFileHistory(path, &o.Loc)
-			grepx.parent.hide()
-		})
-	}
-	if openpreview {
-		grepx.update_preview()
-	}
-	grepx.update_title()
-	grepx.main.App().ForceDraw()
 }
 func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
+	if grepx.quick_view == nil {
+		if grepx.parent != nil && !grepx.parent.Visible {
+			grepx.stop_grep()
+			return
+		}
+	}
 	if task != grepx.impl.taskid {
 		return
 	}
@@ -370,12 +446,17 @@ func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
 		if grepx.quick_view != nil {
 			grepx.quick_view.end_of_update_ui()
 		} else {
-			grepx.grep_to_list(true)
+			grepx.update_list_druring_final()
 		}
 	} else if grepx.quick_view != nil {
 		grepx.quick_view.update_ui(o, grepx)
 	} else {
-		grepx.update_ui(o)
+		grep := grepx.impl
+		if grep.AddData(o) {
+			grepx.main.App().QueueUpdate(func() {
+				grepx.update_list_druring_grep()
+			})
+		}
 	}
 
 }
@@ -389,46 +470,48 @@ func (v quick_view_delegate) update_ui(o *grep.GrepOutput, grepx *livewgreppicke
 	}
 }
 
-func (grepx *livewgreppicker) update_ui(o *grep.GrepOutput) {
-	grep := grepx.impl
-	if grep.result == nil {
-		grep.result = &grepresult{
-			data: []ref_with_caller{},
-		}
-	}
-	if grep.temp == nil {
-		grep.temp = &grepresult{
-			data: []ref_with_caller{},
-		}
-	}
-	if !grepx.parent.Visible {
-		grepx.stop_grep()
-		return
-	}
-	grep.temp.data = append(grep.temp.data, to_ref_caller(grepx.impl.key, o))
-	if len(grep.result.data) > 10 {
+func (grep *grep_impl) AddData(o *grep.GrepOutput) bool {
+	grep.temp.data = append(grep.temp.data, to_ref_caller(grep.key, o))
+	if len(grep.result.data) > 50 {
 		if len(grep.temp.data) < 50 {
-			return
+			return false
 		}
 	}
-	grepx.main.App().QueueUpdate(func() {
-		grepx.grep_to_list(false)
-	})
+	return true
 }
 
-// func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
-// 	loc := lsp.Location{
-// 		URI: lsp.NewDocumentURI(o.Fpath),
-// 		Range: lsp.Range{
-// 			Start: lsp.Position{Line: o.LineNumber - 1, Character: 0},
-// 			End:   lsp.Position{Line: o.LineNumber - 1, Character: 0},
-// 		},
-// 	}
-// 	return loc
-// }
+//	func convert_grep_info_location(o *grep.GrepOutput) lsp.Location {
+//		loc := lsp.Location{
+//			URI: lsp.NewDocumentURI(o.Fpath),
+//			Range: lsp.Range{
+//				Start: lsp.Position{Line: o.LineNumber - 1, Character: 0},
+//				End:   lsp.Position{Line: o.LineNumber - 1, Character: 0},
+//			},
+//		}
+//		return loc
+//	}
+func DefaultQuery(word string) QueryOption {
+	x := QueryOption{grep.OptionSet{Query: word, Wholeword: true, Ignorecase: true}}
+	return x
+}
+func (a QueryOption) Whole(b bool) QueryOption {
+	a.Wholeword = b
+	return a
+}
+func (a QueryOption) Cap(b bool) QueryOption {
+	a.Ignorecase = !b
+	return a
+}
 
 func to_ref_caller(key string, o *grep.GrepOutput) ref_with_caller {
-	b := strings.Index(o.Line, key)
+	b := 0
+	if o.X == -1 {
+		if ind := strings.Index(o.Line, key); ind >= 0 {
+			b = ind
+		}
+	} else {
+		b = o.X
+	}
 	e := b + len(key)
 	// sss := o.Line[b:e]
 	// log.Println(sss)
@@ -452,8 +535,9 @@ func to_ref_caller(key string, o *grep.GrepOutput) ref_with_caller {
 func (pk livewgreppicker) Save() {
 	Result := search_reference_result{}
 	data := qf_history_data{Type: data_grep_word,
-		Key:  lspcore.SymolSearchKey{Key: pk.impl.key},
-		Date: time.Now().Unix(),
+		Key:          lspcore.SymolSearchKey{Key: pk.impl.key},
+		Date:         time.Now().Unix(),
+		SearchOption: pk.impl.last,
 	}
 	Result.Refs = append(Result.Refs, pk.impl.result.data...)
 	data.Result = Result
@@ -461,12 +545,19 @@ func (pk livewgreppicker) Save() {
 	main.save_qf_uirefresh(data)
 }
 func (pk livewgreppicker) UpdateQuery(query string) {
-	pk.stop_grep()
-	pk.codeprev.Clear()
-	pk.grep_list_view.Clear()
-	pk.update_preview()
-	pk.impl.query_option.query = query
+	pk.set_list_handle()
 	pk.impl.livekeydelay.OnKey(query)
+}
+
+func (pk *livewgreppicker) set_list_handle() {
+	pk.grep_list_view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		pk.open_view_from_normal_list(index, true)
+		update_title_with_index(pk, index)
+	})
+	pk.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		idx := pk.grep_list_view.GetCurrentItem()
+		pk.open_view_from_normal_list(idx, false)
+	})
 }
 
 // close implements picker.
@@ -478,45 +569,59 @@ func (pk *livewgreppicker) close() {
 }
 
 type QueryOption struct {
-	query           string
-	include_pattern string
+	grep.OptionSet
 }
 
 func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
-	pk.impl.last = query_option
-	query := query_option.query
-	if len(query) == 0 {
-		pk.stop_grep()
-		return
+	if query_option == pk.impl.last {
+		if grep := pk.impl.grep; grep != nil {
+			if grep.IsRunning() {
+				return
+			}
+		}
 	}
-	opt := grep.OptionSet{
-		Grep_only:     true,
-		G:             true,
-		Wholeword:     true,
-		IcludePattern: query_option.include_pattern,
+
+	pk.stop_grep()
+	var clean_ui = func() {
+		pk.grep_list_view.Clear()
+		pk.codeprev.Clear()
+		pk.grep_list_view.SetCurrentItem(-1)
+		pk.update_title()
 	}
-	pk.impl.taskid++
-	pk.impl.key = query
-	pk.grep_list_view.Key = query
-	pk.grep_list_view.Clear()
-	g, err := grep.NewGorep(pk.impl.taskid, query, &opt)
-	if err != nil {
-		return
+
+	var new_query_stack = func() {
+		pk.impl.last = query_option
+		pk.impl.taskid++
+		query := pk.impl.last.Query
+		pk.impl.key = query
+		pk.grep_list_view.Key = query
+		pk.grep_list_view.Clear()
+		if query == "" {
+			return
+		}
+
+		if g, err := grep.NewGorep(pk.impl.taskid, query, pk.impl.last.OptionSet); err == nil {
+			impl := pk.impl
+			if impl.grep != nil {
+				pk.stop_grep()
+			}
+			impl.grep = g
+			impl.result = grepresult{}
+			g.CB = pk.end
+			g.Kick(global_prj_root)
+		}
 	}
-	impl := pk.impl
-	if impl.grep != nil {
-		pk.stop_grep()
-	}
-	impl.grep = g
-	impl.result = &grepresult{}
-	g.CB = pk.end
-	chans := g.Kick(global_prj_root)
-	go g.Report(chans, false)
+	go pk.main.App().QueueUpdateDraw(func() {
+		clean_ui()
+		go new_query_stack()
+	})
 
 }
 
 func (pk *livewgreppicker) stop_grep() {
 	if pk.impl != nil && pk.impl.grep != nil {
 		pk.impl.grep.Abort()
+	} else {
+		debug.DebugLog("stop_grep grep is nil")
 	}
 }

@@ -140,7 +140,7 @@ func new_tsdef(
 		nil,
 		true,
 		false,
-		&TreesitterInit{make(chan ts_init_call), false},
+		&TreesitterInit{make(chan ts_init_call,20), false},
 	}
 	// ret.load_scm()
 	return ret
@@ -614,7 +614,7 @@ type TreesitterInit struct {
 	start bool
 }
 
-var ts_init = &TreesitterInit{t: make(chan ts_init_call, 10), start: false}
+// var ts_init = &TreesitterInit{t: make(chan ts_init_call, 10), start: false}
 
 func (ts_int *TreesitterInit) Run(t ts_init_call) {
 	if !ts_int.start {

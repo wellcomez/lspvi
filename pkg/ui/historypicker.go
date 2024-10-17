@@ -56,7 +56,7 @@ type history_item struct {
 	dispname string
 }
 
-func new_history_picker(v *fzfmain, edit CodeEditor) history_picker {
+func new_history_picker(v *fzfmain) history_picker {
 	// list := new_customlist()
 	// list.SetBorder(true)
 	sym := history_picker{
@@ -64,40 +64,40 @@ func new_history_picker(v *fzfmain, edit CodeEditor) history_picker {
 			fzflist_impl: new_fzflist_impl(nil, v),
 		},
 	}
-	sym.impl.set_fuzz(true)
 	history := v.main.Navigation().history
 	items := []history_item{}
-	close := func(data_index int, listIndex int) {
+	fzfdata := []string{}
+	for _, v := range history.history_files() {
+		h := v.newFunction1()
+		fzfdata = append(fzfdata, h.dispname)
+		items = append(items, h)
+		var sss = []colortext{{FileIcon(h.filepath.Path) + " ", 0}}
+		sym.impl.list.AddColorItem(append(sss, colortext{h.dispname, 0}), nil, nil)
+	}
+	if history.index < sym.impl.list.GetItemCount() {
+		sym.impl.list.SetCurrentItem(history.index)
+	}
+	sym.impl.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		data_index := sym.fzf.selected_index[i]
 		v := sym.impl.listdata[data_index]
 		parent := sym.impl.parent
 		path := v.filepath
 		loc := v.filepath.GetLocation()
 		parent.main.OpenFileHistory(path.Path, &loc)
 		parent.hide()
-	}
-	for i, h := range history.history_files() {
-
-		dispname := trim_project_filename(h.Path, global_prj_root)
-		h := history_item{
-			filepath: h,
-			dispname: fmt.Sprintln(dispname,":",h.Pos.Line+1),
-		}
-		index := i
-		// fzf_item_strings = append(fzf_item_strings, dispname)
-		sym.impl.list.AddItem(h.dispname, "", func() {
-			close(index, index)
-		})
-		items = append(items, h)
-	}
-	if history.index<sym.impl.list.GetItemCount(){
-		sym.impl.list.SetCurrentItem(history.index)
-	}
+	})
 	sym.impl.listdata = items
-	sym.fzf = new_fzf_on_list(sym.impl.list, true)
-	sym.fzf.selected = close
+	sym.fzf = new_fzf_on_list_data(sym.impl.list, fzfdata, true)
 	return sym
 }
 
+func (h backforwarditem) newFunction1() history_item {
+	dispname := trim_project_filename(h.Path, global_prj_root)
+	return history_item{
+		filepath: h,
+		dispname: fmt.Sprintln(dispname, ":", h.Pos.Line+1),
+	}
+}
 
 func (pk history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.impl.list.InputHandler()
@@ -117,8 +117,16 @@ func (pk history_picker) UpdateQuery(query string) {
 		return
 	}
 	query = strings.ToLower(query)
-	listview := pk.impl.list
-	listview.Clear()
-	listview.Key = query
 	pk.fzf.OnSearch(query, true)
+	fzf := pk.fzf
+	fzf.listview.Clear()
+
+	hl := global_theme.search_highlight_color()
+	for i, v := range fzf.selected_index {
+		file := pk.impl.listdata[v]
+		t1 := convert_string_colortext(fzf.selected_postion[i], file.dispname, 0, hl)
+		var sss = []colortext{{FileIcon(file.filepath.Path) + " ", 0}}
+		fzf.listview.AddColorItem(append(sss, t1...),
+			nil, func() {})
+	}
 }

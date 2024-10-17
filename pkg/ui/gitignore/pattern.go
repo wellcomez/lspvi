@@ -24,13 +24,13 @@ const (
 )
 
 // Pattern defines a single gitignore pattern.
-type Pattern interface {
-	// Match matches the given path to the pattern.
-	Match(path []string, isDir bool) MatchResult
-	BfPth() []string
-}
+// type Pattern interface {
+// 	// Match matches the given path to the pattern.
+// 	Match(path []string, isDir bool) MatchResult
+// 	BfPth() []string
+// }
 
-type pattern struct {
+type Pattern struct {
 	domain    []string
 	pattern   []string
 	inclusion bool
@@ -40,7 +40,7 @@ type pattern struct {
 
 // ParsePattern parses a gitignore pattern string into the Pattern structure.
 func ParsePattern(p string, domain []string) Pattern {
-	res := pattern{domain: domain}
+	res := Pattern{domain: domain}
 
 	if strings.HasPrefix(p, inclusionPrefix) {
 		res.inclusion = true
@@ -61,9 +61,9 @@ func ParsePattern(p string, domain []string) Pattern {
 	}
 
 	res.pattern = strings.Split(p, patternDirSep)
-	return &res
+	return res
 }
-func(p* pattern)BfPth() (ret []string){
+func(p* Pattern)BfPth() (ret []string){
 	for _, v := range p.pattern {
 		v=strings.TrimLeft(v, "*")	
 		v=strings.TrimRight(v, "*")	
@@ -71,7 +71,7 @@ func(p* pattern)BfPth() (ret []string){
 	}
 	return ret
 }
-func (p *pattern) Match(path []string, isDir bool) MatchResult {
+func (p *Pattern) Match(path []string, isDir bool) MatchResult {
 	if len(path) <= len(p.domain) {
 		return NoMatch
 	}
@@ -95,7 +95,7 @@ func (p *pattern) Match(path []string, isDir bool) MatchResult {
 	}
 }
 
-func (p *pattern) simpleNameMatch(path []string, isDir bool) bool {
+func (p *Pattern) simpleNameMatch(path []string, isDir bool) bool {
 	for i, name := range path {
 		if match, err := filepath.Match(p.pattern[0], name); err != nil {
 			return false
@@ -110,7 +110,7 @@ func (p *pattern) simpleNameMatch(path []string, isDir bool) bool {
 	return false
 }
 
-func (p *pattern) globMatch(path []string, isDir bool) bool {
+func (p *Pattern) globMatch(path []string, isDir bool) bool {
 	matched := false
 	canTraverse := false
 	for i, pattern := range p.pattern {

@@ -16,7 +16,7 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	defer func() {
 		grep.waitGreps.Done()
 	}()
-	if grep.IsAbort(){
+	if grep.IsAbort() {
 		return
 	}
 	// if strings.HasPrefix(fpath, grep.global_prj_root) {
@@ -39,13 +39,12 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	mem, err := syscall.Mmap(int(file.Fd()), 0, int(fi.Size()),
 		syscall.PROT_READ, syscall.MAP_SHARED)
 	if err != nil {
-
 		return
 	}
 	defer syscall.Munmap(mem)
 
 	isBinary := verifyBinary(mem)
-	if isBinary && !grep.scope.binary {
+	if isBinary {
 		return
 	}
 
@@ -55,23 +54,27 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	scanner.Split(bufio.ScanLines)
 	lineNumber := 0
 
-	var ret = GrepInfo{fpath, lineNumber, "", 0}
+	var ret = GrepInfo{fpath, lineNumber, "", 0, false, -1}
 	for scanner.Scan() {
+		if grep.IsAbort() {
+			return
+		}
 		lineNumber++
 		strline := scanner.Text()
-		finded := grep.newFunction1(strline)
-		if finded {
+		X := grep.Match(strline)
+		if len(X) > 0 {
 			if !grep.just_grep_file {
 				if isBinary {
-					out <- GrepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath), 1}
+					out <- GrepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath), 1, false, X[0]}
 					return
 				} else {
-					out <- GrepInfo{fpath, lineNumber, strline, 1}
+					out <- GrepInfo{fpath, lineNumber, strline, 1, false, X[0]}
 				}
 			} else {
 				if ret.Matched == 0 {
 					ret.LineNumber = lineNumber
 					ret.Line = strline
+					ret.X = X[0]
 				}
 				ret.Matched++
 			}

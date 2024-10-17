@@ -2,6 +2,7 @@ package grep
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -22,6 +23,8 @@ type GrepInfo struct {
 	LineNumber int
 	Line       string
 	Matched    int
+	end        bool
+	X          int
 }
 type contenttype int
 
@@ -41,14 +44,11 @@ type channelSet struct {
 }
 
 type OptionSet struct {
-	G             bool
-	Grep_only     bool
-	search_binary bool
-	Ignore        string
-	// hidden        bool
-	ignorecase    bool
-	Wholeword     bool
-	IcludePattern string
+	Query       string
+	Ignorecase  bool
+	Wholeword   bool
+	Exclude     bool
+	PathPattern string
 }
 
 type searchScope struct {
@@ -68,10 +68,9 @@ const (
 
 type Gorep struct {
 	pattern         *regexp.Regexp
-	include_pattern string
+	Option          OptionSet
+	path_pattern    string
 	ptnstring       string
-	useptnstring    bool
-	scope           searchScope
 	CB              func(taskid int, out *GrepOutput)
 	id              int
 	waitMaps        sync.WaitGroup
@@ -80,17 +79,32 @@ type Gorep struct {
 	filecount       int
 	just_grep_file  bool
 	global_prj_root string
-	// report_end      chan bool
-	grep_status grep_status
+	opened_file     int
+	grep_status     grep_status
+	default_gi      gi.Matcher
 }
 
-func (grep *Gorep) newFunction1(strline string) bool {
+func (g *Gorep) IsRunning() bool {
+	return g.grep_status == GrepRunning
+}
+func (grep *Gorep) Match(strline string) (Index []int) {
 	grep.count++
-	if grep.useptnstring {
-		return len(str.IndexAll(strline, grep.ptnstring, 1)) > 0
+	if grep.pattern == nil {
+		if grep.Option.Ignorecase {
+			ret := str.IndexAllIgnoreCase(strline, grep.ptnstring, 1)
+			if len(ret) == 1 {
+				Index = append(Index, ret[0]...)
+			}
+		} else {
+			ret := str.IndexAll(strline, grep.ptnstring, 1)
+			if len(ret) == 1 {
+				Index = append(Index, ret[0]...)
+			}
+		}
 	} else {
-		return grep.pattern.MatchString(strline)
+		Index = grep.pattern.FindStringIndex(strline)
 	}
+	return
 }
 func (grep *Gorep) IsAbort() bool {
 	return grep.grep_status == GrepAbort
@@ -99,34 +113,30 @@ func (grep *Gorep) Abort() {
 	switch grep.grep_status {
 	case GrepRunning:
 		grep.grep_status = GrepAbort
-		// grep.report_end <- true
+		grep.CB = nil
+		debug.DebugLog(GrepTag, "Run Abort", grep.String())
 		return
 	}
 }
 
 const separator = string(os.PathSeparator)
 
-func (grep *Gorep) Report(chans *channelSet, isColor bool) {
+func (grep *Gorep) Report(chans *channelSet) {
 	// var markGrep string
 	var waitReports sync.WaitGroup
 
 	chPrint := make(chan GrepOutput)
-	chPrintEnd := make(chan string)
+	chEnd := make(chan bool)
 
 	go func() {
 		for {
 			select {
+			case <-chEnd:
+				return
 			case msg := <-chPrint:
 				if grep.grep_status == GrepRunning {
 					grep.CB(grep.id, &msg)
 				}
-			case <-chPrintEnd:
-				if grep.grep_status == GrepRunning {
-					grep.CB(grep.id, nil)
-					grep.grep_status = GrepDone
-				}
-				debug.InfoLog("Routine Report End ", "Pattern =", grep.ptnstring)
-				return
 			}
 		}
 	}()
@@ -167,8 +177,7 @@ func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 		default:
 			break
 		}
-		grep.Debug("Reporter End")
-		chPrintEnd <- mark
+		chEnd <- true
 	}
 
 	waitReports.Add(1)
@@ -176,15 +185,11 @@ func (grep *Gorep) Report(chans *channelSet, isColor bool) {
 	waitReports.Wait()
 }
 
-func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
+func NewGorep(id int, ptn string, opt OptionSet) (*Gorep, error) {
 	base := &Gorep{
-		pattern:   nil,
-		ptnstring: pattern,
-		scope: searchScope{
-			grep:   false,
-			binary: false,
-		},
-		useptnstring:   true,
+		pattern:        nil,
+		ptnstring:      ptn,
+		Option:         opt,
 		id:             id,
 		begintm:        time.Now().UnixMilli(),
 		just_grep_file: false,
@@ -192,44 +197,33 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 	}
 	base.Debug("NewGrep")
 	var err error
-	if !base.useptnstring {
-		if opt.ignorecase {
-			pattern = "(?i)" + pattern
+	if opt.Wholeword {
+		ignoecase := ""
+		ptn = ""
+		if opt.Ignorecase {
+			ignoecase = "(?i)"
+		} else {
+			ptn = regexp.QuoteMeta(ptn)
 		}
 		if opt.Wholeword {
-			pattern = `\b` + pattern + `\b`
+			ptn = fmt.Sprintf(`\b%s\b`, regexp.QuoteMeta(base.ptnstring))
 		}
-		base.pattern, err = regexp.Compile(pattern)
+		ptn = fmt.Sprintf(`%s%s`, ignoecase, ptn)
+		base.pattern = regexp.MustCompile(ptn)
 		if err != nil {
 			debug.ErrorLog(GrepTag, "regexp error", err)
 			return nil, err
 		}
-		// if len(opt.ignore) > 0 {
-		// 	if opt.ignorecase {
-		// 		opt.ignore = "(?i)" + opt.ignore
-		// 	}
-		// }
-	}
-	if len(opt.IcludePattern) > 0 {
-		base.include_pattern = opt.IcludePattern
 	}
 
-	// config search scope
-	if opt.G {
-		base.scope.grep = true
+	if len(opt.PathPattern) > 0 {
+		base.path_pattern = opt.PathPattern
 	}
-	if opt.Grep_only {
-		// base.scope.file = false
-		// base.scope.symlink = false
-		base.scope.grep = true
-	}
-	if opt.search_binary {
-		base.scope.binary = true
-	}
+
 	return base, nil
 }
 
-func (grep *Gorep) Kick(fpath string) *channelSet {
+func (grep *Gorep) Kick(fpath string) {
 	grep.global_prj_root = fpath
 	chsMap := makeChannelSet()
 	chsReduce := makeChannelSet()
@@ -237,15 +231,15 @@ func (grep *Gorep) Kick(fpath string) *channelSet {
 	go func() {
 		home, _ := os.UserHomeDir()
 		ps, _ := gi.ReadIgnoreFile(filepath.Join(home, ".gitignore_global"))
-		m := gi.NewMatcher(ps, true)
-		grep.mapsend(fpath, chsMap, m)
+		grep.default_gi = gi.NewMatcher(ps, false)
+		grep.mapsend(fpath, chsMap, grep.default_gi)
 		grep.waitMaps.Wait()
 		closeChannelSet(chsMap)
 	}()
 	go func() {
 		grep.reduce(chsMap, chsReduce)
 	}()
-	return chsReduce
+	go grep.Report(chsReduce)
 }
 
 func makeChannelSet() *channelSet {
@@ -274,10 +268,22 @@ func closeChannelSet(chans *channelSet) {
 func (grep *Gorep) Debug(s string) {
 	debug.InfoLog(GrepTag, s, "Abort=", grep.grep_status, "id=", grep.id, "Files", grep.filecount, "Line=", grep.count, grep.ptnstring, time.Now().UnixMilli()-grep.begintm)
 }
+func (grep *Gorep) String() string {
+	status := ""
+	switch grep.grep_status {
+	case GrepRunning:
+		status = "Running"
+	case GrepAbort:
+		status = "Abort"
+	case GrepDone:
+		status = "Done"
+	}
+	return fmt.Sprintln(grep.id, grep.ptnstring, "Opened", grep.opened_file, "status=", status, "Files", grep.filecount, "Line=", grep.count, time.Now().UnixMilli()-grep.begintm)
+}
 func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 	defer grep.waitMaps.Done()
+	debug.TraceLog(GrepTag, "mapsend ", grep.String())
 	if grep.IsAbort() {
-		debug.DebugLog("Abort Return " + fpath)
 		return
 	}
 	/* expand dir */
@@ -286,11 +292,14 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 		debug.ErrorLog(GrepTag, "readir error: ", err)
 		return
 	}
-	m.Enter(fpath)
+	if data, err := gi.EnterDir(fpath); err == nil && len(data) > 0 {
+		m = gi.NewMatcher(grep.default_gi.Patterns(), false)
+		m.AddPatterns(data)
+	}
 
 	for _, finfo := range list {
 		if grep.IsAbort() {
-			debug.DebugLog(GrepTag, "Abort Return "+grep.ptnstring)
+			debug.DebugLog(GrepTag, "mapsend ", grep.String())
 			return
 		}
 		fname := finfo.Name()
@@ -308,25 +317,36 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 			continue
 		}
 		if finfo.Type().IsRegular() {
-			skip := false
-			if len(grep.include_pattern) > 0 {
-				skip = true
-				if yes, _ := doublestar.Match(grep.include_pattern, path); yes {
-					skip = false
-				} else if yes, _ := doublestar.Match(grep.include_pattern, finfo.Name()); yes {
-					skip = false
+			if pth := grep.path_pattern; len(pth) > 0 {
+				m1 := func() (yes bool) {
+					yes, _ = doublestar.Match(pth, path)
+					return
 				}
-			}
-			if skip {
-				debug.DebugLog(GrepTag, "ignore:"+grep.include_pattern, path)
-				continue
+				m2 := func() (yes bool) {
+					yes, _ = doublestar.Match(pth, finfo.Name())
+					return
+				}
+				found := false
+				for _, v := range []func() bool{m1, m2} {
+					if v() {
+						found = true
+						break
+					}
+				}
+				if found {
+					if grep.Option.Exclude {
+						continue
+					}
+				} else if !grep.Option.Exclude {
+					continue
+				}
 			}
 		}
 		if finfo.IsDir() {
 			grep.waitMaps.Add(1)
 			go grep.mapsend(path, chans, m)
 		} else if finfo.Type().IsRegular() {
-			chans.grep <- GrepInfo{path, 0, "", 0}
+			chans.grep <- GrepInfo{path, 0, "", 0, false,-1}
 		}
 	}
 }
@@ -334,11 +354,23 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 func (grep *Gorep) reduce(chsIn *channelSet, chsOut *channelSet) {
 	go func(in <-chan GrepInfo, out chan<- GrepInfo) {
 		for msg := range in {
+			if grep.IsAbort() {
+				debug.DebugLog(GrepTag, "reduce abort ", grep.String())
+				continue
+			}
 			grep.waitGreps.Add(1)
+			grep.opened_file++
 			go grep.grep(msg.Fpath, out)
 		}
 		grep.waitGreps.Wait()
 		close(out)
+		debug.DebugLog("reduce done", grep.String())
+		if grep.grep_status == GrepRunning {
+			grep.grep_status = GrepDone
+			if grep.CB != nil {
+				grep.CB(grep.id, nil)
+			}
+		}
 	}(chsIn.grep, chsOut.grep)
 }
 
@@ -359,4 +391,5 @@ func verifyBinary(buf []byte) bool {
 func (grep *Gorep) grep(fpath string, out chan<- GrepInfo) {
 	//fmt.Fprintf(os.Stderr, "grep mmap error: %v\n", err)
 	RunGrep(grep, fpath, out)
+	grep.opened_file--
 }
