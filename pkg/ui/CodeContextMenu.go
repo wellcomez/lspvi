@@ -160,7 +160,7 @@ func update_selection_menu(code *CodeView) {
 		}, hide: len(menudata.select_text) == 0},
 		{item: create_menu_item("Grep word"), handle: func() {
 			rightmenu_select_text := menudata.select_text
-			main.qf_grep_word(QueryOption{grep.OptionSet{Query: rightmenu_select_text, Ignorecase: true, Wholeword: true}})
+			main.qf_grep_word(DefaultQuery(rightmenu_select_text).Whole(true))
 			menudata.SelectInEditor(code.view.Cursor)
 		}, hide: len(menudata.select_text) == 0},
 		{item: create_menu_item("Copy Selection"), handle: func() {
