@@ -92,7 +92,7 @@ func EnterDir(dir string) ([]Pattern, error) {
 	return ReadIgnoreFile(filepath.Join(dir, ".gitignore"))
 }
 
-func (m *Matcher) MatchFile(file string, isdir bool) bool {
+func (m Matcher) MatchFile(file string, isdir bool) bool {
 	if m.bf != nil {
 		if !m.bf.Contains(file) {
 			return false
@@ -101,7 +101,7 @@ func (m *Matcher) MatchFile(file string, isdir bool) bool {
 	ss := strings.Split(file, "/")
 	return m.Match(ss[1:], isdir)
 }
-func (m *Matcher) Match(path []string, isDir bool) bool {
+func (m Matcher) Match(path []string, isDir bool) bool {
 	n := len(m.patterns)
 	for i := n - 1; i >= 0; i-- {
 		if match := m.patterns[i].Match(path, isDir); match > NoMatch {
