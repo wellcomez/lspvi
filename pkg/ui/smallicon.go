@@ -284,6 +284,7 @@ type IconButton struct {
 	*tview.Box
 	r        rune
 	selected bool
+	click func (bool)
 }
 
 func NewIconButton(r rune) *IconButton {
@@ -307,6 +308,9 @@ func (c *IconButton) MouseHandler() func(action tview.MouseAction, event *tcell.
 		if InRect(event, c) {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 				c.selected = !c.selected
+				if c.click!=nil{
+					c.click(c.selected)
+				}
 			}
 		}
 		return

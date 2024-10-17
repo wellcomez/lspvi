@@ -111,7 +111,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	file_include.SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorDarkGrey))
 	// file_include.SetPlaceholder(global_prj_root)
 	file_include.SetChangedFunc(func(text string) {
-		pk.impl.query_option.include_pattern = text
+		pk.impl.query_option.PathPattern = text
 		debug.DebugLog("dialog", text)
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
@@ -152,13 +152,28 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 		pk.Save()
 	})
 	set_color(save_btn)
+
 	input_filter := tview.NewFlex()
 	input_filter.SetDirection(tview.FlexColumn)
-	x1 := tview.NewButton(fmt.Sprintf("%c", '\ueae5'))
-	x1.SetTitleAlign(tview.AlignCenter)
-	set_color(x1)
+
+	exclude := NewIconButton('\ueae5')
+	exclude.click = func(b bool) {
+		pk.impl.query_option.Exclude = b
+	}
+
+	cap := NewIconButton('\ueab1')
+	cap.click = func(b bool) {
+		pk.impl.query_option.Ignorecase = !b
+	}
+
+	word := NewIconButton('\ueb7e')
+	word.click = func(b bool) {
+		pk.impl.query_option.Wholeword = b
+	}
 	input_filter.
-		AddItem(x1, 3, 0, false).
+		AddItem(exclude, 2, 0, false).
+		AddItem(cap, 2, 0, false).
+		AddItem(word, 2, 0, false).
 		AddItem(file_include, 0, 9, false).
 		AddItem(search_btn, 2, 0, false).
 		AddItem(save_btn, 2, 0, false)
@@ -248,7 +263,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 	grep.get_grep_new_data()
 
 	task := grepx.impl.taskid
-	sss := grepx.impl.last.query
+	sss := grepx.impl.last.Query
 	Refs := grep.result.data
 	go func() {
 		livegreptag := fmt.Sprint("LG-UI", sss, "-", len(Refs), task)
@@ -343,12 +358,12 @@ type keydelay struct {
 
 // OnKey
 func (k *keydelay) OnKey(query string) {
-	k.grepx.impl.query_option.query = query
+	k.grepx.impl.query_option.Query = query
 	if k.waiting.Load() {
-		debug.DebugLog("LG", "Exit", query, k.grepx.impl.query_option.query)
+		debug.DebugLog("LG", "Exit", query, query)
 		return
 	} else {
-		debug.DebugLog("LG", "Start", query, k.grepx.impl.query_option.query)
+		debug.DebugLog("LG", "Start", query, query)
 	}
 	go func() {
 		k.waiting.Store(true)
@@ -358,7 +373,7 @@ func (k *keydelay) OnKey(query string) {
 		} else {
 			<-time.After(time.Microsecond * 10)
 		}
-		debug.DebugLog("LG", "run", query, k.grepx.impl.query_option.query)
+		debug.DebugLog("LG", "run", query, query)
 		k.grepx.__updatequery(k.grepx.impl.query_option)
 	}()
 }
@@ -510,8 +525,7 @@ func (pk *livewgreppicker) close() {
 }
 
 type QueryOption struct {
-	query           string
-	include_pattern string
+	grep.OptionSet
 }
 
 func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
@@ -534,7 +548,7 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 	var new_query_stack = func() {
 		pk.impl.last = query_option
 		pk.impl.taskid++
-		query := pk.impl.last.query
+		query := pk.impl.last.Query
 		pk.impl.key = query
 		pk.grep_list_view.Key = query
 		pk.grep_list_view.Clear()
@@ -542,13 +556,7 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 			return
 		}
 
-		opt := grep.OptionSet{
-			Grep_only:     true,
-			G:             true,
-			Wholeword:     true,
-			IcludePattern: query_option.include_pattern,
-		}
-		if g, err := grep.NewGorep(pk.impl.taskid, query, &opt); err == nil {
+		if g, err := grep.NewGorep(pk.impl.taskid, query, &pk.impl.last.OptionSet); err == nil {
 			impl := pk.impl
 			if impl.grep != nil {
 				pk.stop_grep()

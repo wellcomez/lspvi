@@ -43,14 +43,11 @@ type channelSet struct {
 }
 
 type OptionSet struct {
-	G             bool
-	Grep_only     bool
-	search_binary bool
-	Ignore        string
-	// hidden        bool
-	ignorecase    bool
-	Wholeword     bool
-	IcludePattern string
+	Query       string
+	Ignorecase  bool
+	Wholeword   bool
+	Exclude     bool
+	PathPattern string
 }
 
 type searchScope struct {
@@ -70,7 +67,7 @@ const (
 
 type Gorep struct {
 	pattern         *regexp.Regexp
-	include_pattern string
+	path_pattern string
 	ptnstring       string
 	useptnstring    bool
 	scope           searchScope
@@ -194,7 +191,7 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 	base.Debug("NewGrep")
 	var err error
 	if !base.useptnstring {
-		if opt.ignorecase {
+		if opt.Ignorecase {
 			pattern = "(?i)" + pattern
 		}
 		if opt.Wholeword {
@@ -211,22 +208,11 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 		// 	}
 		// }
 	}
-	if len(opt.IcludePattern) > 0 {
-		base.include_pattern = opt.IcludePattern
+	if len(opt.PathPattern) > 0 {
+		base.path_pattern = opt.PathPattern
 	}
 
-	// config search scope
-	if opt.G {
-		base.scope.grep = true
-	}
-	if opt.Grep_only {
-		// base.scope.file = false
-		// base.scope.symlink = false
-		base.scope.grep = true
-	}
-	if opt.search_binary {
-		base.scope.binary = true
-	}
+	base.scope.grep = true
 	return base, nil
 }
 
@@ -325,16 +311,16 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 		}
 		if finfo.Type().IsRegular() {
 			skip := false
-			if len(grep.include_pattern) > 0 {
+			if len(grep.path_pattern) > 0 {
 				skip = true
-				if yes, _ := doublestar.Match(grep.include_pattern, path); yes {
+				if yes, _ := doublestar.Match(grep.path_pattern, path); yes {
 					skip = false
-				} else if yes, _ := doublestar.Match(grep.include_pattern, finfo.Name()); yes {
+				} else if yes, _ := doublestar.Match(grep.path_pattern, finfo.Name()); yes {
 					skip = false
 				}
 			}
 			if skip {
-				debug.DebugLog(GrepTag, "ignore:"+grep.include_pattern, path)
+				debug.DebugLog(GrepTag, "ignore:"+grep.path_pattern, path)
 				continue
 			}
 		}

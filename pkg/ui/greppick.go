@@ -56,7 +56,7 @@ func (g *greppicker) handle() func(event *tcell.EventKey, setFocus func(p tview.
 func RunQuery(g *greppicker) {
 	g.impl.fzf_on_result = nil
 	g.parent.input.SetLabel(">")
-	g.impl.query_option.query = g.parent.input.GetText()
+	g.impl.query_option.Query= g.parent.input.GetText()
 	g.livewgreppicker.__updatequery(g.impl.query_option)
 }
 
