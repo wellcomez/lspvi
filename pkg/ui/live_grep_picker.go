@@ -78,7 +78,7 @@ func (pk livewgreppicker) open_view_from_normal_list(cur int, prev bool) bool {
 		fpath := item.Loc.URI.AsPath().String()
 		lineNumber := item.Loc.Range.Start.Line
 		if prev {
-			pk.PrevOpen(fpath, lineNumber+1)
+			pk.PrevOpen(fpath, lineNumber)
 		} else {
 			pk.main.OpenFileHistory(fpath, &item.Loc)
 		}
@@ -419,7 +419,7 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 			line := o.get_code(0)
 			lineNumber := o.Loc.Range.Start.Line
 			path := trim_project_filename(fpath, global_prj_root)
-			data := fmt.Sprintf("%s:%d %s", path, lineNumber, line)
+			data := fmt.Sprintf("%s:%d %s", path, lineNumber+1, line)
 			grepx.grep_list_view.AddItem(data, "", func() {
 				grepx.main.OpenFileHistory(path, &o.Loc)
 				grepx.parent.hide()
@@ -552,10 +552,10 @@ func (pk livewgreppicker) UpdateQuery(query string) {
 func (pk *livewgreppicker) set_list_handle() {
 	pk.grep_list_view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		pk.open_view_from_normal_list(index, true)
-		update_title_with_index(pk,index)
+		update_title_with_index(pk, index)
 	})
 	pk.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		idx:=pk.grep_list_view.GetCurrentItem()
+		idx := pk.grep_list_view.GetCurrentItem()
 		pk.open_view_from_normal_list(idx, false)
 	})
 }
