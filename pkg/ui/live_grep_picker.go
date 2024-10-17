@@ -201,10 +201,10 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 //		return layout
 //	}
 
-func new_live_grep_picker(v *fzfmain) *livewgreppicker {
+func new_live_grep_picker(v *fzfmain, q QueryOption) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v)
-	impl := &grep_impl{taskid: int(time.Now().Second()) * 100}
+	impl := &grep_impl{taskid: int(time.Now().Second()) * 100, query_option: q}
 	impl.query_option.Ignorecase = true
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
@@ -213,6 +213,7 @@ func new_live_grep_picker(v *fzfmain) *livewgreppicker {
 		impl:             impl,
 		not_live:         false,
 	}
+	v.input.SetText(q.Query)
 	grep.impl.livekeydelay.grepx = grep
 	x.use_cusutom_list(grep.grep_list_view)
 	impl.quick = quick_view_data{main: v.main, ignore_symbol_resolv: true}
@@ -487,7 +488,7 @@ func (a QueryOption) Whole(b bool) QueryOption {
 	return a
 }
 func (a QueryOption) Cap(b bool) QueryOption {
-	a.Ignorecase= !b
+	a.Ignorecase = !b
 	return a
 }
 
