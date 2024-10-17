@@ -7,7 +7,6 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
-	"zen108.com/lspvi/pkg/ui/grep"
 )
 
 type CodeContextMenu struct {
