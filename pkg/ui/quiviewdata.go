@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -38,7 +39,7 @@ func new_quikview_data(m MainService, Type DateType, filename string, Refs []ref
 	}
 	return a
 }
-func (qk *quick_view_data) Add(ref ref_with_caller) (ret list_tree_node,err error){
+func (qk *quick_view_data) Add(ref ref_with_caller) (ret list_tree_node, err error) {
 	idx := len(qk.Refs.Refs)
 	qk.Refs.Refs = append(qk.Refs.Refs, ref)
 	f := ref.Loc.URI.AsPath().String()
@@ -49,8 +50,8 @@ func (qk *quick_view_data) Add(ref ref_with_caller) (ret list_tree_node,err erro
 			return
 		}
 	}
-	ret= list_tree_node{ref_index: idx, parent: true, expand: true, filename: f}
-	qk.tree.root = append(qk.tree.root,ret)
+	ret = list_tree_node{ref_index: idx, parent: true, expand: true, filename: f}
+	qk.tree.root = append(qk.tree.root, ret)
 	return
 }
 func (qk *quick_view_data) tree_to_listemitem() []*list_tree_node {
@@ -261,7 +262,11 @@ func (v *FlexTreeNode) ListItem() (ret []string) {
 	for i, c := range v.child {
 		s := c.data.text
 		if i == lastIndex && m {
-			s = fmt_color_string(down, tcell.ColorRed) + s[1:]
+			if len(s) > 1 {
+				s = fmt_color_string(down, tcell.ColorRed) + s
+			} else {
+				s = fmt_color_string(down, tcell.ColorRed) + "  ?????"
+			}
 		}
 		ret = append(ret, s)
 
@@ -292,9 +297,15 @@ func (node FlexTreeNode) GetRange(root *FlexTreeNodeRoot) (Range []int, err erro
 	}
 	return Range, fmt.Errorf("not found")
 }
-func (node *FlexTreeNodeRoot) GetCaller(index int) *ref_with_caller {
+func (node *FlexTreeNodeRoot) GetCaller(index int) (ret *ref_with_caller, err error) {
 	n, _, _, _ := node.GetNodeIndex(index)
-	return n.data.get_caller(node.qk)
+	if n != nil {
+		ret = n.data.get_caller(node.qk)
+		return
+	} else {
+		err = fmt.Errorf("not found")
+		return
+	}
 }
 
 type NodePostion int
@@ -431,6 +442,34 @@ func (n *FlexTreeNode) LoadMore() {
 		n.child = append(n.child, *f)
 	}
 	n.loadcount = len(n.child)
+}
+
+func (quickview_data *quick_view_data) go_build_listview_data() []*list_tree_node {
+	// var qk = view.tree
+	var ret = make([]*list_tree_node, len(quickview_data.Refs.Refs))
+	maxConcurrency := 5
+	taskChannel := make(chan struct{}, maxConcurrency)
+
+	lineno := 1
+	var waitReports sync.WaitGroup
+	for i := range quickview_data.tree.root {
+		if quickview_data.abort {
+			break
+		}
+		waitReports.Add(1)
+		run := func(lineno, i int) {
+			defer waitReports.Done()
+			taskChannel <- struct{}{}
+			var a *list_tree_node = &quickview_data.tree.root[i]
+			a.get_tree_listitem(quickview_data, lineno)
+			<-taskChannel
+		}
+		go run(lineno, i)
+		lineno++
+	}
+	waitReports.Wait()
+	quickview_data.tree.tree_data_item = ret
+	return ret
 }
 func (quickview_data *quick_view_data) build_listview_data() []*list_tree_node {
 	// var qk = view.tree
