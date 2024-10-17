@@ -161,7 +161,7 @@ type MainService interface {
 
 type mainui struct {
 	sel                 selectarea
-	code_navigation_bar *smallicon
+	// code_navigation_bar *smallicon
 	quickbar            *minitoolbar
 	term                *Term
 	fileexplorer        *file_tree_view
@@ -674,7 +674,7 @@ func MainUI(arg *Arguments) {
 	main := &mainui{sel: selectarea{nottext: true}}
 	prj.Load(arg, main)
 	global_file_watch.AddReciever(main)
-	main.code_navigation_bar = new_small_icon(main)
+	// main.code_navigation_bar = new_small_icon(main)
 	main.quickbar = new_quick_toolbar(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
 	global_theme.update_default_color()
