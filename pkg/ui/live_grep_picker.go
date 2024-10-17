@@ -78,7 +78,7 @@ func (pk livewgreppicker) open_view_from_normal_list(cur int, prev bool) bool {
 		fpath := item.Loc.URI.AsPath().String()
 		lineNumber := item.Loc.Range.Start.Line
 		if prev {
-			pk.PrevOpen(fpath, lineNumber-1)
+			pk.PrevOpen(fpath, lineNumber+1)
 		} else {
 			pk.main.OpenFileHistory(fpath, &item.Loc)
 		}
@@ -303,8 +303,23 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 		}
 		grep.quick = *qk
 		view := grepx.grep_list_view
+		view.Clear()
+		for i := range data {
+			v := data[i]
+			if task != grepx.impl.taskid {
+				debug.DebugLog(livegreptag, "=======abort-3")
+				return
+			}
+			view.AddItem(v, "", nil)
+		}
 		view.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
 			_, pos, _, parent := tree.GetNodeIndex(index)
+			if pos == NodePostion_LastChild {
+				if !parent.HasMore() {
+					pos = NodePostion_Child
+				}
+
+			}
 			switch pos {
 			case NodePostion_Root:
 				{
@@ -338,15 +353,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			}
 			grepx.update_title()
 		})
-		view.Clear()
-		for i := range data {
-			v := data[i]
-			if task != grepx.impl.taskid {
-				debug.DebugLog(livegreptag, "=======abort-3")
-				return
-			}
-			view.AddItem(v, "", nil)
-		}
+
 		grepx.tmp_quick_data = nil
 		main.App().QueueUpdateDraw(func() {
 			grepx.update_preview()

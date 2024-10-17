@@ -51,6 +51,16 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	}
 	impl.set_fuzz(true)
 	list := impl.list
+
+	if global_walk == nil || global_walk.Root != global_prj_root {
+		global_walk = filewalk.NewFilewalk(global_prj_root)
+		go func() {
+			global_walk.Walk()
+			ret.UpdateData(impl, global_walk)
+		}()
+	} else {
+		ret.UpdateData(impl, global_walk)
+	}
 	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
 		if ret.fzf != nil {
 			index := list.GetCurrentItem()
@@ -63,15 +73,6 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		ret.update_title()
 	})
-	if global_walk == nil || global_walk.Root != global_prj_root {
-		global_walk = filewalk.NewFilewalk(global_prj_root)
-		go func() {
-			global_walk.Walk()
-			ret.UpdateData(impl, global_walk)
-		}()
-	} else {
-		ret.UpdateData(impl, global_walk)
-	}
 	return ret
 }
 func (dir *DirWalk) update_title() {
@@ -105,6 +106,9 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 
 func (wk *DirWalk) UpdateQuery(query string) {
 	wk.fzflist_impl.list.Clear()
+	if wk.fzf == nil {
+		return
+	}
 	wk.fzf.OnSearch(query, false)
 	hl := global_theme.search_highlight_color()
 	fzf := wk.fzf
