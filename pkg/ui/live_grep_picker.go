@@ -341,27 +341,25 @@ type keydelay struct {
 	waiting atomic.Bool
 }
 
-func (k *keydelay) OnKey(s string) {
+// OnKey
+func (k *keydelay) OnKey(query string) {
+	k.grepx.impl.query_option.query = query
 	if k.waiting.Load() {
-		debug.DebugLog("LG", "Exit", s, k.grepx.impl.query_option.query)
+		debug.DebugLog("LG", "Exit", query, k.grepx.impl.query_option.query)
 		return
 	} else {
-		debug.DebugLog("LG", "Start", s, k.grepx.impl.query_option.query)
+		debug.DebugLog("LG", "Start", query, k.grepx.impl.query_option.query)
 	}
 	go func() {
 		k.waiting.Store(true)
 		defer k.waiting.Store(false)
-		if len(s) == 1 {
+		if len(query) == 1 {
 			<-time.After(time.Microsecond * 50)
 		} else {
 			<-time.After(time.Microsecond * 10)
 		}
-		if len(k.grepx.impl.query_option.query) == 0 {
-			k.grepx.grep_list_view.Clear()
-		} else {
-			debug.DebugLog("LG", "run", s, k.grepx.impl.query_option.query)
-			k.grepx.__updatequery(k.grepx.impl.query_option)
-		}
+		debug.DebugLog("LG", "run", query, k.grepx.impl.query_option.query)
+		k.grepx.__updatequery(k.grepx.impl.query_option)
 	}()
 }
 func (impl *grep_impl) get_grep_new_data() (draw bool, data []ref_with_caller) {
@@ -490,12 +488,6 @@ func (pk livewgreppicker) Save() {
 }
 func (pk livewgreppicker) UpdateQuery(query string) {
 	pk.set_list_handle()
-	pk.stop_grep()
-	pk.codeprev.Clear()
-	pk.grep_list_view.Clear()
-	pk.grep_list_view.SetCurrentItem(-1)
-	pk.update_title()
-	pk.impl.query_option.query = query
 	pk.impl.livekeydelay.OnKey(query)
 }
 
@@ -532,33 +524,45 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 	}
 
 	pk.stop_grep()
-
-	pk.impl.last = query_option
-	pk.impl.taskid++
-	query := pk.impl.last.query
-	pk.impl.key = query
-	pk.grep_list_view.Key = query
-	pk.grep_list_view.Clear()
-	if query == "" {
-		return
+	var clean_ui = func() {
+		pk.grep_list_view.Clear()
+		pk.codeprev.Clear()
+		pk.grep_list_view.SetCurrentItem(-1)
+		pk.update_title()
 	}
 
-	opt := grep.OptionSet{
-		Grep_only:     true,
-		G:             true,
-		Wholeword:     true,
-		IcludePattern: query_option.include_pattern,
-	}
-	if g, err := grep.NewGorep(pk.impl.taskid, query, &opt); err == nil {
-		impl := pk.impl
-		if impl.grep != nil {
-			pk.stop_grep()
+	var new_query_stack = func() {
+		pk.impl.last = query_option
+		pk.impl.taskid++
+		query := pk.impl.last.query
+		pk.impl.key = query
+		pk.grep_list_view.Key = query
+		pk.grep_list_view.Clear()
+		if query == "" {
+			return
 		}
-		impl.grep = g
-		impl.result = grepresult{}
-		g.CB = pk.end
-		g.Kick(global_prj_root)
+
+		opt := grep.OptionSet{
+			Grep_only:     true,
+			G:             true,
+			Wholeword:     true,
+			IcludePattern: query_option.include_pattern,
+		}
+		if g, err := grep.NewGorep(pk.impl.taskid, query, &opt); err == nil {
+			impl := pk.impl
+			if impl.grep != nil {
+				pk.stop_grep()
+			}
+			impl.grep = g
+			impl.result = grepresult{}
+			g.CB = pk.end
+			g.Kick(global_prj_root)
+		}
 	}
+	go pk.main.App().QueueUpdateDraw(func() {
+		clean_ui()
+		go new_query_stack()
+	})
 
 }
 
