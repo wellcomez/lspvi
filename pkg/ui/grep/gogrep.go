@@ -70,8 +70,6 @@ type Gorep struct {
 	Option          OptionSet
 	path_pattern    string
 	ptnstring       string
-	useptnstring    bool
-	scope           searchScope
 	CB              func(taskid int, out *GrepOutput)
 	id              int
 	waitMaps        sync.WaitGroup
@@ -88,10 +86,14 @@ type Gorep struct {
 func (g *Gorep) IsRunning() bool {
 	return g.grep_status == GrepRunning
 }
-func (grep *Gorep) newFunction1(strline string) bool {
+func (grep *Gorep) Match(strline string) bool {
 	grep.count++
-	if grep.useptnstring {
-		return len(str.IndexAll(strline, grep.ptnstring, 1)) > 0
+	if grep.pattern == nil {
+		if grep.Option.Ignorecase {
+			return len(str.IndexAllIgnoreCase(strline, grep.ptnstring, 1)) > 0
+		} else {
+			return len(str.IndexAll(strline, grep.ptnstring, 1)) > 0
+		}
 	} else {
 		return grep.pattern.MatchString(strline)
 	}
@@ -175,16 +177,11 @@ func (grep *Gorep) Report(chans *channelSet) {
 	waitReports.Wait()
 }
 
-func NewGorep(id int, pattern string, opt OptionSet) (*Gorep, error) {
+func NewGorep(id int, ptn string, opt OptionSet) (*Gorep, error) {
 	base := &Gorep{
-		pattern:   nil,
-		ptnstring: pattern,
-		scope: searchScope{
-			grep:   false,
-			binary: false,
-		},
+		pattern:        nil,
+		ptnstring:      ptn,
 		Option:         opt,
-		useptnstring:   true,
 		id:             id,
 		begintm:        time.Now().UnixMilli(),
 		just_grep_file: false,
@@ -192,29 +189,29 @@ func NewGorep(id int, pattern string, opt OptionSet) (*Gorep, error) {
 	}
 	base.Debug("NewGrep")
 	var err error
-	if !base.useptnstring {
+	if opt.Wholeword {
+		ignoecase := ""
+		ptn = ""
 		if opt.Ignorecase {
-			pattern = "(?i)" + pattern
+			ignoecase = "(?i)"
+		} else {
+			ptn = regexp.QuoteMeta(ptn)
 		}
 		if opt.Wholeword {
-			pattern = `\b` + pattern + `\b`
+			ptn = fmt.Sprintf(`\b%s\b`, regexp.QuoteMeta(base.ptnstring))
 		}
-		base.pattern, err = regexp.Compile(pattern)
+		ptn = fmt.Sprintf(`%s%s`, ignoecase, ptn)
+		base.pattern = regexp.MustCompile(ptn)
 		if err != nil {
 			debug.ErrorLog(GrepTag, "regexp error", err)
 			return nil, err
 		}
-		// if len(opt.ignore) > 0 {
-		// 	if opt.ignorecase {
-		// 		opt.ignore = "(?i)" + opt.ignore
-		// 	}
-		// }
 	}
+
 	if len(opt.PathPattern) > 0 {
 		base.path_pattern = opt.PathPattern
 	}
 
-	base.scope.grep = true
 	return base, nil
 }
 
@@ -312,18 +309,29 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 			continue
 		}
 		if finfo.Type().IsRegular() {
-			skip := false
-			if len(grep.path_pattern) > 0 {
-				skip = true
-				if yes, _ := doublestar.Match(grep.path_pattern, path); yes {
-					skip = false
-				} else if yes, _ := doublestar.Match(grep.path_pattern, finfo.Name()); yes {
-					skip = false
+			if pth := grep.path_pattern; len(pth) > 0 {
+				m1 := func() (yes bool) {
+					yes, _ = doublestar.Match(pth, path)
+					return
 				}
-			}
-			if skip {
-				debug.DebugLog(GrepTag, "ignore:"+grep.path_pattern, path)
-				continue
+				m2 := func() (yes bool) {
+					yes, _ = doublestar.Match(pth, finfo.Name())
+					return
+				}
+				found := false
+				for _, v := range []func() bool{m1, m2} {
+					if v() {
+						found = true
+						break
+					}
+				}
+				if found {
+					if grep.Option.Exclude {
+						continue
+					}
+				} else if !grep.Option.Exclude {
+					continue
+				}
 			}
 		}
 		if finfo.IsDir() {
