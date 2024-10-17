@@ -83,10 +83,11 @@ type Gorep struct {
 	just_grep_file  bool
 	global_prj_root string
 	opened_file     int
-	// report_end      chan bool
 	grep_status grep_status
 }
-
+func(g *Gorep)IsRunning() bool {
+	return g.grep_status == GrepRunning
+}
 func (grep *Gorep) newFunction1(strline string) bool {
 	grep.count++
 	if grep.useptnstring {
@@ -115,10 +116,13 @@ func (grep *Gorep) Report(chans *channelSet) {
 	var waitReports sync.WaitGroup
 
 	chPrint := make(chan GrepOutput)
-
+	chEnd := make(chan bool)
+	
 	go func() {
 		for {
 			select {
+			case <-chEnd:
+				return
 			case msg := <-chPrint:
 				if grep.grep_status == GrepRunning {
 					grep.CB(grep.id, &msg)
@@ -163,6 +167,7 @@ func (grep *Gorep) Report(chans *channelSet) {
 		default:
 			break
 		}
+		chEnd <-true
 	}
 
 	waitReports.Add(1)
