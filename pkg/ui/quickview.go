@@ -920,8 +920,8 @@ func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
 		}
 	}
 	if v.Range.Start.Line == v.Range.End.Line {
-		s := v.Range.Start.Character
-		e := v.Range.End.Character
+		s := max(v.Range.Start.Character,0)
+		e := max(v.Range.End.Character,0)
 		if len(line) > s && len(line) >= e && s < e {
 			a1 := line[:s]
 			a := line[s:e]
