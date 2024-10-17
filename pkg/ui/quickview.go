@@ -254,6 +254,7 @@ type fzf_on_listview struct {
 	list_data        []fzf_list_item
 	selected         func(dataindex int, listindex int)
 	query            string
+	data             []string
 }
 
 func new_fzf_on_list_data(list *customlist, data []string, fuzz bool) *fzf_on_listview {
@@ -261,6 +262,7 @@ func new_fzf_on_list_data(list *customlist, data []string, fuzz bool) *fzf_on_li
 		listview:       list,
 		fuzz:           fuzz,
 		selected_index: []int{},
+		data:           data,
 	}
 	opt := fzf.DefaultOptions()
 	opt.Fuzzy = fuzz
@@ -380,6 +382,26 @@ func fzf_color_pos(colors []int, s string) []Pos {
 		}
 	}
 	return colors2
+}
+func convert_string_colortext(colors []int, s string, normal tcell.Color, hl tcell.Color) (ss []colortext) {
+	if hl == 0 {
+		hl = tcell.ColorYellow
+	}
+	if len(colors) < len(s) {
+		var colors2 = fzf_color_pos(colors, s)
+		begin := 0
+		for _, v := range colors2 {
+			normal_text := s[begin:v.X]
+			ss = append(ss, colortext{normal_text,normal})
+			x := s[v.X:v.Y]
+			ss = append(ss, colortext{x, hl})
+			begin = v.Y
+		}
+		if begin < len(s) {
+			ss = append(ss, colortext{text: s[begin:]})
+		}
+	}
+	return
 }
 func fzf_color_with_color(colors []int, s string, normal tcell.Color, hl tcell.Color) string {
 	if hl == 0 {

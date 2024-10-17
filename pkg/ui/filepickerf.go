@@ -87,10 +87,17 @@ func (dir *DirWalk) update_title() {
 func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 	dir.filewalk = file
 	data := global_walk.Filelist
+	fzfdata := []string{}
 	for _, v := range data {
-		impl.list.AddItem(trim_project_filename(v, global_prj_root), "", func() {})
+		fzfdata = append(fzfdata, trim_project_filename(v, global_prj_root))
 	}
-	dir.fzf = new_fzf_on_list(impl.list, true)
+	for _, v := range fzfdata {
+		impl.list.AddColorItem([]colortext{
+			{FileIcon(v) + " ", 0},
+			{v, 0},
+		}, nil, func() {})
+	}
+	dir.fzf = new_fzf_on_list_data(impl.list, fzfdata, true)
 	dir.update_title()
 	go dir.fzflist_impl.parent.app.QueueUpdateDraw(func() {
 	})
@@ -98,6 +105,15 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 
 func (wk *DirWalk) UpdateQuery(query string) {
 	wk.fzflist_impl.list.Clear()
-	// wk.fzflist_impl.list.Key = query
-	wk.fzf.OnSearch(query, true)
+	wk.fzf.OnSearch(query, false)
+	hl := global_theme.search_highlight_color()
+	fzf := wk.fzf
+	fzf.listview.Clear()
+	for i, v := range fzf.selected_index {
+		file := fzf.data[v]
+		t1 := convert_string_colortext(fzf.selected_postion[i], file, 0, hl)
+		var sss = []colortext{{FileIcon(file) + " ", 0}}
+		fzf.listview.AddColorItem(append(sss, t1...),
+			nil, func() {})
+	}
 }

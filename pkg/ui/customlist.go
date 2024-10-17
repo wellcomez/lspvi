@@ -10,28 +10,45 @@ type hlItem struct {
 }
 type customlist struct {
 	*tview.List
-	hlitems       []*hlItem
-	Key           string
-	fuzz          bool
-	default_color tcell.Color
-	selected      []int
+	// hlitems         []*hlItem
+	Key               string
+	fuzz              bool
+	default_color     tcell.Color
+	selected          []int
+	main_color_text   [][]colortext
+	second_color_text [][]colortext
 }
 
 func (l *customlist) Clear() *customlist {
 	l.List.Clear()
-	l.hlitems = []*hlItem{}
+	l.main_color_text = [][]colortext{}
+	l.second_color_text = [][]colortext{}
 	return l
 }
 func new_customlist(two bool) *customlist {
 	ret := &customlist{default_color: global_theme.search_highlight_color()}
 	ret.List = tview.NewList()
 	ret.ShowSecondaryText(two)
-	ret.hlitems = []*hlItem{}
+	ret.main_color_text = [][]colortext{}
+	ret.second_color_text = [][]colortext{}
 	ret.fuzz = false
 	return ret
 }
+func (l *customlist) AddColorItem(main, second []colortext, selected func()) *customlist {
+	l.main_color_text = append(l.main_color_text, main)
+	maintext := ""
+	for _, v := range main {
+		maintext += v.text
+	}
+	second_text := ""
+	for _, v := range second {
+		second_text += v.text
+	}
+	l.List.AddItem(maintext, second_text, 0, selected)
+	return l
+}
 func (l *customlist) AddItem(mainText, secondText string, selected func()) *customlist {
-	l.hlitems = append(l.hlitems, &hlItem{})
+	// l.hlitems = append(l.hlitems, &hlItem{})
 	l.List.AddItem(mainText, secondText, 0, selected)
 	return l
 }
@@ -68,12 +85,22 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	// for _, v := range l.Key {
 	// 	keys2 = append(keys2, l.NewDefaultColorKey(string(v)))
 	// }
-	for index := itemoffset; index < len(l.hlitems); index++ {
-		MainText, SecondText := l.List.GetItemText(index)
-		// MainText, main_postion := get_hl_postion(MainText, keys, l, keys2)
+	for index := itemoffset; index < l.GetItemCount(); index++ {
+		var main_text, second_text []colortext
 		selected := index == l.List.GetCurrentItem()
-		main_text := GetColorText(MainText, []colortext{colortext{l.Key, l.default_color}})
-		second_text := GetColorText(SecondText, []colortext{colortext{l.Key, l.default_color}})
+		var has_main, has_second bool
+		if len(l.main_color_text) > 0 {
+			main_text = l.main_color_text[index]
+			if len(l.second_color_text) > 0 {
+				second_text = l.second_color_text[index]
+			}
+		} else {
+			MainText, SecondText := l.List.GetItemText(index)
+			main_text = GetColorText(MainText, []colortext{{l.Key, l.default_color}})
+			second_text = GetColorText(SecondText, []colortext{{l.Key, l.default_color}})
+		}
+		has_main = len(main_text) > 0
+		has_second = len(second_text) > 0
 		if selected {
 			for i := range main_text {
 				main_text[i].color = 0
@@ -92,7 +119,7 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		if y >= bottomLimit {
 			break
 		}
-		if len(MainText) > 0 {
+		if has_main {
 			if multiselected {
 				l.draw_item_color_new(main_text, screen, offset_x, y, width, theme_style)
 			} else if selected {
@@ -105,7 +132,7 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		if y >= bottomLimit {
 			break
 		}
-		if l.showSecondaryText() && len(SecondText) > 0 {
+		if l.showSecondaryText() && has_second {
 			if selected {
 				l.draw_item_color_new(second_text, screen, offset_x, y, width, selected_style)
 			} else {
