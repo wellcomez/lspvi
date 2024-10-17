@@ -39,7 +39,6 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	mem, err := syscall.Mmap(int(file.Fd()), 0, int(fi.Size()),
 		syscall.PROT_READ, syscall.MAP_SHARED)
 	if err != nil {
-
 		return
 	}
 	defer syscall.Munmap(mem)
@@ -57,6 +56,9 @@ func PosixRunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 
 	var ret = GrepInfo{fpath, lineNumber, "", 0, false}
 	for scanner.Scan() {
+		if grep.IsAbort() {
+			return
+		}
 		lineNumber++
 		strline := scanner.Text()
 		finded := grep.newFunction1(strline)
