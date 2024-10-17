@@ -429,7 +429,7 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 			}
 			if opt.Change != lsp.TextDocumentSyncKindNone {
 				sym.verison++
-				debug.DebugLog("cqdebug", "didchange", changeevents[0].String())
+				debug.TraceLog("cqdebug", "didchange", changeevents[0].String())
 				return sym.lsp.DidChange(sym.Filename, sym.verison, changeevents)
 			} else {
 				return fmt.Errorf("TextDocumentSyncKindNone is None")
