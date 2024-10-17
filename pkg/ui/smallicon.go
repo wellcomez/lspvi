@@ -70,10 +70,18 @@ var str_forward = '▶'
 
 func (c *smallicon) Relocated() {
 	left, top := c.get_offset_xy()
-	c.code = make([]icon, len(SplitCode.code_collection))
+	c.code = []icon{}
+	for i, v := range SplitCode.code_collection {
+		runs := FileIconRune(v.FileName())
+		if i == 0 {
+			runs = append([]rune{' '}, runs...)
+		}
+		runs = append(runs, ' ')
+		r := icon{s: runs}
+		c.code = append(c.code, r)
+	}
 	left = c.file.relocate(left, top)
 	for i := range c.code {
-		c.code[i].s = []rune{block_str}
 		left = c.code[i].relocate(left, top)
 	}
 	left = c.outline.relocate(left, top)
@@ -284,7 +292,7 @@ type IconButton struct {
 	*tview.Box
 	r        rune
 	selected bool
-	click func (bool)
+	click    func(bool)
 }
 
 func NewIconButton(r rune) *IconButton {
@@ -308,7 +316,7 @@ func (c *IconButton) MouseHandler() func(action tview.MouseAction, event *tcell.
 		if InRect(event, c) {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 				c.selected = !c.selected
-				if c.click!=nil{
+				if c.click != nil {
 					c.click(c.selected)
 				}
 			}

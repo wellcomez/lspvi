@@ -52,14 +52,15 @@ type filetree_context struct {
 }
 
 var normal_file = fmt.Sprintf("%c", '\uf15c')
-//var go_icon = fmt.Sprintf("%c", '\uf1a0')
+
+// var go_icon = fmt.Sprintf("%c", '\uf1a0')
 var go_icon = fmt.Sprintf("%c", '\uf0d4')
 var c_icon = fmt.Sprintf("%c", '\U000f0bf2')
 var h_icon = fmt.Sprintf("%c", '\U0000f0fd')
 var py_icon = fmt.Sprintf("%c", '\ue73c')
 var js_icon = fmt.Sprintf("%c", '\ue74f')
 var ts_icon = fmt.Sprintf("%c", '\U000f03e6')
-var html_icon = fmt.Sprintf("%c",'\U000f0c01')
+var html_icon = fmt.Sprintf("%c", '\U000f0c01')
 var cpp_icon = fmt.Sprintf("%c", '\U000f03e4')
 var css_icon = fmt.Sprintf("%c", '\U000f03e7')
 var png_icon = fmt.Sprintf("%c", '\uf1c5')
@@ -125,8 +126,14 @@ func get_icon_file(file string, is_dir bool) string {
 }
 
 func FileWithIcon(file string) string {
-	Icon:= FileIcon(file)
-	return fmt.Sprintf("%s %s",Icon,file)
+	Icon := FileIcon(file)
+	return fmt.Sprintf("%s %s", Icon, file)
+}
+func FileIconRune(file string) (ret []rune) {
+	for _, v := range FileIcon(file) {
+		ret = append(ret, v)
+	}
+	return
 }
 func FileIcon(file string) string {
 	ext := filepath.Ext(file)
