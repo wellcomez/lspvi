@@ -67,7 +67,8 @@ const (
 
 type Gorep struct {
 	pattern         *regexp.Regexp
-	path_pattern string
+	Option          OptionSet
+	path_pattern    string
 	ptnstring       string
 	useptnstring    bool
 	scope           searchScope
@@ -174,7 +175,7 @@ func (grep *Gorep) Report(chans *channelSet) {
 	waitReports.Wait()
 }
 
-func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
+func NewGorep(id int, pattern string, opt OptionSet) (*Gorep, error) {
 	base := &Gorep{
 		pattern:   nil,
 		ptnstring: pattern,
@@ -182,6 +183,7 @@ func NewGorep(id int, pattern string, opt *OptionSet) (*Gorep, error) {
 			grep:   false,
 			binary: false,
 		},
+		Option:         opt,
 		useptnstring:   true,
 		id:             id,
 		begintm:        time.Now().UnixMilli(),

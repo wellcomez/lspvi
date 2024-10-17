@@ -556,7 +556,7 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 			return
 		}
 
-		if g, err := grep.NewGorep(pk.impl.taskid, query, &pk.impl.last.OptionSet); err == nil {
+		if g, err := grep.NewGorep(pk.impl.taskid, query, pk.impl.last.OptionSet); err == nil {
 			impl := pk.impl
 			if impl.grep != nil {
 				pk.stop_grep()
