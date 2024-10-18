@@ -97,8 +97,13 @@ func (complete *CompleteMenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 		complete.loc = codetext.Cursor.Loc
 		complete.show = true
 		go func() {
+			task := complete.task
 			<-time.After(10 * time.Second)
+			if task != complete.task {
+				return
+			}
 			complete.show = false
+			complete.task = nil
 		}()
 	}
 	req := lspcore.Complete{
