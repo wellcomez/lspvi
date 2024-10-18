@@ -929,65 +929,6 @@ func (code *codetextview) xOffset() int64 {
 //		return xjj
 //	}
 
-func (code *CodeView) handle_complete_key(after []lspcore.CodeChangeEvent) {
-	codetext := code.view
-	lsp := code.LspSymbol()
-	if lsp == nil {
-		return
-	}
-	if !lsp.HasLsp() {
-		return
-	}
-	if complete := codetext.complete; complete != nil {
-		for _, v := range after {
-			if codetext.run_complete(v, lsp, complete, codetext) {
-				break
-			}
-		}
-	}
-}
-
-func (view *codetextview) run_complete(v lspcore.CodeChangeEvent, sym *lspcore.Symbol_file, complete *CompleteMenu, codetext *codetextview) bool {
-	for _, e := range v.Events {
-		if e.Type == lspcore.TextChangeTypeInsert && len(e.Text) == 1 {
-			if e.Text == "\n" {
-				continue
-			}
-			var cb = func(cl lsp.CompletionList, err error) {
-				if err != nil {
-					return
-				}
-				if !cl.IsIncomplete {
-					return
-				}
-				complete.Clear()
-				width := 0
-				for i := range cl.Items {
-					v := cl.Items[i]
-					width = max(len(v.Label)+2, width)
-					complete.AddItem(v.Label, "", func() {
-						complete.show = false
-						codetext.Buf.Insert(complete.loc, v.Label)
-					})
-				}
-				complete.height = len(cl.Items)
-				complete.width = width
-				complete.loc = codetext.Cursor.Loc
-				complete.show = true
-				go func() {
-					<-time.After(10 * time.Second)
-					complete.show = false
-				}()
-			}
-			go sym.DidComplete(lspcore.Complete{
-				Pos:              e.Range.End,
-				TriggerCharacter: e.Text,
-				Cb:               cb})
-			return true
-		}
-	}
-	return false
-}
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// prev := get_line_content(lineno, code)
 	if code.insert {
