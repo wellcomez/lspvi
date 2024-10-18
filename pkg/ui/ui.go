@@ -55,6 +55,7 @@ func new_flex_area(id view_id, main *mainui) *flex_area {
 }
 
 type rootlayout struct {
+	code_area   *flex_area
 	editor_area *flex_area
 	console     *flex_area
 	cmdline     *tview.InputField
@@ -742,11 +743,12 @@ func MainUI(arg *Arguments) {
 	app := GlobalApp
 	main.app = GlobalApp
 
-	editor_area := create_edit_area(main)
+	editor_area, code_area := create_edit_area(main)
 	code := main.codeview
 	console_layout, tab_area := create_console_area(main)
 
 	main_layout := main.create_main_layout(editor_area, console_layout, tab_area)
+	main.layout.code_area = code_area
 	mainmenu := main.create_menu_bar(tab_area)
 
 	main.create_right_context_menu()
@@ -843,7 +845,8 @@ func (main *mainui) on_change_color(name string) {
 func handle_draw_after(main *mainui, screen tcell.Screen) {
 	// new_top_toolbar(main).Draw(screen)
 	if main.current_editor().vid().is_editor_main() {
-		x, y, w, _ := main.codeview.view.GetInnerRect()
+		x, _, w, _ := main.layout.code_area.GetRect()
+		_, y, _, _ := main.codeview.view.GetInnerRect()
 		left := x
 		right := x + w
 		for _, v := range SplitCode.code_collection {
@@ -1057,7 +1060,7 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 	tab_area.AddItem(main.statusbar, 0, 10, false)
 }
 
-func create_edit_area(main *mainui) *flex_area {
+func create_edit_area(main *mainui) (*flex_area, *flex_area) {
 	codelayout := new_flex_area(view_layout_splicode, main)
 	codelayout.Width = 80
 	SplitCode.layout = codelayout
@@ -1101,7 +1104,7 @@ func create_edit_area(main *mainui) *flex_area {
 			codeview.Paste()
 		}
 	}
-	return editor_area
+	return editor_area, codelayout
 }
 
 func (main *mainui) reload_index_list() {
