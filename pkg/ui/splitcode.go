@@ -47,6 +47,12 @@ func (c CodeSplit) TabIndex(vid view_id) int {
 	}
 	return -1
 }
+func (c CodeSplit) First() *CodeView {
+	if len(c.index) == 0 {
+		return nil
+	}
+	return c.TabView(0)
+}
 func (c CodeSplit) Last() *CodeView {
 	ind := len(c.index) - 1
 	return c.TabView(ind)

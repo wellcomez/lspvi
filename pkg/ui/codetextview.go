@@ -35,16 +35,39 @@ func (view *codetextview) IconStyle(main MainService) tcell.Style {
 	}
 	return style
 }
+
+var close_icon = '\uf2d3'
+var split_icon = '\ueb56'
+
 func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
+	vid := code.code.vid()
 	name := filepath.Base(code.code.FileName())
 	FileWithIcon(name)
 	var runes = []rune{}
-	for _, v := range FileWithIcon(name)+" " {
+	for _, v := range FileWithIcon(name) + " " {
 		runes = append(runes, v)
 	}
 	sytle := code.IconStyle(code.main)
+	first := SplitCode.First() == code.code
+	var quick_btn icon = icon{
+		s: []rune{close_icon, ' '},
+		click: func() {
+			if view, ok := SplitCode.code_collection[vid]; ok {
+				SplitClose(view).handle()
+			}
+		},
+		style: func() tcell.Style {
+			return sytle
+		},
+	}
 	item := []icon{
 		{s: runes, style: func() tcell.Style { return sytle }, click: func() {}},
+	}
+	if vid != view_code {
+		item = append(item, quick_btn)
+	}
+	if first {
+		item = append([]icon{FileExploreIconButton(code.main)}, item...)
 	}
 	ret := &minitoolbar{
 		item: item,
@@ -55,9 +78,32 @@ func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 	}
 	return ret
 }
+func FileExploreIconButton(main MainService) icon {
+
+	return icon{
+		s: []rune{file_rune, ' '},
+		click: func() {
+			main.toggle_view(view_file)
+		},
+		style: func() tcell.Style {
+			return get_style_hide(main.IsHide(view_file))
+		},
+	}
+
+}
+func OutlineIconButton(main MainService) icon {
+	var outline = icon{
+		s: []rune{outline_rune, ' '},
+		click: func() {
+			main.toggle_view(view_outline_list)
+		},
+		style: func() tcell.Style {
+			return get_style_hide(main.IsHide(view_outline_list))
+		},
+	}
+	return outline
+}
 func new_textcode_toolbar(code *codetextview) *minitoolbar {
-	var close_icon = '\uf2d3'
-	var split_icon = '\ueb56'
 	sytle := code.IconStyle(code.main)
 	item := []icon{}
 	vid := code.code.vid()
@@ -78,17 +124,7 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 			return sytle
 		},
 	}
-	var quick_btn icon = icon{
-		s: []rune{close_icon},
-		click: func() {
-			if view, ok := SplitCode.code_collection[vid]; ok {
-				SplitClose(view).handle()
-			}
-		},
-		style: func() tcell.Style {
-			return sytle
-		},
-	}
+
 	main := code.main
 	var back = icon{
 		s: []rune{' ', str_back, ' '},
@@ -108,32 +144,16 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 			return get_style_hide(!main.CanGoFoward())
 		},
 	}
-	var file = icon{
-		s: []rune{file_rune, ' '},
-		click: func() {
-			main.toggle_view(view_file)
-		},
-		style: func() tcell.Style {
-			return get_style_hide(code.main.IsHide(view_file))
-		},
-	}
-	var outline = icon{
-		s: []rune{outline_rune, ' '},
-		click: func() {
-			main.toggle_view(view_outline_list)
-		},
-		style: func() tcell.Style {
-			return get_style_hide(code.main.IsHide(view_outline_list))
-		},
-	}
+
+	var outline = OutlineIconButton(code.main)
 
 	if vid == view_code {
 		item = append(item, split_btn)
 	} else {
-		item = append(item, []icon{split_btn, quick_btn}...)
+		item = append(item, []icon{split_btn}...)
 	}
 	if is_last {
-		item = append(item, []icon{back, forward, outline, file}...)
+		item = append(item, []icon{back, forward, outline}...)
 	}
 
 	ret := &minitoolbar{
@@ -148,6 +168,7 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 }
 func (v *codetextview) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
 	return func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+		new_textcode_left_toolbar(v).handle_mouse_event(action, event)
 		new_textcode_toolbar(v).handle_mouse_event(action, event)
 		return v.View.MouseHandler()(action, event, setFocus)
 	}
