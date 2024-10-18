@@ -77,7 +77,8 @@ func (t DateType) Icon() string {
 	case data_callin:
 		return fmt.Sprintf("%c", '\ueb92')
 	case data_grep_word:
-		return fmt.Sprintf("%c", '\U000f0bff')
+		return fmt.Sprintf("%c", '\uf002')
+		// return fmt.Sprintf("%c", '\U000f0bff')
 	}
 	return ""
 }
