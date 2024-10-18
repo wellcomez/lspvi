@@ -117,6 +117,7 @@ type MainService interface {
 	key_map_leader() []cmditem
 	//lsp
 	Lspmgr() *lspcore.LspWorkspace
+	LspComplete()
 	get_callin_stack(loc lsp.Location, filepath string)
 	get_callin_stack_by_cursor(loc lsp.Location, filepath string)
 	get_refer(pos lsp.Range, filepath string)
@@ -440,6 +441,9 @@ func (m *mainui) OnLspCallTaskInViewChanged(call_in_stack *lspcore.CallInTask) {
 // OnLspCaller implements lspcore.lsp_data_changed.
 func (m *mainui) OnLspCaller(s string, c lsp.CallHierarchyItem, stacks []lspcore.CallStack) {
 	// m.callinview.update(stacks)
+}
+func (m *mainui) LspComplete() {
+	m.current_editor().Complete()
 }
 func (m *mainui) get_callin_stack(loc lsp.Location, filepath string) {
 	lsp, err := m.lspmgr.Open(filepath)

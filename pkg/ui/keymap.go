@@ -74,6 +74,7 @@ const (
 	vi_search_mode
 	vi_line_head
 	vi_line_end
+	lsp_complete
 	handle_ctrl_c
 	handle_ctrl_v
 	cmd_quit
@@ -421,6 +422,13 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.Dialog().OpenKeymapFzf()
 			return true
 		}}
+	case lsp_complete:
+		{
+			return cmdactor{id, "Lsp complete", func() bool {
+				m.LspComplete()
+				return true
+			}}
+		}
 	default:
 		return cmdactor{id,
 			"", nil,

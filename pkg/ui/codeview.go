@@ -24,6 +24,7 @@ import (
 )
 
 type CodeEditor interface {
+	Complete()
 	SplitRight() *CodeView
 	Clear()
 	IsLoading() bool
@@ -1303,6 +1304,8 @@ func (code *CodeView) move_up_down(up bool) {
 	code.update_with_line_changed()
 }
 
+func (code *CodeView) Complete() {
+}
 func (code *CodeView) update_with_line_changed() {
 	root := code.view
 	main := code.main
