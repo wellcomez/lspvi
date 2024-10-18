@@ -35,6 +35,7 @@ type lspcore struct {
 	conn                  *jsonrpc2.Conn
 	capabilities          map[string]interface{}
 	initializationOptions map[string]interface{}
+	CompletionProvider    *lsp.CompletionOptions
 	// arguments             []string
 	handle        jsonrpc2.Handler
 	rw            io.ReadWriteCloser
@@ -243,6 +244,45 @@ func (client *lspcore) DidClose(file string) error {
 	return client.conn.Notify(context.Background(), "textDocument/didClose", param)
 }
 
+type Complete struct {
+	Pos              lsp.Position
+	TriggerCharacter string
+	File             string
+	Cb               func(lsp.CompletionList, error)
+}
+
+func (core *lspcore) DidComplete(param Complete) (result lsp.CompletionList, err error) {
+	complete := lsp.CompletionParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{
+				URI: lsp.NewDocumentURI(param.File),
+			},
+			Position: param.Pos,
+		},
+	}
+	if core.CompletionProvider != nil {
+		var context = lsp.CompletionContext{
+			TriggerKind: lsp.CompletionTriggerKindInvoked,
+		}
+		cc := core.CompletionProvider.TriggerCharacters
+		for _, v := range cc {
+			if v == param.TriggerCharacter {
+				context.TriggerKind = lsp.CompletionTriggerKindTriggerCharacter
+				context.TriggerCharacter = v
+				break
+			}
+		}
+		complete.Context = &context
+	}
+	var sss interface{}
+	err = core.conn.Call(context.Background(), "textDocument/completion", complete, &sss)
+	if param.Cb != nil {
+		b, _ := json.Marshal(sss)
+		err := json.Unmarshal(b, &result)
+		param.Cb(result, err)
+	}
+	return
+}
 func (core *lspcore) DidOpen(file SourceCode, version int) error {
 	x, err := core.newTextDocument(file.Path, version, file.Cotent)
 	if err != nil {

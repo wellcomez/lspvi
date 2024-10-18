@@ -926,9 +926,67 @@ func (code *codetextview) xOffset() int64 {
 //		return xjj
 //	}
 
+func (code *CodeView) handle_complete_key(event *tcell.EventKey, after []lspcore.CodeChangeEvent) {
+	codetext := code.view
+	if complete := codetext.complete; complete != nil {
+		for _, v := range after {
+			for _, e := range v.Events {
+				if e.Type == lspcore.TextChangeTypeInsert && len(e.Text) == 1 {
+					if sym := code.LspSymbol(); sym != nil {
+						if e.Text == "\n" {
+							continue
+						}
+						var cb = func(cl lsp.CompletionList, err error) {
+							if err != nil {
+								return
+							}
+							if !cl.IsIncomplete {
+								return
+							}
+							complete.Clear()
+							width := 0
+							for i := range cl.Items {
+								v := cl.Items[i]
+								width = max(len(v.Label)+2, width)
+								complete.AddItem(v.Label, "", func() {
+									complete.show = false
+									codetext.Buf.Insert(complete.loc, v.Label)
+								})
+							}
+							complete.height = len(cl.Items)
+							complete.width = width
+							complete.loc = codetext.Cursor.Loc
+							complete.show = true
+							go func() {
+								<-time.After(10 * time.Second)
+								complete.show = false
+							}()
+						}
+						go sym.DidComplete(lspcore.Complete{
+							Pos:              e.Range.End,
+							TriggerCharacter: e.Text,
+							Cb:               cb})
+					}
+					break
+				}
+			}
+		}
+	}
+}
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// prev := get_line_content(lineno, code)
 	if code.insert {
+		if code.view.complete.show {
+			switch event.Key() {
+			case tcell.KeyEnter, tcell.KeyUp, tcell.KeyDown:
+				{
+					code.view.complete.InputHandler()(event, func(p tview.Primitive) {
+
+					})
+					return nil
+				}
+			}
+		}
 		if h, ok := code.key_map[event.Key()]; ok {
 			h(code)
 			return nil
@@ -936,7 +994,8 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	}
 	var status1 = new_code_change_checker(code)
 	code.view.HandleEvent(event)
-	status1.after(code)
+	changed := status1.after(code)
+	code.handle_complete_key(event, changed)
 	return nil
 }
 

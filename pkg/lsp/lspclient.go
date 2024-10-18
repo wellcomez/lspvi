@@ -16,6 +16,7 @@ type lspclient interface {
 	IsReady() bool
 	Launch_Lsp_Server() error
 	DidOpen(file SourceCode, version int) error
+	DidComplete(param Complete) (lsp.CompletionList, error)
 	DidClose(file string) error
 	DidSave(file string, text string) error
 	DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error
@@ -100,6 +101,10 @@ func (l lsp_base) DidClose(file string) error {
 type SourceCode struct {
 	Path   string
 	Cotent string
+}
+
+func (l lsp_base) DidComplete(param Complete) (lsp.CompletionList, error) {
+	return l.core.DidComplete(param)
 }
 
 // Initialize implements lspclient.

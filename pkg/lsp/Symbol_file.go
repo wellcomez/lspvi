@@ -49,6 +49,10 @@ func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
 	return nil
 }
 
+func (s *Symbol_file) DidComplete(param Complete) (lsp.CompletionList, error) {
+	param.File = s.Filename
+	return s.lsp.DidComplete(param)
+}
 func (*Symbol_file) newMethod(v *Symbol, rang lsp.Range) *Symbol {
 	if v.SymInfo.Kind == lsp.SymbolKindFunction || v.SymInfo.Kind == lsp.SymbolKindMethod {
 		if rang.Overlaps(v.SymInfo.Location.Range) {

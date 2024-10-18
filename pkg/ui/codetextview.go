@@ -13,6 +13,40 @@ import (
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
+type CompleteMenu struct {
+	*customlist
+	show          bool
+	loc           femto.Loc
+	width, height int
+}
+
+func NewCompleteMenu(main MainService) *CompleteMenu {
+	ret := &CompleteMenu{
+		customlist: new_customlist(false)}
+
+	// ret.customlist.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// 	idx := ret.GetCurrentItem()
+	// 	count := ret.GetItemCount()
+	// 	if event.Key() == tcell.KeyUp {
+	// 		idx--
+	// 		idx = max(idx, 0)
+	// 		ret.SetCurrentItem(idx)
+	// 		return nil
+	// 	}
+	// 	if event.Key() == tcell.KeyDown {
+	// 		idx++
+	// 		idx = min(idx, count-1)
+	// 		ret.SetCurrentItem(idx)
+	// 		return nil
+	// 	}
+	// 	if event.Key() == tcell.KeyEnter {
+	// 		ret.customlist.List.InputHandler()(event, nil)
+	// 	}
+	// 	return event
+	// })
+	return ret
+}
+
 type codetextview struct {
 	*femto.View
 	bookmark             bookmarkfile
@@ -23,6 +57,7 @@ type codetextview struct {
 	code                 CodeEditor
 	PasteHandlerImpl     func(text string, setFocus func(tview.Primitive))
 	main                 MainService
+	complete             *CompleteMenu
 }
 
 func (view *codetextview) IconStyle(main MainService) tcell.Style {
@@ -219,6 +254,12 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		new_textcode_left_toolbar(v).Draw(screen)
 		new_textcode_toolbar(v).Draw(screen)
 	}
+	if v.complete != nil && v.complete.show {
+		x1 := x + v.complete.loc.X + x
+		y1 := y + v.complete.loc.Y + 1 + y
+		v.complete.SetRect(x1, y1, v.complete.width, v.complete.height)
+		v.complete.Draw(screen)
+	}
 	// newFunction1(v, x, y, w,screen)
 }
 func (code *codetextview) PasteHandler() func(text string, setFocus func(tview.Primitive)) {
@@ -362,6 +403,7 @@ func new_codetext_view(buffer *femto.Buffer, main MainService) *codetextview {
 		nil,
 		nil,
 		main,
+		NewCompleteMenu(main),
 	}
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		style := tcell.StyleDefault
