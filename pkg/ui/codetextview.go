@@ -161,7 +161,31 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 		item = append(item, []icon{split_btn}...)
 	}
 	if is_last {
-		item = append(item, []icon{back, forward, buttom, outline}...)
+
+		bf := []icon{back, forward}
+		item = append(item, bf...)
+		if code.main.RunInBrowser() {
+			zoom_out := icon{
+				s: []rune{'\ueb81', ' '},
+				style: func() tcell.Style {
+					return get_style_hide(false)
+				},
+				click: func() {
+					main.ZoomWeb(true)
+				},
+			}
+			zoom_in := icon{
+				s: []rune{'\ueb82', ' '},
+				style: func() tcell.Style {
+					return get_style_hide(false)
+				},
+				click: func() {
+					main.ZoomWeb(false)
+				},
+			}
+			item = append(item, []icon{zoom_out, zoom_in}...)
+		}
+		item = append(item, []icon{buttom, outline}...)
 	}
 
 	ret := &minitoolbar{
