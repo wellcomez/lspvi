@@ -92,9 +92,11 @@ func (complete *CompleteMenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 				codetext.Buf.Insert(complete.loc, v.Label)
 			})
 		}
-		complete.height = max(10, len(cl.Items))
+		complete.height = min(10, len(cl.Items))
 		complete.width = width
 		complete.loc = codetext.Cursor.Loc
+		complete.loc.Y = complete.loc.Y - codetext.Topline
+		complete.loc.X = complete.editor.Cursor.GetVisualX()
 		complete.show = true
 		go func() {
 			task := complete.task

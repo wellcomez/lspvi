@@ -67,6 +67,7 @@ type rootlayout struct {
 
 type MainService interface {
 	App() *tview.Application
+	//tty
 	RunInBrowser() bool
 	//cmdline
 	CmdLine() *cmdline
