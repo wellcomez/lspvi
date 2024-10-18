@@ -91,7 +91,7 @@ func (SplitCode *CodeSplit) Remove(code *CodeView) {
 }
 func SplitRight(code *CodeView) context_menu_item {
 	return context_menu_item{item: create_menu_item("SplitRight"), handle: func() {
-		if !code.id.is_editor_main() {
+		if code.id.is_editor_main() {
 			code.SplitRight()
 		}
 	}, hide: !code.id.is_editor_main()}

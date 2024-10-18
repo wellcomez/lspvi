@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -33,6 +34,26 @@ func (view *codetextview) IconStyle(main MainService) tcell.Style {
 		style = style.Foreground(focus_color)
 	}
 	return style
+}
+func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
+	name := filepath.Base(code.code.FileName())
+	FileWithIcon(name)
+	var runes = []rune{}
+	for _, v := range FileWithIcon(name)+" " {
+		runes = append(runes, v)
+	}
+	sytle := code.IconStyle(code.main)
+	item := []icon{
+		{s: runes, style: func() tcell.Style { return sytle }, click: func() {}},
+	}
+	ret := &minitoolbar{
+		item: item,
+	}
+	ret.getxy = func() (int, int) {
+		x, y, _, _ := code.GetRect()
+		return x, y
+	}
+	return ret
 }
 func new_textcode_toolbar(code *codetextview) *minitoolbar {
 	var close_icon = '\uf2d3'
@@ -142,6 +163,7 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 	if vid == view_code_below {
 		v.code.DrawNavigationBar(x, y, w, screen)
 	} else {
+		new_textcode_left_toolbar(v).Draw(screen)
 		new_textcode_toolbar(v).Draw(screen)
 	}
 	// newFunction1(v, x, y, w,screen)

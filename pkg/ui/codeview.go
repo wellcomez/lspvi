@@ -1535,7 +1535,7 @@ func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus
 func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
 	main := code.main
 	code.openfile(filename, false, func(oldfile bool) {
-		code.view.SetTitle(trim_project_filename(code.Path(), global_prj_root))
+		// code.view.SetTitle(trim_project_filename(code.Path(), global_prj_root))
 		if line != nil {
 			code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 		}
@@ -1664,7 +1664,7 @@ func (code *CodeView) __load_in_main(filename string, data []byte) error {
 		name = trim_project_filename(filename, global_prj_root)
 	}
 	name = strings.TrimLeft(name, "/")
-	UpdateTitleAndColor(code.view.Box, name)
+	// UpdateTitleAndColor(code.view.Box, name)
 	code.update_with_line_changed()
 	return nil
 }
