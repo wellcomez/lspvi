@@ -21,16 +21,128 @@ type codetextview struct {
 	LineNumberUnderMouse int
 	code                 CodeEditor
 	PasteHandlerImpl     func(text string, setFocus func(tview.Primitive))
+	main                 MainService
 }
 
+func (view *codetextview) IconStyle(main MainService) tcell.Style {
+	focus_color := tcell.ColorYellow
+	style := get_style_hide(false)
+	focus := false
+	focus = view.HasFocus() || view.code == main.current_editor()
+	if focus {
+		style = style.Foreground(focus_color)
+	}
+	return style
+}
+func new_textcode_toolbar(code *codetextview) *minitoolbar {
+	var close_icon = '\uf2d3'
+	var split_icon = '\ueb56'
+	sytle := code.IconStyle(code.main)
+	item := []icon{}
+	vid := code.code.vid()
+
+	is_last := false
+	v := SplitCode.Last()
+	if v == nil {
+		is_last = true
+	} else {
+		is_last = v == code.code
+	}
+	var split_btn icon = icon{
+		s: []rune{split_icon, ' '},
+		click: func() {
+			code.code.SplitRight()
+		},
+		style: func() tcell.Style {
+			return sytle
+		},
+	}
+	var quick_btn icon = icon{
+		s: []rune{close_icon},
+		click: func() {
+			if view, ok := SplitCode.code_collection[vid]; ok {
+				SplitClose(view).handle()
+			}
+		},
+		style: func() tcell.Style {
+			return sytle
+		},
+	}
+	main := code.main
+	var back = icon{
+		s: []rune{' ', str_back, ' '},
+		click: func() {
+			main.GoBack()
+		},
+		style: func() tcell.Style {
+			return get_style_hide(!main.CanGoBack())
+		},
+	}
+	var forward = icon{
+		s: []rune{str_forward, ' '},
+		click: func() {
+			main.GoForward()
+		},
+		style: func() tcell.Style {
+			return get_style_hide(!main.CanGoFoward())
+		},
+	}
+	var file = icon{
+		s: []rune{file_rune, ' '},
+		click: func() {
+			main.toggle_view(view_file)
+		},
+		style: func() tcell.Style {
+			return get_style_hide(code.main.IsHide(view_file))
+		},
+	}
+	var outline = icon{
+		s: []rune{outline_rune, ' '},
+		click: func() {
+			main.toggle_view(view_outline_list)
+		},
+		style: func() tcell.Style {
+			return get_style_hide(code.main.IsHide(view_outline_list))
+		},
+	}
+
+	if vid == view_code {
+		item = append(item, split_btn)
+	} else {
+		item = append(item, []icon{split_btn, quick_btn}...)
+	}
+	if is_last {
+		item = append(item, []icon{back, forward, outline, file}...)
+	}
+
+	ret := &minitoolbar{
+		item: item,
+	}
+	ret.getxy = func() (int, int) {
+		x, y, w, _ := code.GetRect()
+		x = x + w - ret.Width()
+		return x, y
+	}
+	return ret
+}
+func (v *codetextview) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+	return func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+		new_textcode_toolbar(v).handle_mouse_event(action, event)
+		return v.View.MouseHandler()(action, event, setFocus)
+	}
+
+}
 func (v *codetextview) Draw(screen tcell.Screen) {
 	v.View.Draw(screen)
 	if v.code == nil {
 		return
 	}
 	x, y, w, _ := v.GetInnerRect()
-	if v.code.vid() == view_code_below {
+	vid := v.code.vid()
+	if vid == view_code_below {
 		v.code.DrawNavigationBar(x, y, w, screen)
+	} else {
+		new_textcode_toolbar(v).Draw(screen)
 	}
 	// newFunction1(v, x, y, w,screen)
 }
@@ -165,7 +277,7 @@ func (root *codetextview) draw_line_mark(mark bookmarkfile, ch rune, bottom int,
 		}
 	}
 }
-func new_codetext_view(buffer *femto.Buffer) *codetextview {
+func new_codetext_view(buffer *femto.Buffer, main MainService) *codetextview {
 
 	root := &codetextview{
 		femto.NewView(buffer),
@@ -175,13 +287,14 @@ func new_codetext_view(buffer *femto.Buffer) *codetextview {
 		false, 0,
 		nil,
 		nil,
+		main,
 	}
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		style := tcell.StyleDefault
 		_, topY, _, _ := root.GetInnerRect()
 		bottom := root.Bottomline()
 		mark := root.bookmark
-		bookmark_icon:='\uf02e'
+		bookmark_icon := '\uf02e'
 		root.draw_line_mark(mark, bookmark_icon, bottom, screen, x, topY, style)
 		root.draw_line_mark(root.linechange, '*', bottom, screen, x, topY, style)
 		// root.change_line_color(screen, x, topY, style)

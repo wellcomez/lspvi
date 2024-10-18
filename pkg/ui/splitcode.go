@@ -90,15 +90,18 @@ func (SplitCode *CodeSplit) Remove(code *CodeView) {
 	global_file_watch.Remove(code)
 }
 func SplitRight(code *CodeView) context_menu_item {
-	main := code.main
 	return context_menu_item{item: create_menu_item("SplitRight"), handle: func() {
 		if !code.id.is_editor_main() {
-			return
+			code.SplitRight()
 		}
-		codeview2 := SplitCode.New()
-		codeview2.view.SetBorder(true)
-		SplitCode.SetActive(codeview2)
-		main.Right_context_menu().add(codeview2.rightmenu)
-		codeview2.LoadFileWithLsp(code.Path(), nil, true)
 	}, hide: !code.id.is_editor_main()}
+}
+
+func (code *CodeView) SplitRight() *CodeView {
+	codeview2 := SplitCode.New()
+	codeview2.view.SetBorder(true)
+	SplitCode.SetActive(codeview2)
+	code.main.Right_context_menu().add(codeview2.rightmenu)
+	codeview2.LoadFileWithLsp(code.Path(), nil, true)
+	return codeview2
 }

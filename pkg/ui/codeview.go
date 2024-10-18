@@ -24,6 +24,7 @@ import (
 )
 
 type CodeEditor interface {
+	SplitRight() *CodeView
 	Clear()
 	IsLoading() bool
 	GetLines(begin, end int) []string
@@ -565,7 +566,7 @@ func NewCodeView(main MainService) *CodeView {
 	path := ""
 	content := ""
 	buffer := femto.NewBufferFromString(string(content), path)
-	root := new_codetext_view(buffer)
+	root := new_codetext_view(buffer, main)
 	root.SetRuntimeFiles(runtime.Files)
 	// root.SetColorscheme(colorscheme)
 	root.SetInputCapture(ret.handle_key)
@@ -1332,7 +1333,6 @@ func (code *CodeView) action_grep_word(selected bool) {
 		nil,
 	)
 }
-
 
 func (code *CodeView) action_goto_define(line *lspcore.OpenOption) {
 	main := code.main

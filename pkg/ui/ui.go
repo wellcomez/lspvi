@@ -16,6 +16,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
 	// "github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 
@@ -65,6 +66,10 @@ type rootlayout struct {
 }
 
 type MainService interface {
+	IsHide(view_id) bool
+	CanGoBack() bool
+	CanGoFoward() bool
+
 	Close()
 	quit()
 
@@ -160,33 +165,33 @@ type MainService interface {
 // editor_area_fouched
 
 type mainui struct {
-	sel                 selectarea
+	sel selectarea
 	// code_navigation_bar *smallicon
-	quickbar            *minitoolbar
-	term                *Term
-	fileexplorer        *file_tree_view
-	codeview            *CodeView
-	codeviewmain        *CodeView
-	codeview2           *CodeView
-	lspmgr              *lspcore.LspWorkspace
-	symboltree          *SymbolTreeView
-	quickview           *quick_view
-	bookmark_view       *bookmark_view
-	page                *console_pages
-	callinview          *callinview
-	app                 *tview.Application
-	uml                 *umlview
-	bf                  *BackForward
-	bookmark            *proj_bookmark
-	log                 *logview
-	cmdline             *cmdline
-	prefocused          view_id
-	searchcontext       *GenericSearch
-	statusbar           *tview.TextView
-	layout              *rootlayout
-	console_index_list  *qf_index_view
-	right_context_menu  *contextmenu
-	recent_open         *recent_open_file
+	quickbar           *minitoolbar
+	term               *Term
+	fileexplorer       *file_tree_view
+	codeview           *CodeView
+	codeviewmain       *CodeView
+	codeview2          *CodeView
+	lspmgr             *lspcore.LspWorkspace
+	symboltree         *SymbolTreeView
+	quickview          *quick_view
+	bookmark_view      *bookmark_view
+	page               *console_pages
+	callinview         *callinview
+	app                *tview.Application
+	uml                *umlview
+	bf                 *BackForward
+	bookmark           *proj_bookmark
+	log                *logview
+	cmdline            *cmdline
+	prefocused         view_id
+	searchcontext      *GenericSearch
+	statusbar          *tview.TextView
+	layout             *rootlayout
+	console_index_list *qf_index_view
+	right_context_menu *contextmenu
+	recent_open        *recent_open_file
 	// _editor_area_layout *editor_area_layout
 	tty          bool
 	ws           string
@@ -812,7 +817,7 @@ func (main *mainui) on_change_color(name string) {
 	global_theme.update_controller_theme()
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
-	new_top_toolbar(main).Draw(screen)
+	// new_top_toolbar(main).Draw(screen)
 	if main.current_editor().vid().is_editor_main() {
 		x, y, w, _ := main.codeview.view.GetInnerRect()
 		left := x
@@ -882,7 +887,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 	}
 
 	main.sel.handle_mouse_selection(action, event)
-	new_top_toolbar(main).handle_mouse_event(action, event)
+	// new_top_toolbar(main).handle_mouse_event(action, event)
 	main.quickbar.handle_mouse_event(action, event)
 
 	for _, v := range resizer {
@@ -1241,6 +1246,9 @@ func (main *mainui) GoForward() {
 		loc:    &start,
 		offset: i.Pos.Offset,
 	}, false, nil)
+}
+func (main *mainui) IsHide(id view_id) bool {
+	return id.to_view_link(main).Hide
 }
 func (main *mainui) CanGoBack() bool {
 	return main.bf.history.index < len(main.bf.history.datalist)-1
