@@ -321,6 +321,11 @@ func (m *mainui) zoom(zoomin bool) {
 	// // m._editor_area_layout.zoom(zoomin, viewid)
 }
 func (m *mainui) toggle_view(id view_id) {
+	switch id {
+	case view_console_area:
+		m.layout.mainlayout.resizer.toggle(id.to_view_link(m))
+		return
+	}
 	m.layout.editor_area.resizer.toggle(id.to_view_link(m))
 }
 

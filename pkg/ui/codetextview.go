@@ -146,14 +146,22 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 	}
 
 	var outline = OutlineIconButton(code.main)
-
+	var buttom = icon{
+		s: []rune{'\U000f10a9',' '},
+		click: func() {
+			main.toggle_view(view_console_area)
+		},
+		style: func() tcell.Style {
+			return get_style_hide(main.IsHide(view_console_area))
+		},
+	}
 	if vid == view_code {
 		item = append(item, split_btn)
 	} else {
 		item = append(item, []icon{split_btn}...)
 	}
 	if is_last {
-		item = append(item, []icon{back, forward, outline}...)
+		item = append(item, []icon{back, forward, buttom, outline}...)
 	}
 
 	ret := &minitoolbar{
