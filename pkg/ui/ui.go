@@ -66,48 +66,56 @@ type rootlayout struct {
 }
 
 type MainService interface {
-	IsHide(view_id) bool
-	CanGoBack() bool
-	CanGoFoward() bool
-
+	App() *tview.Application
+	RunInBrowser() bool
+	//cmdline
+	CmdLine() *cmdline
 	Close()
 	quit()
-
+	//log
 	cleanlog()
+
+	//screen
 	ScreenSize() (w, h int)
-
+	//help
 	helpkey(bool) []string
-
-	Dialog() *fzfmain
+	//view manager
 	toggle_view(id view_id)
+	get_focus_view_id() view_id
+	set_viewid_focus(v view_id)
+	to_view_link(viewid view_id) *view_link
+	set_perfocus_view(viewid view_id)
+	IsHide(view_id) bool
+
+	//zoom
 	zoom(zoomin bool)
 	ZoomWeb(zoom bool)
 
-	to_view_link(viewid view_id) *view_link
-
+	//ui component
 	FileExplore() *file_tree_view
 	OutLineView() *SymbolTreeView
 	Term() *Term
+	Recent_open() *recent_open_file
+	Bookmark() *proj_bookmark
 
-	OnSearch(option search_option)
-
+	//editor
 	current_editor() CodeEditor
+	Codeview2() *CodeView
+	//open
 	OpenFileHistory(filename string, line *lsp.Location)
 
 	on_select_project(prj *Project)
-
+	// tab
+	switch_tab_view()
 	ActiveTab(id view_id, focused bool)
-	CmdLine() *cmdline
-
-	set_viewid_focus(v view_id)
+	Tab() *tabmgr
+	// color
 	on_change_color(name string)
-	App() *tview.Application
-	get_focus_view_id() view_id
-
+	//keymap
 	key_map_space_menu() []cmditem
 	key_map_escape() []cmditem
 	key_map_leader() []cmditem
-
+	//lsp
 	Lspmgr() *lspcore.LspWorkspace
 	get_callin_stack(loc lsp.Location, filepath string)
 	get_callin_stack_by_cursor(loc lsp.Location, filepath string)
@@ -115,12 +123,18 @@ type MainService interface {
 	get_implementation(pos lsp.Range, filepath string, line *lspcore.OpenOption)
 	get_define(pos lsp.Range, filepath string, line *lspcore.OpenOption)
 	get_declare(pos lsp.Range, filepath string)
-
+	OnSymbolistChanged(file *lspcore.Symbol_file, err error)
+	//clpboard
 	CopyToClipboard(s string)
-	save_qf_uirefresh(data qf_history_data) error
-	LoadQfData(item qf_history_data) (task *lspcore.CallInTask)
-	open_in_tabview(keys qf_history_data)
 
+	//quickfix
+	save_qf_uirefresh(data qf_history_data) error
+	open_in_tabview(keys qf_history_data)
+	LoadQfData(item qf_history_data) (task *lspcore.CallInTask)
+
+	//dialog
+	Dialog() *fzfmain
+	//fzf picker
 	open_colorescheme()
 	open_qfh_query()
 	open_wks_query()
@@ -130,36 +144,30 @@ type MainService interface {
 	open_picker_livegrep()
 	open_picker_ctrlp()
 	open_picker_refs()
+	open_picker_grep(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker
 
+	//move window
 	move_to_window(direction)
 
-	switch_tab_view()
+	//history
 	GoBack()
 	GoForward()
-
-	create_menu_item(id command_id, handle func()) context_menu_item
 	Navigation() *BackForward
+	CanGoBack() bool
+	CanGoFoward() bool
 
-	Recent_open() *recent_open_file
-	Bookmark() *proj_bookmark
-	Tab() *tabmgr
-
+	//Search
 	qf_grep_word(QueryOption)
+	OnSearch(option search_option)
+	Searchcontext() *GenericSearch
 
 	Mode() mode
 
-	open_picker_grep(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker
 	OnCodeLineChange(x, y int, file string)
 
-	OnSymbolistChanged(file *lspcore.Symbol_file, err error)
-
+	//context menu
+	create_menu_item(id command_id, handle func()) context_menu_item
 	Right_context_menu() *contextmenu
-
-	Searchcontext() *GenericSearch
-	Codeview2() *CodeView
-
-	// new_bookmark_editor(cb func(string), code *CodeView) bookmark_edit
-	set_perfocus_view(viewid view_id)
 }
 
 // editor_area_fouched
@@ -578,7 +586,8 @@ func (m *mainui) open_file_to_history_option(file string, loc *lsp.Location, lin
 }
 
 func (m *mainui) open_in_tty(file string) bool {
-	if m.tty {
+	x := m.RunInBrowser()
+	if x {
 		ext := filepath.Ext(file)
 		open_in_image_set := []string{".png", ".md"}
 		for _, v := range open_in_image_set {
@@ -589,6 +598,11 @@ func (m *mainui) open_in_tty(file string) bool {
 
 	}
 	return false
+}
+
+func (m *mainui) RunInBrowser() bool {
+	x := m.tty
+	return x
 }
 
 type navigation_loc struct {
