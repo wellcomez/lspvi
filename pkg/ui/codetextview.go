@@ -81,7 +81,7 @@ func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 func FileExploreIconButton(main MainService) icon {
 
 	return icon{
-		s: []rune{file_rune, ' '},
+		s: []rune{left_sidebar_rune, ' '},
 		click: func() {
 			main.toggle_view(view_file)
 		},
@@ -93,7 +93,7 @@ func FileExploreIconButton(main MainService) icon {
 }
 func OutlineIconButton(main MainService) icon {
 	var outline = icon{
-		s: []rune{outline_rune, ' '},
+		s: []rune{right_sidebar_rune, ' '},
 		click: func() {
 			main.toggle_view(view_outline_list)
 		},
@@ -127,7 +127,7 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 
 	main := code.main
 	var back = icon{
-		s: []rune{' ', str_back, ' '},
+		s: []rune{' ', back_runne, ' '},
 		click: func() {
 			main.GoBack()
 		},
@@ -136,7 +136,7 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 		},
 	}
 	var forward = icon{
-		s: []rune{str_forward, ' '},
+		s: []rune{forward_runne, ' '},
 		click: func() {
 			main.GoForward()
 		},
@@ -147,7 +147,7 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 
 	var outline = OutlineIconButton(code.main)
 	var buttom = icon{
-		s: []rune{'\U000f10a9',' '},
+		s: []rune{'\U000f10a9', ' '},
 		click: func() {
 			main.toggle_view(view_console_area)
 		},

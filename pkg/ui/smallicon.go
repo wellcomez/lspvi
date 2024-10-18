@@ -52,11 +52,15 @@ func (s *icon) relocate(x, y int) int {
 }
 
 var block_str = '■'
-var str_back = '◀'
-var str_forward = '▶'
 
-var file_rune = '\U000f10aa'
-var outline_rune = '\U000f10ab'
+// var str_back = '◀'
+// var str_forward = '▶'
+
+var left_sidebar_rune = '\U000f10aa'
+var right_sidebar_rune = '\U000f10ab'
+
+var back_runne = '\U000f0b28'
+var forward_runne = '\U000f0b2a'
 
 type minitoolbar struct {
 	item  []icon
@@ -114,17 +118,17 @@ func (c *minitoolbar) Draw(screen tcell.Screen) {
 	}
 }
 func new_quick_toolbar(main *mainui) *minitoolbar {
-	var quick_btn icon = icon{
-		s: []rune{block_str},
-		click: func() {
+	// var quick_btn icon = icon{
+	// 	s: []rune{block_str},
+	// 	click: func() {
 
-		},
-		style: func() tcell.Style {
-			return get_style_hide(false)
-		},
-	}
+	// 	},
+	// 	style: func() tcell.Style {
+	// 		return get_style_hide(false)
+	// 	},
+	// }
 	var index_bt icon = icon{
-		s: []rune{block_str},
+		s: []rune{' ',right_sidebar_rune,' '},
 		click: func() {
 			main.layout.console.resizer.toggle(view_qf_index_view.to_view_link(main))
 			main.app.ForceDraw()
@@ -133,7 +137,7 @@ func new_quick_toolbar(main *mainui) *minitoolbar {
 			return get_style_hide(view_qf_index_view.to_view_link(main).Hide)
 		},
 	}
-	icon := []icon{quick_btn, index_bt}
+	icon := []icon{index_bt}
 	ret := &minitoolbar{
 		item: icon,
 	}
@@ -144,6 +148,7 @@ func new_quick_toolbar(main *mainui) *minitoolbar {
 	}
 	return ret
 }
+
 // func new_top_toolbar(main *mainui) *minitoolbar {
 // 	str_back = '\U000f0b28'
 // 	str_forward = '\U000f0b2a'
