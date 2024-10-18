@@ -421,6 +421,9 @@ func (code CodeView) FileName() string {
 }
 func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
+	if !code.insert {
+		code.view.complete.show = false
+	}
 }
 func (code *CodeView) SelectWordFromCopyCursor(c femto.Cursor) femto.Cursor {
 	view := code.view
