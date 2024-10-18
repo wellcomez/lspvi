@@ -111,7 +111,18 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 		for i := range cl.Items {
 			v := cl.Items[i]
 			width = max(len(v.Label)+2, width)
-			complete.AddItem(v.Label, "", func() {
+			t := v.Label
+			style, err := global_theme.get_lsp_color(lsp.SymbolKind(v.Kind))
+			if err != nil {
+				style = tcell.StyleDefault
+			}
+			if i, ok := lspcore.LspIcon[int(v.Kind)]; ok {
+				t = i + t
+			} else {
+				t = " " + t
+			}
+			f, _, _ := style.Decompose()
+			complete.AddColorItem([]colortext{{t, f}}, nil, func() {
 				complete.show = false
 				if v.TextEdit != nil {
 					r := v.TextEdit.Range
