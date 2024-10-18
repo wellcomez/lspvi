@@ -228,6 +228,9 @@ func (v *fzfmain) OpenFileFzf(root string) {
 	filewalk := NewDirWalk(root, v)
 	v.Frame = tview.NewFrame(filewalk.grid(v.input))
 	v.input.SetLabel(">")
+	v.input.SetChangedFunc(func(s string) {
+		v.currentpicker.UpdateQuery(s)
+	})
 	v.app.SetFocus(v.input)
 	v.Visible = true
 	v.currentpicker = filepicker{
