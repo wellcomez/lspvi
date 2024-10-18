@@ -9,12 +9,12 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (parent *fzfmain) openfile(path string) {
-	parent.main.OpenFileHistory(path, nil)
-	parent.hide()
-	// parent.main.set_viewid_focus(code.vid())
-	parent.main.CmdLine().Vim.EnterEscape()
-}
+// func (parent *fzfmain) openfile(path string) {
+// 	parent.main.OpenFileHistory(path, nil)
+// 	parent.hide()
+// 	// parent.main.set_viewid_focus(code.vid())
+// 	parent.main.CmdLine().Vim.EnterEscape()
+// }
 
 type clickdetector struct {
 	lastMouseX, lastMouseY int       // The last position of the mouse.

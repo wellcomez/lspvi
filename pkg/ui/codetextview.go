@@ -208,15 +208,14 @@ func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen
 	style := global_theme.get_default_style()
 	textStyle := global_theme.get_color("selection")
 
+	x1 := code.FileName()
+	x1 = strings.ReplaceAll(x1, "/", " > ") + " > "
+	for _, v := range x1 {
+		begin = code_navbar_draw_runne(
+			screen, begin, y, v, *textStyle)
+	}
 	if sym != nil {
 		begin = code_navbar_draw_runne(screen, begin, y, ' ', *textStyle)
-
-		x1 := code.FileName()
-		x1 = strings.ReplaceAll(x1, "/", " > ") + " > "
-		for _, v := range x1 {
-			begin = code_navbar_draw_runne(
-				screen, begin, y, v, *textStyle)
-		}
 
 		if len(sym.Classname) > 0 {
 			s := style
@@ -266,13 +265,13 @@ func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen
 					begin, y, v, textStyle.Foreground(f))
 			}
 		}
-		for {
-			if begin < x+w {
-				begin = code_navbar_draw_runne(screen,
-					begin, y, ' ', *textStyle)
-			} else {
-				break
-			}
+	}
+	for {
+		if begin < x+w {
+			begin = code_navbar_draw_runne(screen,
+				begin, y, ' ', *textStyle)
+		} else {
+			break
 		}
 	}
 }
