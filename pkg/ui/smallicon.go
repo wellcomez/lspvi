@@ -26,8 +26,8 @@ type icon struct {
 	style      func() tcell.Style
 }
 
-func (s icon) Draw(screen tcell.Screen, style tcell.Style) {
-	x := s.begin.X
+func (s icon) Draw(screen tcell.Screen, style tcell.Style) (x int) {
+	x = s.begin.X
 	y := s.begin.Y
 	for _, v := range s.s {
 		if v == ' ' {
@@ -37,6 +37,7 @@ func (s icon) Draw(screen tcell.Screen, style tcell.Style) {
 		}
 		x++
 	}
+	return
 }
 
 func (s *icon) in(p Pos) bool {
@@ -110,12 +111,14 @@ func (c *minitoolbar) Width() int {
 	}
 	return w
 }
-func (c *minitoolbar) Draw(screen tcell.Screen) {
+func (c *minitoolbar) Draw(screen tcell.Screen) (b, e int) {
 	c.Relocated()
+	b = c.item[0].begin.X
 	for i := range c.item {
 		a := &c.item[i]
-		a.Draw(screen, a.style())
+		e = a.Draw(screen, a.style())
 	}
+	return
 }
 func new_quick_toolbar(main *mainui) *minitoolbar {
 	// var quick_btn icon = icon{
@@ -128,7 +131,7 @@ func new_quick_toolbar(main *mainui) *minitoolbar {
 	// 	},
 	// }
 	var index_bt icon = icon{
-		s: []rune{' ',right_sidebar_rune,' '},
+		s: []rune{' ', right_sidebar_rune, ' '},
 		click: func() {
 			main.layout.console.resizer.toggle(view_qf_index_view.to_view_link(main))
 			main.app.ForceDraw()
