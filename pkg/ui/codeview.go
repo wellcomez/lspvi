@@ -24,6 +24,7 @@ import (
 )
 
 type CodeEditor interface {
+	NewChangeChecker() code_change_cheker
 	Complete()
 	SplitRight() *CodeView
 	Clear()
@@ -361,6 +362,9 @@ type CodeView struct {
 	loading     bool
 }
 
+func (code *CodeView) NewChangeChecker() code_change_cheker {
+	return new_code_change_checker(code)
+}
 func (c *CodeView) Clear() {
 	c.LoadBuffer([]byte{}, "")
 }
@@ -931,18 +935,18 @@ func (code *codetextview) xOffset() int64 {
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// prev := get_line_content(lineno, code)
-	if code.insert {
-		if code.view.complete.show {
-			switch event.Key() {
-			case tcell.KeyEnter, tcell.KeyUp, tcell.KeyDown:
-				{
-					code.view.complete.InputHandler()(event, func(p tview.Primitive) {
+	if code.view.complete.show {
+		switch event.Key() {
+		case tcell.KeyEnter, tcell.KeyUp, tcell.KeyDown:
+			{
+				code.view.complete.InputHandler()(event, func(p tview.Primitive) {
 
-					})
-					return nil
-				}
+				})
+				return nil
 			}
 		}
+	}
+	if code.insert {
 		if h, ok := code.key_map[event.Key()]; ok {
 			h(code)
 			return nil

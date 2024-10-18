@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/pgavlin/femto"
+	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -13,32 +14,15 @@ type CompleteMenu struct {
 	loc           femto.Loc
 	width, height int
 	editor        *codetextview
+	task          *complete_task
+}
+type complete_task struct {
+	current lspcore.Complete
 }
 
 func NewCompleteMenu(main MainService, txt *codetextview) *CompleteMenu {
 	ret := &CompleteMenu{
-		new_customlist(false), false, femto.Loc{X: 0, Y: 0}, 0, 0, txt}
-
-	// ret.customlist.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-	// 	idx := ret.GetCurrentItem()
-	// 	count := ret.GetItemCount()
-	// 	if event.Key() == tcell.KeyUp {
-	// 		idx--
-	// 		idx = max(idx, 0)
-	// 		ret.SetCurrentItem(idx)
-	// 		return nil
-	// 	}
-	// 	if event.Key() == tcell.KeyDown {
-	// 		idx++
-	// 		idx = min(idx, count-1)
-	// 		ret.SetCurrentItem(idx)
-	// 		return nil
-	// 	}
-	// 	if event.Key() == tcell.KeyEnter {
-	// 		ret.customlist.List.InputHandler()(event, nil)
-	// 	}
-	// 	return event
-	// })
+		new_customlist(false), false, femto.Loc{X: 0, Y: 0}, 0, 0, txt, nil}
 	return ret
 }
 
@@ -66,7 +50,7 @@ func (view *codetextview) run_complete(v lspcore.CodeChangeEvent, sym *lspcore.S
 			if e.Text == "\n" {
 				continue
 			}
-			req := complete.newFunction1(e)
+			req := complete.CreateRequest(e)
 			go sym.DidComplete(req)
 			return true
 		}
@@ -74,9 +58,9 @@ func (view *codetextview) run_complete(v lspcore.CodeChangeEvent, sym *lspcore.S
 	return false
 }
 
-func (complete *CompleteMenu) newFunction1(e lspcore.TextChangeEvent) lspcore.Complete {
+func (complete *CompleteMenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.Complete {
 	var codetext = complete.editor
-	var cb = func(cl lsp.CompletionList, err error) {
+	var cb = func(cl lsp.CompletionList, param lspcore.Complete, err error) {
 		if err != nil {
 			return
 		}
@@ -84,16 +68,31 @@ func (complete *CompleteMenu) newFunction1(e lspcore.TextChangeEvent) lspcore.Co
 			return
 		}
 		complete.Clear()
+		if complete.task == nil {
+			complete.task = &complete_task{param}
+		} else {
+			complete.task.current = param
+		}
 		width := 0
 		for i := range cl.Items {
 			v := cl.Items[i]
 			width = max(len(v.Label)+2, width)
 			complete.AddItem(v.Label, "", func() {
 				complete.show = false
+				if v.TextEdit != nil {
+					r := v.TextEdit.Range
+					checker := complete.editor.code.NewChangeChecker()
+					codetext.Buf.Replace(
+						femto.Loc{X: r.Start.Character, Y: r.Start.Line},
+						femto.Loc{X: r.End.Character, Y: r.End.Line},
+						v.TextEdit.NewText)
+					checker.End()
+					return
+				}
 				codetext.Buf.Insert(complete.loc, v.Label)
 			})
 		}
-		complete.height = len(cl.Items)
+		complete.height = max(10, len(cl.Items))
 		complete.width = width
 		complete.loc = codetext.Cursor.Loc
 		complete.show = true
@@ -106,5 +105,14 @@ func (complete *CompleteMenu) newFunction1(e lspcore.TextChangeEvent) lspcore.Co
 		Pos:              e.Range.End,
 		TriggerCharacter: e.Text,
 		Cb:               cb}
+	if complete.task != nil {
+		p0 := complete.task.current.Pos
+		p0.Character = p0.Character + 1
+		if p0 == req.Pos {
+			req.Continued = true
+		} else {
+			complete.task = nil
+		}
+	}
 	return req
 }

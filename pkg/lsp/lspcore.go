@@ -248,7 +248,8 @@ type Complete struct {
 	Pos              lsp.Position
 	TriggerCharacter string
 	File             string
-	Cb               func(lsp.CompletionList, error)
+	Cb               func(lsp.CompletionList, Complete, error)
+	Continued        bool
 }
 
 func (core *lspcore) DidComplete(param Complete) (result lsp.CompletionList, err error) {
@@ -279,7 +280,7 @@ func (core *lspcore) DidComplete(param Complete) (result lsp.CompletionList, err
 	if param.Cb != nil {
 		b, _ := json.Marshal(sss)
 		err := json.Unmarshal(b, &result)
-		param.Cb(result, err)
+		param.Cb(result, param, err)
 	}
 	return
 }

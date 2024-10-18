@@ -16,6 +16,7 @@ type code_change_cheker struct {
 	cur      string
 	undo_top *femto.Element
 	redo_top *femto.Element
+	code     *CodeView
 }
 
 func new_code_change_checker(code *CodeView) code_change_cheker {
@@ -32,6 +33,7 @@ func new_code_change_checker(code *CodeView) code_change_cheker {
 	return code_change_cheker{lineno: lineno, next: next, cur: cur,
 		undo_top: code.view.Buf.UndoStack.Top,
 		redo_top: code.view.Buf.RedoStack.Top,
+		code:     code,
 	}
 }
 
@@ -62,6 +64,9 @@ func (check *code_change_cheker) CheckRedo(code *CodeView) []lspcore.CodeChangeE
 	return ret
 }
 
+func (check *code_change_cheker) End() []lspcore.CodeChangeEvent {
+	return check.after(check.code)
+}
 func (check *code_change_cheker) after(code *CodeView) []lspcore.CodeChangeEvent {
 	undo := code.view.Buf.UndoStack
 	debug.DebugLog(tag, " stack change top", undo.Size)
