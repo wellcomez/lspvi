@@ -221,8 +221,8 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		new_textcode_toolbar(v).Draw(screen)
 	}
 	if v.complete != nil && v.complete.show {
-		x1 := x + v.complete.loc.X
-		y1 := y + v.complete.loc.Y + 2
+		x1 := x + v.complete.loc.X + 4
+		y1 := y + v.complete.loc.Y + 1
 		v.complete.SetRect(x1, y1, v.complete.width, v.complete.height)
 		v.complete.Draw(screen)
 	}
