@@ -822,6 +822,10 @@ func (v *Vim) EnterVmap() {
 
 // EnterEscape enters escape mode.
 func (v *Vim) EnterEscape() {
+	if v.app.current_editor().HasComplete(){
+		v.app.current_editor().CloseComplete()
+		return 
+	}
 	v.app.cmdline.Clear()
 	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}
 	v.app.current_editor().ResetSelection()

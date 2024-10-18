@@ -3,12 +3,25 @@ package mainui
 import (
 	"time"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
+	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-type CompleteMenu struct {
+type CompleteMenu interface {
+	CreateRequest(e lspcore.TextChangeEvent) lspcore.Complete
+	Draw(screen tcell.Screen)
+	IsShown() bool
+	Show(bool)
+	Hide()
+	Loc() femto.Loc
+	Size() (int, int)
+	SetRect(int, int, int, int)
+	InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive))
+}
+type completemenu struct {
 	*customlist
 	show          bool
 	loc           femto.Loc
@@ -20,10 +33,31 @@ type complete_task struct {
 	current lspcore.Complete
 }
 
-func NewCompleteMenu(main MainService, txt *codetextview) *CompleteMenu {
-	ret := &CompleteMenu{
+func (m completemenu) IsShown() bool {
+	return m.show
+}
+
+func (m completemenu) Size() (int, int) {
+	return m.width, m.height
+}
+func (m *completemenu) Loc() femto.Loc {
+	return m.loc
+}
+func (m *completemenu) Show(yes bool) {
+	if yes {
+		m.show = true
+	} else {
+		m.Hide()
+	}
+}
+func (m *completemenu) Hide() {
+	m.show = false
+	m.task = nil
+}
+func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
+	ret := completemenu{
 		new_customlist(false), false, femto.Loc{X: 0, Y: 0}, 0, 0, txt, nil}
-	return ret
+	return &ret
 }
 
 func (code *CodeView) handle_complete_key(after []lspcore.CodeChangeEvent) {
@@ -44,7 +78,7 @@ func (code *CodeView) handle_complete_key(after []lspcore.CodeChangeEvent) {
 	}
 }
 
-func (view *codetextview) run_complete(v lspcore.CodeChangeEvent, sym *lspcore.Symbol_file, complete *CompleteMenu, codetext *codetextview) bool {
+func (view *codetextview) run_complete(v lspcore.CodeChangeEvent, sym *lspcore.Symbol_file, complete CompleteMenu, codetext *codetextview) bool {
 	for _, e := range v.Events {
 		if e.Type == lspcore.TextChangeTypeInsert && len(e.Text) == 1 {
 			if e.Text == "\n" {
@@ -58,7 +92,7 @@ func (view *codetextview) run_complete(v lspcore.CodeChangeEvent, sym *lspcore.S
 	return false
 }
 
-func (complete *CompleteMenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.Complete {
+func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.Complete {
 	var codetext = complete.editor
 	var cb = func(cl lsp.CompletionList, param lspcore.Complete, err error) {
 		if err != nil {

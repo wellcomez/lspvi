@@ -24,6 +24,8 @@ import (
 )
 
 type CodeEditor interface {
+	HasComplete() bool
+	CloseComplete()
 	NewChangeChecker() code_change_cheker
 	Complete()
 	SplitRight() *CodeView
@@ -256,6 +258,14 @@ func (code *CodeView) goto_line_head() {
 		code.move_selection(vs)
 	}
 }
+
+func (code CodeView) CloseComplete() {
+	code.view.complete.Hide()
+	code.main.App().ForceDraw()
+}
+func (code CodeView) HasComplete() bool {
+	return code.view.complete.IsShown()
+}
 func (code CodeView) EditorPosition() *EditorPosition {
 	if !code.not_preview {
 		return nil
@@ -426,7 +436,7 @@ func (code CodeView) FileName() string {
 func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
 	if !code.insert {
-		code.view.complete.show = false
+		code.view.complete.Hide()
 	}
 }
 func (code *CodeView) SelectWordFromCopyCursor(c femto.Cursor) femto.Cursor {
@@ -935,7 +945,7 @@ func (code *codetextview) xOffset() int64 {
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	// prev := get_line_content(lineno, code)
-	if code.view.complete.show {
+	if code.view.complete.IsShown() {
 		switch event.Key() {
 		case tcell.KeyEnter, tcell.KeyUp, tcell.KeyDown:
 			{

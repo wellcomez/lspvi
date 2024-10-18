@@ -23,7 +23,7 @@ type codetextview struct {
 	code                 CodeEditor
 	PasteHandlerImpl     func(text string, setFocus func(tview.Primitive))
 	main                 MainService
-	complete             *CompleteMenu
+	complete             CompleteMenu
 }
 
 func (view *codetextview) IconStyle(main MainService) tcell.Style {
@@ -220,10 +220,11 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		new_textcode_left_toolbar(v).Draw(screen)
 		new_textcode_toolbar(v).Draw(screen)
 	}
-	if v.complete != nil && v.complete.show {
-		x1 := x + v.complete.loc.X + 4
-		y1 := y + v.complete.loc.Y + 1
-		v.complete.SetRect(x1, y1, v.complete.width, v.complete.height)
+	if v.complete != nil && v.complete.IsShown() {
+		x1 := x + v.complete.Loc().X + 4
+		y1 := y + v.complete.Loc().Y + 1
+		w, h := v.complete.Size()
+		v.complete.SetRect(x1, y1, w, h)
 		v.complete.Draw(screen)
 	}
 	// newFunction1(v, x, y, w,screen)
@@ -371,7 +372,7 @@ func new_codetext_view(buffer *femto.Buffer, main MainService) *codetextview {
 		main,
 		nil,
 	}
-	root.complete = NewCompleteMenu(main, root)
+	root.complete = Newcompletemenu(main, root)
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		style := tcell.StyleDefault
 		_, topY, _, _ := root.GetInnerRect()
