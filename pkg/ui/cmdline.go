@@ -756,6 +756,7 @@ func (v *Vim) EnterInsert() bool {
 		v.vi = vimstate{Insert: true}
 		v.vi_handle = InsertHandle{main: v.app, codeview: v.app.current_editor()}
 		v.update_editor_mode()
+		v.app.CmdLine().input.Blur()
 		return true
 	} else {
 		return false

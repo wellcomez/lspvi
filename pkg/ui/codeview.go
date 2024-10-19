@@ -764,6 +764,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		case tview.MouseLeftDown, tview.MouseRightClick, tview.MouseLeftClick:
 			if code.id.is_editor() {
 				code.SetCurrenteditor()
+				code.main.CmdLine().input.Blur()
 				if code.id != view_code_below {
 					symboltree := code.main.OutLineView()
 					symboltree.editor = code
