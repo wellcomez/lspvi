@@ -11,12 +11,13 @@ import (
 )
 
 type code_change_cheker struct {
-	lineno   int
-	next     string
-	cur      string
-	undo_top *femto.Element
-	redo_top *femto.Element
-	code     *CodeView
+	lineno     int
+	next       string
+	cur        string
+	undo_top   *femto.Element
+	redo_top   *femto.Element
+	code       *CodeView
+	not_notify bool
 }
 
 func new_code_change_checker(code *CodeView) code_change_cheker {
@@ -57,7 +58,9 @@ func (check *code_change_cheker) CheckRedo(code *CodeView) []lspcore.CodeChangeE
 		a := code.LspContentFullChangeEvent()
 		a.Full = false
 		a = ParserEvent(a, &v)
-		code.on_content_changed(a)
+		if !check.not_notify {
+			code.on_content_changed(a)
+		}
 		ret = append(ret, a)
 	}
 	check.UpdateLineChange(code)

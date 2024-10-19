@@ -2,6 +2,7 @@ package mainui
 
 import (
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -62,13 +63,18 @@ func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
 	return &ret
 }
 
-func (code *CodeView) handle_complete_key(after []lspcore.CodeChangeEvent) {
+func (code *CodeView) handle_complete_key(event *tcell.EventKey, after []lspcore.CodeChangeEvent) {
 	codetext := code.view
 	lsp := code.LspSymbol()
 	if lsp == nil {
 		return
 	}
 	if !lsp.HasLsp() {
+		return
+	}
+	switch event.Key() {
+	case tcell.KeyTab, tcell.KeyEnter, tcell.KeyBackspace, tcell.KeyBackspace2, tcell.KeyDelete:
+		codetext.complete.Hide()
 		return
 	}
 	if complete := codetext.complete; complete != nil {
@@ -83,14 +89,6 @@ func (code *CodeView) handle_complete_key(after []lspcore.CodeChangeEvent) {
 func (view *codetextview) run_complete(v lspcore.CodeChangeEvent, sym *lspcore.Symbol_file, complete CompleteMenu, codetext *codetextview) bool {
 	for _, e := range v.Events {
 		if e.Type == lspcore.TextChangeTypeInsert && len(e.Text) == 1 {
-			is_continue := false
-			switch e.Text {
-			case "=", "\n", "\t", " ", ",", "":
-				is_continue = true
-			}
-			if is_continue {
-				continue
-			}
 			req := complete.CreateRequest(e)
 			req.Sym = sym
 			go req.Sym.DidComplete(req)
@@ -155,15 +153,18 @@ func (c *completemenu) HelpCb(ret lsp.SignatureHelp, arg lspcore.SignatureHelp, 
 	check := c.editor.code.NewChangeChecker()
 	defer check.End()
 	if len(ret.Signatures) > 0 {
-		x := ret.Signatures[0].Label
-		c.editor.View.Buf.Replace(femto.Loc{
-			X: arg.Range.Start.Character,
-			Y: arg.Range.Start.Line,
-		}, femto.Loc{
-			X: arg.Range.End.Character,
-			Y: arg.Range.End.Line,
-		}, x)
-		debug.DebugLog("complete","signature")
+		x := ret.Signatures[0]
+		var array = []string{}
+		for _, v := range x.Parameters {
+			array = append(array, string(v.Label))
+		}
+		ss := strings.Join(array, ",")
+
+		c.editor.View.Buf.Insert(femto.Loc{
+			X: arg.Pos.Character + 1,
+			Y: arg.Pos.Line,
+		}, ss)
+		debug.DebugLog("complete", "signature")
 	}
 	debug.DebugLog("help", ret, arg, err)
 }
@@ -174,6 +175,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 	if v.TextEdit != nil {
 		r := v.TextEdit.Range
 		checker := complete.editor.code.NewChangeChecker()
+		checker.not_notify = true
 
 		newtext := v.TextEdit.NewText
 		switch v.Kind {
@@ -184,7 +186,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				var xy = index[0]
 				var Pos lsp.Position
 
-				Pos.Character = xy[0] + r.Start.Character
+				Pos.Character = xy[0] + r.Start.Character - 1
 				Pos.Line = r.Start.Line
 
 				start := lsp.Position{
@@ -193,15 +195,14 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				}
 				end := start
 
-				chr := newtext[xy[0]-1 : xy[0]]
+				// chr := newtext[xy[0]-1 : xy[0]]
 
 				newtext = re.ReplaceAllString(newtext, "")
 
 				help = &lspcore.SignatureHelp{
-					HelpCb:           complete.HelpCb,
-					Pos:              Pos,
-					IsVisiable:       false,
-					TriggerCharacter: chr,
+					HelpCb:     complete.HelpCb,
+					Pos:        Pos,
+					IsVisiable: false,
 					Range: lsp.Range{
 						Start: start,
 						End:   end,
@@ -215,8 +216,12 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 			femto.Loc{X: max(x_now, r.End.Character), Y: r.End.Line},
 			newtext)
 
-		checker.End()
+		events := checker.End()
+		for _, v := range events {
+			lspret.Sym.NotifyCodeChange(v)
+		}
 		if help != nil {
+			help.TriggerCharacter = editor.Buf.Line(help.Pos.Line)[help.Pos.Character : help.Pos.Character+1]
 			go lspret.Sym.SignatureHelp(*help)
 		}
 		return
