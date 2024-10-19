@@ -170,6 +170,9 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 	if result.Capabilities.CompletionProvider != nil {
 		core.CompletionProvider = result.Capabilities.CompletionProvider
 	}
+	if result.Capabilities.SignatureHelpProvider!= nil {
+		core.SignatureHelpProvider = result.Capabilities.SignatureHelpProvider
+	}
 	if data, err := result.Capabilities.TextDocumentSync.MarshalJSON(); err == nil {
 		if err = json.Unmarshal(data, &r); err == nil {
 			core.sync = &r

@@ -36,6 +36,7 @@ type lspcore struct {
 	capabilities          map[string]interface{}
 	initializationOptions map[string]interface{}
 	CompletionProvider    *lsp.CompletionOptions
+	SignatureHelpProvider *lsp.SignatureHelpOptions
 	// arguments             []string
 	handle        jsonrpc2.Handler
 	rw            io.ReadWriteCloser
@@ -246,17 +247,20 @@ func (client *lspcore) DidClose(file string) error {
 
 type SignatureHelp struct {
 	Pos              lsp.Position
-	TriggerCharacter string
 	File             string
 	HelpCb           func(lsp.SignatureHelp, SignatureHelp, error)
+	IsVisiable       bool
+	TriggerCharacter string
+	Range            lsp.Range
 	Continued        bool
 }
 type Complete struct {
-	Pos              lsp.Position
-	TriggerCharacter string
-	File             string
-	Cb               func(lsp.CompletionList, Complete, error)
-	Continued        bool
+	Pos                  lsp.Position
+	TriggerCharacter     string
+	File                 string
+	CompleteHelpCallback func(lsp.CompletionList, Complete, error)
+	Continued            bool
+	Sym                  *Symbol_file
 }
 
 func (client *lspcore) CompletionItemResolve(param *lsp.CompletionItem) (*lsp.CompletionItem, error) {
@@ -282,7 +286,17 @@ func (client *lspcore) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, err
 		},
 	}
 	var res lsp.SignatureHelp
+	if client.SignatureHelpProvider != nil {
+		param.Context = &lsp.SignatureHelpContext{
+			TriggerKind:      lsp.SignatureHelpTriggerKindInvoked,
+			IsRetrigger:      arg.IsVisiable,
+			TriggerCharacter: arg.TriggerCharacter,
+		}
+	}
 	err := client.conn.Call(context.Background(), "textDocument/signatureHelp", param, &res)
+	if arg.HelpCb != nil {
+		arg.HelpCb(res, arg, err)
+	}
 	return &res, err
 }
 
@@ -311,10 +325,10 @@ func (core *lspcore) DidComplete(param Complete) (result lsp.CompletionList, err
 	}
 	var sss interface{}
 	err = core.conn.Call(context.Background(), "textDocument/completion", complete, &sss)
-	if param.Cb != nil {
+	if param.CompleteHelpCallback != nil {
 		b, _ := json.Marshal(sss)
 		err := json.Unmarshal(b, &result)
-		param.Cb(result, param, err)
+		param.CompleteHelpCallback(result, param, err)
 	}
 	return
 }

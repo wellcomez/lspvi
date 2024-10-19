@@ -5,6 +5,7 @@ import (
 	// "encoding/hex"
 	"errors"
 	"fmt"
+
 	// "log"
 	"os"
 	"path/filepath"
@@ -63,8 +64,8 @@ func (s *Symbol_file) DidComplete(param Complete) (lsp.CompletionList, error) {
 	param.File = s.Filename
 	if s.lsp == nil {
 		err := errors.New("lsp is nil")
-		if param.Cb != nil {
-			param.Cb(lsp.CompletionList{}, param, err)
+		if param.CompleteHelpCallback != nil {
+			param.CompleteHelpCallback(lsp.CompletionList{}, param, err)
 		}
 		return lsp.CompletionList{}, err
 	}

@@ -15,9 +15,12 @@ type struct1 struct {
 	a, b, c int
 }
 
-func (a struct1) call1()  {}
-func (a *struct1) call2() {}
+func (a struct1) call1()  {
 
+}
+func (a *struct1) call2(c,b int) {
+	// a.call2()
+}
 func aa() {
 }
 func a2() {
