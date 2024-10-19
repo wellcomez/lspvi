@@ -1,3 +1,6 @@
+// Copyright 2024 wellcomez
+// SPDX-License-Identifier: gplv3
+
 package mainui
 
 import "github.com/gdamore/tcell/v2"
