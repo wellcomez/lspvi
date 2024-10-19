@@ -55,6 +55,7 @@ func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 		click: func() {
 			if view, ok := SplitCode.code_collection[vid]; ok {
 				SplitClose(view).handle()
+				code.main.App().ForceDraw()
 			}
 		},
 		style: func() tcell.Style {
