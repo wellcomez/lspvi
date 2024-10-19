@@ -210,10 +210,11 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				}
 			}
 		}
-		x_now := complete.editor.Cursor.Loc.X
+		replace:=editor.Buf.Line(r.Start.Line)[r.Start.Character:r.End.Character]
+		debug.DebugLog("complete", "replace",replace)
 		editor.Buf.Replace(
 			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-			femto.Loc{X: max(x_now, r.End.Character), Y: r.End.Line},
+			femto.Loc{X: r.End.Character, Y: r.End.Line},
 			newtext)
 
 		events := checker.End()
