@@ -210,17 +210,31 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				}
 			}
 		}
-		replace:=editor.Buf.Line(r.Start.Line)[r.Start.Character:r.End.Character]
-		debug.DebugLog("complete", "replace",replace)
-		editor.Buf.Replace(
-			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-			femto.Loc{X: r.End.Character, Y: r.End.Line},
-			newtext)
-
-		events := checker.End()
-		for _, v := range events {
-			lspret.Sym.NotifyCodeChange(v)
+		line := editor.Buf.Line(r.Start.Line)
+		replace := line[r.Start.Character:r.End.Character]
+		debug.DebugLog("complete", "replace", replace)
+		if len(line) > r.End.Character {
+			editor.Buf.Replace(
+				femto.Loc{X: r.Start.Character, Y: r.Start.Line},
+				femto.Loc{X: r.End.Character, Y: r.End.Line},
+				newtext)
+		}else{
+			r.End.Character =len(line)
+			editor.Buf.Replace(
+				femto.Loc{X: r.Start.Character, Y: r.Start.Line},
+				femto.Loc{X: r.End.Character, Y: r.End.Line},
+				newtext)
 		}
+		if events := checker.End(); len(events) > 0 {
+
+		}
+		Event := []lspcore.TextChangeEvent{{
+			Type:  lspcore.TextChangeTypeReplace,
+			Range: r,
+			Text:  newtext}}
+		lspret.Sym.NotifyCodeChange(lspcore.CodeChangeEvent{
+			File:   lspret.Sym.Filename,
+			Events: Event})
 		if help != nil {
 			help.TriggerCharacter = editor.Buf.Line(help.Pos.Line)[help.Pos.Character : help.Pos.Character+1]
 			go lspret.Sym.SignatureHelp(*help)
