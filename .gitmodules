@@ -4,6 +4,3 @@
 [submodule "pkg/go-tree-sitter"]
 	path = pkg/go-tree-sitter
 	url = git@github.com:wellcomez/go-tree-sitter.git
-[submodule "pkg/lspr"]
-	path = pkg/lspr
-	url = git@github.com:wellcomez/lspr
