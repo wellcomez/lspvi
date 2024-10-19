@@ -244,12 +244,46 @@ func (client *lspcore) DidClose(file string) error {
 	return client.conn.Notify(context.Background(), "textDocument/didClose", param)
 }
 
+type SignatureHelp struct {
+	Pos              lsp.Position
+	TriggerCharacter string
+	File             string
+	HelpCb           func(lsp.SignatureHelp, SignatureHelp, error)
+	Continued        bool
+}
 type Complete struct {
 	Pos              lsp.Position
 	TriggerCharacter string
 	File             string
 	Cb               func(lsp.CompletionList, Complete, error)
 	Continued        bool
+}
+
+func (client *lspcore) CompletionItemResolve(param *lsp.CompletionItem) (*lsp.CompletionItem, error) {
+	ctx := context.Background()
+	var res lsp.CompletionItem
+	err := client.conn.Call(ctx, "completionItem/resolve", param, &res)
+	return &res, err
+}
+
+func (client *lspcore) TextDocumentHover(param *lsp.HoverParams) (*lsp.Hover, error) {
+	var res lsp.Hover
+	err := client.conn.Call(context.Background(), "textDocument/hover", param, &res)
+	return &res, err
+}
+
+func (client *lspcore) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, error) {
+	var param = lsp.SignatureHelpParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{
+				URI: lsp.NewDocumentURI(arg.File),
+			},
+			Position: arg.Pos,
+		},
+	}
+	var res lsp.SignatureHelp
+	err := client.conn.Call(context.Background(), "textDocument/signatureHelp", param, &res)
+	return &res, err
 }
 
 func (core *lspcore) DidComplete(param Complete) (result lsp.CompletionList, err error) {

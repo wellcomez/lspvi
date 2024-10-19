@@ -48,9 +48,26 @@ func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
 	}
 	return nil
 }
-
+func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, error) {
+	arg.File = s.Filename
+	if s.lsp == nil {
+		err := errors.New("lsp is nil")
+		if arg.HelpCb != nil {
+			arg.HelpCb(lsp.SignatureHelp{}, arg, err)
+		}
+		return nil, err
+	}
+	return s.lsp.SignatureHelp(arg)
+}
 func (s *Symbol_file) DidComplete(param Complete) (lsp.CompletionList, error) {
 	param.File = s.Filename
+	if s.lsp == nil {
+		err := errors.New("lsp is nil")
+		if param.Cb != nil {
+			param.Cb(lsp.CompletionList{}, param, err)
+		}
+		return lsp.CompletionList{}, err
+	}
 	return s.lsp.DidComplete(param)
 }
 func (*Symbol_file) newMethod(v *Symbol, rang lsp.Range) *Symbol {
