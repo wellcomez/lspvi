@@ -15,9 +15,11 @@ type struct1 struct {
 	a, b, c int
 }
 
+// call1 test 
 func (a struct1) call1()  {
 
 }
+// call2  test2
 func (a *struct1) call2(c,b int) {
 	// a.call2()
 }
