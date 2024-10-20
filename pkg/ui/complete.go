@@ -38,7 +38,8 @@ type completemenu struct {
 	document      *tview.TextView
 }
 type complete_task struct {
-	current lspcore.Complete
+	current  lspcore.Complete
+	StartPos femto.Loc
 }
 
 func (m completemenu) IsShown() bool {
@@ -117,7 +118,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 	}
 	complete.Clear()
 	if complete.task == nil {
-		complete.task = &complete_task{param}
+		complete.task = &complete_task{param, femto.Loc{X: param.Pos.Character, Y: param.Pos.Line}}
 	} else {
 		complete.task.current = param
 	}
@@ -145,19 +146,21 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		})
 	}
 	complete.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		v := cl.Items[index]
-		var comment Comment
-		var text = []string{v.Detail}
-		if err := json.Unmarshal(v.Documentation, &comment); err == nil {
-			text = append(text, comment.Value)
+		if index < len(cl.Items) {
+			v := cl.Items[index]
+			var comment Comment
+			var text = []string{v.Detail}
+			if err := json.Unmarshal(v.Documentation, &comment); err == nil {
+				text = append(text, comment.Value)
+			}
+			complete.document.SetText(strings.Join(text, "\n"))
 		}
-		complete.document.SetText(strings.Join(text, "\n"))
 	})
 	complete.height = min(10, len(cl.Items))
 	complete.width = max(width, 20)
-	complete.loc = editor.Cursor.Loc
+	complete.loc = complete.task.StartPos
+	complete.loc.X = complete.loc.X - 1
 	complete.loc.Y = complete.loc.Y - editor.Topline
-	complete.loc.X = complete.editor.Cursor.GetVisualX()
 	complete.show = true
 	go func() {
 		task := complete.task
@@ -284,12 +287,20 @@ func (l *completemenu) Draw(screen tcell.Screen) {
 	x, y, _, h := l.customlist.GetRect()
 	w1 := 0
 	_, top := l.GetOffset()
+	h = min(h, l.GetItemCount())
 	for i := top; i < top+h; i++ {
 		x1, _ := l.GetItemText(i)
 		w1 = max(w1, len(x1))
 	}
 	l.customlist.SetRect(x, y, w1, h)
 	l.customlist.Draw(screen)
-	l.document.SetRect(x+w1, y, 20, h)
+
+	text := l.document.GetText(false)
+	ssss := strings.Split(text, "\n")
+	document_width := 0
+	for _, v := range ssss {
+		document_width = max(document_width, len(v))
+	}
+	l.document.SetRect(x+w1, y, document_width, h)
 	l.document.Draw(screen)
 }
