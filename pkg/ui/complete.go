@@ -150,6 +150,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 	}()
 }
 func (c *completemenu) HelpCb(ret lsp.SignatureHelp, arg lspcore.SignatureHelp, err error) {
+	debug.DebugLog("complete", "help", ret, arg.Pos, arg.TriggerCharacter, err)
 	if err != nil {
 		return
 	}
@@ -177,8 +178,8 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 	var help *lspcore.SignatureHelp
 	if v.TextEdit != nil {
 		r := v.TextEdit.Range
-		checker := complete.editor.code.NewChangeChecker()
-		checker.not_notify = true
+		//checker := complete.editor.code.NewChangeChecker()
+		//checker.not_notify = true
 
 		newtext := v.TextEdit.NewText
 		switch v.Kind {
@@ -214,23 +215,18 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 			}
 		}
 		line := editor.Buf.Line(r.Start.Line)
-		replace := line[r.Start.Character:r.End.Character]
-		debug.DebugLog("complete", "replace", replace)
+		replace := ""
 		if len(line) > r.End.Character {
-			editor.Buf.Replace(
-				femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-				femto.Loc{X: r.End.Character, Y: r.End.Line},
-				newtext)
-		}else{
-			r.End.Character =len(line)
-			editor.Buf.Replace(
-				femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-				femto.Loc{X: r.End.Character, Y: r.End.Line},
-				newtext)
+			replace = line[r.Start.Character:r.End.Character]
+		} else {
+			replace = line[r.Start.Character:]
+			r.End.Character = len(line)
 		}
-		if events := checker.End(); len(events) > 0 {
-
-		}
+		debug.DebugLog("complete", "replace", replace, "=>", newtext)
+		editor.Buf.Replace(
+			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
+			femto.Loc{X: r.End.Character, Y: r.End.Line},
+			newtext)
 		Event := []lspcore.TextChangeEvent{{
 			Type:  lspcore.TextChangeTypeReplace,
 			Range: r,
