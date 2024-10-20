@@ -151,7 +151,9 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 			var comment Comment
 			var text = []string{v.Detail}
 			if err := json.Unmarshal(v.Documentation, &comment); err == nil {
-				text = append(text, comment.Value)
+				if len(comment.Value) > 0 {
+					text = append(text, "//"+comment.Value)
+				}
 			}
 			complete.document.SetText(strings.Join(text, "\n"))
 		}
