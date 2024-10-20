@@ -4,6 +4,7 @@
 package mainui
 
 import (
+	"encoding/json"
 	"regexp"
 	"strings"
 	"time"
@@ -34,6 +35,7 @@ type completemenu struct {
 	width, height int
 	editor        *codetextview
 	task          *complete_task
+	document      *tview.TextView
 }
 type complete_task struct {
 	current lspcore.Complete
@@ -62,7 +64,7 @@ func (m *completemenu) Hide() {
 }
 func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
 	ret := completemenu{
-		new_customlist(false), false, femto.Loc{X: 0, Y: 0}, 0, 0, txt, nil}
+		new_customlist(false), false, femto.Loc{X: 0, Y: 0}, 0, 0, txt, nil, tview.NewTextView()}
 	return &ret
 }
 
@@ -100,6 +102,11 @@ func (view *codetextview) run_complete(v lspcore.CodeChangeEvent, sym *lspcore.S
 	}
 	return false
 }
+
+type Comment struct {
+	Value string `json:"value"`
+}
+
 func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspcore.Complete, err error) {
 	var editor = complete.editor
 	if err != nil {
@@ -117,6 +124,10 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 	width := 0
 	for i := range cl.Items {
 		v := cl.Items[i]
+		debug.DebugLog("complete", "item", "Detail=", v.Detail, "InsertText=", v.InsertText, "Label=", v.Label, string(v.Documentation))
+		if v.LabelDetails != nil {
+			debug.DebugLog("complete", "item", "LabelDetail", v.LabelDetails.Description, v.LabelDetails.Detail)
+		}
 		width = max(len(v.Label)+2, width)
 		t := v.Label
 		style, err := global_theme.get_lsp_color(lsp.SymbolKind(v.Kind))
@@ -133,6 +144,15 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 			complete.handle_complete_result(v, &param)
 		})
 	}
+	complete.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		v := cl.Items[index]
+		var comment Comment
+		var text = []string{v.Detail}
+		if err := json.Unmarshal(v.Documentation, &comment); err == nil {
+			text = append(text, comment.Value)
+		}
+		complete.document.SetText(strings.Join(text, "\n"))
+	})
 	complete.height = min(10, len(cl.Items))
 	complete.width = max(width, 20)
 	complete.loc = editor.Cursor.Loc
@@ -261,5 +281,15 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 }
 
 func (l *completemenu) Draw(screen tcell.Screen) {
+	x, y, _, h := l.customlist.GetRect()
+	w1 := 0
+	_, top := l.GetOffset()
+	for i := top; i < top+h; i++ {
+		x1, _ := l.GetItemText(i)
+		w1 = max(w1, len(x1))
+	}
+	l.customlist.SetRect(x, y, w1, h)
 	l.customlist.Draw(screen)
+	l.document.SetRect(x+w1, y, 20, h)
+	l.document.Draw(screen)
 }

@@ -430,7 +430,7 @@ func (core *lspcore) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, 
 	}
 	return convert_result_to_lsp_location(result)
 }
-func (core lspcore) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
+func (core *lspcore) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
 	var params = lsp.CallHierarchyPrepareParams{}
 	file := LocationContent{
 		location: loc,
@@ -788,7 +788,7 @@ func notificationDispatcher(method string, req json.RawMessage) (ret string, err
 			// client.errorHandler(err)
 			return
 		}
-		ret = param.Message 
+		ret = param.Message
 		// client.handler.LogTrace(logger, &param)
 	case "window/showMessage":
 		var param lsp.ShowMessageParams
@@ -796,7 +796,7 @@ func notificationDispatcher(method string, req json.RawMessage) (ret string, err
 			// client.errorHandler(err)
 			return
 		}
-		ret = param.Message 
+		ret = param.Message
 		// client.handler.WindowShowMessage(logger, &param)
 	case "LogMessage":
 		fallthrough
@@ -806,7 +806,7 @@ func notificationDispatcher(method string, req json.RawMessage) (ret string, err
 			// client.errorHandler(err)
 			return
 		}
-		ret = param.Message 
+		ret = param.Message
 		// client.handler.WindowLogMessage(logger, &param)
 	case "featureFlagsNotification":
 		// params: FeatureFlags
