@@ -196,12 +196,22 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 }
 
 func (w WorkSpace) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
-
-	if data, err := json.MarshalIndent(req, " ", " "); err == nil {
-		w.Callback.LspLogOutput(string(data), "lsp-notify")
+	var logerr error
+	if _, err := json.MarshalIndent(req, " ", " "); err == nil {
+		if a, err := json.Marshal(req.Params); err == nil {
+			if ret, err := notificationDispatcher(req.Method, a); err == nil {
+				data := fmt.Sprintf("\nMethod: %s\n Params: %s", req.Method, ret)
+				w.Callback.LspLogOutput(data, "lsp-notify")
+			} else {
+				logerr = err
+			}
+		} else {
+			logerr = err
+		}
 	} else {
-		w.Callback.LspLogOutput(fmt.Sprint(err), "lsp-notify")
+		logerr = err
 	}
+	w.Callback.LspLogOutput(fmt.Sprint(logerr), "lsp-notify")
 }
 func (core *lspcore) Progress_notify() error {
 	params := &lsp.ProgressParams{}
@@ -760,4 +770,62 @@ func mainxx2() {
 
 	fmt.Printf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
 
+}
+func notificationDispatcher(method string, req json.RawMessage) (ret string, err error) {
+	switch method {
+	case "$/progress":
+		var param lsp.ProgressParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			return
+		}
+		ret = fmt.Sprintf("value=%s", string(param.Value))
+		// client.handler.Progress(logger, &param)
+	case "$/cancelRequest":
+		// should not reach here
+	case "$/logTrace":
+		var param lsp.LogTraceParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			// client.errorHandler(err)
+			return
+		}
+		ret = param.Message 
+		// client.handler.LogTrace(logger, &param)
+	case "window/showMessage":
+		var param lsp.ShowMessageParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			// client.errorHandler(err)
+			return
+		}
+		ret = param.Message 
+		// client.handler.WindowShowMessage(logger, &param)
+	case "LogMessage":
+		fallthrough
+	case "window/logMessage":
+		var param lsp.LogMessageParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			// client.errorHandler(err)
+			return
+		}
+		ret = param.Message 
+		// client.handler.WindowLogMessage(logger, &param)
+	case "featureFlagsNotification":
+		// params: FeatureFlags
+	case "telemetry/event":
+		// params: ‘object’ | ‘number’ | ‘boolean’ | ‘string’;
+		// client.handler.TelemetryEvent(logger, req) // passthrough
+	case "textDocument/publishDiagnostics":
+		var param lsp.PublishDiagnosticsParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			// client.errorHandler(err)
+			return
+		}
+		// client.handler.TextDocumentPublishDiagnostics(logger, &param)
+	default:
+		// if handler, ok := client.customNotification[method]; ok {
+		// 	handler(logger, req)
+		// } else {
+		// 	panic("unimplemented notification: " + method)
+		// }
+	}
+	return
 }
