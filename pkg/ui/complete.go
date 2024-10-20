@@ -149,7 +149,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		complete.task = nil
 	}()
 }
-func (c *completemenu) HelpCb(ret lsp.SignatureHelp, arg lspcore.SignatureHelp, err error) {
+func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.SignatureHelp, err error) {
 	debug.DebugLog("complete", "help", ret, arg.Pos, arg.TriggerCharacter, err)
 	if err != nil {
 		return
@@ -204,7 +204,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				newtext = re.ReplaceAllString(newtext, "")
 
 				help = &lspcore.SignatureHelp{
-					HelpCb:     complete.HelpCb,
+					HelpCb:     complete.hanlde_help_signature,
 					Pos:        Pos,
 					IsVisiable: false,
 					Range: lsp.Range{
@@ -258,4 +258,8 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 		}
 	}
 	return req
+}
+
+func (l *completemenu) Draw(screen tcell.Screen) {
+	l.customlist.Draw(screen)
 }
