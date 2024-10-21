@@ -167,10 +167,7 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 	/*if d, e := json.MarshalIndent(result, " ", ""); e == nil {
 		log.Println(LSP_DEBUG_TAG, string(d))
 	}*/
-	core.CompletionProvider = result.Capabilities.CompletionProvider
-	core.SignatureHelpProvider = result.Capabilities.SignatureHelpProvider
-	core.DocumentFormattingProvider = result.Capabilities.DocumentFormattingProvider
-	core.DocumentRangeFormattingProvider = result.Capabilities.DocumentRangeFormattingProvider
+	core.CapabilitiesStatus= result.Capabilities
 	if data, err := result.Capabilities.TextDocumentSync.MarshalJSON(); err == nil {
 		if err = json.Unmarshal(data, &r); err == nil {
 			core.sync = &r
@@ -194,7 +191,6 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 
 // IsMe implements lsplang.
 func (l lsp_lang_go) IsMe(filename string) bool {
-
 	var ext = []string{"go", "gomod", "gowork", "gotmpl"}
 	return IsMe(filename, ext)
 }

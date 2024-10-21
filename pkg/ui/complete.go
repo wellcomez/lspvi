@@ -5,6 +5,7 @@ package mainui
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -17,14 +18,28 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
+type HelpBox struct {
+	*tview.TextView
+}
+
+func NewHelpBox() *HelpBox {
+	ret := &HelpBox{
+		TextView: tview.NewTextView(),
+	}
+	x := global_theme.get_color("selection")
+	ret.SetTextStyle(*x)
+	_, b, _ := x.Decompose()
+	ret.SetBackgroundColor(b)
+	return ret
+}
+
 type CompleteMenu interface {
+	OnHelp(tg lspcore.TriggerChar) bool
 	CreateRequest(e lspcore.TextChangeEvent) lspcore.Complete
 	Draw(screen tcell.Screen)
 	IsShown() bool
 	Show(bool)
 	Hide()
-	Loc() femto.Loc
-	Size() (int, int)
 	SetRect(int, int, int, int)
 	InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive))
 }
@@ -36,6 +51,7 @@ type completemenu struct {
 	editor        *codetextview
 	task          *complete_task
 	document      *tview.TextView
+	heplview      *HelpBox
 }
 type complete_task struct {
 	current  lspcore.Complete
@@ -57,15 +73,22 @@ func (m *completemenu) Show(yes bool) {
 		m.show = true
 	} else {
 		m.Hide()
+		m.heplview = nil
 	}
 }
 func (m *completemenu) Hide() {
 	m.show = false
 	m.task = nil
+	m.heplview = nil
 }
 func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
 	ret := completemenu{
-		new_customlist(false), false, femto.Loc{X: 0, Y: 0}, 0, 0, txt, nil, tview.NewTextView()}
+		new_customlist(false),
+		false,
+		femto.Loc{X: 0, Y: 0},
+		0, 0,
+		txt, nil,
+		tview.NewTextView(), nil}
 	return &ret
 }
 
@@ -82,6 +105,14 @@ func (code *CodeView) handle_complete_key(event *tcell.EventKey, after []lspcore
 	case tcell.KeyTab, tcell.KeyEnter, tcell.KeyBackspace, tcell.KeyBackspace2, tcell.KeyDelete:
 		codetext.complete.Hide()
 		return
+	}
+	key := fmt.Sprintf("%c", event.Rune())
+	if tg, err := code.lspsymbol.IsTrigger(key); err != nil {
+		if tg.Type == lspcore.TriggerCharHelp {
+			if codetext.complete.OnHelp(tg) {
+				return
+			}
+		}
 	}
 	if complete := codetext.complete; complete != nil {
 		for _, v := range after {
@@ -182,6 +213,7 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 	check := c.editor.code.NewChangeChecker()
 	defer check.End()
 	if len(ret.Signatures) > 0 {
+		c.new_help_box(ret,arg)
 		x := ret.Signatures[0]
 		var array = []string{}
 		for _, v := range x.Parameters {
@@ -196,6 +228,52 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 		debug.DebugLog("complete", "signature")
 	}
 	debug.DebugLog("help", ret, arg, err)
+}
+func (complete *completemenu) OnHelp(tg lspcore.TriggerChar) bool {
+	sym := complete.editor.code.LspSymbol()
+	editor := complete.editor
+	loc := editor.Cursor.Loc
+	if help, err := sym.SignatureHelp(lspcore.SignatureHelp{
+		Pos:              lsp.Position{Line: loc.Y, Character: loc.X},
+		File:             sym.Filename,
+		HelpCb:           nil,
+		IsVisiable:       false,
+		TriggerCharacter: tg.Ch,
+		Continued:        false,
+	}); err == nil && len(help.Signatures) > 0 {
+		debug.DebugLog("help", help)
+		complete.new_help_box(help,lspcore.SignatureHelp{})
+		return true
+	}
+	return false
+}
+
+func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspcore.SignatureHelp) {
+	ret := []string{}
+	width := 0
+	for _, v := range help.Signatures {
+		line := ""
+		ret2 := []string{}
+		for _, p := range v.Parameters {
+			a := string(p.Label)
+			a = strings.ReplaceAll(a, "\"", "")
+			ret2 = append(ret2, a)
+		}
+		line = strings.Join(ret2, ",")
+		if helpcall.CompleteSelected != "" {
+			line = helpcall.CreateSignatureHelp(line)
+		}
+		width = max(len(line), width)
+		ret = append(ret, line)
+	}
+	heplview := NewHelpBox()
+	heplview.SetBorder(true)
+	txt := strings.Join(ret, "\n")
+	heplview.SetText(txt)
+	loc := complete.editor.Cursor.Loc
+	loc.Y = loc.Y - complete.editor.Topline - len(ret)
+	heplview.SetRect(loc.X, loc.Y, width+2, len(ret)+2)
+	complete.heplview = heplview
 }
 func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspret *lspcore.Complete) {
 	var editor = complete.editor
@@ -218,24 +296,21 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				Pos.Character = xy[0] + r.Start.Character - 1
 				Pos.Line = r.Start.Line
 
-				start := lsp.Position{
-					Line:      Pos.Line,
-					Character: Pos.Character,
-				}
-				end := start
+				// start := lsp.Position{
+				// 	Line:      Pos.Line,
+				// 	Character: Pos.Character,
+				// }
+				// end := start
 
 				// chr := newtext[xy[0]-1 : xy[0]]
 
 				newtext = re.ReplaceAllString(newtext, "")
 
 				help = &lspcore.SignatureHelp{
-					HelpCb:     complete.hanlde_help_signature,
-					Pos:        Pos,
-					IsVisiable: false,
-					Range: lsp.Range{
-						Start: start,
-						End:   end,
-					},
+					HelpCb:           complete.hanlde_help_signature,
+					Pos:              Pos,
+					IsVisiable:       false,
+					CompleteSelected: v.TextEdit.NewText,
 				}
 			}
 		}
@@ -286,23 +361,37 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 }
 
 func (l *completemenu) Draw(screen tcell.Screen) {
-	x, y, _, h := l.customlist.GetRect()
-	w1 := 0
-	_, top := l.GetOffset()
-	h = min(h, l.GetItemCount())
-	for i := top; i < top+h; i++ {
-		x1, _ := l.GetItemText(i)
-		w1 = max(w1, len(x1))
-	}
-	l.customlist.SetRect(x, y, w1, h)
-	l.customlist.Draw(screen)
+	v := l.editor
+	x, y, _, _ := l.editor.GetInnerRect()
+	complete_list_left := x + l.Loc().X + 4
+	complete_list_top := y + l.Loc().Y + 1
+	if l.show {
+		w, h := l.Size()
+		v.complete.SetRect(complete_list_left, complete_list_top, w, h)
+		x, y, _, h = l.customlist.GetRect()
+		w1 := 0
+		_, top := l.GetOffset()
+		h = min(h, l.GetItemCount())
+		for i := top; i < top+h; i++ {
+			x1, _ := l.GetItemText(i)
+			w1 = max(w1, len(x1))
+		}
+		l.customlist.SetRect(x, y, w1, h)
+		l.customlist.Draw(screen)
 
-	text := l.document.GetText(false)
-	ssss := strings.Split(text, "\n")
-	document_width := 0
-	for _, v := range ssss {
-		document_width = max(document_width, len(v))
+		text := l.document.GetText(false)
+		ssss := strings.Split(text, "\n")
+		document_width := 0
+		for _, v := range ssss {
+			document_width = max(document_width, len(v))
+		}
+		l.document.SetRect(x+w1, y, document_width, h)
+		l.document.Draw(screen)
 	}
-	l.document.SetRect(x+w1, y, document_width, h)
-	l.document.Draw(screen)
+	if help := l.heplview; help != nil {
+		// loc := l.editor.Cursor.Loc
+		// _, _, w, h := help.GetRect()
+		// help.SetRect(x+loc.X, loc.Y-h, w, h)
+		help.Draw(screen)
+	}
 }

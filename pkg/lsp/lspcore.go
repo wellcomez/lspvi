@@ -2,11 +2,13 @@ package lspcore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -31,14 +33,16 @@ func (r rpchandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 }
 
 type lspcore struct {
-	cmd                             *exec.Cmd
-	conn                            *jsonrpc2.Conn
-	capabilities                    map[string]interface{}
-	initializationOptions           map[string]interface{}
-	CompletionProvider              *lsp.CompletionOptions
-	SignatureHelpProvider           *lsp.SignatureHelpOptions
-	DocumentFormattingProvider      *lsp.DocumentFormattingOptions
-	DocumentRangeFormattingProvider *lsp.DocumentRangeFormattingOptions
+	cmd          *exec.Cmd
+	conn         *jsonrpc2.Conn
+	capabilities map[string]interface{}
+
+	CapabilitiesStatus    lsp.ServerCapabilities
+	initializationOptions map[string]interface{}
+	// CompletionProvider              *lsp.CompletionOptions
+	// SignatureHelpProvider           *lsp.SignatureHelpOptions
+	// DocumentFormattingProvider      *lsp.DocumentFormattingOptions
+	// DocumentRangeFormattingProvider *lsp.DocumentRangeFormattingOptions
 	// arguments             []string
 	handle        jsonrpc2.Handler
 	rw            io.ReadWriteCloser
@@ -263,9 +267,15 @@ type SignatureHelp struct {
 	HelpCb           func(lsp.SignatureHelp, SignatureHelp, error)
 	IsVisiable       bool
 	TriggerCharacter string
-	Range            lsp.Range
 	Continued        bool
+	CompleteSelected string
 }
+
+func (h SignatureHelp) CreateSignatureHelp(s string) string {
+	re := regexp.MustCompile(`\$\{\d+:?\}`)
+	return re.ReplaceAllString(h.CompleteSelected, s)
+}
+
 type Complete struct {
 	Pos                  lsp.Position
 	TriggerCharacter     string
@@ -282,7 +292,7 @@ type FormatOption struct {
 }
 
 func (client *lspcore) TextDocumentFormatting(param FormatOption) (ret []lsp.TextEdit, err error) {
-	if param.Range.End != param.Range.Start && client.DocumentRangeFormattingProvider != nil {
+	if param.Range.End != param.Range.Start && client.CapabilitiesStatus.DocumentRangeFormattingProvider != nil {
 		return client.TextDocumentRangeFormatting(param)
 	}
 	var ret2 []lsp.TextEdit
@@ -334,7 +344,7 @@ func (client *lspcore) TextDocumentHover(file string, Pos lsp.Position) (*lsp.Ho
 	return &res, err
 }
 
-func (client *lspcore) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, error) {
+func (client *lspcore) SignatureHelp(arg SignatureHelp) (lsp.SignatureHelp, error) {
 	var param = lsp.SignatureHelpParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{
@@ -345,15 +355,13 @@ func (client *lspcore) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, err
 	}
 	var res lsp.SignatureHelp
 	TriggerKind := lsp.SignatureHelpTriggerKindInvoked
-	if client.SignatureHelpProvider != nil {
-		cc := client.SignatureHelpProvider.TriggerCharacters
+	if client.CapabilitiesStatus.SignatureHelpProvider != nil {
+		cc := client.CapabilitiesStatus.SignatureHelpProvider.TriggerCharacters
 		for _, v := range cc {
 			if arg.TriggerCharacter == v {
 				TriggerKind = lsp.SignatureHelpTriggerKindTriggerCharacter
 			}
 		}
-	}
-	if client.SignatureHelpProvider != nil {
 		param.Context = &lsp.SignatureHelpContext{
 			TriggerKind:      TriggerKind,
 			IsRetrigger:      arg.IsVisiable,
@@ -364,9 +372,38 @@ func (client *lspcore) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, err
 	if arg.HelpCb != nil {
 		arg.HelpCb(res, arg, err)
 	}
-	return &res, err
+	return res, err
 }
 
+type TriggerCharType int
+
+const (
+	TriggerCharHelp TriggerCharType = iota
+	TriggerCharComplete
+)
+
+type TriggerChar struct {
+	Type TriggerCharType
+	Ch   string
+}
+
+func (core *lspcore) IsTrigger(param string) (TriggerChar, error) {
+	if c := core.CapabilitiesStatus.CompletionProvider; c == nil {
+		for _, a := range c.TriggerCharacters {
+			if param == a {
+				return TriggerChar{TriggerCharHelp, param}, nil
+			}
+		}
+	}
+	if c := core.CapabilitiesStatus.SignatureHelpProvider; c == nil {
+		for _, a := range c.TriggerCharacters {
+			if param == a {
+				return TriggerChar{TriggerCharComplete, param}, nil
+			}
+		}
+	}
+	return TriggerChar{}, errors.New("not found")
+}
 func (core *lspcore) DidComplete(param Complete) (result lsp.CompletionList, err error) {
 	complete := lsp.CompletionParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
@@ -376,11 +413,11 @@ func (core *lspcore) DidComplete(param Complete) (result lsp.CompletionList, err
 			Position: param.Pos,
 		},
 	}
-	if core.CompletionProvider != nil {
+	if CompletionProvider := core.CapabilitiesStatus.CompletionProvider; CompletionProvider != nil {
 		var context = lsp.CompletionContext{
 			TriggerKind: lsp.CompletionTriggerKindInvoked,
 		}
-		cc := core.CompletionProvider.TriggerCharacters
+		cc := CompletionProvider.TriggerCharacters
 		for _, v := range cc {
 			if v == param.TriggerCharacter {
 				context.TriggerKind = lsp.CompletionTriggerKindTriggerCharacter

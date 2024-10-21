@@ -240,13 +240,7 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		}
 		// new_textcode_toolbar(v).Draw(screen)
 	}
-	if v.complete != nil && v.complete.IsShown() {
-		x1 := x + v.complete.Loc().X + 4
-		y1 := y + v.complete.Loc().Y + 1
-		w, h := v.complete.Size()
-		v.complete.SetRect(x1, y1, w, h)
-		v.complete.Draw(screen)
-	}
+	v.complete.Draw(screen)
 	// newFunction1(v, x, y, w,screen)
 }
 

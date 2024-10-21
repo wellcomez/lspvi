@@ -49,14 +49,14 @@ func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
 	}
 	return nil
 }
-func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, error) {
+func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (lsp.SignatureHelp, error) {
 	arg.File = s.Filename
 	if s.lsp == nil {
 		err := errors.New("lsp is nil")
 		if arg.HelpCb != nil {
 			arg.HelpCb(lsp.SignatureHelp{}, arg, err)
 		}
-		return nil, err
+		return lsp.SignatureHelp{}, err
 	}
 	return s.lsp.SignatureHelp(arg)
 }
@@ -73,6 +73,9 @@ func (s *Symbol_file) Format(opt FormatOption) (ret []lsp.TextEdit, err error) {
 		opt.Filename = s.Filename
 	}
 	return s.lsp.Format(opt)
+}
+func (s Symbol_file) IsTrigger(param string) (TriggerChar, error) {
+	return s.lsp.IsTrigger(param)
 }
 func (s Symbol_file) CompletionItemResolve(param *lsp.CompletionItem) (ret *lsp.CompletionItem, err error) {
 	if s.lsp == nil {
