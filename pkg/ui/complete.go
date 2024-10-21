@@ -5,6 +5,7 @@ package mainui
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -168,8 +169,18 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 	return false
 }
 
-type Comment struct {
+type Document struct {
 	Value string `json:"value"`
+}
+
+func (v *Document) Parser(a []byte) error {
+	if err := json.Unmarshal(a, v); err != nil {
+		return err
+	}
+	if len(v.Value) == 0 {
+		return errors.New("no value")
+	}
+	return nil
 }
 
 func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspcore.Complete, err error) {
@@ -212,12 +223,10 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 	complete.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		if index < len(cl.Items) {
 			v := cl.Items[index]
-			var comment Comment
 			var text = []string{v.Detail}
-			if err := json.Unmarshal(v.Documentation, &comment); err == nil {
-				if len(comment.Value) > 0 {
-					text = append(text, "//"+comment.Value)
-				}
+			var doc Document
+			if doc.Parser(v.Documentation) == nil {
+				text = append(text, "//"+doc.Value)
 			}
 			complete.document.SetText(strings.Join(text, "\n"))
 		}
@@ -293,17 +302,28 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	for _, v := range help.Signatures {
 		line := ""
 		ret2 := []string{}
+		comment := []string{}
 		for _, p := range v.Parameters {
 			a := string(p.Label)
 			a = strings.ReplaceAll(a, "\"", "")
+			var document Document
+			if document.Parser(p.Documentation) == nil {
+				comment = append(comment, fmt.Sprintf("%s %s", a, document.Value))
+			}
 			ret2 = append(ret2, a)
 		}
 		line = strings.Join(ret2, ",")
-		line = fmt.Sprintf(" %s", line)
+		line = fmt.Sprintf("%s", line)
 		if helpcall.CompleteSelected != "" {
 			line = helpcall.CreateSignatureHelp(line)
 		}
+		line = " " + line
+		line_document := strings.Join(comment, "\n")
 		width = max(len(line), width)
+		if len(line_document) > 0 {
+			width = max(len(line_document), width)
+			line = line + "\n" + line_document
+		}
 		ret = append(ret, line)
 	}
 	heplview := NewHelpBox()
