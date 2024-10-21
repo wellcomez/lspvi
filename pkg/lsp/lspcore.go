@@ -31,13 +31,13 @@ func (r rpchandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 }
 
 type lspcore struct {
-	cmd                        *exec.Cmd
-	conn                       *jsonrpc2.Conn
-	capabilities               map[string]interface{}
-	initializationOptions      map[string]interface{}
-	CompletionProvider         *lsp.CompletionOptions
-	SignatureHelpProvider      *lsp.SignatureHelpOptions
-	DocumentFormattingProvider *lsp.DocumentFormattingOptions
+	cmd                             *exec.Cmd
+	conn                            *jsonrpc2.Conn
+	capabilities                    map[string]interface{}
+	initializationOptions           map[string]interface{}
+	CompletionProvider              *lsp.CompletionOptions
+	SignatureHelpProvider           *lsp.SignatureHelpOptions
+	DocumentFormattingProvider      *lsp.DocumentFormattingOptions
 	DocumentRangeFormattingProvider *lsp.DocumentRangeFormattingOptions
 	// arguments             []string
 	handle        jsonrpc2.Handler
@@ -302,8 +302,14 @@ func (client *lspcore) CompletionItemResolve(param *lsp.CompletionItem) (*lsp.Co
 	return &res, err
 }
 
-func (client *lspcore) TextDocumentHover(param *lsp.HoverParams) (*lsp.Hover, error) {
+func (client *lspcore) TextDocumentHover(file string, Pos lsp.Position) (*lsp.Hover, error) {
 	var res lsp.Hover
+	var param = lsp.HoverParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(file)},
+			Position: Pos,
+		},
+	}
 	err := client.conn.Call(context.Background(), "textDocument/hover", param, &res)
 	return &res, err
 }

@@ -18,6 +18,7 @@ type lspclient interface {
 	Launch_Lsp_Server() error
 	DidOpen(file SourceCode, version int) error
 	DidComplete(param Complete) (lsp.CompletionList, error)
+	CompletionItemResolve(param *lsp.CompletionItem) (*lsp.CompletionItem, error)
 	SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, error)
 	DidClose(file string) error
 	DidSave(file string, text string) error
@@ -110,6 +111,9 @@ type SourceCode struct {
 
 func (l lsp_base) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, error) {
 	return l.core.SignatureHelp(arg)
+}
+func (l lsp_base) CompletionItemResolve(param *lsp.CompletionItem) (*lsp.CompletionItem, error) {
+	return l.core.CompletionItemResolve(param)
 }
 func (l lsp_base) DidComplete(param Complete) (lsp.CompletionList, error) {
 	return l.core.DidComplete(param)
