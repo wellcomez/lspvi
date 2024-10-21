@@ -20,8 +20,17 @@ import (
 
 type HelpBox struct {
 	*tview.TextView
+	begin femto.Loc
+	end   femto.Loc
 }
 
+func (v HelpBox) IsShown(view *codetextview) bool {
+	loc := view.Cursor.Loc
+	if v.begin.GreaterThan(loc) || v.end.LessThan(loc) {
+		return false
+	}
+	return true
+}
 func NewHelpBox() *HelpBox {
 	ret := &HelpBox{
 		TextView: tview.NewTextView(),
@@ -30,6 +39,7 @@ func NewHelpBox() *HelpBox {
 	ret.SetTextStyle(*x)
 	_, b, _ := x.Decompose()
 	ret.SetBackgroundColor(b)
+	//ret.SetBorder(true)
 	return ret
 }
 
@@ -79,7 +89,6 @@ func (m *completemenu) Show(yes bool) {
 func (m *completemenu) Hide() {
 	m.show = false
 	m.task = nil
-	m.heplview = nil
 }
 func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
 	ret := completemenu{
@@ -213,18 +222,24 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 	check := c.editor.code.NewChangeChecker()
 	defer check.End()
 	if len(ret.Signatures) > 0 {
-		c.new_help_box(ret,arg)
+		helpview := c.new_help_box(ret, arg)
 		x := ret.Signatures[0]
 		var array = []string{}
 		for _, v := range x.Parameters {
 			array = append(array, string(v.Label))
 		}
 		ss := strings.Join(array, ",")
-
-		c.editor.View.Buf.Insert(femto.Loc{
+		replace_range := femto.Loc{
 			X: arg.Pos.Character + 1,
 			Y: arg.Pos.Line,
-		}, ss)
+		}
+		c.editor.View.Buf.Insert(replace_range, ss)
+
+		helpview.begin = replace_range
+		end := replace_range
+		end.X = end.X + len(ss)
+		helpview.end = end
+
 		debug.DebugLog("complete", "signature")
 	}
 	debug.DebugLog("help", ret, arg, err)
@@ -242,14 +257,14 @@ func (complete *completemenu) OnHelp(tg lspcore.TriggerChar) bool {
 		Continued:        false,
 	}); err == nil && len(help.Signatures) > 0 {
 		debug.DebugLog("help", help)
-		complete.new_help_box(help,lspcore.SignatureHelp{})
+		complete.new_help_box(help, lspcore.SignatureHelp{})
 		return true
 	}
 	return false
 }
 
-func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspcore.SignatureHelp) {
-	ret := []string{}
+func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspcore.SignatureHelp) *HelpBox {
+	ret := []string{""}
 	width := 0
 	for _, v := range help.Signatures {
 		line := ""
@@ -260,6 +275,7 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 			ret2 = append(ret2, a)
 		}
 		line = strings.Join(ret2, ",")
+		line = fmt.Sprintf(" %s", line)
 		if helpcall.CompleteSelected != "" {
 			line = helpcall.CreateSignatureHelp(line)
 		}
@@ -267,13 +283,13 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 		ret = append(ret, line)
 	}
 	heplview := NewHelpBox()
-	heplview.SetBorder(true)
 	txt := strings.Join(ret, "\n")
 	heplview.SetText(txt)
 	loc := complete.editor.Cursor.Loc
 	loc.Y = loc.Y - complete.editor.Topline - len(ret)
 	heplview.SetRect(loc.X, loc.Y, width+2, len(ret)+2)
 	complete.heplview = heplview
+	return heplview
 }
 func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspret *lspcore.Complete) {
 	var editor = complete.editor
@@ -389,9 +405,8 @@ func (l *completemenu) Draw(screen tcell.Screen) {
 		l.document.Draw(screen)
 	}
 	if help := l.heplview; help != nil {
-		// loc := l.editor.Cursor.Loc
-		// _, _, w, h := help.GetRect()
-		// help.SetRect(x+loc.X, loc.Y-h, w, h)
-		help.Draw(screen)
+		if help.IsShown(l.editor) {
+			help.Draw(screen)
+		}
 	}
 }
