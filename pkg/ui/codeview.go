@@ -20,12 +20,11 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 
 	"zen108.com/lspvi/pkg/debug"
 	// "github.com/gdamore/tcell"
 )
-
-
 
 func (editor *CodeView) get_symbol_range(sym lspcore.Symbol) lsp.Range {
 	r := sym.SymInfo.Location.Range
@@ -165,16 +164,16 @@ type CodeView struct {
 	// LineNumberUnderMouse int
 	not_preview bool
 	insert      bool
-	diff        *Differ
-	loading     bool
-	filebuffer  FileBuf
+	//diff        *Differ
+	loading    bool
+	filebuffer FileBuf
 }
 
 func (code *CodeView) NewChangeChecker() code_change_cheker {
 	return new_code_change_checker(code)
 }
 func (c *CodeView) Clear() {
-	c.LoadBuffer([]byte{}, "")
+	c.LoadBuffer(fileloader.FileLoader{})
 }
 func (c CodeView) TreeSitter() *lspcore.TreeSitter {
 	return c.tree_sitter
@@ -1428,7 +1427,7 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 		code.main.OutLineView().Clear()
 	}
 	code.loading = true
-	data, err := os.ReadFile(filename)
+	file, err := fileloader.Loader.GetFile(filename, reload)
 	if err == nil {
 		if code.id.is_editor() {
 			global_file_watch.Add(filename)
@@ -1436,15 +1435,13 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 		if code.main != nil {
 			code.main.Recent_open().add(filename)
 		}
-	} else {
-		data = []byte{}
 	}
 	code.lspsymbol = nil
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
 	// "monokai"A
 	go func() {
 		GlobalApp.QueueUpdate(func() {
-			code.__load_in_main(filename, data)
+			code.__load_in_main(file)
 			code.loading = false
 			if onload != nil {
 				onload(false)
@@ -1463,12 +1460,13 @@ func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 		}
 	})
 }
-func (code *CodeView) __load_in_main(filename string, data []byte) error {
-	b := code.view.Buf
-	b.Settings["syntax"] = false
+func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
+	// b := code.view.Buf
+	// b.Settings["syntax"] = false
 	code.tree_sitter = nil
-	code.file = NewFile(filename)
-	code.LoadBuffer(data, filename)
+	code.file = NewFile(fileload.FileName)
+	var filename = fileload.FileName
+	code.LoadBuffer(fileload)
 
 	ts_load_event := code.LspContentFullChangeEvent()
 	ts_load_event.Data = code.GetBuffData()
@@ -1516,28 +1514,22 @@ func (code CodeView) change_wrap_appearance() {
 func (view *codetextview) is_softwrap() bool {
 	return view.Buf.Settings["softwrap"] == true
 }
-func (code *CodeView) LoadBuffer(data []byte, filename string) {
+func (code *CodeView) LoadBuffer(file fileloader.FileLoader) {
 	code.tree_sitter = nil
-	buffer := femto.NewBufferFromString(string(data), filename)
-	code.view.linechange = bookmarkfile{}
-	code.diff = nil
-	code.filebuffer = FileBuf{
-		buf:      buffer,
-		filename: filename,
+	buffer := file.Buff
+	if buffer == nil {
+		buffer = femto.NewBufferFromString("", file.FileName)
 	}
-
+	code.view.linechange = bookmarkfile{}
+	// code.diff = nil
 	code.view.OpenBuffer(buffer)
-
-	code.config_wrap(filename)
+	code.config_wrap(file.FileName)
 	// colorscheme/output/dracula.micro
 	// buf, err := os.ReadFile("/home/z/dev/lsp/goui/pkg/ui/colorscheme/output/dracula.micro")
 	// colorscheme = femto.ParseColorscheme(string(buf))
 	// _, b, _ := n.Decompose()
 	// tview.Styles.PrimitiveBackgroundColor = b
 	code.set_color()
-	if len(data) < 10000 {
-		code.diff = &Differ{}
-	}
 }
 
 func (code *CodeView) config_wrap(filename string) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
+	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 )
 
 type CodeOpenQueueStatus int
@@ -114,7 +115,7 @@ func (queue *CodeOpenQueue) Work() {
 						if e.Range != nil {
 							queue.editor.goto_location_no_history(*e.Range, false, nil)
 						} else if e.openbuf != nil {
-							queue.editor.LoadBuffer(e.openbuf.data, e.openbuf.filename)
+							queue.editor.LoadBuffer(fileloader.NewDataFileLoad( e.openbuf.data,  e.openbuf.filename))
 						} else if e.open_no_lsp != nil {
 							queue.editor.LoadFileNoLsp(e.open_no_lsp.filename, e.open_no_lsp.line)
 						} else if e.main_open_history != nil {

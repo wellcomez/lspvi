@@ -27,13 +27,13 @@ func new_code_change_checker(code *CodeView) code_change_cheker {
 	lineno := code.view.Cursor.Loc.Y
 	next := get_line_content(lineno+1, code.view.Buf)
 	cur := get_line_content(lineno, code.view.Buf)
-	if code.diff != nil {
-		if len(code.diff.bufer) == 0 {
-			Buf := code.view.Buf
-			end := Buf.LinesNum()
-			code.diff = &Differ{Buf.Lines(0, end), -1}
-		}
-	}
+	// if code.diff != nil {
+	// 	if len(code.diff.bufer) == 0 {
+	// 		Buf := code.view.Buf
+	// 		end := Buf.LinesNum()
+	// 		code.diff = &Differ{Buf.Lines(0, end), -1}
+	// 	}
+	// }
 	return code_change_cheker{lineno: lineno, next: next, cur: cur,
 		undo_top: code.view.Buf.UndoStack.Top,
 		redo_top: code.view.Buf.RedoStack.Top,

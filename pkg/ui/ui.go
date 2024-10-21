@@ -26,6 +26,7 @@ import (
 	// femto "zen108.com/lspvi/pkg/highlight"
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 )
 
 // var appname = "lspvi"
@@ -944,7 +945,7 @@ func load_from_history(main *mainui) {
 			},
 		}, offset: 0}, false, nil)
 	} else {
-		code.LoadBuffer([]byte{}, "")
+		code.LoadBuffer(fileloader.NewDataFileLoad([]byte{}, ""))
 	}
 }
 

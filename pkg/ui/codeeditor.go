@@ -5,6 +5,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 )
 
 type CodeEditor interface {
@@ -57,7 +58,7 @@ type CodeEditor interface {
 	IsLoading() bool
 	Reload()
 	Save() error
-	LoadBuffer(data []byte, filename string)
+	LoadBuffer(fileloader.FileLoader)
 	LoadFileNoLsp(filename string, line int) error
 	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
 
