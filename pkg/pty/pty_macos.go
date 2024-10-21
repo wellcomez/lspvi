@@ -1,4 +1,4 @@
-// +build linux
+// +build macos
 
 package pty
 

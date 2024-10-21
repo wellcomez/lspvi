@@ -1,3 +1,6 @@
+// Copyright 2024 wellcomez
+// SPDX-License-Identifier: gplv3
+
 /*
 ignore is a library which returns a new ignorer object which can
 test against various paths. This is particularly useful when trying

@@ -1,3 +1,6 @@
+// Copyright 2024 wellcomez
+// SPDX-License-Identifier: gplv3
+
 package mainui
 
 import (
@@ -632,7 +635,7 @@ func (v *Vim) EnterGrep(txt string) {
 	v.app.cmdline.input.SetText(txt)
 }
 func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
-	if event.Rune() == ':' {
+	if v.vi.Escape && event.Rune() == ':' {
 		if v.EnterCommand() {
 			return true, nil
 		}
@@ -756,6 +759,7 @@ func (v *Vim) EnterInsert() bool {
 		v.vi = vimstate{Insert: true}
 		v.vi_handle = InsertHandle{main: v.app, codeview: v.app.current_editor()}
 		v.update_editor_mode()
+		v.app.CmdLine().input.Blur()
 		return true
 	} else {
 		return false
@@ -822,6 +826,10 @@ func (v *Vim) EnterVmap() {
 
 // EnterEscape enters escape mode.
 func (v *Vim) EnterEscape() {
+	if v.app.current_editor().HasComplete() {
+		v.app.current_editor().CloseComplete()
+		return
+	}
 	v.app.cmdline.Clear()
 	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}
 	v.app.current_editor().ResetSelection()

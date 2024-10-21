@@ -1,3 +1,6 @@
+// Copyright 2024 wellcomez
+// SPDX-License-Identifier: gplv3
+
 package mainui
 
 import (
@@ -23,6 +26,7 @@ type codetextview struct {
 	code                 CodeEditor
 	PasteHandlerImpl     func(text string, setFocus func(tview.Primitive))
 	main                 MainService
+	complete             CompleteMenu
 }
 
 func (view *codetextview) IconStyle(main MainService) tcell.Style {
@@ -54,6 +58,7 @@ func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 		click: func() {
 			if view, ok := SplitCode.code_collection[vid]; ok {
 				SplitClose(view).handle()
+				code.main.App().ForceDraw()
 			}
 		},
 		style: func() tcell.Style {
@@ -74,7 +79,7 @@ func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 	}
 	ret.getxy = func() (int, int) {
 		x, y, _, _ := code.GetRect()
-		return x, y
+		return x, y - 1
 	}
 	return ret
 }
@@ -194,7 +199,7 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 	ret.getxy = func() (int, int) {
 		x, y, w, _ := code.GetRect()
 		x = x + w - ret.Width()
-		return x, y
+		return x, y - 1
 	}
 	return ret
 }
@@ -206,6 +211,12 @@ func (v *codetextview) MouseHandler() func(action tview.MouseAction, event *tcel
 	}
 
 }
+
+var BoxDrawingsDoubleHorizontal rune = '\u2550' // ═
+var BoxDrawingsLightHorizontal rune = '\u2500'  // ─
+func (b *codetextview) SetRect(x, y, width, height int) {
+	b.View.SetRect(x, y+1, width, height-1)
+}
 func (v *codetextview) Draw(screen tcell.Screen) {
 	v.View.Draw(screen)
 	if v.code == nil {
@@ -216,15 +227,32 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 	if vid == view_code_below {
 		v.code.DrawNavigationBar(x, y, w, screen)
 	} else {
-		new_textcode_left_toolbar(v).Draw(screen)
-		new_textcode_toolbar(v).Draw(screen)
+		_, y, _, _ := v.GetRect()
+		y--
+		ch := BoxDrawingsLightHorizontal
+		if v.HasFocus() {
+			ch = BoxDrawingsDoubleHorizontal
+		}
+		_, b := new_textcode_left_toolbar(v).Draw(screen)
+		e, _ := new_textcode_toolbar(v).Draw(screen)
+		for i := b; i < e; i++ {
+			code_navbar_draw_runne(screen, i, y, ch, tcell.StyleDefault.Foreground(tview.Styles.BorderColor).Background(tview.Styles.PrimitiveBackgroundColor))
+		}
+		// new_textcode_toolbar(v).Draw(screen)
 	}
+	v.complete.Draw(screen)
 	// newFunction1(v, x, y, w,screen)
 }
+
+var BoxDrawingsHeavyVertical rune = '\u2503'  // ┃
+var BoxDrawingsLightVertical rune = '\u2502'  // │
+var BoxDrawingsDoubleVertical rune = '\u2551' // ║
+
 func (code *codetextview) PasteHandler() func(text string, setFocus func(tview.Primitive)) {
 	return code.PasteHandlerImpl
 }
 func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen) {
+	y = y - 1
 	var v = code.view
 	var symbol = code.LspSymbol()
 	if symbol == nil {
@@ -240,6 +268,11 @@ func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen
 	style := global_theme.get_default_style()
 	textStyle := global_theme.get_color("selection")
 
+	b1 := BoxDrawingsLightVertical
+	if code.view.HasFocus() {
+		b1 = BoxDrawingsDoubleVertical
+	}
+	begin = code_navbar_draw_runne(screen, begin, y, b1, tcell.StyleDefault.Foreground(tview.Styles.BorderColor))
 	x1 := code.FileName()
 	x1 = strings.ReplaceAll(x1, "/", " > ") + " > "
 	for _, v := range x1 {
@@ -299,13 +332,14 @@ func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen
 		}
 	}
 	for {
-		if begin < x+w {
+		if begin < x+w-1 {
 			begin = code_navbar_draw_runne(screen,
 				begin, y, ' ', *textStyle)
 		} else {
 			break
 		}
 	}
+	code_navbar_draw_runne(screen, begin, y, b1, tcell.StyleDefault.Foreground(tview.Styles.BorderColor))
 }
 
 func code_navbar_draw_runne(screen tcell.Screen, begin int, y int, v rune, textStyle tcell.Style) int {
@@ -362,7 +396,9 @@ func new_codetext_view(buffer *femto.Buffer, main MainService) *codetextview {
 		nil,
 		nil,
 		main,
+		nil,
 	}
+	root.complete = Newcompletemenu(main, root)
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		style := tcell.StyleDefault
 		_, topY, _, _ := root.GetInnerRect()

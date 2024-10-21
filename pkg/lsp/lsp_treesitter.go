@@ -784,7 +784,13 @@ func (s SourceFile) Same(s1 SourceFile) bool {
 }
 
 var loaded_files = make(map[string]*TreeSitter)
-
+func NewTreeSitterParse(name string,data string) *TreeSitter {
+	if len(name) == 0 {
+		return nil
+	}
+	v := NewTreeSitter(name, []byte(data))
+	return v
+}
 func GetNewTreeSitter(name string, event CodeChangeEvent) *TreeSitter {
 	if len(name) == 0 {
 		return nil

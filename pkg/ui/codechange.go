@@ -1,3 +1,6 @@
+// Copyright 2024 wellcomez
+// SPDX-License-Identifier: gplv3
+
 package mainui
 
 import (
@@ -11,27 +14,30 @@ import (
 )
 
 type code_change_cheker struct {
-	lineno   int
-	next     string
-	cur      string
-	undo_top *femto.Element
-	redo_top *femto.Element
+	lineno     int
+	next       string
+	cur        string
+	undo_top   *femto.Element
+	redo_top   *femto.Element
+	code       *CodeView
+	not_notify bool
 }
 
 func new_code_change_checker(code *CodeView) code_change_cheker {
 	lineno := code.view.Cursor.Loc.Y
 	next := get_line_content(lineno+1, code.view.Buf)
 	cur := get_line_content(lineno, code.view.Buf)
-	if code.diff != nil {
-		if len(code.diff.bufer) == 0 {
-			Buf := code.view.Buf
-			end := Buf.LinesNum()
-			code.diff = &Differ{Buf.Lines(0, end), -1}
-		}
-	}
+	// if code.diff != nil {
+	// 	if len(code.diff.bufer) == 0 {
+	// 		Buf := code.view.Buf
+	// 		end := Buf.LinesNum()
+	// 		code.diff = &Differ{Buf.Lines(0, end), -1}
+	// 	}
+	// }
 	return code_change_cheker{lineno: lineno, next: next, cur: cur,
 		undo_top: code.view.Buf.UndoStack.Top,
 		redo_top: code.view.Buf.RedoStack.Top,
+		code:     code,
 	}
 }
 
@@ -55,13 +61,18 @@ func (check *code_change_cheker) CheckRedo(code *CodeView) []lspcore.CodeChangeE
 		a := code.LspContentFullChangeEvent()
 		a.Full = false
 		a = ParserEvent(a, &v)
-		code.on_content_changed(a)
+		if !check.not_notify {
+			code.on_content_changed(a)
+		}
 		ret = append(ret, a)
 	}
 	check.UpdateLineChange(code)
 	return ret
 }
 
+func (check *code_change_cheker) End() []lspcore.CodeChangeEvent {
+	return check.after(check.code)
+}
 func (check *code_change_cheker) after(code *CodeView) []lspcore.CodeChangeEvent {
 	undo := code.view.Buf.UndoStack
 	debug.DebugLog(tag, " stack change top", undo.Size)
@@ -222,6 +233,7 @@ func (q *lspchange_queue) AddQuery(c *CodeView, event lspcore.CodeChangeEvent) {
 	// }
 	q.wait_queue = append(q.wait_queue, lspchange{c, event})
 	if len(q.wait_queue) > 0 {
+		send_lsp_codechange_notifyify(c.LspSymbol(), event)
 		q.lspchange <- len(q.wait_queue)
 	}
 
@@ -256,21 +268,22 @@ func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
 	if event.Full {
 		event.Data = data
 	}
-	if code.lspsymbol != nil {
-		code.lspsymbol.NotifyCodeChange(event)
-	}
 	var ts = event
 	ts.Data = data
 	var new_ts = lspcore.GetNewTreeSitter(code.Path(), ts)
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
-		if !ts.IsMe(code.Path()) {
-			return
+		if sym := code.LspSymbol(); sym != nil && sym.Filename == event.File {
+			sym.Ts = new_ts
+			sym.LspLoadSymbol()
+			on_treesitter_update(code, ts)
 		}
-		if code.lspsymbol != nil {
-			code.lspsymbol.LspLoadSymbol()
-		}
-		on_treesitter_update(code, ts)
 	})
+}
+
+func send_lsp_codechange_notifyify(sym *lspcore.Symbol_file, event lspcore.CodeChangeEvent) {
+	if sym != nil {
+		sym.NotifyCodeChange(event)
+	}
 }
 
 func (code *CodeView) GetBuffData() []byte {

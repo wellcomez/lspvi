@@ -5,6 +5,7 @@ import (
 	// "encoding/hex"
 	"errors"
 	"fmt"
+
 	// "log"
 	"os"
 	"path/filepath"
@@ -22,6 +23,8 @@ type Symbol_file struct {
 	Wk           *LspWorkspace
 	tokens       *lsp.SemanticTokens
 	verison      int
+	Ts           *TreeSitter
+	lspopen      bool
 }
 
 func (sym Symbol_file) LspClient() lspclient {
@@ -48,7 +51,53 @@ func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
 	}
 	return nil
 }
+func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (lsp.SignatureHelp, error) {
+	arg.File = s.Filename
+	if s.lsp == nil {
+		err := errors.New("lsp is nil")
+		if arg.HelpCb != nil {
+			arg.HelpCb(lsp.SignatureHelp{}, arg, err)
+		}
+		return lsp.SignatureHelp{}, err
+	}
+	return s.lsp.SignatureHelp(arg)
+}
 
+func (s *Symbol_file) Format(opt FormatOption) (ret []lsp.TextEdit, err error) {
+	if s.lsp == nil {
+		err = errors.New("lsp is nil")
+		if opt.Format != nil {
+			opt.Format(ret, err)
+		}
+		return
+	}
+	if opt.Filename == "" {
+		opt.Filename = s.Filename
+	}
+	return s.lsp.Format(opt)
+}
+func (s Symbol_file) IsTrigger(param string) (TriggerChar, error) {
+	return s.lsp.IsTrigger(param)
+}
+func (s Symbol_file) CompletionItemResolve(param *lsp.CompletionItem) (ret *lsp.CompletionItem, err error) {
+	if s.lsp == nil {
+		err = errors.New("lsp is nil")
+		return
+	}
+	ret, err = s.lsp.CompletionItemResolve(param)
+	return
+}
+func (s *Symbol_file) DidComplete(param Complete) (lsp.CompletionList, error) {
+	param.File = s.Filename
+	if s.lsp == nil {
+		err := errors.New("lsp is nil")
+		if param.CompleteHelpCallback != nil {
+			param.CompleteHelpCallback(lsp.CompletionList{}, param, err)
+		}
+		return lsp.CompletionList{}, err
+	}
+	return s.lsp.DidComplete(param)
+}
 func (*Symbol_file) newMethod(v *Symbol, rang lsp.Range) *Symbol {
 	if v.SymInfo.Kind == lsp.SymbolKindFunction || v.SymInfo.Kind == lsp.SymbolKindMethod {
 		if rang.Overlaps(v.SymInfo.Location.Range) {

@@ -2,11 +2,13 @@ package lspcore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -31,10 +33,16 @@ func (r rpchandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 }
 
 type lspcore struct {
-	cmd                   *exec.Cmd
-	conn                  *jsonrpc2.Conn
-	capabilities          map[string]interface{}
+	cmd          *exec.Cmd
+	conn         *jsonrpc2.Conn
+	capabilities map[string]interface{}
+
+	CapabilitiesStatus    lsp.ServerCapabilities
 	initializationOptions map[string]interface{}
+	// CompletionProvider              *lsp.CompletionOptions
+	// SignatureHelpProvider           *lsp.SignatureHelpOptions
+	// DocumentFormattingProvider      *lsp.DocumentFormattingOptions
+	// DocumentRangeFormattingProvider *lsp.DocumentRangeFormattingOptions
 	// arguments             []string
 	handle        jsonrpc2.Handler
 	rw            io.ReadWriteCloser
@@ -194,12 +202,22 @@ func (core *lspcore) Initialize(wk WorkSpace) (lsp.InitializeResult, error) {
 }
 
 func (w WorkSpace) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
-
-	if data, err := json.MarshalIndent(req, " ", " "); err == nil {
-		w.Callback.LspLogOutput(string(data), "lsp-notify")
+	var logerr error
+	if _, err := json.MarshalIndent(req, " ", " "); err == nil {
+		if a, err := json.Marshal(req.Params); err == nil {
+			if ret, err := notificationDispatcher(req.Method, a); err == nil {
+				data := fmt.Sprintf("\nMethod: %s\n Params: %s", req.Method, ret)
+				w.Callback.LspLogOutput(data, "lsp-notify")
+			} else {
+				logerr = err
+			}
+		} else {
+			logerr = err
+		}
 	} else {
-		w.Callback.LspLogOutput(fmt.Sprint(err), "lsp-notify")
+		logerr = err
 	}
+	w.Callback.LspLogOutput(fmt.Sprint(logerr), "lsp-notify")
 }
 func (core *lspcore) Progress_notify() error {
 	params := &lsp.ProgressParams{}
@@ -243,6 +261,183 @@ func (client *lspcore) DidClose(file string) error {
 	return client.conn.Notify(context.Background(), "textDocument/didClose", param)
 }
 
+type SignatureHelp struct {
+	Pos                 lsp.Position
+	File                string
+	HelpCb              func(lsp.SignatureHelp, SignatureHelp, error)
+	IsVisiable          bool
+	TriggerCharacter    string
+	Continued           bool
+	CompleteSelected    string
+	ActiveSignatureHelp *lsp.SignatureHelp
+}
+
+func (h SignatureHelp) CreateSignatureHelp(s string) string {
+	re := regexp.MustCompile(`\$\{\d+:?\}`)
+	return re.ReplaceAllString(h.CompleteSelected, s)
+}
+
+type Complete struct {
+	Pos                  lsp.Position
+	TriggerCharacter     string
+	File                 string
+	CompleteHelpCallback func(lsp.CompletionList, Complete, error)
+	Continued            bool
+	Sym                  *Symbol_file
+}
+type FormatOption struct {
+	Filename string
+	Range    lsp.Range
+	Options  lsp.FormattingOptions
+	Format   func([]lsp.TextEdit, error)
+}
+
+func (client *lspcore) TextDocumentFormatting(param FormatOption) (ret []lsp.TextEdit, err error) {
+	if param.Range.End != param.Range.Start && client.CapabilitiesStatus.DocumentRangeFormattingProvider != nil {
+		return client.TextDocumentRangeFormatting(param)
+	}
+	var ret2 []lsp.TextEdit
+	if err = client.conn.Call(context.Background(), "textDocument/formatting", lsp.DocumentFormattingParams{
+		TextDocument: lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(param.Filename)},
+		Options:      param.Options,
+	}, &ret2); err == nil {
+		ret = ret2
+	}
+	if param.Format != nil {
+		param.Format(ret, err)
+	}
+	return
+}
+func (client *lspcore) TextDocumentRangeFormatting(opt FormatOption) (ret []lsp.TextEdit, err error) {
+	var param = lsp.DocumentRangeFormattingParams{
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: lsp.NewDocumentURI(opt.Filename),
+		},
+		Range:   opt.Range,
+		Options: opt.Options,
+	}
+	var ret2 []lsp.TextEdit
+	err = client.conn.Call(context.Background(), "textDocument/rangeFormatting", param, &ret2)
+	if err == nil {
+		ret = ret2
+	}
+	if opt.Format != nil {
+		opt.Format(ret, err)
+	}
+	return
+}
+func (client *lspcore) CompletionItemResolve(param *lsp.CompletionItem) (*lsp.CompletionItem, error) {
+	ctx := context.Background()
+	var res lsp.CompletionItem
+	err := client.conn.Call(ctx, "completionItem/resolve", param, &res)
+	return &res, err
+}
+
+func (client *lspcore) TextDocumentHover(file string, Pos lsp.Position) (*lsp.Hover, error) {
+	var res lsp.Hover
+	var param = lsp.HoverParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(file)},
+			Position:     Pos,
+		},
+	}
+	err := client.conn.Call(context.Background(), "textDocument/hover", param, &res)
+	return &res, err
+}
+
+func (client *lspcore) SignatureHelp(arg SignatureHelp) (lsp.SignatureHelp, error) {
+	var param = lsp.SignatureHelpParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{
+				URI: lsp.NewDocumentURI(arg.File),
+			},
+			Position: arg.Pos,
+		},
+	}
+	var res lsp.SignatureHelp
+	TriggerKind := lsp.SignatureHelpTriggerKindInvoked
+	if client.CapabilitiesStatus.SignatureHelpProvider != nil {
+		cc := client.CapabilitiesStatus.SignatureHelpProvider.TriggerCharacters
+		for _, v := range cc {
+			if arg.TriggerCharacter == v {
+				TriggerKind = lsp.SignatureHelpTriggerKindTriggerCharacter
+			}
+		}
+		param.Context = &lsp.SignatureHelpContext{
+			TriggerKind:         TriggerKind,
+			IsRetrigger:         arg.IsVisiable,
+			TriggerCharacter:    arg.TriggerCharacter,
+			ActiveSignatureHelp: arg.ActiveSignatureHelp,
+		}
+	}
+	err := client.conn.Call(context.Background(), "textDocument/signatureHelp", param, &res)
+	if arg.HelpCb != nil {
+		arg.HelpCb(res, arg, err)
+	}
+	return res, err
+}
+
+type TriggerCharType int
+
+const (
+	TriggerCharHelp TriggerCharType = iota
+	TriggerCharComplete
+)
+
+type TriggerChar struct {
+	Type TriggerCharType
+	Ch   string
+}
+
+func (core *lspcore) IsTrigger(param string) (TriggerChar, error) {
+	if c := core.CapabilitiesStatus.CompletionProvider; c != nil {
+		for _, a := range c.TriggerCharacters {
+			if param == a {
+				return TriggerChar{TriggerCharComplete, param}, nil
+			}
+		}
+	}
+	if c := core.CapabilitiesStatus.SignatureHelpProvider; c != nil {
+		for _, a := range c.TriggerCharacters {
+			if param == a {
+				return TriggerChar{TriggerCharHelp, param}, nil
+			}
+		}
+	}
+	return TriggerChar{}, errors.New("not found")
+}
+func (core *lspcore) DidComplete(param Complete) (result lsp.CompletionList, err error) {
+	complete := lsp.CompletionParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{
+				URI: lsp.NewDocumentURI(param.File),
+			},
+			Position: param.Pos,
+		},
+	}
+	if CompletionProvider := core.CapabilitiesStatus.CompletionProvider; CompletionProvider != nil {
+		var context = lsp.CompletionContext{
+			TriggerKind: lsp.CompletionTriggerKindInvoked,
+		}
+		cc := CompletionProvider.TriggerCharacters
+		for _, v := range cc {
+			if v == param.TriggerCharacter {
+				context.TriggerKind = lsp.CompletionTriggerKindTriggerCharacter
+				context.TriggerCharacter = v
+				break
+			}
+		}
+		complete.Context = &context
+	}
+	var sss interface{}
+	err = core.conn.Call(context.Background(), "textDocument/completion", complete, &sss)
+	if param.CompleteHelpCallback != nil {
+		b, _ := json.Marshal(sss)
+		err := json.Unmarshal(b, &result)
+		param.CompleteHelpCallback(result, param, err)
+	}
+	return
+}
 func (core *lspcore) DidOpen(file SourceCode, version int) error {
 	x, err := core.newTextDocument(file.Path, version, file.Cotent)
 	if err != nil {
@@ -331,7 +526,7 @@ func (core *lspcore) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, 
 	}
 	return convert_result_to_lsp_location(result)
 }
-func (core lspcore) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
+func (core *lspcore) TextDocumentPrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
 	var params = lsp.CallHierarchyPrepareParams{}
 	file := LocationContent{
 		location: loc,
@@ -671,4 +866,62 @@ func mainxx2() {
 
 	fmt.Printf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
 
+}
+func notificationDispatcher(method string, req json.RawMessage) (ret string, err error) {
+	switch method {
+	case "$/progress":
+		var param lsp.ProgressParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			return
+		}
+		ret = fmt.Sprintf("value=%s", string(param.Value))
+		// client.handler.Progress(logger, &param)
+	case "$/cancelRequest":
+		// should not reach here
+	case "$/logTrace":
+		var param lsp.LogTraceParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			// client.errorHandler(err)
+			return
+		}
+		ret = param.Message
+		// client.handler.LogTrace(logger, &param)
+	case "window/showMessage":
+		var param lsp.ShowMessageParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			// client.errorHandler(err)
+			return
+		}
+		ret = param.Message
+		// client.handler.WindowShowMessage(logger, &param)
+	case "LogMessage":
+		fallthrough
+	case "window/logMessage":
+		var param lsp.LogMessageParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			// client.errorHandler(err)
+			return
+		}
+		ret = param.Message
+		// client.handler.WindowLogMessage(logger, &param)
+	case "featureFlagsNotification":
+		// params: FeatureFlags
+	case "telemetry/event":
+		// params: ‘object’ | ‘number’ | ‘boolean’ | ‘string’;
+		// client.handler.TelemetryEvent(logger, req) // passthrough
+	case "textDocument/publishDiagnostics":
+		var param lsp.PublishDiagnosticsParams
+		if err = json.Unmarshal(req, &param); err != nil {
+			// client.errorHandler(err)
+			return
+		}
+		// client.handler.TextDocumentPublishDiagnostics(logger, &param)
+	default:
+		// if handler, ok := client.customNotification[method]; ok {
+		// 	handler(logger, req)
+		// } else {
+		// 	panic("unimplemented notification: " + method)
+		// }
+	}
+	return
 }

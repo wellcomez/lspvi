@@ -21,8 +21,9 @@ var Constructor = ""
 var Field = "󰜢"
 var Variable = "󰀫"
 var Class = "𝓒"
+
 // var Interface = ""
-var Interface='\ueb61'
+var Interface = '\ueb61'
 var Module = ""
 var Property = "󰜢"
 var Unit = "󰑭"
@@ -87,7 +88,7 @@ var LspIcon = map[int]string{
 	9:  " ", //-- Constructor
 	10: "󰕘 ", //-- Enum
 	//11: "󰕘 ", //-- Interface
-	11: fmt.Sprintf("%c",Interface),
+	11: fmt.Sprintf("%c", Interface),
 	12: "󰊕 ", //-- Function
 	13: "󰆧 ", //-- Variable
 	14: "󰏿 ", //-- Constant
@@ -298,32 +299,41 @@ func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
 	return wk.openbuffer(filename, "")
 }
 func (wk *LspWorkspace) openbuffer(filename string, content string) (*Symbol_file, bool, error) {
-	val, ok := wk.get(filename)
 	is_new := false
-	if ok {
-		wk.current = val
-		return val, is_new, nil
+	ret := wk.OpenNoLsp(filename)
+	if ret.lspopen {
+		wk.current = ret
+		return ret, is_new, nil
 	}
-	ret := &Symbol_file{
-		Filename: filename,
-		lsp:      wk.getClient(filename),
-		Handle:   wk.Handle,
-		Wk:       wk,
-	}
-	wk.set(filename, ret)
 	if ret.lsp == nil {
 		return nil, is_new, fmt.Errorf("fail to open %s", filename)
 	}
 	is_new = true
-	err := ret.lsp.DidOpen(SourceCode{filename, content}, ret.verison)
-	if err != nil {
+	if err := ret.lsp.DidOpen(SourceCode{filename, content}, ret.verison); err == nil {
+		ret.lspopen = true
+	} else {
 		return ret, is_new, err
 	}
-	token, err := ret.lsp.Semantictokens_full(filename)
-	if err == nil {
+	if token, err := ret.lsp.Semantictokens_full(filename); err == nil {
 		ret.tokens = token
+	} else {
+		return ret, is_new, err
 	}
-	return ret, is_new, err
+	return ret, is_new, nil
+}
+
+func (wk *LspWorkspace) OpenNoLsp(filename string) (ret *Symbol_file) {
+	ret, _ = wk.get(filename)
+	if ret == nil {
+		ret = &Symbol_file{
+			Filename: filename,
+			lsp:      wk.getClient(filename),
+			Handle:   wk.Handle,
+			Wk:       wk,
+		}
+		wk.set(filename, ret)
+	}
+	return ret
 }
 
 func (wk *LspWorkspace) set(filename string, ret *Symbol_file) {

@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 wellcomez
+ * SPDX-License-Identifier: gplv3
+ */
+
 function getFileExtension(filename) {
     const lastDotIndex = filename.lastIndexOf('.');
     if (lastDotIndex === -1) {

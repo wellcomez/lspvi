@@ -14,8 +14,13 @@ type lspclient interface {
 	Semantictokens_full(file string) (*lsp.SemanticTokens, error)
 	InitializeLsp(wk WorkSpace) error
 	IsReady() bool
+	Format(opt FormatOption) ([]lsp.TextEdit, error)
 	Launch_Lsp_Server() error
 	DidOpen(file SourceCode, version int) error
+	DidComplete(param Complete) (lsp.CompletionList, error)
+	CompletionItemResolve(param *lsp.CompletionItem) (*lsp.CompletionItem, error)
+	IsTrigger(param string) (TriggerChar, error)
+	SignatureHelp(arg SignatureHelp) (lsp.SignatureHelp, error)
 	DidClose(file string) error
 	DidSave(file string, text string) error
 	DidChange(file string, verion int, ContentChanges []lsp.TextDocumentContentChangeEvent) error
@@ -39,6 +44,9 @@ type lsp_base struct {
 	wk   *WorkSpace
 }
 
+func (l lsp_base) Format(opt FormatOption) ([]lsp.TextEdit, error) {
+	return l.core.TextDocumentFormatting(opt)
+}
 func (l lsp_base) syncOption() *TextDocumentSyncOptions {
 	return l.core.sync
 }
@@ -100,6 +108,19 @@ func (l lsp_base) DidClose(file string) error {
 type SourceCode struct {
 	Path   string
 	Cotent string
+}
+
+func (l lsp_base) SignatureHelp(arg SignatureHelp) (lsp.SignatureHelp, error) {
+	return l.core.SignatureHelp(arg)
+}
+func (l lsp_base) CompletionItemResolve(param *lsp.CompletionItem) (*lsp.CompletionItem, error) {
+	return l.core.CompletionItemResolve(param)
+}
+func (l lsp_base) IsTrigger(param string) (TriggerChar, error) {
+	return l.core.IsTrigger(param)
+}
+func (l lsp_base) DidComplete(param Complete) (lsp.CompletionList, error) {
+	return l.core.DidComplete(param)
 }
 
 // Initialize implements lspclient.
