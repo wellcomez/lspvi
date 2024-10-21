@@ -45,13 +45,14 @@ func NewHelpBox() *HelpBox {
 
 type CompleteMenu interface {
 	OnHelp(tg lspcore.TriggerChar) bool
-	CreateRequest(e lspcore.TextChangeEvent) lspcore.Complete
 	Draw(screen tcell.Screen)
 	IsShown() bool
 	Show(bool)
 	Hide()
 	SetRect(int, int, int, int)
 	InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive))
+	StartComplete(v lspcore.CodeChangeEvent) bool
+	CheckTrigeKey(event *tcell.EventKey) bool
 }
 type completemenu struct {
 	*customlist
@@ -115,30 +116,53 @@ func (code *CodeView) handle_complete_key(event *tcell.EventKey, after []lspcore
 		codetext.complete.Hide()
 		return
 	}
-	key := fmt.Sprintf("%c", event.Rune())
-	if tg, err := code.lspsymbol.IsTrigger(key); err != nil {
-		if tg.Type == lspcore.TriggerCharHelp {
-			if codetext.complete.OnHelp(tg) {
-				return
-			}
-		}
+	if codetext.complete.CheckTrigeKey(event) {
+		return
 	}
 	if complete := codetext.complete; complete != nil {
 		for _, v := range after {
-			if codetext.run_complete(v, lsp, complete, codetext) {
+			if complete.StartComplete(v) {
 				break
 			}
 		}
 	}
 }
 
-func (view *codetextview) run_complete(v lspcore.CodeChangeEvent, sym *lspcore.Symbol_file, complete CompleteMenu, codetext *codetextview) bool {
+func (complete *completemenu) StartComplete(v lspcore.CodeChangeEvent) bool {
+
+	var codetext *codetextview = complete.editor
+
+	var sym *lspcore.Symbol_file = codetext.code.LspSymbol()
 	for _, e := range v.Events {
 		if e.Type == lspcore.TextChangeTypeInsert && len(e.Text) == 1 {
 			req := complete.CreateRequest(e)
 			req.Sym = sym
 			go req.Sym.DidComplete(req)
 			return true
+		}
+	}
+	return false
+}
+
+func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
+	var sym *lspcore.Symbol_file = complete.editor.code.LspSymbol()
+	var codetext *codetextview = complete.editor
+	key := fmt.Sprintf("%c", event.Rune())
+	if tg, err := sym.IsTrigger(key); err != nil {
+		switch tg.Type {
+
+		case lspcore.TriggerCharHelp:
+			{
+				if codetext.complete.OnHelp(tg) {
+					return true
+				}
+			}
+		case lspcore.TriggerCharComplete:
+			{
+				complete.Hide()
+				complete.heplview = nil
+				return true
+			}
 		}
 	}
 	return false
@@ -239,7 +263,7 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 		end := replace_range
 		end.X = end.X + len(ss)
 		helpview.end = end
-
+		c.editor.Cursor.Loc = replace_range
 		debug.DebugLog("complete", "signature")
 	}
 	debug.DebugLog("help", ret, arg, err)
