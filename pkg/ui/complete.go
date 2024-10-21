@@ -19,14 +19,17 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-type HelpBox struct {
+type LpsTextView struct {
 	*tview.Box
-	begin  femto.Loc
-	end    femto.Loc
-	prev   *lsp.SignatureHelp
-	main   MainService
 	lines  []string
 	HlLine lspcore.TreesiterSymbolLine
+	main  MainService
+}
+type HelpBox struct {
+	*LpsTextView
+	begin femto.Loc
+	end   femto.Loc
+	prev  *lsp.SignatureHelp
 }
 
 func (v HelpBox) IsShown(view *codetextview) bool {
@@ -51,7 +54,11 @@ func (v HelpBox) IsShown(view *codetextview) bool {
 	return false
 }
 func NewHelpBox() *HelpBox {
-	ret := &HelpBox{}
+	ret := &HelpBox{
+		LpsTextView:&LpsTextView{
+			Box:tview.NewBox(),
+		},
+	}
 	// x := global_theme.get_color("selection")
 	return ret
 }
@@ -491,7 +498,7 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 	}
 	return req
 }
-func (l *HelpBox) Draw(screen tcell.Screen) {
+func (l *LpsTextView) Draw(screen tcell.Screen) {
 	x, y, w, _ := l.GetInnerRect()
 
 	default_style := global_theme.get_color("selection")
