@@ -267,7 +267,6 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 			Y: arg.Pos.Line,
 		}
 		c.editor.View.Buf.Insert(replace_range, ss)
-
 		helpview.begin = replace_range
 		end := replace_range
 		end.X = end.X + len(ss)
@@ -305,22 +304,23 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 		comment := []string{}
 
 		if len(v.Parameters) > 0 {
-			line := ""
-			ret2 := []string{}
-			for _, p := range v.Parameters {
-				a := string(p.Label)
-				a = strings.ReplaceAll(a, "\"", "")
-				var document Document
-				if document.Parser(p.Documentation) == nil {
-					comment = append(comment, fmt.Sprintf("%s %s", a, document.Value))
-				}
-				ret2 = append(ret2, a)
-			}
-			line = strings.Join(ret2, ",")
-			line = fmt.Sprintf("%s", line)
-			if helpcall.CompleteSelected != "" {
-				line = helpcall.CreateSignatureHelp(line)
-			}
+			line := v.Label
+			// line := ""
+			// ret2 := []string{}
+			// for _, p := range v.Parameters {
+			// 	a := string(p.Label)
+			// 	a = strings.ReplaceAll(a, "\"", "")
+			// 	var document Document
+			// 	if document.Parser(p.Documentation) == nil {
+			// 		comment = append(comment, fmt.Sprintf("%s %s", a, document.Value))
+			// 	}
+			// 	ret2 = append(ret2, a)
+			// }
+			// line = strings.Join(ret2, ",")
+			// line = fmt.Sprintf("%s", line)
+			// if helpcall.CompleteSelected != "" {
+			// 	line = helpcall.CreateSignatureHelp(line)
+			// }
 			width = max(len(line), width)
 			lines = append(lines, line)
 		}
