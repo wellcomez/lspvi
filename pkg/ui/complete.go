@@ -27,10 +27,22 @@ type HelpBox struct {
 
 func (v HelpBox) IsShown(view *codetextview) bool {
 	loc := view.Cursor.Loc
-	if v.begin.GreaterThan(loc) || v.end.LessThan(loc) {
-		return false
+	if v.begin.Y == loc.Y {
+		begin := v.begin
+		line := view.Buf.Line(begin.Y)
+		if begin.X > len(line) {
+			return false
+		}
+		ss := line[begin.X:]
+		if index := strings.Index(ss, ")"); index >= 0 {
+			v.end.X = begin.X + index
+		}
+		if v.begin.GreaterThan(loc) || v.end.LessThan(loc) {
+			return false
+		}
+		return true
 	}
-	return true
+	return false
 }
 func NewHelpBox() *HelpBox {
 	ret := &HelpBox{
