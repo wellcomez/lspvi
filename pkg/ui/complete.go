@@ -20,10 +20,13 @@ import (
 )
 
 type HelpBox struct {
-	*tview.TextView
-	begin femto.Loc
-	end   femto.Loc
-	prev  *lsp.SignatureHelp
+	*tview.Box
+	begin  femto.Loc
+	end    femto.Loc
+	prev   *lsp.SignatureHelp
+	main   MainService
+	lines  []string
+	HlLine lspcore.TreesiterSymbolLine
 }
 
 func (v HelpBox) IsShown(view *codetextview) bool {
@@ -48,14 +51,8 @@ func (v HelpBox) IsShown(view *codetextview) bool {
 	return false
 }
 func NewHelpBox() *HelpBox {
-	ret := &HelpBox{
-		TextView: tview.NewTextView(),
-	}
-	x := global_theme.get_color("selection")
-	ret.SetTextStyle(*x)
-	_, b, _ := x.Decompose()
-	ret.SetBackgroundColor(b)
-	//ret.SetBorder(true)
+	ret := &HelpBox{}
+	// x := global_theme.get_color("selection")
 	return ret
 }
 
@@ -381,13 +378,34 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 		ret = append(ret, strings.Join(lines, "\n"))
 	}
 	heplview := NewHelpBox()
+	heplview.main = complete.editor.main
+	filename := complete.filename()
 	txt := strings.Join(ret, "\n")
-	heplview.SetText(txt)
+	heplview.Load(txt, filename)
 	loc := complete.editor.Cursor.Loc
-	loc.Y = loc.Y - complete.editor.Topline - len(ret)
+	loc.Y = loc.Y - complete.editor.Topline - len(ret) + 1uu
 	heplview.SetRect(loc.X, loc.Y, width+2, len(ret)+2)
 	complete.heplview = heplview
 	return heplview
+}
+
+func (complete *completemenu) filename() string {
+	filename := complete.editor.code.FileName()
+	return filename
+}
+
+func (heplview *HelpBox) Load(txt string, filename string) {
+	// v := (femto.NewBufferFromString(txt, filename))
+	// v.SetRuntimeFiles(runtime.Files)
+	heplview.Box = tview.NewBox()
+	heplview.lines = strings.Split(txt, "\n")
+	ts := lspcore.NewTreeSitterParse(filename, txt)
+	ts.Init(func(ts *lspcore.TreeSitter) {
+		debug.DebugLog("init")
+		heplview.main.App().QueueUpdateDraw(func() {
+			heplview.HlLine = ts.HlLine
+		})
+	})
 }
 func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspret *lspcore.Complete) {
 	var editor = complete.editor
@@ -473,7 +491,48 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 	}
 	return req
 }
+func (l *HelpBox) Draw(screen tcell.Screen) {
+	x, y, w, _ := l.GetInnerRect()
 
+	default_style := global_theme.get_color("selection")
+	_, bg, _ := default_style.Decompose()
+	for i, line := range l.lines {
+		posx := x
+		var symline *[]lspcore.TreeSitterSymbol
+		if sym, ok := l.HlLine[i]; ok {
+			symline = &sym
+		}
+		for j, v := range line {
+			posx = x + j
+			if symline != nil {
+				draw_it := false
+				for _, pos := range *symline {
+					col := uint32(j)
+					if col >= pos.Begin.Column && col <= pos.End.Column {
+						style := global_theme.get_color(pos.SymbolName)
+						if style == nil {
+							style = global_theme.get_color("@" + pos.SymbolName)
+						}
+						if style != nil {
+							s := *style
+							screen.SetContent(posx, y+i, v, nil, s.Background(bg))
+							draw_it = true
+							break
+						}
+					}
+				}
+				if draw_it {
+					continue
+				}
+			}
+			screen.SetContent(posx, y+i, v, nil, *default_style)
+
+		}
+		for ; posx < x+w; posx++ {
+			screen.SetContent(posx, y+i, ' ', nil, *default_style)
+		}
+	}
+}
 func (l *completemenu) Draw(screen tcell.Screen) {
 	v := l.editor
 	x, y, _, _ := l.editor.GetInnerRect()
