@@ -282,7 +282,7 @@ type FormatOption struct {
 }
 
 func (client *lspcore) TextDocumentFormatting(param FormatOption) (ret []lsp.TextEdit, err error) {
-	if param.Range.End != param.Range.Start {
+	if param.Range.End != param.Range.Start && client.DocumentRangeFormattingProvider != nil {
 		return client.TextDocumentRangeFormatting(param)
 	}
 	var ret2 []lsp.TextEdit
