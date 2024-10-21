@@ -307,7 +307,7 @@ func (client *lspcore) TextDocumentHover(file string, Pos lsp.Position) (*lsp.Ho
 	var param = lsp.HoverParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(file)},
-			Position: Pos,
+			Position:     Pos,
 		},
 	}
 	err := client.conn.Call(context.Background(), "textDocument/hover", param, &res)
@@ -324,9 +324,18 @@ func (client *lspcore) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, err
 		},
 	}
 	var res lsp.SignatureHelp
+	TriggerKind := lsp.SignatureHelpTriggerKindInvoked
+	if client.SignatureHelpProvider != nil {
+		cc := client.SignatureHelpProvider.TriggerCharacters
+		for _, v := range cc {
+			if arg.TriggerCharacter == v {
+				TriggerKind = lsp.SignatureHelpTriggerKindTriggerCharacter
+			}
+		}
+	}
 	if client.SignatureHelpProvider != nil {
 		param.Context = &lsp.SignatureHelpContext{
-			TriggerKind:      lsp.SignatureHelpTriggerKindInvoked,
+			TriggerKind:      TriggerKind,
 			IsRetrigger:      arg.IsVisiable,
 			TriggerCharacter: arg.TriggerCharacter,
 		}
