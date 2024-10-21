@@ -260,7 +260,9 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 	complete.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		if index < len(cl.Items) {
 			v := cl.Items[index]
-			var text = []string{v.Detail}
+			var text = []string{
+				v.Label,
+				v.Detail}
 			var doc Document
 			if doc.Parser(v.Documentation) == nil {
 				text = append(text, "//"+doc.Value)
@@ -456,7 +458,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 		line := editor.Buf.Line(r.Start.Line)
 		replace := ""
 		if len(line) > r.End.Character {
-			r.End.Character=r.End.Character+1
+			r.End.Character = r.End.Character + 1
 			replace = line[r.Start.Character:r.End.Character]
 		} else {
 			replace = line[r.Start.Character:]
@@ -502,16 +504,15 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 func (l *LpsTextView) Draw(screen tcell.Screen) {
 	x, y, w, _ := l.GetInnerRect()
 
-	default_style := global_theme.get_color("selection")
+	default_style := *global_theme.get_color("selection")
 	_, bg, _ := default_style.Decompose()
 	for i, line := range l.lines {
-		posx := x
 		var symline *[]lspcore.TreeSitterSymbol
 		if sym, ok := l.HlLine[i]; ok {
 			symline = &sym
 		}
 		for j, v := range line {
-			posx = x + j
+			posx := x + j
 			if symline != nil {
 				draw_it := false
 				for _, pos := range *symline {
@@ -533,11 +534,11 @@ func (l *LpsTextView) Draw(screen tcell.Screen) {
 					continue
 				}
 			}
-			screen.SetContent(posx, y+i, v, nil, *default_style)
+			screen.SetContent(posx, y+i, v, nil, default_style.Background(bg))
 
 		}
-		for ; posx < x+w; posx++ {
-			screen.SetContent(posx, y+i, ' ', nil, *default_style)
+		for posx := x + len(line); posx < x+w; posx++ {
+			screen.SetContent(posx, y+i, ' ', nil, default_style.Background(bg))
 		}
 	}
 }
@@ -557,6 +558,7 @@ func (l *completemenu) Draw(screen tcell.Screen) {
 			x1, _ := l.GetItemText(i)
 			w1 = max(w1, len(x1))
 		}
+		w1 = min(w1, 30)
 		l.customlist.SetRect(x, y, w1, h)
 		l.customlist.Draw(screen)
 
