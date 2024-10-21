@@ -143,14 +143,14 @@ func (s File) Same(s1 File) bool {
 	return s == s1
 }
 
-type FileBuf struct {
-	buf      *femto.Buffer
-	filename string
-}
+// type FileBuf struct {
+// 	buf      *femto.Buffer
+// 	filename string
+// }
 type CodeView struct {
 	*view_link
 	file        File
-	tree_sitter *lspcore.TreeSitter
+	// tree_sitter *lspcore.TreeSitter
 	// tree_sitter_highlight lspcore.TreesiterSymbolLine
 	view *codetextview
 	// theme     string
@@ -175,7 +175,10 @@ func (c *CodeView) Clear() {
 	c.LoadBuffer(fileloader.FileLoader{})
 }
 func (c CodeView) TreeSitter() *lspcore.TreeSitter {
-	return c.tree_sitter
+	if sym:=c.LspSymbol();sym!=nil{
+		return sym.Ts
+	}
+	return nil
 }
 func (code CodeView) Primitive() tview.Primitive {
 	return code.view
@@ -565,7 +568,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 					symboltree := code.main.OutLineView()
 					symboltree.editor = code
 					symboltree.Clear()
-					symboltree.update_with_ts(code.tree_sitter, code.LspSymbol())
+					symboltree.update_with_ts(code.TreeSitter(), code.LspSymbol())
 					code.update_with_line_changed()
 				}
 			}
@@ -1378,7 +1381,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 		} else {
 			go code.async_lsp_open(func(sym *lspcore.Symbol_file) {
 				code.loading = false
-				code.main.OutLineView().update_with_ts(code.tree_sitter, sym)
+				code.main.OutLineView().update_with_ts(code.TreeSitter(), sym)
 				if line != nil {
 					code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 				}
@@ -1450,7 +1453,6 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 
 func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 	go GlobalApp.QueueUpdateDraw(func() {
-		code.tree_sitter = ts
 		code.set_color()
 		if code.main != nil {
 			code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
@@ -1460,7 +1462,6 @@ func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	// b := code.view.Buf
 	// b.Settings["syntax"] = false
-	code.tree_sitter = nil
 	code.file = NewFile(fileload.FileName)
 	var filename = fileload.FileName
 	code.LoadBuffer(fileload)
@@ -1502,7 +1503,6 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 }
 
 func update_view_tree_sitter(code *CodeView, ts *lspcore.TreeSitter) {
-	code.tree_sitter = ts
 	go GlobalApp.QueueUpdateDraw(func() {
 		code.set_color()
 		if code.main != nil {
@@ -1528,7 +1528,6 @@ func (view *codetextview) is_softwrap() bool {
 	return view.Buf.Settings["softwrap"] == true
 }
 func (code *CodeView) LoadBuffer(file fileloader.FileLoader) {
-	code.tree_sitter = nil
 	buffer := file.Buff
 	if buffer == nil {
 		buffer = femto.NewBufferFromString("", file.FileName)
@@ -1564,10 +1563,10 @@ func (code *CodeView) set_color() {
 	code.set_codeview_colortheme(global_theme)
 }
 func (code *CodeView) set_synax_color(theme *symbol_colortheme) {
-	if code.tree_sitter == nil {
+	if ts:=code.TreeSitter();ts== nil {
 		code.view.Buf.SetTreesitter(lspcore.TreesiterSymbolLine{})
 	} else {
-		code.view.Buf.SetTreesitter(code.tree_sitter.HlLine)
+		code.view.Buf.SetTreesitter(ts.HlLine)
 	}
 	code.view.SetColorscheme(theme.colorscheme)
 }
