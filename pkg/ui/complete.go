@@ -44,6 +44,7 @@ func NewHelpBox() *HelpBox {
 }
 
 type CompleteMenu interface {
+	HandleKeyInput(event *tcell.EventKey, after []lspcore.CodeChangeEvent)
 	OnHelp(tg lspcore.TriggerChar) bool
 	Draw(screen tcell.Screen)
 	IsShown() bool
@@ -102,9 +103,8 @@ func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
 	return &ret
 }
 
-func (code *CodeView) handle_complete_key(event *tcell.EventKey, after []lspcore.CodeChangeEvent) {
-	codetext := code.view
-	lsp := code.LspSymbol()
+func (complete *completemenu) HandleKeyInput(event *tcell.EventKey, after []lspcore.CodeChangeEvent) {
+	lsp := complete.editor.code.LspSymbol()
 	if lsp == nil {
 		return
 	}
@@ -113,13 +113,13 @@ func (code *CodeView) handle_complete_key(event *tcell.EventKey, after []lspcore
 	}
 	switch event.Key() {
 	case tcell.KeyTab, tcell.KeyEnter, tcell.KeyBackspace, tcell.KeyBackspace2, tcell.KeyDelete:
-		codetext.complete.Hide()
+		complete.Hide()
 		return
 	}
-	if codetext.complete.CheckTrigeKey(event) {
+	if complete.CheckTrigeKey(event) {
 		return
 	}
-	if complete := codetext.complete; complete != nil {
+	if complete := complete; complete != nil {
 		for _, v := range after {
 			if complete.StartComplete(v) {
 				break

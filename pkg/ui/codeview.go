@@ -974,7 +974,9 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	var status1 = new_code_change_checker(code)
 	code.view.HandleEvent(event)
 	changed := status1.after(code)
-	code.handle_complete_key(event, changed)
+	if complete := code.view.complete; complete != nil {
+		complete.HandleKeyInput(event, changed)
+	}
 	return nil
 }
 
