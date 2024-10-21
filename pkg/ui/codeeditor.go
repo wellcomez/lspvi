@@ -8,54 +8,76 @@ import (
 )
 
 type CodeEditor interface {
+	//Complete
 	HasComplete() bool
 	CloseComplete()
-	NewChangeChecker() code_change_cheker
 	Complete()
+
+	//code change check
+	NewChangeChecker() code_change_cheker
+
+	//split
 	SplitRight() *CodeView
-	Clear()
-	IsLoading() bool
-	GetLines(begin, end int) []string
-	GetSelection() string
-	OnSearch(txt string, whole bool) []SearchPos
-	vid() view_id
+
+	//Primitive
 	Primitive() tview.Primitive
-	Format()
+
+	//path
 	FileName() string
 	Path() string
 
-	update_with_line_changed()
 
-	Save() error
-
+	//handle key event
 	handle_key(event *tcell.EventKey) *tcell.EventKey
 
-	ResetSelection()
-
+	//bookmark
 	bookmark()
 
+	//lsp
 	key_call_in()
 	action_goto_declaration()
 	action_get_refer()
 	action_get_implementation(line *lspcore.OpenOption)
 	action_goto_define(line *lspcore.OpenOption)
-
-	// openfile(filename string, onload func()) error
-	Reload()
-	LoadBuffer(data []byte, filename string)
-	LoadFileNoLsp(filename string, line int) error
-
-	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
-
-	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
-	goto_line_history(line int, history bool)
-
+	Format()
 	get_symbol_range(sym lspcore.Symbol) lsp.Range
 	LspSymbol() *lspcore.Symbol_file
-
 	TreeSitter() *lspcore.TreeSitter
-	Match()
+	get_callin(sym lspcore.Symbol)
+	open_picker_refs()
 
+	//selected
+	ResetSelection()
+	GetSelection() string
+
+	//search
+	OnSearch(txt string, whole bool) []SearchPos
+
+	//load
+	IsLoading() bool
+	Reload()
+	Save() error
+	LoadBuffer(data []byte, filename string)
+	LoadFileNoLsp(filename string, line int) error
+	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
+
+	//goto line
+	Clear()
+	GetLines(begin, end int) []string
+	vid() view_id
+	goto_line_end()
+	goto_line_head()
+	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
+	goto_line_history(line int, history bool)
+	update_with_line_changed()
+
+	//match
+	action_grep_word(selected bool)
+	Match()
+	OnFindInfile(fzf bool, noloop bool) string
+	OnFindInfileWordOption(fzf bool, noloop bool, whole bool) string
+
+	//action
 	action_key_up()
 	action_key_down()
 	action_page_down(bool)
@@ -64,25 +86,23 @@ type CodeEditor interface {
 	word_left()
 	word_right()
 
+	//undo
 	Undo()
+
+	//delete
 	deleteline()
 	deleteword()
-	copyline(bool)
-	Paste()
 	deltext()
 
-	goto_line_end()
-	goto_line_head()
-	get_callin(sym lspcore.Symbol)
+	//copy Paste
+	copyline(bool)
+	Paste()
 
-	open_picker_refs()
+	//InsertMode
 	InsertMode(yes bool)
-
-	action_grep_word(selected bool)
-	OnFindInfile(fzf bool, noloop bool) string
-	OnFindInfileWordOption(fzf bool, noloop bool, whole bool) string
-
+	//history
 	EditorPosition() *EditorPosition
 
+	//draw
 	DrawNavigationBar(x int, y int, w int, screen tcell.Screen)
 }
