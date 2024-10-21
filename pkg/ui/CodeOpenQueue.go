@@ -8,6 +8,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
 )
+
 type CodeOpenQueueStatus int
 
 const (
@@ -15,6 +16,24 @@ const (
 	CodeOpenQueueStatusStop
 )
 
+type arg_main_openhistory struct {
+	filename string
+	line     *lsp.Location
+}
+type arg_openbuf struct {
+	data     []byte
+	filename string
+}
+type arg_open_nolsp struct {
+	filename string
+	line     int
+}
+type EditorOpenArgument struct {
+	open_no_lsp       *arg_open_nolsp
+	Range             *lsp.Range
+	openbuf           *arg_openbuf
+	main_open_history *arg_main_openhistory
+}
 
 type CodeOpenQueue struct {
 	mutex      sync.Mutex
@@ -51,7 +70,6 @@ func close_queue(queue *CodeOpenQueue) {
 		}
 	}
 }
-
 
 func (q *CodeOpenQueue) LoadFileNoLsp(filename string, line int) {
 	q.enqueue(EditorOpenArgument{open_no_lsp: &arg_open_nolsp{filename, line}})
