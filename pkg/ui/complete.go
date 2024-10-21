@@ -383,7 +383,7 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	txt := strings.Join(ret, "\n")
 	heplview.Load(txt, filename)
 	loc := complete.editor.Cursor.Loc
-	loc.Y = loc.Y - complete.editor.Topline - len(ret) + 1uu
+	loc.Y = loc.Y - complete.editor.Topline - len(ret) + 1
 	heplview.SetRect(loc.X, loc.Y, width+2, len(ret)+2)
 	complete.heplview = heplview
 	return heplview
