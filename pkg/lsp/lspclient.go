@@ -44,7 +44,7 @@ type lsp_base struct {
 }
 
 func (l lsp_base) Format(opt FormatOption) ([]lsp.TextEdit, error) {
-	return l.core.TextDocumentRangeFormatting(opt)
+	return l.core.TextDocumentFormatting(opt)
 }
 func (l lsp_base) syncOption() *TextDocumentSyncOptions {
 	return l.core.sync

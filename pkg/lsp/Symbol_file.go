@@ -62,6 +62,16 @@ func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (*lsp.SignatureHelp, erro
 }
 
 func (s *Symbol_file) Format(opt FormatOption) (ret []lsp.TextEdit, err error) {
+	if s.lsp == nil {
+		err = errors.New("lsp is nil")
+		if opt.Format != nil {
+			opt.Format(ret, err)
+		}
+		return
+	}
+	if opt.Filename == "" {
+		opt.Filename = s.Filename
+	}
 	return s.lsp.Format(opt)
 }
 func (s Symbol_file) CompletionItemResolve(param *lsp.CompletionItem) (ret *lsp.CompletionItem, err error) {

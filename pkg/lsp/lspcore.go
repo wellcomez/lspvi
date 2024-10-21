@@ -275,15 +275,32 @@ type Complete struct {
 	Sym                  *Symbol_file
 }
 type FormatOption struct {
-	filename string
+	Filename string
 	Range    lsp.Range
 	Options  lsp.FormattingOptions
+	Format   func([]lsp.TextEdit, error)
 }
 
+func (client *lspcore) TextDocumentFormatting(param FormatOption) (ret []lsp.TextEdit, err error) {
+	if param.Range.End != param.Range.Start {
+		return client.TextDocumentRangeFormatting(param)
+	}
+	var ret2 []lsp.TextEdit
+	if err = client.conn.Call(context.Background(), "textDocument/formatting", lsp.DocumentFormattingParams{
+		TextDocument: lsp.TextDocumentIdentifier{URI: lsp.NewDocumentURI(param.Filename)},
+		Options:      param.Options,
+	}, &ret2); err == nil {
+		ret = ret2
+	}
+	if param.Format != nil {
+		param.Format(ret, err)
+	}
+	return
+}
 func (client *lspcore) TextDocumentRangeFormatting(opt FormatOption) (ret []lsp.TextEdit, err error) {
 	var param = lsp.DocumentRangeFormattingParams{
 		TextDocument: lsp.TextDocumentIdentifier{
-			URI: lsp.NewDocumentURI(opt.filename),
+			URI: lsp.NewDocumentURI(opt.Filename),
 		},
 		Range:   opt.Range,
 		Options: opt.Options,
@@ -292,6 +309,9 @@ func (client *lspcore) TextDocumentRangeFormatting(opt FormatOption) (ret []lsp.
 	err = client.conn.Call(context.Background(), "textDocument/rangeFormatting", param, &ret2)
 	if err == nil {
 		ret = ret2
+	}
+	if opt.Format != nil {
+		opt.Format(ret, err)
 	}
 	return
 }

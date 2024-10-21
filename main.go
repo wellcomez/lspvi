@@ -29,6 +29,5 @@ func main() {
 		mainui.StartWebUI(*arg,nil)
 		return
 	}
-
 	mainui.MainUI(arg)
 }

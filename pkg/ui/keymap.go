@@ -56,6 +56,8 @@ const (
 	vi_del_word
 	vi_pageup
 	vi_pagedown
+	format_document
+	format_document_range
 	copy_path
 	next_window_left
 	next_window_right
@@ -432,6 +434,21 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 				return true
 			}}
 		}
+
+	case format_document:
+		{
+			return cmdactor{id, "Document Format", func() bool {
+				m.current_editor().Format()
+				return true
+			}}
+		}
+	case format_document_range:
+		{
+			return cmdactor{id, "Document Format Range", func() bool {
+				m.current_editor().Format()
+				return true
+			}}
+		}
 	default:
 		return cmdactor{id,
 			"", nil,
@@ -504,6 +521,7 @@ func (main *mainui) ctrl_w_map() []cmditem {
 func (main *mainui) key_map_escape() []cmditem {
 	m := main
 	sss := []cmditem{
+		get_cmd_actor(m, format_document).esc_key(split("=")),
 		get_cmd_actor(m, file_in_file).esc_key(split("f")),
 		get_cmd_actor(m, file_in_file_vi_word).esc_key(split("*")),
 		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),

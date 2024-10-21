@@ -39,7 +39,7 @@ type CodeEditor interface {
 	OnSearch(txt string, whole bool) []SearchPos
 	vid() view_id
 	Primitive() tview.Primitive
-
+	Format()
 	FileName() string
 	Path() string
 
@@ -354,6 +354,10 @@ func (s File) Same(s1 File) bool {
 	return s == s1
 }
 
+type FileBuf struct {
+	buf      *femto.Buffer
+	filename string
+}
 type CodeView struct {
 	*view_link
 	file        File
@@ -373,6 +377,7 @@ type CodeView struct {
 	insert      bool
 	diff        *Differ
 	loading     bool
+	filebuffer  FileBuf
 }
 
 func (code *CodeView) NewChangeChecker() code_change_cheker {
@@ -1724,6 +1729,10 @@ func (code *CodeView) LoadBuffer(data []byte, filename string) {
 	buffer := femto.NewBufferFromString(string(data), filename)
 	code.view.linechange = bookmarkfile{}
 	code.diff = nil
+	code.filebuffer = FileBuf{
+		buf:      buffer,
+		filename: filename,
+	}
 
 	code.view.OpenBuffer(buffer)
 
@@ -1944,4 +1953,52 @@ func (code *CodeView) change_topline_with_previousline(line int) {
 	//linenumberusermouse should less than linecout
 	code.view.Topline = max(topline, 0)
 	// log.Println("gotoline", line, "linecount", linecount, "topline", code.view.Topline, "LineNumberUnderMouse", code.LineNumberUnderMouse)
+}
+func (code *CodeView) Format() {
+	// line := code.view.Cursor.Loc.Y
+	// length := len(code.view.Buf.LineBytes(line))
+	editor := code.view
+	be := editor.Cursor.CurSelection
+	Options := lsp.FormattingOptions{
+		"TabSize": 4,
+	}
+	Range := lsp.Range{}
+	if be[1].GreaterThan(be[0]) {
+		Range = lsp.Range{
+			Start: lsp.Position{
+				Line:      be[0].Y,
+				Character: be[0].X,
+			},
+			End: lsp.Position{
+				Line:      be[1].Y,
+				Character: be[1].X,
+			},
+		}
+	}
+	go func() {
+		if ret, err := code.LspSymbol().Format(lspcore.FormatOption{
+			Filename: code.Path(),
+			Range:    Range,
+			Options:  Options,
+		}); err == nil {
+			go code.main.App().QueueUpdateDraw(func() {
+				check := code.NewChangeChecker()
+				defer check.End()
+				for _, v := range ret {
+					if v.NewText == "\n" {
+						continue
+					}
+					start := femto.Loc{
+						X: v.Range.Start.Character,
+						Y: v.Range.Start.Line,
+					}
+					end := femto.Loc{
+						X: v.Range.End.Character,
+						Y: v.Range.End.Line,
+					}
+					code.view.Buf.Replace(start, end, v.NewText)
+				}
+			})
+		}
+	}()
 }
