@@ -289,11 +289,11 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 	defer check.End()
 	if len(ret.Signatures) > 0 {
 		helpview := c.new_help_box(ret, arg)
-		x := ret.Signatures[0]
-		var array = []string{}
-		for _, v := range x.Parameters {
-			array = append(array, string(v.Label))
-		}
+		// x := ret.Signatures[0]
+		// var array = []string{}
+		// for _, v := range x.Parameters {
+		// 	array = append(array, string(v.Label))
+		// }
 		// ss := strings.Join(array, ",")
 		replace_range := femto.Loc{
 			X: arg.Pos.Character + 1,
