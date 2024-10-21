@@ -14,6 +14,7 @@ type lspclient interface {
 	Semantictokens_full(file string) (*lsp.SemanticTokens, error)
 	InitializeLsp(wk WorkSpace) error
 	IsReady() bool
+	Format(opt FormatOption) ([]lsp.TextEdit, error)
 	Launch_Lsp_Server() error
 	DidOpen(file SourceCode, version int) error
 	DidComplete(param Complete) (lsp.CompletionList, error)
@@ -41,6 +42,9 @@ type lsp_base struct {
 	wk   *WorkSpace
 }
 
+func (l lsp_base) Format(opt FormatOption) ([]lsp.TextEdit, error) {
+	return l.core.TextDocumentRangeFormatting(opt)
+}
 func (l lsp_base) syncOption() *TextDocumentSyncOptions {
 	return l.core.sync
 }

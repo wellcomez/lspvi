@@ -31,12 +31,14 @@ func (r rpchandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 }
 
 type lspcore struct {
-	cmd                   *exec.Cmd
-	conn                  *jsonrpc2.Conn
-	capabilities          map[string]interface{}
-	initializationOptions map[string]interface{}
-	CompletionProvider    *lsp.CompletionOptions
-	SignatureHelpProvider *lsp.SignatureHelpOptions
+	cmd                        *exec.Cmd
+	conn                       *jsonrpc2.Conn
+	capabilities               map[string]interface{}
+	initializationOptions      map[string]interface{}
+	CompletionProvider         *lsp.CompletionOptions
+	SignatureHelpProvider      *lsp.SignatureHelpOptions
+	DocumentFormattingProvider *lsp.DocumentFormattingOptions
+	DocumentRangeFormattingProvider *lsp.DocumentRangeFormattingOptions
 	// arguments             []string
 	handle        jsonrpc2.Handler
 	rw            io.ReadWriteCloser
@@ -272,7 +274,27 @@ type Complete struct {
 	Continued            bool
 	Sym                  *Symbol_file
 }
+type FormatOption struct {
+	filename string
+	Range    lsp.Range
+	Options  lsp.FormattingOptions
+}
 
+func (client *lspcore) TextDocumentRangeFormatting(opt FormatOption) (ret []lsp.TextEdit, err error) {
+	var param = lsp.DocumentRangeFormattingParams{
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: lsp.NewDocumentURI(opt.filename),
+		},
+		Range:   opt.Range,
+		Options: opt.Options,
+	}
+	var ret2 []lsp.TextEdit
+	err = client.conn.Call(context.Background(), "textDocument/rangeFormatting", param, &ret2)
+	if err == nil {
+		ret = ret2
+	}
+	return
+}
 func (client *lspcore) CompletionItemResolve(param *lsp.CompletionItem) (*lsp.CompletionItem, error) {
 	ctx := context.Background()
 	var res lsp.CompletionItem

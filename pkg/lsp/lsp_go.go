@@ -167,12 +167,10 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 	/*if d, e := json.MarshalIndent(result, " ", ""); e == nil {
 		log.Println(LSP_DEBUG_TAG, string(d))
 	}*/
-	if result.Capabilities.CompletionProvider != nil {
-		core.CompletionProvider = result.Capabilities.CompletionProvider
-	}
-	if result.Capabilities.SignatureHelpProvider!= nil {
-		core.SignatureHelpProvider = result.Capabilities.SignatureHelpProvider
-	}
+	core.CompletionProvider = result.Capabilities.CompletionProvider
+	core.SignatureHelpProvider = result.Capabilities.SignatureHelpProvider
+	core.DocumentFormattingProvider = result.Capabilities.DocumentFormattingProvider
+	core.DocumentRangeFormattingProvider = result.Capabilities.DocumentRangeFormattingProvider
 	if data, err := result.Capabilities.TextDocumentSync.MarshalJSON(); err == nil {
 		if err = json.Unmarshal(data, &r); err == nil {
 			core.sync = &r
