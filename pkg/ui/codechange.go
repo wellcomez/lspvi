@@ -233,6 +233,7 @@ func (q *lspchange_queue) AddQuery(c *CodeView, event lspcore.CodeChangeEvent) {
 	// }
 	q.wait_queue = append(q.wait_queue, lspchange{c, event})
 	if len(q.wait_queue) > 0 {
+		send_lsp_codechange_notifyify(c.LspSymbol(), event)
 		q.lspchange <- len(q.wait_queue)
 	}
 
@@ -267,21 +268,22 @@ func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
 	if event.Full {
 		event.Data = data
 	}
-	if sym := code.LspSymbol(); sym != nil {
-		sym.NotifyCodeChange(event)
-	}
 	var ts = event
 	ts.Data = data
 	var new_ts = lspcore.GetNewTreeSitter(code.Path(), ts)
 	new_ts.Init(func(ts *lspcore.TreeSitter) {
-		if !ts.IsMe(code.Path()) {
-			return
-		}
-		if sym := code.LspSymbol(); sym != nil {
+		if sym := code.LspSymbol(); sym != nil && sym.Filename == event.File {
+			sym.Ts = new_ts
 			sym.LspLoadSymbol()
+			on_treesitter_update(code, ts)
 		}
-		on_treesitter_update(code, ts)
 	})
+}
+
+func send_lsp_codechange_notifyify(sym *lspcore.Symbol_file, event lspcore.CodeChangeEvent) {
+	if sym != nil {
+		sym.NotifyCodeChange(event)
+	}
 }
 
 func (code *CodeView) GetBuffData() []byte {
