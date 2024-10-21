@@ -278,6 +278,7 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 			X: arg.Pos.Character + 1,
 			Y: arg.Pos.Line,
 		}
+		ss=""
 		c.editor.View.Buf.Insert(replace_range, ss)
 		helpview.begin = replace_range
 		end := replace_range
