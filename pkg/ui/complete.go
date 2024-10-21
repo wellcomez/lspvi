@@ -23,6 +23,7 @@ type HelpBox struct {
 	*tview.TextView
 	begin femto.Loc
 	end   femto.Loc
+	prev  *lsp.SignatureHelp
 }
 
 func (v HelpBox) IsShown(view *codetextview) bool {
@@ -36,6 +37,8 @@ func (v HelpBox) IsShown(view *codetextview) bool {
 		ss := line[begin.X:]
 		if index := strings.Index(ss, ")"); index >= 0 {
 			v.end.X = begin.X + index
+		} else if v.begin.LessThan(loc) {
+			return true
 		}
 		if v.begin.GreaterThan(loc) || v.end.LessThan(loc) {
 			return false
@@ -58,7 +61,7 @@ func NewHelpBox() *HelpBox {
 
 type CompleteMenu interface {
 	HandleKeyInput(event *tcell.EventKey, after []lspcore.CodeChangeEvent)
-	OnHelp(tg lspcore.TriggerChar) bool
+	OnTrigeHelp(tg lspcore.TriggerChar) bool
 	Draw(screen tcell.Screen)
 	IsShown() bool
 	Show(bool)
@@ -156,7 +159,11 @@ func (complete *completemenu) StartComplete(v lspcore.CodeChangeEvent) bool {
 	}
 	return false
 }
-
+func Loc2Pos(loc femto.Loc) (pos lsp.Position) {
+	pos.Line = loc.Y
+	pos.Character = loc.X
+	return
+}
 func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 	var sym *lspcore.Symbol_file = complete.editor.code.LspSymbol()
 	var codetext *codetextview = complete.editor
@@ -166,7 +173,7 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 
 		case lspcore.TriggerCharHelp:
 			{
-				if codetext.complete.OnHelp(tg) {
+				if codetext.complete.OnTrigeHelp(tg) {
 					return true
 				}
 			}
@@ -178,6 +185,20 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 			}
 		}
 	}
+
+	// if help := complete.heplview; help != nil && help.IsShown(codetext) {
+	// 	x := codetext.Cursor.Loc
+	// 	ch := codetext.Buf.Line(x.Y)[x.X-1]
+	// 	if ret, err := sym.SignatureHelp(lspcore.SignatureHelp{
+	// 		IsVisiable:          true,
+	// 		Pos:                 Loc2Pos(x),
+	// 		TriggerCharacter:    fmt.Sprintf("%c", ch),
+	// 		ActiveSignatureHelp: help.prev,
+	// 	}); err == nil {
+	// 		debug.DebugLog("complete", "--------", len(ret.Signatures))
+	// 	}
+	// 	return true
+	// }
 	return false
 }
 
@@ -273,14 +294,15 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 		for _, v := range x.Parameters {
 			array = append(array, string(v.Label))
 		}
-		ss := strings.Join(array, ",")
+		// ss := strings.Join(array, ",")
 		replace_range := femto.Loc{
 			X: arg.Pos.Character + 1,
 			Y: arg.Pos.Line,
 		}
-		ss=""
+		ss := ""
 		c.editor.View.Buf.Insert(replace_range, ss)
 		helpview.begin = replace_range
+		helpview.prev = &ret
 		end := replace_range
 		end.X = end.X + len(ss)
 		helpview.end = end
@@ -289,7 +311,7 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 	}
 	debug.DebugLog("help", ret, arg, err)
 }
-func (complete *completemenu) OnHelp(tg lspcore.TriggerChar) bool {
+func (complete *completemenu) OnTrigeHelp(tg lspcore.TriggerChar) bool {
 	sym := complete.editor.code.LspSymbol()
 	editor := complete.editor
 	loc := editor.Cursor.Loc
@@ -302,7 +324,16 @@ func (complete *completemenu) OnHelp(tg lspcore.TriggerChar) bool {
 		Continued:        false,
 	}); err == nil && len(help.Signatures) > 0 {
 		debug.DebugLog("help", help)
-		complete.new_help_box(help, lspcore.SignatureHelp{})
+
+		var prev *lsp.SignatureHelp
+		if complete.heplview != nil {
+			prev = complete.heplview.prev
+		}
+		help := complete.new_help_box(help, lspcore.SignatureHelp{})
+		help.begin = loc
+		help.end = loc
+		help.prev = prev
+		complete.editor.main.App().ForceDraw()
 		return true
 	}
 	return false

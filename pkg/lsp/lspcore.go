@@ -262,13 +262,14 @@ func (client *lspcore) DidClose(file string) error {
 }
 
 type SignatureHelp struct {
-	Pos              lsp.Position
-	File             string
-	HelpCb           func(lsp.SignatureHelp, SignatureHelp, error)
-	IsVisiable       bool
-	TriggerCharacter string
-	Continued        bool
-	CompleteSelected string
+	Pos                 lsp.Position
+	File                string
+	HelpCb              func(lsp.SignatureHelp, SignatureHelp, error)
+	IsVisiable          bool
+	TriggerCharacter    string
+	Continued           bool
+	CompleteSelected    string
+	ActiveSignatureHelp *lsp.SignatureHelp
 }
 
 func (h SignatureHelp) CreateSignatureHelp(s string) string {
@@ -363,9 +364,10 @@ func (client *lspcore) SignatureHelp(arg SignatureHelp) (lsp.SignatureHelp, erro
 			}
 		}
 		param.Context = &lsp.SignatureHelpContext{
-			TriggerKind:      TriggerKind,
-			IsRetrigger:      arg.IsVisiable,
-			TriggerCharacter: arg.TriggerCharacter,
+			TriggerKind:         TriggerKind,
+			IsRetrigger:         arg.IsVisiable,
+			TriggerCharacter:    arg.TriggerCharacter,
+			ActiveSignatureHelp: arg.ActiveSignatureHelp,
 		}
 	}
 	err := client.conn.Call(context.Background(), "textDocument/signatureHelp", param, &res)
