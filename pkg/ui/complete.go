@@ -300,31 +300,41 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	ret := []string{""}
 	width := 0
 	for _, v := range help.Signatures {
-		line := ""
-		ret2 := []string{}
+		lines := []string{}
+		var signature_document Document
 		comment := []string{}
-		for _, p := range v.Parameters {
-			a := string(p.Label)
-			a = strings.ReplaceAll(a, "\"", "")
-			var document Document
-			if document.Parser(p.Documentation) == nil {
-				comment = append(comment, fmt.Sprintf("%s %s", a, document.Value))
+
+		if len(v.Parameters) > 0 {
+			line := ""
+			ret2 := []string{}
+			for _, p := range v.Parameters {
+				a := string(p.Label)
+				a = strings.ReplaceAll(a, "\"", "")
+				var document Document
+				if document.Parser(p.Documentation) == nil {
+					comment = append(comment, fmt.Sprintf("%s %s", a, document.Value))
+				}
+				ret2 = append(ret2, a)
 			}
-			ret2 = append(ret2, a)
+			line = strings.Join(ret2, ",")
+			line = fmt.Sprintf("%s", line)
+			if helpcall.CompleteSelected != "" {
+				line = helpcall.CreateSignatureHelp(line)
+			}
+			width = max(len(line), width)
+			lines = append(lines, line)
 		}
-		line = strings.Join(ret2, ",")
-		line = fmt.Sprintf("%s", line)
-		if helpcall.CompleteSelected != "" {
-			line = helpcall.CreateSignatureHelp(line)
+		if signature_document.Parser(v.Documentation) == nil {
+			comment = append(comment, "//"+signature_document.Value)
+			line_document := strings.Join(comment, "\n")
+			if len(line_document) > 0 {
+				lines = append(lines, line_document)
+			}
 		}
-		line = " " + line
-		line_document := strings.Join(comment, "\n")
-		width = max(len(line), width)
-		if len(line_document) > 0 {
-			width = max(len(line_document), width)
-			line = line + "\n" + line_document
+		for i := range lines {
+			lines[i] = " " + lines[i]
 		}
-		ret = append(ret, line)
+		ret = append(ret, strings.Join(lines, "\n"))
 	}
 	heplview := NewHelpBox()
 	txt := strings.Join(ret, "\n")
