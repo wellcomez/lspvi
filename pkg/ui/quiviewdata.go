@@ -75,7 +75,7 @@ func (qk *quick_view_data) get_data(index int) (*ref_with_caller, error) {
 	return &qk.Refs.Refs[index], nil
 }
 func (qk *quick_view_data) async_open(call *ref_with_caller, cb func(error, bool)) {
-	var file string = call.Loc.URI.AsPath().Base()
+	var file string = call.Loc.URI.AsPath().String()
 	var r lsp.Range = call.Loc.Range
 	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
 	if !qk.need_async_open() {
