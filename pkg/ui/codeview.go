@@ -143,13 +143,13 @@ func (s File) Same(s1 File) bool {
 	return s == s1
 }
 
-// type FileBuf struct {
-// 	buf      *femto.Buffer
-// 	filename string
-// }
+//	type FileBuf struct {
+//		buf      *femto.Buffer
+//		filename string
+//	}
 type CodeView struct {
 	*view_link
-	file        File
+	file File
 	// tree_sitter *lspcore.TreeSitter
 	// tree_sitter_highlight lspcore.TreesiterSymbolLine
 	view *codetextview
@@ -165,7 +165,7 @@ type CodeView struct {
 	not_preview bool
 	insert      bool
 	//diff        *Differ
-	loading    bool
+	loading bool
 }
 
 func (code *CodeView) NewChangeChecker() code_change_cheker {
@@ -175,7 +175,7 @@ func (c *CodeView) Clear() {
 	c.LoadBuffer(fileloader.FileLoader{})
 }
 func (c CodeView) TreeSitter() *lspcore.TreeSitter {
-	if sym:=c.LspSymbol();sym!=nil{
+	if sym := c.LspSymbol(); sym != nil {
 		return sym.Ts
 	}
 	return nil
@@ -1437,8 +1437,6 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 			code.main.Recent_open().add(filename)
 		}
 	}
-	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
-	// "monokai"A
 	go func() {
 		GlobalApp.QueueUpdate(func() {
 			code.__load_in_main(file)
@@ -1465,7 +1463,7 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	code.file = NewFile(fileload.FileName)
 	var filename = fileload.FileName
 	code.LoadBuffer(fileload)
-	sym := code.LspSymbol()
+	sym := code.main.Lspmgr().OpenNoLsp(filename)
 	has_ts := false
 	if sym != nil {
 		if tree_sitter := sym.Ts; tree_sitter != nil {
@@ -1481,7 +1479,8 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 				if !ts.IsMe(code.Path()) {
 					return
 				}
-				if sym := code.LspSymbol(); sym != nil && sym.Filename == fileload.FileName {
+				sym := code.LspSymbol()
+				if sym != nil && sym.Filename == fileload.FileName {
 					sym.Ts = ts
 				}
 				update_view_tree_sitter(code, ts)
@@ -1563,7 +1562,7 @@ func (code *CodeView) set_color() {
 	code.set_codeview_colortheme(global_theme)
 }
 func (code *CodeView) set_synax_color(theme *symbol_colortheme) {
-	if ts:=code.TreeSitter();ts== nil {
+	if ts := code.TreeSitter(); ts == nil {
 		code.view.Buf.SetTreesitter(lspcore.TreesiterSymbolLine{})
 	} else {
 		code.view.Buf.SetTreesitter(ts.HlLine)
