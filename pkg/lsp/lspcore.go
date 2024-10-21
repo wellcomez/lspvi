@@ -388,17 +388,17 @@ type TriggerChar struct {
 }
 
 func (core *lspcore) IsTrigger(param string) (TriggerChar, error) {
-	if c := core.CapabilitiesStatus.CompletionProvider; c == nil {
-		for _, a := range c.TriggerCharacters {
-			if param == a {
-				return TriggerChar{TriggerCharHelp, param}, nil
-			}
-		}
-	}
-	if c := core.CapabilitiesStatus.SignatureHelpProvider; c == nil {
+	if c := core.CapabilitiesStatus.CompletionProvider; c != nil {
 		for _, a := range c.TriggerCharacters {
 			if param == a {
 				return TriggerChar{TriggerCharComplete, param}, nil
+			}
+		}
+	}
+	if c := core.CapabilitiesStatus.SignatureHelpProvider; c != nil {
+		for _, a := range c.TriggerCharacters {
+			if param == a {
+				return TriggerChar{TriggerCharHelp, param}, nil
 			}
 		}
 	}

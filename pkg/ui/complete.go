@@ -148,7 +148,7 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 	var sym *lspcore.Symbol_file = complete.editor.code.LspSymbol()
 	var codetext *codetextview = complete.editor
 	key := fmt.Sprintf("%c", event.Rune())
-	if tg, err := sym.IsTrigger(key); err != nil {
+	if tg, err := sym.IsTrigger(key); err == nil {
 		switch tg.Type {
 
 		case lspcore.TriggerCharHelp:
@@ -161,7 +161,7 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 			{
 				complete.Hide()
 				complete.heplview = nil
-				return true
+				return false
 			}
 		}
 	}
