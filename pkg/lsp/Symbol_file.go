@@ -23,6 +23,7 @@ type Symbol_file struct {
 	Wk           *LspWorkspace
 	tokens       *lsp.SemanticTokens
 	verison      int
+	Ts           *TreeSitter
 }
 
 func (sym Symbol_file) LspClient() lspclient {

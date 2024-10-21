@@ -154,9 +154,9 @@ type CodeView struct {
 	// tree_sitter_highlight lspcore.TreesiterSymbolLine
 	view *codetextview
 	// theme     string
-	main      MainService
-	lspsymbol *lspcore.Symbol_file
-	key_map   map[tcell.Key]func(code *CodeView)
+	main MainService
+	// lspsymbol *lspcore.Symbol_file
+	key_map map[tcell.Key]func(code *CodeView)
 	// mouse_select_area    bool
 	rightmenu_items []context_menu_item
 	right_menu_data *right_menu_data
@@ -166,7 +166,6 @@ type CodeView struct {
 	insert      bool
 	//diff        *Differ
 	loading    bool
-	filebuffer FileBuf
 }
 
 func (code *CodeView) NewChangeChecker() code_change_cheker {
@@ -182,7 +181,8 @@ func (code CodeView) Primitive() tview.Primitive {
 	return code.view
 }
 func (code CodeView) LspSymbol() *lspcore.Symbol_file {
-	return code.lspsymbol
+	sym, _ := code.main.Lspmgr().Get(code.Path())
+	return sym
 }
 func (code *CodeView) Reload() {
 	if sym := code.LspSymbol(); sym != nil {
@@ -192,7 +192,6 @@ func (code *CodeView) Reload() {
 		code.openfile(code.Path(), true, func(bool) {
 			code.view.Topline = offset
 			if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
-				code.lspsymbol = s
 				s.LspLoadSymbol()
 			}
 		})
@@ -1379,7 +1378,6 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 		} else {
 			go code.async_lsp_open(func(sym *lspcore.Symbol_file) {
 				code.loading = false
-				code.lspsymbol = sym
 				code.main.OutLineView().update_with_ts(code.tree_sitter, sym)
 				if line != nil {
 					code.goto_location_no_history(line.Range, code.id != view_code_below, option)
@@ -1436,7 +1434,6 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 			code.main.Recent_open().add(filename)
 		}
 	}
-	code.lspsymbol = nil
 	// /home/z/gopath/pkg/mod/github.com/pgavlin/femto@v0.0.0-20201224065653-0c9d20f9cac4/runtime/files/colorschemes/
 	// "monokai"A
 	go func() {
@@ -1467,37 +1464,53 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	code.file = NewFile(fileload.FileName)
 	var filename = fileload.FileName
 	code.LoadBuffer(fileload)
-
-	ts_load_event := code.LspContentFullChangeEvent()
-	ts_load_event.Data = code.GetBuffData()
-	if tree_sitter := lspcore.GetNewTreeSitter(filename, ts_load_event); tree_sitter != nil {
-		tree_sitter.Init(func(ts *lspcore.TreeSitter) {
-			if !ts.IsMe(code.Path()) {
-				return
-			}
-			go GlobalApp.QueueUpdateDraw(func() {
-				code.tree_sitter = ts
-				code.set_color()
-				if code.main != nil {
-					if code.id.is_editor() {
-						code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-					}
+	sym := code.LspSymbol()
+	has_ts := false
+	if sym != nil {
+		if tree_sitter := sym.Ts; tree_sitter != nil {
+			update_view_tree_sitter(code, tree_sitter)
+			has_ts = true
+		}
+	}
+	if !has_ts {
+		ts_load_event := code.LspContentFullChangeEvent()
+		ts_load_event.Data = code.GetBuffData()
+		if tree_sitter := lspcore.GetNewTreeSitter(filename, ts_load_event); tree_sitter != nil {
+			tree_sitter.Init(func(ts *lspcore.TreeSitter) {
+				if !ts.IsMe(code.Path()) {
+					return
 				}
+				if sym := code.LspSymbol(); sym != nil && sym.Filename == fileload.FileName {
+					sym.Ts = ts
+				}
+				update_view_tree_sitter(code, ts)
 			})
-		})
+		}
 	}
 	code.set_loc(femto.Loc{X: 0, Y: 0})
 	if code.main != nil {
 		code.view.bookmark = *code.main.Bookmark().GetFileBookmark(filename)
 	}
-	name := filename
-	if code.main != nil {
-		name = trim_project_filename(filename, global_prj_root)
-	}
-	name = strings.TrimLeft(name, "/")
+	// name := filename
+	// if code.main != nil {
+	// name = trim_project_filename(filename, global_prj_root)
+	// }
+	// name = strings.TrimLeft(name, "/")
 	// UpdateTitleAndColor(code.view.Box, name)
 	code.update_with_line_changed()
 	return nil
+}
+
+func update_view_tree_sitter(code *CodeView, ts *lspcore.TreeSitter) {
+	code.tree_sitter = ts
+	go GlobalApp.QueueUpdateDraw(func() {
+		code.set_color()
+		if code.main != nil {
+			if code.id.is_editor() {
+				code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+			}
+		}
+	})
 }
 
 func (code CodeView) change_wrap_appearance() {

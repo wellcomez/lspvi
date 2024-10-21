@@ -267,8 +267,8 @@ func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
 	if event.Full {
 		event.Data = data
 	}
-	if code.lspsymbol != nil {
-		code.lspsymbol.NotifyCodeChange(event)
+	if sym := code.LspSymbol(); sym != nil {
+		sym.NotifyCodeChange(event)
 	}
 	var ts = event
 	ts.Data = data
@@ -277,8 +277,8 @@ func (code *CodeView) update_ts(event lspcore.CodeChangeEvent) {
 		if !ts.IsMe(code.Path()) {
 			return
 		}
-		if code.lspsymbol != nil {
-			code.lspsymbol.LspLoadSymbol()
+		if sym := code.LspSymbol(); sym != nil {
+			sym.LspLoadSymbol()
 		}
 		on_treesitter_update(code, ts)
 	})
