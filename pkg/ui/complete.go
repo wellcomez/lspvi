@@ -23,7 +23,7 @@ type LpsTextView struct {
 	*tview.Box
 	lines  []string
 	HlLine lspcore.TreesiterSymbolLine
-	main  MainService
+	main   MainService
 }
 type HelpBox struct {
 	*LpsTextView
@@ -55,8 +55,8 @@ func (v HelpBox) IsShown(view *codetextview) bool {
 }
 func NewHelpBox() *HelpBox {
 	ret := &HelpBox{
-		LpsTextView:&LpsTextView{
-			Box:tview.NewBox(),
+		LpsTextView: &LpsTextView{
+			Box: tview.NewBox(),
 		},
 	}
 	// x := global_theme.get_color("selection")
@@ -82,7 +82,7 @@ type completemenu struct {
 	width, height int
 	editor        *codetextview
 	task          *complete_task
-	document      *tview.TextView
+	document      *LpsTextView
 	heplview      *HelpBox
 }
 type complete_task struct {
@@ -119,7 +119,7 @@ func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
 		femto.Loc{X: 0, Y: 0},
 		0, 0,
 		txt, nil,
-		tview.NewTextView(), nil}
+		&LpsTextView{Box: tview.NewBox(), main: main}, nil}
 	return &ret
 }
 
@@ -265,7 +265,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 			if doc.Parser(v.Documentation) == nil {
 				text = append(text, "//"+doc.Value)
 			}
-			complete.document.SetText(strings.Join(text, "\n"))
+			complete.document.Load(strings.Join(text, "\n"), complete.filename())
 		}
 	})
 	complete.height = min(10, len(cl.Items))
@@ -401,7 +401,7 @@ func (complete *completemenu) filename() string {
 	return filename
 }
 
-func (heplview *HelpBox) Load(txt string, filename string) {
+func (heplview *LpsTextView) Load(txt string, filename string) {
 	// v := (femto.NewBufferFromString(txt, filename))
 	// v.SetRuntimeFiles(runtime.Files)
 	heplview.Box = tview.NewBox()
@@ -426,7 +426,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 		newtext := v.TextEdit.NewText
 		switch v.Kind {
 		case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
-			re := regexp.MustCompile(`\$\{\d+:?\}`)
+			re := regexp.MustCompile(`\$\{.*\}`)
 			index := re.FindAllStringIndex(newtext, 1)
 			if len(index) > 0 {
 				var xy = index[0]
@@ -456,6 +456,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 		line := editor.Buf.Line(r.Start.Line)
 		replace := ""
 		if len(line) > r.End.Character {
+			r.End.Character=r.End.Character+1
 			replace = line[r.Start.Character:r.End.Character]
 		} else {
 			replace = line[r.Start.Character:]
@@ -559,8 +560,7 @@ func (l *completemenu) Draw(screen tcell.Screen) {
 		l.customlist.SetRect(x, y, w1, h)
 		l.customlist.Draw(screen)
 
-		text := l.document.GetText(false)
-		ssss := strings.Split(text, "\n")
+		ssss := l.document.lines
 		document_width := 0
 		for _, v := range ssss {
 			document_width = max(document_width, len(v))
