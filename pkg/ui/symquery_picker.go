@@ -53,8 +53,8 @@ func (pk *workspace_query_picker) on_query_ok(sym []lsp.SymbolInformation) {
 				}
 			}
 			colors := []colortext{
-				{fmt.Sprintf("%-10s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", "")), 0},
-				{fmt.Sprintf("%-20s ", strings.TrimLeft(v.Name, " \t")), fg},
+				{fmt.Sprintf("%-10s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", "")), fg},
+				{fmt.Sprintf("%-30s ", strings.TrimLeft(v.Name, " \t")), fg},
 				{filepath.Base(filename), 0},
 			}
 			pk.impl.list.AddColorItem(colors, nil, func() {
