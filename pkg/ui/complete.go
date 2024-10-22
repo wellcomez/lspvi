@@ -515,36 +515,43 @@ func (l *LpsTextView) Draw(screen tcell.Screen) {
 		if sym, ok := l.HlLine[i]; ok {
 			symline = &sym
 		}
-		for j, v := range line {
-			posx := x + j
+		for col, v := range line {
+			style := default_style
+			posx := x + col
 			if symline != nil {
-				draw_it := false
-				for _, pos := range *symline {
-					col := uint32(j)
-					if col >= pos.Begin.Column && col <= pos.End.Column {
-						style := global_theme.get_color(pos.SymbolName)
-						if style == nil {
-							style = global_theme.get_color("@" + pos.SymbolName)
-						}
-						if style != nil {
-							s := *style
-							screen.SetContent(posx, y+i, v, nil, s.Background(bg))
-							draw_it = true
-							break
-						}
-					}
-				}
-				if draw_it {
-					continue
+				if s, e := GetColumnStyle(symline, uint32(col), bg); e == nil {
+					style = s
 				}
 			}
-			screen.SetContent(posx, y+i, v, nil, default_style.Background(bg))
-
+			screen.SetContent(posx, y+i, v, nil, style)
 		}
 		for posx := x + len(line); posx < x+w; posx++ {
 			screen.SetContent(posx, y+i, ' ', nil, default_style.Background(bg))
 		}
 	}
+}
+
+func GetColumnStyle(symline *[]lspcore.TreeSitterSymbol, col uint32, bg tcell.Color) (style tcell.Style, err error) {
+	for _, pos := range *symline {
+		if col >= pos.Begin.Column && col <= pos.End.Column {
+			if s, e := newFunction1(pos); e == nil {
+				style = s.Background(bg)
+				return
+			}
+		}
+	}
+	return style, fmt.Errorf("not found")
+}
+
+func newFunction1(pos lspcore.TreeSitterSymbol) (tcell.Style, error) {
+	style := global_theme.get_color(pos.SymbolName)
+	if style == nil {
+		style = global_theme.get_color("@" + pos.SymbolName)
+	}
+	if style == nil {
+		return tcell.Style{}, fmt.Errorf("not found")
+	}
+	return *style, nil
 }
 func (l *completemenu) Draw(screen tcell.Screen) {
 	v := l.editor
