@@ -138,22 +138,27 @@ func (pk bookmark_picker) close() {
 
 // UpdateQuery implements picker.
 func (pk bookmark_picker) UpdateQuery(query string) {
-	listview := pk.impl.hlist
+	hlist := pk.impl.hlist
 	query = strings.ToLower(query)
-	listview.Clear()
-
-	listview.Key = query
-	pk.impl.fzf.selected = func(data_index int, listindex int) {
-		loc := pk.impl.listdata[data_index].loc
-		close_bookmark_picker(pk.impl.prev_picker_impl, loc)
+	hlist.Clear()
+	pk.impl.fzf.OnSearch(query, false)
+	hl := global_theme.search_highlight_color()
+	for i, v := range pk.impl.fzf.selected_index {
+		file := pk.impl.fzf.data[v]
+		t1 := convert_string_colortext(pk.impl.fzf.selected_postion[i], file, 0, hl)
+		hlist.AddColorItem(
+			append([]colortext{
+				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow},
+			}, t1...),
+			nil, nil)
 	}
-	pk.impl.fzf.OnSearch(query, true)
-	pk.update_preview()
+	hlist.SetCurrentItem(0)
+	// pk.update_preview()
 }
 func (pk bookmark_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.impl.listcustom.InputHandler()
 	handle(event, setFocus)
-	pk.update_preview()
+	// pk.update_preview()
 }
 
 // handle implements picker.
@@ -175,7 +180,7 @@ type bookmark_picker_impl struct {
 
 func get_list_item(v ref_line, root string) (string, string) {
 	path := v.line + ":" + strings.ReplaceAll(v.path, root, "")
-	return fmt.Sprintf("%s **%s**", path, v.caller), strings.TrimLeft(v.code, " \t")
+	return fmt.Sprintf("%s %s", path, v.caller), strings.TrimLeft(v.code, " \t")
 }
 
 type bookmark_edit struct {
@@ -213,17 +218,6 @@ func (pk *bookmark_edit) grid(input *tview.InputField) *tview.Grid {
 	return pk.fzflist_impl.grid(input)
 }
 
-// func new_bookmark_editor(v *fzfmain, cb func(string), code *CodeView) bookmark_edit {
-// 	var line = code.view.Cursor.Loc.Y + 1
-// 	line1 := code.view.Buf.Line(line - 1)
-// 	ret := bookmark_edit{
-// 		fzflist_impl: new_fzflist_impl(nil, v),
-// 		cb:           cb,
-// 	}
-// 	ret.fzflist_impl.list.AddItem(line1, code.Path(), nil)
-// 	v.create_dialog_content(ret.grid(v.input), ret)
-// 	return ret
-// }
 
 // new_bookmark_picker
 func new_bookmark_picker(v *fzfmain, bookmark *proj_bookmark) bookmark_picker {
@@ -234,27 +228,41 @@ func new_bookmark_picker(v *fzfmain, bookmark *proj_bookmark) bookmark_picker {
 		impl: impl,
 	}
 	// sym.impl.codeprev.view.SetBorder(true)
+	hlist := new_customlist(false)
+	impl.hlist = hlist
 
-	impl.hlist, impl.listdata = init_bookmark_list(bookmark, func(i int) {
-		loc := sym.impl.listdata[i].loc
-		close_bookmark_picker(impl.prev_picker_impl, loc)
+	listdata := reload_bookmark_list(bookmark)
+	fzfdata := bookmark.fzfdata(listdata)
+	hlist.fuzz = true
+	impl.use_cusutom_list(hlist)
+
+	hlist.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		if impl.fzf != nil {
+			data_index := impl.fzf.get_data_index(index)
+			loc := impl.listdata[data_index].loc
+			impl.PrevOpen(loc.URI.AsPath().String(), loc.Range.Start.Line)
+		}
 	})
-	impl.hlist.fuzz = true
-	impl.use_cusutom_list(impl.hlist)
-	fzf := new_fzf_on_list(sym.impl.hlist, sym.impl.hlist.fuzz)
+	hlist.SetSelectedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		if impl.fzf != nil {
+			data_index := impl.fzf.get_data_index(index)
+			loc := impl.listdata[data_index].loc
+			v.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+			v.hide()
+		}
+	})
+
+	impl.listdata = listdata
+	bookmark.add_to_list(listdata, hlist)
+	fzf := new_fzf_on_list_data(hlist, fzfdata, hlist.fuzz)
 	sym.impl.fzf = fzf
 	sym.UpdateQuery("")
 	return sym
 }
 
-func init_bookmark_list(bookmark *proj_bookmark, selected func(int)) (*customlist, []ref_line) {
-	hlist := new_customlist(false)
-	listdata := reload_bookmark_list(bookmark, hlist, selected)
-	return hlist, listdata
-}
 
-func reload_bookmark_list(bookmark *proj_bookmark, hlist *customlist, selected func(int)) []ref_line {
-	hlist.Clear()
+func reload_bookmark_list(bookmark *proj_bookmark) []ref_line {
+	// hlist.Clear()
 	marks := bookmark.Bookmark
 	listdata := []ref_line{}
 	for _, file := range marks {
@@ -275,23 +283,32 @@ func reload_bookmark_list(bookmark *proj_bookmark, hlist *customlist, selected f
 			listdata = append(listdata, ref)
 		}
 	}
+	return listdata
+}
+func (bookmark proj_bookmark) fzfdata(listdata []ref_line) (data []string) {
+	root := bookmark.root
+	for _, v := range listdata {
+		a, _ := get_list_item(v, root)
+		data = append(data, a)
+	}
+	return
+}
+func (bookmark *proj_bookmark) add_to_list(listdata []ref_line, hlist *customlist) {
 	root := bookmark.root
 	for i, v := range listdata {
 		a, b := get_list_item(v, root)
-		index := i
-		hlist.AddItem(fmt.Sprintf("**%-03d** %s", i+1, a), fmt.Sprintf("   %s", b), func() { selected(index) })
+		hlist.AddColorItem(
+			[]colortext{
+				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow},
+				{a, 0}},
+			[]colortext{
+				{fmt.Sprintf("   %s", b), 0}}, nil)
 	}
-	return listdata
 }
 
-func close_bookmark_picker(impl *prev_picker_impl, loc lsp.Location) {
-	impl.open_location(loc)
-	impl.parent.hide()
-	// impl.cq.CloseQueue()
-}
-func (pk bookmark_picker) update_preview() {
-	pk.impl.update_preview()
-}
+//	func (pk bookmark_picker) update_preview() {
+//		pk.impl.update_preview()
+//	}
 func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Flex {
 	return pk.impl.flex(input, 2)
 }
@@ -314,9 +331,7 @@ func (bk *bookmark_view) onsave() {
 	b.list.Clear()
 	b.list.SetChangedFunc(nil)
 	b.list.SetSelectedFunc(nil)
-	b.data = reload_bookmark_list(b.bookmark, b.list, func(i int) {
-		b.onclick(i)
-	})
+	b.data = reload_bookmark_list(b.bookmark)
 	b.fzf = new_fzf_on_list(b.list, true)
 }
 func (bk *bookmark_view) OnSearch(txt string) {
@@ -366,10 +381,8 @@ func (ret *bookmark_view) update_redraw() {
 
 func (ret *bookmark_view) loaddata() {
 	// main := ret.main
-	ret.data = reload_bookmark_list(ret.bookmark, ret.list, func(i int) {
-
-		ret.onclick(i)
-	})
+	ret.data = reload_bookmark_list(ret.bookmark)
+	ret.bookmark.add_to_list(ret.data, ret.list)
 	ret.list.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		loc := ret.data[i].loc
 		ret.code.OpenFileHistory(loc.URI.AsPath().String(), &loc)
@@ -407,8 +420,8 @@ func (menu bk_menu_context) getbox() *tview.Box {
 func (menu bk_menu_context) menuitem() []context_menu_item {
 	return menu.qk.menuitem
 }
-func (ret *bookmark_view) onclick(i int) {
-	loc := ret.data[i].loc
-	ret.list.SetCurrentItem(i)
-	ret.code.OpenFileHistory(loc.URI.AsPath().String(), &loc)
-}
+// func (ret *bookmark_view) onclick(i int) {
+// 	loc := ret.data[i].loc
+// 	ret.list.SetCurrentItem(i)
+// 	ret.code.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+// }
