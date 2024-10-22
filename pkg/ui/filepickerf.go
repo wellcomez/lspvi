@@ -113,8 +113,12 @@ func (wk *DirWalk) UpdateQuery(query string) {
 		return
 	}
 	wk.fzf.OnSearch(query, false)
-	hl := global_theme.search_highlight_color()
 	fzf := wk.fzf
+	UpdateColorFzfList(fzf)
+}
+
+func UpdateColorFzfList(fzf *fzf_on_listview) {
+	hl := global_theme.search_highlight_color()
 	fzf.listview.Clear()
 	for i, v := range fzf.selected_index {
 		file := fzf.data[v]
