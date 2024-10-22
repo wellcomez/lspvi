@@ -507,27 +507,42 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 }
 func (l *LpsTextView) Draw(screen tcell.Screen) {
 	x, y, w, _ := l.GetInnerRect()
-
+	// w = 40
 	default_style := *global_theme.get_color("selection")
 	_, bg, _ := default_style.Decompose()
+	default_style = default_style.Background(bg)
+	breaknum := 0
 	for i, line := range l.lines {
+		PosY := y + i + breaknum
 		var symline *[]lspcore.TreeSitterSymbol
 		if sym, ok := l.HlLine[i]; ok {
 			symline = &sym
 		}
 		for col, v := range line {
 			style := default_style
-			posx := x + col
 			if symline != nil {
 				if s, e := GetColumnStyle(symline, uint32(col), bg); e == nil {
 					style = s
 				}
 			}
-			screen.SetContent(posx, y+i, v, nil, style)
+
+			x1 := col % w
+			Posx := x + x1
+
+			n := col / w
+			screen.SetContent(Posx, PosY+n, v, nil, style)
 		}
-		for posx := x + len(line); posx < x+w; posx++ {
-			screen.SetContent(posx, y+i, ' ', nil, default_style.Background(bg))
+		for col := len(line); col < w; col++ {
+			x1 := col % w
+			Posx := x + x1
+			n := col / w
+			screen.SetContent(Posx, PosY+n, ' ', nil, default_style)
 		}
+		n := len(line) / w
+		if len(line)%w > 0 {
+			n++
+		}
+		breaknum += (n - 1)
 	}
 }
 
