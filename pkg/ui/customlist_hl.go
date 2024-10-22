@@ -22,18 +22,31 @@ func fmt_bold_string(s string) string {
 }
 
 type color_line struct {
-	line []colortext
+	line   []colortext
+	result string
 }
 
 func (line *color_line) add2(s []colortext) *color_line {
 	line.line = append(line.line, s...)
+	for _, v := range s {
+		line.add(v.text, v.color)
+	}
+	return line
+}
+func (line *color_line) pepend(s string, color tcell.Color) *color_line {
+	line.line = append([]colortext{{s, color}}, line.line...)
+	line.result = fmt_color_string(s, color) + line.result
 	return line
 }
 func (line *color_line) add(s string, color tcell.Color) *color_line {
 	line.line = append(line.line, colortext{s, color})
+	line.result = line.result + fmt_color_string(s, color)
 	return line
 }
 func fmt_color_string(s string, color tcell.Color) string {
+	if color == 0 {
+		return s
+	}
 	return fmt.Sprintf("**[%d]%s**", color, s)
 }
 

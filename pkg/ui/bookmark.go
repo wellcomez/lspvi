@@ -332,14 +332,15 @@ func (bk *bookmark_view) onsave() {
 }
 func (bk *bookmark_view) OnSearch(txt string) {
 	bk.list.Key = txt
-	old := bk.fzf.OnSearch(txt, true)
-	if len(txt) > 0 {
-		highlight_listitem_search_key(old, bk.list, txt)
-	}
-	bk.fzf.selected = func(dataindex int, listindex int) {
-		loc := bk.data[dataindex].loc
-		bk.code.OpenFileHistory(loc.URI.AsPath().String(), &loc)
-	}
+	bk.fzf.OnSearch(txt, false)
+	UpdateColorFzfList(bk.fzf)
+	// if len(txt) > 0 {
+	// 	highlight_listitem_search_key(old, bk.list, txt)
+	// }
+	// bk.fzf.selected = func(dataindex int, listindex int) {
+	// 	loc := bk.data[dataindex].loc
+	// 	bk.code.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+	// }
 }
 func new_bookmark_view(bookmark *proj_bookmark, code MainService, yes func() bool) *bookmark_view {
 	ret := &bookmark_view{

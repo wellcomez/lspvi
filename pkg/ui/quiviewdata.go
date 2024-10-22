@@ -145,7 +145,7 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 	}
 	if len(tree.text) == 0 {
 		result := tree.get_treenode_text(qk, caller, caller_context, lineno)
-		tree.text = result
+		tree.text = result.result
 	} else {
 		debug.DebugLog(tag_quickview, "text not empty")
 	}
@@ -155,7 +155,7 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 	return
 }
 
-func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_with_caller, prev *ref_with_caller, lineno int) string {
+func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_with_caller, prev *ref_with_caller, lineno int) *color_line {
 	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
 	parent := tree.parent
 	root := lspmgr.Wk.Path
@@ -167,22 +167,23 @@ func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_w
 		caller.lines = editor.GetLines(caller.Loc.Range.Start.Line, caller.Loc.Range.End.Line)
 	}
 	list_text := caller.ListItem(root, parent, prev)
-	result := ""
+	// result := ""
+	line := &color_line{}
 	if parent {
-		result = fmt.Sprintf("%3d. %s", lineno, list_text)
+		line.add(fmt.Sprintf("%3d. %s", lineno, list_text), 0)
 		if len(tree.children) > 0 {
 			if !tree.expand {
-				result = fmt_color_string(fmt.Sprintf("%c", IconCollapse), color) + result
+				line.pepend(fmt.Sprintf("%c", IconCollapse), color)
 			} else {
-				result = fmt_color_string(fmt.Sprintf("%c", IconExpaned), color) + result
+				line.pepend(fmt.Sprintf("%c", IconExpaned), color)
 			}
 		} else {
-			result = " " + result
+			line.pepend(" ", 0)
 		}
 	} else {
-		result = fmt.Sprintf(" %s", list_text)
+		line.add(fmt.Sprintf(" %s", list_text), 0)
 	}
-	return result
+	return line
 }
 func (tree *list_tree_node) get_caller(qk *quick_view_data) *ref_with_caller {
 	caller := &qk.Refs.Refs[tree.ref_index]
