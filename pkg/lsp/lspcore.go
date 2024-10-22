@@ -277,6 +277,9 @@ func (h SignatureHelp) CreateSignatureHelp(s string) string {
 	return re.ReplaceAllString(h.CompleteSelected, s)
 }
 
+type CompleteResult struct {
+	Document []string
+}
 type Complete struct {
 	Pos                  lsp.Position
 	TriggerCharacter     string
@@ -284,6 +287,7 @@ type Complete struct {
 	CompleteHelpCallback func(lsp.CompletionList, Complete, error)
 	Continued            bool
 	Sym                  *Symbol_file
+	Result               *CompleteResult
 }
 type FormatOption struct {
 	Filename string

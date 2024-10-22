@@ -22,11 +22,27 @@ var root_files = []string{
 }
 
 type lsp_lang_cpp struct {
+	lsplang_base
 }
 
 // IsMe implements lsplang.
 func (l lsp_lang_cpp) IsMe(filename string) bool {
 	return IsMe(filename, file_extensions)
+}
+func (a lsp_lang_cpp) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete, err error) {
+	document := []string{}
+	for index := range cl.Items {
+
+		v := cl.Items[index]
+		var text = []string{
+			strings.Join([]string{v.Detail, v.Label + " "}, " ")}
+		var doc Document
+		if doc.Parser(v.Documentation) == nil {
+			text = append(text, "//"+doc.Value)
+		}
+		document = append(document, strings.Join(text, "\n"))
+	}
+	ret.Result = &CompleteResult{Document: document}
 }
 
 // Resolve implements lsplang.

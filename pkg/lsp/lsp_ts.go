@@ -21,6 +21,7 @@ func (l lsp_ts) IsSource(filename string) bool {
 // }
 
 type lsp_ts struct {
+	lsplang_base
 	LanguageID string
 }
 

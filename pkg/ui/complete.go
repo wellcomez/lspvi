@@ -4,8 +4,6 @@
 package mainui
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -207,19 +205,19 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 	return false
 }
 
-type Document struct {
-	Value string `json:"value"`
-}
+// type Document struct {
+// 	Value string `json:"value"`
+// }
 
-func (v *Document) Parser(a []byte) error {
-	if err := json.Unmarshal(a, v); err != nil {
-		return err
-	}
-	if len(v.Value) == 0 {
-		return errors.New("no value")
-	}
-	return nil
-}
+// func (v *Document) Parser(a []byte) error {
+// 	if err := json.Unmarshal(a, v); err != nil {
+// 		return err
+// 	}
+// 	if len(v.Value) == 0 {
+// 		return errors.New("no value")
+// 	}
+// 	return nil
+// }
 
 func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspcore.Complete, err error) {
 	var editor = complete.editor
@@ -259,12 +257,14 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		})
 	}
 	complete.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		if index < len(cl.Items) {
+		if param.Result != nil && len(param.Result.Document) == len(cl.Items) {			text := param.Result.Document[index]
+			complete.document.Load(text, complete.filename())
+		} else if index < len(cl.Items) {
 			v := cl.Items[index]
 			var text = []string{
 				v.Label,
 				v.Detail}
-			var doc Document
+			var doc lspcore.Document
 			if doc.Parser(v.Documentation) == nil {
 				text = append(text, "//"+doc.Value)
 			}
@@ -351,7 +351,7 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	width := 0
 	for _, v := range help.Signatures {
 		lines := []string{}
-		var signature_document Document
+		var signature_document lspcore.Document
 		comment := []string{}
 
 		if len(v.Parameters) > 0 {
