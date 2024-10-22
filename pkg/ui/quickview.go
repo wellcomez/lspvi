@@ -672,7 +672,8 @@ func (qk *quick_view) new_search(t DateType, key SearchKey) {
 	})
 	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		vvv := qk.data.Refs.Refs[index]
-		qk.quickview.update_preview(vvv.Loc)
+		// qk.quickview.update_preview(vvv.Loc)
+		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 		qk.main.Tab().UpdatePageTitle()
 	})
 }
@@ -732,7 +733,8 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 	})
 	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		if ref, err := qk.data.get_data(index); err == nil && ref != nil {
-			qk.quickview.update_preview(ref.Loc)
+			// qk.quickview.update_preview(ref.Loc)
+			qk.cq.OpenFileHistory(ref.Loc.URI.AsPath().String(), &ref.Loc)
 			qk.main.Tab().UpdatePageTitle()
 		}
 	})
