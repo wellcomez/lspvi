@@ -624,39 +624,6 @@ func (qk *quick_view) OnSearch(txt string) {
 	qk.cmd_search_key = txt
 }
 
-// func highlight_search_key(old_query string, view *customlist, new_query string) {
-// 	sss := [][2]string{}
-// 	ptn := ""
-// 	if old_query != "" {
-// 		ptn = fmt_bold_string(old_query)
-// 	}
-// 	for i := 0; i < view.GetItemCount(); i++ {
-// 		m, s := view.GetItemText(i)
-// 		if len(ptn) > 0 {
-// 			m = strings.ReplaceAll(m, ptn, old_query)
-// 			s = strings.ReplaceAll(s, ptn, old_query)
-// 		}
-// 		sss = append(sss, [2]string{m, s})
-// 	}
-// 	if len(new_query) > 0 {
-// 		if new_query != "" {
-// 			ptn = fmt_bold_string(new_query)
-// 		}
-// 		for i := range sss {
-// 			v := &sss[i]
-// 			m := v[0]
-// 			s := v[1]
-// 			m = strings.ReplaceAll(m, new_query, ptn)
-// 			s = strings.ReplaceAll(s, new_query, ptn)
-// 			v[0] = m
-// 			v[1] = s
-// 		}
-// 	}
-// 	view.Clear()
-// 	for _, v := range sss {
-// 		view.AddItem(v[0], v[1], nil)
-// 	}
-// }
 
 // String
 func (qk *quick_view) String() string {
