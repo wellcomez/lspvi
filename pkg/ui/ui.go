@@ -511,7 +511,20 @@ func (m *mainui) get_refer(pos lsp.Range, filename string) {
 func (m mainui) get_editor_range_text(filename string, pos lsp.Range) string {
 	if m.current_editor().Path() == filename {
 		lines := m.current_editor().GetLines(pos.Start.Line, pos.End.Line)
-		return strings.Join(lines, "")
+		if len(lines)==1{
+			return lines[0][pos.Start.Character:pos.End.Character]
+		}
+		 a:=[]string{
+		 	lines[0][pos.Start.Character:],
+		 } 
+		for i := 1; i < len(lines)-1; i++ {
+			a=append(a,lines[i])
+		}
+		if pos.End.Line > len(lines)+pos.Start.Line  {
+			a=append(a,lines[len(lines)-1][:pos.End.Character])
+		}
+		return strings.Join(a,"")
+
 	} else if body, err := lspcore.NewBody(lsp.Location{URI: lsp.NewDocumentURI(filename), Range: pos}); err == nil {
 		return body.String()
 	} else {
