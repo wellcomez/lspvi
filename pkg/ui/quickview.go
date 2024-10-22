@@ -40,8 +40,8 @@ func (pk *quick_preview) update_preview(loc lsp.Location) {
 	UpdateTitleAndColor(pk.frame.Box, title)
 	pk.cq.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line)
 }
-func new_quick_preview() *quick_preview {
-	codeprev := NewCodeView(nil)
+func new_quick_preview(main MainService) *quick_preview {
+	codeprev := NewCodeView(main)
 	frame := tview.NewFrame(codeprev.view)
 	frame.SetBorder(true)
 	return &quick_preview{
@@ -89,11 +89,11 @@ func (l list_view_tree_extend) NeedCreate() bool {
 }
 
 type qf_history_data struct {
-	Type         DateType
-	Key          SearchKey
-	Result       search_reference_result
-	Date         int64
-	UID          string
+	Type   DateType
+	Key    SearchKey
+	Result search_reference_result
+	Date   int64
+	UID    string
 	// SearchOption QueryOption
 }
 
@@ -472,7 +472,7 @@ func new_quikview(main *mainui) *quick_view {
 		Name:      vid.getname(),
 		view:      view,
 		main:      main,
-		quickview: new_quick_preview(),
+		quickview: new_quick_preview(main),
 		cq:        NewCodeOpenQueue(nil, main),
 	}
 
@@ -680,6 +680,7 @@ func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 func (qk *quick_view) selection_handle_impl(index int, click bool) {
 	if qk.data.tree != nil {
 		qk.view.SetCurrentItem(index)
+		
 		node := qk.data.tree.tree_data_item[index]
 		need_draw := false
 		if click {

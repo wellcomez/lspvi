@@ -33,7 +33,7 @@ func (view *codetextview) IconStyle(main MainService) tcell.Style {
 	focus_color := tcell.ColorYellow
 	style := get_style_hide(false)
 	focus := false
-	focus = view.HasFocus() || view.code == main.current_editor()
+	focus = view.HasFocus() || (main != nil && view.code == main.current_editor())
 	if focus {
 		style = style.Foreground(focus_color)
 	}
