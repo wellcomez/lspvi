@@ -20,6 +20,13 @@ type colortext struct {
 func fmt_bold_string(s string) string {
 	return fmt.Sprintf("**%s**", s)
 }
+type color_line struct{
+	line []colortext
+}
+func (line* color_line) add(s string,color tcell.Color ) *color_line{
+	line.line = append(line.line, colortext{s,color})
+	return line
+}
 func fmt_color_string(s string, color tcell.Color) string {
 	return fmt.Sprintf("**[%d]%s**", color, s)
 }
