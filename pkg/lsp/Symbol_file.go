@@ -230,11 +230,43 @@ type SymolParam struct {
 	Line   *OpenOption
 	File   string
 }
+type OpenTabOption int
+
+const (
+	OpenTabOption_CurrentTab OpenTabOption = iota
+	OpenTabOption_NewTab
+	OpenTabOption_Below
+)
+
 type OpenOption struct {
 	LineNumber int
 	Offset     int
+	Newtab     OpenTabOption
+	Openner    int
 }
 
+func NewOpenOption(line, offset int) *OpenOption {
+	return &OpenOption{LineNumber: line, Offset: offset, Newtab: OpenTabOption_CurrentTab, Openner: -1}
+}
+
+//	func (z OpenOption) SetOffset(s int) OpenOption {
+//		z.Offset = s
+//		return z
+//	}
+func (z *OpenOption) SetNewTab(s OpenTabOption) *OpenOption {
+	z.Newtab = s
+	return z
+}
+
+func (z *OpenOption) SetOpenner(s int) *OpenOption {
+	z.Openner = s
+	return z
+}
+
+//	func (z OpenOption) SetLine(s int) OpenOption {
+//		z.LineNumber = s
+//		return z
+//	}
 func (sym *Symbol_file) GotoDefine(ranges lsp.Range, line *OpenOption) {
 	if sym.lsp == nil {
 		return

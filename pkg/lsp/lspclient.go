@@ -120,6 +120,13 @@ func (l lsp_base) IsTrigger(param string) (TriggerChar, error) {
 	return l.core.IsTrigger(param)
 }
 func (l lsp_base) DidComplete(param Complete) (lsp.CompletionList, error) {
+	var cb = param.CompleteHelpCallback
+	if cb != nil {
+		param.CompleteHelpCallback = func(cl lsp.CompletionList, c Complete, err error) {
+			l.core.lang.CompleteHelpCallback(cl, &c, err)
+			cb(cl, c, err)
+		}
+	}
 	return l.core.DidComplete(param)
 }
 

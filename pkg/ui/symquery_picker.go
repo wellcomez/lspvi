@@ -34,7 +34,7 @@ func (pk *workspace_query_picker) name() string {
 	return "workspace symbol"
 }
 
-func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInformation, err error) {
+func (pk *workspace_query_picker) on_query_ok(sym []lsp.SymbolInformation) {
 	pk.impl.sym = sym
 	root := global_prj_root
 	pk.impl.parent.app.QueueUpdateDraw(func() {
@@ -45,8 +45,7 @@ func (pk *workspace_query_picker) on_query_ok(ret string, sym []lsp.SymbolInform
 			// }
 			index := i
 			filename := v.Location.URI.AsPath().String()
-			filename = strings.ReplaceAll(filename, root, "")
-			s := fmt.Sprintf("%-8s %-20s %s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", ""), strings.TrimLeft(v.Name, " \t"), filename)
+			s := fmt.Sprintf("%-8s %-20s %s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", ""), strings.TrimLeft(v.Name, " \t"), trim_project_filename(filename, root))
 			pk.impl.list.AddItem(s, "", func() {
 				sym := pk.impl.sym[index]
 				main := pk.impl.parent.main
@@ -66,9 +65,9 @@ func (pk *workspace_query_picker) UpdateQuery(query string) {
 	pk.impl.query = query
 	pk.impl.list.Clear()
 	go func() {
-		symbol, err := pk.impl.symbol.WorkspaceQuery(query)
+		symbol, _ := pk.impl.symbol.WorkspaceQuery(query)
 		if pk.impl.query == query {
-			pk.on_query_ok(query, symbol, err)
+			pk.on_query_ok(symbol)
 		}
 	}()
 }

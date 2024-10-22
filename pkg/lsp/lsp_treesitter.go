@@ -232,6 +232,7 @@ func (s *ts_lang_def) is_me(file string) bool {
 }
 
 type lsp_dummy struct {
+	lsplang_base
 }
 
 // InitializeLsp implements lsplang.

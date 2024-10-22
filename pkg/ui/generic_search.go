@@ -105,7 +105,7 @@ func search_on_ui(option search_option, main *mainui) {
 			prefocused = main.prefocused
 		}
 	default:
-		prefocused = main.current_editor().vid() 
+		prefocused = main.current_editor().vid()
 	}
 	changed := true
 	if main.searchcontext == nil {
@@ -146,7 +146,7 @@ func search_on_ui(option search_option, main *mainui) {
 		}
 	default:
 		{
-			var code =main.current_editor()
+			var code = main.current_editor()
 			if changed {
 				gs.indexList = code.OnSearch(txt, whole)
 				pos := gs.GetIndex()
@@ -160,7 +160,10 @@ func search_on_ui(option search_option, main *mainui) {
 							Loc: loc,
 						})
 					}
-					main.quickview.UpdateListView(data_search, data, lspcore.SymolSearchKey{Key: txt})
+					grep := QueryOption{}
+					grep.Wholeword = whole 
+					grep.Query = txt
+					main.quickview.UpdateListView(data_search, data, SearchKey{&lspcore.SymolSearchKey{Key: txt}, &grep})
 				}
 			} else {
 				var pos SearchPos

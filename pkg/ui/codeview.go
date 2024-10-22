@@ -397,8 +397,11 @@ func NewCodeView(main MainService) *CodeView {
 func (main *mainui) qf_grep_word(opt QueryOption) {
 	main.quickview.view.Clear()
 	rightmenu_select_text := opt.Query
-	key := lspcore.SymolSearchKey{
-		Key: rightmenu_select_text,
+	key := SearchKey{
+		&lspcore.SymolSearchKey{
+			Key: rightmenu_select_text,
+		},
+		&opt,
 	}
 	main.ActiveTab(view_quickview, false)
 	main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)
@@ -559,7 +562,8 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		}
 		switch action {
 		case tview.MouseLeftDoubleClick:
-			code.action_goto_define(&lspcore.OpenOption{LineNumber: code.view.Cursor.Loc.Y, Offset: code.view.Cursor.Loc.Y - code.view.Topline})
+			x := code.CreateOpenOption()
+			code.action_goto_define(x)
 		case tview.MouseLeftDown, tview.MouseRightClick, tview.MouseLeftClick:
 			if code.id.is_editor() {
 				code.SetCurrenteditor()
@@ -575,6 +579,12 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		}
 		return true
 	})
+}
+
+func (code *CodeView) CreateOpenOption() *lspcore.OpenOption {
+	x := lspcore.NewOpenOption(code.view.Cursor.Loc.Y, code.view.Cursor.Loc.Y-code.view.Topline)
+	x.Openner = int(code.vid())
+	return x
 }
 
 func (code *CodeView) SetCurrenteditor() {
@@ -762,9 +772,9 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 	}
-	var status1 = new_code_change_checker(code)
+	var status1 = code.NewChangeChecker()
 	code.view.HandleEvent(event)
-	changed := status1.after(code)
+	changed := status1.End()
 	if complete := code.view.complete; complete != nil {
 		complete.HandleKeyInput(event, changed)
 	}
@@ -996,27 +1006,26 @@ func (code *CodeView) Save() error {
 	return os.WriteFile(code.Path(), []byte(data), 0644)
 }
 func (code *CodeView) Undo() {
-	checker := new_code_change_checker(code)
+	checker := code.NewChangeChecker()
+	defer checker.End()
 	code.view.Undo()
-	checker.CheckRedo(code)
 	// code.on_content_changed(lspcore.CodeChangeEvent{})
 }
 func (code *CodeView) deleteword() {
-	checker := new_code_change_checker(code)
+	checker := code.NewChangeChecker()
+	defer checker.End()
 	code.view.DeleteWordRight()
-	checker.after(code)
-	// code.on_content_changed()
 }
 func (code *CodeView) deleteline() {
-	checker := new_code_change_checker(code)
+	checker := code.NewChangeChecker()
+	defer checker.End()
 	code.view.CutLine()
-	checker.after(code)
 	// code.on_content_changed()
 }
 func (code *CodeView) deltext() {
-	checker := new_code_change_checker(code)
+	checker := code.NewChangeChecker()
+	defer checker.End()
 	code.view.Delete()
-	checker.after(code)
 }
 
 // pasteline
@@ -1027,14 +1036,14 @@ func (code *CodeView) Paste() {
 			has_break = true
 		}
 		view := code.view
-		vs := new_code_change_checker(code)
+		checker := code.NewChangeChecker()
+		defer checker.End()
 		if has_break {
 			code.view.Cursor.End()
 			var r rune = '\n'
 			code.view.HandleEvent(tcell.NewEventKey(tcell.KeyEnter, r, tcell.ModNone))
 		}
 		view.Paste()
-		vs.after(code)
 	}
 }
 func (code *CodeView) copyline(line bool) {

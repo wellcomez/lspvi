@@ -94,11 +94,17 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	switch id {
 	case zoomout:
 		return cmdactor{id, "zoom out", func() bool {
+			if m.CmdLine().Vim.vi.Insert {
+				return false
+			}
 			m.zoom(false)
 			return true
 		}}
 	case zoomin:
 		return cmdactor{id, "zoom in", func() bool {
+			if m.CmdLine().Vim.vi.Insert {
+				return false
+			}
 			m.zoom(true)
 			return true
 		}}

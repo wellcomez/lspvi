@@ -4,8 +4,6 @@
 package mainui
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -64,6 +62,7 @@ func NewHelpBox() *HelpBox {
 }
 
 type CompleteMenu interface {
+	MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive)
 	HandleKeyInput(event *tcell.EventKey, after []lspcore.CodeChangeEvent)
 	OnTrigeHelp(tg lspcore.TriggerChar) bool
 	Draw(screen tcell.Screen)
@@ -206,19 +205,19 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 	return false
 }
 
-type Document struct {
-	Value string `json:"value"`
-}
+// type Document struct {
+// 	Value string `json:"value"`
+// }
 
-func (v *Document) Parser(a []byte) error {
-	if err := json.Unmarshal(a, v); err != nil {
-		return err
-	}
-	if len(v.Value) == 0 {
-		return errors.New("no value")
-	}
-	return nil
-}
+// func (v *Document) Parser(a []byte) error {
+// 	if err := json.Unmarshal(a, v); err != nil {
+// 		return err
+// 	}
+// 	if len(v.Value) == 0 {
+// 		return errors.New("no value")
+// 	}
+// 	return nil
+// }
 
 func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspcore.Complete, err error) {
 	var editor = complete.editor
@@ -259,15 +258,20 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 	}
 	complete.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		if index < len(cl.Items) {
-			v := cl.Items[index]
-			var text = []string{
-				v.Label,
-				v.Detail}
-			var doc Document
-			if doc.Parser(v.Documentation) == nil {
-				text = append(text, "//"+doc.Value)
+			if param.Result != nil && len(param.Result.Document) == len(cl.Items) {
+				text := param.Result.Document[index]
+				complete.document.Load(text, complete.filename())
+			} else {
+				v := cl.Items[index]
+				var text = []string{
+					v.Label,
+					v.Detail}
+				var doc lspcore.Document
+				if doc.Parser(v.Documentation) == nil {
+					text = append(text, "//"+doc.Value)
+				}
+				complete.document.Load(strings.Join(text, "\n"), complete.filename())
 			}
-			complete.document.Load(strings.Join(text, "\n"), complete.filename())
 		}
 	})
 	complete.height = min(10, len(cl.Items))
@@ -350,7 +354,7 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	width := 0
 	for _, v := range help.Signatures {
 		lines := []string{}
-		var signature_document Document
+		var signature_document lspcore.Document
 		comment := []string{}
 
 		if len(v.Parameters) > 0 {
@@ -503,44 +507,66 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 }
 func (l *LpsTextView) Draw(screen tcell.Screen) {
 	x, y, w, _ := l.GetInnerRect()
-
+	// w = 40
 	default_style := *global_theme.get_color("selection")
 	_, bg, _ := default_style.Decompose()
+	default_style = default_style.Background(bg)
+	breaknum := 0
 	for i, line := range l.lines {
+		PosY := y + i + breaknum
 		var symline *[]lspcore.TreeSitterSymbol
 		if sym, ok := l.HlLine[i]; ok {
 			symline = &sym
 		}
-		for j, v := range line {
-			posx := x + j
+		for col, v := range line {
+			style := default_style
 			if symline != nil {
-				draw_it := false
-				for _, pos := range *symline {
-					col := uint32(j)
-					if col >= pos.Begin.Column && col <= pos.End.Column {
-						style := global_theme.get_color(pos.SymbolName)
-						if style == nil {
-							style = global_theme.get_color("@" + pos.SymbolName)
-						}
-						if style != nil {
-							s := *style
-							screen.SetContent(posx, y+i, v, nil, s.Background(bg))
-							draw_it = true
-							break
-						}
-					}
-				}
-				if draw_it {
-					continue
+				if s, e := GetColumnStyle(symline, uint32(col), bg); e == nil {
+					style = s
 				}
 			}
-			screen.SetContent(posx, y+i, v, nil, default_style.Background(bg))
 
+			x1 := col % w
+			Posx := x + x1
+
+			n := col / w
+			screen.SetContent(Posx, PosY+n, v, nil, style)
 		}
-		for posx := x + len(line); posx < x+w; posx++ {
-			screen.SetContent(posx, y+i, ' ', nil, default_style.Background(bg))
+		for col := len(line); col < w; col++ {
+			x1 := col % w
+			Posx := x + x1
+			n := col / w
+			screen.SetContent(Posx, PosY+n, ' ', nil, default_style)
+		}
+		n := len(line) / w
+		if len(line)%w > 0 {
+			n++
+		}
+		breaknum += (n - 1)
+	}
+}
+
+func GetColumnStyle(symline *[]lspcore.TreeSitterSymbol, col uint32, bg tcell.Color) (style tcell.Style, err error) {
+	for _, pos := range *symline {
+		if col >= pos.Begin.Column && col <= pos.End.Column {
+			if s, e := newFunction1(pos); e == nil {
+				style = s.Background(bg)
+				return
+			}
 		}
 	}
+	return style, fmt.Errorf("not found")
+}
+
+func newFunction1(pos lspcore.TreeSitterSymbol) (tcell.Style, error) {
+	style := global_theme.get_color(pos.SymbolName)
+	if style == nil {
+		style = global_theme.get_color("@" + pos.SymbolName)
+	}
+	if style == nil {
+		return tcell.Style{}, fmt.Errorf("not found")
+	}
+	return *style, nil
 }
 func (l *completemenu) Draw(screen tcell.Screen) {
 	v := l.editor

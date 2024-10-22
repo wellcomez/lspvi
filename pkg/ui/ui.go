@@ -644,6 +644,16 @@ func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhist
 	}
 	// title := strings.Replace(file, m.root, "", -1)
 	// m.layout.parent.SetTitle(title)
+	if option != nil {
+		switch option.Newtab {
+		case lspcore.OpenTabOption_NewTab:
+			code.NewTab(file, loc, true, option)
+			return
+		case lspcore.OpenTabOption_Below:
+			code.OpenBelow(file, loc, true, option)
+			return
+		}
+	}
 	code.open_file_lspon_line_option(file, loc, true, option)
 }
 

@@ -3,6 +3,11 @@
 
 package mainui
 
+import (
+	"github.com/tectiv3/go-lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
+)
+
 type CodeSplit struct {
 	code_collection map[view_id]*CodeView
 	last            view_id
@@ -107,10 +112,25 @@ func SplitRight(code *CodeView) context_menu_item {
 }
 
 func (code *CodeView) SplitRight() *CodeView {
+	codeview2 := create_split_codeview(code)
+	codeview2.LoadFileWithLsp(code.Path(), nil, true)
+	return codeview2
+}
+
+func create_split_codeview(code *CodeView) *CodeView {
 	codeview2 := SplitCode.New()
 	codeview2.view.SetBorder(true)
 	SplitCode.SetActive(codeview2)
 	code.main.Right_context_menu().add(codeview2.rightmenu)
-	codeview2.LoadFileWithLsp(code.Path(), nil, true)
+	return codeview2
+}
+func (code *CodeView) OpenBelow(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption)  {
+	code2 :=code.main.Codeview2()
+	code2.open_file_lspon_line_option(filename, line, focus, option)
+	code.main.ActiveTab(view_code_below,true)
+}
+func (code *CodeView) NewTab(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) *CodeView {
+	codeview2 := create_split_codeview(code)
+	codeview2.open_file_lspon_line_option(filename, line, focus, option)
 	return codeview2
 }
