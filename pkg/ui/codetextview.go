@@ -221,7 +221,11 @@ func (v *codetextview) MouseHandler() func(action tview.MouseAction, event *tcel
 var BoxDrawingsDoubleHorizontal rune = '\u2550' // ═
 var BoxDrawingsLightHorizontal rune = '\u2500'  // ─
 func (b *codetextview) SetRect(x, y, width, height int) {
-	b.View.SetRect(x, y+1, width, height-1)
+	if b.code.vid().is_editor() {
+		b.View.SetRect(x, y+1, width, height-1)
+	} else {
+		b.View.SetRect(x, y, width, height)
+	}
 }
 func (v *codetextview) Draw(screen tcell.Screen) {
 	v.View.Draw(screen)
@@ -232,7 +236,7 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 	vid := v.code.vid()
 	if vid == view_code_below {
 		v.code.DrawNavigationBar(x, y, w, screen)
-	} else {
+	} else if v.code.vid().is_editor() {
 		_, y, _, _ := v.GetRect()
 		y--
 		ch := BoxDrawingsLightHorizontal
@@ -244,9 +248,8 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 		for i := b; i < e; i++ {
 			code_navbar_draw_runne(screen, i, y, ch, tcell.StyleDefault.Foreground(tview.Styles.BorderColor).Background(tview.Styles.PrimitiveBackgroundColor))
 		}
-		// new_textcode_toolbar(v).Draw(screen)
+		v.complete.Draw(screen)
 	}
-	v.complete.Draw(screen)
 	// newFunction1(v, x, y, w,screen)
 }
 
