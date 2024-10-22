@@ -93,9 +93,9 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		selected := index == l.List.GetCurrentItem()
 		var has_main, has_second bool
 		if len(l.main_color_text) > 0 {
-			main_text = l.main_color_text[index]
+			main_text = append([]colortext{}, l.main_color_text[index]...)
 			if len(l.second_color_text) > 0 {
-				second_text = l.second_color_text[index]
+				second_text = append([]colortext{}, l.second_color_text[index]...)
 			}
 		} else {
 			MainText, SecondText := l.List.GetItemText(index)

@@ -45,8 +45,19 @@ func (pk *workspace_query_picker) on_query_ok(sym []lsp.SymbolInformation) {
 			// }
 			index := i
 			filename := v.Location.URI.AsPath().String()
-			s := fmt.Sprintf("%-8s %-20s %s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", ""), strings.TrimLeft(v.Name, " \t"), trim_project_filename(filename, root))
-			pk.impl.list.AddItem(s, "", func() {
+			var fg tcell.Color
+			query := global_theme
+			if query != nil {
+				if style, err := query.get_lsp_color(v.Kind); err == nil {
+					fg, _, _ = style.Decompose()
+				}
+			}
+			colors := []colortext{
+				{fmt.Sprintf("%-10s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", "")), 0},
+				{fmt.Sprintf("%-20s ", strings.TrimLeft(v.Name, " \t")), fg},
+				{trim_project_filename(filename, root), 0},
+			}
+			pk.impl.list.AddColorItem(colors, nil, func() {
 				sym := pk.impl.sym[index]
 				main := pk.impl.parent.main
 				main.OpenFileHistory(sym.Location.URI.AsPath().String(), &sym.Location)
