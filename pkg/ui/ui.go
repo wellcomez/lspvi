@@ -182,7 +182,6 @@ type MainService interface {
 type mainui struct {
 	sel selectarea
 	// code_navigation_bar *smallicon
-	quickbar           *minitoolbar
 	term               *Term
 	fileexplorer       *file_tree_view
 	codeview           *CodeView
@@ -337,11 +336,14 @@ func (m *mainui) zoom(zoomin bool) {
 }
 func (m *mainui) toggle_view(id view_id) {
 	switch id {
+	case view_qf_index_view:
+		m.layout.console.resizer.toggle(id.to_view_link(m))
 	case view_console_area:
 		m.layout.mainlayout.resizer.toggle(id.to_view_link(m))
-		return
+	default:
+		m.layout.editor_area.resizer.toggle(id.to_view_link(m))
 	}
-	m.layout.editor_area.resizer.toggle(id.to_view_link(m))
+	m.App().ForceDraw()
 }
 
 func (m *mainui) OnLspCallTaskInViewResovled(stacks *lspcore.CallInTask) {
@@ -511,19 +513,19 @@ func (m *mainui) get_refer(pos lsp.Range, filename string) {
 func (m mainui) get_editor_range_text(filename string, pos lsp.Range) string {
 	if m.current_editor().Path() == filename {
 		lines := m.current_editor().GetLines(pos.Start.Line, pos.End.Line)
-		if len(lines)==1{
+		if len(lines) == 1 {
 			return lines[0][pos.Start.Character:pos.End.Character]
 		}
-		 a:=[]string{
-		 	lines[0][pos.Start.Character:],
-		 } 
+		a := []string{
+			lines[0][pos.Start.Character:],
+		}
 		for i := 1; i < len(lines)-1; i++ {
-			a=append(a,lines[i])
+			a = append(a, lines[i])
 		}
-		if pos.End.Line > len(lines)+pos.Start.Line  {
-			a=append(a,lines[len(lines)-1][:pos.End.Character])
+		if pos.End.Line > len(lines)+pos.Start.Line {
+			a = append(a, lines[len(lines)-1][:pos.End.Character])
 		}
-		return strings.Join(a,"")
+		return strings.Join(a, "")
 
 	} else if body, err := lspcore.NewBody(lsp.Location{URI: lsp.NewDocumentURI(filename), Range: pos}); err == nil {
 		return body.String()
@@ -732,7 +734,6 @@ func MainUI(arg *Arguments) {
 	prj.Load(arg, main)
 	global_file_watch.AddReciever(main)
 	// main.code_navigation_bar = new_small_icon(main)
-	main.quickbar = new_quick_toolbar(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
 	global_theme.update_default_color()
 
@@ -900,9 +901,6 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 		}
 	}
 	// main.code_navigation_bar.Draw(screen)
-	if !main.layout.dialog.Visible {
-		main.quickbar.Draw(screen)
-	}
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
@@ -942,7 +940,6 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 
 	main.sel.handle_mouse_selection(action, event)
 	// new_top_toolbar(main).handle_mouse_event(action, event)
-	main.quickbar.handle_mouse_event(action, event)
 
 	for _, v := range resizer {
 		if v.checkdrag(action, event) == tview.MouseConsumed {

@@ -7,22 +7,66 @@ import (
 	"log"
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
 type console_pages struct {
 	*tview.Pages
 	*view_link
+	quickbar *minitoolbar
 }
 
+func new_quick_toolbar(main MainService) *minitoolbar {
+	var index_bt icon = icon{
+		s: []rune{' ', right_sidebar_rune, ' '},
+		click: func() {
+			main.toggle_view(view_qf_index_view)
+		},
+		style: func() tcell.Style {
+			return get_style_hide(main.to_view_link(view_qf_index_view).Hide)
+		},
+	}
+	icon := []icon{index_bt}
+	ret := &minitoolbar{
+		item: icon,
+	}
+	// ret.getxy = func() (int, int) {
+	// 	x, y, w, _ := main.page.GetRect()
+	// 	x = x + w - ret.Width()
+	// 	return x, y
+	// }
+	return ret
+}
+func (v *console_pages) Draw(screen tcell.Screen) {
+	v.Pages.Draw(screen)
+	v.quickbar.Draw(screen)
+
+}
+func (v *console_pages) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+	return func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+		v.quickbar.handle_mouse_event(action, event)
+		return v.Pages.MouseHandler()(action, event, setFocus)
+	}
+}
+
+// main.quickbar.handle_mouse_event(action, event)
 func (console *console_pages) update_title(s string) {
 	UpdateTitleAndColor(console.Box, s)
 }
-func new_console_pages() *console_pages {
-	return &console_pages{
+
+// main.quickbar = new_quick_toolbar(main)
+func new_console_pages(main MainService) *console_pages {
+	v := &console_pages{
 		tview.NewPages(),
-		&view_link{id: view_console_pages},
+		&view_link{id: view_console_pages}, new_quick_toolbar(main),
 	}
+	v.quickbar.getxy = func() (int, int) {
+		x, y, w, _ := v.GetRect()
+		x = x + w - v.quickbar.Width()
+		return x, y
+	}
+	return v
 }
 
 type tabmgr struct {
@@ -146,7 +190,7 @@ func create_console_area(main *mainui) (*flex_area, *tview.Flex) {
 	main.codeview2 = NewCodeView(main)
 	main.codeview2.id = view_code_below
 
-	console := new_console_pages()
+	console := new_console_pages(main)
 	console.SetChangedFunc(func() {
 		xx := console.GetPageNames(true)
 		if len(xx) == 1 {
