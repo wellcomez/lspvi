@@ -64,6 +64,7 @@ func NewHelpBox() *HelpBox {
 }
 
 type CompleteMenu interface {
+	MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive)
 	HandleKeyInput(event *tcell.EventKey, after []lspcore.CodeChangeEvent)
 	OnTrigeHelp(tg lspcore.TriggerChar) bool
 	Draw(screen tcell.Screen)
