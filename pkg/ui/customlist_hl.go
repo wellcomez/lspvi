@@ -20,11 +20,17 @@ type colortext struct {
 func fmt_bold_string(s string) string {
 	return fmt.Sprintf("**%s**", s)
 }
-type color_line struct{
+
+type color_line struct {
 	line []colortext
 }
-func (line* color_line) add(s string,color tcell.Color ) *color_line{
-	line.line = append(line.line, colortext{s,color})
+
+func (line *color_line) add2(s []colortext) *color_line {
+	line.line = append(line.line, s...)
+	return line
+}
+func (line *color_line) add(s string, color tcell.Color) *color_line {
+	line.line = append(line.line, colortext{s, color})
 	return line
 }
 func fmt_color_string(s string, color tcell.Color) string {
@@ -68,12 +74,12 @@ func pasrse_bold_color_string(s string) splitresult {
 			b1 := b + 2
 			b2 := b1 + e
 			c1 := b2 + 2
-			if c1<len(s){
-				c=s[c1:]
+			if c1 < len(s) {
+				c = s[c1:]
 			}
 			return splitresult{
 				b: colortext{text: s[:b]},
-				m: colortext{text: s[b1 : b2], color: tcell.ColorYellow},
+				m: colortext{text: s[b1:b2], color: tcell.ColorYellow},
 				a: colortext{text: c},
 			}
 		}

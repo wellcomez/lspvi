@@ -398,7 +398,7 @@ func convert_string_colortext(colors []int, s string, normal tcell.Color, hl tce
 	if hl == 0 {
 		hl = tcell.ColorYellow
 	}
-	if len(colors) < len(s) {
+	if len(colors) <= len(s) {
 		var colors2 = fzf_color_pos(colors, s)
 		begin := 0
 		for _, v := range colors2 {
