@@ -490,23 +490,23 @@ func new_quikview(main *mainui) *quick_view {
 	// 	}
 	// 	return action, event
 	// })
-	view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		ch := event.Rune()
-		if ch == 'j' || event.Key() == tcell.KeyDown {
-			ret.go_next()
-		} else if ch == 'k' || event.Key() == tcell.KeyUp {
-			ret.go_prev()
-		} else {
-			return event
-		}
-		return nil
-	})
-	view.SetSelectedFunc(ret.selection_handle)
+	// view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// 	ch := event.Rune()
+	// 	if ch == 'j' || event.Key() == tcell.KeyDown {
+	// 		ret.go_next()
+	// 	} else if ch == 'k' || event.Key() == tcell.KeyUp {
+	// 		ret.go_prev()
+	// 	} else {
+	// 		return event
+	// 	}
+	// 	return nil
+	// })
+	// view.SetSelectedFunc(ret.selection_handle)
 
 	ret.menuitem = []context_menu_item{
 		{item: cmditem{cmd: cmdactor{desc: "Open "}}, handle: func() {
 			if view.GetItemCount() > 0 {
-				ret.selection_handle_impl(view.GetCurrentItem(), true)
+				// ret.selection_handle_impl(view.GetCurrentItem(), true)
 			}
 		}},
 		{item: cmditem{cmd: cmdactor{desc: "Save "}}, handle: func() {
@@ -575,10 +575,11 @@ func checkDirExists(dirPath string) bool {
 	// 其他类型的错误
 	return false
 }
-func (qk *quick_view) DrawPreview(screen tcell.Screen, left, top, width, height int) bool {
-	qk.quickview.draw(left, top, width, height, screen)
-	return false
-}
+
+// func (qk *quick_view) DrawPreview(screen tcell.Screen, left, top, width, height int) bool {
+// 	qk.quickview.draw(left, top, width, height, screen)
+// 	return false
+// }
 
 func (qk *quick_preview) draw(left, top, width, height int, screen tcell.Screen) {
 	if !qk.visisble {
@@ -588,34 +589,34 @@ func (qk *quick_preview) draw(left, top, width, height int, screen tcell.Screen)
 	frame.SetRect(left, top, width, height)
 	frame.Draw(screen)
 }
-func (qk *quick_view) go_prev() {
-	if qk.view.GetItemCount() == 0 {
-		return
-	}
-	next := (qk.view.GetCurrentItem() - 1 + qk.view.GetItemCount()) % qk.view.GetItemCount()
-	qk.view.SetCurrentItem(next)
-	qk.open_index(next)
-	qk.selection_handle_impl(next, false)
-}
+// func (qk *quick_view) go_prev() {
+// 	if qk.view.GetItemCount() == 0 {
+// 		return
+// 	}
+// 	next := (qk.view.GetCurrentItem() - 1 + qk.view.GetItemCount()) % qk.view.GetItemCount()
+// 	qk.view.SetCurrentItem(next)
+// 	qk.open_index(next)
+// 	qk.selection_handle_impl(next, false)
+// }
 
-func (qk *quick_view) open_index(next int) {
-	if len(qk.data.Refs.Refs) > 0 {
-		if a, e := qk.data.get_data(next); e == nil {
-			qk.quickview.update_preview(a.Loc)
-		}
-	}
-}
-func (qk *quick_view) go_next() {
-	if qk.view.GetItemCount() == 0 {
-		return
-	}
-	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
-	if loc, err := qk.data.get_data(next); err == nil {
-		qk.quickview.update_preview(loc.Loc)
-		qk.view.SetCurrentItem(next)
-		qk.selection_handle_impl(next, false)
-	}
-}
+// func (qk *quick_view) open_index(next int) {
+// 	if len(qk.data.Refs.Refs) > 0 {
+// 		if a, e := qk.data.get_data(next); e == nil {
+// 			qk.quickview.update_preview(a.Loc)
+// 		}
+// 	}
+// }
+// func (qk *quick_view) go_next() {
+// 	if qk.view.GetItemCount() == 0 {
+// 		return
+// 	}
+// 	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
+// 	if loc, err := qk.data.get_data(next); err == nil {
+// 		qk.quickview.update_preview(loc.Loc)
+// 		qk.view.SetCurrentItem(next)
+// 		qk.selection_handle_impl(next, false)
+// 	}
+// }
 func (qk *quick_view) OnSearch(txt string) {
 	// old_query := qk.cmd_search_key
 	// view := qk.view
@@ -670,47 +671,47 @@ func (qk *quick_view) String() string {
 }
 
 // selection_handle
-func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
-	qk.selection_handle_impl(index, true)
-	if qk.quickview != nil {
-		qk.quickview.visisble = false
-	}
-}
+// func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
+// 	qk.selection_handle_impl(index, true)
+// 	if qk.quickview != nil {
+// 		qk.quickview.visisble = false
+// 	}
+// }
 
-func (qk *quick_view) selection_handle_impl(index int, click bool) {
-	if qk.data.tree != nil {
-		qk.view.SetCurrentItem(index)
+// func (qk *quick_view) selection_handle_impl(index int, click bool) {
+// 	if qk.data.tree != nil {
+// 		qk.view.SetCurrentItem(index)
 
-		node := qk.data.tree.tree_data_item[index]
-		need_draw := false
-		if click {
-			if node.parent {
-				node.expand = !node.expand
-				data := qk.data.tree_to_listemitem()
-				qk.view.Clear()
-				for _, v := range data {
-					qk.view.AddItem(v.text, "", func() {
+// 		node := qk.data.tree.tree_data_item[index]
+// 		need_draw := false
+// 		if click {
+// 			if node.parent {
+// 				node.expand = !node.expand
+// 				data := qk.data.tree_to_listemitem()
+// 				qk.view.Clear()
+// 				for _, v := range data {
+// 					qk.view.AddItem(v.text, "", func() {
 
-					})
-				}
-				need_draw = true
-			}
-		}
+// 					})
+// 				}
+// 				need_draw = true
+// 			}
+// 		}
 
-		if vvv, err := qk.data.get_data(index); err == nil {
-			qk.main.Tab().UpdatePageTitle()
-			qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
-			if need_draw {
-				GlobalApp.ForceDraw()
-			}
-		}
-	} else {
-		vvv := qk.data.Refs.Refs[index]
-		qk.view.SetCurrentItem(index)
-		qk.main.Tab().UpdatePageTitle()
-		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
-	}
-}
+// 		if vvv, err := qk.data.get_data(index); err == nil {
+// 			qk.main.Tab().UpdatePageTitle()
+// 			qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
+// 			if need_draw {
+// 				GlobalApp.ForceDraw()
+// 			}
+// 		}
+// 	} else {
+// 		vvv := qk.data.Refs.Refs[index]
+// 		qk.view.SetCurrentItem(index)
+// 		qk.main.Tab().UpdatePageTitle()
+// 		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
+// 	}
+// }
 
 type DateType int
 
@@ -788,8 +789,18 @@ func (qk *quick_view) new_search(t DateType, key SearchKey) {
 		qk.view.Key = ""
 	}
 	qk.data.reset_tree()
-	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		qk.selection_handle(i, s1, s2, r)
+	qk.view.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
+		if qk.view.GetCurrentItem() == index {
+			qk.quickview.visisble = false
+			vvv := qk.data.Refs.Refs[index]
+			qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
+			qk.main.Tab().UpdatePageTitle()
+		}
+	})
+	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		vvv := qk.data.Refs.Refs[index]
+		qk.quickview.update_preview(vvv.Loc)
+		qk.main.Tab().UpdatePageTitle()
 	})
 }
 
@@ -810,6 +821,11 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 	}
 	qk.flex_tree = tree
 	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		current_index := qk.view.GetCurrentItem()
+		if current_index != i {
+			return
+		}
+		qk.quickview.visisble = false
 		item, pos, more, parent := tree.GetNodeIndex(i)
 		switch pos {
 
@@ -838,6 +854,12 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 					qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
 				}
 			}
+		}
+		qk.main.App().ForceDraw()
+	})
+	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		if ref, err := qk.data.get_data(index); err == nil && ref != nil {
+			qk.quickview.update_preview(ref.Loc)
 		}
 	})
 	loaddata(data, 0)
