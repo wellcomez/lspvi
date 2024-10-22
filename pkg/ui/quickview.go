@@ -589,41 +589,13 @@ func (qk *quick_preview) draw(left, top, width, height int, screen tcell.Screen)
 	frame.SetRect(left, top, width, height)
 	frame.Draw(screen)
 }
-// func (qk *quick_view) go_prev() {
-// 	if qk.view.GetItemCount() == 0 {
-// 		return
-// 	}
-// 	next := (qk.view.GetCurrentItem() - 1 + qk.view.GetItemCount()) % qk.view.GetItemCount()
-// 	qk.view.SetCurrentItem(next)
-// 	qk.open_index(next)
-// 	qk.selection_handle_impl(next, false)
-// }
 
-// func (qk *quick_view) open_index(next int) {
-// 	if len(qk.data.Refs.Refs) > 0 {
-// 		if a, e := qk.data.get_data(next); e == nil {
-// 			qk.quickview.update_preview(a.Loc)
-// 		}
-// 	}
-// }
-// func (qk *quick_view) go_next() {
-// 	if qk.view.GetItemCount() == 0 {
-// 		return
-// 	}
-// 	next := (qk.view.GetCurrentItem() + 1) % qk.view.GetItemCount()
-// 	if loc, err := qk.data.get_data(next); err == nil {
-// 		qk.quickview.update_preview(loc.Loc)
-// 		qk.view.SetCurrentItem(next)
-// 		qk.selection_handle_impl(next, false)
-// 	}
-// }
 func (qk *quick_view) OnSearch(txt string) {
 	// old_query := qk.cmd_search_key
 	// view := qk.view
 	// highlight_search_key(old_query, view, txt)
 	qk.cmd_search_key = txt
 }
-
 
 // String
 func (qk *quick_view) String() string {
@@ -637,48 +609,7 @@ func (qk *quick_view) String() string {
 	return fmt.Sprintf("%s %s %d/%d", s, key, index, coutn)
 }
 
-// selection_handle
-// func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
-// 	qk.selection_handle_impl(index, true)
-// 	if qk.quickview != nil {
-// 		qk.quickview.visisble = false
-// 	}
-// }
 
-// func (qk *quick_view) selection_handle_impl(index int, click bool) {
-// 	if qk.data.tree != nil {
-// 		qk.view.SetCurrentItem(index)
-
-// 		node := qk.data.tree.tree_data_item[index]
-// 		need_draw := false
-// 		if click {
-// 			if node.parent {
-// 				node.expand = !node.expand
-// 				data := qk.data.tree_to_listemitem()
-// 				qk.view.Clear()
-// 				for _, v := range data {
-// 					qk.view.AddItem(v.text, "", func() {
-
-// 					})
-// 				}
-// 				need_draw = true
-// 			}
-// 		}
-
-// 		if vvv, err := qk.data.get_data(index); err == nil {
-// 			qk.main.Tab().UpdatePageTitle()
-// 			qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
-// 			if need_draw {
-// 				GlobalApp.ForceDraw()
-// 			}
-// 		}
-// 	} else {
-// 		vvv := qk.data.Refs.Refs[index]
-// 		qk.view.SetCurrentItem(index)
-// 		qk.main.Tab().UpdatePageTitle()
-// 		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
-// 	}
-// }
 
 type DateType int
 
@@ -827,6 +758,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		if ref, err := qk.data.get_data(index); err == nil && ref != nil {
 			qk.quickview.update_preview(ref.Loc)
+			qk.main.Tab().UpdatePageTitle()
 		}
 	})
 	loaddata(data, 0)
