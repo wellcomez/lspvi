@@ -6,6 +6,7 @@ package mainui
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -36,7 +37,22 @@ func (pk *workspace_query_picker) name() string {
 	return "workspace symbol"
 }
 
+type ListSymbolItem struct {
+	sym        *lsp.SymbolInformation
+	Positions  []int
+	sort       int
+	colorsname []colortext
+}
+type ListSymbolItemGroup struct {
+	item  ListSymbolItem
+	child []ListSymbolItem
+}
+
 func (pk *workspace_query_picker) on_query_ok(query string, arg []lsp.SymbolInformation) {
+	pk.on_query_1(query, arg)
+}
+
+func (pk *workspace_query_picker) on_query_1(query string, arg []lsp.SymbolInformation) {
 	if len(arg) == 0 {
 		return
 	}
@@ -55,12 +71,12 @@ func (pk *workspace_query_picker) on_query_ok(query string, arg []lsp.SymbolInfo
 		pk.impl.list.Key = pk.impl.query
 		var sym []lsp.SymbolInformation
 		for _, m := range result.Matches {
-			if m.Score < 50{
+			if m.Score < 50 {
 				continue
 			}
 			i := m.HayIndex
 			v := arg[i]
-			sym =append(sym, v)
+			sym = append(sym, v)
 			index := i
 			filename := v.Location.URI.AsPath().String()
 			var fg tcell.Color
@@ -102,6 +118,155 @@ func (pk *workspace_query_picker) on_query_ok(query string, arg []lsp.SymbolInfo
 		})
 	})
 }
+func (pk *workspace_query_picker) newMethod(arg []lsp.SymbolInformation, query string) {
+	if len(arg) == 0 {
+		return
+	}
+	pk.impl.parent.app.QueueUpdateDraw(func() {
+		opt := fzf.DefaultOptions()
+		opt.Fuzzy = true
+		ss := []string{}
+		for _, v := range arg {
+			ss = append(ss, v.Name)
+		}
+		fzf := fzf.New(ss, opt)
+		fzf.Search(query)
+		result := <-fzf.GetResultChannel()
+		pk.impl.list.Clear()
+		pk.impl.list.SetCurrentItem(0)
+		pk.impl.list.Key = pk.impl.query
+
+		var Symbols []ListSymbolItem
+		var class_group = make(map[string]ListSymbolItemGroup)
+		for _, m := range result.Matches {
+			if m.Score < 50 {
+				continue
+			}
+			i := m.HayIndex
+			sym := arg[i]
+			var fg tcell.Color
+			query := global_theme
+			if query != nil {
+				if style, err := query.get_lsp_color(sym.Kind); err == nil {
+					fg, _, _ = style.Decompose()
+				}
+			}
+			SymbolNames := convert_string_colortext(m.Positions, sym.Name, fg, tcell.ColorYellow)
+			new_one := ListSymbolItem{&sym, m.Positions, m.Score, SymbolNames}
+			switch sym.Kind {
+			case lsp.SymbolKindClass, lsp.SymbolKindStruct:
+				class_group[sym.Name] = ListSymbolItemGroup{new_one, []ListSymbolItem{}}
+			default:
+				added := false
+				for k, v := range class_group {
+					var prefix = k + "."
+					if strings.HasPrefix(sym.Name, prefix) {
+
+						added = true
+						new_one.newMethod(prefix)
+						a := append(class_group[k].child, new_one)
+						v.child = a
+						class_group[k] = v
+					}
+				}
+				if !added {
+					class_group[sym.Name] = ListSymbolItemGroup{new_one, []ListSymbolItem{}}
+				}
+
+			}
+		}
+		var sss = []ListSymbolItemGroup{}
+		for k := range class_group {
+			sss = append(sss, class_group[k])
+		}
+		sort.Slice(sss, func(i, j int) bool {
+			return sss[i].item.sort > sss[j].item.sort
+		})
+		for i := range sss {
+			Symbols = append(Symbols, sss[i].item)
+			Symbols = append(Symbols, sss[i].child...)
+		}
+
+		for i := range Symbols {
+			index := i
+			m := Symbols[i]
+			sym := Symbols[i].sym
+			filename := sym.Location.URI.AsPath().String()
+
+			var fg tcell.Color
+			query := global_theme
+			if query != nil {
+				if style, err := query.get_lsp_color(sym.Kind); err == nil {
+					fg, _, _ = style.Decompose()
+				}
+			}
+
+			colors := []colortext{
+				{fmt.Sprintf("%-10s", strings.ReplaceAll(sym.Kind.String(), "SymbolKind:", "")), fg},
+			}
+			name_length := 0
+			for _, v := range m.colorsname {
+				name_length = name_length + len(v.text)
+			}
+			colors = append(colors, m.colorsname...)
+			if n := 30 - name_length; n > 0 {
+				colors = append(colors, colortext{
+					strings.Repeat(" ", n), 0,
+				})
+			}
+			colors = append(colors, colortext{" ", 0})
+			file := colortext{filepath.Base(filename), 0}
+			colors = append(colors, file)
+
+			pk.impl.list.AddColorItem(colors, nil, func() {
+				sym := Symbols[index]
+				main := pk.impl.parent.main
+				main.OpenFileHistory(sym.sym.Location.URI.AsPath().String(), &sym.sym.Location)
+				pk.impl.parent.hide()
+			})
+		}
+		pk.impl.list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+			pk.update_preview_2(Symbols)
+			if index < len(Symbols) {
+				v := Symbols[index]
+				filename := v.sym.Location.URI.AsPath().String()
+				pk.impl.list.SetTitle(trim_project_filename(filename, global_prj_root))
+			}
+		})
+	})
+}
+
+func (new_one *ListSymbolItem) newMethod(prefix string) {
+	var indx int
+	for i := range new_one.colorsname {
+		s := new_one.colorsname[i]
+		if len(s.text) == 0 {
+			continue
+		}
+		break_it := !(indx < len(prefix))
+		if !break_it {
+			begin := 0
+			for i := range s.text {
+				break_it := !(indx < len(prefix))
+				if !break_it {
+					if prefix[indx] == s.text[i] {
+						indx++
+						begin++
+					} else {
+						break_it = true
+						break
+					}
+				}
+			}
+			new_one.colorsname[i].text = s.text[begin:]
+			if break_it {
+				break
+			}
+		} else {
+			break
+		}
+	}
+}
 
 // UpdateQuery implements picker.
 func (pk *workspace_query_picker) UpdateQuery(query string) {
@@ -115,6 +280,14 @@ func (pk *workspace_query_picker) UpdateQuery(query string) {
 			pk.on_query_ok(query, symbol)
 		}
 	}()
+}
+func (pk workspace_query_picker) update_preview_2(sym []ListSymbolItem) {
+	cur := pk.impl.list.GetCurrentItem()
+	if cur < len(sym) {
+		item := sym[cur]
+		pk.impl.PrevOpen(item.sym.Location.URI.AsPath().String(),
+			item.sym.Location.Range.Start.Line)
+	}
 }
 func (pk workspace_query_picker) update_preview(sym []lsp.SymbolInformation) {
 	cur := pk.impl.list.GetCurrentItem()
