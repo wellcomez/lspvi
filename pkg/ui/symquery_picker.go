@@ -109,7 +109,7 @@ func (pk *workspace_query_picker) on_query_1(query string, arg []lsp.SymbolInfor
 			})
 		}
 		pk.impl.list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-			pk.update_preview(sym)
+			pk.update_preview(sym,index)
 			if index < len(sym) {
 				v := sym[index]
 				filename := v.Location.URI.AsPath().String()
@@ -289,8 +289,8 @@ func (pk workspace_query_picker) update_preview_2(sym []ListSymbolItem) {
 			item.sym.Location.Range.Start.Line)
 	}
 }
-func (pk workspace_query_picker) update_preview(sym []lsp.SymbolInformation) {
-	cur := pk.impl.list.GetCurrentItem()
+func (pk workspace_query_picker) update_preview(sym []lsp.SymbolInformation,cur int) {
+	// cur := pk.impl.list.GetCurrentItem()
 	if cur < len(sym) {
 		item := sym[cur]
 		pk.impl.PrevOpen(item.Location.URI.AsPath().String(),
