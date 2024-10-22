@@ -17,6 +17,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 )
 
 type qf_history_picker_impl struct {
@@ -35,7 +36,7 @@ type qk_history_picker struct {
 
 // close implements picker.
 func (pk qk_history_picker) close() {
-	pk.cq.CloseQueue()
+	// pk.cq.CloseQueue()
 }
 
 // name implements picker.
@@ -247,7 +248,7 @@ func (qk *qk_history_picker) updateprev() {
 				aa = append(aa, v.text)
 			}
 			aa = remove_color(aa)
-			qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte(strings.Join(aa, "\n")), name}})
+			qk.codeprev.LoadBuffer(fileloader.NewDataFileLoad([]byte(strings.Join(aa, "\n")), name))
 		}
 	case data_callin:
 		{
@@ -276,7 +277,8 @@ func (qk *qk_history_picker) updateprev() {
 					}
 				}
 				data := strings.Join(content, "\n")
-				qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte(data), ""}})
+				// qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte(data), ""}})
+				qk.codeprev.LoadBuffer(fileloader.NewDataFileLoad([]byte(data), ""))
 			} else {
 				dirs, err := os.ReadDir(callin)
 				content := []string{}
@@ -285,13 +287,14 @@ func (qk *qk_history_picker) updateprev() {
 				}
 				data := strings.Join(content, "\n")
 				if err == nil {
-					qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte(data), ""}})
+					qk.codeprev.LoadBuffer(fileloader.NewDataFileLoad([]byte(data), ""))
+					// qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte(data), ""}})
 				}
 			}
 		}
 	default:
 		{
-			qk.cq.enqueue(EditorOpenArgument{openbuf: &arg_openbuf{[]byte("?????????????"), ""}})
+			qk.codeprev.LoadBuffer(fileloader.NewDataFileLoad([]byte("??????????????"), ""))
 		}
 	}
 }

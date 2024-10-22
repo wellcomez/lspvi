@@ -565,7 +565,7 @@ func (pk *livewgreppicker) set_list_handle() {
 // close implements picker.
 func (pk *livewgreppicker) close() {
 	if pk.quick_view == nil {
-		pk.cq.CloseQueue()
+		// pk.cq.CloseQueue()
 	}
 	pk.stop_grep()
 }

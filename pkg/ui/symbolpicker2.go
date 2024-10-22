@@ -202,7 +202,7 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 func (impl *symbol_picker_impl) UpdatePrev(index int) {
 	if sym := impl.get_current_item_symbol(index); sym != nil {
 		file := sym.sym.SymInfo.Location.URI.AsPath().String()
-		impl.cq.LoadFileNoLsp(file, sym.sym.SymInfo.Location.Range.Start.Line)
+		impl.PrevOpen(file, sym.sym.SymInfo.Location.Range.Start.Line)
 	}
 }
 

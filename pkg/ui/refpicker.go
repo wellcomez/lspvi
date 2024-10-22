@@ -108,7 +108,7 @@ type prev_picker_impl struct {
 	// listview         *tview.List
 	listcustom       *customlist
 	codeprev         CodeEditor
-	cq               *CodeOpenQueue
+	// cq               *CodeOpenQueue
 	parent           *fzfmain
 	list_click_check *GridListClickCheck
 	on_list_selected func()
@@ -175,7 +175,7 @@ func (pk refpicker) OnGetImplement(ranges lspcore.SymolSearchKey, file lspcore.I
 
 // close implements picker.
 func (pk refpicker) close() {
-	pk.impl.cq.CloseQueue()
+	// pk.impl.cq.CloseQueue()
 }
 
 // name implements picker.
@@ -360,7 +360,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 		parent:   v,
 		// editor:   editor,
 	}
-	x.cq = NewCodeOpenQueue(x.codeprev, nil)
+	// x.cq = NewCodeOpenQueue(x.codeprev, nil)
 	x.livekeydelay.code = x.codeprev
 	return x
 }

@@ -133,7 +133,7 @@ type bookmark_picker struct {
 
 // close implements picker.
 func (pk bookmark_picker) close() {
-	pk.impl.cq.CloseQueue()
+	// pk.impl.cq.CloseQueue()
 }
 
 // UpdateQuery implements picker.
@@ -287,7 +287,7 @@ func reload_bookmark_list(bookmark *proj_bookmark, hlist *customlist, selected f
 func close_bookmark_picker(impl *prev_picker_impl, loc lsp.Location) {
 	impl.open_location(loc)
 	impl.parent.hide()
-	impl.cq.CloseQueue()
+	// impl.cq.CloseQueue()
 }
 func (pk bookmark_picker) update_preview() {
 	pk.impl.update_preview()
