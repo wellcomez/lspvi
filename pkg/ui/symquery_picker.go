@@ -37,6 +37,7 @@ func (pk *workspace_query_picker) name() string {
 
 func (pk *workspace_query_picker) on_query_ok(sym []lsp.SymbolInformation) {
 	pk.impl.parent.app.QueueUpdateDraw(func() {
+		pk.impl.list.Clear()
 		pk.impl.list.Key = pk.impl.query
 		for i, v := range sym {
 			// a := lspcore.Symbol{
@@ -80,7 +81,6 @@ func (pk *workspace_query_picker) UpdateQuery(query string) {
 		return
 	}
 	pk.impl.query = query
-	pk.impl.list.Clear()
 	go func() {
 		symbol, _ := pk.impl.symbol.WorkspaceQuery(query)
 		if pk.impl.query == query {

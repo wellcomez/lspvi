@@ -10,11 +10,15 @@ import (
 	"log"
 	"strings"
 
+	// "sync/atomic"
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 
 	// lsp "github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	"zen108.com/lspvi/pkg/ui/grep"
 )
@@ -109,10 +113,37 @@ type prev_picker_impl struct {
 	list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
+	livekeydelay     opendelay
+}
+type opendelay struct {
+	// imp      *CodeOpenQueue
+	// filename string
+	// line     i
+	code CodeEditor
+	st   int64
 }
 
+func (k *opendelay) OnKey(filename string, line int) {
+	st := time.Now().UnixMilli()
+	// k.filename = filename
+	// k.line = line
+	k.st = st
+	go func() {
+		<-time.After(time.Microsecond * 100)
+		if k.st != st {
+			debug.DebugLog("openprev", "skip", filename, line)
+			return
+		}
+		if k.code.IsLoading() {
+			debug.DebugLog("openprev", "skip isloading", filename, line)
+			return
+		}
+		// k.imp.LoadFileNoLsp(filename, line)
+		k.code.LoadFileNoLsp(filename, line)
+	}()
+}
 func (imp *prev_picker_impl) PrevOpen(filename string, line int) {
-	imp.cq.LoadFileNoLsp(filename, line)
+	imp.livekeydelay.OnKey(filename, line)
 }
 func (impl *prev_picker_impl) use_cusutom_list(l *customlist) {
 	impl.listcustom = l
@@ -330,6 +361,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 		// editor:   editor,
 	}
 	x.cq = NewCodeOpenQueue(x.codeprev, nil)
+	x.livekeydelay.code = x.codeprev
 	return x
 }
 func (pk *refpicker) load(ranges lsp.Range) {
