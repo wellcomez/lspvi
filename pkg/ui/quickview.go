@@ -17,7 +17,7 @@ import (
 
 	// str "github.com/boyter/go-string"
 	"github.com/gdamore/tcell/v2"
-	"github.com/reinhrst/fzf-lib"
+	// "github.com/reinhrst/fzf-lib"
 	fzflib "github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
@@ -259,7 +259,7 @@ type fzf_on_listview struct {
 	selected_index   []int
 	selected_text    []string
 	selected_postion [][]int
-	fzf              *fzf.Fzf
+	fzf              *fzflib.Fzf
 	listview         *customlist
 	fuzz             bool
 	list_data        []fzf_list_item
@@ -275,7 +275,7 @@ func new_fzf_on_list_data(list *customlist, data []string, fuzz bool) *fzf_on_li
 		selected_index: []int{},
 		data:           data,
 	}
-	opt := fzf.DefaultOptions()
+	opt := fzflib.DefaultOptions()
 	opt.Fuzzy = fuzz
 	key := []string{}
 	for i := 0; i < len(data); i++ {
@@ -285,7 +285,7 @@ func new_fzf_on_list_data(list *customlist, data []string, fuzz bool) *fzf_on_li
 		ret.selected_index = append(ret.selected_index, i)
 	}
 	if len(key) > 0 {
-		ret.fzf = fzf.New(key, opt)
+		ret.fzf = fzflib.New(key, opt)
 	}
 	return ret
 }
@@ -295,7 +295,7 @@ func new_fzf_on_list(list *customlist, fuzz bool) *fzf_on_listview {
 		fuzz:           fuzz,
 		selected_index: []int{},
 	}
-	opt := fzf.DefaultOptions()
+	opt := fzflib.DefaultOptions()
 	opt.Fuzzy = fuzz
 	key := []string{}
 	for i := 0; i < list.GetItemCount(); i++ {
@@ -305,7 +305,7 @@ func new_fzf_on_list(list *customlist, fuzz bool) *fzf_on_listview {
 		ret.selected_index = append(ret.selected_index, i)
 	}
 	if len(key) > 0 {
-		ret.fzf = fzf.New(key, opt)
+		ret.fzf = fzflib.New(key, opt)
 	}
 	return ret
 }
