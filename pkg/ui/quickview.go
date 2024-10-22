@@ -680,7 +680,7 @@ func (qk *quick_view) selection_handle(index int, _ string, _ string, _ rune) {
 func (qk *quick_view) selection_handle_impl(index int, click bool) {
 	if qk.data.tree != nil {
 		qk.view.SetCurrentItem(index)
-		
+
 		node := qk.data.tree.tree_data_item[index]
 		need_draw := false
 		if click {
@@ -750,12 +750,7 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 }
 func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, key SearchKey) {
 	if key.Key != qk.searchkey.Key {
-		qk.view.Clear()
-		qk.cmd_search_key = ""
-		qk.Type = t
-		qk.searchkey = key
-		qk.grep.close()
-		qk.data.reset_tree()
+		qk.new_search(t, key)
 	}
 	if end {
 		qk.save()
@@ -778,21 +773,29 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 
-func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key SearchKey) {
+func (qk *quick_view) new_search(t DateType, key SearchKey) {
+	qk.view.Clear()
+	qk.cmd_search_key = ""
+	qk.Type = t
+	qk.searchkey = key
 	if qk.grep != nil {
 		qk.grep.close()
 	}
-	qk.Type = t
-	qk.searchkey = key
 	switch t {
 	case data_grep_word, data_search:
 		qk.view.Key = key.Key
 	default:
 		qk.view.Key = ""
 	}
-	qk.view.Clear()
+	qk.data.reset_tree()
+	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		qk.selection_handle(i, s1, s2, r)
+	})
+}
+
+func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key SearchKey) {
+	qk.new_search(t, key)
 	qk.view.SetCurrentItem(-1)
-	qk.cmd_search_key = ""
 	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), &qk.searchkey, Refs, true)
 	qk.data.go_build_listview_data()
 	tree := qk.data.build_flextree_data(10)

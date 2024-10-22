@@ -360,6 +360,9 @@ const (
 	NodePostion_None
 )
 
+func (root *FlexTreeNodeRoot) Empty() bool {
+	return len(root.child) == 0
+}
 func (root *FlexTreeNodeRoot) GetNodeIndex(index int) (ret *FlexTreeNode, pos NodePostion, more bool, parent *FlexTreeNode) {
 	begin := 0
 	pos = NodePostion_None

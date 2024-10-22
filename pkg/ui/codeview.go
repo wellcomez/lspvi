@@ -395,7 +395,13 @@ func NewCodeView(main MainService) *CodeView {
 }
 
 func (main *mainui) qf_grep_word(opt QueryOption) {
-	main.quickview.view.Clear()
+	main.ActiveTab(view_quickview, false)
+	quickview := main.quickview
+	quickview.qf_grep_word(opt)
+}
+
+func (quickview *quick_view) qf_grep_word(opt QueryOption) {
+	var main = quickview.main
 	rightmenu_select_text := opt.Query
 	key := SearchKey{
 		&lspcore.SymolSearchKey{
@@ -403,17 +409,13 @@ func (main *mainui) qf_grep_word(opt QueryOption) {
 		},
 		&opt,
 	}
-	main.ActiveTab(view_quickview, false)
-	main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)
-	if main.quickview.grep != nil {
-		main.quickview.grep.close()
-	}
+	quickview.new_search(data_grep_word, key)
 	add := 0
 	buf := []ref_with_caller{}
 	buf2 := []ref_with_caller{}
 	coping := false
-	main.quickview.grep = main.open_picker_grep(opt, func(end bool, ss ref_with_caller) bool {
-		var ret = rightmenu_select_text == key.Key && main.quickview.Type == data_grep_word
+	quickview.grep = main.open_picker_grep(opt, func(end bool, ss ref_with_caller) bool {
+		var ret = rightmenu_select_text == key.Key && quickview.Type == data_grep_word
 		if ret {
 			if add > 1000 {
 				return false
@@ -428,13 +430,13 @@ func (main *mainui) qf_grep_word(opt QueryOption) {
 				buf = append(buf, ss)
 			}
 			if add < 15 || len(buf) >= 100 || end {
-				main.app.QueueUpdateDraw(func() {
+				main.App().QueueUpdateDraw(func() {
 					coping = true
 					for _, s := range buf {
 						add++
-						main.quickview.AddResult(end, data_grep_word, s, key)
+						quickview.AddResult(end, data_grep_word, s, key)
 					}
-					main.page.update_title(main.quickview.String())
+					main.Tab().UpdatePageTitle()
 					buf = []ref_with_caller{}
 					coping = false
 				})
