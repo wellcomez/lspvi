@@ -178,8 +178,8 @@ type bookmark_picker_impl struct {
 	hlist *customlist
 }
 
-func get_list_item(v ref_line, root string) (string, string) {
-	path := v.line + ":" + strings.ReplaceAll(v.path, root, "")
+func get_list_item(v ref_line) (string, string) {
+	path := fmt.Sprintln(trim_project_filename(v.path, global_prj_root), ":", v.line)
 	return fmt.Sprintf("%s %s", path, v.caller), strings.TrimLeft(v.code, " \t")
 }
 
@@ -217,7 +217,6 @@ func (b bookmark_edit) name() string {
 func (pk *bookmark_edit) grid(input *tview.InputField) *tview.Grid {
 	return pk.fzflist_impl.grid(input)
 }
-
 
 // new_bookmark_picker
 func new_bookmark_picker(v *fzfmain, bookmark *proj_bookmark) bookmark_picker {
@@ -260,7 +259,6 @@ func new_bookmark_picker(v *fzfmain, bookmark *proj_bookmark) bookmark_picker {
 	return sym
 }
 
-
 func reload_bookmark_list(bookmark *proj_bookmark) []ref_line {
 	// hlist.Clear()
 	marks := bookmark.Bookmark
@@ -286,17 +284,15 @@ func reload_bookmark_list(bookmark *proj_bookmark) []ref_line {
 	return listdata
 }
 func (bookmark proj_bookmark) fzfdata(listdata []ref_line) (data []string) {
-	root := bookmark.root
 	for _, v := range listdata {
-		a, _ := get_list_item(v, root)
+		a, _ := get_list_item(v)
 		data = append(data, a)
 	}
 	return
 }
 func (bookmark *proj_bookmark) add_to_list(listdata []ref_line, hlist *customlist) {
-	root := bookmark.root
 	for i, v := range listdata {
-		a, b := get_list_item(v, root)
+		a, b := get_list_item(v)
 		hlist.AddColorItem(
 			[]colortext{
 				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow},
@@ -420,6 +416,7 @@ func (menu bk_menu_context) getbox() *tview.Box {
 func (menu bk_menu_context) menuitem() []context_menu_item {
 	return menu.qk.menuitem
 }
+
 // func (ret *bookmark_view) onclick(i int) {
 // 	loc := ret.data[i].loc
 // 	ret.list.SetCurrentItem(i)
