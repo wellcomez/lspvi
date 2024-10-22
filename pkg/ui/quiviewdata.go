@@ -20,8 +20,8 @@ import (
 var tag_quickview = "quickdata"
 
 type quick_view_data struct {
-	Refs                 search_reference_result
-	searchKey            *SearchKey
+	Refs      search_reference_result
+	searchKey *SearchKey
 	// grepoption           QueryOption
 	tree                 *list_view_tree_extend
 	Type                 DateType
@@ -489,7 +489,7 @@ func (n *FlexTreeNode) LoadMore() {
 
 func (quickview_data *quick_view_data) go_build_listview_data() []*list_tree_node {
 	// var qk = view.tree
-	var ret = make([]*list_tree_node, len(quickview_data.Refs.Refs))
+	var root = make([][]*list_tree_node, len(quickview_data.Refs.Refs))
 	maxConcurrency := 5
 	taskChannel := make(chan struct{}, maxConcurrency)
 
@@ -504,13 +504,18 @@ func (quickview_data *quick_view_data) go_build_listview_data() []*list_tree_nod
 			defer waitReports.Done()
 			taskChannel <- struct{}{}
 			var a *list_tree_node = &quickview_data.tree.root[i]
-			a.get_tree_listitem(quickview_data, lineno)
+			data := a.get_tree_listitem(quickview_data, lineno)
 			<-taskChannel
+			root[i] = append(root[i], data...)
 		}
 		go run(lineno, i)
 		lineno++
 	}
 	waitReports.Wait()
+	ret := []*list_tree_node{}
+	for _, v := range root {
+		ret = append(ret, v...)
+	}
 	quickview_data.tree.tree_data_item = ret
 	return ret
 }
