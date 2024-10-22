@@ -341,7 +341,7 @@ func new_refer_picker(clone lspcore.Symbol_file, v *fzfmain) refpicker {
 	sym := refpicker{
 		impl: &impl,
 	}
-	x1 := new_customlist(true)
+	x1 := new_customlist(false)
 	x1.SetSelectedFunc(func(index_list int, s1, s2 string, r rune) {
 		log.Println(index_list, s1, s2, r)
 		data_index := impl.fzf.get_data_index(index_list)
