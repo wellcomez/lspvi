@@ -1396,7 +1396,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 				if line != nil {
 					code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 				}
-				if focus && code.id != view_code_below {
+				if focus && code.id.is_editor(){ 
 					if sym == nil {
 						main.OutLineView().Clear()
 					}
@@ -1435,7 +1435,7 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 			return nil
 		}
 	}
-	if code.main != nil {
+	if code.main != nil &&code.vid().is_editor(){
 		code.main.OutLineView().Clear()
 	}
 	code.loading = true
