@@ -269,30 +269,34 @@ func (wk LspWorkspace) Close() {
 }
 func (wk LspWorkspace) getClient(filename string) lspclient {
 	for _, c := range wk.clients {
-		ret := wk.new_client(c, filename)
-		if ret != nil {
+		if ret, err := wk.new_client(c, filename); ret != nil {
 			return ret
+		} else if err != nil {
+			debug.ErrorLog(DebugTag, "getClient failed", err)
 		}
-
 	}
 	return nil
 }
 
-func (wk LspWorkspace) new_client(c lspclient, filename string) lspclient {
+func (wk LspWorkspace) new_client(c lspclient, filename string) (ret lspclient, err error) {
 	if !c.IsMe(filename) {
-		return nil
+		// err = fmt.Errorf("not match")
+		return
 	}
 	if c.IsReady() {
-		return c
+		ret = c
+		return
 	}
-	err := c.Launch_Lsp_Server()
+	err = c.Launch_Lsp_Server()
 	if err == nil {
 		err = c.InitializeLsp(wk.Wk)
 		if err == nil {
-			return c
+			ret = c
+		} else {
+			ret = c
 		}
 	}
-	return nil
+	return
 }
 
 func (wk *LspWorkspace) open(filename string) (*Symbol_file, bool, error) {
@@ -306,7 +310,13 @@ func (wk *LspWorkspace) openbuffer(filename string, content string) (*Symbol_fil
 		return ret, is_new, nil
 	}
 	if ret.lsp == nil {
-		return nil, is_new, fmt.Errorf("fail to open %s", filename)
+		if lsp := wk.getClient(filename); lsp != nil {
+			ret.lsp = lsp
+		} else {
+			err := fmt.Errorf("fail to open %s lsp is null", filename)
+			debug.WarnLog(DebugTag, "openbuffer ", err)
+			return nil, is_new, err
+		}
 	}
 	is_new = true
 	if err := ret.lsp.DidOpen(SourceCode{filename, content}, ret.verison); err == nil {

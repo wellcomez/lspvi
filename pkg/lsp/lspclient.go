@@ -56,14 +56,20 @@ func (l lsp_base) Semantictokens_full(file string) (*lsp.SemanticTokens, error) 
 func (l lsp_base) IsReady() bool {
 	return l.core.inited
 }
-func (l lsp_base) InitializeLsp(wk WorkSpace) error {
-	err := l.core.lang.InitializeLsp(l.core, wk)
-	if err != nil {
-		return err
+func (l lsp_base) InitializeLsp(wk WorkSpace) (err error) {
+	l.core.lock.Lock()
+	defer l.core.lock.Unlock()
+	if !l.core.inited {
+		err = l.core.lang.InitializeLsp(l.core, wk)
+		if err == nil {
+			l.core.Initialized()
+			l.core.Progress_notify()
+			debug.InfoLog(DebugTag, "InitializeLsp OK: ", l.core.lang)
+		} else {
+			debug.WarnLog(DebugTag, "InitializeLsp failed: ", err)
+		}
 	}
-	l.core.Initialized()
-	l.core.Progress_notify()
-	return nil
+	return
 }
 func (l lsp_base) Launch_Lsp_Server() error {
 	l.core.lock.Lock()
