@@ -10,6 +10,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type CodeContextMenu struct {
@@ -122,7 +123,7 @@ func update_selection_menu(code *CodeView) {
 		}},
 		{item: create_menu_item("Goto define"), handle: func() {
 			menudata.SelectInEditor(code.view.Cursor)
-			main.get_define(menudata.selection_range, code.Path(), nil)
+			main.get_define(menudata.selection_range, code.Path(), code.CreateOpenOption().SetNewTab(lspcore.OpenTabOption_Below))
 			main.ActiveTab(view_quickview, false)
 		}},
 		{item: create_menu_item("Call incoming"), handle: func() {

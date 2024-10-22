@@ -562,7 +562,8 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		}
 		switch action {
 		case tview.MouseLeftDoubleClick:
-			code.action_goto_define(&lspcore.OpenOption{LineNumber: code.view.Cursor.Loc.Y, Offset: code.view.Cursor.Loc.Y - code.view.Topline})
+			x := code.CreateOpenOption()
+			code.action_goto_define(x)
 		case tview.MouseLeftDown, tview.MouseRightClick, tview.MouseLeftClick:
 			if code.id.is_editor() {
 				code.SetCurrenteditor()
@@ -578,6 +579,12 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 		}
 		return true
 	})
+}
+
+func (code *CodeView) CreateOpenOption() *lspcore.OpenOption {
+	x := lspcore.NewOpenOption(code.view.Cursor.Loc.Y, code.view.Cursor.Loc.Y-code.view.Topline)
+	x.Openner = int(code.vid())
+	return x
 }
 
 func (code *CodeView) SetCurrenteditor() {
