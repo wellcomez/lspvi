@@ -51,6 +51,7 @@ func (pk *workspace_query_picker) on_query_ok(query string, arg []lsp.SymbolInfo
 		fzf.Search(query)
 		result := <-fzf.GetResultChannel()
 		pk.impl.list.Clear()
+		pk.impl.list.SetCurrentItem(0)
 		pk.impl.list.Key = pk.impl.query
 		var sym []lsp.SymbolInformation
 		for _, m := range result.Matches {
