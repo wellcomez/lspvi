@@ -30,7 +30,8 @@ type quick_preview struct {
 	codeprev CodeEditor
 	frame    *tview.Frame
 	visisble bool
-	cq       *CodeOpenQueue
+	// cq       *CodeOpenQueue
+	delay opendelay
 }
 
 // update_preview
@@ -38,7 +39,8 @@ func (pk *quick_preview) update_preview(loc lsp.Location) {
 	pk.visisble = true
 	title := fmt.Sprintf("%s:%d", loc.URI.AsPath().String(), loc.Range.End.Line+1)
 	UpdateTitleAndColor(pk.frame.Box, title)
-	pk.cq.LoadFileNoLsp(loc.URI.AsPath().String(), loc.Range.Start.Line)
+	// pk.cq.LoadFileNoLsp(, loc.Range.Start.Line)
+	pk.delay.OnKey(loc.URI.AsPath().String(), loc.Range.Start.Line)
 }
 func new_quick_preview(main MainService) *quick_preview {
 	codeprev := NewCodeView(main)
@@ -47,7 +49,7 @@ func new_quick_preview(main MainService) *quick_preview {
 	return &quick_preview{
 		codeprev: codeprev,
 		frame:    frame,
-		cq:       NewCodeOpenQueue(codeprev, nil),
+		delay:    opendelay{code: codeprev},
 	}
 }
 
@@ -583,8 +585,6 @@ func (qk *quick_view) String() string {
 	key := qk.searchkey.Key
 	return fmt.Sprintf("%s %s %d/%d", s, key, index, coutn)
 }
-
-
 
 type DateType int
 
