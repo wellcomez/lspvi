@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -20,27 +21,46 @@ var tag_quickview = "quickdata"
 
 type quick_view_data struct {
 	Refs                 search_reference_result
+	searchKey            *SearchKey
+	// grepoption           QueryOption
 	tree                 *list_view_tree_extend
 	Type                 DateType
 	main                 MainService
 	abort                bool
 	ignore_symbol_resolv bool
+	is_save_change       bool
 }
 
 func (qk *quick_view_data) reset_tree() {
 	qk.tree = nil
 }
-func new_quikview_data(m MainService, Type DateType, filename string, Refs []ref_with_caller) *quick_view_data {
+func new_quikview_data(m MainService, Type DateType, filename string, key *SearchKey, Refs []ref_with_caller, save bool) *quick_view_data {
 	a := &quick_view_data{
-		main: m,
-		tree: &list_view_tree_extend{filename: filename},
-		Type: Type,
-		Refs: search_reference_result{Refs},
+		main:           m,
+		searchKey:      key,
+		tree:           &list_view_tree_extend{filename: filename},
+		Type:           Type,
+		Refs:           search_reference_result{Refs},
+		is_save_change: save,
 	}
 	if len(Refs) > 0 {
 		a.tree.build_tree(Refs)
 	}
 	return a
+}
+func (qk quick_view_data) qf_history_data() (ret qf_history_data, err error) {
+	if qk.searchKey != nil {
+		ret = qf_history_data{
+			qk.Type,
+			*qk.searchKey,
+			qk.Refs,
+			time.Now().Unix(),
+			"",
+		}
+	} else {
+		err = fmt.Errorf("no search key")
+	}
+	return
 }
 func (qk *quick_view_data) Add(ref ref_with_caller) (ret list_tree_node, err error) {
 	idx := len(qk.Refs.Refs)
@@ -94,7 +114,14 @@ func (qk *quick_view_data) async_open(call *ref_with_caller, cb func(error, bool
 		}
 	}
 }
-func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno int, caller_context *ref_with_caller) (caller *ref_with_caller, next_call_context *ref_with_caller) {
+func (qk *quick_view_data) Save() {
+	if qk.is_save_change {
+		if data, err := qk.qf_history_data(); err == nil {
+			qk.main.save_qf_uirefresh(data)
+		}
+	}
+}
+func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno int, caller_context *ref_with_caller) (caller *ref_with_caller, next_call_context *ref_with_caller, changed bool) {
 	caller = tree.get_caller(qk)
 	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
 	switch qk.Type {
@@ -105,8 +132,12 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 				filename := v.URI.AsPath().String()
 				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
 					caller.Caller = c
+					changed = true
 				} else if sym == nil {
 					go qk.async_open(caller, func(err error, b bool) {
+						if b {
+							qk.Save()
+						}
 					})
 				}
 			}
@@ -164,6 +195,7 @@ func (quickview_data quick_view_data) need_async_open() bool {
 func (quickview_data *quick_view_data) BuildListString(root string) []string {
 	var data = []string{}
 	var lspmgr *lspcore.LspWorkspace = quickview_data.main.Lspmgr()
+	changed := false
 	for i, caller := range quickview_data.Refs.Refs {
 		// caller.width = width
 		switch quickview_data.Type {
@@ -173,8 +205,13 @@ func (quickview_data *quick_view_data) BuildListString(root string) []string {
 				filename := v.URI.AsPath().String()
 				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
 					caller.Caller = c
+					changed = true
 				} else if sym == nil {
-					quickview_data.async_open(&caller, func(err error, b bool) {})
+					quickview_data.async_open(&caller, func(err error, b bool) {
+						if b {
+							quickview_data.Save()
+						}
+					})
 				}
 			}
 		}
@@ -184,6 +221,9 @@ func (quickview_data *quick_view_data) BuildListString(root string) []string {
 		}
 		x := fmt.Sprintf("%3d. %s", i+1, secondline)
 		data = append(data, x)
+	}
+	if changed {
+		quickview_data.Save()
 	}
 	return data
 }
@@ -492,7 +532,7 @@ func (quickview_data *quick_view_data) build_listview_data() []*list_tree_node {
 }
 
 func (tree *list_tree_node) get_tree_listitem(view *quick_view_data, lineno int) (data []*list_tree_node) {
-	parent, _ := tree.quickfix_listitem_string(view, lineno, nil)
+	parent, _, change := tree.quickfix_listitem_string(view, lineno, nil)
 	tree.get_caller(view).LoadLines()
 	data = append(data, tree)
 	if tree.expand {
@@ -504,9 +544,16 @@ func (tree *list_tree_node) get_tree_listitem(view *quick_view_data, lineno int)
 				return
 			}
 			c := &tree.children[i]
-			_, call_context = c.quickfix_listitem_string(view, lineno, call_context)
+			c1 := false
+			_, call_context, c1 = c.quickfix_listitem_string(view, lineno, call_context)
+			if c1 {
+				change = c1
+			}
 			data = append(data, c)
 		}
+	}
+	if change {
+		view.Save()
 	}
 	return data
 }

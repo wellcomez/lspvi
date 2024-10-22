@@ -24,7 +24,6 @@ import (
 
 	// "zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
-	"zen108.com/lspvi/pkg/ui/grep"
 )
 
 type quick_preview struct {
@@ -52,6 +51,11 @@ func new_quick_preview() *quick_preview {
 	}
 }
 
+type SearchKey struct {
+	*lspcore.SymolSearchKey
+	SearchOption *QueryOption
+}
+
 // quick_view
 type quick_view struct {
 	Type DateType
@@ -65,7 +69,7 @@ type quick_view struct {
 	main      MainService
 	// menu         *contextmenu
 	menuitem      []context_menu_item
-	searchkey     lspcore.SymolSearchKey
+	searchkey     SearchKey
 	right_context quick_view_context
 
 	cmd_search_key string
@@ -86,11 +90,11 @@ func (l list_view_tree_extend) NeedCreate() bool {
 
 type qf_history_data struct {
 	Type         DateType
-	Key          lspcore.SymolSearchKey
+	Key          SearchKey
 	Result       search_reference_result
 	Date         int64
 	UID          string
-	SearchOption QueryOption
+	// SearchOption QueryOption
 }
 
 func (main *mainui) save_qf_uirefresh(data qf_history_data) error {
@@ -113,9 +117,7 @@ func (h *qf_history_data) ListItem() string {
 func (qk quick_view) save() error {
 	date := time.Now().Unix()
 	qk.main.save_qf_uirefresh(
-		qf_history_data{qk.Type, qk.searchkey, qk.data.Refs, date, "", QueryOption{
-			grep.OptionSet{Ignorecase: true},
-		}})
+		qf_history_data{qk.Type, qk.searchkey, qk.data.Refs, date, ""})
 	return nil
 }
 
@@ -215,10 +217,10 @@ func (h *quickfix_history) Load() ([]qf_history_data, error) {
 	for _, dir := range dirs {
 		var result = qf_history_data{
 			Type: data_callin,
-			Key: lspcore.SymolSearchKey{
+			Key: SearchKey{&lspcore.SymolSearchKey{
 				Key:  dir.Name(),
 				File: filepath.Join(umlDir, dir.Name()),
-			},
+			}, nil},
 		}
 		ret = append(ret, result)
 
@@ -720,7 +722,7 @@ const (
 	data_implementation
 )
 
-func search_key_uid(key lspcore.SymolSearchKey) string {
+func search_key_uid(key SearchKey) string {
 	if len(key.File) > 0 {
 		return fmt.Sprintf("%s %s:%d:%d", key.Key, key.File, key.Ranges.Start.Line, key.Ranges.Start.Character)
 	}
@@ -742,10 +744,10 @@ func (qk *quick_view) OnLspRefenceChanged(refs []lsp.Location, t DateType, key l
 		break
 	}
 
-	qk.UpdateListView(t, Refs, key)
+	qk.UpdateListView(t, Refs, SearchKey{&key, nil})
 	qk.save()
 }
-func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, key lspcore.SymolSearchKey) {
+func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, key SearchKey) {
 	if key.Key != qk.searchkey.Key {
 		qk.view.Clear()
 		qk.cmd_search_key = ""
@@ -775,7 +777,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	// qk.open_index(qk.view.GetCurrentItem())
 }
 
-func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lspcore.SymolSearchKey) {
+func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key SearchKey) {
 	if qk.grep != nil {
 		qk.grep.close()
 	}
@@ -790,7 +792,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key lsp
 	qk.view.Clear()
 	qk.view.SetCurrentItem(-1)
 	qk.cmd_search_key = ""
-	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), Refs)
+	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), &qk.searchkey, Refs, true)
 	qk.data.go_build_listview_data()
 	tree := qk.data.build_flextree_data(10)
 	data := tree.ListString()

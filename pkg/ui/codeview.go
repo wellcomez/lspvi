@@ -397,8 +397,11 @@ func NewCodeView(main MainService) *CodeView {
 func (main *mainui) qf_grep_word(opt QueryOption) {
 	main.quickview.view.Clear()
 	rightmenu_select_text := opt.Query
-	key := lspcore.SymolSearchKey{
-		Key: rightmenu_select_text,
+	key := SearchKey{
+		&lspcore.SymolSearchKey{
+			Key: rightmenu_select_text,
+		},
+		&opt,
 	}
 	main.ActiveTab(view_quickview, false)
 	main.quickview.UpdateListView(data_grep_word, []ref_with_caller{}, key)

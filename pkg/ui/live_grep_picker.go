@@ -289,7 +289,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 		debug.DebugLog(livegreptag, "start to trelist")
 		defer debug.DebugLog(livegreptag, "end to treelist")
 		main := grepx.main
-		qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), Refs)
+		qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), &SearchKey{&lspcore.SymolSearchKey{Key: grep.key}, &grep.query_option}, Refs, false)
 		if grepx.tmp_quick_data != nil {
 			debug.DebugLog(livegreptag, "tmp_quick_data", grepx.tmp_quick_data.abort)
 			grepx.tmp_quick_data.abort = true
@@ -538,9 +538,8 @@ func to_ref_caller(key string, o *grep.GrepOutput) ref_with_caller {
 func (pk livewgreppicker) Save() {
 	Result := search_reference_result{}
 	data := qf_history_data{Type: data_grep_word,
-		Key:          lspcore.SymolSearchKey{Key: pk.impl.key},
-		Date:         time.Now().Unix(),
-		SearchOption: pk.impl.last,
+		Key:  SearchKey{&lspcore.SymolSearchKey{Key: pk.impl.key}, &pk.impl.last},
+		Date: time.Now().Unix(),
 	}
 	Result.Refs = append(Result.Refs, pk.impl.result.data...)
 	data.Result = Result
