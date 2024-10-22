@@ -5,6 +5,11 @@ class class_c {
 public:
   class_c() {}
   void run_class_c();
-  void call_1() {}
-  void call_2() {call_1();}
-};
+  int  run_class_1(int a,int c){
+	return 0;  
+  }
+  void call_1(int a,int b) {}
+  void call_2() { 
+  	call_1(1,2);
+  }  
+}  
