@@ -129,7 +129,7 @@ func (k *opendelay) OnKey(filename string, line int) {
 	// k.line = line
 	k.st = st
 	go func() {
-		<-time.After(time.Microsecond * 100)
+		<-time.After(time.Millisecond* 100)
 		if k.st != st {
 			debug.DebugLog("openprev", "skip", filename, line)
 			return
