@@ -476,32 +476,7 @@ func new_quikview(main *mainui) *quick_view {
 		cq:        NewCodeOpenQueue(nil, main),
 	}
 
-	// ret.Flex = layout
 	ret.right_context.qk = ret
-	// view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-	// 	is_rightclick := (action == tview.MouseRightClick)
-	// 	menu := ret.menu
-	// 	action, event = menu.handle_mouse(action, event)
-	// 	if ret.menu.visible && is_rightclick {
-	// 		_, y, _, _ := view.GetRect()
-	// 		index := (menu.MenuPos.y - y)
-	// 		log.Println("index in list:", index)
-	// 		view.SetCurrentItem(index)
-	// 	}
-	// 	return action, event
-	// })
-	// view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-	// 	ch := event.Rune()
-	// 	if ch == 'j' || event.Key() == tcell.KeyDown {
-	// 		ret.go_next()
-	// 	} else if ch == 'k' || event.Key() == tcell.KeyUp {
-	// 		ret.go_prev()
-	// 	} else {
-	// 		return event
-	// 	}
-	// 	return nil
-	// })
-	// view.SetSelectedFunc(ret.selection_handle)
 
 	ret.menuitem = []context_menu_item{
 		{item: cmditem{cmd: cmdactor{desc: "Open "}}, handle: func() {
