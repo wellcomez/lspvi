@@ -257,18 +257,21 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		})
 	}
 	complete.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		if param.Result != nil && len(param.Result.Document) == len(cl.Items) {			text := param.Result.Document[index]
-			complete.document.Load(text, complete.filename())
-		} else if index < len(cl.Items) {
-			v := cl.Items[index]
-			var text = []string{
-				v.Label,
-				v.Detail}
-			var doc lspcore.Document
-			if doc.Parser(v.Documentation) == nil {
-				text = append(text, "//"+doc.Value)
+		if index < len(cl.Items) {
+			if param.Result != nil && len(param.Result.Document) == len(cl.Items) {
+				text := param.Result.Document[index]
+				complete.document.Load(text, complete.filename())
+			} else {
+				v := cl.Items[index]
+				var text = []string{
+					v.Label,
+					v.Detail}
+				var doc lspcore.Document
+				if doc.Parser(v.Documentation) == nil {
+					text = append(text, "//"+doc.Value)
+				}
+				complete.document.Load(strings.Join(text, "\n"), complete.filename())
 			}
-			complete.document.Load(strings.Join(text, "\n"), complete.filename())
 		}
 	})
 	complete.height = min(10, len(cl.Items))
