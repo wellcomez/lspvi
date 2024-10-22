@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
@@ -35,14 +36,30 @@ func (pk *workspace_query_picker) name() string {
 	return "workspace symbol"
 }
 
-func (pk *workspace_query_picker) on_query_ok(sym []lsp.SymbolInformation) {
+func (pk *workspace_query_picker) on_query_ok(query string, arg []lsp.SymbolInformation) {
+	if len(arg) == 0 {
+		return
+	}
 	pk.impl.parent.app.QueueUpdateDraw(func() {
+		opt := fzf.DefaultOptions()
+		opt.Fuzzy = true
+		ss := []string{}
+		for _, v := range arg {
+			ss = append(ss, v.Name)
+		}
+		fzf := fzf.New(ss, opt)
+		fzf.Search(query)
+		result := <-fzf.GetResultChannel()
 		pk.impl.list.Clear()
 		pk.impl.list.Key = pk.impl.query
-		for i, v := range sym {
-			// a := lspcore.Symbol{
-			// 	SymInfo: v,
-			// }
+		var sym []lsp.SymbolInformation
+		for _, m := range result.Matches {
+			if m.Score < 50{
+				continue
+			}
+			i := m.HayIndex
+			v := arg[i]
+			sym =append(sym, v)
 			index := i
 			filename := v.Location.URI.AsPath().String()
 			var fg tcell.Color
@@ -52,11 +69,21 @@ func (pk *workspace_query_picker) on_query_ok(sym []lsp.SymbolInformation) {
 					fg, _, _ = style.Decompose()
 				}
 			}
+			name := convert_string_colortext(m.Positions, v.Name, fg, tcell.ColorYellow)
 			colors := []colortext{
 				{fmt.Sprintf("%-10s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", "")), fg},
-				{fmt.Sprintf("%-30s ", strings.TrimLeft(v.Name, " \t")), fg},
-				{filepath.Base(filename), 0},
+				// {fmt.Sprintf("%-30s ", v.Name), fg},
 			}
+			colors = append(colors, name...)
+			if n := 30 - len(v.Name); n > 0 {
+				colors = append(colors, colortext{
+					strings.Repeat(" ", n), 0,
+				})
+			}
+			colors = append(colors, colortext{" ", 0})
+			file := colortext{filepath.Base(filename), 0}
+			colors = append(colors, file)
+
 			pk.impl.list.AddColorItem(colors, nil, func() {
 				sym := sym[index]
 				main := pk.impl.parent.main
@@ -84,7 +111,7 @@ func (pk *workspace_query_picker) UpdateQuery(query string) {
 	go func() {
 		symbol, _ := pk.impl.symbol.WorkspaceQuery(query)
 		if pk.impl.query == query {
-			pk.on_query_ok(symbol)
+			pk.on_query_ok(query, symbol)
 		}
 	}()
 }
