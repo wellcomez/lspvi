@@ -156,22 +156,13 @@ func (grep *Gorep) Report(chans *channelSet) {
 					// decoStr := grep.pattern.ReplaceAllString(msg.line, accent)
 					a := GrepOutput{
 						// destor: decoStr,
-						GrepInfo: &GrepInfo{
-							LineNumber: msg.LineNumber,
-							Line:       msg.Line,
-							Fpath:      msg.Fpath,
-							Matched:    msg.Matched,
-						},
+						GrepInfo:     &msg,
 						content_type: FILE_TYPE,
 					}
 					chPrint <- a
 				} else { // binary file
 					a := GrepOutput{
-						GrepInfo: &GrepInfo{
-							LineNumber: msg.LineNumber,
-							Line:       msg.Line,
-							Fpath:      msg.Fpath,
-						},
+						GrepInfo:     &msg,
 						content_type: BINARY_TYPE,
 					}
 					chPrint <- a
@@ -349,7 +340,7 @@ func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 			grep.waitMaps.Add(1)
 			go grep.mapsend(path, chans, m)
 		} else if finfo.Type().IsRegular() {
-			chans.grep <- GrepInfo{path, 0, "", 0, false,-1}
+			chans.grep <- GrepInfo{path, 0, "", 0, false, -1}
 		}
 	}
 }
