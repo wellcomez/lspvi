@@ -92,12 +92,12 @@ func (key cmdkey) matched_event(s tcell.EventKey) bool {
 			return false
 		}
 	}
-	if key.Modifiers.Ctrl{
+	if key.Modifiers.Ctrl {
 		if m&tcell.ModCtrl == 0 {
 			return false
 		}
 	}
-	if key.Modifiers.Shift{
+	if key.Modifiers.Shift {
 		if m&tcell.ModShift == 0 {
 			return false
 		}
@@ -140,15 +140,15 @@ func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
 	}, actor}
 }
 func (actor cmditem) Ctrl() cmditem {
-	actor.Key.Modifiers.Ctrl= true
+	actor.Key.Modifiers.Ctrl = true
 	return actor
 }
 func (actor cmditem) Alt() cmditem {
-	actor.Key.Modifiers.Alt= true
+	actor.Key.Modifiers.Alt = true
 	return actor
 }
 func (actor cmditem) AddShift() cmditem {
-	actor.Key.Modifiers.Shift= true
+	actor.Key.Modifiers.Shift = true
 	return actor
 }
 
@@ -210,10 +210,10 @@ func (cmd cmdkey) displaystring() string {
 	if cmd.Modifiers.Shift {
 		t = append(t, "Shift")
 	}
-	if cmd.Modifiers.Alt  {
+	if cmd.Modifiers.Alt {
 		t = append(t, "Alt")
 	}
-	if cmd.Modifiers.Ctrl{
+	if cmd.Modifiers.Ctrl {
 		t = append(t, "Ctrl")
 	}
 	if cmd.CtrlW {
@@ -226,9 +226,9 @@ func (cmd cmdkey) displaystring() string {
 	case cmd_key_escape:
 		t = append(t, "escape")
 	case cmd_key_tcell_key:
-		return tcell.KeyNames[cmd.TCellKey]
+		t = append(t, tcell.KeyNames[cmd.TCellKey])
 	case cmd_key_rune:
-		return fmt.Sprintf("%c", cmd.Rune)
+		t = append(t, fmt.Sprintf("%c", cmd.Rune))
 	case cmd_key_leader:
 		t = append(t, "space")
 	}
