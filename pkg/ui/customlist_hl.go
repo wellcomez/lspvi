@@ -35,34 +35,34 @@ func (line *colorstring) Sprintf(format string, v ...any) {
 	for {
 		v_index := strings.Index(p, "%v")
 		if v_index > 0 {
-			line.add(fmt.Sprintf(p[:v_index], param[v_index]), 0)
+			line.add_string_color(fmt.Sprintf(p[:v_index], param[v_index]), 0)
 			idx++
 			x := param[v_index]
-			switch v:=x.(type) {
+			switch v := x.(type) {
 			case colortext:
 				line.add_color_text(v)
 			case colorstring:
 				line.add_color_text_list(v.line)
 			default:
-				line.add(fmt.Sprintf("%v",x),0)
-				debug.ErrorLog("fmt_color_string %v",v)
+				line.add_string_color(fmt.Sprintf("%v", x), 0)
+				debug.ErrorLog("fmt_color_string %v", v)
 			}
 			idx++
 			p = p[v_index+2:]
 		} else {
-			line.add( fmt.Sprintf(p,param[idx:]...),0)
+			line.add_string_color(fmt.Sprintf(p, param[idx:]...), 0)
 			break
 		}
 	}
 
 }
 func (line *colorstring) add_color_text(v colortext) *colorstring {
-	return line.add(v.text, v.color)
+	return line.add_string_color(v.text, v.color)
 }
 func (line *colorstring) add_color_text_list(s []colortext) *colorstring {
 	line.line = append(line.line, s...)
 	for _, v := range s {
-		line.add(v.text, v.color)
+		line.add_string_color(v.text, v.color)
 	}
 	return line
 }
@@ -71,7 +71,10 @@ func (line *colorstring) pepend(s string, color tcell.Color) *colorstring {
 	line.result = fmt_color_string(s, color) + line.result
 	return line
 }
-func (line *colorstring) add(s string, color tcell.Color) *colorstring {
+func (line *colorstring) a(s string) *colorstring {
+	return line.add_string_color(s, 0)
+}
+func (line *colorstring) add_string_color(s string, color tcell.Color) *colorstring {
 	line.line = append(line.line, colortext{s, color})
 	line.result = line.result + fmt_color_string(s, color)
 	return line

@@ -170,7 +170,7 @@ func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_w
 	// result := ""
 	line := &colorstring{}
 	if parent {
-		line.add(fmt.Sprintf("%3d. %s", lineno, list_text), 0)
+		line.add_string_color(fmt.Sprintf("%3d. %s", lineno, list_text), 0)
 		if len(tree.children) > 0 {
 			if !tree.expand {
 				line.pepend(fmt.Sprintf("%c", IconCollapse), color)
@@ -181,7 +181,7 @@ func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_w
 			line.pepend(" ", 0)
 		}
 	} else {
-		line.add(fmt.Sprintf(" %s", list_text), 0)
+		line.add_string_color(fmt.Sprintf(" %s", list_text), 0)
 	}
 	return line
 }

@@ -234,8 +234,8 @@ func set_list_item(v SymbolFzf, prefix int, posistion []int) *colorstring {
 	if posistion != nil {
 		// s := fzf_color(posistion, v.sym.SymInfo.Name)
 		hl := convert_string_colortext(posistion, v.sym.SymInfo.Name, cc, tcell.ColorGreenYellow)
-		return ret.add(fmt.Sprintf("%s%s ", space, icon), 0).add_color_text_list(hl)
+		return ret.add_string_color(fmt.Sprintf("%s%s ", space, icon), 0).add_color_text_list(hl)
 	} else {
-		return ret.add(fmt.Sprintf("%s%s %s", space, icon, v.sym.SymInfo.Name), cc)
+		return ret.add_string_color(fmt.Sprintf("%s%s %s", space, icon, v.sym.SymInfo.Name), cc)
 	}
 }
