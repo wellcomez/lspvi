@@ -143,9 +143,8 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 			}
 		}
 	}
-	if len(tree.text) == 0 {
+	if tree.color_string == nil {
 		result := tree.get_treenode_text(qk, caller, caller_context, lineno)
-		tree.text = result.result
 		tree.color_string = result
 	} else {
 		debug.DebugLog(tag_quickview, "text not empty")
@@ -232,11 +231,11 @@ func (quickview_data *quick_view_data) BuildListString(root string) []*colorstri
 }
 
 type list_tree_node struct {
-	ref_index    int
-	expand       bool
-	parent       bool
-	children     []list_tree_node
-	text         string
+	ref_index int
+	expand    bool
+	parent    bool
+	children  []list_tree_node
+	// text         string
 	color_string *colorstring
 	lspignore    bool
 	filename     string
@@ -307,7 +306,7 @@ func (v *FlexTreeNode) ListItem() (ret []string) {
 	m := v.HasMore()
 	lastIndex := len(v.child) - 1
 	for i, c := range v.child {
-		s := c.data.text
+		s := c.data.color_string.ColorText()
 		if i == lastIndex && m {
 			if len(s) > 1 {
 				s = fmt_color_string(down, tcell.ColorRed) + s
@@ -322,7 +321,7 @@ func (v *FlexTreeNode) ListItem() (ret []string) {
 }
 
 func (v FlexTreeNode) RootString() string {
-	ss := v.data.text
+	ss := v.data.color_string.ColorText()
 	if len(v.child) > 0 {
 		ss = strings.Replace(ss, "▶", "▼", 1)
 	} else {
