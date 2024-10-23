@@ -1791,7 +1791,7 @@ func (code *CodeView) Format() {
 				check := code.NewChangeChecker()
 				defer check.End()
 				// continue
-				format2(ret, code)
+				format3(ret, code)
 			})
 		}
 	}()
