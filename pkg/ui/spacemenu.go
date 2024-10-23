@@ -32,14 +32,18 @@ type cmdactor struct {
 }
 
 func (key cmdkey) matched_event(s tcell.EventKey) bool {
+	m := s.Modifiers()
 	if key.Alt {
-		m := s.Modifiers()
 		if m&tcell.ModAlt == 0 {
 			return false
 		}
 	}
+	if key.Ctrl {
+		if m&tcell.ModCtrl == 0 {
+			return false
+		}
+	}
 	if key.Shift {
-		m := s.Modifiers()
 		if m&tcell.ModShift == 0 {
 			return false
 		}
@@ -82,6 +86,10 @@ func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
 		Type:     cmd_key_tcell_key,
 		TCellKey: key,
 	}, actor}
+}
+func (actor cmditem) Ctrl() cmditem {
+	actor.Key.Ctrl = true
+	return actor
 }
 func (actor cmditem) Alt() cmditem {
 	actor.Key.Alt = true
@@ -134,6 +142,7 @@ type cmdkey struct {
 	EventName string
 	Shift     bool
 	Alt       bool
+	Ctrl      bool
 	Rune      rune
 	TCellKey  tcell.Key
 	CtrlW     bool
