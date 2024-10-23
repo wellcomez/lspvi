@@ -106,8 +106,8 @@ func layout_list_edit(list tview.Primitive, code tview.Primitive, input *tview.I
 
 type prev_picker_impl struct {
 	// listview         *tview.List
-	listcustom       *customlist
-	codeprev         CodeEditor
+	listcustom *customlist
+	codeprev   CodeEditor
 	// cq               *CodeOpenQueue
 	parent           *fzfmain
 	list_click_check *GridListClickCheck
@@ -129,7 +129,7 @@ func (k *opendelay) OnKey(filename string, line int) {
 	// k.line = line
 	k.st = st
 	go func() {
-		<-time.After(time.Millisecond* 100)
+		<-time.After(time.Millisecond * 100)
 		if k.st != st {
 			debug.DebugLog("openprev", "skip", filename, line)
 			return
@@ -442,7 +442,7 @@ func (pk *refpicker) loadlist(data []*list_tree_node) {
 	listview.Key = pk.impl.key
 	for i := range data {
 		v := data[i]
-		listview.AddItem(v.text, "", nil)
+		listview.AddColorItem(v.color_string.line, nil, nil)
 	}
 	pk.impl.fzf = new_fzf_on_list(listview, true)
 }
