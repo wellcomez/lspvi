@@ -175,7 +175,7 @@ func (c *workspace_picker) name() string {
 
 func new_workspace_picker(v *fzfmain) *workspace_picker {
 	impl := &wk_picker_impl{
-		new_fzflist_impl(nil, v),
+		new_fzflist_impl(v),
 	}
 	gload_workspace_list.Load()
 	ret := &workspace_picker{impl: impl}

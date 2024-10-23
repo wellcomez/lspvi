@@ -63,7 +63,7 @@ func (c *color_picker) name() string {
 
 func new_color_picker(v *fzfmain) *color_picker {
 	impl := &color_pick_impl{
-		new_fzflist_impl(nil, v),
+		new_fzflist_impl(v),
 		[]color_theme_file{},
 	}
 	ret := &color_picker{impl: impl, main: v.main}

@@ -1595,7 +1595,7 @@ func (code *CodeView) new_bookmark_editor_cb(cb func(string)) bookmark_edit {
 	var line = code.view.Cursor.Loc.Y + 1
 	line1 := code.view.Buf.Line(line - 1)
 	ret := bookmark_edit{
-		fzflist_impl: new_fzflist_impl(nil, dlg),
+		fzflist_impl: new_fzflist_impl(dlg),
 		cb:           cb,
 	}
 	ret.fzflist_impl.list.AddItem(line1, code.Path(), nil)

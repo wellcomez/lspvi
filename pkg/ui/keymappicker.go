@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 )
 
@@ -66,7 +65,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 		keymaplist = append(keymaplist, fmt.Sprintf("%-20s %s", v.Key.displaystring(), v.Cmd.desc))
 	}
 
-	x := new_fzflist_impl(nil, v)
+	x := new_fzflist_impl(v)
 
 	ret := keymap_picker{
 		impl: &keymap_picker_impl{
@@ -93,7 +92,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	return ret
 }
 
-func new_fzflist_impl(fzf *fzf.Fzf, v *fzfmain) *fzflist_impl {
+func new_fzflist_impl(v *fzfmain) *fzflist_impl {
 	x := &fzflist_impl{
 		parent: v,
 		list:   new_customlist(false),

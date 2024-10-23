@@ -335,7 +335,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case vi_pagedown:
-		return cmdactor{id, "PageUp", func() bool {
+		return cmdactor{id, "PageDown", func() bool {
 			m.current_editor().action_page_down(true)
 			return true
 		}}

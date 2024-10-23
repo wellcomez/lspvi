@@ -46,7 +46,7 @@ type DirWalk struct {
 var global_walk *filewalk.Filewalk
 
 func NewDirWalk(root string, v *fzfmain) *DirWalk {
-	impl := new_fzflist_impl(nil, v)
+	impl := new_fzflist_impl(v)
 	ret := &DirWalk{
 		impl,
 		nil,
