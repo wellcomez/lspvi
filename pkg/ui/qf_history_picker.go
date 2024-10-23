@@ -6,7 +6,6 @@ package mainui
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 )
@@ -46,16 +46,10 @@ func (pk qk_history_picker) name() string {
 
 // UpdateQuery implements picker.
 func (pk qk_history_picker) UpdateQuery(query string) {
-	impl := pk.impl
-	fzf := impl.fzf
-	fzf.Search(query)
-	pk.list.Clear()
 	pk.list.Key = query
-	pk.impl.selected = func(dataindex int, listindex int) {
-		pk.parent.hide()
-		pk.open_in_qf()
-	}
-	pk.impl.OnSearch(query, true)
+	pk.impl.OnSearch(query, false)
+	UpdateColorFzfList(pk.impl.fzf_on_listview)
+
 }
 func (pk *qk_history_picker) grid() tview.Primitive {
 	return pk.flex(pk.parent.input, 1)
@@ -63,7 +57,6 @@ func (pk *qk_history_picker) grid() tview.Primitive {
 func (pk qk_history_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.list.InputHandler()
 	handle(event, setFocus)
-	pk.updateprev()
 }
 func (pk qk_history_picker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return pk.handle_key_override
@@ -120,20 +113,21 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 		},
 		list: list,
 	}
-	x.on_list_selected = func() {
-		ret.updateprev()
-	}
+	fzfdata := []string{}
 	for _, value := range keymaplist {
 		// index := i
-		list.AddItem(value, "", func() {
-			ret.open_in_qf()
-			ret.parent.hide()
-			// log.Println(,index)
-		})
+		fzfdata = append(fzfdata, value)
+		list.AddItem(value, "", nil)
 	}
-	ret.impl.fzf_on_listview = new_fzf_on_list(list, true)
-	ret.updateprev()
-
+	ret.impl.fzf_on_listview = new_fzf_on_list_data(list, fzfdata, true)
+	fzf := ret.impl.fzf_on_listview
+	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		ret.open_in_qf(fzf.get_data_index(i))
+		ret.parent.hide()
+	})
+	list.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
+		ret.updateprev(fzf.get_data_index(i))
+	})
 	return ret
 }
 
@@ -165,8 +159,7 @@ func load_qf_history(main MainService) ([]qf_history_data, []string) {
 	return keys, keymaplist
 }
 
-func (qk *qk_history_picker) open_in_qf() {
-	i := qk.impl.get_data_index(-1)
+func (qk *qk_history_picker) open_in_qf(i int) {
 	if i < 0 {
 		return
 	}
@@ -212,13 +205,13 @@ func (main *mainui) open_in_tabview(item qf_history_data) {
 			if err == nil {
 				buf, err := os.ReadFile(fielname)
 				if err != nil {
-					log.Println("open_in_tab", fielname, err)
+					debug.ErrorLog("open_in_tab", fielname, err)
 					return
 				}
 				var task lspcore.CallInTask
 				err = json.Unmarshal(buf, &task)
 				if err != nil {
-					log.Println("open_in_tab Unmarshal", fielname, err)
+					debug.ErrorLog("open_in_tab Unmarshal", fielname, err)
 					return
 				}
 				main.callinview.updatetask(&task)
@@ -228,8 +221,7 @@ func (main *mainui) open_in_tabview(item qf_history_data) {
 	}
 }
 
-func (qk *qk_history_picker) updateprev() {
-	index := qk.impl.get_data_index(-1)
+func (qk *qk_history_picker) updateprev(index int) {
 	if index < 0 {
 		return
 	}
@@ -258,13 +250,13 @@ func (qk *qk_history_picker) updateprev() {
 			if err == nil {
 				buf, err := os.ReadFile(fielname)
 				if err != nil {
-					log.Println("updateprev", fielname, err)
+					debug.ErrorLog("updateprev", fielname, err)
 					return
 				}
 				var task lspcore.CallInTask
 				err = json.Unmarshal(buf, &task)
 				if err != nil {
-					log.Println("updateprev Unmarshal", fielname, err)
+					debug.ErrorLog("updateprev Unmarshal", fielname, err)
 					return
 				}
 				content := []string{}
