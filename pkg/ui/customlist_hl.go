@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type colortext struct {
@@ -26,7 +27,39 @@ type colorstring struct {
 	result string
 }
 
-func (line *colorstring) add2(s []colortext) *colorstring {
+func (line *colorstring) Sprintf(format string, v ...any) {
+	var param []any = []any{}
+	param = append(param, v...)
+	p := format
+	idx := 0
+	for {
+		v_index := strings.Index(p, "%v")
+		if v_index > 0 {
+			line.add(fmt.Sprintf(p[:v_index], param[v_index]), 0)
+			idx++
+			x := param[v_index]
+			switch v:=x.(type) {
+			case colortext:
+				line.add_color_text(v)
+			case colorstring:
+				line.add_color_text_list(v.line)
+			default:
+				line.add(fmt.Sprintf("%v",x),0)
+				debug.ErrorLog("fmt_color_string %v",v)
+			}
+			idx++
+			p = p[v_index+2:]
+		} else {
+			line.add( fmt.Sprintf(p,param[idx:]...),0)
+			break
+		}
+	}
+
+}
+func (line *colorstring) add_color_text(v colortext) *colorstring {
+	return line.add(v.text, v.color)
+}
+func (line *colorstring) add_color_text_list(s []colortext) *colorstring {
 	line.line = append(line.line, s...)
 	for _, v := range s {
 		line.add(v.text, v.color)
