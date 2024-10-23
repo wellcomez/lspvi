@@ -2,8 +2,10 @@ package mainui
 
 import (
 	"fmt"
-	"github.com/gdamore/tcell/v2"
 	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 var command_name = []string{
@@ -139,6 +141,10 @@ func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
 		TCellKey: key,
 	}, actor}
 }
+func (actor cmditem) Global() cmditem {
+	actor.Key.global = true
+	return actor
+}
 func (actor cmditem) Ctrl() cmditem {
 	actor.Key.Modifiers.Ctrl = true
 	return actor
@@ -203,6 +209,61 @@ type cmdkey struct {
 	// EventName string
 	Modifiers Modifiers
 	CtrlW     bool
+	global    bool
+}
+
+func (cmd *cmdkey) Parse(a string) (err error) {
+	seq := strings.Split(a, "+")
+
+	if len(seq) == 0 {
+		err = fmt.Errorf("empty key")
+		return
+	}
+	cmd.Type = cmd_key_command
+	switch seq[0] {
+	case "menu":
+		cmd.Type = cmd_key_menu
+	case "space":
+		cmd.Type = cmd_key_leader
+	case "escape":
+		cmd.Type = cmd_key_escape
+	default:
+		a := seq[0]
+		parese_key(a, cmd)
+	}
+	for i := 1; i < len(seq); i++ {
+		parese_key(seq[i], cmd)
+	}
+	return
+}
+
+func parese_key(a string, cmd *cmdkey) bool {
+	for k, v := range tcell.KeyNames {
+		if v == a {
+			cmd.TCellKey = k
+			return true
+		}
+	}
+	var r = []rune(a)
+	if len(r) == 1 {
+		cmd.Rune = r[0]
+		cmd.Type = cmd_key_rune
+		return true
+	}
+	switch a {
+	case "CtrlW":
+		cmd.CtrlW = true
+	case "Shift":
+		cmd.Modifiers.Shift = true
+	case "Ctrl":
+		cmd.Modifiers.Ctrl = true
+	case "Alt":
+		cmd.Modifiers.Alt = true
+	default:
+		debug.WarnLog("unknown key", a)
+		return false
+	}
+	return true
 }
 
 func (cmd cmdkey) displaystring() string {
@@ -276,4 +337,34 @@ func (m mainui) save_keyboard_config() {
 	}
 	global_config.Keyboard = UserCommands
 	global_config.Save()
+}
+
+func (config LspviConfig) ParseKeyBind(m *mainui) (menu, global, escape, lead []cmditem) {
+	for k := range config.Keyboard {
+		v := config.Keyboard[k]
+		for id, name := range command_name {
+			if name == k {
+				v.command = command_id(id)
+				for _, k := range v.Bind {
+					actor := get_cmd_actor(m, v.command)
+					key := cmdkey{}
+					key.Parse(k.Keys)
+					cmd := cmditem{Cmd: actor, Key: key}
+					if key.global {
+						global = append(global, cmd)
+					} else {
+						switch key.Type {
+						case cmd_key_menu:
+							menu = append(menu, cmd)
+						case cmd_key_escape:
+							escape = append(escape, cmd)
+						case cmd_key_leader:
+							lead = append(lead, cmd)
+						}
+					}
+				}
+			}
+		}
+	}
+	return
 }

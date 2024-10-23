@@ -599,7 +599,7 @@ func (main *mainui) key_map_leader() []cmditem {
 	return sss
 }
 func (m *mainui) global_key_map() []cmditem {
-	return []cmditem{
+	ret := []cmditem{
 		get_cmd_actor(m, handle_ctrl_c).tcell_key(tcell.KeyCtrlC),
 		get_cmd_actor(m, handle_ctrl_v).tcell_key(tcell.KeyCtrlV),
 		get_cmd_actor(m, goto_back).runne('o').Ctrl(),
@@ -611,6 +611,10 @@ func (m *mainui) global_key_map() []cmditem {
 		get_cmd_actor(m, zoomout).runne('+'),
 		get_cmd_actor(m, zoomin).runne('-'),
 	}
+	for i := range ret {
+		ret[i].Key.global = true
+	}
+	return ret
 }
 
 /*
