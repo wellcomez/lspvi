@@ -605,6 +605,7 @@ func (m *mainui) global_key_map() []cmditem {
 		get_cmd_actor(m, goto_back).enven_name_key("Ctrl+O"),
 		get_cmd_actor(m, goto_forward).enven_name_key("Rune[O]"),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
+		get_cmd_actor(m, open_picker_help).runne('p').Alt(),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTab),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTAB),
 		get_cmd_actor(m, zoomout).enven_name_key("Rune[+]"),
