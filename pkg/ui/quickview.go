@@ -374,7 +374,7 @@ func (fzf *fzf_on_listview) refresh_list() {
 	}
 	fzf.listview.SetCurrentItem(0)
 }
-func fzf_color_pos(colors []int, s string) []Pos {
+func fzf_color_pos(colors []int) []Pos {
 	sort.Slice(colors, func(i, j int) bool {
 		return colors[i] < colors[j]
 	})
@@ -394,22 +394,23 @@ func fzf_color_pos(colors []int, s string) []Pos {
 	}
 	return colors2
 }
-func convert_string_colortext(colors []int, s string, normal tcell.Color, hl tcell.Color) (ss []colortext) {
+func convert_string_colortext(colors []int, ssss string, normal tcell.Color, hl tcell.Color) (ss []colortext) {
 	if hl == 0 {
 		hl = tcell.ColorYellow
 	}
+	s := []rune(ssss)
 	if len(colors) <= len(s) {
-		var colors2 = fzf_color_pos(colors, s)
+		var colors2 = fzf_color_pos(colors)
 		begin := 0
 		for _, v := range colors2 {
 			normal_text := s[begin:v.X]
-			ss = append(ss, colortext{normal_text, normal})
+			ss = append(ss, colortext{string(normal_text), normal})
 			x := s[v.X:v.Y]
-			ss = append(ss, colortext{x, hl})
+			ss = append(ss, colortext{string(x), hl})
 			begin = v.Y
 		}
 		if begin < len(s) {
-			ss = append(ss, colortext{text: s[begin:]})
+			ss = append(ss, colortext{text: string(s[begin:])})
 		}
 	}
 	return
@@ -443,24 +444,25 @@ func convert_string_colortext(colors []int, s string, normal tcell.Color, hl tce
 //		}
 //		return s
 //	}
-func fzf_color(colors []int, s string) string {
+func fzf_color(colors []int, args string) (ret string) {
 	ss := []string{}
-	var colors2 = fzf_color_pos(colors, s)
+	ret = args
+	xxx := []rune(args)
+	var colors2 = fzf_color_pos(colors)
 	begin := 0
 	for _, v := range colors2 {
-		ss = append(ss, s[begin:v.X])
-		x := s[v.X:v.Y]
-		x = fmt_color_string(x, tcell.ColorYellow)
-		ss = append(ss, x)
+		ss = append(ss, string(xxx[begin:v.X]))
+		x := fmt_color_string(string(xxx[v.X:v.Y]), tcell.ColorYellow)
+		ss = append(ss, string([]rune(x)))
 		begin = v.Y
 	}
-	if begin < len(s) {
-		ss = append(ss, s[begin:])
+	if begin < len(args) {
+		ss = append(ss, string(xxx[begin:]))
 	}
 	if len(ss) > 0 {
-		s = strings.Join(ss, "")
+		ret = strings.Join(ss, "")
 	}
-	return s
+	return
 }
 
 // new_quikview
