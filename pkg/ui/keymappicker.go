@@ -41,7 +41,8 @@ func (pk keymap_picker) UpdateQuery(query string) {
 	fzf := impl.fzf
 	impl.list.Clear()
 	impl.list.Key = query
-	fzf.OnSearch(query, true)
+	fzf.OnSearch(query, false)
+	UpdateColorFzfList(fzf)
 }
 
 func (pk keymap_picker) newMethod(index int) {
@@ -75,16 +76,20 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 		},
 	}
 	list := ret.impl.list
+	fzfdata := []string{}
 	for i, v := range keymaplist {
 		index := i
+		fzfdata = append(fzfdata, v)
 		list.AddItem(v, "", func() {
 			ret.newMethod(index)
 		})
 	}
-	ret.impl.fzf = new_fzf_on_list(list, true)
-	ret.impl.fzf.selected = func(dataindex int, listindex int) {
+	fzf := new_fzf_on_list_data(list, fzfdata, true)
+	ret.impl.fzf = fzf
+	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		dataindex := fzf.get_data_index(i)
 		ret.newMethod(dataindex)
-	}
+	})
 	return ret
 }
 
