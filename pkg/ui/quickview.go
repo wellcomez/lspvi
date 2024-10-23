@@ -460,7 +460,7 @@ func fzf_color(colors []int, args string) (ret string) {
 		ss = append(ss, string(xxx[begin:]))
 	}
 	if len(ss) > 0 {
-		ret = strings.Join(s, "")
+		ret = strings.Join(ss, "")
 	}
 	return
 }
