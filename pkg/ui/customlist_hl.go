@@ -25,6 +25,7 @@ func fmt_bold_string(s string) string {
 type colorstring struct {
 	line   []colortext
 	result string
+	text   string
 }
 
 func (line *colorstring) Sprintf(format string, v ...any) {
@@ -56,6 +57,15 @@ func (line *colorstring) Sprintf(format string, v ...any) {
 	}
 
 }
+func (line *colorstring) plaintext() (ret string) {
+	if len(line.text) == 0 {
+		for _, v := range line.line {
+			ret = ret + v.text
+		}
+		line.text = ret
+	}
+	return line.text
+}
 func (line *colorstring) add_color_text(v colortext) *colorstring {
 	return line.add_string_color(v.text, v.color)
 }
@@ -67,16 +77,20 @@ func (line *colorstring) add_color_text_list(s []colortext) *colorstring {
 	return line
 }
 func (line *colorstring) pepend(s string, color tcell.Color) *colorstring {
-	line.line = append([]colortext{{s, color}}, line.line...)
-	line.result = fmt_color_string(s, color) + line.result
+	if len(s) > 0 {
+		line.line = append([]colortext{{s, color}}, line.line...)
+		line.result = fmt_color_string(s, color) + line.result
+	}
 	return line
 }
 func (line *colorstring) a(s string) *colorstring {
 	return line.add_string_color(s, 0)
 }
 func (line *colorstring) add_string_color(s string, color tcell.Color) *colorstring {
-	line.line = append(line.line, colortext{s, color})
-	line.result = line.result + fmt_color_string(s, color)
+	if len(s) > 0 {
+		line.line = append(line.line, colortext{s, color})
+		line.result = line.result + fmt_color_string(s, color)
+	}
 	return line
 }
 func fmt_color_string(s string, color tcell.Color) string {

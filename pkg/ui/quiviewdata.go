@@ -146,6 +146,7 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 	if len(tree.text) == 0 {
 		result := tree.get_treenode_text(qk, caller, caller_context, lineno)
 		tree.text = result.result
+		tree.color_string = result
 	} else {
 		debug.DebugLog(tag_quickview, "text not empty")
 	}
@@ -170,7 +171,7 @@ func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_w
 	// result := ""
 	line := &colorstring{}
 	if parent {
-		line.add_string_color(fmt.Sprintf("%3d. %s", lineno, list_text), 0)
+		line.a(fmt.Sprintf("%3d. ", lineno)).add_color_text_list(list_text.line)
 		if len(tree.children) > 0 {
 			if !tree.expand {
 				line.pepend(fmt.Sprintf("%c", IconCollapse), color)
@@ -181,7 +182,7 @@ func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_w
 			line.pepend(" ", 0)
 		}
 	} else {
-		line.add_string_color(fmt.Sprintf(" %s", list_text), 0)
+		line.add_color_text_list(list_text.line)
 	}
 	return line
 }
@@ -193,8 +194,8 @@ func (quickview_data quick_view_data) need_async_open() bool {
 	return !quickview_data.ignore_symbol_resolv
 }
 
-func (quickview_data *quick_view_data) BuildListString(root string) []string {
-	var data = []string{}
+func (quickview_data *quick_view_data) BuildListString(root string) []*colorstring {
+	var data = []*colorstring{}
 	var lspmgr *lspcore.LspWorkspace = quickview_data.main.Lspmgr()
 	changed := false
 	for i, caller := range quickview_data.Refs.Refs {
@@ -217,11 +218,12 @@ func (quickview_data *quick_view_data) BuildListString(root string) []string {
 			}
 		}
 		secondline := caller.ListItem(root, true, nil)
-		if len(secondline) == 0 {
+		if len(secondline.plaintext()) == 0 {
 			continue
 		}
-		x := fmt.Sprintf("%3d. %s", i+1, secondline)
-		data = append(data, x)
+		x := fmt.Sprintf("%3d. ", i+1)
+		secondline.pepend(x, 0)
+		data = append(data, secondline)
 	}
 	if changed {
 		quickview_data.Save()
@@ -230,13 +232,14 @@ func (quickview_data *quick_view_data) BuildListString(root string) []string {
 }
 
 type list_tree_node struct {
-	ref_index int
-	expand    bool
-	parent    bool
-	children  []list_tree_node
-	text      string
-	lspignore bool
-	filename  string
+	ref_index    int
+	expand       bool
+	parent       bool
+	children     []list_tree_node
+	text         string
+	color_string *colorstring
+	lspignore    bool
+	filename     string
 }
 
 func (treeroot *list_view_tree_extend) build_tree(Refs []ref_with_caller) {

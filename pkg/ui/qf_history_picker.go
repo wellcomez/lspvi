@@ -245,7 +245,11 @@ func (qk *qk_history_picker) updateprev() {
 			data := qkv.tree_to_listemitem()
 			aa := []string{}
 			for _, v := range data {
-				aa = append(aa, v.text)
+				if v.color_string != nil {
+					aa = append(aa, v.color_string.plaintext())
+				} else {
+					aa = append(aa, v.text)
+				}
 			}
 			aa = remove_color(aa)
 			qk.codeprev.LoadBuffer(fileloader.NewDataFileLoad([]byte(strings.Join(aa, "\n")), name))

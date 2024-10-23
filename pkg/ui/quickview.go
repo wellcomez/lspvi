@@ -414,34 +414,35 @@ func convert_string_colortext(colors []int, s string, normal tcell.Color, hl tce
 	}
 	return
 }
-// func fzf_color_with_color(colors []int, s string, normal tcell.Color, hl tcell.Color) string {
-// 	if hl == 0 {
-// 		hl = tcell.ColorYellow
-// 	}
-// 	if len(colors) < len(s) {
-// 		ss := []string{}
-// 		var colors2 = fzf_color_pos(colors, s)
-// 		begin := 0
-// 		for _, v := range colors2 {
-// 			normal_text := s[begin:v.X]
-// 			if normal != 0 {
-// 				normal_text = fmt_color_string(normal_text, normal)
-// 			}
-// 			ss = append(ss, normal_text)
-// 			x := s[v.X:v.Y]
-// 			x = fmt_color_string(x, hl)
-// 			ss = append(ss, x)
-// 			begin = v.Y
-// 		}
-// 		if begin < len(s) {
-// 			ss = append(ss, s[begin:])
-// 		}
-// 		if len(ss) > 0 {
-// 			s = strings.Join(ss, "")
-// 		}
-// 	}
-// 	return s
-// }
+
+//	func fzf_color_with_color(colors []int, s string, normal tcell.Color, hl tcell.Color) string {
+//		if hl == 0 {
+//			hl = tcell.ColorYellow
+//		}
+//		if len(colors) < len(s) {
+//			ss := []string{}
+//			var colors2 = fzf_color_pos(colors, s)
+//			begin := 0
+//			for _, v := range colors2 {
+//				normal_text := s[begin:v.X]
+//				if normal != 0 {
+//					normal_text = fmt_color_string(normal_text, normal)
+//				}
+//				ss = append(ss, normal_text)
+//				x := s[v.X:v.Y]
+//				x = fmt_color_string(x, hl)
+//				ss = append(ss, x)
+//				begin = v.Y
+//			}
+//			if begin < len(s) {
+//				ss = append(ss, s[begin:])
+//			}
+//			if len(ss) > 0 {
+//				s = strings.Join(ss, "")
+//			}
+//		}
+//		return s
+//	}
 func fzf_color(colors []int, s string) string {
 	ss := []string{}
 	var colors2 = fzf_color_pos(colors, s)
@@ -491,24 +492,33 @@ func new_quikview(main *mainui) *quick_view {
 		}},
 		{item: cmditem{cmd: cmdactor{desc: "Copy"}}, handle: func() {
 			ss := ret.sel.list.selected
-			var data []string
+			var data []*colorstring
 			if ret.data.tree == nil {
 				data = ret.data.BuildListString("")
 			} else {
 				x := ret.data.tree.tree_data_item
 				for _, v := range x {
-					data = append(data, v.text)
+					s := colorstring{}
+					if v.color_string != nil {
+						s.a(v.color_string.plaintext())
+					} else {
+						s.a(v.text)
+					}
+					data = append(data, &s)
 				}
 			}
 			if len(ss) > 0 {
 				sss := data[ss[0]:ss[1]]
-				aa := remove_color(sss)
+				aa := []string{}
+				for _, v := range sss {
+					aa = append(aa, v.plaintext())
+				}
 				data := strings.Join(aa, "\n")
 				main.CopyToClipboard(data)
 				ret.sel.clear()
 				main.app.ForceDraw()
 			} else {
-				main.CopyToClipboard(data[view.GetCurrentItem()])
+				main.CopyToClipboard(data[view.GetCurrentItem()].plaintext())
 			}
 		}},
 	}
@@ -638,13 +648,10 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	// _, _, width, _ := qk.view.GetRect()
 	// caller.width = width
 	secondline := caller.ListItem(global_prj_root, false, nil)
-	if len(secondline) == 0 {
+	if len(secondline.line) == 0 {
 		return
 	}
-	qk.view.AddItem(fmt.Sprintf("%3d. %s", qk.view.GetItemCount()+1, secondline), "", nil)
-	// qk.main.UpdatePageTitle()
-
-	// qk.open_index(qk.view.GetCurrentItem())
+	qk.view.AddItem(secondline.pepend(fmt.Sprintf("%3d. ", qk.view.GetItemCount()+1), 0).result, "", nil)
 }
 
 func (qk *quick_view) new_search(t DateType, key SearchKey) {
@@ -742,7 +749,8 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 	qk.main.Tab().UpdatePageTitle()
 }
 
-func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) string {
+func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with_caller) (ret *colorstring) {
+	ret = &colorstring{}
 	v := caller.Loc
 
 	path := v.URI.AsPath().String()
@@ -753,13 +761,12 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 		// if caller.Childrens > 1 {
 		// 	return fmt.Sprintf("%s %s", path, fmt_color_string(fmt.Sprint(caller.Childrens), tcell.ColorRed))
 		// }
-		return path
+		return ret.a(path)
 	}
 	funcolor := global_theme.search_highlight_color()
 	line := caller.get_code(funcolor)
 	if caller.Caller != nil {
-		c1 := ""
-		x := ""
+		var c1 colortext
 		if prev != nil && (prev.Caller.ClassName == caller.Caller.ClassName && prev.Caller.Name == caller.Caller.Name) {
 			prefix := strings.Repeat(" ", min(len(prev.Caller.Name+prev.Caller.ClassName), 4))
 			// if prev.Caller.ClassName != "" {
@@ -768,14 +775,14 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 			// if prev.Caller.Name != "" {
 			// 	x = strings.Repeat(" ", len(prev.Caller.Name)+2)
 			// }
-			return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, prefix, line)
+			return ret.a(fmt.Sprintf(":%-4d %s ", v.Range.Start.Line+1, prefix)).add_color_text_list(line.line)
 		} else {
 			funcolor := global_theme.search_highlight_color()
 			if len(caller.Caller.ClassName) > 0 {
 				if c, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
 					f, _, _ := c.Decompose()
 					icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindClass)])
-					c1 = fmt_color_string(fmt.Sprint(icon, caller.Caller.ClassName+" > "), f)
+					c1 = colortext{fmt.Sprint(icon, caller.Caller.ClassName+" > "), f}
 				}
 			}
 			kind := caller.Caller.Item.Kind
@@ -794,19 +801,23 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 			callname = strings.TrimLeft(callname, " ")
 			callname = strings.TrimRight(callname, " ")
 			callname = icon + callname
-			x = fmt_color_string(callname+" > ", caller_color)
-			if c1 != "" {
-				return fmt.Sprintf(":%-4d %s%s %s", v.Range.Start.Line+1, c1, x, line)
+			x := colortext{callname + " > ", caller_color}
+			liner := fmt.Sprintf("%-4d ", v.Range.Start.Line)
+			ret.a(liner)
+			if c1.text != "" {
+				return ret.add_color_text(c1).add_color_text(x).a(" ").add_color_text_list(line.line)
+				// return fmt.Sprintf(":%-4d %s%s %s", v.Range.Start.Line+1, c1, x, line)
 			} else {
-				return fmt.Sprintf(":%-4d %s %s", v.Range.Start.Line+1, x, line)
+				return ret.add_color_text(x).a(" ").add_color_text_list(line.line)
 			}
 		}
 	} else {
-		return fmt.Sprintf(":%-4d %s", v.Range.Start.Line+1, strings.TrimLeft(line, "\t "))
+		return ret.a(fmt.Sprintf(":%-4d ", v.Range.Start.Line+1)).add_color_text_list(line.line)
 	}
 }
 
-func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
+func (caller *ref_with_caller) get_code(funcolor tcell.Color) (ret *colorstring) {
+	ret = &colorstring{}
 	lines := caller.lines
 
 	line := ""
@@ -843,10 +854,10 @@ func (caller *ref_with_caller) get_code(funcolor tcell.Color) string {
 			if len(a2) > 0 && a2[0] == '*' {
 				a2 = " " + a2
 			}
-			line = strings.Join([]string{a1, fmt_color_string(a, funcolor), a2}, "")
+			return ret.a(a1).add_string_color(a, funcolor).a(a2)
 		}
 	}
-	return line
+	return ret.a(line)
 }
 
 func (caller *ref_with_caller) LoadLines() *filecache {
