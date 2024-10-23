@@ -155,7 +155,7 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 	return
 }
 
-func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_with_caller, prev *ref_with_caller, lineno int) *color_line {
+func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_with_caller, prev *ref_with_caller, lineno int) *colorstring {
 	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
 	parent := tree.parent
 	root := lspmgr.Wk.Path
@@ -168,7 +168,7 @@ func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_w
 	}
 	list_text := caller.ListItem(root, parent, prev)
 	// result := ""
-	line := &color_line{}
+	line := &colorstring{}
 	if parent {
 		line.add(fmt.Sprintf("%3d. %s", lineno, list_text), 0)
 		if len(tree.children) > 0 {

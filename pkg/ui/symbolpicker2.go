@@ -218,8 +218,8 @@ func (impl *symbol_picker_impl) get_current_item_symbol(i int) *SymbolFzf {
 	return nil
 }
 
-func set_list_item(v SymbolFzf, prefix int, posistion []int) *color_line {
-	var ret = &color_line{}
+func set_list_item(v SymbolFzf, prefix int, posistion []int) *colorstring {
+	var ret = &colorstring{}
 	space := strings.Repeat("\t\t", prefix)
 	icon := v.sym.Icon()
 	query := global_theme

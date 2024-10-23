@@ -21,24 +21,24 @@ func fmt_bold_string(s string) string {
 	return fmt.Sprintf("**%s**", s)
 }
 
-type color_line struct {
+type colorstring struct {
 	line   []colortext
 	result string
 }
 
-func (line *color_line) add2(s []colortext) *color_line {
+func (line *colorstring) add2(s []colortext) *colorstring {
 	line.line = append(line.line, s...)
 	for _, v := range s {
 		line.add(v.text, v.color)
 	}
 	return line
 }
-func (line *color_line) pepend(s string, color tcell.Color) *color_line {
+func (line *colorstring) pepend(s string, color tcell.Color) *colorstring {
 	line.line = append([]colortext{{s, color}}, line.line...)
 	line.result = fmt_color_string(s, color) + line.result
 	return line
 }
-func (line *color_line) add(s string, color tcell.Color) *color_line {
+func (line *colorstring) add(s string, color tcell.Color) *colorstring {
 	line.line = append(line.line, colortext{s, color})
 	line.result = line.result + fmt_color_string(s, color)
 	return line
