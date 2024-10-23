@@ -760,7 +760,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 		return ret.a(path)
 	}
 	funcolor := global_theme.search_highlight_color()
-	line := caller.get_code(funcolor)
+	code := caller.get_code(funcolor)
 	if caller.Caller != nil {
 		var c1 colortext
 		if prev != nil && (prev.Caller.ClassName == caller.Caller.ClassName && prev.Caller.Name == caller.Caller.Name) {
@@ -771,7 +771,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 			// if prev.Caller.Name != "" {
 			// 	x = strings.Repeat(" ", len(prev.Caller.Name)+2)
 			// }
-			return ret.a(fmt.Sprintf(":%-4d %s ", v.Range.Start.Line+1, prefix)).add_color_text_list(line.line)
+			return ret.a(fmt.Sprintf(":%-4d %s ", v.Range.Start.Line+1, prefix)).add_color_text_list(code.line)
 		} else {
 			funcolor := global_theme.search_highlight_color()
 			if len(caller.Caller.ClassName) > 0 {
@@ -801,14 +801,14 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 			liner := fmt.Sprintf("%-4d ", v.Range.Start.Line)
 			ret.a(liner)
 			if c1.text != "" {
-				return ret.add_color_text(c1).add_color_text(x).a(" ").add_color_text_list(line.line)
+				return ret.add_color_text(c1).add_color_text(x).a(" ").add_color_text_list(code.line)
 				// return fmt.Sprintf(":%-4d %s%s %s", v.Range.Start.Line+1, c1, x, line)
 			} else {
-				return ret.add_color_text(x).a(" ").add_color_text_list(line.line)
+				return ret.add_color_text(x).a(" ").add_color_text_list(code.line)
 			}
 		}
 	} else {
-		return ret.a(fmt.Sprintf(":%-4d ", v.Range.Start.Line+1)).add_color_text_list(line.line)
+		return ret.a(fmt.Sprintf(":%-4d ", v.Range.Start.Line+1)).add_color_text_list(code.line)
 	}
 }
 

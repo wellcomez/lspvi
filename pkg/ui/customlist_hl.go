@@ -59,7 +59,7 @@ func (line *colorstring) Sprintf(format string, v ...any) {
 }
 func (line *colorstring) ColorText() (ret string) {
 	for _, v := range line.line {
-		ret = fmt_color_string(v.text, v.color) + ret
+		ret = ret + fmt_color_string(v.text, v.color)
 	}
 	return
 }
@@ -76,7 +76,6 @@ func (line *colorstring) add_color_text(v colortext) *colorstring {
 	return line.add_string_color(v.text, v.color)
 }
 func (line *colorstring) add_color_text_list(s []colortext) *colorstring {
-	line.line = append(line.line, s...)
 	for _, v := range s {
 		line.add_string_color(v.text, v.color)
 	}
@@ -94,7 +93,6 @@ func (line *colorstring) Replace(old string, new string, n int) {
 func (line *colorstring) pepend(s string, color tcell.Color) *colorstring {
 	if len(s) > 0 {
 		line.line = append([]colortext{{s, color}}, line.line...)
-		// line.result = fmt_color_string(s, color) + line.result
 	}
 	return line
 }
@@ -104,7 +102,6 @@ func (line *colorstring) a(s string) *colorstring {
 func (line *colorstring) add_string_color(s string, color tcell.Color) *colorstring {
 	if len(s) > 0 {
 		line.line = append(line.line, colortext{s, color})
-		// line.result = line.result + fmt_color_string(s, color)
 	}
 	return line
 }
