@@ -460,7 +460,7 @@ func fzf_color(colors []int, args string) (ret string) {
 		ss = append(ss, string(xxx[begin:]))
 	}
 	if len(ss) > 0 {
-		ret = strings.Join(ss, "")
+		ret = strings.Join(s, "")
 	}
 	return
 }
@@ -484,15 +484,15 @@ func new_quikview(main *mainui) *quick_view {
 	ret.right_context.qk = ret
 
 	ret.menuitem = []context_menu_item{
-		{item: cmditem{cmd: cmdactor{desc: "Open "}}, handle: func() {
+		{item: cmditem{Cmd: cmdactor{desc: "Open "}}, handle: func() {
 			if view.GetItemCount() > 0 {
 				// ret.selection_handle_impl(view.GetCurrentItem(), true)
 			}
 		}},
-		{item: cmditem{cmd: cmdactor{desc: "Save "}}, handle: func() {
+		{item: cmditem{Cmd: cmdactor{desc: "Save "}}, handle: func() {
 			ret.save()
 		}},
-		{item: cmditem{cmd: cmdactor{desc: "Copy"}}, handle: func() {
+		{item: cmditem{Cmd: cmdactor{desc: "Copy"}}, handle: func() {
 			ss := ret.sel.list.selected
 			var data []*colorstring
 			if ret.data.tree == nil {

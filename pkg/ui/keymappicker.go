@@ -47,7 +47,7 @@ func (pk keymap_picker) UpdateQuery(query string) {
 
 func (pk keymap_picker) newMethod(index int) {
 	pk.impl.parent.hide()
-	pk.impl.keys[index].cmd.handle()
+	pk.impl.keys[index].Cmd.handle()
 }
 
 // handle implements picker.
@@ -63,7 +63,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	// keys = append(keys, v.main.vi_key_map()...)
 	keymaplist := []string{}
 	for _, v := range keys {
-		keymaplist = append(keymaplist, fmt.Sprintf("%-20s %s", v.key.displaystring(), v.cmd.desc))
+		keymaplist = append(keymaplist, fmt.Sprintf("%-20s %s", v.Key.displaystring(), v.Cmd.desc))
 	}
 
 	x := new_fzflist_impl(nil, v)

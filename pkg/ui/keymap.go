@@ -87,7 +87,7 @@ const (
 
 func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_item {
 	return context_menu_item{
-		item: cmditem{cmd: get_cmd_actor(m, id)}, handle: handle,
+		item: cmditem{Cmd: get_cmd_actor(m, id)}, handle: handle,
 	}
 }
 func get_cmd_actor(m MainService, id command_id) cmdactor {
@@ -632,19 +632,19 @@ func (m *mainui) keymap(keytype cmdkeytype, markdown bool) []string {
 	items = append(items, m.key_map_leader()...)
 
 	for _, k := range items {
-		if k.key.Type != keytype {
+		if k.Key.Type != keytype {
 			continue
 		}
 		pre := ""
-		if k.key.hasctrlw {
+		if k.Key.hasctrlw {
 			pre = "ctrl+w "
 		}
 		var s string
 		if markdown {
-			s = fmt.Sprintf("|%-10s |%s|", pre+k.key.displaystring(), k.cmd.desc)
+			s = fmt.Sprintf("|%-10s |%s|", pre+k.Key.displaystring(), k.Cmd.desc)
 
 		} else {
-			s = fmt.Sprintf("%-10s %s", k.key.displaystring(), k.cmd.desc)
+			s = fmt.Sprintf("%-10s %s", k.Key.displaystring(), k.Cmd.desc)
 		}
 
 		ret = append(ret, s)

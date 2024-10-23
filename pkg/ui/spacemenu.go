@@ -15,15 +15,15 @@ import (
 
 type space_menu struct {
 	table     *tview.List
-	main     MainService 
+	main      MainService
 	visible   bool
 	impl      *space_menu_impl
 	input     *inputdelay
 	menustate func(*space_menu)
 }
 type cmditem struct {
-	key cmdkey
-	cmd cmdactor
+	Key cmdkey
+	Cmd cmdactor
 }
 type cmdactor struct {
 	id     command_id
@@ -62,7 +62,7 @@ func (actor cmdactor) runne(key rune) cmditem {
 	}, actor}
 }
 func (c cmditem) ctrlw() cmditem {
-	c.key.hasctrlw = true
+	c.Key.hasctrlw = true
 	return c
 }
 func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
@@ -219,9 +219,9 @@ func (menu *space_menu) onenter() {
 func (item space_menu_item) col(n int) *tview.TableCell {
 	text := ""
 	if n == 0 {
-		text = item.item.key.string()
+		text = item.item.Key.string()
 	} else if n == 1 {
-		text = item.item.cmd.desc
+		text = item.item.Cmd.desc
 	}
 	return &tview.TableCell{Text: text}
 }
@@ -233,7 +233,7 @@ type space_menu_impl struct {
 func init_space_menu_item(m *mainui) []space_menu_item {
 	var ret = []space_menu_item{}
 	for _, v := range m.key_map_space_menu() {
-		ret = append(ret, space_menu_item{item: v, handle: v.cmd.handle})
+		ret = append(ret, space_menu_item{item: v, handle: v.Cmd.handle})
 	}
 	return ret
 }
@@ -265,7 +265,7 @@ func (t *space_menu) load_spacemenu() {
 	t.table.Clear()
 	impl := t.impl
 	for _, v := range impl.items {
-		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
+		s := fmt.Sprintf("%-5s %s", v.item.Key.string(), v.item.Cmd.desc)
 		t.table.AddItem(s, "", 0, func() {
 		})
 	}

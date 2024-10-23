@@ -5,19 +5,20 @@ package mainui
 
 import (
 	"fmt"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
 // type MousePosition struct {
-	// x, y int
+// x, y int
 // }
 type contextmenu struct {
-	table       *tview.List
-	main        *mainui
-	visible     bool
-	impl        *contextmenu_impl
-	input       *inputdelay
+	table   *tview.List
+	main    *mainui
+	visible bool
+	impl    *contextmenu_impl
+	input   *inputdelay
 	// MenuPos     MousePosition
 	width       int
 	menu_handle []context_menu_handle
@@ -44,7 +45,7 @@ type context_menu_item struct {
 }
 
 func create_menu_item(name string) cmditem {
-	x := cmditem{cmd: cmdactor{desc: name}}
+	x := cmditem{Cmd: cmdactor{desc: name}}
 	return x
 }
 
@@ -86,7 +87,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	posX, posY := event.Position()
 	if !menu.table.InRect(posX, posY) {
 		// if menu.MenuPos.x == 0 {
-			// log.Printf("xxxxxxxxx")
+		// log.Printf("xxxxxxxxx")
 		// }
 		if menu.visible {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
@@ -126,16 +127,16 @@ func (t *contextmenu) menu_text() []string {
 	ret := []string{}
 	size := 0
 	for _, v := range t.impl.items {
-		size = max(len(v.item.cmd.desc), size)
+		size = max(len(v.item.Cmd.desc), size)
 	}
 	fmtstr := "%-" + fmt.Sprint(size) + "s"
 	for _, v := range t.impl.items {
-		keystr := v.item.key.string()
+		keystr := v.item.Key.string()
 		var s string
 		if len(keystr) > 0 {
-			s = fmt.Sprintf(" %-2s "+fmtstr, keystr, v.item.cmd.desc)
+			s = fmt.Sprintf(" %-2s "+fmtstr, keystr, v.item.Cmd.desc)
 		} else {
-			s = fmt.Sprintf(" "+fmtstr, v.item.cmd.desc)
+			s = fmt.Sprintf(" "+fmtstr, v.item.Cmd.desc)
 		}
 		ret = append(ret, s)
 	}

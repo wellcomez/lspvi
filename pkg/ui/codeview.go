@@ -456,13 +456,13 @@ func addjust_menu_width(items []context_menu_item) []context_menu_item {
 	}
 	maxlen := 0
 	for _, v := range leftitems {
-		maxlen = max(maxlen, len(v.item.cmd.desc))
+		maxlen = max(maxlen, len(v.item.Cmd.desc))
 	}
 	sss := strings.Repeat("-", maxlen)
 	for i := range leftitems {
 		v := &leftitems[i]
-		if strings.Index(v.item.cmd.desc, "-") == 0 {
-			v.item.cmd.desc = sss
+		if strings.Index(v.item.Cmd.desc, "-") == 0 {
+			v.item.Cmd.desc = sss
 		}
 	}
 	return leftitems
@@ -804,8 +804,8 @@ func get_line_content(line int, Buf *femto.Buffer) string {
 }
 func (code *CodeView) run_command(cmdlist []cmditem, key string) bool {
 	for _, v := range cmdlist {
-		if v.key.matched(key) {
-			v.cmd.handle()
+		if v.Key.matched(key) {
+			v.Cmd.handle()
 			return true
 		}
 	}
@@ -1396,7 +1396,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 				if line != nil {
 					code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 				}
-				if focus && code.id.is_editor(){ 
+				if focus && code.id.is_editor() {
 					if sym == nil {
 						main.OutLineView().Clear()
 					}
@@ -1435,7 +1435,7 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 			return nil
 		}
 	}
-	if code.main != nil &&code.vid().is_editor(){
+	if code.main != nil && code.vid().is_editor() {
 		code.main.OutLineView().Clear()
 	}
 	code.loading = true

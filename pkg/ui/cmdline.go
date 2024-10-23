@@ -457,8 +457,8 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	viewid := l.main.get_focus_view_id()
 	if viewid.is_editor() {
 		for _, cmd := range l.input.cmdlist {
-			if cmd.key.Type == cmd_key_tcell_key && cmd.key.tcell_key == event.Key() {
-				cmd.cmd.handle()
+			if cmd.Key.Type == cmd_key_tcell_key && cmd.Key.tcell_key == event.Key() {
+				cmd.Cmd.handle()
 				return true
 			}
 		}
@@ -785,9 +785,9 @@ type ctrlw_handle struct {
 func (c ctrlw_handle) HanldeKey(event *tcell.EventKey) bool {
 	main := c.impl.vim.app
 	for _, v := range main.ctrl_w_map() {
-		if v.key.matched_event(*event) {
-			v.cmd.handle()
-			c.impl.state = v.cmd.desc
+		if v.Key.matched_event(*event) {
+			v.Cmd.handle()
+			c.impl.state = v.Cmd.desc
 			c.end()
 			return true
 		}
