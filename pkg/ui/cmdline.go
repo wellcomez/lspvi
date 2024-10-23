@@ -830,7 +830,7 @@ func (v *Vim) EnterVmap() {
 func (v *Vim) EnterEscape() {
 	if v.app.current_editor().HasComplete() {
 		v.app.current_editor().CloseComplete()
-		return
+		// return
 	}
 	v.app.cmdline.Clear()
 	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}
