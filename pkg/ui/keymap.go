@@ -17,7 +17,7 @@ import (
 type command_id int
 
 const (
-	open_picker_document_symbol = iota
+	open_picker_document_symbol command_id = iota
 	open_picker_bookmark
 	open_picker_refs
 	open_picker_colorscheme

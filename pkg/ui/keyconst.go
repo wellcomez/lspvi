@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var keymap_name = []string{
+var command_name = []string{
 	"open_picker_document_symbol",
 	"open_picker_bookmark",
 	"open_picker_refs",
@@ -87,17 +87,17 @@ type cmdactor struct {
 
 func (key cmdkey) matched_event(s tcell.EventKey) bool {
 	m := s.Modifiers()
-	if key.Alt {
+	if key.Modifiers.Alt {
 		if m&tcell.ModAlt == 0 {
 			return false
 		}
 	}
-	if key.Ctrl {
+	if key.Modifiers.Ctrl{
 		if m&tcell.ModCtrl == 0 {
 			return false
 		}
 	}
-	if key.Shift {
+	if key.Modifiers.Shift{
 		if m&tcell.ModShift == 0 {
 			return false
 		}
@@ -140,15 +140,15 @@ func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
 	}, actor}
 }
 func (actor cmditem) Ctrl() cmditem {
-	actor.Key.Ctrl = true
+	actor.Key.Modifiers.Ctrl= true
 	return actor
 }
 func (actor cmditem) Alt() cmditem {
-	actor.Key.Alt = true
+	actor.Key.Modifiers.Alt= true
 	return actor
 }
 func (actor cmditem) AddShift() cmditem {
-	actor.Key.Shift = true
+	actor.Key.Modifiers.Shift= true
 	return actor
 }
 
@@ -189,43 +189,38 @@ const (
 	cmd_key_command
 )
 
+type Modifiers struct {
+	Shift bool
+	Alt   bool
+	Ctrl  bool
+}
 type cmdkey struct {
-	key       []string
-	Type      cmdkeytype
-	EventName string
-	Shift     bool
-	Alt       bool
-	Ctrl      bool
-	Rune      rune
-	TCellKey  tcell.Key
+	key      []string
+	Type     cmdkeytype
+	TCellKey tcell.Key
+	Rune     rune
+
+	// EventName string
+	Modifiers Modifiers
 	CtrlW     bool
 }
 
 func (cmd cmdkey) displaystring() string {
 	t := []string{}
-	if cmd.Shift {
+	if cmd.Modifiers.Shift {
 		t = append(t, "Shift")
 	}
-	if cmd.Alt {
+	if cmd.Modifiers.Alt  {
 		t = append(t, "Alt")
 	}
-	if cmd.Ctrl {
+	if cmd.Modifiers.Ctrl{
 		t = append(t, "Ctrl")
+	}
+	if cmd.CtrlW {
+		t = append(t, "CtrlW")
 	}
 
 	switch cmd.Type {
-	// case cmd_key_event_name:
-	// {
-	// 	switch cmd.EventName {
-	// 	case "Rune[O]":
-	// 		return "Shift + o"
-	// 	case "Rune[+]":
-	// 		return "Shift + +"
-	// 	case "Rune[-]":
-	// 		return "-"
-	// 	}
-	// 	return cmd.EventName
-	// }
 	case cmd_key_menu:
 		t = append(t, "menu")
 	case cmd_key_escape:
@@ -244,15 +239,41 @@ func (cmd cmdkey) string() string {
 	return strings.Join(cmd.key, "")
 }
 
+type UserCommand struct {
+	command command_id
+	Desc    string       `yaml:"desc"`
+	Bind    []keybinding `yaml:"bind"`
+}
+type keybinding struct {
+	Menu *bool `yaml:"menu,omitempty"`
+	Keys string
+}
+type lspvi_command_map map[string]UserCommand
+
 func (m mainui) save_keyboard_config() {
-	keyconfigs := []keyconfig{}
+	UserCommands := make(lspvi_command_map)
 	var items = AllKeyMap(m)
 	for _, v := range items {
-		keyconfigs = append(keyconfigs, keyconfig{
-			Cmd: v.Key.displaystring(),
-			Key: v.Cmd.desc,
-		})
+		command_name := command_name[v.Cmd.id]
+		if _, ok := UserCommands[command_name]; !ok {
+			UserCommands[command_name] = UserCommand{
+				Desc:    v.Cmd.desc,
+				command: v.Cmd.id,
+				Bind:    []keybinding{},
+			}
+		}
+		cmd := UserCommands[command_name]
+
+		x := keybinding{
+			Keys: v.Key.displaystring(),
+		}
+		if v.Key.Type == cmd_key_menu {
+			var yes = true
+			x.Menu = &yes
+		}
+		cmd.Bind = append(cmd.Bind, x)
+		UserCommands[command_name] = cmd
 	}
-	global_config.Keyboard = keyconfigs
+	global_config.Keyboard = UserCommands
 	global_config.Save()
 }
