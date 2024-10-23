@@ -20,6 +20,7 @@ type LspviConfig struct {
 	Wrap        bool              `yaml:"wrap"`
 	Lsp         lspcore.LspConfig `yaml:"lsp"`
 	Color       color             `yaml:"color"`
+	Keyboard    []keyconfig       `yaml:"keyboard"`
 }
 
 func (config LspviConfig) Load() (*LspviConfig, error) {
