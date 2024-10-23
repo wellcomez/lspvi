@@ -83,6 +83,9 @@ const (
 	handle_ctrl_c
 	handle_ctrl_v
 	cmd_quit
+	cmd_clean_log
+	cmd_save
+	cmd_reload
 )
 
 func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_item {
@@ -111,6 +114,21 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case cmd_quit:
 		return cmdactor{id, "Quit", func() bool {
 			m.quit()
+			return true
+		}}
+	case cmd_clean_log:
+		return cmdactor{id, "clean log", func() bool {
+			m.cleanlog()
+			return true
+		}}
+	case cmd_save:
+		return cmdactor{id, "save", func() bool {
+			m.current_editor().Save()
+			return true
+		}}
+	case cmd_reload:
+		return cmdactor{id, "reload", func() bool {
+			m.current_editor().Reload()
 			return true
 		}}
 	case open_picker_qfh:

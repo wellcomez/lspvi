@@ -75,6 +75,9 @@ var command_name = []string{
 	"handle_ctrl_c",
 	"handle_ctrl_v",
 	"cmd_quit",
+	"cmd_clean_log",
+	"cmd_save",
+	"cmd_reload",
 }
 
 type cmditem struct {
@@ -306,8 +309,10 @@ type UserCommand struct {
 	Bind    []keybinding `yaml:"bind"`
 }
 type keybinding struct {
-	Menu *bool `yaml:"menu,omitempty"`
-	Keys string
+	Menu        *bool `yaml:"menu,omitempty"`
+	Keys        string
+	Global      *bool `yaml:"global,omitempty"`
+	CommandMode *bool `yaml:"commandmode,omitempty"`
 }
 type lspvi_command_map map[string]UserCommand
 
@@ -332,7 +337,31 @@ func (m mainui) save_keyboard_config() {
 			var yes = true
 			x.Menu = &yes
 		}
+		if v.Key.global {
+			var yes = true
+			x.Global = &yes
+		}
 		cmd.Bind = append(cmd.Bind, x)
+		UserCommands[command_name] = cmd
+	}
+	comands := m.CmdLine().cmds
+	for _, c := range comands {
+		if c.id < 0 {
+			continue
+		}
+		command_name := command_name[c.id]
+		if _, ok := UserCommands[command_name]; !ok {
+			UserCommands[command_name] = UserCommand{
+				Desc:    c.descriptor,
+				command: c.id,
+				Bind:    []keybinding{},
+			}
+		}
+		cmd := UserCommands[command_name]
+		for _, v := range c.arg0 {
+			yes:=true
+			cmd.Bind = append(cmd.Bind, keybinding{Keys: v,CommandMode: &yes})
+		}
 		UserCommands[command_name] = cmd
 	}
 	global_config.Keyboard = UserCommands
