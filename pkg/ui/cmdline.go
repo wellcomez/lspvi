@@ -457,7 +457,7 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	viewid := l.main.get_focus_view_id()
 	if viewid.is_editor() {
 		for _, cmd := range l.input.cmdlist {
-			if cmd.Key.Type == cmd_key_tcell_key && cmd.Key.tcell_key == event.Key() {
+			if cmd.Key.Type == cmd_key_tcell_key && cmd.Key.TCellKey == event.Key() {
 				cmd.Cmd.handle()
 				return true
 			}

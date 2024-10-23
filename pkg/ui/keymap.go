@@ -636,7 +636,7 @@ func (m *mainui) keymap(keytype cmdkeytype, markdown bool) []string {
 			continue
 		}
 		pre := ""
-		if k.Key.hasctrlw {
+		if k.Key.CtrlW {
 			pre = "ctrl+w "
 		}
 		var s string

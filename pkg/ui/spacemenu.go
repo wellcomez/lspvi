@@ -34,11 +34,11 @@ type cmdactor struct {
 func (key cmdkey) matched_event(s tcell.EventKey) bool {
 	switch key.Type {
 	case cmd_key_tcell_key:
-		return key.tcell_key == s.Key()
+		return key.TCellKey == s.Key()
 	case cmd_key_event_name:
-		return key.eventname == s.Name()
+		return key.EventName == s.Name()
 	case cmd_key_rune:
-		return key.rune == s.Rune()
+		return key.Rune == s.Rune()
 	}
 	return false
 }
@@ -58,23 +58,27 @@ func (key cmdkey) matched(s string) bool {
 func (actor cmdactor) runne(key rune) cmditem {
 	return cmditem{cmdkey{
 		Type: cmd_key_rune,
-		rune: key,
+		Rune: key,
 	}, actor}
 }
 func (c cmditem) ctrlw() cmditem {
-	c.Key.hasctrlw = true
+	c.Key.CtrlW = true
 	return c
 }
 func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
 	return cmditem{cmdkey{
-		Type:      cmd_key_tcell_key,
-		tcell_key: key,
+		Type:     cmd_key_tcell_key,
+		TCellKey: key,
 	}, actor}
+}
+func (actor cmditem) AddShift() cmditem {
+	actor.Key.Shift = true
+	return actor
 }
 func (actor cmdactor) enven_name_key(eventname string) cmditem {
 	return cmditem{cmdkey{
 		Type:      cmd_key_event_name,
-		eventname: eventname,
+		EventName: eventname,
 	}, actor}
 }
 func (actor cmdactor) leader(key []string) cmditem {
@@ -111,10 +115,11 @@ const (
 type cmdkey struct {
 	key       []string
 	Type      cmdkeytype
-	eventname string
-	rune      rune
-	tcell_key tcell.Key
-	hasctrlw  bool
+	EventName string
+	Shift     bool
+	Rune      rune
+	TCellKey  tcell.Key
+	CtrlW     bool
 }
 
 func (cmd cmdkey) displaystring() string {
@@ -122,7 +127,7 @@ func (cmd cmdkey) displaystring() string {
 	switch cmd.Type {
 	case cmd_key_event_name:
 		{
-			switch cmd.eventname {
+			switch cmd.EventName {
 			case "Rune[O]":
 				return "Shift + o"
 			case "Rune[+]":
@@ -130,16 +135,16 @@ func (cmd cmdkey) displaystring() string {
 			case "Rune[-]":
 				return "-"
 			}
-			return cmd.eventname
+			return cmd.EventName
 		}
 	case cmd_key_menu:
 		t = append(t, "menu")
 	case cmd_key_escape:
 		t = append(t, "escape")
 	case cmd_key_tcell_key:
-		return tcell.KeyNames[cmd.tcell_key]
+		return tcell.KeyNames[cmd.TCellKey]
 	case cmd_key_rune:
-		return fmt.Sprintf("%c", cmd.rune)
+		return fmt.Sprintf("%c", cmd.Rune)
 	case cmd_key_leader:
 		t = append(t, "space")
 	}
