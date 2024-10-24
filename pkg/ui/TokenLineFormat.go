@@ -335,7 +335,7 @@ func (t *TokenLine) FormatOutput(no_print bool) (ret string) {
 		ret = ret + v.replace()
 	}
 	for _, v := range t.appends {
-		ret = ret + v.data
+		ret = ret + v.replace()
 	}
 	return
 }
