@@ -11,7 +11,7 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (format *TokenLineFormat) Run() (code_change lspcore.CodeChangeEvent) {
+func (format *TokenLineFormat) Run() (code_change lspcore.CodeChangeEvent, err error) {
 
 	var lines []*TokenLine
 	for linenr := range format.lines {
@@ -24,11 +24,11 @@ func (format *TokenLineFormat) Run() (code_change lspcore.CodeChangeEvent) {
 	for _, tl := range lines {
 		tl.Run(format)
 	}
-	debug.DebugLog("format", strings.Repeat("=", 20), len(lines))
+	debug.DebugLog("format", "print", strings.Repeat("=", 40), len(lines))
 	for _, tl := range lines {
 		tl.print()
 	}
-	debug.DebugLog("format", strings.Repeat("=", 20), len(lines))
+	debug.DebugLog("format", strings.Repeat("=", 40), len(lines))
 	for _, tl := range lines {
 		i := tl.lineno
 		if tl.removed {
@@ -38,7 +38,8 @@ func (format *TokenLineFormat) Run() (code_change lspcore.CodeChangeEvent) {
 		}
 	}
 	deleted := 0
-
+	// err = fmt.Errorf("not replacing")
+	// return
 	var Events []lspcore.TextChangeEvent
 	for i := 0; i < len(lines); i++ {
 		lineno := len(lines) - i - 1
@@ -87,36 +88,42 @@ func (currentLine TokenLine) print() {
 	if currentLine.line_edit != nil {
 		e = string_editor(*currentLine.line_edit)
 	}
-	debug.DebugLogf("format", "line:%d inline-editor:%d  line-editor:%s", currentLine.lineno, currentLine.editorcount, e)
-	debug.DebugLog("format", "old--", codeprint(currentLine.line))
-	debug.DebugLog("format", "new--", codeprint(currentLine.FormatOutput(false)))
+	debug.DebugLogf("format", "%d inline-editor:%d  line-editor:%s", currentLine.lineno, currentLine.editorcount, e)
+	x1 := codeprint(currentLine.line)
+	debug.DebugLog("format", "old--", len(x1), x1)
+	x := codeprint(currentLine.FormatOutput(false))
+	debug.DebugLog("format", "new--", len(x), x)
 }
-func (currentLine *TokenLine) Run(format *TokenLineFormat) {
-	if currentLine.formated {
+func (cur *TokenLine) Run(format *TokenLineFormat) {
+	if cur.formated {
 		return
 	}
-	currentLine.formated = true
-	if edit := currentLine.line_edit; edit != nil {
+	debug.DebugLog("format", cur.lineno, "**********Run-start@", cur.editorcount, "EditText", cur.line_edit)
+	defer debug.DebugLog("format", cur.lineno, "**********Run-end@")
+	cur.formated = true
+	if edit := cur.line_edit; edit != nil {
+		debug.DebugLog("format", cur.lineno, "edit start@", cur.editorcount, string_editor(*edit))
+		defer debug.DebugLog("format", cur.lineno, "edit end@")
 		start, end := GetEditLoc(*edit)
 		newLines := strings.Split(edit.NewText, "\n")
 		if len(newLines) == 1 {
 			lastline := format.lines[end.Y]
 			lastline.Run(format)
 			replace, left := lastline.split(end)
-			currentLine.replaced = append(currentLine.replaced, replace...)
+			cur.replaced = append(cur.replaced, replace...)
 			lastline.removed = true
 			to_left := append([]Token{{
 				edit.NewText,
 				nil,
 				-1, -1,
 			}}, left...)
-			currentLine.appends = append(currentLine.appends, to_left...)
-			currentLine.print()
+			cur.appends = append(cur.appends, to_left...)
+			cur.print()
 		} else {
 			for i := range newLines {
 				v := newLines[i]
 				if i == 0 {
-					currentLine.appends = append(currentLine.appends, Token{data: v})
+					cur.appends = append(cur.appends, Token{data: v})
 				} else {
 					lineNr := i + start.Y
 					line := format.lines[lineNr]
@@ -132,8 +139,8 @@ func (line TokenLine) Range() (start, end femto.Loc) {
 	return
 }
 func (lastline *TokenLine) split(end femto.Loc) (replace []Token, add []Token) {
-	add = lastline.SubFrom(end.X)
-	replace = lastline.SubTo(end.X)
+	replace, add = Split(end.X, lastline.Tokens)
+	add = append(add, lastline.appends...)
 	return
 }
 
@@ -172,19 +179,27 @@ func create_line(Buf *femto.Buffer, edits []lsp.TextEdit) (tokenline *TokenLine,
 			debug.DebugLog("format", "createline", string_editor(e), "just multi-line")
 		}
 
+		tokenline.Tokens = line_tokens
+
 		if next_index < len(edits) {
 			break_line_edit := edits[next_index]
 			start, stop := GetEditLoc(break_line_edit)
-			if start.Y != stop.Y {
+			if start.Y != stop.Y && lineNr == start.Y {
+				if start.X < len(tokenline.line) {
+					debug.DebugLog("format", "createline-line-edit", start.X, ":", len(tokenline.line))
+				}
 				tokenline.line_edit = &break_line_edit
-				tokenline.replaced = []Token{{line[start.X:], &break_line_edit, start.X, len(line)}}
+				left, right := Split(start.X, tokenline.Tokens)
+				tokenline.Tokens = left
+				for i := range right {
+					right[i].edit = &break_line_edit
+				}
+				tokenline.replaced = right
 			}
 			if lineNr == start.Y {
 				next_index++
 			}
 		}
-		tokenline.Tokens = line_tokens
-
 	}
 	return
 }
@@ -223,6 +238,21 @@ type TokenLine struct {
 	formated    bool
 }
 
+func Split(index int, tokes []Token) (left, rigtht []Token) {
+	for i, v := range tokes {
+		if index < v.e {
+			left = append(left, tokes[:i]...)
+			if index < v.e {
+				left = append(left, Token{v.data[:index-v.b], v.edit, v.b, index})
+				rigtht = append(rigtht, Token{v.data[index:], v.edit, index, v.e})
+			}
+			rigtht = append(rigtht, tokes[i+1:]...)
+			return
+		}
+	}
+	left = append(left, tokes...)
+	return
+}
 func (line *TokenLine) SubTo(index int) (t []Token) {
 	for _, v := range line.Tokens {
 		if index <= v.e {

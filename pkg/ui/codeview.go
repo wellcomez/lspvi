@@ -1793,9 +1793,10 @@ func (code *CodeView) Format() {
 				// continue
 				// format3(ret, code)
 				tf := NewTokenLineFormat(code.view.Buf, ret)
-				event := tf.Run()
-				event.File = code.Path()
-				code.on_content_changed(event)
+				if event, err := tf.Run(); err == nil {
+					event.File = code.Path()
+					code.on_content_changed(event)
+				}
 			})
 		}
 	}()
