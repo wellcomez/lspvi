@@ -12,7 +12,6 @@ import (
 )
 
 func (format *TokenLineFormat) Run(replace bool) (code_change lspcore.CodeChangeEvent, err error) {
-
 	var lines []*TokenLine
 	for linenr := range format.lines {
 		tl := format.lines[linenr]
@@ -312,7 +311,11 @@ type TokenLineFormat struct {
 	Buf   *femto.Buffer
 }
 
-func NewTokenLineFormat(Buf *femto.Buffer, edits []lsp.TextEdit) (f *TokenLineFormat) {
+func NewTokenLineFormat(Buf *femto.Buffer, edits []lsp.TextEdit) (f *TokenLineFormat, err error) {
+	if len(edits) == 0 {
+		err = fmt.Errorf("no edits")
+		return
+	}
 	f = &TokenLineFormat{Buf: Buf}
 	f.lines = make(map[int]*TokenLine)
 	for {

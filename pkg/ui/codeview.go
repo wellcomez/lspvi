@@ -1792,11 +1792,14 @@ func (code *CodeView) Format() {
 				defer check.End()
 				// continue
 				// format3(ret, code)
-				tf := NewTokenLineFormat(code.view.Buf, ret)
-				if _, err := tf.Run(true); err == nil {
-					// event.File = code.Path()
-					// code.on_content_changed(event)
-					// code.LspSymbol().NotifyCodeChange(event)
+				if tf, err := NewTokenLineFormat(code.view.Buf, ret); err == nil {
+					if _, err := tf.Run(true); err == nil {
+						// event.File = code.Path()
+						// code.on_content_changed(event)
+						// code.LspSymbol().NotifyCodeChange(event)
+					}
+				} else {
+					debug.DebugLog("format", err)
 				}
 			})
 		}
