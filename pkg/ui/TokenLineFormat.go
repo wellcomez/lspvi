@@ -169,7 +169,7 @@ func (lastline *TokenLine) split(end femto.Loc) (replace []Token, add []Token) {
 	return
 }
 
-func create_line(Buf *femto.Buffer, edits []lsp.TextEdit) (tokenline *TokenLine, next_index int) {
+func create_line(Buf *femto.Buffer, edits []lsp.TextEdit) (tokenline *TokenLine, next_index int, err error) {
 	next_index = -1
 	if len(edits) > 0 {
 		lineNr := edits[0].Range.Start.Line
@@ -178,9 +178,13 @@ func create_line(Buf *femto.Buffer, edits []lsp.TextEdit) (tokenline *TokenLine,
 
 		begin_x := 0
 		for next_index = 0; next_index < len(edits); next_index++ {
-			_, end := GetEditLoc(edits[next_index])
+			start, end := GetEditLoc(edits[next_index])
 			if end.Y != lineNr {
 				break
+			} else if start.X > len(line) || end.X > len(line) {
+				err = fmt.Errorf("%v %v %s", start, end, line)
+				tokenline = nil
+				return
 			}
 		}
 		var line_tokens = []Token{}
@@ -349,7 +353,7 @@ func NewTokenLineFormat(Buf *femto.Buffer, edits []lsp.TextEdit) (f *TokenLineFo
 	f = &TokenLineFormat{Buf: Buf}
 	f.lines = make(map[int]*TokenLine)
 	for {
-		if line, next_index := create_line(Buf, edits); line != nil {
+		if line, next_index, e := create_line(Buf, edits); line != nil {
 			f.lines[line.lineno] = line
 			edits = edits[next_index:]
 			if next_edit := line.line_edit; next_edit != nil {
@@ -359,6 +363,9 @@ func NewTokenLineFormat(Buf *femto.Buffer, edits []lsp.TextEdit) (f *TokenLineFo
 					f.lines[i] = x1
 				}
 			}
+		} else if e != nil {
+			err = e
+			return
 		} else {
 			return
 		}

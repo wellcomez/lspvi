@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
 )
@@ -65,6 +66,21 @@ func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (ret lsp.SignatureHelp, e
 }
 
 func (s *Symbol_file) on_error(err error) {
+	if err == nil {
+		return
+	}
+	s.Wk.Wk.Callback.LspLogOutput("LSPSERVER_API_ERROR", fmt.Sprintf("%v", err))
+	v := err.(*jsonrpc2.Error)
+	if v != nil {
+		if v.Code == -32602 {
+			s.verison++
+			s.lspopen = false
+			if err := s.lsp.DidOpen(SourceCode{Path: s.Filename}, s.verison); err != nil {
+				debug.DebugLog(DebugTag, "lsp reopen failed", s.Filename, err)
+			}
+			return
+		}
+	}
 }
 func (s *Symbol_file) Format(opt FormatOption) (ret []lsp.TextEdit, err error) {
 	if s.lsp == nil {
