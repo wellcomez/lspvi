@@ -75,14 +75,14 @@ func GetEditLoc(v lsp.TextEdit) (femto.Loc, femto.Loc) {
 
 func format3(edits []lsp.TextEdit, code *CodeView) error {
 	f := Format{Lines: code.view.Buf}
-	return f.run(edits, code)
+	return f.run(edits)
 }
 
 type Format struct {
 	Lines *femto.Buffer
 }
 
-func (d *Format) run(edits []lsp.TextEdit, code *CodeView) error {
+func (d *Format) run(edits []lsp.TextEdit) error {
 	sort.SliceStable(edits, func(i, j int) bool {
 		// Compare lines first
 		if edits[i].Range.Start.Line != edits[j].Range.Start.Line {
@@ -142,7 +142,7 @@ func (d *Format) applySingleLineEdit(edit lsp.TextEdit) error {
 // applyMultiLineEdit handles edits that span multiple lines
 func (d *Format) applyMultiLineEdit(edit lsp.TextEdit) error {
 	// Get the prefix of the first line
-	start, end := GetEditLoc(edit)
+	start, _ := GetEditLoc(edit)
 
 	firstLine := d.Lines.Line(edit.Range.Start.Line)
 	prefix := firstLine[:edit.Range.Start.Character]
@@ -163,28 +163,13 @@ func (d *Format) applyMultiLineEdit(edit lsp.TextEdit) error {
 	// Combine suffix with last new line
 	lastIndex := len(newLines) - 1
 	newLines[lastIndex] = newLines[lastIndex] + suffix
-	end.X = len(lastLine)
-	if edit.Range.End.Line+1 < d.Lines.LinesNum() {
-		end = femto.Loc{Y: edit.Range.End.Line + 1, X: 0}
-	}
-	x := '?'
-	if len(lastLine) > end.X {
-		x = rune(lastLine[end.X])
-	}
-	x1 := '?'
-	if start.X < len(firstLine) {
-
-		x1 = rune(firstLine[start.X])
-	}
-	debug.DebugLog("format", start.Y, []rune(edit.NewText), fmt.Sprintf("newLines <%s>", edit.NewText),
-		fmt.Sprintf("end %d:%d [%c] '%s' %d", end.Y, end.X, x, lastLine, len(lastLine)),
-		fmt.Sprintf("start %d:%d [%c] '%s' %d", start.Y, start.X, x1, firstLine, len(firstLine)))
+	newFunction2(edit, d)
 	for i, v := range newLines {
 		debug.DebugLog("format", "++", i+start.Y, ":", len(v), fmt.Sprintf("[%s]", v))
 	}
 	if len(newLines) == 1 {
 		start, end := GetEditLoc(edit)
-		end.X = max(end.X,len(lastLine))
+		end.X = max(end.X, len(lastLine))
 		d.Lines.Replace(start, end, edit.NewText+lastLine)
 	} else {
 		for i := range newLines {
@@ -193,7 +178,7 @@ func (d *Format) applyMultiLineEdit(edit lsp.TextEdit) error {
 			x1 := len(d.Lines.Line(lineNr))
 			d.Lines.Replace(femto.Loc{Y: lineNr, X: 0}, femto.Loc{Y: i + start.Y, X: x1}, v)
 			newline := d.Lines.Line(lineNr)
-			debug.DebugLog("format", "ReplaceAfter-", v, "-", lineNr, ":", len(newline), fmt.Sprintf("[%s]", newline),)
+			debug.DebugLog("format", "ReplaceAfter-", v, "-", lineNr, ":", len(newline), fmt.Sprintf("[%s]", newline))
 		}
 	}
 	// d.Lines.Replace(femto.Loc{Y: edit.Range.Start.Line, X: 0}, end, strings.Join(newLines, "\n"))
@@ -206,4 +191,26 @@ func (d *Format) applyMultiLineEdit(edit lsp.TextEdit) error {
 	// 	)...,
 	// )
 	return nil
+}
+
+func newFunction2(edit lsp.TextEdit, d *Format) {
+	start, end := GetEditLoc(edit)
+	var lastLine = d.Lines.Line(end.Y)
+	var firstLine = d.Lines.Line(start.Y)
+
+	if edit.Range.End.Line+1 < d.Lines.LinesNum() {
+		end = femto.Loc{Y: edit.Range.End.Line + 1, X: 0}
+	}
+	x := '?'
+	if len(lastLine) > end.X {
+		x = rune(lastLine[end.X])
+	}
+	x1 := '?'
+	if start.X < len(firstLine) {
+
+		x1 = rune(firstLine[start.X])
+	}
+	debug.DebugLog("format", start.Y, []rune(edit.NewText),
+		fmt.Sprintf("end %d:%d [%c] '%s' %d", end.Y, end.X, x, lastLine, len(lastLine)),
+		fmt.Sprintf("start %d:%d [%c] '%s' %d", start.Y, start.X, x1, firstLine, len(firstLine)))
 }
