@@ -129,7 +129,8 @@ func (cur *TokenLine) Run(format *TokenLineFormat) {
 				} else {
 					lineNr := i + start.Y
 					line := format.lines[lineNr]
-					line.newline = []Token{{data: v}}
+					line.Run(format)
+					// line.newline = []Token{{data: v}}
 				}
 			}
 		}
