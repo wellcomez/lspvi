@@ -196,6 +196,7 @@ func (line *TokenLine) SubFrom(index int) (t []Token) {
 			}
 		}
 	}
+	t = append(t, line.appends...)
 	return
 }
 func (t *TokenLine) FormatOutput() (ret string) {
