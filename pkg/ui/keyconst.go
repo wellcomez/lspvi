@@ -359,13 +359,38 @@ func (m mainui) save_keyboard_config() {
 		}
 		cmd := UserCommands[command_name]
 		for _, v := range c.arg0 {
-			yes:=true
-			cmd.Bind = append(cmd.Bind, keybinding{Keys: v,CommandMode: &yes})
+			yes := true
+			cmd.Bind = append(cmd.Bind, keybinding{Keys: v, CommandMode: &yes})
 		}
 		UserCommands[command_name] = cmd
 	}
 	global_config.Keyboard = UserCommands
 	global_config.Save()
+}
+func (cmdline *cmdline) ConvertCmdItem() (ret []cmditem) {
+	comands := cmdline.cmds
+	for i := range comands {
+		c := comands[i]
+		if c.id < 0 {
+			continue
+		}
+		a := cmditem{
+			Key: cmdkey{
+				Type: cmd_key_command,
+				key:  c.arg0,
+			},
+			Cmd: cmdactor{
+				desc: c.descriptor,
+				id:   c.id,
+				handle: func() bool {
+					c.run(nil)
+					return true
+				},
+			},
+		}
+		ret = append(ret, a)
+	}
+	return
 }
 
 func (config LspviConfig) ParseKeyBind(m *mainui) (menu, global, escape, lead []cmditem) {

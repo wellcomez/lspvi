@@ -79,7 +79,7 @@ func new_cmdline(main *mainui) *cmdline {
 	return code
 }
 func (cmd *cmdline) OnSet(args []string) bool {
-	if len(args) == 1 {
+	if len(args) == 1 || len(args) == 0 {
 		return false
 	}
 	switch args[1] {
