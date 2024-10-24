@@ -1788,10 +1788,14 @@ func (code *CodeView) Format() {
 			Options:  Options,
 		}); err == nil {
 			go code.main.App().QueueUpdateDraw(func() {
-				check := code.NewChangeChecker()
-				defer check.End()
+				// check := code.NewChangeChecker()
+				// defer check.End()
 				// continue
-				format3(ret, code)
+				// format3(ret, code)
+				tf := NewTokenLineFormat(code.view.Buf, ret)
+				event := tf.Run()
+				event.File = code.Path()
+				code.on_content_changed(event)
 			})
 		}
 	}()

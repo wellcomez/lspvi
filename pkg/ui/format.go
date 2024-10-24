@@ -49,19 +49,16 @@ func GetEditLoc(v lsp.TextEdit) (femto.Loc, femto.Loc) {
 	return start, end
 }
 
-func format3(edits []lsp.TextEdit, code *CodeView) error {
+func Format3(edits []lsp.TextEdit, code *CodeView) error {
 	f := Format{Lines: code.view.Buf}
-	return f.run(edits)
+	return f.Run(edits)
 }
 
 type Format struct {
 	Lines *femto.Buffer
 }
 
-func (d *Format) run(edits []lsp.TextEdit) error {
-	tf := NewTokenLineFormat(d.Lines, edits)
-	tf.Run()
-	return nil
+func (d *Format) Run(edits []lsp.TextEdit) error {
 	sort.SliceStable(edits, func(i, j int) bool {
 		// Compare lines first
 		if edits[i].Range.Start.Line != edits[j].Range.Start.Line {

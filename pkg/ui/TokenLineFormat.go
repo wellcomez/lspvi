@@ -8,9 +8,10 @@ import (
 	"github.com/pgavlin/femto"
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (format *TokenLineFormat) Run() {
+func (format *TokenLineFormat) Run() (code_change lspcore.CodeChangeEvent) {
 
 	var lines []*TokenLine
 	for linenr := range format.lines {
@@ -37,26 +38,43 @@ func (format *TokenLineFormat) Run() {
 		}
 	}
 	deleted := 0
+
+	var Events []lspcore.TextChangeEvent
 	for i := 0; i < len(lines); i++ {
 		lineno := len(lines) - i - 1
 		line := lines[lineno]
 		if !line.removed {
+			var s, e femto.Loc
 			newline := line.FormatOutput(true)
 			if deleted != 0 {
-				start, _ := line.Range()
-				_, end := lines[lineno+deleted].Range()
-				format.Buf.Replace(start, end, newline)
+				s, _ = line.Range()
+				_, e = lines[lineno+deleted].Range()
 			} else {
-				s, e := line.Range()
-				format.Buf.Replace(s, e, newline)
+				s, e = line.Range()
 			}
+			format.Buf.Replace(s, e, newline)
+			a := lspcore.TextChangeEvent{
+				Text: newline,
+				Type: lspcore.TextChangeTypeReplace,
+				Range: lsp.Range{
+					Start: lsp.Position{
+						Line:      s.Y,
+						Character: s.X,
+					},
+					End: lsp.Position{
+						Line:      e.Y,
+						Character: e.X,
+					},
+				},
+			}
+			Events = append(Events, a)
 			deleted = 0
 		} else {
 			deleted++
 		}
 	}
-	// debug.DebugLog("format", "%s\nformat", strings.Join(code, "\n"))
-
+	code_change.Events = Events
+	return
 }
 
 var codeprint = func(s string) (ret string) {
@@ -133,20 +151,22 @@ func create_line(Buf *femto.Buffer, edits []lsp.TextEdit) (tokenline *TokenLine,
 				break
 			}
 		}
-		var s = []Token{}
+		var line_tokens = []Token{}
 		for i := 0; i < next_index; i++ {
 			tokenline.editorcount++
 			start, end := GetEditLoc(edits[i])
 			t := Token{line[begin_x:start.X], nil, begin_x, start.X}
-			s = append(s, t)
+			line_tokens = append(line_tokens, t)
 			begin_x = start.X
 			t = Token{line[begin_x:end.X], &edits[i], begin_x, end.X}
-			s = append(s, t)
+			line_tokens = append(line_tokens, t)
 			debug.DebugLog("format", "createline", string_editor(edits[i]), "find edit")
 			begin_x = end.X
 		}
-		lasttoken := Token{line[begin_x:], nil, begin_x, len(line)}
-		s = append(s, lasttoken)
+		if begin_x < len(line) {
+			lasttoken := Token{line[begin_x:], nil, begin_x, len(line)}
+			line_tokens = append(line_tokens, lasttoken)
+		}
 		if next_index == 0 {
 			e := edits[0]
 			debug.DebugLog("format", "createline", string_editor(e), "just multi-line")
@@ -163,7 +183,7 @@ func create_line(Buf *femto.Buffer, edits []lsp.TextEdit) (tokenline *TokenLine,
 				next_index++
 			}
 		}
-		tokenline.Tokens = s
+		tokenline.Tokens = line_tokens
 
 	}
 	return
