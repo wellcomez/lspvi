@@ -37,4 +37,5 @@ func (log *logview) update_log_view(s string) {
 	x := t + h+"\n"
 	log.log.SetText(
 		x + s + "\n")
+	log.log.ScrollToEnd()
 }
