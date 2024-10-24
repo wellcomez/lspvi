@@ -1009,8 +1009,8 @@ func (code *CodeView) Save() error {
 }
 func (code *CodeView) Undo() {
 	checker := code.NewChangeChecker()
-	defer checker.End()
 	code.view.Undo()
+	checker.CheckRedo(code)
 	// code.on_content_changed(lspcore.CodeChangeEvent{})
 }
 func (code *CodeView) deleteword() {
