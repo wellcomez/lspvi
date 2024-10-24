@@ -32,10 +32,10 @@ func (input *inputdelay) get_cmd(key string) (cmd_action, []*cmditem) {
 	cmdlist := input.cmdlist
 	for i, _ := range cmdlist {
 		v := &cmdlist[i]
-		if v.key.prefixmatched(key) {
+		if v.Key.prefixmatched(key) {
 			matched++
 		}
-		if v.key.string() == key {
+		if v.Key.string() == key {
 			same++
 			cmds = append(cmds, v)
 		}
@@ -61,7 +61,7 @@ func (input *inputdelay) run_delay_cmd(cmd *cmditem) {
 		if input.main != nil {
 			input.main.app.QueueUpdate(func() {
 				if input.delay_cmd != nil {
-					input.delay_cmd.cmd.handle()
+					input.delay_cmd.Cmd.handle()
 					if input.delay_cmd_cb != nil {
 						input.delay_cmd_cb()
 					}
@@ -78,7 +78,7 @@ func (input *inputdelay) check(cmd string) cmd_action {
 	case cmd_action_run:
 		{
 			var cmd = cmds[0]
-			cmd.cmd.handle()
+			cmd.Cmd.handle()
 		}
 	case cmd_action_delay:
 		if len(cmds) > 0 {
@@ -97,8 +97,8 @@ func (input *inputdelay) run(cmd string) bool {
 	}*/
 	if input.cmdlist != nil {
 		for _, v := range input.cmdlist {
-			if v.key.string() == cmd {
-				v.cmd.handle()
+			if v.Key.string() == cmd {
+				v.Cmd.handle()
 				return true
 			}
 		}

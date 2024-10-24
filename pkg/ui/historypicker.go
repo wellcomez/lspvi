@@ -64,7 +64,7 @@ func new_history_picker(v *fzfmain) history_picker {
 	// list.SetBorder(true)
 	sym := history_picker{
 		impl: &history_picker_impl{
-			fzflist_impl: new_fzflist_impl(nil, v),
+			fzflist_impl: new_fzflist_impl(v),
 		},
 	}
 	history := v.main.Navigation().history

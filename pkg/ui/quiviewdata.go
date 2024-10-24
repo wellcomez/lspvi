@@ -143,9 +143,9 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 			}
 		}
 	}
-	if len(tree.text) == 0 {
+	if tree.color_string == nil {
 		result := tree.get_treenode_text(qk, caller, caller_context, lineno)
-		tree.text = result
+		tree.color_string = result
 	} else {
 		debug.DebugLog(tag_quickview, "text not empty")
 	}
@@ -155,7 +155,7 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 	return
 }
 
-func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_with_caller, prev *ref_with_caller, lineno int) string {
+func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_with_caller, prev *ref_with_caller, lineno int) *colorstring {
 	var lspmgr *lspcore.LspWorkspace = qk.main.Lspmgr()
 	parent := tree.parent
 	root := lspmgr.Wk.Path
@@ -167,22 +167,23 @@ func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_w
 		caller.lines = editor.GetLines(caller.Loc.Range.Start.Line, caller.Loc.Range.End.Line)
 	}
 	list_text := caller.ListItem(root, parent, prev)
-	result := ""
+	// result := ""
+	line := &colorstring{}
 	if parent {
-		result = fmt.Sprintf("%3d. %s", lineno, list_text)
+		line.a(fmt.Sprintf("%3d. ", lineno)).add_color_text_list(list_text.line)
 		if len(tree.children) > 0 {
 			if !tree.expand {
-				result = fmt_color_string(fmt.Sprintf("%c", IconCollapse), color) + result
+				line.pepend(fmt.Sprintf("%c", IconCollapse), color)
 			} else {
-				result = fmt_color_string(fmt.Sprintf("%c", IconExpaned), color) + result
+				line.pepend(fmt.Sprintf("%c", IconExpaned), color)
 			}
 		} else {
-			result = " " + result
+			line.pepend(" ", 0)
 		}
 	} else {
-		result = fmt.Sprintf(" %s", list_text)
+		line.add_color_text_list(list_text.line)
 	}
-	return result
+	return line
 }
 func (tree *list_tree_node) get_caller(qk *quick_view_data) *ref_with_caller {
 	caller := &qk.Refs.Refs[tree.ref_index]
@@ -192,8 +193,8 @@ func (quickview_data quick_view_data) need_async_open() bool {
 	return !quickview_data.ignore_symbol_resolv
 }
 
-func (quickview_data *quick_view_data) BuildListString(root string) []string {
-	var data = []string{}
+func (quickview_data *quick_view_data) BuildListString(root string) []*colorstring {
+	var data = []*colorstring{}
 	var lspmgr *lspcore.LspWorkspace = quickview_data.main.Lspmgr()
 	changed := false
 	for i, caller := range quickview_data.Refs.Refs {
@@ -216,11 +217,12 @@ func (quickview_data *quick_view_data) BuildListString(root string) []string {
 			}
 		}
 		secondline := caller.ListItem(root, true, nil)
-		if len(secondline) == 0 {
+		if len(secondline.plaintext()) == 0 {
 			continue
 		}
-		x := fmt.Sprintf("%3d. %s", i+1, secondline)
-		data = append(data, x)
+		x := fmt.Sprintf("%3d. ", i+1)
+		secondline.pepend(x, 0)
+		data = append(data, secondline)
 	}
 	if changed {
 		quickview_data.Save()
@@ -233,9 +235,10 @@ type list_tree_node struct {
 	expand    bool
 	parent    bool
 	children  []list_tree_node
-	text      string
-	lspignore bool
-	filename  string
+	// text         string
+	color_string *colorstring
+	lspignore    bool
+	filename     string
 }
 
 func (treeroot *list_view_tree_extend) build_tree(Refs []ref_with_caller) {
@@ -303,7 +306,7 @@ func (v *FlexTreeNode) ListItem() (ret []string) {
 	m := v.HasMore()
 	lastIndex := len(v.child) - 1
 	for i, c := range v.child {
-		s := c.data.text
+		s := c.data.color_string.ColorText()
 		if i == lastIndex && m {
 			if len(s) > 1 {
 				s = fmt_color_string(down, tcell.ColorRed) + s
@@ -318,7 +321,7 @@ func (v *FlexTreeNode) ListItem() (ret []string) {
 }
 
 func (v FlexTreeNode) RootString() string {
-	ss := v.data.text
+	ss := v.data.color_string.ColorText()
 	if len(v.child) > 0 {
 		ss = strings.Replace(ss, "▶", "▼", 1)
 	} else {

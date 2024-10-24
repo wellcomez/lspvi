@@ -45,7 +45,7 @@ func new_cmdline(main *mainui) *cmdline {
 	input.SetInputCapture(code.Keyhandle)
 	code.Vim = NewVim(main)
 	code.cmds = []cmd_processor{
-		{[]string{"cn", "cp"}, "next/prev quick fix", func(s []string) {
+		{-1, []string{"cn", "cp"}, "next/prev quick fix", func(s []string) {
 			command := s[0]
 			if command != "cn" {
 				get_cmd_actor(main, vi_quick_prev).handle()
@@ -53,28 +53,29 @@ func new_cmdline(main *mainui) *cmdline {
 				get_cmd_actor(main, vi_quick_next).handle()
 			}
 		}},
-		{[]string{"cleanlog"}, "Clear log", func(s []string) {
+		{cmd_clean_log, []string{"cleanlog"}, "Clear log", func(s []string) {
 			main.cleanlog()
 		}},
-		{[]string{"w"}, "save", func(s []string) {
+		{cmd_save, []string{"w"}, "save", func(s []string) {
 			main.current_editor().Save()
 		}},
-		{[]string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string) {
+		{cmd_quit, []string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string) {
 			main.Close()
 		}},
-		{[]string{"e!"}, "Reload", func(s []string) {
+		{cmd_reload, []string{"e!"}, "Reload", func(s []string) {
 			main.current_editor().Reload()
 		}},
-		{[]string{"h", "help"}, "help", func(s []string) {
+		{-1, []string{"h", "help"}, "help", func(s []string) {
 			main.helpkey(true)
 		}},
-		{[]string{"search", "grep"}, "search", func(args []string) {
+		{-1, []string{"search", "grep"}, "search", func(args []string) {
 			code.OnSearchCommand(args)
 		}},
-		{[]string{"set"}, "set", func(args []string) {
+		{-1, []string{"set"}, "set", func(args []string) {
 			code.OnSet(args)
 		}},
 	}
+
 	return code
 }
 func (cmd *cmdline) OnSet(args []string) bool {
@@ -107,6 +108,7 @@ func (cmd *cmdline) OnSearchCommand(args []string) bool {
 }
 
 type cmd_processor struct {
+	id         command_id
 	arg0       []string
 	descriptor string
 	run        func([]string)
@@ -457,8 +459,8 @@ func (l EscapeHandle) HanldeKey(event *tcell.EventKey) bool {
 	viewid := l.main.get_focus_view_id()
 	if viewid.is_editor() {
 		for _, cmd := range l.input.cmdlist {
-			if cmd.key.Type == cmd_key_tcell_key && cmd.key.tcell_key == event.Key() {
-				cmd.cmd.handle()
+			if cmd.Key.Type == cmd_key_tcell_key && cmd.Key.TCellKey == event.Key() {
+				cmd.Cmd.handle()
 				return true
 			}
 		}
@@ -785,9 +787,9 @@ type ctrlw_handle struct {
 func (c ctrlw_handle) HanldeKey(event *tcell.EventKey) bool {
 	main := c.impl.vim.app
 	for _, v := range main.ctrl_w_map() {
-		if v.key.matched_event(*event) {
-			v.cmd.handle()
-			c.impl.state = v.cmd.desc
+		if v.Key.matched_event(*event) {
+			v.Cmd.handle()
+			c.impl.state = v.Cmd.desc
 			c.end()
 			return true
 		}
@@ -828,7 +830,7 @@ func (v *Vim) EnterVmap() {
 func (v *Vim) EnterEscape() {
 	if v.app.current_editor().HasComplete() {
 		v.app.current_editor().CloseComplete()
-		return
+		// return
 	}
 	v.app.cmdline.Clear()
 	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}

@@ -17,7 +17,7 @@ import (
 type command_id int
 
 const (
-	open_picker_document_symbol = iota
+	open_picker_document_symbol command_id = iota
 	open_picker_bookmark
 	open_picker_refs
 	open_picker_colorscheme
@@ -83,11 +83,14 @@ const (
 	handle_ctrl_c
 	handle_ctrl_v
 	cmd_quit
+	cmd_clean_log
+	cmd_save
+	cmd_reload
 )
 
 func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_item {
 	return context_menu_item{
-		item: cmditem{cmd: get_cmd_actor(m, id)}, handle: handle,
+		item: cmditem{Cmd: get_cmd_actor(m, id)}, handle: handle,
 	}
 }
 func get_cmd_actor(m MainService, id command_id) cmdactor {
@@ -111,6 +114,21 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case cmd_quit:
 		return cmdactor{id, "Quit", func() bool {
 			m.quit()
+			return true
+		}}
+	case cmd_clean_log:
+		return cmdactor{id, "clean log", func() bool {
+			m.cleanlog()
+			return true
+		}}
+	case cmd_save:
+		return cmdactor{id, "save", func() bool {
+			m.current_editor().Save()
+			return true
+		}}
+	case cmd_reload:
+		return cmdactor{id, "reload", func() bool {
+			m.current_editor().Reload()
 			return true
 		}}
 	case open_picker_qfh:
@@ -335,7 +353,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case vi_pagedown:
-		return cmdactor{id, "PageUp", func() bool {
+		return cmdactor{id, "PageDown", func() bool {
 			m.current_editor().action_page_down(true)
 			return true
 		}}
@@ -511,8 +529,12 @@ const key_picker_help = "h"
 const key_workspace_symbol_query = "ws"
 const key_focus_in_fileview = "xf"
 
-func (main *mainui) ctrl_w_map() []cmditem {
-	return []cmditem{
+func (k mainui) ctrl_w_map() []cmditem {
+	return k.key.ctrl_w
+}
+func (k *keymap) ctrl_w_map() []cmditem {
+	main := k.main
+	k.ctrl_w = []cmditem{
 		get_cmd_actor(main, next_window_down).tcell_key(tcell.KeyDown).ctrlw(),
 		get_cmd_actor(main, next_window_up).tcell_key(tcell.KeyUp).ctrlw(),
 		get_cmd_actor(main, next_window_left).tcell_key(tcell.KeyLeft).ctrlw(),
@@ -523,10 +545,15 @@ func (main *mainui) ctrl_w_map() []cmditem {
 		get_cmd_actor(main, next_window_left).runne('h').ctrlw(),
 		get_cmd_actor(main, next_window_right).runne('l').ctrlw(),
 	}
+	return k.ctrl_w
 }
-func (main *mainui) key_map_escape() []cmditem {
-	m := main
-	sss := []cmditem{
+
+func (m *mainui) key_map_escape() []cmditem {
+	return m.key.escape
+}
+func (k *keymap) key_map_escape() []cmditem {
+	m := k.main
+	k.escape = []cmditem{
 		get_cmd_actor(m, format_document).esc_key(split("=")),
 		get_cmd_actor(m, file_in_file).esc_key(split("f")),
 		get_cmd_actor(m, file_in_file_vi_word).esc_key(split("*")),
@@ -555,19 +582,24 @@ func (main *mainui) key_map_escape() []cmditem {
 		get_cmd_actor(m, vi_del_line).esc_key(split("dd")),
 		get_cmd_actor(m, vi_del_word).esc_key(split("dw")),
 		get_cmd_actor(m, vi_undo).esc_key(split("u")),
-		get_cmd_actor(main, goto_define).esc_key(split(key_goto_define)),
-		get_cmd_actor(main, goto_refer).esc_key(split(key_goto_refer)),
-		get_cmd_actor(main, goto_decl).esc_key(split(key_goto_decl)),
-		get_cmd_actor(main, goto_implement).esc_key(split(key_goto_impl)),
-		get_cmd_actor(main, goto_first_line).esc_key(split(key_goto_first_line)),
-		get_cmd_actor(main, goto_last_line).esc_key(split(key_goto_last_line)),
-		get_cmd_actor(main, bookmark_it).esc_key(split(chr_bookmark)),
-		get_cmd_actor(main, goto_to_fileview).esc_key(split(key_focus_in_fileview)),
+		get_cmd_actor(m, goto_define).esc_key(split(key_goto_define)),
+		get_cmd_actor(m, goto_refer).esc_key(split(key_goto_refer)),
+		get_cmd_actor(m, goto_decl).esc_key(split(key_goto_decl)),
+		get_cmd_actor(m, goto_implement).esc_key(split(key_goto_impl)),
+		get_cmd_actor(m, goto_first_line).esc_key(split(key_goto_first_line)),
+		get_cmd_actor(m, goto_last_line).esc_key(split(key_goto_last_line)),
+		get_cmd_actor(m, bookmark_it).esc_key(split(chr_bookmark)),
+		get_cmd_actor(m, goto_to_fileview).esc_key(split(key_focus_in_fileview)),
 	}
-	return sss
+	return k.escape
 }
+
 func (m *mainui) key_map_space_menu() []cmditem {
-	return []cmditem{
+	return m.key.menu
+}
+func (k *keymap) key_map_space_menu() {
+	var m = k.main
+	k.menu = []cmditem{
 		get_cmd_actor(m, open_picker_document_symbol).menu_key(split(key_picker_document_symbol)),
 		get_cmd_actor(m, open_picker_qfh).menu_key(split("q")),
 		get_cmd_actor(m, open_picker_refs).menu_key(split(chr_goto_refer)),
@@ -587,6 +619,10 @@ func (m *mainui) key_map_space_menu() []cmditem {
 }
 
 func (main *mainui) key_map_leader() []cmditem {
+	return main.key.leader
+}
+func (k *keymap) key_map_leader() []cmditem {
+	main := k.main
 	sss := []cmditem{
 		get_cmd_actor(main, open_picker_ctrlp).leader(split(key_picker_ctrlp)),
 		get_cmd_actor(main, open_picker_grep_word).leader(split(key_picker_grep_word)),
@@ -596,20 +632,45 @@ func (main *mainui) key_map_leader() []cmditem {
 		get_cmd_actor(main, open_picker_history).leader(split(key_picker_history)),
 		get_cmd_actor(main, open_picker_document_symbol).leader(split(key_picker_document_symbol)),
 	}
+	k.leader = sss
 	return sss
 }
+
+type keymap struct {
+	global, escape, leader, menu, ctrl_w []cmditem
+	main                                 MainService
+}
+
+func NewKeyMap(main MainService) *keymap {
+	ret := &keymap{main: main}
+	ret.global_key_map()
+	ret.key_map_escape()
+	ret.key_map_leader()
+	ret.key_map_space_menu()
+	ret.ctrl_w_map()
+	return ret
+}
 func (m *mainui) global_key_map() []cmditem {
-	return []cmditem{
+	return m.key.global
+}
+func (k *keymap) global_key_map() []cmditem {
+	m := k.main
+	k.global = []cmditem{
 		get_cmd_actor(m, handle_ctrl_c).tcell_key(tcell.KeyCtrlC),
 		get_cmd_actor(m, handle_ctrl_v).tcell_key(tcell.KeyCtrlV),
-		get_cmd_actor(m, goto_back).enven_name_key("Ctrl+O"),
-		get_cmd_actor(m, goto_forward).enven_name_key("Rune[O]"),
+		get_cmd_actor(m, goto_back).tcell_key(tcell.KeyCtrlO),
+		get_cmd_actor(m, goto_forward).runne('O'),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
+		get_cmd_actor(m, open_picker_help).runne('p').Alt(),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTab),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTAB),
-		get_cmd_actor(m, zoomout).enven_name_key("Rune[+]"),
-		get_cmd_actor(m, zoomin).enven_name_key("Rune[-]"),
+		get_cmd_actor(m, zoomout).runne('+'),
+		get_cmd_actor(m, zoomin).runne('-'),
 	}
+	for i := range k.global {
+		k.global[i].Key.global = true
+	}
+	return k.global
 }
 
 /*
@@ -622,41 +683,52 @@ func (m *mainui) global_key_map() []cmditem {
 		}
 	}
 */
-func (m *mainui) keymap(keytype cmdkeytype, markdown bool) []string {
+func (m mainui) keymap(keytype cmdkeytype, markdown bool) []string {
 	ret := []string{}
-	var items = []cmditem{}
-	items = append(items, m.ctrl_w_map()...)
-	items = append(items, m.global_key_map()...)
-	items = append(items, m.key_map_space_menu()...)
-	items = append(items, m.key_map_escape()...)
-	items = append(items, m.key_map_leader()...)
+	var items = AllKeyMap(m)
 
 	for _, k := range items {
-		if k.key.Type != keytype {
+		if k.Key.Type != keytype {
 			continue
 		}
 		pre := ""
-		if k.key.hasctrlw {
+		if k.Key.CtrlW {
 			pre = "ctrl+w "
 		}
 		var s string
 		if markdown {
-			s = fmt.Sprintf("|%-10s |%s|", pre+k.key.displaystring(), k.cmd.desc)
+			s = fmt.Sprintf("|%-10s |%s|", pre+k.Key.displaystring(), k.Cmd.desc)
 
 		} else {
-			s = fmt.Sprintf("%-10s %s", k.key.displaystring(), k.cmd.desc)
+			s = fmt.Sprintf("%-10s %s", k.Key.displaystring(), k.Cmd.desc)
 		}
 
 		ret = append(ret, s)
 	}
 	return ret
 }
+
+func AllKeyMap(m mainui) (items []cmditem) {
+	items = append(items, m.ctrl_w_map()...)
+	items = append(items, m.global_key_map()...)
+	items = append(items, m.key_map_space_menu()...)
+	items = append(items, m.key_map_escape()...)
+	items = append(items, m.key_map_leader()...)
+	return items
+}
+
+type keyconfig struct {
+	Cmd string `yaml:"command"`
+	Key string `yaml:"key"`
+}
+
 func (m *mainui) helpkey(print bool) []string {
-	types := []cmdkeytype{cmd_key_escape, cmd_key_leader, cmd_key_menu, cmd_key_event_name}
-	if print {
-		types = append(types, cmd_key_rune)
-		types = append(types, cmd_key_tcell_key)
-	}
+	m.save_keyboard_config()
+	types := []cmdkeytype{cmd_key_escape, cmd_key_leader, cmd_key_menu}
+	// if print {
+	types = append(types, cmd_key_rune)
+	types = append(types, cmd_key_tcell_key)
+	// }
 	ret := []string{}
 	if print {
 		s := fmt.Sprintf("|%-10s |%s|", "key", "function")

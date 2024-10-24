@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 )
 
@@ -41,12 +40,13 @@ func (pk keymap_picker) UpdateQuery(query string) {
 	fzf := impl.fzf
 	impl.list.Clear()
 	impl.list.Key = query
-	fzf.OnSearch(query, true)
+	fzf.OnSearch(query, false)
+	UpdateColorFzfList(fzf)
 }
 
 func (pk keymap_picker) newMethod(index int) {
 	pk.impl.parent.hide()
-	pk.impl.keys[index].cmd.handle()
+	pk.impl.keys[index].Cmd.handle()
 }
 
 // handle implements picker.
@@ -62,10 +62,10 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	// keys = append(keys, v.main.vi_key_map()...)
 	keymaplist := []string{}
 	for _, v := range keys {
-		keymaplist = append(keymaplist, fmt.Sprintf("%-20s %s", v.key.displaystring(), v.cmd.desc))
+		keymaplist = append(keymaplist, fmt.Sprintf("%-20s %s", v.Key.displaystring(), v.Cmd.desc))
 	}
 
-	x := new_fzflist_impl(nil, v)
+	x := new_fzflist_impl(v)
 
 	ret := keymap_picker{
 		impl: &keymap_picker_impl{
@@ -75,20 +75,24 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 		},
 	}
 	list := ret.impl.list
+	fzfdata := []string{}
 	for i, v := range keymaplist {
 		index := i
+		fzfdata = append(fzfdata, v)
 		list.AddItem(v, "", func() {
 			ret.newMethod(index)
 		})
 	}
-	ret.impl.fzf = new_fzf_on_list(list, true)
-	ret.impl.fzf.selected = func(dataindex int, listindex int) {
+	fzf := new_fzf_on_list_data(list, fzfdata, true)
+	ret.impl.fzf = fzf
+	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		dataindex := fzf.get_data_index(i)
 		ret.newMethod(dataindex)
-	}
+	})
 	return ret
 }
 
-func new_fzflist_impl(fzf *fzf.Fzf, v *fzfmain) *fzflist_impl {
+func new_fzflist_impl(v *fzfmain) *fzflist_impl {
 	x := &fzflist_impl{
 		parent: v,
 		list:   new_customlist(false),

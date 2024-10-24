@@ -9,7 +9,6 @@ import (
 	// "log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
@@ -463,37 +462,33 @@ func (sym *Symbol_file) LspLoadSymbol() error {
 func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 	if sym.lsp != nil {
 		if opt := sym.lsp.syncOption(); opt != nil {
-			var Start, End lsp.Position
+			// var Start, End lsp.Position
 			changeevents := []lsp.TextDocumentContentChangeEvent{}
 			if event.Full {
-				var data []byte
-				endline := len(event.Data)
-				if endline == 0 {
-					if d, err := os.ReadFile(sym.Filename); err == nil {
-						data = d
-						endline = len(strings.Split(string(data), "\n"))
-					} else {
+				var data = event.Data
+				var err error
+				// endline := len(event.Data)
+				if len(data) == 0 {
+					if data, err = os.ReadFile(sym.Filename); err != nil {
 						return err
 					}
-				} else {
-					data = event.Data
 				}
-				Start = lsp.Position{
-					Line:      0,
-					Character: 0,
-				}
-				End = lsp.Position{
-					Line:      endline - 1,
-					Character: 0,
-				}
-				if End.Line == 0 {
-					debug.ErrorLog(DebugTag, "notify_code_change", "empty data", event)
-				}
+				// Start = lsp.Position{
+				// 	Line:      0,
+				// 	Character: 0,
+				// }
+				// End = lsp.Position{
+				// 	Line:      endline - 1,
+				// 	Character: 0,
+				// }
+				// if End.Line == 0 {
+				// 	debug.ErrorLog(DebugTag, "notify_code_change", "empty data", event)
+				// }
 				changeevents = []lsp.TextDocumentContentChangeEvent{{
-					Range: &lsp.Range{
-						Start: Start,
-						End:   End,
-					},
+					// Range: &lsp.Range{
+					// 	Start: Start,
+					// 	End:   End,
+					// },
 					Text: string(data),
 				}}
 			} else {

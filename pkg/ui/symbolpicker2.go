@@ -51,16 +51,16 @@ func (c current_document_pick) UpdateQuery(query string) {
 				s := set_list_item(n, 0, selected_postion[n.index])
 				list_index_data[list_index] = n.index
 				list_index++
-				list.AddItem(s, "", nil)
+				list.AddColorItem(s.line, nil, nil)
 			}
 		} else {
 			s := set_list_item(n, 0, nil)
-			list.AddItem(s, "", nil)
+			list.AddColorItem(s.line, nil, nil)
 			list_index_data[list_index] = n.index
 			list_index++
 			for _, v := range mm {
 				s := set_list_item(v, 1, selected_postion[v.index])
-				list.AddItem(s, "", nil)
+				list.AddColorItem(s.line, nil, nil)
 				list_index_data[list_index] = v.index
 				list_index++
 			}
@@ -168,12 +168,12 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 	var list_index_data = make(map[int]int)
 	var list_index = 0
 	for _, v := range impl.symbol.ClassObject {
-		list.AddItem(set_list_item(v, 0, nil), "", nil)
+		list.AddColorItem(set_list_item(v, 0, nil).line, nil, nil)
 		list_index_data[list_index] = v.index
 		list_index++
 		if len(v.Member) > 0 {
 			for _, m := range v.Member {
-				list.AddItem(set_list_item(m, 1, nil), "", nil)
+				list.AddColorItem(set_list_item(m, 1, nil).line, nil, nil)
 				list_index_data[list_index] = v.index
 				list_index++
 			}
@@ -192,7 +192,7 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 		impl.UpdatePrev(index)
 	})
 
-	impl.listcustom= list
+	impl.listcustom = list
 	impl.fzf = new_fzf_on_list_data(list, impl.symbol.names, true)
 	list.SetCurrentItem(0)
 	impl.UpdatePrev(-1)
@@ -218,7 +218,8 @@ func (impl *symbol_picker_impl) get_current_item_symbol(i int) *SymbolFzf {
 	return nil
 }
 
-func set_list_item(v SymbolFzf, prefix int, posistion []int) string {
+func set_list_item(v SymbolFzf, prefix int, posistion []int) *colorstring {
+	var ret = &colorstring{}
 	space := strings.Repeat("\t\t", prefix)
 	icon := v.sym.Icon()
 	query := global_theme
@@ -231,11 +232,10 @@ func set_list_item(v SymbolFzf, prefix int, posistion []int) string {
 	}
 	// if false {
 	if posistion != nil {
-		s := fzf_color(posistion, v.sym.SymInfo.Name)
-		return fmt.Sprintf("%s%s %s", space, icon, s)
+		// s := fzf_color(posistion, v.sym.SymInfo.Name)
+		hl := convert_string_colortext(posistion, v.sym.SymInfo.Name, cc, tcell.ColorGreenYellow)
+		return ret.add_string_color(fmt.Sprintf("%s%s ", space, icon), 0).add_color_text_list(hl)
 	} else {
-		t := fmt.Sprintf("%s%s %s", space, icon, v.sym.SymInfo.Name)
-		t = fmt_color_string(t, cc)
-		return t
+		return ret.add_string_color(fmt.Sprintf("%s%s %s", space, icon, v.sym.SymInfo.Name), cc)
 	}
 }

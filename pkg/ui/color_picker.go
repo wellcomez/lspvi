@@ -5,7 +5,7 @@ package mainui
 
 import (
 	"fmt"
-	"log"
+	// "log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -45,7 +45,8 @@ func (pk *color_picker) grid(input *tview.InputField) *tview.Grid {
 
 // UpdateQuery implements picker.
 func (c *color_picker) UpdateQuery(query string) {
-	c.fzf.OnSearch(query, true)
+	c.fzf.OnSearch(query, false)
+	UpdateColorFzfList(c.fzf)
 }
 func (pk color_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.impl.list.InputHandler()
@@ -62,11 +63,12 @@ func (c *color_picker) name() string {
 
 func new_color_picker(v *fzfmain) *color_picker {
 	impl := &color_pick_impl{
-		new_fzflist_impl(nil, v),
+		new_fzflist_impl(v),
 		[]color_theme_file{},
 	}
 	ret := &color_picker{impl: impl, main: v.main}
 	dirs, err := treesittertheme.GetTheme()
+	fzfdata := []string{}
 	if err == nil {
 		index := 1
 		for i := range dirs {
@@ -76,7 +78,9 @@ func new_color_picker(v *fzfmain) *color_picker {
 				name:       d}
 			a.name = a.name[:strings.Index(a.name, ".")]
 			ret.impl.data = append(ret.impl.data, a)
-			impl.list.AddItem(fmt.Sprintf("%-4d. %-30s *ts", index, a.name), "", func() {
+			x := fmt.Sprintf("%-4d. %-30s *ts", index, a.name)
+			fzfdata = append(fzfdata, x)
+			impl.list.AddItem(x, "", func() {
 				ret.on_select(&a)
 			})
 			index++
@@ -88,18 +92,19 @@ func new_color_picker(v *fzfmain) *color_picker {
 				treesitter: false,
 			}
 			ret.impl.data = append(ret.impl.data, a)
-			impl.list.AddItem(fmt.Sprintf("%-4d. %-30s ", index, a.name), "", func() {
+			x := fmt.Sprintf("%-4d. %-30s ", index, a.name)
+			fzfdata = append(fzfdata, x)
+			impl.list.AddItem(x, "", func() {
 				ret.on_select(&a)
 			})
 			index++
 		}
 	}
-	ret.fzf = new_fzf_on_list(ret.impl.list, true)
-	ret.fzf.selected = func(dataindex, listindex int) {
-		a := ret.impl.data[dataindex]
-		log.Println(a)
+	ret.fzf = new_fzf_on_list_data(ret.impl.list, fzfdata, true)
+	impl.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		a := ret.impl.data[ret.fzf.get_data_index(i)]
 		ret.on_select(&a)
-	}
+	})
 	for i, v := range ret.impl.data {
 		if v.name == global_theme.name {
 			ret.impl.list.SetCurrentItem(i)

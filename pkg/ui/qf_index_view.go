@@ -177,7 +177,7 @@ func (menu qf_index_menu_context) menuitem() []context_menu_item {
 	case view_callin, view_quickview, view_bookmark:
 		hide := viewid != view_callin
 		return []context_menu_item{
-			{item: cmditem{cmd: cmdactor{desc: "Delete "}}, handle: func() {
+			{item: cmditem{Cmd: cmdactor{desc: "Delete "}}, handle: func() {
 				if len(ret.qfh.selected) > 0 && ret.qfh.selected[0] != ret.qfh.selected[1] {
 					ret.qfh.DeleteRange(ret.qfh.selected)
 					ret.sel.update_select_item()
@@ -192,7 +192,7 @@ func (menu qf_index_menu_context) menuitem() []context_menu_item {
 					}
 				}
 			}},
-			{item: cmditem{cmd: cmdactor{desc: "Reload "}}, handle: func() {
+			{item: cmditem{Cmd: cmdactor{desc: "Reload "}}, handle: func() {
 				value := ret.qfh.keys[ret.GetCurrentItem()]
 				var main MainService = ret.main
 				switch value.Type {
@@ -215,15 +215,15 @@ func (menu qf_index_menu_context) menuitem() []context_menu_item {
 		{
 			term := ret.main.term
 			return []context_menu_item{
-				{item: cmditem{cmd: cmdactor{desc: "new zsh "}}, handle: func() {
+				{item: cmditem{Cmd: cmdactor{desc: "new zsh "}}, handle: func() {
 					term.addterm("zsh")
 					ret.Load(viewid)
 				}},
-				{item: cmditem{cmd: cmdactor{desc: "new bash "}}, handle: func() {
+				{item: cmditem{Cmd: cmdactor{desc: "new bash "}}, handle: func() {
 					term.addterm("bash")
 					ret.Load(viewid)
 				}},
-				{item: cmditem{cmd: cmdactor{desc: "Exit "}}, handle: func() {
+				{item: cmditem{Cmd: cmdactor{desc: "Exit "}}, handle: func() {
 					term.Kill()
 					ret.Load(viewid)
 				}},

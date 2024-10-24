@@ -422,8 +422,9 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 			line := o.get_code(0)
 			lineNumber := o.Loc.Range.Start.Line
 			path := trim_project_filename(fpath, global_prj_root)
-			data := fmt.Sprintf("%s:%d %s", path, lineNumber+1, line)
-			grepx.grep_list_view.AddItem(data, "", func() {
+			data := colorstring{}
+			data.add_color_text_list(line.line).pepend(fmt.Sprintf("%s:%d ", path, lineNumber+1), 0)
+			grepx.grep_list_view.AddItem(data.ColorText(), "", func() {
 				grepx.main.OpenFileHistory(path, &o.Loc)
 				grepx.parent.hide()
 			})

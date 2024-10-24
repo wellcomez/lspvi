@@ -140,7 +140,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 	}
 
 	menuitem := []context_menu_item{
-		{item: cmditem{cmd: cmdactor{desc: "Reload"}}, handle: func() {
+		{item: cmditem{Cmd: cmdactor{desc: "Reload"}}, handle: func() {
 			children := nodepath[0].GetChildren()
 			for i := range children {
 				if children[i] == node {
@@ -149,7 +149,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 				}
 			}
 		}, hide: hiderefresh},
-		{item: cmditem{cmd: cmdactor{desc: "GotoDefine"}}, handle: func() {
+		{item: cmditem{Cmd: cmdactor{desc: "GotoDefine"}}, handle: func() {
 			node := ret.view.GetCurrentNode()
 			value := node.GetReference()
 			if value != nil {
@@ -160,7 +160,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 				}
 			}
 		}, hide: hide_define},
-		{item: cmditem{cmd: cmdactor{desc: "GotoReference"}}, handle: func() {
+		{item: cmditem{Cmd: cmdactor{desc: "GotoReference"}}, handle: func() {
 			node := ret.view.GetCurrentNode()
 			value := node.GetReference()
 			if value != nil {
@@ -171,15 +171,15 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 				}
 			}
 		}, hide: hide_define},
-		{item: cmditem{cmd: cmdactor{desc: "Call incoming"}}, handle: func() {
+		{item: cmditem{Cmd: cmdactor{desc: "Call incoming"}}, handle: func() {
 			value := node.GetReference()
 			if value != nil {
 				go ret.get_next_callin(value, main)
 			}
 		}, hide: hidecallin},
 		{item: create_menu_item("-"), handle: func() {}, hide: hidecallin},
-		{item: cmditem{cmd: cmdactor{desc: "Save"}}, handle: func() {}},
-		{item: cmditem{cmd: cmdactor{desc: "Delete"}}, handle: func() {
+		{item: cmditem{Cmd: cmdactor{desc: "Save"}}, handle: func() {}},
+		{item: cmditem{Cmd: cmdactor{desc: "Delete"}}, handle: func() {
 			ret.DeleteCurrentNode()
 		}},
 	}

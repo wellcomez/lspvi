@@ -255,7 +255,7 @@ func (viewid view_id) to_box(m *mainui) *tview.Box {
 var all_view_list = []view_id{view_code}
 var all_view_name_map = map[view_id]string{
 	view_log:              "Log",
-	view_quickview:        "Refs|Search",
+	view_quickview:        "Search",
 	view_callin:           "Callin",
 	view_uml:              "UML",
 	view_cmd:              "cmd",

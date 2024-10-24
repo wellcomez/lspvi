@@ -6,7 +6,6 @@ package mainui
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -158,7 +157,8 @@ func (pk *workspace_picker) grid(input *tview.InputField) *tview.Grid {
 
 // UpdateQuery implements picker.
 func (c *workspace_picker) UpdateQuery(query string) {
-	c.fzf.OnSearch(query, true)
+	c.fzf.OnSearch(query, false)
+	UpdateColorFzfList(c.fzf)
 }
 func (pk workspace_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.impl.list.InputHandler()
@@ -175,23 +175,25 @@ func (c *workspace_picker) name() string {
 
 func new_workspace_picker(v *fzfmain) *workspace_picker {
 	impl := &wk_picker_impl{
-		new_fzflist_impl(nil, v),
+		new_fzflist_impl(v),
 	}
 	gload_workspace_list.Load()
 	ret := &workspace_picker{impl: impl}
+	fzfdata := []string{}
 	for i := range gload_workspace_list.Projects {
 		a := gload_workspace_list.Projects[i]
-		impl.list.AddItem(fmt.Sprintf("%-10s %-30s", a.Name, a.Root), "", func() {
+		x := fmt.Sprintf("%-10s %-30s", a.Name, a.Root)
+		fzfdata = append(fzfdata, x)
+		impl.list.AddItem(x, "", func() {
 			ret.on_select(&a)
 		})
 	}
 
-	ret.fzf = new_fzf_on_list(ret.impl.list, true)
-	ret.fzf.selected = func(dataindex, listindex int) {
-		a := gload_workspace_list.Projects[dataindex]
-		log.Println(a)
+	ret.fzf = new_fzf_on_list_data(ret.impl.list, fzfdata, true)
+	impl.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		a := gload_workspace_list.Projects[ret.fzf.get_data_index(i)]
 		ret.on_select(&a)
-	}
+	})
 	return ret
 }
 

@@ -456,13 +456,13 @@ func addjust_menu_width(items []context_menu_item) []context_menu_item {
 	}
 	maxlen := 0
 	for _, v := range leftitems {
-		maxlen = max(maxlen, len(v.item.cmd.desc))
+		maxlen = max(maxlen, len(v.item.Cmd.desc))
 	}
 	sss := strings.Repeat("-", maxlen)
 	for i := range leftitems {
 		v := &leftitems[i]
-		if strings.Index(v.item.cmd.desc, "-") == 0 {
-			v.item.cmd.desc = sss
+		if strings.Index(v.item.Cmd.desc, "-") == 0 {
+			v.item.Cmd.desc = sss
 		}
 	}
 	return leftitems
@@ -804,8 +804,8 @@ func get_line_content(line int, Buf *femto.Buffer) string {
 }
 func (code *CodeView) run_command(cmdlist []cmditem, key string) bool {
 	for _, v := range cmdlist {
-		if v.key.matched(key) {
-			v.cmd.handle()
+		if v.Key.matched(key) {
+			v.Cmd.handle()
 			return true
 		}
 	}
@@ -1396,7 +1396,7 @@ func (code *CodeView) open_file_lspon_line_option(filename string, line *lsp.Loc
 				if line != nil {
 					code.goto_location_no_history(line.Range, code.id != view_code_below, option)
 				}
-				if focus && code.id.is_editor(){ 
+				if focus && code.id.is_editor() {
 					if sym == nil {
 						main.OutLineView().Clear()
 					}
@@ -1435,7 +1435,7 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 			return nil
 		}
 	}
-	if code.main != nil &&code.vid().is_editor(){
+	if code.main != nil && code.vid().is_editor() {
 		code.main.OutLineView().Clear()
 	}
 	code.loading = true
@@ -1463,10 +1463,13 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 	go GlobalApp.QueueUpdateDraw(func() {
 		code.set_color()
-		if code.main != nil {
-			code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-		}
 	})
+	if code.main != nil {
+		if !code.vid().is_editor() {
+			return
+		}
+		code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+	}
 }
 func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	// b := code.view.Buf
@@ -1478,7 +1481,7 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	has_ts := false
 	if sym != nil {
 		if tree_sitter := sym.Ts; tree_sitter != nil {
-			update_view_tree_sitter(code, tree_sitter)
+			on_treesitter_update(code, tree_sitter)
 			has_ts = true
 		}
 	}
@@ -1494,7 +1497,7 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 				if sym != nil && sym.Filename == fileload.FileName {
 					sym.Ts = ts
 				}
-				update_view_tree_sitter(code, ts)
+				on_treesitter_update(code, ts)
 			})
 		}
 	}
@@ -1512,16 +1515,16 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	return nil
 }
 
-func update_view_tree_sitter(code *CodeView, ts *lspcore.TreeSitter) {
-	go GlobalApp.QueueUpdateDraw(func() {
-		code.set_color()
-		if code.main != nil {
-			if code.id.is_editor() {
-				code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-			}
-		}
-	})
-}
+// func update_view_tree_sitter(code *CodeView, ts *lspcore.TreeSitter) {
+// 	go GlobalApp.QueueUpdateDraw(func() {
+// 		code.set_color()
+// 	})
+// 	if code.main != nil {
+// 		if code.id.is_editor() {
+// 			code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+// 		}
+// 	}
+// }
 
 func (code CodeView) change_wrap_appearance() {
 	code.config_wrap(code.Path())
@@ -1595,7 +1598,7 @@ func (code *CodeView) new_bookmark_editor_cb(cb func(string)) bookmark_edit {
 	var line = code.view.Cursor.Loc.Y + 1
 	line1 := code.view.Buf.Line(line - 1)
 	ret := bookmark_edit{
-		fzflist_impl: new_fzflist_impl(nil, dlg),
+		fzflist_impl: new_fzflist_impl(dlg),
 		cb:           cb,
 	}
 	ret.fzflist_impl.list.AddItem(line1, code.Path(), nil)
@@ -1790,19 +1793,16 @@ func (code *CodeView) Format() {
 			go code.main.App().QueueUpdateDraw(func() {
 				check := code.NewChangeChecker()
 				defer check.End()
-				for _, v := range ret {
-					if v.NewText == "\n" {
-						continue
+				// continue
+				// format3(ret, code)
+				if tf, err := NewTokenLineFormat(code.view.Buf, ret); err == nil {
+					if _, err := tf.Run(true); err == nil {
+						// event.File = code.Path()
+						// code.on_content_changed(event)
+						// code.LspSymbol().NotifyCodeChange(event)
 					}
-					start := femto.Loc{
-						X: v.Range.Start.Character,
-						Y: v.Range.Start.Line,
-					}
-					end := femto.Loc{
-						X: v.Range.End.Character,
-						Y: v.Range.End.Line,
-					}
-					code.view.Buf.Replace(start, end, v.NewText)
+				} else {
+					debug.DebugLog("format", err)
 				}
 			})
 		}

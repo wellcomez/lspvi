@@ -7,7 +7,6 @@ import (
 	// "fmt"
 
 	"fmt"
-	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -15,139 +14,11 @@ import (
 
 type space_menu struct {
 	table     *tview.List
-	main     MainService 
+	main      MainService
 	visible   bool
 	impl      *space_menu_impl
 	input     *inputdelay
 	menustate func(*space_menu)
-}
-type cmditem struct {
-	key cmdkey
-	cmd cmdactor
-}
-type cmdactor struct {
-	id     command_id
-	desc   string
-	handle func() bool
-}
-
-func (key cmdkey) matched_event(s tcell.EventKey) bool {
-	switch key.Type {
-	case cmd_key_tcell_key:
-		return key.tcell_key == s.Key()
-	case cmd_key_event_name:
-		return key.eventname == s.Name()
-	case cmd_key_rune:
-		return key.rune == s.Rune()
-	}
-	return false
-}
-func (key cmdkey) prefixmatched(s string) bool {
-	return strings.HasPrefix(key.string(), s)
-}
-func (key cmdkey) matched(s string) bool {
-	return strings.HasPrefix(key.string(), s)
-}
-
-//	func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
-//		return cmditem{cmdkey{
-//			Type:      cmd_key_tcell_key,
-//			tcell_key: key,
-//		}, actor}
-//	}
-func (actor cmdactor) runne(key rune) cmditem {
-	return cmditem{cmdkey{
-		Type: cmd_key_rune,
-		rune: key,
-	}, actor}
-}
-func (c cmditem) ctrlw() cmditem {
-	c.key.hasctrlw = true
-	return c
-}
-func (actor cmdactor) tcell_key(key tcell.Key) cmditem {
-	return cmditem{cmdkey{
-		Type:      cmd_key_tcell_key,
-		tcell_key: key,
-	}, actor}
-}
-func (actor cmdactor) enven_name_key(eventname string) cmditem {
-	return cmditem{cmdkey{
-		Type:      cmd_key_event_name,
-		eventname: eventname,
-	}, actor}
-}
-func (actor cmdactor) leader(key []string) cmditem {
-	return cmditem{cmdkey{
-		key:  key,
-		Type: cmd_key_leader,
-	}, actor}
-}
-func (actor cmdactor) esc_key(key []string) cmditem {
-	return cmditem{cmdkey{
-		key:  key,
-		Type: cmd_key_escape,
-	}, actor}
-}
-func (actor cmdactor) menu_key(key []string) cmditem {
-	return cmditem{cmdkey{
-		key:  key,
-		Type: cmd_key_menu,
-	}, actor}
-}
-
-type cmdkeytype int
-
-const (
-	cmd_key_menu = iota
-	cmd_key_escape
-	cmd_key_leader
-	cmd_key_event_name
-	cmd_key_tcell_key
-	cmd_key_rune
-	cmd_key_command
-)
-
-type cmdkey struct {
-	key       []string
-	Type      cmdkeytype
-	eventname string
-	rune      rune
-	tcell_key tcell.Key
-	hasctrlw  bool
-}
-
-func (cmd cmdkey) displaystring() string {
-	t := []string{}
-	switch cmd.Type {
-	case cmd_key_event_name:
-		{
-			switch cmd.eventname {
-			case "Rune[O]":
-				return "Shift + o"
-			case "Rune[+]":
-				return "Shift + +"
-			case "Rune[-]":
-				return "-"
-			}
-			return cmd.eventname
-		}
-	case cmd_key_menu:
-		t = append(t, "menu")
-	case cmd_key_escape:
-		t = append(t, "escape")
-	case cmd_key_tcell_key:
-		return tcell.KeyNames[cmd.tcell_key]
-	case cmd_key_rune:
-		return fmt.Sprintf("%c", cmd.rune)
-	case cmd_key_leader:
-		t = append(t, "space")
-	}
-	t = append(t, cmd.key...)
-	return strings.Join(t, " + ")
-}
-func (cmd cmdkey) string() string {
-	return strings.Join(cmd.key, "")
 }
 
 type space_menu_item struct {
@@ -219,9 +90,9 @@ func (menu *space_menu) onenter() {
 func (item space_menu_item) col(n int) *tview.TableCell {
 	text := ""
 	if n == 0 {
-		text = item.item.key.string()
+		text = item.item.Key.string()
 	} else if n == 1 {
-		text = item.item.cmd.desc
+		text = item.item.Cmd.desc
 	}
 	return &tview.TableCell{Text: text}
 }
@@ -233,7 +104,7 @@ type space_menu_impl struct {
 func init_space_menu_item(m *mainui) []space_menu_item {
 	var ret = []space_menu_item{}
 	for _, v := range m.key_map_space_menu() {
-		ret = append(ret, space_menu_item{item: v, handle: v.cmd.handle})
+		ret = append(ret, space_menu_item{item: v, handle: v.Cmd.handle})
 	}
 	return ret
 }
@@ -265,7 +136,7 @@ func (t *space_menu) load_spacemenu() {
 	t.table.Clear()
 	impl := t.impl
 	for _, v := range impl.items {
-		s := fmt.Sprintf("%-5s %s", v.item.key.string(), v.item.cmd.desc)
+		s := fmt.Sprintf("%-5s %s", v.item.Key.string(), v.item.Cmd.desc)
 		t.table.AddItem(s, "", 0, func() {
 		})
 	}

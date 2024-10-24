@@ -182,6 +182,7 @@ type MainService interface {
 type mainui struct {
 	sel selectarea
 	// code_navigation_bar *smallicon
+	key                *keymap
 	term               *Term
 	fileexplorer       *file_tree_view
 	codeview           *CodeView
@@ -731,6 +732,7 @@ func MainUI(arg *Arguments) {
 	// 	ws:       arg.Ws,
 	// }
 	main := &mainui{sel: selectarea{nottext: true}}
+	main.key = NewKeyMap(main)
 	prj.Load(arg, main)
 	global_file_watch.AddReciever(main)
 	// main.code_navigation_bar = new_small_icon(main)
@@ -1265,8 +1267,8 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		return event
 	}
 	for _, v := range main.global_key_map() {
-		if v.key.matched_event(*event) {
-			if v.cmd.handle() {
+		if v.Key.matched_event(*event) {
+			if v.Cmd.handle() {
 				return nil
 			}
 		}

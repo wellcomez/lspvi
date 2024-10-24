@@ -192,7 +192,7 @@ func NewTerminal(main *mainui, app *tview.Application, shellname string) *Term {
 	ret.right_context = &term_right_menu{
 		view: ret,
 		menu_item: &menudata{[]context_menu_item{
-			{item: cmditem{cmd: cmdactor{desc: "Copy "}}, handle: func() {
+			{item: cmditem{Cmd: cmdactor{desc: "Copy "}}, handle: func() {
 				// ret.qfh.Delete(ret.GetCurrentItem())
 				s := ret.sel.GetSelection()
 				main.CopyToClipboard(s)
@@ -219,9 +219,10 @@ func (t *Term) ListTerm() []string {
 func (ret *Term) new_pty(shellname string, cb func(bool)) *terminal_pty {
 	cmdline := ""
 	switch shellname {
-	case "bash":{
-		cmdline = "bash"
-	}
+	case "bash":
+		{
+			cmdline = "bash"
+		}
 	case "zsh":
 		cmdline = "/usr/bin/zsh"
 	case "sh":
