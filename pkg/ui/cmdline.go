@@ -79,7 +79,7 @@ func new_cmdline(main *mainui) *cmdline {
 	return code
 }
 func (cmd *cmdline) OnSet(args []string) bool {
-	if len(args) == 1 {
+	if len(args) == 1 || len(args) == 0 {
 		return false
 	}
 	switch args[1] {
@@ -97,6 +97,26 @@ func (cmd *cmdline) OnSet(args []string) bool {
 		}
 	}
 	return true
+}
+func (cmdline *cmdline) ConvertCmdItem() (ret []cmditem) {
+	comands := cmdline.cmds
+	for i := range comands {
+		c := comands[i]
+		// if c.id < 0 {
+		// 	continue
+		// }
+		if c.arg0[0] == "set" {
+			ss := []string{"colorscheme", "wrap"}
+			for _, v := range ss {
+				a := c.to_cmditem([]string{v})
+				ret = append(ret, a)
+			}
+		} else {
+			a := c.to_cmditem(nil)
+			ret = append(ret, a)
+		}
+	}
+	return
 }
 func (cmd *cmdline) OnSearchCommand(args []string) bool {
 	if len(args) > 1 {
