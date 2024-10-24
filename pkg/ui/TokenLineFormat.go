@@ -126,18 +126,30 @@ func (cur *TokenLine) Run(format *TokenLineFormat) {
 				cur.appends = append(cur.appends, to_left...)
 				cur.print()
 			}
-		case 1:
+		default:
 			{
 				ss := strings.Split(edit.NewText, "\n")
 				s1 := ss[0]
-				s2 := ss[1]
-				debug.DebugLog("format",cur.lineno, "s1-", strconv.Quote(s1), "s2-", strconv.Quote(s2))
+				s2 := ss[len(ss)-1]
+				newline := ss[1 : len(ss)-1]
+				if len(newline) > 0 {
+					for i := 0; i < len(newline); i++ {
+						debug.DebugLog("format", cur.lineno, i+cur.lineno+1, "editmulti-insert", strconv.Quote(newline[i]))
+						// v := newline[i]
+						// n := []Token{{data: v}}
+						// l := TokenLine{line: v, lineno: i + cur.lineno,
+						// 	newline: n}
+						// cur.insertline = append(cur.insertline, l)
+					}
+				}
+				debug.DebugLog("format", cur.lineno, "s1-", strconv.Quote(s1), "s2-", strconv.Quote(s2))
 				cur.appends = append(cur.appends, Token{data: s1})
 				cur.print()
-				nextline := format.lines[cur.lineno+1]
+
+				nextline := format.lines[end.Y]
 				nextline.Run(format)
 				_, right := Split(end.X, nextline.Tokens)
-				r := []Token{{data: s2, b: 0, e: end.Y}}
+				r := []Token{{data: s2, b: 0, e: end.X}}
 				r = append(r, right...)
 				r = append(r, nextline.appends...)
 				nextline.newline = r
@@ -231,6 +243,12 @@ type Token struct {
 	b, e int
 }
 
+func NewToken(data string) *Token {
+	return &Token{
+		data: data,
+	}
+}
+
 func (t *Token) replace() string {
 	if t.edit == nil {
 		return t.data
@@ -249,6 +267,7 @@ type TokenLine struct {
 	newline     []Token
 	removed     bool
 	formated    bool
+	insertline  []TokenLine
 }
 
 func Split(index int, tokes []Token) (left, rigtht []Token) {
@@ -304,7 +323,7 @@ func (t *TokenLine) FormatOutput(no_print bool) (ret string) {
 	}
 	if len(t.newline) > 0 {
 		for _, v := range t.newline {
-			ret = ret + v.data
+			ret = ret + v.replace()
 		}
 		return
 	}
@@ -349,6 +368,6 @@ func NewTokenLineFormat(Buf *femto.Buffer, edits []lsp.TextEdit) (f *TokenLineFo
 func create_from_bufline(Buf *femto.Buffer, i int) *TokenLine {
 	x := Buf.Line(i)
 	token := Token{x, nil, 0, len(x)}
-	x1 := TokenLine{[]Token{token}, 0, x, nil, i, nil, nil, nil, false, false}
+	x1 := TokenLine{[]Token{token}, 0, x, nil, i, nil, nil, nil, false, false, nil}
 	return &x1
 }
