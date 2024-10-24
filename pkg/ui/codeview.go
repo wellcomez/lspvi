@@ -1463,10 +1463,13 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 	go GlobalApp.QueueUpdateDraw(func() {
 		code.set_color()
-		if code.main != nil {
-			code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-		}
 	})
+	if code.main != nil {
+		if !code.vid().is_editor() {
+			return
+		}
+		code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+	}
 }
 func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	// b := code.view.Buf
@@ -1478,7 +1481,7 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	has_ts := false
 	if sym != nil {
 		if tree_sitter := sym.Ts; tree_sitter != nil {
-			update_view_tree_sitter(code, tree_sitter)
+			on_treesitter_update(code, tree_sitter)
 			has_ts = true
 		}
 	}
@@ -1494,7 +1497,7 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 				if sym != nil && sym.Filename == fileload.FileName {
 					sym.Ts = ts
 				}
-				update_view_tree_sitter(code, ts)
+				on_treesitter_update(code, ts)
 			})
 		}
 	}
@@ -1512,16 +1515,16 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	return nil
 }
 
-func update_view_tree_sitter(code *CodeView, ts *lspcore.TreeSitter) {
-	go GlobalApp.QueueUpdateDraw(func() {
-		code.set_color()
-		if code.main != nil {
-			if code.id.is_editor() {
-				code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
-			}
-		}
-	})
-}
+// func update_view_tree_sitter(code *CodeView, ts *lspcore.TreeSitter) {
+// 	go GlobalApp.QueueUpdateDraw(func() {
+// 		code.set_color()
+// 	})
+// 	if code.main != nil {
+// 		if code.id.is_editor() {
+// 			code.main.OutLineView().update_with_ts(ts, code.LspSymbol())
+// 		}
+// 	}
+// }
 
 func (code CodeView) change_wrap_appearance() {
 	code.config_wrap(code.Path())
