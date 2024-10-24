@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
 )
@@ -50,18 +51,37 @@ func (sym *Symbol_file) Find(rang lsp.Range) *Symbol {
 	}
 	return nil
 }
-func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (lsp.SignatureHelp, error) {
+func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (ret lsp.SignatureHelp, err error) {
 	arg.File = s.Filename
 	if s.lsp == nil {
-		err := errors.New("lsp is nil")
+		err = errors.New("lsp is nil")
 		if arg.HelpCb != nil {
 			arg.HelpCb(lsp.SignatureHelp{}, arg, err)
 		}
-		return lsp.SignatureHelp{}, err
+		return
 	}
-	return s.lsp.SignatureHelp(arg)
+	ret, err = s.lsp.SignatureHelp(arg)
+	s.on_error(err)
+	return
 }
 
+func (s *Symbol_file) on_error(err error) {
+	if err == nil {
+		return
+	}
+	s.Wk.Wk.Callback.LspLogOutput("LSPSERVER_API_ERROR", fmt.Sprintf("%v", err))
+	v := err.(*jsonrpc2.Error)
+	if v != nil {
+		if v.Code == -32602 {
+			s.verison++
+			s.lspopen = false
+			if err := s.lsp.DidOpen(SourceCode{Path: s.Filename}, s.verison); err != nil {
+				debug.DebugLog(DebugTag, "lsp reopen failed", s.Filename, err)
+			}
+			return
+		}
+	}
+}
 func (s *Symbol_file) Format(opt FormatOption) (ret []lsp.TextEdit, err error) {
 	if s.lsp == nil {
 		err = errors.New("lsp is nil")
@@ -73,7 +93,9 @@ func (s *Symbol_file) Format(opt FormatOption) (ret []lsp.TextEdit, err error) {
 	if opt.Filename == "" {
 		opt.Filename = s.Filename
 	}
-	return s.lsp.Format(opt)
+	ret, err = s.lsp.Format(opt)
+	s.on_error(err)
+	return
 }
 func (s Symbol_file) IsTrigger(param string) (TriggerChar, error) {
 	return s.lsp.IsTrigger(param)
@@ -84,18 +106,21 @@ func (s Symbol_file) CompletionItemResolve(param *lsp.CompletionItem) (ret *lsp.
 		return
 	}
 	ret, err = s.lsp.CompletionItemResolve(param)
+	s.on_error(err)
 	return
 }
-func (s *Symbol_file) DidComplete(param Complete) (lsp.CompletionList, error) {
+func (s *Symbol_file) DidComplete(param Complete) (ret lsp.CompletionList, err error) {
 	param.File = s.Filename
 	if s.lsp == nil {
-		err := errors.New("lsp is nil")
+		err = errors.New("lsp is nil")
 		if param.CompleteHelpCallback != nil {
 			param.CompleteHelpCallback(lsp.CompletionList{}, param, err)
 		}
-		return lsp.CompletionList{}, err
+		return
 	}
-	return s.lsp.DidComplete(param)
+	ret, err = s.lsp.DidComplete(param)
+	s.on_error(err)
+	return
 }
 func (*Symbol_file) newMethod(v *Symbol, rang lsp.Range) *Symbol {
 	if v.SymInfo.Kind == lsp.SymbolKindFunction || v.SymInfo.Kind == lsp.SymbolKindMethod {
@@ -207,6 +232,7 @@ func (sym *Symbol_file) Reference(req SymolParam) {
 		err = fmt.Errorf("lsp is nil")
 	} else {
 		loc, err = sym.lsp.GetReferences(sym.Filename, req.Ranges.Start)
+		sym.on_error(err)
 	}
 	sym.Handle.OnLspRefenceChanged(SymolSearchKey{Ranges: ranges, File: sym.Filename, Key: key, sym: sym}, loc, err)
 }
@@ -216,6 +242,7 @@ func (sym *Symbol_file) Declare(ranges lsp.Range, line *OpenOption) {
 	}
 	loc, err := sym.lsp.GetDeclare(sym.Filename, ranges.Start)
 	if err != nil {
+		sym.on_error(err)
 		return
 	}
 	if len(loc) > 0 {
@@ -272,6 +299,7 @@ func (sym *Symbol_file) GotoDefine(ranges lsp.Range, line *OpenOption) {
 	}
 	loc, err := sym.lsp.GetDefine(sym.Filename, ranges.Start)
 	if err != nil {
+		sym.on_error(err)
 		return
 	}
 	if len(loc) > 0 {
@@ -328,17 +356,23 @@ func (sym *Symbol_file) CallHierarchyOutcomingCall(callitem lsp.CallHierarchyIte
 	}
 	return sym.lsp.CallHierarchyOutcomingCalls(callitem)
 }
-func (sym *Symbol_file) CallHierarchyIncomingCall(callitem lsp.CallHierarchyItem) ([]lsp.CallHierarchyIncomingCall, error) {
+func (sym *Symbol_file) CallHierarchyIncomingCall(callitem lsp.CallHierarchyItem) (ret []lsp.CallHierarchyIncomingCall, err error) {
 	if sym.lsp == nil {
-		return nil, fmt.Errorf("lsp is null")
+		err = fmt.Errorf("lsp is null")
+		return
 	}
-	return sym.lsp.CallHierarchyIncomingCalls(callitem)
+	ret, err = sym.lsp.CallHierarchyIncomingCalls(callitem)
+	sym.on_error(err)
+	return
 }
-func (sym *Symbol_file) PrepareCallHierarchy(loc lsp.Location) ([]lsp.CallHierarchyItem, error) {
+func (sym *Symbol_file) PrepareCallHierarchy(loc lsp.Location) (ret []lsp.CallHierarchyItem, err error) {
 	if sym.lsp == nil {
-		return nil, fmt.Errorf("lsp is null")
+		err = fmt.Errorf("lsp is null")
+		return
 	}
-	return sym.lsp.PrepareCallHierarchy(loc)
+	ret, err = sym.lsp.PrepareCallHierarchy(loc)
+	sym.on_error(err)
+	return
 }
 func (sym *Symbol_file) CallinTask(loc lsp.Location, level int) (*CallInTask, error) {
 	task := NewCallInTask(loc, sym.lsp, level)
@@ -553,6 +587,7 @@ func (sym *Symbol_file) DidSave() {
 }
 func (sym *Symbol_file) LoadSymbol(reload bool) {
 	err := sym.__load_symbol_impl(reload)
+	sym.on_error(err)
 	sym.Handle.OnSymbolistChanged(sym, err)
 }
 func (sym Symbol_file) find_stack_symbol(call *CallStackEntry) (*Symbol, error) {
