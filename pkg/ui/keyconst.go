@@ -371,24 +371,37 @@ func (cmdline *cmdline) ConvertCmdItem() (ret []cmditem) {
 	comands := cmdline.cmds
 	for i := range comands {
 		c := comands[i]
-		if c.id < 0 {
-			continue
+		// if c.id < 0 {
+		// 	continue
+		// }
+		if c.arg0[0] == "set" {
+			ss := []string{"colorscheme", "wrap"}
+			for _, v := range ss {
+				a := c.to_cmditem([]string{v})
+				ret = append(ret, a)
+			}
+		} else {
+			a := c.to_cmditem(nil)
+			ret = append(ret, a)
 		}
-		a := cmditem{
-			Key: cmdkey{
-				Type: cmd_key_command,
-				key:  c.arg0,
+	}
+	return
+}
+
+func (c cmd_processor) to_cmditem(arg []string) (a cmditem) {
+	a = cmditem{
+		Key: cmdkey{
+			Type: cmd_key_command,
+			key:  append(c.arg0, arg...),
+		},
+		Cmd: cmdactor{
+			desc: strings.Join(append([]string{c.descriptor}, arg...), " "),
+			id:   c.id,
+			handle: func() bool {
+				c.run(arg)
+				return true
 			},
-			Cmd: cmdactor{
-				desc: c.descriptor,
-				id:   c.id,
-				handle: func() bool {
-					c.run(nil)
-					return true
-				},
-			},
-		}
-		ret = append(ret, a)
+		},
 	}
 	return
 }
