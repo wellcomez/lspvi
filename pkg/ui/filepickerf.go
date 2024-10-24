@@ -127,4 +127,5 @@ func UpdateColorFzfList(fzf *fzf_on_listview) {
 		fzf.listview.AddColorItem(append(sss, t1...),
 			nil, func() {})
 	}
+	fzf.listview.SetCurrentItem(0)
 }
