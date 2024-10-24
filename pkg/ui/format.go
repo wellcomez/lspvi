@@ -58,10 +58,9 @@ type Format struct {
 	Lines *femto.Buffer
 }
 
-
 func (d *Format) run(edits []lsp.TextEdit) error {
-	tf :=NewTokenLineFormat(d.Lines,edits)
-	tf.FormatOnTokenline()
+	tf := NewTokenLineFormat(d.Lines, edits)
+	tf.Run()
 	return nil
 	sort.SliceStable(edits, func(i, j int) bool {
 		// Compare lines first

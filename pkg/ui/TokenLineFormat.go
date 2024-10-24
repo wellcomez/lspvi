@@ -10,7 +10,7 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 
-func (format *TokenLineFormat) FormatOnTokenline() {
+func (format *TokenLineFormat) Run() {
 
 	var lines []*TokenLine
 	for linenr := range format.lines {
@@ -21,7 +21,7 @@ func (format *TokenLineFormat) FormatOnTokenline() {
 		return lines[i].lineno < lines[j].lineno
 	})
 	for _, tl := range lines {
-		tl.format_on_breakline(format)
+		tl.Run(format)
 	}
 	for _, tl := range lines {
 		tl.print()
@@ -39,11 +39,11 @@ func (currentLine TokenLine) print() {
 	if currentLine.line_edit != nil {
 		e = string_editor(*currentLine.line_edit)
 	}
-	debug.DebugLogf("format", "line:%d editnumber:%d breakline:%s", currentLine.lineno, currentLine.editorcount, e)
+	debug.DebugLogf("format", "line:%d inline-editor:%d  line-editor:%s", currentLine.lineno, currentLine.editorcount, e)
 	debug.DebugLog("format", "old--", codeprint(currentLine.line))
 	debug.DebugLog("format", "new--", codeprint(currentLine.FormatOutput()))
 }
-func (currentLine *TokenLine) format_on_breakline(format *TokenLineFormat) {
+func (currentLine *TokenLine) Run(format *TokenLineFormat) {
 	if currentLine.formated {
 		return
 	}
@@ -53,7 +53,7 @@ func (currentLine *TokenLine) format_on_breakline(format *TokenLineFormat) {
 		newLines := strings.Split(edit.NewText, "\n")
 		if len(newLines) == 1 {
 			lastline := format.lines[end.Y]
-			lastline.format_on_breakline(format)
+			lastline.Run(format)
 			replace, left := lastline.split(end)
 			currentLine.replaced = append(currentLine.replaced, replace...)
 			lastline.removed = true
