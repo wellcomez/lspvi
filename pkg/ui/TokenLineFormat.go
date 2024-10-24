@@ -246,7 +246,7 @@ func Split(index int, tokes []Token) (left, rigtht []Token) {
 			left = append(left, tokes[:i]...)
 			if index < v.e {
 				left = append(left, Token{v.data[:index-v.b], v.edit, v.b, index})
-				rigtht = append(rigtht, Token{v.data[index:], v.edit, index, v.e})
+				rigtht = append(rigtht, Token{v.data[index-v.b:], v.edit, index, v.e})
 			}
 			rigtht = append(rigtht, tokes[i+1:]...)
 			return
