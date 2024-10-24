@@ -36,6 +36,25 @@ func (format *TokenLineFormat) Run() {
 			debug.DebugLog("format", "*:", i, tl.FormatOutput(true))
 		}
 	}
+	deleted := 0
+	for i := 0; i < len(lines); i++ {
+		lineno := len(lines) - i - 1
+		line := lines[lineno]
+		if !line.removed {
+			newline := line.FormatOutput(true)
+			if deleted != 0 {
+				start, _ := line.Range()
+				_, end := lines[lineno+deleted].Range()
+				format.Buf.Replace(start, end, newline)
+			} else {
+				s, e := line.Range()
+				format.Buf.Replace(s, e, newline)
+			}
+			deleted = 0
+		} else {
+			deleted++
+		}
+	}
 	// debug.DebugLog("format", "%s\nformat", strings.Join(code, "\n"))
 
 }
@@ -89,7 +108,11 @@ func (currentLine *TokenLine) Run(format *TokenLineFormat) {
 		}
 	}
 }
-
+func (line TokenLine) Range() (start, end femto.Loc) {
+	start = femto.Loc{Y: line.lineno, X: 0}
+	end = femto.Loc{Y: line.lineno, X: len(line.line)}
+	return
+}
 func (lastline *TokenLine) split(end femto.Loc) (replace []Token, add []Token) {
 	add = lastline.SubFrom(end.X)
 	replace = lastline.SubTo(end.X)
@@ -101,7 +124,7 @@ func create_line(Buf *femto.Buffer, edits []lsp.TextEdit) (tokenline *TokenLine,
 	if len(edits) > 0 {
 		lineNr := edits[0].Range.Start.Line
 		tokenline = create_from_bufline(Buf, lineNr)
-		line := tokenline.line 
+		line := tokenline.line
 
 		begin_x := 0
 		for next_index = 0; next_index < len(edits); next_index++ {
@@ -120,6 +143,7 @@ func create_line(Buf *femto.Buffer, edits []lsp.TextEdit) (tokenline *TokenLine,
 			t = Token{line[begin_x:end.X], &edits[i], begin_x, end.X}
 			s = append(s, t)
 			debug.DebugLog("format", "createline", string_editor(edits[i]), "find edit")
+			begin_x = end.X
 		}
 		lasttoken := Token{line[begin_x:], nil, begin_x, len(line)}
 		s = append(s, lasttoken)
@@ -146,7 +170,7 @@ func create_line(Buf *femto.Buffer, edits []lsp.TextEdit) (tokenline *TokenLine,
 }
 func string_editor(e lsp.TextEdit) string {
 	start, end := GetEditLoc(e)
-	return fmt.Sprintf("%d:%d %s %v", start.Y, end.Y, string_editor_text(e), []rune(e.NewText))
+	return fmt.Sprintf("%d:%d ->  %d:%d %s %v", start.Y, start.X, end.Y, end.X, string_editor_text(e), []rune(e.NewText))
 }
 func string_editor_text(e lsp.TextEdit) string {
 	x := codeprint(strings.ReplaceAll(e.NewText, "\n", "\\n"))
@@ -208,9 +232,9 @@ func (line *TokenLine) SubFrom(index int) (t []Token) {
 	t = append(t, line.appends...)
 	return
 }
-func (t *TokenLine) FormatOutput(delet_empty bool) (ret string) {
+func (t *TokenLine) FormatOutput(no_print bool) (ret string) {
 	if t.removed {
-		if !delet_empty {
+		if !no_print {
 			ret = "deleted?????????????????????????????????"
 		}
 		return
