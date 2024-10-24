@@ -60,6 +60,9 @@ type Format struct {
 
 
 func (d *Format) run(edits []lsp.TextEdit) error {
+	tf :=NewTokenLineFormat(d.Lines,edits)
+	tf.FormatOnTokenline()
+	return nil
 	sort.SliceStable(edits, func(i, j int) bool {
 		// Compare lines first
 		if edits[i].Range.Start.Line != edits[j].Range.Start.Line {
