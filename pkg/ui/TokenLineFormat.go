@@ -11,7 +11,7 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-func (format *TokenLineFormat) Run() (code_change lspcore.CodeChangeEvent, err error) {
+func (format *TokenLineFormat) Run(replace bool) (code_change lspcore.CodeChangeEvent, err error) {
 
 	var lines []*TokenLine
 	for linenr := range format.lines {
@@ -38,8 +38,10 @@ func (format *TokenLineFormat) Run() (code_change lspcore.CodeChangeEvent, err e
 		}
 	}
 	deleted := 0
-	// err = fmt.Errorf("not replacing")
-	// return
+	if !replace {
+		err = fmt.Errorf("not replacing")
+		return
+	}
 	var Events []lspcore.TextChangeEvent
 	for i := 0; i < len(lines); i++ {
 		lineno := len(lines) - i - 1

@@ -1793,9 +1793,10 @@ func (code *CodeView) Format() {
 				// continue
 				// format3(ret, code)
 				tf := NewTokenLineFormat(code.view.Buf, ret)
-				if event, err := tf.Run(); err == nil {
+				if event, err := tf.Run(false); err == nil {
 					event.File = code.Path()
-					code.on_content_changed(event)
+					// code.on_content_changed(event)
+					code.LspSymbol().NotifyCodeChange(event)
 				}
 			})
 		}
