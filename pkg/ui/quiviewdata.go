@@ -302,7 +302,7 @@ func (v *FlexTreeNode) ListItem() (ret []string) {
 	down := ""
 	// down := fmt.Sprintf("%c",'\U000f1464')
 	down = "▶"
-	down = fmt.Sprintf("%c", '\U000f004a')
+	down = fmt.Sprintf("%-2c", '\U000f004a')
 	m := v.HasMore()
 	lastIndex := len(v.child) - 1
 	for i, c := range v.child {
