@@ -53,7 +53,7 @@ func (node *CallNode) Ignore(uid int64) bool {
 
 type callinview struct {
 	*view_link
-	view           *tview.TreeView
+	view           *Tree
 	Name           string
 	main           MainService
 	task_list      []CallNode
@@ -80,7 +80,7 @@ type dom_node struct {
 }
 
 func new_callview(main MainService) *callinview {
-	view := tview.NewTreeView()
+	view := NewTree()
 	ret := &callinview{
 		view_link: &view_link{
 			id:    view_callin,

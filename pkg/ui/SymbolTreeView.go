@@ -79,6 +79,8 @@ func is_symbol_inside(m *lspcore.Symbol, r lsp.Range) bool {
 
 type Tree struct {
 	*tview.TreeView
+	action tview.MouseAction
+	event  *tcell.EventMouse
 }
 
 func (t *Tree) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
@@ -87,9 +89,20 @@ func (t *Tree) MouseHandler() func(action tview.MouseAction, event *tcell.EventM
 		// case tview.MouseLeftClick, tview.MouseLeftDown:
 		// 	debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset())
 		// }
-		debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset())
-		if action==tview.MouseLeftDown{
-			action = tview.MouseLeftClick
+		if action == tview.MouseLeftDown {
+			debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset())
+			action = t.action
+
+			t.action = tview.MouseLeftClick
+			t.event = event
+		} else if action == tview.MouseLeftClick {
+			if t.event != nil {
+				detal := event.When().UnixMilli() - t.event.When().UnixMilli()
+				debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset(), detal)
+				if detal < 500 {
+					return true, t
+				}
+			}
 		}
 		return t.TreeView.MouseHandler()(action, event, setFocus)
 	}
