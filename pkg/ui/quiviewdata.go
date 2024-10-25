@@ -354,6 +354,10 @@ func (v FlexTreeNode) RootColorString() colorstring {
 	}
 	count := fmt.Sprintf("[%d/%d]", v.GetCount()-1, len(v.data.children))
 	ss.a(count)
+	if style := global_theme.select_style(); style != nil {
+		_, bg, _ := style.Decompose()
+		ss.setbg(bg)
+	}
 	return ss
 }
 func (v FlexTreeNode) RootString() string {

@@ -29,6 +29,12 @@ type colorstring struct {
 	text string
 }
 
+func (line *colorstring) setbg(bg tcell.Color) {
+	for i := range line.line {
+		line.line[i].bg = bg
+	}
+}
+
 // func (line *colorstring) Sprintf(format string, v ...any) {
 // 	var param []any = []any{}
 // 	param = append(param, v...)
