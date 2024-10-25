@@ -126,7 +126,7 @@ func (l *List) SetCurrentItem(index int) *List {
 
 	l.currentItem = index
 
-	l.adjustOffset()
+	// l.adjustOffset()
 
 	return l
 }
@@ -639,7 +639,7 @@ func (l *List) MouseHandler() func(action tview.MouseAction, event *tcell.EventM
 					if l.changed != nil {
 						l.changed(index, item.MainText, item.SecondaryText, item.Shortcut)
 					}
-					l.adjustOffset()
+					// l.adjustOffset()
 				}
 				l.currentItem = index
 			}
