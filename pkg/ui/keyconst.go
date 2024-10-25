@@ -55,8 +55,8 @@ var command_name = []string{
 	"next_window_right",
 	"next_window_down",
 	"next_window_up",
-	"file_in_file",
-	"file_in_file_vi_word",
+	"find_in_file",
+	"find_in_file_vi_word",
 	"brack_match",
 	"arrow_up",
 	"arrow_down",
@@ -415,4 +415,24 @@ func (config LspviConfig) ParseKeyBind(m *mainui) (menu, global, escape, lead []
 		}
 	}
 	return
+}
+var mouseActionStrings = []string{
+	"MouseMove",
+	"MouseLeftDown",
+	"MouseLeftUp",
+	"MouseLeftClick",
+	"MouseLeftDoubleClick",
+	"MouseMiddleDown",
+	"MouseMiddleUp",
+	"MouseMiddleClick",
+	"MouseMiddleDoubleClick",
+	"MouseRightDown",
+	"MouseRightUp",
+	"MouseRightClick",
+	"MouseRightDoubleClick",
+	"MouseScrollUp",
+	"MouseScrollDown",
+	"MouseScrollLeft",
+	"MouseScrollRight",
+	"MouseConsumed",
 }

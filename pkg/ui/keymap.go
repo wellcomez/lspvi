@@ -63,8 +63,8 @@ const (
 	next_window_right
 	next_window_down
 	next_window_up
-	file_in_file
-	file_in_file_vi_word
+	find_in_file
+	find_in_file_vi_word
 	brack_match
 	arrow_up
 	arrow_down
@@ -96,7 +96,7 @@ func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_ite
 func get_cmd_actor(m MainService, id command_id) cmdactor {
 	switch id {
 	case zoomout:
-		return cmdactor{id, "zoom out", func() bool {
+		return cmdactor{id, "Zoom out", func() bool {
 			if m.CmdLine().Vim.vi.Insert {
 				return false
 			}
@@ -104,7 +104,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case zoomin:
-		return cmdactor{id, "zoom in", func() bool {
+		return cmdactor{id, "Zoom in", func() bool {
 			if m.CmdLine().Vim.vi.Insert {
 				return false
 			}
@@ -117,68 +117,68 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case cmd_clean_log:
-		return cmdactor{id, "clean log", func() bool {
+		return cmdactor{id, "Clean log", func() bool {
 			m.cleanlog()
 			return true
 		}}
 	case cmd_save:
-		return cmdactor{id, "save", func() bool {
+		return cmdactor{id, "Save", func() bool {
 			m.current_editor().Save()
 			return true
 		}}
 	case cmd_reload:
-		return cmdactor{id, "reload", func() bool {
+		return cmdactor{id, "Reload", func() bool {
 			m.current_editor().Reload()
 			return true
 		}}
 	case open_picker_qfh:
-		return cmdactor{id, "quickfix history", func() bool {
+		return cmdactor{id, "Quickfix history", func() bool {
 			m.open_qfh_query()
 			return true
 		}}
 	case open_picker_wkq:
-		return cmdactor{id, "query workspace symbol", func() bool {
+		return cmdactor{id, "Query workspace symbol", func() bool {
 			m.open_wks_query()
 			return true
 		}}
 	case open_picker_document_symbol:
-		return cmdactor{id, "open symbol", func() bool {
+		return cmdactor{id, "Open symbol", func() bool {
 
 			m.open_document_symbol_picker()
 			return true
 		}}
 	case open_picker_colorscheme:
-		return cmdactor{id, "colorscheme", func() bool {
+		return cmdactor{id, "Colorscheme", func() bool {
 			m.open_colorescheme()
 			return true
 		}}
 	case open_picker_workspace:
-		return cmdactor{id, "workspace", func() bool {
+		return cmdactor{id, "Workspace", func() bool {
 			m.Dialog().OpenWorkspaceFzf()
 			return true
 		}}
 	case open_picker_refs:
-		return cmdactor{id, "reference", func() bool {
+		return cmdactor{id, "Reference", func() bool {
 			m.open_picker_refs()
 			return true
 		}}
 	case open_picker_bookmark:
-		return cmdactor{id, "bookmark", func() bool {
+		return cmdactor{id, "Bookmark", func() bool {
 			m.open_picker_bookmark()
 			return true
 		}}
 	case open_picker_livegrep:
-		return cmdactor{id, "live grep", func() bool {
+		return cmdactor{id, "Live grep", func() bool {
 			m.open_picker_livegrep()
 			return true
 		}}
 	case open_picker_history:
-		return cmdactor{id, "history", func() bool {
+		return cmdactor{id, "History", func() bool {
 			m.open_picker_history()
 			return true
 		}}
 	case open_picker_grep_word:
-		return cmdactor{id, "grep word", func() bool {
+		return cmdactor{id, "Grep word", func() bool {
 			m.current_editor().action_grep_word(true)
 			return true
 		}}
@@ -201,14 +201,14 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}}
 	case goto_back:
 		{
-			return cmdactor{id, "back", func() bool {
+			return cmdactor{id, "Back", func() bool {
 				m.GoBack()
 				return true
 			}}
 		}
 	case goto_tab:
 		{
-			return cmdactor{id, "tab", func() bool {
+			return cmdactor{id, "Tab", func() bool {
 				if m.CmdLine().Vim.vi.Insert {
 					return false
 				}
@@ -218,19 +218,19 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}
 	case goto_forward:
 		{
-			return cmdactor{id, "forward", func() bool {
+			return cmdactor{id, "Forward", func() bool {
 				m.GoForward()
 				return true
 			}}
 		}
 	case goto_first_line:
-		return cmdactor{id, "goto first line", func() bool {
+		return cmdactor{id, "Goto first line", func() bool {
 			m.current_editor().goto_line_history(0, true)
 			return true
 		}}
 	case goto_to_fileview:
 		{
-			return cmdactor{id, "goto file explorer", func() bool {
+			return cmdactor{id, "Goto file explorer", func() bool {
 				dir := filepath.Dir(m.current_editor().Path())
 				if m.to_view_link(view_file).Hide {
 					m.toggle_view(view_file)
@@ -241,64 +241,64 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			}}
 		}
 	case goto_last_line:
-		return cmdactor{id, "goto first line", func() bool {
+		return cmdactor{id, "Goto first line", func() bool {
 			m.current_editor().goto_line_history(-1, true)
 			return true
 		}}
 	case goto_define:
-		return cmdactor{id, "goto define", func() bool {
+		return cmdactor{id, "Goto define", func() bool {
 			m.current_editor().action_goto_define(nil)
 			return true
 		}}
 	case goto_implement:
-		return cmdactor{id, "goto implementation", func() bool {
+		return cmdactor{id, "Goto implementation", func() bool {
 			m.current_editor().action_get_implementation(nil)
 			return true
 		}}
 	case goto_refer:
-		return cmdactor{id, "goto refer", func() bool {
+		return cmdactor{id, "Goto refer", func() bool {
 			m.current_editor().action_get_refer()
 			return true
 		}}
 	case goto_callin:
-		return cmdactor{id, "goto callin", func() bool {
+		return cmdactor{id, "Goto callin", func() bool {
 			m.current_editor().key_call_in()
 			return true
 		}}
 	case goto_decl:
-		return cmdactor{id, "goto decl", func() bool {
+		return cmdactor{id, "Goto decl", func() bool {
 			m.current_editor().action_goto_declaration()
 			return true
 		}}
 	case next_window_down:
-		return cmdactor{id, "next window down", func() bool {
+		return cmdactor{id, "Next window down", func() bool {
 			m.move_to_window(move_down)
 			return true
 		}}
 	case next_window_left:
-		return cmdactor{id, "next window left", func() bool {
+		return cmdactor{id, "Next window left", func() bool {
 			m.move_to_window(move_left)
 			return true
 
 		}}
 	case next_window_right:
-		return cmdactor{id, "next window right", func() bool {
+		return cmdactor{id, "Next window right", func() bool {
 			m.move_to_window(move_right)
 			return true
 		}}
 	case next_window_up:
-		return cmdactor{id, "next window up", func() bool {
+		return cmdactor{id, "Next window up", func() bool {
 			m.move_to_window(move_up)
 			return true
 		}}
-	case file_in_file:
-		return cmdactor{id, "file in file", func() bool {
+	case find_in_file:
+		return cmdactor{id, "Find in file", func() bool {
 			w := m.current_editor().OnFindInfile(true, true)
 			m.CmdLine().set_escape_search_mode(w)
 			return true
 		}}
-	case file_in_file_vi_word:
-		return cmdactor{id, "file in file vi", func() bool {
+	case find_in_file_vi_word:
+		return cmdactor{id, "Find in file vi", func() bool {
 			word := m.current_editor().OnFindInfileWordOption(false, false, true)
 			cmdline := m.CmdLine()
 			cmdline.set_escape_search_mode(word)
@@ -312,32 +312,32 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			}}
 		}
 	case arrow_up:
-		return cmdactor{id, "up", func() bool {
+		return cmdactor{id, "Up", func() bool {
 			m.current_editor().action_key_up()
 			return true
 		}}
 	case arrow_down:
-		return cmdactor{id, "down", func() bool {
+		return cmdactor{id, "Down", func() bool {
 			m.current_editor().action_key_down()
 			return true
 		}}
 	case vi_left, arrow_left:
-		return cmdactor{id, "left", func() bool {
+		return cmdactor{id, "Left", func() bool {
 			m.current_editor().key_left()
 			return true
 		}}
 	case vi_right, arrow_right:
-		return cmdactor{id, "right", func() bool {
+		return cmdactor{id, "Right", func() bool {
 			m.current_editor().key_right()
 			return true
 		}}
 	case vi_left_word:
-		return cmdactor{id, "word left", func() bool {
+		return cmdactor{id, "Word left", func() bool {
 			m.current_editor().word_left()
 			return true
 		}}
 	case vi_right_word:
-		return cmdactor{id, "word right", func() bool {
+		return cmdactor{id, "Word right", func() bool {
 			m.current_editor().word_right()
 			return true
 		}}
@@ -393,31 +393,31 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case vi_line_end:
-		return cmdactor{id, "goto line end", func() bool {
+		return cmdactor{id, "Goto line end", func() bool {
 			m.current_editor().goto_line_end()
 			return true
 		}}
 	case vi_line_head:
-		return cmdactor{id, "goto line head", func() bool {
+		return cmdactor{id, "Goto line head", func() bool {
 			m.current_editor().goto_line_head()
 			return true
 		}}
 	case vi_quick_prev:
 		{
-			return cmdactor{id, "prev", func() bool {
+			return cmdactor{id, "Prev", func() bool {
 				// m.quickview.go_prev()
 				return true
 			}}
 		}
 	case vi_quick_next:
 		{
-			return cmdactor{id, "quick_next", func() bool {
+			return cmdactor{id, "Quick next", func() bool {
 				// m.quickview.go_next()
 				return true
 			}}
 		}
 	case vi_search_mode:
-		return cmdactor{id, "search mode", func() bool {
+		return cmdactor{id, "Search mode", func() bool {
 			vim := m.CmdLine().Vim
 			vim.EnterEscape()
 			vim.EnterFind()
@@ -425,13 +425,13 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case handle_ctrl_c:
-		return cmdactor{id, "ctrl-c copy", func() bool {
+		return cmdactor{id, "Ctrl-c copy", func() bool {
 			m.current_editor().copyline(false)
 			debug.InfoLog("keymap", "copy to clipboard")
 			return true
 		}}
 	case handle_ctrl_v:
-		return cmdactor{id, "ctrl-v paste", func() bool {
+		return cmdactor{id, "Ctrl-v paste", func() bool {
 			aa := m.current_editor().Primitive().HasFocus()
 			if aa {
 				m.current_editor().Paste()
@@ -447,7 +447,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case open_picker_help:
-		return cmdactor{id, "help", func() bool {
+		return cmdactor{id, "Help", func() bool {
 			m.Dialog().OpenKeymapFzf()
 			return true
 		}}
@@ -555,8 +555,8 @@ func (k *keymap) key_map_escape() []cmditem {
 	m := k.main
 	k.escape = []cmditem{
 		get_cmd_actor(m, format_document).esc_key(split("=")),
-		get_cmd_actor(m, file_in_file).esc_key(split("f")),
-		get_cmd_actor(m, file_in_file_vi_word).esc_key(split("*")),
+		get_cmd_actor(m, find_in_file).esc_key(split("f")),
+		get_cmd_actor(m, find_in_file_vi_word).esc_key(split("*")),
 		get_cmd_actor(m, vi_search_mode).esc_key(split("/")),
 		get_cmd_actor(m, vi_line_head).esc_key(split("0")),
 		get_cmd_actor(m, vi_line_end).esc_key(split("A")),
@@ -659,6 +659,7 @@ func (k *keymap) global_key_map() []cmditem {
 		get_cmd_actor(m, handle_ctrl_c).tcell_key(tcell.KeyCtrlC),
 		get_cmd_actor(m, handle_ctrl_v).tcell_key(tcell.KeyCtrlV),
 		get_cmd_actor(m, goto_back).tcell_key(tcell.KeyCtrlO),
+		get_cmd_actor(m, find_in_file).tcell_key(tcell.KeyCtrlF),
 		get_cmd_actor(m, goto_forward).runne('O'),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
 		get_cmd_actor(m, open_picker_help).runne('p').Alt(),
@@ -715,11 +716,6 @@ func AllKeyMap(m mainui) (items []cmditem) {
 	items = append(items, m.key_map_escape()...)
 	items = append(items, m.key_map_leader()...)
 	return items
-}
-
-type keyconfig struct {
-	Cmd string `yaml:"command"`
-	Key string `yaml:"key"`
 }
 
 func (m *mainui) helpkey(print bool) []string {

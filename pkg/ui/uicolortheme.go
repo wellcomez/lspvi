@@ -27,6 +27,9 @@ type symbol_colortheme struct {
 	name        string
 }
 
+func (c symbol_colortheme) select_style() *tcell.Style {
+	return c.get_color("selection")
+}
 func (mgr symbol_colortheme) get_lsp_color(kind lsp.SymbolKind) (tcell.Style, error) {
 	switch kind {
 	case lsp.SymbolKindClass, lsp.SymbolKindInterface:
@@ -153,7 +156,7 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.page.SetBackgroundColor(bg)
 	main.page.SetBorderColor(fg)
 
-	trees := []*tview.TreeView{
+	trees := []*Tree{
 		main.symboltree.view,
 		main.fileexplorer.view,
 		main.callinview.view,

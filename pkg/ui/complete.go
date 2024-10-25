@@ -252,7 +252,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 			t = " " + t
 		}
 		f, _, _ := style.Decompose()
-		complete.AddColorItem([]colortext{{t, f}}, nil, func() {
+		complete.AddColorItem([]colortext{{t, f,0}}, nil, func() {
 			complete.handle_complete_result(v, &param)
 		})
 	}
@@ -508,7 +508,7 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 func (l *LpsTextView) Draw(screen tcell.Screen) {
 	x, y, w, _ := l.GetInnerRect()
 	// w = 40
-	default_style := *global_theme.get_color("selection")
+	default_style := *global_theme.select_style()
 	_, bg, _ := default_style.Decompose()
 	default_style = default_style.Background(bg)
 	breaknum := 0

@@ -272,6 +272,7 @@ func (code *CodeView) SelectWordFromCopyCursor(c femto.Cursor) femto.Cursor {
 //	type text_right_menu struct {
 //		*contextmenu
 //		select_range lsp.Range
+
 //		text         string
 //	}
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {
@@ -1009,8 +1010,8 @@ func (code *CodeView) Save() error {
 }
 func (code *CodeView) Undo() {
 	checker := code.NewChangeChecker()
-	defer checker.End()
 	code.view.Undo()
+	checker.CheckRedo(code)
 	// code.on_content_changed(lspcore.CodeChangeEvent{})
 }
 func (code *CodeView) deleteword() {

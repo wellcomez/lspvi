@@ -26,7 +26,7 @@ const (
 
 type file_tree_view struct {
 	*view_link
-	view          *tview.TreeView
+	view          *Tree
 	Name          string
 	main          *mainui
 	rootdir       string
@@ -197,7 +197,7 @@ func (menu filetree_context) menuitem() []context_menu_item {
 }
 
 func new_file_tree(main *mainui, name string, rootdir string, handle func(filename string) bool) *file_tree_view {
-	view := tview.NewTreeView()
+	view := NewTree()
 	ret := &file_tree_view{
 		view_link: &view_link{
 			id:    view_file,

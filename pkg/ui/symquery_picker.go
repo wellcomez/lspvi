@@ -88,17 +88,17 @@ func (pk *workspace_query_picker) on_query_1(query string, arg []lsp.SymbolInfor
 			}
 			name := convert_string_colortext(m.Positions, v.Name, fg, tcell.ColorYellow)
 			colors := []colortext{
-				{fmt.Sprintf("%-10s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", "")), fg},
+				{fmt.Sprintf("%-10s", strings.ReplaceAll(v.Kind.String(), "SymbolKind:", "")), fg, 0},
 				// {fmt.Sprintf("%-30s ", v.Name), fg},
 			}
 			colors = append(colors, name...)
 			if n := 30 - len(v.Name); n > 0 {
 				colors = append(colors, colortext{
 					strings.Repeat(" ", n), 0,
-				})
+					0})
 			}
-			colors = append(colors, colortext{" ", 0})
-			file := colortext{filepath.Base(filename), 0}
+			colors = append(colors, colortext{" ", 0, 0})
+			file := colortext{filepath.Base(filename), 0, 0}
 			colors = append(colors, file)
 
 			pk.impl.list.AddColorItem(colors, nil, func() {
@@ -109,7 +109,7 @@ func (pk *workspace_query_picker) on_query_1(query string, arg []lsp.SymbolInfor
 			})
 		}
 		pk.impl.list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-			pk.update_preview(sym,index)
+			pk.update_preview(sym, index)
 			if index < len(sym) {
 				v := sym[index]
 				filename := v.Location.URI.AsPath().String()
@@ -202,7 +202,7 @@ func (pk *workspace_query_picker) newMethod(arg []lsp.SymbolInformation, query s
 			}
 
 			colors := []colortext{
-				{fmt.Sprintf("%-10s", strings.ReplaceAll(sym.Kind.String(), "SymbolKind:", "")), fg},
+				{fmt.Sprintf("%-10s", strings.ReplaceAll(sym.Kind.String(), "SymbolKind:", "")), fg, 0},
 			}
 			name_length := 0
 			for _, v := range m.colorsname {
@@ -212,10 +212,10 @@ func (pk *workspace_query_picker) newMethod(arg []lsp.SymbolInformation, query s
 			if n := 30 - name_length; n > 0 {
 				colors = append(colors, colortext{
 					strings.Repeat(" ", n), 0,
-				})
+					0})
 			}
-			colors = append(colors, colortext{" ", 0})
-			file := colortext{filepath.Base(filename), 0}
+			colors = append(colors, colortext{" ", 0, 0})
+			file := colortext{filepath.Base(filename), 0, 0}
 			colors = append(colors, file)
 
 			pk.impl.list.AddColorItem(colors, nil, func() {
@@ -289,7 +289,7 @@ func (pk workspace_query_picker) update_preview_2(sym []ListSymbolItem) {
 			item.sym.Location.Range.Start.Line)
 	}
 }
-func (pk workspace_query_picker) update_preview(sym []lsp.SymbolInformation,cur int) {
+func (pk workspace_query_picker) update_preview(sym []lsp.SymbolInformation, cur int) {
 	// cur := pk.impl.list.GetCurrentItem()
 	if cur < len(sym) {
 		item := sym[cur]

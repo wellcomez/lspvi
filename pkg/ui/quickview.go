@@ -404,9 +404,9 @@ func convert_string_colortext(colors []int, ssss string, normal tcell.Color, hl 
 		begin := 0
 		for _, v := range colors2 {
 			normal_text := s[begin:v.X]
-			ss = append(ss, colortext{string(normal_text), normal})
+			ss = append(ss, colortext{string(normal_text), normal, 0})
 			x := s[v.X:v.Y]
-			ss = append(ss, colortext{string(x), hl})
+			ss = append(ss, colortext{string(x), hl, 0})
 			begin = v.Y
 		}
 		if begin < len(s) {
@@ -607,7 +607,7 @@ const (
 
 func search_key_uid(key SearchKey) string {
 	if len(key.File) > 0 {
-		return fmt.Sprintf("%s %s:%d:%d", key.Key, key.File, key.Ranges.Start.Line, key.Ranges.Start.Character)
+		return fmt.Sprintf("%s %s:%d:%d", key.Key, key.File, key.Ranges.Start.Line+1, key.Ranges.Start.Character)
 	}
 	return key.Key
 }
@@ -689,11 +689,11 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), &qk.searchkey, Refs, true)
 	qk.data.go_build_listview_data()
 	tree := qk.data.build_flextree_data(10)
-	data := tree.ListString()
-	var loaddata = func(data []string, i int) {
+	data := tree.ListColorString()
+	var loaddata = func(data []colorstring, i int) {
 		qk.view.Clear()
 		for _, v := range data {
-			qk.view.AddItem(v, "", nil)
+			qk.view.AddColorItem(v.line, nil, nil)
 		}
 		qk.view.SetCurrentItem(i)
 		qk.main.App().ForceDraw()
@@ -711,19 +711,19 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 		case NodePostion_Root:
 			{
 				if false {
-					tree.LoadMore(item)
+					tree.LoadMore(item, true)
 				} else {
 					tree.Toggle(item)
 				}
-				loaddata(tree.ListItem, i)
+				loaddata(tree.ColorstringItem, i)
 			}
 		case NodePostion_LastChild:
 			{
 				if n, err := tree.GetCaller(i); err == nil {
 					qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
 					if more {
-						tree.LoadMore(parent)
-						loaddata(tree.ListItem, i)
+						tree.LoadMore(parent, true)
+						loaddata(tree.ColorstringItem, i)
 					}
 				}
 			}
@@ -759,7 +759,12 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 		// if caller.Childrens > 1 {
 		// 	return fmt.Sprintf("%s %s", path, fmt_color_string(fmt.Sprint(caller.Childrens), tcell.ColorRed))
 		// }
-		return ret.a(path)
+		var bg tcell.Color
+		if style := global_theme.select_style(); style != nil {
+			_, bg, _ = style.Decompose()
+		}
+		return ret.add_color_text(colortext{path, tcell.ColorYellow, bg})
+		//return ret.a(path)
 	}
 	funcolor := global_theme.search_highlight_color()
 	code := caller.get_code(funcolor)
@@ -780,7 +785,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 				if c, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
 					f, _, _ := c.Decompose()
 					icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindClass)])
-					c1 = colortext{fmt.Sprint(icon, caller.Caller.ClassName+" > "), f}
+					c1 = colortext{fmt.Sprint(icon, caller.Caller.ClassName+" > "), f, 0}
 				}
 			}
 			kind := caller.Caller.Item.Kind
@@ -799,8 +804,8 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 			callname = strings.TrimLeft(callname, " ")
 			callname = strings.TrimRight(callname, " ")
 			callname = icon + callname
-			x := colortext{callname + " > ", caller_color}
-			liner := fmt.Sprintf("%-4d ", v.Range.Start.Line)
+			x := colortext{callname + " > ", caller_color, 0}
+			liner := fmt.Sprintf("%-4d ", v.Range.Start.Line+1)
 			ret.a(liner)
 			if c1.text != "" {
 				return ret.add_color_text(c1).add_color_text(x).a(" ").add_color_text_list(code.line)

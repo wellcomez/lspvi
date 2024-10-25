@@ -104,7 +104,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	x := tview.NewFlex()
 	x.SetDirection(tview.FlexRow)
 	file_include := tview.NewInputField()
-	if style := global_theme.get_color("selection"); style != nil {
+	if style := global_theme.select_style(); style != nil {
 		fg, bg, _ := style.Decompose()
 		file_include.SetFieldBackgroundColor(bg)
 		file_include.SetFieldTextColor(fg)
@@ -338,7 +338,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			case NodePostion_LastChild:
 				{
 					if parent.HasMore() {
-						tree.LoadMore(parent)
+						tree.LoadMore(parent,false)
 						go RefreshTreeList(view, tree, index)
 					}
 				}

@@ -148,7 +148,7 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 		t1 := convert_string_colortext(pk.impl.fzf.selected_postion[i], file, 0, hl)
 		hlist.AddColorItem(
 			append([]colortext{
-				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow},
+				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow,0},
 			}, t1...),
 			nil, nil)
 	}
@@ -295,10 +295,10 @@ func (bookmark *proj_bookmark) add_to_list(listdata []ref_line, hlist *customlis
 		a, b := get_list_item(v)
 		hlist.AddColorItem(
 			[]colortext{
-				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow},
-				{a, 0}},
+				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow,0},
+				{a, 0,0}},
 			[]colortext{
-				{fmt.Sprintf("   %s", b), 0}}, nil)
+				{fmt.Sprintf("   %s", b), 0,0}}, nil)
 	}
 }
 
@@ -327,13 +327,14 @@ func (bk *bookmark_view) onsave() {
 	b.list.Clear()
 	b.list.SetChangedFunc(nil)
 	b.list.SetSelectedFunc(nil)
-	b.data = reload_bookmark_list(b.bookmark)
-	b.fzf = new_fzf_on_list(b.list, true)
+	b.loaddata()
+	// b.data = reload_bookmark_list(b.bookmark)
+	// b.fzf = new_fzf_on_list(b.list, true)
 }
 func (bk *bookmark_view) OnSearch(txt string) {
 	bk.list.Key = txt
 	bk.fzf.OnSearch(txt, false)
-	UpdateColorFzfList(bk.fzf)
+	UpdateColorFzfList(bk.fzf).SetCurrentItem(0)
 	// if len(txt) > 0 {
 	// 	highlight_listitem_search_key(old, bk.list, txt)
 	// }

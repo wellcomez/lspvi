@@ -97,8 +97,8 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 	}
 	for _, v := range fzfdata {
 		impl.list.AddColorItem([]colortext{
-			{FileIcon(v) + " ", 0},
-			{v, 0},
+			{FileIcon(v) + " ", 0, 0},
+			{v, 0, 0},
 		}, nil, func() {})
 	}
 	dir.fzf = new_fzf_on_list_data(impl.list, fzfdata, true)
@@ -114,17 +114,18 @@ func (wk *DirWalk) UpdateQuery(query string) {
 	}
 	wk.fzf.OnSearch(query, false)
 	fzf := wk.fzf
-	UpdateColorFzfList(fzf)
+	UpdateColorFzfList(fzf).SetCurrentItem(0)
 }
 
-func UpdateColorFzfList(fzf *fzf_on_listview) {
+func UpdateColorFzfList(fzf *fzf_on_listview) *customlist {
 	hl := global_theme.search_highlight_color()
 	fzf.listview.Clear()
 	for i, v := range fzf.selected_index {
 		file := fzf.data[v]
 		t1 := convert_string_colortext(fzf.selected_postion[i], file, 0, hl)
-		var sss = []colortext{{FileIcon(file) + " ", 0}}
+		var sss = []colortext{{FileIcon(file) + " ", 0, 0}}
 		fzf.listview.AddColorItem(append(sss, t1...),
 			nil, func() {})
 	}
+	return fzf.listview
 }

@@ -7,6 +7,7 @@ package mainui
 import (
 	// "context"
 	// "encoding/json"
+	"strconv"
 	"time"
 
 	// "encoding/json"
@@ -874,20 +875,20 @@ func (main *mainui) on_change_color(name string) {
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
 	// new_top_toolbar(main).Draw(screen)
-	if main.current_editor().vid().is_editor_main() {
-		x, _, w, _ := main.layout.code_area.GetRect()
-		_, y, _, _ := main.codeview.view.GetInnerRect()
-		left := x
-		right := x + w
-		for _, v := range SplitCode.code_collection {
-			if v.vid().is_editor_main() {
-				x, _, w, _ := v.view.GetInnerRect()
-				left = min(left, x)
-				right = max(right, x+w)
-			}
-		}
-		main.current_editor().DrawNavigationBar(x, y, right-left, screen)
-	}
+	// if main.current_editor().vid().is_editor_main() {
+	// 	x, _, w, _ := main.layout.code_area.GetRect()
+	// 	_, y, _, _ := main.codeview.view.GetInnerRect()
+	// 	left := x
+	// 	right := x + w
+	// 	for _, v := range SplitCode.code_collection {
+	// 		if v.vid().is_editor_main() {
+	// 			x, _, w, _ := v.view.GetInnerRect()
+	// 			left = min(left, x)
+	// 			right = max(right, x+w)
+	// 		}
+	// 	}
+	// 	main.current_editor().DrawNavigationBar(x, y, right-left, screen)
+	// }
 	if main.right_context_menu.visible {
 		main.right_context_menu.Draw(screen)
 	}
@@ -1252,8 +1253,8 @@ func (vl *view_link) next_view(t direction) view_id {
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	eventname := event.Name()
-	debug.TraceLog("main ui recieved ",
-		main.get_focus_view_id(), "eventname", eventname, "runne", fmt.Sprintf("%d", event.Rune()))
+	debug.DebugLog("main ui recieved ",
+		main.get_focus_view_id(), "eventname", eventname, "runne", strconv.QuoteRune(event.Rune()),event.Modifiers())
 	//Ctrl+O
 	if main.layout.dialog.Visible {
 		main.layout.dialog.handle_key(event)

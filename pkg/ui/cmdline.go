@@ -618,6 +618,9 @@ type Vim struct {
 	vi_handle vim_mode_handle
 }
 
+func (v Vim) Enable() bool {
+	return global_config.enablevim
+}
 func (v Vim) String() string {
 	if v.vi_handle != nil {
 		return v.vi_handle.State() + " "
@@ -657,41 +660,50 @@ func (v *Vim) EnterGrep(txt string) {
 	v.app.cmdline.input.SetText(txt)
 }
 func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
-	if v.vi.Escape && event.Rune() == ':' {
-		if v.EnterCommand() {
-			return true, nil
-		}
-	}
-	if event.Key() == tcell.KeyCtrlW {
-		if v.EnterCtrlW() {
-			return true, nil
-		}
-	}
-	if event.Rune() == leadkey {
-		if v.EnterLead() {
-			return true, nil
-		}
-	}
-	if event.Rune() == 'i' {
-		if v.EnterInsert() {
-			return true, nil
-		}
-	}
-	if event.Rune() == '/' || event.Rune() == '?' {
-		if v.vi.Escape {
-			if v.app.searchcontext == nil {
-				v.app.searchcontext = NewGenericSearch(v.app.current_editor().vid(), "")
+	viw_enalbe := v.Enable()
+	if viw_enalbe {
+		if v.vi.Escape && event.Rune() == ':' {
+			if v.EnterCommand() {
+				return true, nil
 			}
-			aa := (event.Rune() == '/')
-			v.app.searchcontext.next_or_prev = aa
-			v.app.cmdline.Clear()
-			v.EnterFind()
+		}
+		if event.Key() == tcell.KeyCtrlW {
+			if v.EnterCtrlW() {
+				return true, nil
+			}
+		}
+		if event.Rune() == leadkey {
+			if v.EnterLead() {
+				return true, nil
+			}
+		}
+		if event.Rune() == 'i' {
+			if v.EnterInsert() {
+				return true, nil
+			}
+		}
+		if event.Rune() == '/' || event.Rune() == '?' {
+			if v.vi.Escape {
+				if v.app.searchcontext == nil {
+					v.app.searchcontext = NewGenericSearch(v.app.current_editor().vid(), "")
+				}
+				aa := (event.Rune() == '/')
+				v.app.searchcontext.next_or_prev = aa
+				v.app.cmdline.Clear()
+				v.EnterFind()
+				return true, nil
+			}
+		}
+		if event.Key() == tcell.KeyEscape {
+			v.EnterEscape()
 			return true, nil
 		}
-	}
-	if event.Key() == tcell.KeyEscape {
-		v.EnterEscape()
-		return true, nil
+	}else{
+		switch event.Key(){
+		case tcell.KeyEscape:
+			TurnOffComplete(v)
+			return true, nil
+		}
 	}
 
 	if v.vi_handle != nil {
@@ -848,10 +860,8 @@ func (v *Vim) EnterVmap() {
 
 // EnterEscape enters escape mode.
 func (v *Vim) EnterEscape() {
-	if v.app.current_editor().HasComplete() {
-		v.app.current_editor().CloseComplete()
-		// return
-	}
+	// return
+	TurnOffComplete(v)
 	v.app.cmdline.Clear()
 	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}
 	v.app.current_editor().ResetSelection()
@@ -874,6 +884,13 @@ func (v *Vim) EnterEscape() {
 	v.vi_handle = esc
 	v.update_editor_mode()
 	v.app.SavePrevFocus()
+}
+
+func TurnOffComplete(v *Vim) {
+	if v.app.current_editor().HasComplete() {
+		v.app.current_editor().CloseComplete()
+
+	}
 }
 
 // EnterCommand enters command mode.

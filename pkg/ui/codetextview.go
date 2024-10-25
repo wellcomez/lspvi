@@ -232,12 +232,13 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 	if v.code == nil {
 		return
 	}
-	x, y, w, _ := v.GetInnerRect()
 	vid := v.code.vid()
 	if vid == view_code_below {
-		v.code.DrawNavigationBar(x, y, w, screen)
+		x, y, w, _ := v.GetRect()
+		v.DrawNavigationBar(x-1, y, w+2, screen)
 	} else if v.code.vid().is_editor() {
-		_, y, _, _ := v.GetRect()
+		x, y, w, _ := v.GetRect()
+		v.DrawNavigationBar(x, y+1, w, screen)
 		y--
 		ch := BoxDrawingsLightHorizontal
 		if v.HasFocus() {
@@ -260,10 +261,12 @@ var BoxDrawingsDoubleVertical rune = '\u2551' // ║
 func (code *codetextview) PasteHandler() func(text string, setFocus func(tview.Primitive)) {
 	return code.PasteHandlerImpl
 }
-func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen) {
+func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Screen) {
 	y = y - 1
-	var v = code.view
+	var code = v.code
 	var symbol = code.LspSymbol()
+	border_style := tcell.StyleDefault.Foreground(tview.Styles.BorderColor).Background(v.GetBackgroundColor())
+	code.LspSymbol()
 	if symbol == nil {
 		return
 	}
@@ -275,13 +278,14 @@ func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen
 	sym := GetClosestSymbol(symbol, r)
 	begin := x
 	style := global_theme.get_default_style()
-	textStyle := global_theme.get_color("selection")
+	textStyle := global_theme.select_style()
 
 	b1 := BoxDrawingsLightVertical
-	if code.view.HasFocus() {
+	if v.HasFocus() {
 		b1 = BoxDrawingsDoubleVertical
 	}
-	begin = code_navbar_draw_runne(screen, begin, y, b1, tcell.StyleDefault.Foreground(tview.Styles.BorderColor))
+	begin = code_navbar_draw_runne(screen, begin, y, b1,
+		border_style)
 	x1 := code.FileName()
 	x1 = strings.ReplaceAll(x1, "/", " > ") + " > "
 	for _, v := range x1 {
@@ -348,7 +352,7 @@ func (code *CodeView) DrawNavigationBar(x int, y int, w int, screen tcell.Screen
 			break
 		}
 	}
-	code_navbar_draw_runne(screen, begin, y, b1, tcell.StyleDefault.Foreground(tview.Styles.BorderColor))
+	code_navbar_draw_runne(screen, begin, y, b1, border_style)
 }
 
 func code_navbar_draw_runne(screen tcell.Screen, begin int, y int, v rune, textStyle tcell.Style) int {

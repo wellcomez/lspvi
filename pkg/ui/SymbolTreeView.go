@@ -13,6 +13,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -76,9 +77,44 @@ func is_symbol_inside(m *lspcore.Symbol, r lsp.Range) bool {
 	return r.Overlaps(m.SymInfo.Location.Range)
 }
 
+type Tree struct {
+	*tview.TreeView
+	action tview.MouseAction
+	event  *tcell.EventMouse
+}
+
+func (t *Tree) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+	return func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+		// switch action {
+		// case tview.MouseLeftClick, tview.MouseLeftDown:
+		// 	debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset())
+		// }
+		x, y := event.Position()
+		if !t.InRect(x, y) {
+			return false, nil
+		}
+		if action == tview.MouseLeftDown {
+			debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset())
+			action = t.action
+
+			t.action = tview.MouseLeftClick
+			t.event = event
+		} else if action == tview.MouseLeftClick {
+			if t.event != nil {
+				detal := event.When().UnixMilli() - t.event.When().UnixMilli()
+				debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset(), detal)
+				if detal < 500 {
+					return true, t
+				}
+			}
+		}
+		return t.TreeView.MouseHandler()(action, event, setFocus)
+	}
+}
+
 type SymbolTreeView struct {
 	*view_link
-	view *tview.TreeView
+	view *Tree
 	// symbols       []SymbolListItem
 	main              MainService
 	searcheresult     *TextFilter
@@ -249,7 +285,7 @@ func (m *SymbolTreeView) OnCodeLineChange(x, y int, file string) {
 }
 
 func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
-	symbol_tree := tview.NewTreeView()
+	symbol_tree := NewTree()
 	ret := &SymbolTreeView{
 		view_link:         &view_link{id: view_outline_list, left: view_code, down: view_quickview},
 		main:              main,
@@ -307,6 +343,13 @@ func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 		return ret.view.GetInnerRect()
 	})
 	return ret
+}
+
+func NewTree() *Tree {
+	symbol_tree := &Tree{
+		TreeView: tview.NewTreeView(),
+	}
+	return symbol_tree
 }
 func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 	switch_expand_state(node)
@@ -556,7 +599,7 @@ func (tree *SymbolTreeView) update_in_main_sync(file *lspcore.Symbol_file) {
 					childnode.AddChild(sub_member)
 					add_memeber_child(sub_member, &memeber)
 				}
-				expand_node_option(childnode,true)
+				expand_node_option(childnode, true)
 			}
 			if len(v.Members) > 20 && tree.collapse_children {
 				expand_node_option(c, false)

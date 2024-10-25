@@ -6,14 +6,10 @@ package mainui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"reflect"
 )
 
-type hlItem struct {
-}
 type customlist struct {
-	*tview.List
-	// hlitems         []*hlItem
+	*List
 	Key               string
 	fuzz              bool
 	default_color     tcell.Color
@@ -30,7 +26,7 @@ func (l *customlist) Clear() *customlist {
 }
 func new_customlist(two bool) *customlist {
 	ret := &customlist{default_color: global_theme.search_highlight_color()}
-	ret.List = tview.NewList()
+	ret.List = NewList()
 	ret.ShowSecondaryText(two)
 	ret.main_color_text = [][]colortext{}
 	ret.second_color_text = [][]colortext{}
@@ -75,7 +71,7 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	style := tcell.StyleDefault.Foreground(tview.Styles.PrimaryTextColor).Background(tview.Styles.PrimitiveBackgroundColor)
 	stylehl := tcell.StyleDefault.Foreground(select_color).Background(tview.Styles.PrimitiveBackgroundColor)
 	theme_style := stylehl
-	if s := global_theme.get_color("selection"); s != nil {
+	if s := global_theme.select_style(); s != nil {
 		theme_style = *s
 	}
 
@@ -99,8 +95,8 @@ func (l *customlist) Draw(screen tcell.Screen) {
 			}
 		} else {
 			MainText, SecondText := l.List.GetItemText(index)
-			main_text = GetColorText(MainText, []colortext{{l.Key, l.default_color}})
-			second_text = GetColorText(SecondText, []colortext{{l.Key, l.default_color}})
+			main_text = GetColorText(MainText, []colortext{{l.Key, l.default_color, 0}})
+			second_text = GetColorText(SecondText, []colortext{{l.Key, l.default_color, 0}})
 		}
 		has_main = len(main_text) > 0
 		has_second = len(second_text) > 0
@@ -135,7 +131,7 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		if y >= bottomLimit {
 			break
 		}
-		if l.showSecondaryText() && has_second {
+		if l.showSecondaryText && has_second {
 			if selected {
 				l.draw_item_color_new(second_text, screen, offset_x, y, width, selected_style)
 			} else {
@@ -150,12 +146,6 @@ func (l *customlist) Draw(screen tcell.Screen) {
 
 }
 
-func (list *customlist) showSecondaryText() bool {
-	v := reflect.ValueOf(list.List).Elem()
-	field := v.FieldByName("showSecondaryText")
-	x := field.Bool()
-	return x
-}
 func (l *customlist) draw_item_color_new(segment []colortext, screen tcell.Screen, offset_x int, y int, width int, normal_style tcell.Style) {
 	x := offset_x
 	max := x + width
@@ -165,7 +155,11 @@ func (l *customlist) draw_item_color_new(segment []colortext, screen tcell.Scree
 				if e.color == 0 {
 					screen.SetContent(x, y, r, nil, normal_style)
 				} else {
-					screen.SetContent(x, y, r, nil, normal_style.Foreground(e.color))
+					x1 := normal_style.Foreground(e.color)
+					if e.bg > 0 {
+						x1 = x1.Background(e.bg)
+					}
+					screen.SetContent(x, y, r, nil, x1)
 				}
 				x++
 			} else {

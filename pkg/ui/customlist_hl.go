@@ -10,12 +10,13 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-	"zen108.com/lspvi/pkg/debug"
+	// "zen108.com/lspvi/pkg/debug"
 )
 
 type colortext struct {
 	text  string
 	color tcell.Color
+	bg    tcell.Color
 }
 
 func fmt_bold_string(s string) string {
@@ -28,35 +29,41 @@ type colorstring struct {
 	text string
 }
 
-func (line *colorstring) Sprintf(format string, v ...any) {
-	var param []any = []any{}
-	param = append(param, v...)
-	p := format
-	idx := 0
-	for {
-		v_index := strings.Index(p, "%v")
-		if v_index > 0 {
-			line.add_string_color(fmt.Sprintf(p[:v_index], param[v_index]), 0)
-			idx++
-			x := param[v_index]
-			switch v := x.(type) {
-			case colortext:
-				line.add_color_text(v)
-			case colorstring:
-				line.add_color_text_list(v.line)
-			default:
-				line.add_string_color(fmt.Sprintf("%v", x), 0)
-				debug.ErrorLog("fmt_color_string %v", v)
-			}
-			idx++
-			p = p[v_index+2:]
-		} else {
-			line.add_string_color(fmt.Sprintf(p, param[idx:]...), 0)
-			break
-		}
+func (line *colorstring) setbg(bg tcell.Color) {
+	for i := range line.line {
+		line.line[i].bg = bg
 	}
-
 }
+
+// func (line *colorstring) Sprintf(format string, v ...any) {
+// 	var param []any = []any{}
+// 	param = append(param, v...)
+// 	p := format
+// 	idx := 0
+// 	for {
+// 		v_index := strings.Index(p, "%v")
+// 		if v_index > 0 {
+// 			line.add_string_color(fmt.Sprintf(p[:v_index], param[v_index]), 0)
+// 			idx++
+// 			x := param[v_index]
+// 			switch v := x.(type) {
+// 			case colortext:
+// 				line.add_color_text(v)
+// 			case colorstring:
+// 				line.add_color_text_list(v.line)
+// 			default:
+// 				line.add_string_color(fmt.Sprintf("%v", x), 0)
+// 				debug.ErrorLog("fmt_color_string %v", v)
+// 			}
+// 			idx++
+// 			p = p[v_index+2:]
+// 		} else {
+// 			line.add_string_color(fmt.Sprintf(p, param[idx:]...), 0)
+// 			break
+// 		}
+// 	}
+
+// }
 func (line *colorstring) ColorText() (ret string) {
 	for _, v := range line.line {
 		ret = ret + fmt_color_string(v.text, v.color)
@@ -73,11 +80,11 @@ func (line *colorstring) plaintext() (ret string) {
 	return line.text
 }
 func (line *colorstring) add_color_text(v colortext) *colorstring {
-	return line.add_string_color(v.text, v.color)
+	return line.add_string_color_bg(v.text, v.color, v.bg)
 }
 func (line *colorstring) add_color_text_list(s []colortext) *colorstring {
 	for _, v := range s {
-		line.add_string_color(v.text, v.color)
+		line.add_string_color_bg(v.text, v.color, v.bg)
 	}
 	return line
 }
@@ -92,16 +99,22 @@ func (line *colorstring) Replace(old string, new string, n int) {
 }
 func (line *colorstring) pepend(s string, color tcell.Color) *colorstring {
 	if len(s) > 0 {
-		line.line = append([]colortext{{s, color}}, line.line...)
+		line.line = append([]colortext{{s, color, 0}}, line.line...)
 	}
 	return line
 }
 func (line *colorstring) a(s string) *colorstring {
-	return line.add_string_color(s, 0)
+	return line.add_string_color_bg(s, 0, 0)
+}
+func (line *colorstring) add_string_color_bg(s string, color, bg tcell.Color) *colorstring {
+	if len(s) > 0 {
+		line.line = append(line.line, colortext{s, color, bg})
+	}
+	return line
 }
 func (line *colorstring) add_string_color(s string, color tcell.Color) *colorstring {
 	if len(s) > 0 {
-		line.line = append(line.line, colortext{s, color})
+		line.line = append(line.line, colortext{s, color, 0})
 	}
 	return line
 }
