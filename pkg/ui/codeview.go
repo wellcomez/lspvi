@@ -1042,9 +1042,9 @@ func (code *CodeView) Paste() {
 		checker := code.NewChangeChecker()
 		defer checker.End()
 		if has_break {
-			code.view.Cursor.End()
-			var r rune = '\n'
-			code.view.HandleEvent(tcell.NewEventKey(tcell.KeyEnter, r, tcell.ModNone))
+			code.view.Cursor.Start()
+			// var r rune = '\n'
+			// code.view.HandleEvent(tcell.NewEventKey(tcell.KeyEnter, r, tcell.ModNone))
 		}
 		view.Paste()
 	}
@@ -1053,7 +1053,7 @@ func (code *CodeView) copyline(line bool) {
 	cmd := code.main.CmdLine()
 	if !cmd.Vim.vi.VMap {
 		if line {
-			s := code.view.Buf.Line(int(code.view.Cursor.Loc.Y))
+			s := code.view.Buf.Line(int(code.view.Cursor.Loc.Y)) + "\n"
 			code.main.CopyToClipboard(s)
 			return
 		}
