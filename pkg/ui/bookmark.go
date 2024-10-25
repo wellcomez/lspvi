@@ -327,8 +327,9 @@ func (bk *bookmark_view) onsave() {
 	b.list.Clear()
 	b.list.SetChangedFunc(nil)
 	b.list.SetSelectedFunc(nil)
-	b.data = reload_bookmark_list(b.bookmark)
-	b.fzf = new_fzf_on_list(b.list, true)
+	b.loaddata()
+	// b.data = reload_bookmark_list(b.bookmark)
+	// b.fzf = new_fzf_on_list(b.list, true)
 }
 func (bk *bookmark_view) OnSearch(txt string) {
 	bk.list.Key = txt
