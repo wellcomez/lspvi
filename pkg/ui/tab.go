@@ -217,7 +217,7 @@ func style_mode(mode tab_style) (tcell.Style, tcell.Style) {
 	_, b, _ := active_btn_style.Decompose()
 	hlstyle := style.Foreground(b)
 	seleted := tcell.ColorBlack
-	if s := global_theme.get_color("selection"); s != nil {
+	if s := global_theme.select_style(); s != nil {
 		_, b, _ := s.Decompose()
 		seleted = b
 	}

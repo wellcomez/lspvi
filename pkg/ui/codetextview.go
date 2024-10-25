@@ -278,7 +278,7 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 	sym := GetClosestSymbol(symbol, r)
 	begin := x
 	style := global_theme.get_default_style()
-	textStyle := global_theme.get_color("selection")
+	textStyle := global_theme.select_style()
 
 	b1 := BoxDrawingsLightVertical
 	if v.HasFocus() {

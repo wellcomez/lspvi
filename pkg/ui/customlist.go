@@ -71,7 +71,7 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	style := tcell.StyleDefault.Foreground(tview.Styles.PrimaryTextColor).Background(tview.Styles.PrimitiveBackgroundColor)
 	stylehl := tcell.StyleDefault.Foreground(select_color).Background(tview.Styles.PrimitiveBackgroundColor)
 	theme_style := stylehl
-	if s := global_theme.get_color("selection"); s != nil {
+	if s := global_theme.select_style(); s != nil {
 		theme_style = *s
 	}
 

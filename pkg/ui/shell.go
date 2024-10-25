@@ -392,7 +392,7 @@ func (termui *Term) Draw(screen tcell.Screen) {
 	lineno_offset := 0
 	default_theme_style := tcell.StyleDefault.Foreground(default_fg).Background(default_bg)
 	sel_style := default_theme_style
-	if s := global_theme.get_color("selection"); s != nil {
+	if s := global_theme.select_style(); s != nil {
 		sel_style = *s
 	}
 	var draw = term_line_drawer{
