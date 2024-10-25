@@ -689,11 +689,11 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), &qk.searchkey, Refs, true)
 	qk.data.go_build_listview_data()
 	tree := qk.data.build_flextree_data(10)
-	data := tree.ListString()
-	var loaddata = func(data []string, i int) {
+	data := tree.ListColorString()
+	var loaddata = func(data []colorstring, i int) {
 		qk.view.Clear()
 		for _, v := range data {
-			qk.view.AddItem(v, "", nil)
+			qk.view.AddColorItem(v.line, nil, nil)
 		}
 		qk.view.SetCurrentItem(i)
 		qk.main.App().ForceDraw()
@@ -711,19 +711,19 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 		case NodePostion_Root:
 			{
 				if false {
-					tree.LoadMore(item)
+					tree.LoadMore(item, true)
 				} else {
 					tree.Toggle(item)
 				}
-				loaddata(tree.ListItem, i)
+				loaddata(tree.ColorstringItem, i)
 			}
 		case NodePostion_LastChild:
 			{
 				if n, err := tree.GetCaller(i); err == nil {
 					qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
 					if more {
-						tree.LoadMore(parent)
-						loaddata(tree.ListItem, i)
+						tree.LoadMore(parent, true)
+						loaddata(tree.ColorstringItem, i)
 					}
 				}
 			}

@@ -281,12 +281,20 @@ func NewFlexTreeNode(data *list_tree_node, idx int) *FlexTreeNode {
 
 type FlexTreeNodeRoot struct {
 	*FlexTreeNode
-	qk       *quick_view_data
-	ListItem []string
+	qk              *quick_view_data
+	ListItem        []string
+	ColorstringItem []colorstring
 }
 
 func (node *FlexTreeNode) GetCount() int {
 	return len(node.child) + 1
+}
+func (node *FlexTreeNodeRoot) ListColorString() (ret []colorstring) {
+	for _, v := range node.child {
+		ret = append(ret, v.ListItemColorString()...)
+	}
+	node.ColorstringItem = ret
+	return ret
 }
 func (node *FlexTreeNodeRoot) ListString() (ret []string) {
 	for _, v := range node.child {
@@ -295,7 +303,25 @@ func (node *FlexTreeNodeRoot) ListString() (ret []string) {
 	node.ListItem = ret
 	return ret
 }
+func (v *FlexTreeNode) ListItemColorString() (ret []colorstring) {
+	x := v.RootColorString()
+	ret = append(ret, x)
+	down := ""
+	// down := fmt.Sprintf("%c",'\U000f1464')
+	down = "▶"
+	down = fmt.Sprintf("%-2c", '\U000f004a')
+	m := v.HasMore()
+	lastIndex := len(v.child) - 1
+	for i, c := range v.child {
+		s := *c.data.color_string
+		if i == lastIndex && m {
+			s.pepend(down, tcell.ColorRed)
+		}
+		ret = append(ret, s)
 
+	}
+	return ret
+}
 func (v *FlexTreeNode) ListItem() (ret []string) {
 	x := v.RootString()
 	ret = append(ret, x)
@@ -319,7 +345,17 @@ func (v *FlexTreeNode) ListItem() (ret []string) {
 	}
 	return ret
 }
-
+func (v FlexTreeNode) RootColorString() colorstring {
+	ss := *v.data.color_string
+	if len(v.child) > 0 {
+		ss.Replace("▶", "▼", 1)
+	} else {
+		ss.Replace("▼", "▶", 1)
+	}
+	count := fmt.Sprintf("[%d/%d]", v.GetCount()-1, len(v.data.children))
+	ss.a(count)
+	return ss
+}
 func (v FlexTreeNode) RootString() string {
 	ss := v.data.color_string.ColorText()
 	if len(v.child) > 0 {
@@ -442,13 +478,21 @@ func (n *FlexTreeNode) HasMore() bool {
 	}
 	return len(n.data.children) > len(n.child)
 }
-func replaceSegment(original []string, start, end int, newSlice []string) []string {
+func replaceSegment[T any](original []T, start, end int, newSlice []T) []T {
 	// Ensure the indices are within bounds
 	if start < 0 || end > len(original) || start > end {
 		return original // Return original if indices are out of bounds
 	}
 	return append(original[:start], append(newSlice, original[end:]...)...)
 }
+
+//	func replaceSegment(original []string, start, end int, newSlice []string) []string {
+//		// Ensure the indices are within bounds
+//		if start < 0 || end > len(original) || start > end {
+//			return original // Return original if indices are out of bounds
+//		}
+//		return append(original[:start], append(newSlice, original[end:]...)...)
+//	}
 func (rootnode *FlexTreeNodeRoot) Toggle(node *FlexTreeNode) {
 	if r, e := node.GetRange(rootnode); e == nil {
 		expand := len(node.child) > 0
@@ -470,11 +514,17 @@ func (rootnode *FlexTreeNodeRoot) Toggle(node *FlexTreeNode) {
 		rootnode.ListItem = replaceSegment(rootnode.ListItem, r[0], r[1], x)
 	}
 }
-func (root *FlexTreeNodeRoot) LoadMore(node *FlexTreeNode) {
+func (root *FlexTreeNodeRoot) LoadMore(node *FlexTreeNode, color bool) {
 	if r, e := node.GetRange(root); e == nil {
 		node.LoadMore()
-		x := node.ListItem()
-		root.ListItem = replaceSegment(root.ListItem, r[0], r[1], x)
+		if !color {
+			x := node.ListItem()
+			root.ListItem = replaceSegment[string](root.ListItem, r[0], r[1], x)
+		} else {
+			x := node.ListItemColorString()
+			root.ColorstringItem = replaceSegment[colorstring](root.ColorstringItem, r[0], r[1], x)
+
+		}
 	}
 }
 func (item *FlexTreeNode) IsParent() bool {

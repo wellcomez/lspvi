@@ -338,7 +338,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			case NodePostion_LastChild:
 				{
 					if parent.HasMore() {
-						tree.LoadMore(parent)
+						tree.LoadMore(parent,false)
 						go RefreshTreeList(view, tree, index)
 					}
 				}
