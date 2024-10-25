@@ -19,7 +19,7 @@ type color struct {
 }
 type vimmode struct {
 	Leadkey string `yaml:"leadkey,omitempty"`
-	Enable  bool   `yaml:"enable,omitempty"`
+	Enable  *bool  `yaml:"enable,omitempty"`
 }
 type LspviConfig struct {
 	Colorscheme string            `yaml:"colorscheme"`
@@ -39,12 +39,18 @@ func (ret *LspviConfig) Load() (err error) {
 		err = yaml.Unmarshal(buf, ret)
 		if err == nil {
 			if ret.Vim == nil {
+				ret.enablevim = true
 				ret.Vim = &vimmode{
 					Leadkey: "space",
+					Enable:  &ret.enablevim,
 				}
-				ret.enablevim = true
 			} else {
-				ret.enablevim = ret.Vim.Enable
+				ret.enablevim = true
+				if ret.Vim.Enable != nil {
+					ret.enablevim = *ret.Vim.Enable
+				} else {
+					ret.enablevim = true
+				}
 			}
 		} else {
 			debug.ErrorLog("config", err)
@@ -58,6 +64,7 @@ func NewLspviconfig() *LspviConfig {
 		Colorscheme: "darcula",
 		Wrap:        false,
 		Color:       color{},
+		enablevim:   false,
 	}
 	return &default_ret
 }
