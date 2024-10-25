@@ -659,7 +659,7 @@ func (k *keymap) global_key_map() []cmditem {
 		get_cmd_actor(m, handle_ctrl_c).tcell_key(tcell.KeyCtrlC),
 		get_cmd_actor(m, handle_ctrl_v).tcell_key(tcell.KeyCtrlV),
 		get_cmd_actor(m, goto_back).tcell_key(tcell.KeyCtrlO),
-		get_cmd_actor(m, find_in_file_vi_word).tcell_key(tcell.KeyCtrlF),
+		get_cmd_actor(m, find_in_file).tcell_key(tcell.KeyCtrlF),
 		get_cmd_actor(m, goto_forward).runne('O'),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
 		get_cmd_actor(m, open_picker_help).runne('p').Alt(),
@@ -716,11 +716,6 @@ func AllKeyMap(m mainui) (items []cmditem) {
 	items = append(items, m.key_map_escape()...)
 	items = append(items, m.key_map_leader()...)
 	return items
-}
-
-type keyconfig struct {
-	Cmd string `yaml:"command"`
-	Key string `yaml:"key"`
 }
 
 func (m *mainui) helpkey(print bool) []string {
