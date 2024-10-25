@@ -1042,11 +1042,14 @@ func (code *CodeView) Paste() {
 		checker := code.NewChangeChecker()
 		defer checker.End()
 		if has_break {
-			code.view.Cursor.Start()
+			code.view.Cursor.End()
+			t := "\n" + text[0:len(text)-1]
+			code.view.Buf.Insert(code.view.Cursor.Loc, t)
 			// var r rune = '\n'
 			// code.view.HandleEvent(tcell.NewEventKey(tcell.KeyEnter, r, tcell.ModNone))
+		} else {
+			view.Paste()
 		}
-		view.Paste()
 	}
 }
 func (code *CodeView) copyline(line bool) {
