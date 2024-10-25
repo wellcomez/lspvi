@@ -89,6 +89,10 @@ func (t *Tree) MouseHandler() func(action tview.MouseAction, event *tcell.EventM
 		// case tview.MouseLeftClick, tview.MouseLeftDown:
 		// 	debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset())
 		// }
+		x, y := event.Position()
+		if !t.InRect(x, y) {
+			return false, nil
+		}
 		if action == tview.MouseLeftDown {
 			debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset())
 			action = t.action
