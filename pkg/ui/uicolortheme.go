@@ -153,7 +153,7 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.page.SetBackgroundColor(bg)
 	main.page.SetBorderColor(fg)
 
-	trees := []*tview.TreeView{
+	trees := []*Tree{
 		main.symboltree.view,
 		main.fileexplorer.view,
 		main.callinview.view,

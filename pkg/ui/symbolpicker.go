@@ -160,11 +160,11 @@ func (picker *symbolpicker) layout(input *tview.InputField, isflex bool) (row *t
 	picker.impl.codeprev.LoadFileNoLsp(picker.impl.filename, 0)
 	if isflex {
 		layout := layout_list_row_edit(list, code, input)
-		picker.impl.click = NewTreeClickCheck(layout.Box, picker.impl.symview.view)
+		picker.impl.click = NewTreeClickCheck(layout.Box, picker.impl.symview.view.TreeView)
 		row = layout
 	} else {
 		layout := layout_list_edit(list, code, input)
-		picker.impl.click = NewTreeClickCheck(layout.Box, picker.impl.symview.view)
+		picker.impl.click = NewTreeClickCheck(layout.Box, picker.impl.symview.view.TreeView)
 		col = layout
 	}
 	picker.impl.click.click = func(event *tcell.EventMouse) {
@@ -328,6 +328,6 @@ func (picker symbolpicker) UpdateQuery(query string) {
 	}
 }
 
-func NewSymbolPick2(v *fzfmain){
+func NewSymbolPick2(v *fzfmain) {
 
 }
