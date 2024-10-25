@@ -759,7 +759,11 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 		// if caller.Childrens > 1 {
 		// 	return fmt.Sprintf("%s %s", path, fmt_color_string(fmt.Sprint(caller.Childrens), tcell.ColorRed))
 		// }
-		return ret.add_string_color(path, tcell.ColorYellow)
+		var bg tcell.Color
+		if style := global_theme.select_style(); style != nil {
+			_, bg, _ = style.Decompose()
+		}
+		return ret.add_color_text(colortext{path, tcell.ColorYellow, bg})
 		//return ret.a(path)
 	}
 	funcolor := global_theme.search_highlight_color()

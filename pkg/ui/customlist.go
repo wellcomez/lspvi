@@ -155,7 +155,11 @@ func (l *customlist) draw_item_color_new(segment []colortext, screen tcell.Scree
 				if e.color == 0 {
 					screen.SetContent(x, y, r, nil, normal_style)
 				} else {
-					screen.SetContent(x, y, r, nil, normal_style.Foreground(e.color))
+					x1 := normal_style.Foreground(e.color)
+					if e.bg > 0 {
+						x1 = x1.Background(e.bg)
+					}
+					screen.SetContent(x, y, r, nil, x1)
 				}
 				x++
 			} else {
