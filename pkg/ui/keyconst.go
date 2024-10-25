@@ -416,3 +416,23 @@ func (config LspviConfig) ParseKeyBind(m *mainui) (menu, global, escape, lead []
 	}
 	return
 }
+var mouseActionStrings = []string{
+	"MouseMove",
+	"MouseLeftDown",
+	"MouseLeftUp",
+	"MouseLeftClick",
+	"MouseLeftDoubleClick",
+	"MouseMiddleDown",
+	"MouseMiddleUp",
+	"MouseMiddleClick",
+	"MouseMiddleDoubleClick",
+	"MouseRightDown",
+	"MouseRightUp",
+	"MouseRightClick",
+	"MouseRightDoubleClick",
+	"MouseScrollUp",
+	"MouseScrollDown",
+	"MouseScrollLeft",
+	"MouseScrollRight",
+	"MouseConsumed",
+}
