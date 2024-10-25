@@ -159,7 +159,7 @@ func (pk *workspace_picker) grid(input *tview.InputField) *tview.Grid {
 // UpdateQuery implements picker.
 func (c *workspace_picker) UpdateQuery(query string) {
 	c.fzf.OnSearch(query, false)
-	UpdateColorFzfList(c.fzf)
+	UpdateColorFzfList(c.fzf).SetCurrentItem(0)
 }
 func (pk workspace_picker) handle_key_override(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	handle := pk.impl.list.InputHandler()

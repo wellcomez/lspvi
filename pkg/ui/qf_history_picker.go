@@ -48,7 +48,7 @@ func (pk qk_history_picker) name() string {
 func (pk qk_history_picker) UpdateQuery(query string) {
 	pk.list.Key = query
 	pk.impl.OnSearch(query, false)
-	UpdateColorFzfList(pk.impl.fzf_on_listview)
+	UpdateColorFzfList(pk.impl.fzf_on_listview).SetCurrentItem(0)
 
 }
 func (pk *qk_history_picker) grid() tview.Primitive {

@@ -41,7 +41,7 @@ func (pk keymap_picker) UpdateQuery(query string) {
 	impl.list.Clear()
 	impl.list.Key = query
 	fzf.OnSearch(query, false)
-	UpdateColorFzfList(fzf)
+	UpdateColorFzfList(fzf).SetCurrentItem(0)
 }
 
 func (pk keymap_picker) newMethod(index int) {

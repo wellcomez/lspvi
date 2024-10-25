@@ -333,7 +333,7 @@ func (bk *bookmark_view) onsave() {
 func (bk *bookmark_view) OnSearch(txt string) {
 	bk.list.Key = txt
 	bk.fzf.OnSearch(txt, false)
-	UpdateColorFzfList(bk.fzf)
+	UpdateColorFzfList(bk.fzf).SetCurrentItem(0)
 	// if len(txt) > 0 {
 	// 	highlight_listitem_search_key(old, bk.list, txt)
 	// }

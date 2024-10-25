@@ -114,10 +114,10 @@ func (wk *DirWalk) UpdateQuery(query string) {
 	}
 	wk.fzf.OnSearch(query, false)
 	fzf := wk.fzf
-	UpdateColorFzfList(fzf)
+	UpdateColorFzfList(fzf).SetCurrentItem(0)
 }
 
-func UpdateColorFzfList(fzf *fzf_on_listview) {
+func UpdateColorFzfList(fzf *fzf_on_listview) *customlist {
 	hl := global_theme.search_highlight_color()
 	fzf.listview.Clear()
 	for i, v := range fzf.selected_index {
@@ -127,5 +127,5 @@ func UpdateColorFzfList(fzf *fzf_on_listview) {
 		fzf.listview.AddColorItem(append(sss, t1...),
 			nil, func() {})
 	}
-	fzf.listview.SetCurrentItem(0)
+	return fzf.listview
 }

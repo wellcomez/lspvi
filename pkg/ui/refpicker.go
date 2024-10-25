@@ -428,7 +428,7 @@ func (pk refpicker) UpdateQuery(query string) {
 				pk.refresh_list(data)
 			}
 		} else {
-			UpdateColorFzfList(fzf)
+			UpdateColorFzfList(fzf).SetCurrentItem(0)
 		}
 	}
 }
