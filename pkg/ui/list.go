@@ -126,7 +126,7 @@ func (l *List) SetCurrentItem(index int) *List {
 
 	l.currentItem = index
 
-	// l.adjustOffset()
+	l.adjustOffset()
 
 	return l
 }
