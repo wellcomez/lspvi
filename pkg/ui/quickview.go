@@ -404,9 +404,9 @@ func convert_string_colortext(colors []int, ssss string, normal tcell.Color, hl 
 		begin := 0
 		for _, v := range colors2 {
 			normal_text := s[begin:v.X]
-			ss = append(ss, colortext{string(normal_text), normal})
+			ss = append(ss, colortext{string(normal_text), normal, 0})
 			x := s[v.X:v.Y]
-			ss = append(ss, colortext{string(x), hl})
+			ss = append(ss, colortext{string(x), hl, 0})
 			begin = v.Y
 		}
 		if begin < len(s) {
@@ -759,7 +759,8 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 		// if caller.Childrens > 1 {
 		// 	return fmt.Sprintf("%s %s", path, fmt_color_string(fmt.Sprint(caller.Childrens), tcell.ColorRed))
 		// }
-		return ret.a(path)
+		return ret.add_string_color(path, tcell.ColorYellow)
+		//return ret.a(path)
 	}
 	funcolor := global_theme.search_highlight_color()
 	code := caller.get_code(funcolor)
@@ -780,7 +781,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 				if c, err := global_theme.get_lsp_color(lsp.SymbolKindClass); err == nil {
 					f, _, _ := c.Decompose()
 					icon := fmt.Sprintf("%c ", lspcore.IconsRunne[int(lsp.SymbolKindClass)])
-					c1 = colortext{fmt.Sprint(icon, caller.Caller.ClassName+" > "), f}
+					c1 = colortext{fmt.Sprint(icon, caller.Caller.ClassName+" > "), f, 0}
 				}
 			}
 			kind := caller.Caller.Item.Kind
@@ -799,7 +800,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 			callname = strings.TrimLeft(callname, " ")
 			callname = strings.TrimRight(callname, " ")
 			callname = icon + callname
-			x := colortext{callname + " > ", caller_color}
+			x := colortext{callname + " > ", caller_color, 0}
 			liner := fmt.Sprintf("%-4d ", v.Range.Start.Line+1)
 			ret.a(liner)
 			if c1.text != "" {

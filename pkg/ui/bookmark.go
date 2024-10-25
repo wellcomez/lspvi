@@ -148,7 +148,7 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 		t1 := convert_string_colortext(pk.impl.fzf.selected_postion[i], file, 0, hl)
 		hlist.AddColorItem(
 			append([]colortext{
-				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow},
+				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow,0},
 			}, t1...),
 			nil, nil)
 	}
@@ -295,10 +295,10 @@ func (bookmark *proj_bookmark) add_to_list(listdata []ref_line, hlist *customlis
 		a, b := get_list_item(v)
 		hlist.AddColorItem(
 			[]colortext{
-				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow},
-				{a, 0}},
+				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow,0},
+				{a, 0,0}},
 			[]colortext{
-				{fmt.Sprintf("   %s", b), 0}}, nil)
+				{fmt.Sprintf("   %s", b), 0,0}}, nil)
 	}
 }
 

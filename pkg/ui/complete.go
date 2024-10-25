@@ -252,7 +252,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 			t = " " + t
 		}
 		f, _, _ := style.Decompose()
-		complete.AddColorItem([]colortext{{t, f}}, nil, func() {
+		complete.AddColorItem([]colortext{{t, f,0}}, nil, func() {
 			complete.handle_complete_result(v, &param)
 		})
 	}

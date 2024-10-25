@@ -15,6 +15,7 @@ import (
 
 type colortext struct {
 	text  string
+	bg    tcell.Color
 	color tcell.Color
 }
 
@@ -92,7 +93,7 @@ func (line *colorstring) Replace(old string, new string, n int) {
 }
 func (line *colorstring) pepend(s string, color tcell.Color) *colorstring {
 	if len(s) > 0 {
-		line.line = append([]colortext{{s, color}}, line.line...)
+		line.line = append([]colortext{{s, color, 0}}, line.line...)
 	}
 	return line
 }
@@ -101,7 +102,7 @@ func (line *colorstring) a(s string) *colorstring {
 }
 func (line *colorstring) add_string_color(s string, color tcell.Color) *colorstring {
 	if len(s) > 0 {
-		line.line = append(line.line, colortext{s, color})
+		line.line = append(line.line, colortext{s, color, 0})
 	}
 	return line
 }

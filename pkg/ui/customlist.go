@@ -95,8 +95,8 @@ func (l *customlist) Draw(screen tcell.Screen) {
 			}
 		} else {
 			MainText, SecondText := l.List.GetItemText(index)
-			main_text = GetColorText(MainText, []colortext{{l.Key, l.default_color}})
-			second_text = GetColorText(SecondText, []colortext{{l.Key, l.default_color}})
+			main_text = GetColorText(MainText, []colortext{{l.Key, l.default_color, 0}})
+			second_text = GetColorText(SecondText, []colortext{{l.Key, l.default_color, 0}})
 		}
 		has_main = len(main_text) > 0
 		has_second = len(second_text) > 0
