@@ -607,7 +607,7 @@ const (
 
 func search_key_uid(key SearchKey) string {
 	if len(key.File) > 0 {
-		return fmt.Sprintf("%s %s:%d:%d", key.Key, key.File, key.Ranges.Start.Line, key.Ranges.Start.Character)
+		return fmt.Sprintf("%s %s:%d:%d", key.Key, key.File, key.Ranges.Start.Line+1, key.Ranges.Start.Character)
 	}
 	return key.Key
 }
@@ -800,7 +800,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 			callname = strings.TrimRight(callname, " ")
 			callname = icon + callname
 			x := colortext{callname + " > ", caller_color}
-			liner := fmt.Sprintf("%-4d ", v.Range.Start.Line)
+			liner := fmt.Sprintf("%-4d ", v.Range.Start.Line+1)
 			ret.a(liner)
 			if c1.text != "" {
 				return ret.add_color_text(c1).add_color_text(x).a(" ").add_color_text_list(code.line)
