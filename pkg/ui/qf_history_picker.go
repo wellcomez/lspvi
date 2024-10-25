@@ -152,7 +152,7 @@ func load_qf_history(main MainService) ([]qf_history_data, []string) {
 	for _, v := range keys {
 		file_info := ""
 		if len(v.Key.File) > 0 {
-			file_info = fmt.Sprintf("%s %d:%d", strings.ReplaceAll(v.Key.File, root, ""), v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
+			file_info = fmt.Sprintf("%s %d:%d", trim_project_filename(v.Key.File,root), v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
 		}
 		keymaplist = append(keymaplist, fmt.Sprintf("%-3s %-20s  %s", v.Type.Icon(), v.Key.Key, file_info))
 	}
