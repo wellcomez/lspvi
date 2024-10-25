@@ -29,7 +29,8 @@ var global_file_watch = NewFileWatch()
 func (prj *Project) Load(arg *Arguments, main *mainui) {
 	root := prj.Root
 	lspviroot = new_workdir(root)
-	global_config, _ = LspviConfig{}.Load()
+	global_config = NewLspviconfig()
+	global_config.Load()
 	// go servmain(lspviroot.uml, 18080, func(port int) {
 	// 	httport = port
 	// })
