@@ -875,20 +875,20 @@ func (main *mainui) on_change_color(name string) {
 }
 func handle_draw_after(main *mainui, screen tcell.Screen) {
 	// new_top_toolbar(main).Draw(screen)
-	if main.current_editor().vid().is_editor_main() {
-		x, _, w, _ := main.layout.code_area.GetRect()
-		_, y, _, _ := main.codeview.view.GetInnerRect()
-		left := x
-		right := x + w
-		for _, v := range SplitCode.code_collection {
-			if v.vid().is_editor_main() {
-				x, _, w, _ := v.view.GetInnerRect()
-				left = min(left, x)
-				right = max(right, x+w)
-			}
-		}
-		main.current_editor().DrawNavigationBar(x, y, right-left, screen)
-	}
+	// if main.current_editor().vid().is_editor_main() {
+	// 	x, _, w, _ := main.layout.code_area.GetRect()
+	// 	_, y, _, _ := main.codeview.view.GetInnerRect()
+	// 	left := x
+	// 	right := x + w
+	// 	for _, v := range SplitCode.code_collection {
+	// 		if v.vid().is_editor_main() {
+	// 			x, _, w, _ := v.view.GetInnerRect()
+	// 			left = min(left, x)
+	// 			right = max(right, x+w)
+	// 		}
+	// 	}
+	// 	main.current_editor().DrawNavigationBar(x, y, right-left, screen)
+	// }
 	if main.right_context_menu.visible {
 		main.right_context_menu.Draw(screen)
 	}

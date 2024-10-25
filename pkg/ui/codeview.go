@@ -272,6 +272,7 @@ func (code *CodeView) SelectWordFromCopyCursor(c femto.Cursor) femto.Cursor {
 //	type text_right_menu struct {
 //		*contextmenu
 //		select_range lsp.Range
+
 //		text         string
 //	}
 func (code *CodeView) OnFindInfile(fzf bool, noloop bool) string {

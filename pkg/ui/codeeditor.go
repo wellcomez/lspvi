@@ -105,5 +105,5 @@ type CodeEditor interface {
 	EditorPosition() *EditorPosition
 
 	//draw
-	DrawNavigationBar(x int, y int, w int, screen tcell.Screen)
+	// DrawNavigationBar(x int, y int, w int, screen tcell.Screen)
 }
