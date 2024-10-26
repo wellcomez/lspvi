@@ -140,7 +140,7 @@ func new_tsdef(
 		nil,
 		true,
 		false,
-		&TreesitterInit{make(chan ts_init_call,20), false},
+		&TreesitterInit{make(chan ts_init_call, 20), false},
 	}
 	// ret.load_scm()
 	return ret
@@ -632,7 +632,6 @@ func (ts_int *TreesitterInit) Run(t ts_init_call) {
 						t.Loadfile(t.tsdef.tslang, cb)
 					default:
 					}
-
 				}
 			}
 		}()
@@ -785,7 +784,8 @@ func (s SourceFile) Same(s1 SourceFile) bool {
 }
 
 var loaded_files = make(map[string]*TreeSitter)
-func NewTreeSitterParse(name string,data string) *TreeSitter {
+
+func NewTreeSitterParse(name string, data string) *TreeSitter {
 	if len(name) == 0 {
 		return nil
 	}
@@ -827,21 +827,22 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 		debug.ErrorLog("fail to load treesitter", err)
 		return err
 	}
-	go func() {
-		ret, hlerr := ts.query(query_highlights)
-		ts.HlLine = ret
-		if hlerr != nil {
-			debug.ErrorLog("fail to load highlights", hlerr)
-		}
-		ts.callback_to_ui(cb)
-	}()
+	// go func() {
+	ret, hlerr := ts.query(query_highlights)
+	ts.HlLine = ret
+	if hlerr != nil {
+		debug.ErrorLog("fail to load highlights", hlerr)
+	}
+	if ts.tsdef.parser != nil {
+		ts.tsdef.parser(ts, nil)
+	}
+	go ts.callback_to_ui(cb)
+	// }()
 	return nil
 }
 
 func (ts *TreeSitter) callback_to_ui(cb func(*TreeSitter)) {
-	if ts.tsdef.parser != nil {
-		ts.tsdef.parser(ts, nil)
-	}
+
 	if cb != nil {
 		cb(ts)
 	}
