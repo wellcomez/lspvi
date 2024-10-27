@@ -151,14 +151,15 @@ func ParserEvent(change lspcore.CodeChangeEvent, event *femto.TextEvent) lspcore
 func (check *code_change_cheker) UpdateLineChange(code *CodeView) {
 	top := code.view.Buf.UndoStack.Top
 	var changeline = []int{}
-
 	seen := make(map[int]bool)
 	for {
 		if top != nil {
 			for _, v := range top.Value.Deltas {
 				for y := v.Start.Y; y <= v.End.Y; y++ {
 					changeline = append(changeline, y)
-					seen[y] = true
+					if code.DiffLine(y) {
+						seen[y] = true
+					}
 				}
 			}
 			top = top.Next
