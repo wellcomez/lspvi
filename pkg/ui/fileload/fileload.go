@@ -10,16 +10,25 @@ import (
 // SPDX-License-Identifier: gplv3
 var Loader FileLoaderMgr
 
+type Lines struct {
+	Lines []string
+}
 type FileLoader struct {
 	Buff     *femto.Buffer
 	FileName string
+	Lines    *Lines
 }
 type FileLoaderMgr struct {
 	filemap map[string]FileLoader
 }
 
 func NewDataFileLoad(data []byte, file string) FileLoader {
-	return FileLoader{Buff: femto.NewBufferFromString(string(data), file), FileName: file}
+	ret := FileLoader{Buff: femto.NewBufferFromString(string(data), file), FileName: file}
+	ret.Lines = &Lines{
+
+		ret.Buff.Lines(0, ret.Buff.LinesNum()-1),
+	}
+	return ret
 }
 func (fm *FileLoaderMgr) GetFile(filename string, reload bool) (ret FileLoader, err error) {
 	if fm.filemap == nil {
@@ -37,11 +46,14 @@ func (fm *FileLoaderMgr) GetFile(filename string, reload bool) (ret FileLoader, 
 	return
 }
 func (fm *FileLoaderMgr) LoadFile(filename string) (ret FileLoader, err error) {
-	if data, err := os.ReadFile(filename); err == nil {
-		return FileLoader{
+	if data, e := os.ReadFile(filename); e == nil {
+		ret = FileLoader{
 			FileName: filename,
 			Buff:     femto.NewBufferFromString(string(data), filename),
-		}, nil
+		}
+		ret.Lines = &Lines{
+			ret.Buff.Lines(0, ret.Buff.LinesNum()-1)}
+		return
 	}
 	return FileLoader{FileName: filename}, err
 }
