@@ -319,6 +319,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			}
 			view.AddItem(v, "", nil)
 		}
+		lastindex := -1
 		view.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
 			_, pos, _, parent := tree.GetNodeIndex(index)
 			if pos == NodePostion_LastChild {
@@ -338,22 +339,25 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			case NodePostion_LastChild:
 				{
 					if parent.HasMore() {
-						tree.LoadMore(parent,false)
+						tree.LoadMore(parent, false)
 						go RefreshTreeList(view, tree, index)
 					}
 				}
 			case NodePostion_Child:
 				{
-					if caller, err := tree.GetCaller(index); err == nil {
-						loc := caller.Loc
-						grepx.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+					if lastindex == index {
+						if caller, err := tree.GetCaller(index); err == nil {
+							loc := caller.Loc
+							grepx.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+						}
+						grepx.parent.hide()
 					}
-					grepx.parent.hide()
 				}
 			}
 
 		})
 		view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+			lastindex = index
 			if caller, err := tree.GetCaller(index); err == nil {
 				loc := caller.Loc
 				grepx.PrevOpen(loc.URI.AsPath().String(), loc.Range.Start.Line)
@@ -412,6 +416,8 @@ func (impl *grep_impl) get_grep_new_data() (draw bool, data []ref_with_caller) {
 	grep.temp = grepresult{}
 	return
 }
+
+// update_list_druring_grep
 func (grepx *livewgreppicker) update_list_druring_grep() {
 	grep := grepx.impl
 	openpreview := len(grep.result.data) == 0
@@ -424,10 +430,7 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 			path := trim_project_filename(fpath, global_prj_root)
 			data := colorstring{}
 			data.add_color_text_list(line.line).pepend(fmt.Sprintf("%s:%d ", path, lineNumber+1), 0)
-			grepx.grep_list_view.AddItem(data.ColorText(), "", func() {
-				grepx.main.OpenFileHistory(path, &o.Loc)
-				grepx.parent.hide()
-			})
+			grepx.grep_list_view.AddItem(data.ColorText(), "", nil)
 		}
 		if openpreview {
 			grepx.update_preview()
@@ -553,13 +556,18 @@ func (pk livewgreppicker) UpdateQuery(query string) {
 }
 
 func (pk *livewgreppicker) set_list_handle() {
+	lastindex := -1
 	pk.grep_list_view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		lastindex = index
 		pk.open_view_from_normal_list(index, true)
 		update_title_with_index(pk, index)
 	})
 	pk.grep_list_view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		idx := pk.grep_list_view.GetCurrentItem()
-		pk.open_view_from_normal_list(idx, false)
+		if lastindex == i {
+			idx := pk.grep_list_view.GetCurrentItem()
+			pk.open_view_from_normal_list(idx, false)
+			pk.parent.hide()
+		}
 	})
 }
 
