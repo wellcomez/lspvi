@@ -47,13 +47,7 @@ func (fm *FileLoaderMgr) GetFile(filename string, reload bool) (ret FileLoader, 
 }
 func (fm *FileLoaderMgr) LoadFile(filename string) (ret FileLoader, err error) {
 	if data, e := os.ReadFile(filename); e == nil {
-		ret = FileLoader{
-			FileName: filename,
-			Buff:     femto.NewBufferFromString(string(data), filename),
-		}
-		ret.Lines = &Lines{
-			ret.Buff.Lines(0, ret.Buff.LinesNum()-1)}
-		return
+		return NewDataFileLoad(data, filename), nil
 	}
 	return FileLoader{FileName: filename}, err
 }
