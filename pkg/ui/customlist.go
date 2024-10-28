@@ -29,7 +29,9 @@ func new_customlist(two bool) *customlist {
 	ret.List = NewList()
 	ret.ShowSecondaryText(two)
 	ret.main_color_text = [][]colortext{}
-	ret.second_color_text = [][]colortext{}
+	if two {
+		ret.second_color_text = [][]colortext{}
+	}
 	ret.fuzz = false
 	return ret
 }
