@@ -15,7 +15,7 @@ import (
 // }
 type contextmenu struct {
 	table   *tview.List
-	main    *mainui
+	main    MainService
 	visible bool
 	impl    *contextmenu_impl
 	input   *inputdelay
@@ -58,7 +58,6 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		return action, event
 	}
 	if action == tview.MouseRightClick {
-		visible := false
 		for _, v := range menu.menu_handle {
 			box := v.getbox()
 			if box != nil && box.InRect(event.Position()) {
@@ -66,16 +65,13 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 					v.on_mouse(action, event)
 				}
 				menu.set_items(v.menuitem())
-				visible = true
+
+				menu.Show(event)
+				return tview.MouseConsumed, nil
 			}
 		}
-		if !visible {
-			menu.visible = false
-			return tview.MouseConsumed, nil
-		}
-		// menu.MenuPos = MousePosition{mouseX, mouseY}
-		menu.Show(event)
-		return tview.MouseConsumed, nil
+		menu.visible = false
+		return action, event
 	}
 	// if menu.MenuPos.x == 0 {
 	// log.Printf("xxxxxxxxx")

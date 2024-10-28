@@ -10,7 +10,7 @@ type inputdelay struct {
 	//keymap  map[string]func()
 	keyseq       string
 	cmdlist      []cmditem
-	main         *mainui
+	main         MainService
 	delay_cmd    *cmditem
 	delay_cmd_cb func()
 }
@@ -30,7 +30,7 @@ func (input *inputdelay) get_cmd(key string) (cmd_action, []*cmditem) {
 	same := 0
 	input.delay_cmd = nil
 	cmdlist := input.cmdlist
-	for i, _ := range cmdlist {
+	for i := range cmdlist {
 		v := &cmdlist[i]
 		if v.Key.prefixmatched(key) {
 			matched++
@@ -59,13 +59,13 @@ func (input *inputdelay) run_delay_cmd(cmd *cmditem) {
 		<-timer.C
 		defer timer.Stop()
 		if input.main != nil {
-			input.main.app.QueueUpdate(func() {
+			input.main.App().QueueUpdate(func() {
 				if input.delay_cmd != nil {
 					input.delay_cmd.Cmd.handle()
 					if input.delay_cmd_cb != nil {
 						input.delay_cmd_cb()
 					}
-					input.main.app.ForceDraw()
+					input.main.App().ForceDraw()
 				}
 			})
 		}
