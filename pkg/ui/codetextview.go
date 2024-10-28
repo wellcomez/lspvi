@@ -261,6 +261,21 @@ var BoxDrawingsDoubleVertical rune = '\u2551' // ║
 func (code *codetextview) PasteHandler() func(text string, setFocus func(tview.Primitive)) {
 	return code.PasteHandlerImpl
 }
+
+type colorchar struct {
+	begin, y  int
+	v         rune
+	textStyle tcell.Style
+}
+type navtext struct {
+	data []colorchar
+}
+
+func (n *navtext) Add(s colorchar) int {
+	n.data = append(n.data, s)
+	return s.begin + 1
+}
+
 func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Screen) {
 	y = y - 1
 	var code = v.code
@@ -284,16 +299,17 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 	if v.HasFocus() {
 		b1 = BoxDrawingsDoubleVertical
 	}
-	begin = code_navbar_draw_runne(screen, begin, y, b1,
-		border_style)
+	var txt navtext
+	begin = txt.Add(colorchar{begin, y, b1,
+		border_style})
 	x1 := code.FileName()
 	x1 = strings.ReplaceAll(x1, "/", " > ") + " > "
 	for _, v := range x1 {
-		begin = code_navbar_draw_runne(
-			screen, begin, y, v, *textStyle)
+		begin = txt.Add(colorchar{
+			begin, y, v, *textStyle})
 	}
 	if sym != nil {
-		begin = code_navbar_draw_runne(screen, begin, y, ' ', *textStyle)
+		begin = txt.Add(colorchar{begin, y, ' ', *textStyle})
 
 		if len(sym.Classname) > 0 {
 			s := style
@@ -304,17 +320,17 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 			if run, ok := lspcore.IconsRunne[int(lsp.SymbolKindClass)]; ok {
 				keys := []rune{run, ' '}
 				for _, run := range keys {
-					begin = code_navbar_draw_runne(screen, begin, y, run, textStyle.Foreground(f))
+					begin = txt.Add(colorchar{begin, y, run, textStyle.Foreground(f)})
 				}
 			}
 
 			for _, v := range sym.Classname {
-				begin = code_navbar_draw_runne(
-					screen, begin, y, v, textStyle.Foreground(f))
+				begin = txt.Add(colorchar{
+					begin, y, v, textStyle.Foreground(f)})
 			}
 			for _, v := range " >" {
-				begin = code_navbar_draw_runne(screen,
-					begin, y, v, *textStyle)
+				begin = txt.Add(colorchar{
+					begin, y, v, *textStyle})
 			}
 		}
 		if len(sym.SymInfo.Name) > 0 {
@@ -326,33 +342,38 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 			if run, ok := lspcore.IconsRunne[int(sym.SymInfo.Kind)]; ok {
 				keys := []rune{run, ' '}
 				for _, run := range keys {
-					begin = code_navbar_draw_runne(screen,
-						begin, y, run, textStyle.Foreground(f))
+					begin = txt.Add(colorchar{
+						begin, y, run, textStyle.Foreground(f)})
 				}
 			} else {
 				x1 := sym.Icon() + " "
 				if len(x1) > 0 {
 					for _, v := range x1 {
-						begin = code_navbar_draw_runne(screen,
-							begin, y, v, textStyle.Foreground(f))
+						begin = txt.Add(colorchar{
+							begin, y, v, textStyle.Foreground(f)})
 					}
 				}
 			}
 			for _, v := range sym.SymInfo.Name {
-				begin = code_navbar_draw_runne(screen,
-					begin, y, v, textStyle.Foreground(f))
+				begin = txt.Add(colorchar{
+					begin, y, v, textStyle.Foreground(f)})
 			}
 		}
 	}
 	for {
 		if begin < x+w-1 {
-			begin = code_navbar_draw_runne(screen,
-				begin, y, ' ', *textStyle)
+			begin = txt.Add(colorchar{
+				begin, y, ' ', *textStyle})
 		} else {
 			break
 		}
 	}
-	code_navbar_draw_runne(screen, begin, y, b1, border_style)
+	for _, v := range txt.data {
+		if v.begin < x+w-1 {
+			code_navbar_draw_runne(screen, v.begin, v.y, v.v, v.textStyle)
+		}
+	}
+	code_navbar_draw_runne(screen, x+w-1, y, b1, border_style)
 }
 
 func code_navbar_draw_runne(screen tcell.Screen, begin int, y int, v rune, textStyle tcell.Style) int {
