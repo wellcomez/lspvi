@@ -141,11 +141,7 @@ func (menu symboltree_view_context) on_mouse(action tview.MouseAction, event *tc
 
 // getbox implements context_menu_handle.
 func (menu symboltree_view_context) getbox() *tview.Box {
-	yes := menu.qk.main.get_focus_view_id() == view_outline_list
-	if yes {
-		return menu.qk.view.Box
-	}
-	return nil
+	return menu.qk.view.Box
 }
 
 // menuitem implements context_menu_handle.
