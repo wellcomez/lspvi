@@ -185,22 +185,22 @@ func new_workspace_picker(v *fzfmain) *workspace_picker {
 		a := gload_workspace_list.Projects[i]
 		x := fmt.Sprintf("%-10s %-30s", a.Name, a.Root)
 		fzfdata = append(fzfdata, x)
-		impl.list.AddItem(x, "", func() {
-			ret.on_select(&a)
-		})
+		impl.list.AddItem(x, "", nil)
 	}
 
 	ret.fzf = new_fzf_on_list_data(ret.impl.list, fzfdata, true)
+	lastindex := -1
 	impl.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		a := gload_workspace_list.Projects[ret.fzf.get_data_index(i)]
-		ret.on_select(&a)
+		if i == lastindex {
+			c := &gload_workspace_list.Projects[ret.fzf.get_data_index(i)]
+			impl.parent.main.on_select_project(c)
+			impl.parent.hide()
+		}
+	})
+	impl.list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		lastindex = index
 	})
 	return ret
-}
-
-func (pk *workspace_picker) on_select(c *Project) {
-	pk.impl.parent.main.on_select_project(c)
-	pk.impl.parent.hide()
 }
 
 type workdir struct {
