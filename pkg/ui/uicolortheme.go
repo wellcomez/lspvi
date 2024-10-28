@@ -183,7 +183,7 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.layout.tab_area.SetBackgroundColor(bg)
 	main.statusbar.SetBackgroundColor(bg)
 	main.console_index_list.SetBackgroundColor(bg)
-	main.layout.dialog.Frame.SetBackgroundColor(bg)
+	main.Dialog().Frame.SetBackgroundColor(bg)
 	x := main.current_editor()
 	main.symboltree.update_with_ts(x.TreeSitter(), x.LspSymbol())
 	main.symboltree.waiter.SetBackgroundColor(bg)
@@ -198,7 +198,7 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 
 	// sp= fg
 	// default_backgroudColor = bg
-	inputs := []*tview.InputField{main.cmdline.input, main.layout.dialog.input}
+	inputs := []*tview.InputField{main.cmdline.input, main.Dialog().input}
 	for _, input := range inputs {
 		input.SetFieldBackgroundColor(bg)
 		input.SetFieldTextColor(fg)
