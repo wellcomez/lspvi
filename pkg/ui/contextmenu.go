@@ -53,7 +53,10 @@ type contextmenu_impl struct {
 	items []context_menu_item
 }
 
-func (rm *contextmenu) handle_menu_mouse_action(action tview.MouseAction, event *tcell.EventMouse, menu context_menu_handle) (tview.MouseAction, *tcell.EventMouse) {
+func (rm *contextmenu) handle_menu_mouse_action(action tview.MouseAction, event *tcell.EventMouse, menu context_menu_handle, view *tview.Box) (tview.MouseAction, *tcell.EventMouse) {
+	if !view.InRect(event.Position()) {
+		return action, event
+	}
 	if action == tview.MouseRightClick {
 		rm.Show(event, menu)
 		return tview.MouseConsumed, nil

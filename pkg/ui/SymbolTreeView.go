@@ -131,7 +131,7 @@ type symboltree_view_context struct {
 
 func (menu symboltree_view_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	rm := menu.qk.main.Right_context_menu()
-	return rm.handle_menu_mouse_action(action, event, menu)
+	return rm.handle_menu_mouse_action(action, event, menu,menu.qk.view.Box)
 }
 
 // getbox implements context_menu_handle.
