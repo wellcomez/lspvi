@@ -123,6 +123,7 @@ type opendelay struct {
 	// line     i
 	code CodeEditor
 	st   int64
+	app  *tview.Application
 }
 
 func (k *opendelay) OnKey(filename string, line int) {
@@ -140,8 +141,12 @@ func (k *opendelay) OnKey(filename string, line int) {
 			debug.DebugLog("openprev", "skip isloading", filename, line)
 			return
 		}
+
+		debug.DebugLog("openprev", "open", filename, line)
 		// k.imp.LoadFileNoLsp(filename, line)
-		k.code.LoadFileNoLsp(filename, line)
+		go k.app.QueueUpdateDraw(func() {
+			k.code.LoadFileNoLsp(filename, line)
+		})
 	}()
 }
 func (imp *prev_picker_impl) PrevOpenLocation(filename string, loc lsp.Location) {
@@ -371,7 +376,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 		// editor:   editor,
 	}
 	// x.cq = NewCodeOpenQueue(x.codeprev, nil)
-	x.livekeydelay.code = x.codeprev
+	x.livekeydelay = opendelay{code: x.codeprev, app: v.main.App()}
 	return x
 }
 func (pk *refpicker) load(ranges lsp.Range) {

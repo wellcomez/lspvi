@@ -49,7 +49,7 @@ func new_quick_preview(main MainService) *quick_preview {
 	return &quick_preview{
 		codeprev: codeprev,
 		frame:    frame,
-		delay:    opendelay{code: codeprev},
+		delay:    opendelay{code: codeprev, app: main.App()},
 	}
 }
 
