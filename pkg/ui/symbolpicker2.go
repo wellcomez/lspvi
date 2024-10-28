@@ -180,7 +180,11 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 		}
 	}
 	impl.list_index_data = list_index_data
+	lastindex := -1
 	list.SetSelectedFunc(func(index int, s1 string, s2 string, r rune) {
+		if lastindex != index {
+			return
+		}
 		if sym := impl.get_current_item_symbol(index); sym != nil {
 			file := sym.sym.SymInfo.Location.URI.AsPath().String()
 			v.main.OpenFileHistory(file, &sym.sym.SymInfo.Location)
@@ -189,6 +193,7 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 
 	})
 	list.SetChangedFunc(func(index int, s string, s2 string, r rune) {
+		lastindex = index
 		impl.UpdatePrev(index)
 	})
 

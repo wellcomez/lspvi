@@ -64,18 +64,18 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 	var layout *tview.Grid
 	if impl.listcustom != nil {
 		layout = layout_list_edit(impl.listcustom, code, input)
-		list = impl.listcustom
+		// list = impl.listcustom
 	} else {
 		layout = layout_list_edit(list, code, input)
 	}
-	list_click_check:= NewGridListClickCheck(layout, list, linenum)
-	list_click_check.on_list_selected = func() {
-		if impl.on_list_selected != nil {
-			impl.on_list_selected()
-		} else {
-			impl.update_preview()
-		}
-	}
+	// list_click_check := NewGridListClickCheck(layout, list, linenum)
+	// list_click_check.on_list_selected = func() {
+	// 	if impl.on_list_selected != nil {
+	// 		impl.on_list_selected()
+	// 	} else {
+	// 		impl.update_preview()
+	// 	}
+	// }
 	// impl.list_click_check = list_click_check
 	return layout
 }
@@ -111,7 +111,7 @@ type prev_picker_impl struct {
 	listcustom *customlist
 	codeprev   CodeEditor
 	// cq               *CodeOpenQueue
-	parent           *fzfmain
+	parent *fzfmain
 	// list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
@@ -454,7 +454,9 @@ func (pk *refpicker) refresh_list(data []*list_tree_node) {
 	}
 	fzf := new_fzf_on_list_data(listview, fzfdata, true)
 	pk.impl.fzf = fzf
+	lastindex := -1
 	listview.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		lastindex = index
 		dataindex := fzf.get_data_index(index)
 		if ref, err := pk.impl.quick_view_data_model.get_data(dataindex); err == nil {
 			loc := ref.Loc
@@ -464,11 +466,13 @@ func (pk *refpicker) refresh_list(data []*list_tree_node) {
 		}
 	})
 	listview.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
-		dataindex := fzf.get_data_index(index)
-		if ref, err := pk.impl.quick_view_data_model.get_data(dataindex); err == nil {
-			loc := ref.Loc
-			pk.impl.parent.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+		if lastindex == index {
+			dataindex := fzf.get_data_index(index)
+			if ref, err := pk.impl.quick_view_data_model.get_data(dataindex); err == nil {
+				loc := ref.Loc
+				pk.impl.parent.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+			}
+			pk.impl.parent.hide()
 		}
-		pk.impl.parent.hide()
 	})
 }
