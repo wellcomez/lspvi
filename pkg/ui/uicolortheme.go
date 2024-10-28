@@ -57,7 +57,7 @@ func (mgr *symbol_colortheme) update_controller_theme() bool {
 	return false
 }
 
-func (mgr *symbol_colortheme) get_default_style() *tcell.Style {
+func (mgr symbol_colortheme) get_default_style() *tcell.Style {
 	if n, ok := mgr.colorscheme["normal"]; ok {
 		return &n
 	}
@@ -151,18 +151,13 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 		}
 	}
 
-	main.layout.console.SetBackgroundColor(bg)
-
-	main.page.SetBackgroundColor(bg)
-	main.page.SetBorderColor(fg)
-
 	trees := []*Tree{
 		main.symboltree.view,
 		main.fileexplorer.view,
 		main.callinview.view,
 		main.uml.file.view}
 	for _, v := range trees {
-		v.SetGraphicsColor(fg)
+		colorscheme.update_tree_color(v)
 	}
 
 	for _, v := range all_view_list {
@@ -174,22 +169,27 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 			view.SetBackgroundColor(bg)
 		}
 	}
-	main.uml.file.view.SetBackgroundColor(bg)
+	textview := []*tview.TextView{main.log.log, main.symboltree.waiter, main.statusbar}
+	for _, v := range textview {
+		colorscheme.update_textview(v)
+	}
+	for _, x1 := range []*flex_area{main.layout.console, main.layout.editor_area} {
+		colorscheme.update_flex_area(x1)
+	}
 
-	main.log.log.SetTextColor(fg)
-	main.log.log.SetBackgroundColor(bg)
-
-	main.layout.editor_area.SetBackgroundColor(bg)
 	main.layout.tab_area.SetBackgroundColor(bg)
-	main.statusbar.SetBackgroundColor(bg)
-	main.console_index_list.SetBackgroundColor(bg)
-	main.Dialog().Frame.SetBackgroundColor(bg)
+
+	colorscheme.update_listbox_color(main.console_index_list.List)
+
+	x1 := main.Dialog()
+	colorscheme.update_dialog_color(x1)
+
 	x := main.current_editor()
 	main.symboltree.update_with_ts(x.TreeSitter(), x.LspSymbol())
-	main.symboltree.waiter.SetBackgroundColor(bg)
-	main.symboltree.waiter.SetTextColor(fg)
 
 	main.page.SetTitleColor(fg)
+	main.page.SetBackgroundColor(bg)
+	main.page.SetBorderColor(fg)
 
 	main.layout.spacemenu.table.SetBackgroundColor(bg)
 	main.layout.spacemenu.load_spacemenu()
@@ -200,11 +200,7 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	// default_backgroudColor = bg
 	inputs := []*tview.InputField{main.cmdline.input, main.Dialog().input}
 	for _, input := range inputs {
-		input.SetFieldBackgroundColor(bg)
-		input.SetFieldTextColor(fg)
-		input.SetBackgroundColor(bg)
-		input.SetFieldTextColor(fg)
-		input.SetLabelColor(fg)
+		colorscheme.update_input_color(input)
 	}
 
 	for _, v := range SplitCode.code_collection {
@@ -212,6 +208,42 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	}
 	main.codeview2.set_codeview_colortheme(colorscheme)
 	main.fileexplorer.ChangeDir(main.fileexplorer.rootdir)
+}
+
+func (c symbol_colortheme) update_dialog_color(x1 *fzfmain) {
+	fg, bg, _ := c.get_default_style().Decompose()
+	x1.Frame.SetBackgroundColor(bg)
+	x1.Frame.SetTitleColor(fg)
+	c.update_input_color(x1.input)
+}
+
+func (c symbol_colortheme) update_tree_color(input *Tree) {
+	fg, bg, _ := c.select_style().Decompose()
+	input.SetBackgroundColor(bg)
+	input.SetBorderColor(tview.Styles.BorderColor)
+	input.SetGraphicsColor(fg)
+}
+func (c symbol_colortheme) update_listbox_color(input *List) {
+	_, bg, _ := c.get_default_style().Decompose()
+	input.SetBackgroundColor(bg)
+	input.SetBorderColor(tview.Styles.BorderColor)
+}
+func (c symbol_colortheme) update_input_color(input *tview.InputField) {
+	fg, bg, _ := c.get_default_style().Decompose()
+	input.SetFieldBackgroundColor(bg)
+	input.SetFieldTextColor(fg)
+	input.SetBackgroundColor(bg)
+	input.SetFieldTextColor(fg)
+	input.SetLabelColor(fg)
+}
+func (color *symbol_colortheme) update_flex_area(x1 *flex_area) {
+	_, bg, _ := color.get_default_style().Decompose()
+	x1.SetBackgroundColor(bg)
+}
+func (color *symbol_colortheme) update_textview(x1 *tview.TextView) {
+	fg, bg, _ := color.get_default_style().Decompose()
+	x1.SetTextColor(fg)
+	x1.SetBackgroundColor(bg)
 }
 
 func (coloretheme *symbol_colortheme) update_default_color() {

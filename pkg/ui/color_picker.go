@@ -102,6 +102,7 @@ func new_color_picker(v *fzfmain) *color_picker {
 	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
 		a := ret.impl.data[ret.fzf.get_data_index(i)]
 		v.main.on_change_color(a.name)
+		global_theme.update_dialog_color(v)
 		if lastindex == i {
 			v.hide()
 		}
