@@ -80,9 +80,7 @@ func new_color_picker(v *fzfmain) *color_picker {
 			ret.impl.data = append(ret.impl.data, a)
 			x := fmt.Sprintf("%-4d. %-30s *ts", index, a.name)
 			fzfdata = append(fzfdata, x)
-			impl.list.AddItem(x, "", func() {
-				ret.on_select(&a)
-			})
+			impl.list.AddItem(x, "", nil)
 			index++
 		}
 		files := runtime.Files.ListRuntimeFiles(femto.RTColorscheme)
@@ -94,17 +92,24 @@ func new_color_picker(v *fzfmain) *color_picker {
 			ret.impl.data = append(ret.impl.data, a)
 			x := fmt.Sprintf("%-4d. %-30s ", index, a.name)
 			fzfdata = append(fzfdata, x)
-			impl.list.AddItem(x, "", func() {
-				ret.on_select(&a)
-			})
+			impl.list.AddItem(x, "", nil)
 			index++
 		}
 	}
 	ret.fzf = new_fzf_on_list_data(ret.impl.list, fzfdata, true)
-	impl.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+	list := impl.list
+	lastindex := -1
+	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
 		a := ret.impl.data[ret.fzf.get_data_index(i)]
-		ret.on_select(&a)
+		v.main.on_change_color(a.name)
+		if lastindex == i {
+			v.hide()
+		}
 	})
+	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		lastindex = index
+	})
+
 	for i, v := range ret.impl.data {
 		if v.name == global_theme.name {
 			ret.impl.list.SetCurrentItem(i)
@@ -112,9 +117,4 @@ func new_color_picker(v *fzfmain) *color_picker {
 		}
 	}
 	return ret
-}
-
-func (pk *color_picker) on_select(c *color_theme_file) {
-	pk.main.on_change_color(c.name)
-	pk.impl.parent.hide()
 }
