@@ -31,27 +31,29 @@ func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.
 		list := impl.listcustom
 		list.SetBorder(true)
 		layout := layout_list_row_edit(list, code, input)
-		impl.list_click_check = NewFlexListClickCheck(layout, list, linenum)
-		impl.list_click_check.on_list_selected = func() {
-			if impl.on_list_selected != nil {
-				impl.on_list_selected()
-			} else {
-				impl.update_preview()
-			}
-		}
+		// list_click_check := NewFlexListClickCheck(layout, list, linenum)
+		// list_click_check.on_list_selected = func() {
+		// 	if impl.on_list_selected != nil {
+		// 		impl.on_list_selected()
+		// 	} else {
+		// 		impl.update_preview()
+		// 	}
+		// }
+		// impl.list_click_check = list_click_check
 		return layout
 	} else {
 		list := impl.listcustom
 		list.SetBorder(true)
 		layout := layout_list_row_edit(list, code, input)
-		impl.list_click_check = NewFlexListClickCheck(layout, list, linenum)
-		impl.list_click_check.on_list_selected = func() {
-			if impl.on_list_selected != nil {
-				impl.on_list_selected()
-			} else {
-				impl.update_preview()
-			}
-		}
+		// list_click_check := NewFlexListClickCheck(layout, list, linenum)
+		// list_click_check.on_list_selected = func() {
+		// 	if impl.on_list_selected != nil {
+		// 		impl.on_list_selected()
+		// 	} else {
+		// 		impl.update_preview()
+		// 	}
+		// }
+		// impl.list_click_check = list_click_check
 		return layout
 	}
 }
@@ -66,14 +68,15 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 	} else {
 		layout = layout_list_edit(list, code, input)
 	}
-	impl.list_click_check = NewGridListClickCheck(layout, list, linenum)
-	impl.list_click_check.on_list_selected = func() {
+	list_click_check:= NewGridListClickCheck(layout, list, linenum)
+	list_click_check.on_list_selected = func() {
 		if impl.on_list_selected != nil {
 			impl.on_list_selected()
 		} else {
 			impl.update_preview()
 		}
 	}
+	// impl.list_click_check = list_click_check
 	return layout
 }
 func (pk *refpicker) row(input *tview.InputField) *tview.Flex {
@@ -109,7 +112,7 @@ type prev_picker_impl struct {
 	codeprev   CodeEditor
 	// cq               *CodeOpenQueue
 	parent           *fzfmain
-	list_click_check *GridListClickCheck
+	// list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
 	livekeydelay     opendelay
