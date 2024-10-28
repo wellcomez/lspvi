@@ -89,10 +89,11 @@ func (line *colorstring) add_color_text_list(s []colortext) *colorstring {
 	return line
 }
 func (line *colorstring) Replace(old string, new string, n int) {
-	for _, v := range line.line {
+	for i := range line.line {
+		v := &line.line[i]
 		if count := strings.Count(v.text, old); count > 0 && n > 0 {
 			replace_count := min(count, n)
-			line.Replace(old, new, replace_count)
+			v.text = strings.Replace(v.text, old, new, replace_count)
 			n = n - replace_count
 		}
 	}
