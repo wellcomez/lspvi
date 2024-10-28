@@ -26,16 +26,16 @@ const (
 
 type file_tree_view struct {
 	*view_link
-	view          *Tree
-	Name          string
-	main          *mainui
-	rootdir       string
-	handle        func(filename string) bool
-	openfile      func(filename string)
-	dir_mode      dir_open_mode
-	right_context filetree_context
+	view     *Tree
+	Name     string
+	main     *mainui
+	rootdir  string
+	handle   func(filename string) bool
+	openfile func(filename string)
+	dir_mode dir_open_mode
+	// right_context filetree_context
 	menu_item     []context_menu_item
-	monitor       bool
+	monitor bool
 }
 
 // OnWatchFileChange implements change_reciever.
@@ -228,11 +228,18 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 			main.toggle_view(view_file)
 		}},
 	}
-	ret.right_context = filetree_context{
+	right_context := filetree_context{
 		qk:        ret,
 		menu_item: menu_item,
 		main:      main,
 	}
+	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		menu := main.Right_context_menu()
+		if a, e := menu.handle_menu_mouse_action(action, event, right_context, view.Box); a == tview.MouseConsumed {
+			return a, e
+		}
+		return action, event
+	})
 	return ret
 
 }
