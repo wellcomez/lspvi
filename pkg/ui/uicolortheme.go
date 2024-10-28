@@ -214,6 +214,7 @@ func (c symbol_colortheme) update_dialog_color(x1 *fzfmain) {
 	fg, bg, _ := c.get_default_style().Decompose()
 	x1.Frame.SetBackgroundColor(bg)
 	x1.Frame.SetTitleColor(fg)
+	x1.Frame.SetBorderColor(tview.Styles.BorderColor)
 	c.update_input_color(x1.input)
 }
 

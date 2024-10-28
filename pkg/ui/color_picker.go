@@ -28,9 +28,10 @@ type theme_changer interface {
 	on_change_color(name string)
 }
 type color_picker struct {
-	impl *color_pick_impl
-	fzf  *fzf_on_listview
-	main theme_changer
+	impl       *color_pick_impl
+	fzf        *fzf_on_listview
+	main       theme_changer
+	gridlayout *tview.Grid
 	// code *CodeView
 }
 
@@ -40,7 +41,9 @@ func (pk *color_picker) close() {
 }
 
 func (pk *color_picker) grid(input *tview.InputField) *tview.Grid {
-	return pk.impl.grid(input)
+	ret := pk.impl.grid(input)
+	pk.gridlayout = ret
+	return ret
 }
 
 // UpdateQuery implements picker.
@@ -103,6 +106,10 @@ func new_color_picker(v *fzfmain) *color_picker {
 		a := ret.impl.data[ret.fzf.get_data_index(i)]
 		v.main.on_change_color(a.name)
 		global_theme.update_dialog_color(v)
+		_,bg , _ := global_theme.get_default_style().Decompose()
+		ret.gridlayout.SetBackgroundColor(bg)
+		ret.gridlayout.SetBorderColor(tview.Styles.BorderColor)
+		global_theme.update_listbox_color(list.List)
 		if lastindex == i {
 			v.hide()
 		}
