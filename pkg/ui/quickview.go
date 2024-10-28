@@ -700,6 +700,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 	}
 	qk.flex_tree = tree
 	use_color := true
+	lastIndex := -1
 	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
 		qk.quickview.visisble = false
 		item, pos, more, parent := tree.GetNodeIndex(i)
@@ -707,9 +708,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 
 		case NodePostion_Root:
 			{
-				if false {
-					tree.LoadMore(item, use_color)
-				} else {
+				if lastIndex == i {
 					tree.Toggle(item, use_color)
 				}
 				loaddata(tree.ColorstringItem, i)
@@ -734,7 +733,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 		qk.main.App().ForceDraw()
 	})
 	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		// lastIndex = index
+		lastIndex = index
 		if ref, err := qk.data.get_data(index); err == nil && ref != nil {
 			// qk.quickview.update_preview(ref.Loc)
 			qk.cq.OpenFileHistory(ref.Loc.URI.AsPath().String(), &ref.Loc)
