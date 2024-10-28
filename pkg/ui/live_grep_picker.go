@@ -331,7 +331,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			switch pos {
 			case NodePostion_Root:
 				{
-					tree.Toggle(parent)
+					tree.Toggle(parent, false)
 					go RefreshTreeList(view, tree, index)
 					grepx.update_title()
 					return

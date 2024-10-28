@@ -519,7 +519,7 @@ func (rootnode *FlexTreeNodeRoot) Toggle(node *FlexTreeNode, color bool) {
 			rootnode.ListItem = replaceSegment[string](rootnode.ListItem, r[0], r[1], x)
 		} else {
 			x := node.ListItemColorString()
-			rootnode.ColorstringItem = replaceSegment[colorstring](rootnode.ListColorString(), r[0], r[1], x)
+			rootnode.ColorstringItem = replaceSegment[colorstring](rootnode.ColorstringItem, r[0], r[1], x)
 
 		}
 	}
