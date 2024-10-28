@@ -138,7 +138,8 @@ func (pk bookmark_picker) close() {
 
 // UpdateQuery implements picker.
 func (pk bookmark_picker) UpdateQuery(query string) {
-	hlist := pk.impl.hlist
+	// hlist := pk.impl.hlist
+	hlist := pk.impl.listcustom
 	query = strings.ToLower(query)
 	hlist.Clear()
 	pk.impl.fzf.OnSearch(query, false)
@@ -148,7 +149,7 @@ func (pk bookmark_picker) UpdateQuery(query string) {
 		t1 := convert_string_colortext(pk.impl.fzf.selected_postion[i], file, 0, hl)
 		hlist.AddColorItem(
 			append([]colortext{
-				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow,0},
+				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow, 0},
 			}, t1...),
 			nil, nil)
 	}
@@ -174,8 +175,8 @@ func (pk bookmark_picker) name() string {
 
 type bookmark_picker_impl struct {
 	*prev_picker_impl
-	fzf   *fzf_on_listview
-	hlist *customlist
+	fzf *fzf_on_listview
+	// hlist *customlist
 }
 
 func get_list_item(v ref_line) (string, string) {
@@ -228,14 +229,13 @@ func new_bookmark_picker(v *fzfmain, bookmark *proj_bookmark) bookmark_picker {
 	}
 	// sym.impl.codeprev.view.SetBorder(true)
 	hlist := new_customlist(false)
-	impl.hlist = hlist
-
 	listdata := reload_bookmark_list(bookmark)
 	fzfdata := bookmark.fzfdata(listdata)
 	hlist.fuzz = true
 	impl.use_cusutom_list(hlist)
-
+	lastindex := -1
 	hlist.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		lastindex = index
 		if impl.fzf != nil {
 			data_index := impl.fzf.get_data_index(index)
 			loc := impl.listdata[data_index].loc
@@ -243,14 +243,15 @@ func new_bookmark_picker(v *fzfmain, bookmark *proj_bookmark) bookmark_picker {
 		}
 	})
 	hlist.SetSelectedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		if impl.fzf != nil {
-			data_index := impl.fzf.get_data_index(index)
-			loc := impl.listdata[data_index].loc
-			v.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
-			v.hide()
+		if lastindex == index {
+			if impl.fzf != nil {
+				data_index := impl.fzf.get_data_index(index)
+				loc := impl.listdata[data_index].loc
+				v.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+				v.hide()
+			}
 		}
 	})
-
 	impl.listdata = listdata
 	bookmark.add_to_list(listdata, hlist)
 	fzf := new_fzf_on_list_data(hlist, fzfdata, hlist.fuzz)
@@ -292,13 +293,14 @@ func (bookmark proj_bookmark) fzfdata(listdata []ref_line) (data []string) {
 }
 func (bookmark *proj_bookmark) add_to_list(listdata []ref_line, hlist *customlist) {
 	for i, v := range listdata {
-		a, b := get_list_item(v)
+		a, _ := get_list_item(v)
+		// x := []colortext{
+		// {fmt.Sprintf("   %s", b), 0, 0}}
 		hlist.AddColorItem(
 			[]colortext{
-				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow,0},
-				{a, 0,0}},
-			[]colortext{
-				{fmt.Sprintf("   %s", b), 0,0}}, nil)
+				{fmt.Sprintf("%-03d", i+1), tcell.ColorYellow, 0},
+				{a, 0, 0}},
+			nil, nil)
 	}
 }
 
