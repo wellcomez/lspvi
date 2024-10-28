@@ -121,12 +121,16 @@ func new_qk_history_picker(v *fzfmain) qk_history_picker {
 	}
 	ret.impl.fzf_on_listview = new_fzf_on_list_data(list, fzfdata, true)
 	fzf := ret.impl.fzf_on_listview
+	last_index := -1
 	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		ret.open_in_qf(fzf.get_data_index(i))
-		ret.parent.hide()
+		if i == last_index {
+			ret.open_in_qf(fzf.get_data_index(i))
+			ret.parent.hide()
+		}
 	})
 	list.SetChangedFunc(func(i int, mainText, secondaryText string, shortcut rune) {
 		ret.updateprev(fzf.get_data_index(i))
+		last_index = i
 	})
 	return ret
 }
@@ -152,7 +156,7 @@ func load_qf_history(main MainService) ([]qf_history_data, []string) {
 	for _, v := range keys {
 		file_info := ""
 		if len(v.Key.File) > 0 {
-			file_info = fmt.Sprintf("%s %d:%d", trim_project_filename(v.Key.File,root), v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
+			file_info = fmt.Sprintf("%s %d:%d", trim_project_filename(v.Key.File, root), v.Key.Ranges.Start.Line, v.Key.Ranges.Start.Character)
 		}
 		keymaplist = append(keymaplist, fmt.Sprintf("%-3s %-20s  %s", v.Type.Icon(), v.Key.Key, file_info))
 	}
