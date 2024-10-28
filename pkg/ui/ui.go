@@ -980,7 +980,7 @@ func (main *mainui) create_right_context_menu() {
 		main.quickview.right_context,
 		main.callinview.right_context,
 		main.bookmark_view.right_context,
-		main.symboltree.right_context,
+		// main.symboltree.right_context,
 		main.uml.file_right_context,
 		main.fileexplorer.right_context,
 		main.console_index_list.right_context,

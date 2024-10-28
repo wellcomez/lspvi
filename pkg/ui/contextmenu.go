@@ -53,6 +53,14 @@ type contextmenu_impl struct {
 	items []context_menu_item
 }
 
+func (rm *contextmenu) handle_menu_mouse_action(action tview.MouseAction, event *tcell.EventMouse, menu context_menu_handle) (tview.MouseAction, *tcell.EventMouse) {
+	if action == tview.MouseRightClick {
+		rm.Show(event, menu)
+		return tview.MouseConsumed, nil
+	}
+	return rm.handle_mouse_after_popmenu(event, action)
+}
+
 func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	if event == nil {
 		return action, event
@@ -64,9 +72,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 				if !menu.visible {
 					v.on_mouse(action, event)
 				}
-				menu.set_items(v.menuitem())
-
-				menu.Show(event)
+				menu.Show(event, v)
 				return tview.MouseConsumed, nil
 			}
 		}
@@ -84,11 +90,9 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 func (menu *contextmenu) handle_mouse_after_popmenu(event *tcell.EventMouse, action tview.MouseAction) (tview.MouseAction, *tcell.EventMouse) {
 	posX, posY := event.Position()
 	if !menu.table.InRect(posX, posY) {
-
 		if menu.visible {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 				menu.visible = false
-				return tview.MouseConsumed, nil
 			}
 		}
 		return action, event
@@ -96,25 +100,27 @@ func (menu *contextmenu) handle_mouse_after_popmenu(event *tcell.EventMouse, act
 
 	if !menu.visible {
 		return action, event
-	}
-	action, _ = menu.mouseclick.handle(action, event)
-	_, top, _, _ := menu.table.GetInnerRect()
-	if action == tview.MouseMove {
-		_, y := event.Position()
-		cur := y - top
-		cur = min(cur, len(menu.impl.items)-1)
-		cur = max(0, cur)
-		menu.table.SetCurrentItem(cur)
-	} else if action == tview.MouseLeftClick {
-		menu.impl.items[menu.table.GetCurrentItem()].handle()
-		menu.visible = false
+	} else {
+		action, _ = menu.mouseclick.handle(action, event)
+		_, top, _, _ := menu.table.GetInnerRect()
+		if action == tview.MouseMove {
+			_, y := event.Position()
+			cur := y - top
+			cur = min(cur, len(menu.impl.items)-1)
+			cur = max(0, cur)
+			menu.table.SetCurrentItem(cur)
+		} else if action == tview.MouseLeftClick {
+			menu.impl.items[menu.table.GetCurrentItem()].handle()
+			menu.visible = false
 
+		}
+		return tview.MouseConsumed, nil
 	}
-	return tview.MouseConsumed, nil
 }
 
-func (menu *contextmenu) Show(event *tcell.EventMouse) {
+func (menu *contextmenu) Show(event *tcell.EventMouse, menu_item context_menu_handle) {
 	menu.visible = true
+	menu.set_items(menu_item.menuitem())
 	menu.table.SetCurrentItem(0)
 	v := menu
 	if v.visible {
