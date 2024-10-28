@@ -73,22 +73,22 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 			menu.visible = false
 			return tview.MouseConsumed, nil
 		}
-		menu.visible = true
-		menu.table.SetCurrentItem(0)
-		v := menu
-		if v.visible {
-			mouseX, mouseY := event.Position()
-			height := len(v.impl.items) + 2
-			v.table.SetRect(mouseX, mouseY+1, v.width-1, height)
-			// menu.MenuPos = MousePosition{mouseX, mouseY}
-		}
+		// menu.MenuPos = MousePosition{mouseX, mouseY}
+		menu.Show(event)
 		return tview.MouseConsumed, nil
 	}
+	// if menu.MenuPos.x == 0 {
+	// log.Printf("xxxxxxxxx")
+	// }
+	// log.Printf("In x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
+	// menu.main.ActiveTab(view_quickview, false)
+	return menu.handle_mouse_after_popmenu(event, action)
+}
+
+func (menu *contextmenu) handle_mouse_after_popmenu(event *tcell.EventMouse, action tview.MouseAction) (tview.MouseAction, *tcell.EventMouse) {
 	posX, posY := event.Position()
 	if !menu.table.InRect(posX, posY) {
-		// if menu.MenuPos.x == 0 {
-		// log.Printf("xxxxxxxxx")
-		// }
+
 		if menu.visible {
 			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
 				menu.visible = false
@@ -97,7 +97,7 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 		}
 		return action, event
 	}
-	// log.Printf("In x:%d, y:%d, x1:%d, y1:%d, h:%d, w:%d", posX, posY, x1, y1, h, w)
+
 	if !menu.visible {
 		return action, event
 	}
@@ -112,9 +112,21 @@ func (menu *contextmenu) handle_mouse(action tview.MouseAction, event *tcell.Eve
 	} else if action == tview.MouseLeftClick {
 		menu.impl.items[menu.table.GetCurrentItem()].handle()
 		menu.visible = false
-		// menu.main.ActiveTab(view_quickview, false)
+
 	}
 	return tview.MouseConsumed, nil
+}
+
+func (menu *contextmenu) Show(event *tcell.EventMouse) {
+	menu.visible = true
+	menu.table.SetCurrentItem(0)
+	v := menu
+	if v.visible {
+		mouseX, mouseY := event.Position()
+		height := len(v.impl.items) + 2
+		v.table.SetRect(mouseX, mouseY+1, v.width-1, height)
+
+	}
 }
 
 type context_menu_handle interface {
