@@ -51,6 +51,9 @@ func (node *CallNode) Ignore(uid int64) bool {
 	return false
 }
 
+type FileTree struct {
+	*Tree
+}
 type callinview struct {
 	*view_link
 	view           *Tree
@@ -104,6 +107,10 @@ func new_callview(main MainService) *callinview {
 	}
 	view.SetInputCapture(ret.KeyHandle)
 	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		menu := main.Right_context_menu()
+		if a, e := menu.handle_menu_mouse_action(action, event, ret.right_context, view.Box); a == tview.MouseConsumed {
+			return a, e
+		}
 		return action, event
 	})
 	ret.cq = NewCodeOpenQueue(nil, main)

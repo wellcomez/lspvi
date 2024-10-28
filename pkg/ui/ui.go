@@ -969,7 +969,7 @@ func (main *mainui) create_right_context_menu() {
 		main.codeview.rightmenu,
 		main.codeview2.rightmenu,
 		main.quickview.right_context,
-		main.callinview.right_context,
+		// main.callinview.right_context,
 		main.bookmark_view.right_context,
 		// main.symboltree.right_context,
 		main.uml.file_right_context,
