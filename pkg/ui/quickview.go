@@ -79,6 +79,7 @@ type quick_view struct {
 	sel            *list_multi_select
 	flex_tree      *FlexTreeNodeRoot
 	cq             *CodeOpenQueue
+	currentstate  string
 }
 type list_view_tree_extend struct {
 	root           []list_tree_node
@@ -584,9 +585,12 @@ func (qk *quick_view) OnSearch(txt string) {
 
 // String
 func (qk *quick_view) String() string {
+	return qk.currentstate
+}
+
+func (qk *quick_view) get_current_index_string(index int) string {
 	var s = qk.Type.String()
 	coutn := qk.view.GetItemCount()
-	index := qk.view.GetCurrentItem()
 	if coutn > 0 {
 		index += 1
 	}
@@ -677,7 +681,6 @@ func (qk *quick_view) new_search(t DateType, key SearchKey) {
 	})
 	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		vvv := qk.data.Refs.Refs[index]
-		// qk.quickview.update_preview(vvv.Loc)
 		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 		qk.main.Tab().UpdatePageTitle()
 	})
@@ -735,7 +738,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		lastIndex = index
 		if ref, err := qk.data.get_data(index); err == nil && ref != nil {
-			// qk.quickview.update_preview(ref.Loc)
+			qk.currentstate = qk.get_current_index_string(index)
 			qk.cq.OpenFileHistory(ref.Loc.URI.AsPath().String(), &ref.Loc)
 			qk.main.Tab().UpdatePageTitle()
 		}
