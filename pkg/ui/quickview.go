@@ -79,7 +79,7 @@ type quick_view struct {
 	sel            *list_multi_select
 	flex_tree      *FlexTreeNodeRoot
 	cq             *CodeOpenQueue
-	currentstate  string
+	currentstate   string
 }
 type list_view_tree_extend struct {
 	root           []list_tree_node
@@ -711,7 +711,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 
 		case NodePostion_Root:
 			{
-				if lastIndex == i {
+				if lastIndex == i || tree.loadcount == 0 {
 					tree.Toggle(item, use_color)
 				}
 				loaddata(tree.ColorstringItem, i)
