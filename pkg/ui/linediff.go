@@ -12,11 +12,16 @@ func (code *CodeView) DiffLine(beign int) bool {
 func (code *CodeView) Diff(beign, end int) (diff []int, err error) {
 
 	if load, e := fileloader.Loader.GetFile(code.Path(), false); e == nil {
-		oldline := load.Lines.Lines[beign : end+1]
+		old_len := len(load.Lines.Lines)
 		newline := load.Buff.Lines(beign, end+1)
 		for i, v := range newline {
-			if oldline[i] != v {
-				diff = append(diff, i+beign)
+			lineno := i + beign
+			if lineno < old_len {
+				if load.Lines.Lines[i] != v {
+					diff = append(diff, lineno)
+				}
+			} else {
+				diff = append(diff, lineno)
 			}
 		}
 	} else {
