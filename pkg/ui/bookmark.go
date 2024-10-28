@@ -313,15 +313,15 @@ func (pk *bookmark_picker) grid(input *tview.InputField) *tview.Flex {
 
 type bookmark_view struct {
 	*view_link
-	list          *customlist
-	data          []ref_line
-	Name          string
-	fzf           *fzf_on_listview
-	menuitem      []context_menu_item
-	right_context bk_menu_context
-	bookmark      *proj_bookmark
-	code          MainService
-	yes           func() bool
+	list     *customlist
+	data     []ref_line
+	Name     string
+	fzf      *fzf_on_listview
+	menuitem []context_menu_item
+	// right_context bk_menu_context
+	bookmark *proj_bookmark
+	code     MainService
+	yes      func() bool
 }
 
 func (bk *bookmark_view) onsave() {
@@ -354,7 +354,7 @@ func new_bookmark_view(bookmark *proj_bookmark, code MainService, yes func() boo
 		bookmark:  bookmark,
 		yes:       yes,
 	}
-	ret.right_context = bk_menu_context{
+	right_context := bk_menu_context{
 		qk: ret,
 	}
 	ret.menuitem = []context_menu_item{
@@ -367,6 +367,12 @@ func new_bookmark_view(bookmark *proj_bookmark, code MainService, yes func() boo
 			ret.bookmark.delete(r)
 		}},
 	}
+	ret.list.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if a, e := code.Right_context_menu().handle_menu_mouse_action(action, event, right_context, ret.list.Box); a == tview.MouseConsumed {
+			return a, e
+		}
+		return action, event
+	})
 	ret.update_redraw()
 	return ret
 }
