@@ -65,8 +65,7 @@ type rootlayout struct {
 	console     *flex_area
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
-	mainlayout  *flex_area
-	dialog      *fzfmain
+	mainlayout  *MainLayout
 	spacemenu   *space_menu
 	// hide_cb     func()
 }
@@ -590,11 +589,11 @@ func (m *mainui) quit() {
 	m.Close()
 }
 func (m *mainui) open_qfh_query() {
-	m.layout.dialog.open_qfh_picker()
+	m.Dialog().open_qfh_picker()
 }
 func (m *mainui) open_wks_query() {
 	code := m.codeview
-	m.layout.dialog.open_wks_query(code)
+	m.Dialog().open_wks_query(code)
 }
 func (m *mainui) ZoomWeb(zoom bool) {
 	if proxy != nil {
@@ -813,7 +812,7 @@ func MainUI(arg *Arguments) {
 	edit_area_resizer.add(SplitCode.layout.view_link, 1)
 	edit_area_resizer.add(main.symboltree.view_link, 2).load()
 
-	main_layout_resizer := new_editor_resize(main, main_layout, func() {}, func(u *ui_reszier) {
+	main_layout_resizer := new_editor_resize(main, main_layout.flex_area, func() {}, func(u *ui_reszier) {
 		if !u.dragging {
 			go func() {
 				main.app.QueueUpdate(func() {
@@ -893,8 +892,9 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 		main.right_context_menu.Draw(screen)
 	}
 	main.layout.spacemenu.Draw(screen)
-	if main.layout.dialog.Visible {
-		main.layout.dialog.Draw(screen)
+	dialog := main.Dialog()
+	if dialog.Visible {
+		dialog.Draw(screen)
 	} else {
 		if main.get_focus_view_id() == view_quickview {
 			l, t, w, h := main.layout.editor_area.GetInnerRect()
@@ -908,7 +908,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
 	spacemenu := main.layout.spacemenu
-	dialog := main.layout.dialog
+	// dialog := main.Dialog()
 
 	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
 	if content_menu_action == tview.MouseConsumed {
@@ -930,16 +930,7 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 		}
 	}
 
-	if dialog.Visible {
-		if !InRect(event, dialog.Frame) {
-			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
-				dialog.hide()
-			}
-		} else {
-			dialog.MouseHanlde(event, action)
-		}
-		return nil, tview.MouseConsumed
-	}
+	
 
 	main.sel.handle_mouse_selection(action, event)
 	// new_top_toolbar(main).handle_mouse_event(action, event)
@@ -988,9 +979,8 @@ func (main *mainui) create_right_context_menu() {
 	}
 }
 
-func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *flex_area, tab_area *tview.Flex) *flex_area {
-	app := main.app
-	main_layout := new_flex_area(view_main_layout, main)
+func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *flex_area, tab_area *tview.Flex) *MainLayout {
+	main_layout := NewMainLayout(main)
 	main_layout.set_dir(tview.FlexRow)
 	editor_area.Height = 100
 	console_layout.Height = 80
@@ -1006,10 +996,11 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 		tab_area:    tab_area,
 		cmdline:     main.cmdline.input,
 		mainlayout:  main_layout,
-		dialog:      Newfuzzpicker(main, app),
 	}
 	return main_layout
 }
+
+
 func (main *mainui) cleanlog() {
 	main.log.clean()
 }
@@ -1254,10 +1245,11 @@ func (vl *view_link) next_view(t direction) view_id {
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	eventname := event.Name()
 	debug.DebugLog("main ui recieved ",
-		main.get_focus_view_id(), "eventname", eventname, "runne", strconv.QuoteRune(event.Rune()),event.Modifiers())
+		main.get_focus_view_id(), "eventname", eventname, "runne", strconv.QuoteRune(event.Rune()), event.Modifiers())
 	//Ctrl+O
-	if main.layout.dialog.Visible {
-		main.layout.dialog.handle_key(event)
+	dialog := main.Dialog()
+	if dialog.Visible {
+		dialog.handle_key(event)
 		return nil
 	}
 	if main.layout.spacemenu.visible {
@@ -1331,28 +1323,28 @@ func (m mainui) ScreenSize() (w, h int) {
 	return w, h
 }
 func (main *mainui) open_picker_bookmark() {
-	main.layout.dialog.OpenBookMarkFzf(main.bookmark)
+	main.Dialog().OpenBookMarkFzf(main.bookmark)
 }
 func (main mainui) Dialog() *fzfmain {
-	return main.layout.dialog
+	return main.layout.mainlayout.dialog
 }
 func (main *mainui) open_picker_refs() {
 	main.current_editor().open_picker_refs()
 }
 func (main *mainui) open_picker_ctrlp() {
-	main.layout.dialog.OpenFileFzf(global_prj_root)
+	main.Dialog().OpenFileFzf(global_prj_root)
 }
 func (main *mainui) open_picker_grep(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker {
-	return main.layout.dialog.OpenGrepWordFzf(word, qf)
+	return main.Dialog().OpenGrepWordFzf(word, qf)
 }
 func (main *mainui) open_picker_livegrep() {
-	main.layout.dialog.OpenLiveGrepFzf()
+	main.Dialog().OpenLiveGrepFzf()
 }
 func (main *mainui) open_colorescheme() {
-	main.layout.dialog.OpenColorFzf(main.codeview)
+	main.Dialog().OpenColorFzf(main.codeview)
 }
 func (main *mainui) open_picker_history() {
-	main.layout.dialog.OpenHistoryFzf()
+	main.Dialog().OpenHistoryFzf()
 }
 func (main *mainui) open_document_symbol_picker() {
 	main.Dialog().OpenDocumntSymbolFzf(main.current_editor())
