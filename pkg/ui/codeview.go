@@ -998,7 +998,6 @@ func (code *CodeView) word_left() {
 func (m *mainui) CopyToClipboard(s string) {
 	if proxy != nil {
 		proxy.set_browser_selection(s)
-		return
 	}
 	clipboard.WriteAll(s)
 }
