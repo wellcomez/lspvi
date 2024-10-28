@@ -968,7 +968,7 @@ func (main *mainui) create_right_context_menu() {
 	main.right_context_menu.menu_handle = []context_menu_handle{
 		main.codeview.rightmenu,
 		main.codeview2.rightmenu,
-		main.quickview.right_context,
+		// main.quickview.right_context,
 		// main.callinview.right_context,
 		// main.bookmark_view.right_context,
 		// main.symboltree.right_context,

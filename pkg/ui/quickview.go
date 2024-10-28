@@ -70,9 +70,8 @@ type quick_view struct {
 	Name      string
 	main      MainService
 	// menu         *contextmenu
-	menuitem      []context_menu_item
-	searchkey     SearchKey
-	right_context quick_view_context
+	menuitem  []context_menu_item
+	searchkey SearchKey
 
 	cmd_search_key string
 	grep           *greppicker
@@ -482,7 +481,8 @@ func new_quikview(main *mainui) *quick_view {
 		cq:        NewCodeOpenQueue(nil, main),
 	}
 
-	ret.right_context.qk = ret
+	var right_context quick_view_context
+	right_context.qk = ret
 
 	ret.menuitem = []context_menu_item{
 		{item: cmditem{Cmd: cmdactor{desc: "Open "}}, handle: func() {
@@ -523,6 +523,12 @@ func new_quikview(main *mainui) *quick_view {
 	}
 	ret.sel = &list_multi_select{list: view}
 	main.sel.Add(ret.sel)
+	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if a, e := main.Right_context_menu().handle_menu_mouse_action(action, event, right_context, view.Box); a == tview.MouseConsumed {
+			return a, e
+		}
+		return action, event
+	})
 	return ret
 }
 
