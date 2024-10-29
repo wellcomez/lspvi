@@ -62,6 +62,7 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		// move cursor to mouse postion
 		code.set_loc(Loc)
 		update_selection_menu(code)
+		return tview.MouseConsumed, nil
 
 	}
 	return action, event

@@ -207,6 +207,9 @@ func (v *codetextview) MouseHandler() func(action tview.MouseAction, event *tcel
 	return func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
 		new_textcode_left_toolbar(v).handle_mouse_event(action, event)
 		new_textcode_toolbar(v).handle_mouse_event(action, event)
+		if !v.InRect(event.Position()) {
+			return false, nil
+		}
 		if v.complete.IsShown() {
 			yes, a := v.complete.MouseHandler()(action, event, setFocus)
 			if yes {

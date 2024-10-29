@@ -160,7 +160,7 @@ type CodeView struct {
 	// mouse_select_area    bool
 	rightmenu_items []context_menu_item
 	right_menu_data *right_menu_data
-	rightmenu       CodeContextMenu
+	// rightmenu       CodeContextMenu
 	// LineNumberUnderMouse int
 	not_preview bool
 	insert      bool
@@ -371,7 +371,7 @@ func NewCodeView(main MainService) *CodeView {
 		not_preview: false,
 	}
 	ret.right_menu_data = &right_menu_data{}
-	ret.rightmenu = CodeContextMenu{code: &ret}
+	rightmenu := CodeContextMenu{code: &ret}
 	ret.main = main
 	ret.map_key_handle()
 	// var colorscheme femto.Colorscheme
@@ -388,7 +388,17 @@ func NewCodeView(main MainService) *CodeView {
 	root.SetRuntimeFiles(runtime.Files)
 	// root.SetColorscheme(colorscheme)
 	root.SetInputCapture(ret.handle_key)
-	root.SetMouseCapture(ret.handle_mouse)
+	root.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (a tview.MouseAction, e *tcell.EventMouse) {
+		menu := main.Right_context_menu()
+		if a, e = rightmenu.on_mouse(action, event); a == tview.MouseConsumed {
+			menu.Show(event, rightmenu)
+			return
+		}
+		if a, e = menu.handle_menu_mouse_action(action, event, rightmenu, root.View.Box); a == tview.MouseConsumed {
+			return a, e
+		}
+		return ret.handle_mouse(action, event)
+	})
 	ret.view = root
 	ret.InsertMode(false)
 	root.code = &ret

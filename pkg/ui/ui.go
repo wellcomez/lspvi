@@ -966,8 +966,8 @@ func load_from_history(main *mainui) {
 func (main *mainui) create_right_context_menu() {
 	main.right_context_menu = new_contextmenu(main)
 	main.right_context_menu.menu_handle = []context_menu_handle{
-		main.codeview.rightmenu,
-		main.codeview2.rightmenu,
+		// main.codeview.rightmenu,
+		// main.codeview2.rightmenu,
 		// main.quickview.right_context,
 		// main.callinview.right_context,
 		// main.bookmark_view.right_context,

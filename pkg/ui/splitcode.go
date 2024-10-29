@@ -82,7 +82,7 @@ func (c CodeSplit) TabView(index int) *CodeView {
 func SplitClose(code *CodeView) context_menu_item {
 	return context_menu_item{item: create_menu_item("Close"), handle: func() {
 		SplitCode.Remove(code)
-		code.main.Right_context_menu().remove(code.rightmenu)
+		// code.main.Right_context_menu().remove(code.rightmenu)
 	}, hide: !(code.id > view_code)}
 }
 
@@ -121,7 +121,7 @@ func create_split_codeview(code *CodeView) *CodeView {
 	codeview2 := SplitCode.New()
 	codeview2.view.SetBorder(true)
 	SplitCode.SetActive(codeview2)
-	code.main.Right_context_menu().add(codeview2.rightmenu)
+	// code.main.Right_context_menu().add(codeview2.rightmenu)
 	return codeview2
 }
 func (code *CodeView) OpenBelow(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption)  {
