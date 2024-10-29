@@ -756,6 +756,12 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 			qk.cq.OpenFileHistory(ref.Loc.URI.AsPath().String(), &ref.Loc)
 			qk.main.Tab().UpdatePageTitle()
 		}
+		if _, pos, more, parent := tree.GetNodeIndex(index); pos == NodePostion_LastChild {
+			if more {
+				tree.LoadMore(parent, use_color)
+				loaddata(tree.ColorstringItem, index)
+			}
+		}
 	})
 	loaddata(data, 0)
 	qk.main.Tab().UpdatePageTitle()
