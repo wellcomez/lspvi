@@ -274,12 +274,31 @@ func (grep *Gorep) String() string {
 	}
 	return fmt.Sprintln(grep.id, grep.ptnstring, "Opened", grep.opened_file, "status=", status, "Files", grep.filecount, "Line=", grep.count, time.Now().UnixMilli()-grep.begintm)
 }
+
+type GrepProgress struct {
+	FileCount int
+}
+
+func (grep *Gorep) GrepProgress(callback func(p GrepProgress)) {
+	go func() {
+		for {
+			if grep.grep_status != GrepRunning {
+				break
+			}
+			timer := time.NewTimer(time.Microsecond * 500)
+			<-timer.C
+			timer.Stop()
+			callback(GrepProgress{FileCount: grep.filecount})
+		}
+	}()
+}
 func (grep *Gorep) mapsend(fpath string, chans *channelSet, m gi.Matcher) {
 	defer grep.waitMaps.Done()
 	debug.TraceLog(GrepTag, "mapsend ", grep.String())
 	if grep.IsAbort() {
 		return
 	}
+	grep.filecount++
 	/* expand dir */
 	list, err := os.ReadDir(fpath)
 	if err != nil {
