@@ -75,10 +75,9 @@ func (pk *workspace_query_picker) on_query_1(query string, arg []lsp.SymbolInfor
 			if m.Score < 50 {
 				continue
 			}
-			i := m.HayIndex
-			v := arg[i]
+			v := arg[m.HayIndex]
 			sym = append(sym, v)
-			index := i
+			index := len(sym) - 1
 			filename := v.Location.URI.AsPath().String()
 			var fg tcell.Color
 			query := global_theme
