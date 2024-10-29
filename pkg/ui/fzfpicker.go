@@ -216,7 +216,7 @@ func (v *fzfmain) symbol_picker_2(code CodeEditor) {
 
 	var Current = code.LspSymbol()
 	var ts = code.TreeSitter()
-	if Current == nil {
+	if Current == nil || len(Current.Class_object) == 0 {
 		Current = &lspcore.Symbol_file{
 			Class_object: ts.Outline,
 		}
