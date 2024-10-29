@@ -411,9 +411,6 @@ func (main *mainui) qf_grep_word(opt QueryOption) {
 	quickview.qf_grep_word(opt)
 }
 
-
-
-
 func (code *CodeView) get_selected_lines() editor_selection {
 	ss := code.view.Cursor.CurSelection
 	if ss[0].GreaterThan(ss[0]) {
@@ -714,17 +711,17 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			}
 		}
 	}
-	if code.insert {
-		if h, ok := code.key_map[event.Key()]; ok {
-			h(code)
-			return nil
-		}
+	if h, ok := code.key_map[event.Key()]; ok {
+		h(code)
+		return nil
 	}
-	var status1 = code.NewChangeChecker()
-	code.view.HandleEvent(event)
-	changed := status1.End()
-	if complete := code.view.complete; complete != nil {
-		complete.HandleKeyInput(event, changed)
+	if code.insert {
+		var status1 = code.NewChangeChecker()
+		code.view.HandleEvent(event)
+		changed := status1.End()
+		if complete := code.view.complete; complete != nil {
+			complete.HandleKeyInput(event, changed)
+		}
 	}
 	return nil
 }
