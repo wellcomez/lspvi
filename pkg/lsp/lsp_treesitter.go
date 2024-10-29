@@ -791,7 +791,7 @@ type LangTreesitterSymbol struct {
 	fzf    *fzf.Fzf
 	ext    string
 	files  []string
-	symbol []*Symbol
+	symbol []Symbol
 }
 
 func GetLangTreeSitterSymbol(name string) (s *LangTreesitterSymbol) {
@@ -814,28 +814,32 @@ func (sym *LangTreesitterSymbol) WorkspaceQuery(query string) (ret []lsp.SymbolI
 	// 	s := sym.symbol[m.HayIndex].SymInfo
 	// 	ret = append(ret, s)
 	// }
-	for i:= range sym.symbol {
-		ret = append(ret, sym.symbol[i].SymInfo)	
+	for i := range sym.symbol {
+		ret = append(ret, sym.symbol[i].SymInfo)
 	}
 	debug.DebugLog(LSP_DEBUG_TAG, "workquery-end", query, len(ret))
 	return
 }
-func child_symbol(s *Symbol) (ret []*Symbol) {
+func child_symbol(s Symbol, prefix string) (ret []Symbol) {
+	if len(prefix) > 0 {
+		s.SymInfo.Name = strings.Join([]string{prefix, s.SymInfo.Name}, ".")
+	}
 	ret = append(ret, s)
+	prefix = s.SymInfo.Name
 	for _, v := range s.Members {
-		ret = append(ret, child_symbol(&v)...)
+		ret = append(ret, child_symbol(v, prefix)...)
 	}
 	return ret
 }
 func NewLangTreeSitterSymbol(name string) (s *LangTreesitterSymbol) {
 	s = &LangTreesitterSymbol{}
-	var ret []*Symbol
+	var ret []Symbol
 	ext := filepath.Ext(name)
 	s.ext = ext
 	for file, ts := range loaded_files {
 		if filepath.Ext(file) == ext {
 			for _, v := range ts.Outline {
-				ret = append(ret, child_symbol(v)...)
+				ret = append(ret, child_symbol(*v, "")...)
 			}
 		}
 		s.files = append(s.files, file)
@@ -844,6 +848,9 @@ func NewLangTreeSitterSymbol(name string) (s *LangTreesitterSymbol) {
 	keys := []string{}
 	for _, v := range ret {
 		keys = append(keys, v.SymInfo.Name)
+	}
+	for _, v := range keys {
+		debug.DebugLog(LSP_DEBUG_TAG, "NewLangTreeSitterSymbol", v)
 	}
 	s.symbol = ret
 	opt := fzf.DefaultOptions()
