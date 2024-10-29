@@ -457,27 +457,6 @@ func (quickview *quick_view) qf_grep_word(opt QueryOption) {
 	})
 }
 
-func addjust_menu_width(items []context_menu_item) []context_menu_item {
-	leftitems := []context_menu_item{}
-	for i := range items {
-		v := items[i]
-		if !v.hide {
-			leftitems = append(leftitems, v)
-		}
-	}
-	maxlen := 0
-	for _, v := range leftitems {
-		maxlen = max(maxlen, len(v.item.Cmd.desc))
-	}
-	sss := strings.Repeat("-", maxlen)
-	for i := range leftitems {
-		v := &leftitems[i]
-		if strings.Index(v.item.Cmd.desc, "-") == 0 {
-			v.item.Cmd.desc = sss
-		}
-	}
-	return leftitems
-}
 
 func (code *CodeView) get_selected_lines() editor_selection {
 	ss := code.view.Cursor.CurSelection

@@ -184,7 +184,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 				go ret.get_next_callin(value, main)
 			}
 		}, hide: hidecallin},
-		{item: create_menu_item("-"), handle: func() {}, hide: hidecallin},
+		{item: create_menu_item(menu_break_line), handle: func() {}, hide: hidecallin},
 		{item: cmditem{Cmd: cmdactor{desc: "Save"}}, handle: func() {}},
 		{item: cmditem{Cmd: cmdactor{desc: "Delete"}}, handle: func() {
 			ret.DeleteCurrentNode()

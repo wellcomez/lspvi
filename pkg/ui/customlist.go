@@ -154,7 +154,9 @@ func (l *customlist) draw_item_color_new(segment []colortext, screen tcell.Scree
 	x := offset_x
 	max := x + width
 	for _, e := range segment {
-		for _, r := range e.text {
+		var rr = []rune(e.text)
+		for i := range rr {
+			r := rr[i]
 			if x < max {
 				x1 := normal_style
 				if e.color > 0 {

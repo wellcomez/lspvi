@@ -5,16 +5,16 @@ package mainui
 
 import (
 	"fmt"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 // type MousePosition struct {
 // x, y int
 // }
 type contextmenu struct {
-	table   *tview.List
+	table   *customlist
 	main    MainService
 	visible bool
 	impl    *contextmenu_impl
@@ -143,9 +143,17 @@ type context_menu_handle interface {
 func (t *contextmenu) menu_text() []string {
 	ret := []string{}
 	size := 0
+	maxstring := ""
 	for _, v := range t.impl.items {
-		size = max(len(v.item.Cmd.desc), size)
+		var r = []rune(v.item.Cmd.desc)
+		x := len(r)
+		if x > size {
+			maxstring = v.item.Cmd.desc
+		}
+		size = max(x, size)
 	}
+
+	debug.DebugLog("menu", "max string", maxstring)
 	fmtstr := "%-" + fmt.Sprint(size) + "s"
 	for _, v := range t.impl.items {
 		keystr := v.item.Key.string()
@@ -179,8 +187,8 @@ func (t *contextmenu) set_items(items []context_menu_item) int {
 	ret := 0
 	menu_items := t.menu_text()
 	for _, s := range menu_items {
-		t.table.AddItem(s, "", 0, nil)
-		ret = max(ret, len(s))
+		t.table.AddItem(s, "", nil)
+		ret = max(ret, len([]rune(s)))
 	}
 	t.impl = impl
 	t.width = ret + 4
@@ -188,7 +196,7 @@ func (t *contextmenu) set_items(items []context_menu_item) int {
 }
 func new_contextmenu(m *mainui) *contextmenu {
 	t := contextmenu{
-		table:       tview.NewList(),
+		table:       new_customlist(false),
 		main:        m,
 		visible:     false,
 		width:       40,
@@ -207,7 +215,7 @@ func new_contextmenu(m *mainui) *contextmenu {
 }
 
 func (t *contextmenu) new_list() {
-	t.table = tview.NewList()
+	t.table = new_customlist(false)
 	t.table.ShowSecondaryText(false)
 	t.table.SetBorder(true)
 	t.table.SetTitle("menu")
