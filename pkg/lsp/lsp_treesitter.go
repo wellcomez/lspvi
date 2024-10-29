@@ -804,16 +804,28 @@ func GetLangTreeSitterSymbol(name string) (s *LangTreesitterSymbol) {
 	}
 }
 func (sym *LangTreesitterSymbol) WorkspaceQuery(query string) (ret []lsp.SymbolInformation, err error) {
-	sym.fzf.Search(query)
-	result := <-sym.fzf.GetResultChannel()
-	for _, m := range result.Matches {
-		// if m.Score < 50 {
-		// 	continue
-		// }
-		s := sym.symbol[m.HayIndex].SymInfo
-		ret = append(ret, s)
+	debug.DebugLog(LSP_DEBUG_TAG, "workquery-begin", query)
+	// sym.fzf.Search(query)
+	// result := <-sym.fzf.GetResultChannel()
+	// for _, m := range result.Matches {
+	// 	// if m.Score < 50 {
+	// 	// 	continue
+	// 	// }
+	// 	s := sym.symbol[m.HayIndex].SymInfo
+	// 	ret = append(ret, s)
+	// }
+	for i:= range sym.symbol {
+		ret = append(ret, sym.symbol[i].SymInfo)	
 	}
+	debug.DebugLog(LSP_DEBUG_TAG, "workquery-end", query, len(ret))
 	return
+}
+func child_symbol(s *Symbol) (ret []*Symbol) {
+	ret = append(ret, s)
+	for _, v := range s.Members {
+		ret = append(ret, child_symbol(&v)...)
+	}
+	return ret
 }
 func NewLangTreeSitterSymbol(name string) (s *LangTreesitterSymbol) {
 	s = &LangTreesitterSymbol{}
@@ -822,10 +834,13 @@ func NewLangTreeSitterSymbol(name string) (s *LangTreesitterSymbol) {
 	s.ext = ext
 	for file, ts := range loaded_files {
 		if filepath.Ext(file) == ext {
-			ret = append(ret, ts.Outline...)
+			for _, v := range ts.Outline {
+				ret = append(ret, child_symbol(v)...)
+			}
 		}
 		s.files = append(s.files, file)
 	}
+
 	keys := []string{}
 	for _, v := range ret {
 		keys = append(keys, v.SymInfo.Name)

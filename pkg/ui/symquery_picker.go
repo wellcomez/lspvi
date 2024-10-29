@@ -13,6 +13,7 @@ import (
 	"github.com/reinhrst/fzf-lib"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -122,6 +123,7 @@ func (pk *workspace_query_picker) newMethod(arg []lsp.SymbolInformation, query s
 	if len(arg) == 0 {
 		return
 	}
+	debug.DebugLog("workspace_query_picker", query, len(arg))
 	pk.impl.parent.app.QueueUpdateDraw(func() {
 		opt := fzf.DefaultOptions()
 		opt.Fuzzy = true
@@ -274,6 +276,7 @@ func (pk *workspace_query_picker) UpdateQuery(query string) {
 		return
 	}
 	pk.impl.query = query
+	pk.impl.list.Clear()
 	go func() {
 		symbol, _ := pk.impl.symbol.WorkspaceQuery(query)
 		if pk.impl.query == query {
