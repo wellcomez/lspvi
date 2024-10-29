@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
@@ -131,7 +132,7 @@ type symboltree_view_context struct {
 
 func (menu symboltree_view_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 	rm := menu.qk.main.Right_context_menu()
-	return rm.handle_menu_mouse_action(action, event, menu,menu.qk.view.Box)
+	return rm.handle_menu_mouse_action(action, event, menu, menu.qk.view.Box)
 }
 
 // getbox implements context_menu_handle.
@@ -274,7 +275,18 @@ func (m *SymbolTreeView) OnCodeLineChange(x, y int, file string) {
 		m.view.SetCurrentNode(ss.ret)
 	}
 }
-
+func (c *SymbolTreeView) copycode() {
+	cur := c.view.GetCurrentNode()
+	value := cur.GetReference()
+	if value != nil {
+		if sym, ok := value.(lsp.SymbolInformation); ok {
+			s := c.editor.GetCode(sym.Location)
+			if len(s) > 0 {
+				clipboard.WriteAll(s)
+			}
+		}
+	}
+}
 func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	symbol_tree := NewTree()
 	ret := &SymbolTreeView{
@@ -296,6 +308,9 @@ func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	}
 	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy"), func() {
 		ret.handle_commnad(copy_data)
+	}, false})
+	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy code"), func() {
+		ret.copycode()
 	}, false})
 	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Path"), func() {
 		ret.handle_commnad(copy_path)

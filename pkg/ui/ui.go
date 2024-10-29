@@ -1068,8 +1068,12 @@ func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
 			}(titlename)
 		}
 		cursor := main.codeview.String()
-		x1 := main.cmdline.Vim.String()
-		main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|::%5d ", cursor, x1, httport))
+		if global_config.enablevim {
+			x1 := main.cmdline.Vim.String()
+			main.statusbar.SetText(fmt.Sprintf("|%s|vi:%8s|::%5d ", cursor, x1, httport))
+		} else {
+			main.statusbar.SetText(fmt.Sprintf("|%s|::%5d ", cursor, httport))
+		}
 		return main.statusbar.GetInnerRect()
 	})
 

@@ -6,8 +6,10 @@ package mainui
 import (
 	"fmt"
 	"path/filepath"
+
 	// "strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
@@ -70,7 +72,6 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	return action, event
 }
 
-
 // getbox implements context_menu_handle.
 func (code CodeContextMenu) getbox() *tview.Box {
 	if code.code.main == nil {
@@ -105,6 +106,10 @@ func update_selection_menu(code *CodeView) {
 	}
 	tty := main.Mode().tty
 	menudata := code.right_menu_data
+	has_clip := false
+	if clip, err := clipboard.ReadAll(); err == nil {
+		has_clip = len(clip) > 0
+	}
 	items := []context_menu_item{
 		{item: create_menu_item("Reference"), handle: func() {
 
@@ -181,6 +186,9 @@ func update_selection_menu(code *CodeView) {
 			code.main.CopyToClipboard(data)
 
 		}, hide: menudata.previous_selection.emtry()},
+		{item: create_menu_item("Paste"), handle: func() {
+			code.Paste()
+		}, hide: !has_clip},
 		{item: create_menu_item(menu_break_line), handle: func() {
 		}},
 		{item: create_menu_item(toggle_file_view), handle: func() {

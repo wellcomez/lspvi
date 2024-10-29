@@ -55,9 +55,11 @@ func (pk keymap_picker) handle() func(event *tcell.EventKey, setFocus func(p tvi
 	return handle
 }
 func new_keymap_picker(v *fzfmain) keymap_picker {
-	keys := v.main.key_map_escape()
-	keys = append(keys, v.main.key_map_escape()...)
-	keys = append(keys, v.main.key_map_leader()...)
+	var keys []cmditem
+	if v.main.CmdLine().Vim.Enable() {
+		keys = append(keys, v.main.key_map_escape()...)
+		keys = append(keys, v.main.key_map_leader()...)
+	}
 	keys = append(keys, v.main.key_map_space_menu()...)
 	keys = append(keys, v.main.CmdLine().ConvertCmdItem()...)
 	// keys = append(keys, v.main.vi_key_map()...)

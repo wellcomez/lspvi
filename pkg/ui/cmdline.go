@@ -698,20 +698,19 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 			v.EnterEscape()
 			return true, nil
 		}
-	}else{
-		switch event.Key(){
-		case tcell.KeyEscape:
-			TurnOffComplete(v)
-			return true, nil
-		}
-	}
-
-	if v.vi_handle != nil {
-		if !v.HandleVimHistory(event) {
-			if v.vi_handle.HanldeKey(event) {
+		if v.vi_handle != nil {
+			if !v.HandleVimHistory(event) {
+				if v.vi_handle.HanldeKey(event) {
+					return true, nil
+				}
+			} else {
 				return true, nil
 			}
-		} else {
+		}
+	} else {
+		switch event.Key() {
+		case tcell.KeyEscape:
+			TurnOffComplete(v)
 			return true, nil
 		}
 	}

@@ -411,9 +411,6 @@ func (main *mainui) qf_grep_word(opt QueryOption) {
 	quickview.qf_grep_word(opt)
 }
 
-
-
-
 func (code *CodeView) get_selected_lines() editor_selection {
 	ss := code.view.Cursor.CurSelection
 	if ss[0].GreaterThan(ss[0]) {
@@ -714,17 +711,20 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			}
 		}
 	}
-	if code.insert {
+	enable_vim := code.main.CmdLine().Vim.Enable()
+	if enable_vim {
 		if h, ok := code.key_map[event.Key()]; ok {
 			h(code)
 			return nil
 		}
 	}
-	var status1 = code.NewChangeChecker()
-	code.view.HandleEvent(event)
-	changed := status1.End()
-	if complete := code.view.complete; complete != nil {
-		complete.HandleKeyInput(event, changed)
+	if code.insert || !enable_vim {
+		var status1 = code.NewChangeChecker()
+		code.view.HandleEvent(event)
+		changed := status1.End()
+		if complete := code.view.complete; complete != nil {
+			complete.HandleKeyInput(event, changed)
+		}
 	}
 	return nil
 }
@@ -985,6 +985,11 @@ func (code *CodeView) Paste() {
 		view := code.view
 		checker := code.NewChangeChecker()
 		defer checker.End()
+		sel := code.view.Cursor.CurSelection
+		if sel[1].GreaterThan(sel[0]) {
+			code.view.Buf.Replace(sel[0], sel[1], text)
+			return
+		}
 		if has_break {
 			code.view.Cursor.End()
 			t := "\n" + text[0:len(text)-1]
@@ -995,6 +1000,16 @@ func (code *CodeView) Paste() {
 			view.Paste()
 		}
 	}
+}
+
+func (c CodeView) GetCode(loc lsp.Location) string {
+	lines := c.GetLines(loc.Range.Start.Line, loc.Range.End.Line)
+	if len(lines) == 1 {
+		return lines[0]
+	}
+	lines[0] = lines[0][loc.Range.Start.Character:]
+	lines[len(lines)-1] = lines[len(lines)-1][:loc.Range.End.Character]
+	return strings.Join(lines, "\n")
 }
 func (code *CodeView) copyline(line bool) {
 	cmd := code.main.CmdLine()
