@@ -25,10 +25,20 @@ func fmt_bold_string(s string) string {
 
 type colorstring struct {
 	line []colortext
-	// _result string
 	text string
 }
 
+func (line *colorstring) len() (ret int) {
+	for _, v := range line.line {
+		ret = ret + len([]rune(v.text))
+	}
+	return
+}
+func (line *colorstring) setfg(bg tcell.Color) {
+	for i := range line.line {
+		line.line[i].color = bg
+	}
+}
 func (line *colorstring) setbg(bg tcell.Color) {
 	for i := range line.line {
 		line.line[i].bg = bg

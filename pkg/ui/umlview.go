@@ -199,5 +199,5 @@ func update_filetree_menu(ret *umlview, node *tview.TreeNode) {
 			},
 		},
 	}
-	ret.file.menu_item = addjust_menu_width(menus)
+	ret.file.menu_item = menus
 }

@@ -190,7 +190,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 			ret.DeleteCurrentNode()
 		}},
 	}
-	return addjust_menu_width(menuitem)
+	return menuitem
 }
 
 func reload_callin(ret *callinview, taskindex int, node *tview.TreeNode) {

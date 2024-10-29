@@ -5,6 +5,8 @@ package mainui
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"zen108.com/lspvi/pkg/debug"
@@ -20,9 +22,9 @@ type contextmenu struct {
 	impl    *contextmenu_impl
 	input   *inputdelay
 	// MenuPos     MousePosition
-	width       int
-	menu_handle []context_menu_handle
-	mouseclick  clickdetector
+	height, width int
+	menu_handle   []context_menu_handle
+	mouseclick    clickdetector
 	// parent      *tview.Box
 }
 
@@ -128,7 +130,7 @@ func (menu *contextmenu) Show(event *tcell.EventMouse, menu_item context_menu_ha
 	v := menu
 	if v.visible {
 		mouseX, mouseY := event.Position()
-		height := len(v.impl.items) + 2
+		height := v.height + 2
 		v.table.SetRect(mouseX, mouseY+1, v.width-1, height)
 
 	}
@@ -140,12 +142,17 @@ type context_menu_handle interface {
 	on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse)
 }
 
-func (t *contextmenu) menu_text() []string {
-	ret := []string{}
+func (t *contextmenu) menu_text() (ret []colorstring) {
 	size := 0
 	maxstring := ""
 	for _, v := range t.impl.items {
+		if v.hide {
+			continue
+		}
 		var r = []rune(v.item.Cmd.desc)
+		if len(r) > 0 && r[0] == BoxDrawingsLightHorizontal {
+			continue
+		}
 		x := len(r)
 		if x > size {
 			maxstring = v.item.Cmd.desc
@@ -156,14 +163,25 @@ func (t *contextmenu) menu_text() []string {
 	debug.DebugLog("menu", "max string", maxstring)
 	fmtstr := "%-" + fmt.Sprint(size) + "s"
 	for _, v := range t.impl.items {
-		keystr := v.item.Key.string()
-		var s string
-		if len(keystr) > 0 {
-			s = fmt.Sprintf(" %-2s "+fmtstr, keystr, v.item.Cmd.desc)
-		} else {
-			s = fmt.Sprintf(" "+fmtstr, v.item.Cmd.desc)
+		if v.hide {
+			continue
 		}
-		ret = append(ret, s)
+		keystr := v.item.Key.string()
+		var color colorstring
+		if strings.Index(v.item.Cmd.desc, menu_break_line) == 0 {
+			s := strings.Repeat(menu_break_line, size)
+			color.a(s).setfg(tview.Styles.BorderColor)
+			ret = append(ret, color)
+		} else {
+			var s string
+			if len(keystr) > 0 {
+				s = fmt.Sprintf(" %-2s "+fmtstr, keystr, v.item.Cmd.desc)
+			} else {
+				s = fmt.Sprintf(" "+fmtstr, v.item.Cmd.desc)
+			}
+			color.a(s)
+			ret = append(ret, color)
+		}
 	}
 	return ret
 }
@@ -179,7 +197,6 @@ func (t *contextmenu) set_items(items []context_menu_item) int {
 		command_list = append(command_list, v.item)
 	}
 	t.input = &inputdelay{
-		// cb:      t.input_cb,
 		cmdlist: command_list,
 		main:    t.main,
 	}
@@ -187,11 +204,12 @@ func (t *contextmenu) set_items(items []context_menu_item) int {
 	ret := 0
 	menu_items := t.menu_text()
 	for _, s := range menu_items {
-		t.table.AddItem(s, "", nil)
-		ret = max(ret, len([]rune(s)))
+		t.table.AddColorItem(s.line, nil, nil)
+		ret = max(ret, s.len())
 	}
 	t.impl = impl
-	t.width = ret + 4
+	t.height = len(menu_items)
+	t.width = ret + 2
 	return ret
 }
 func new_contextmenu(m *mainui) *contextmenu {

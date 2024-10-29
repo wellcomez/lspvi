@@ -6,7 +6,7 @@ package mainui
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
+	// "strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -70,31 +70,6 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 	return action, event
 }
 
-func addjust_menu_width(items []context_menu_item) []context_menu_item {
-	leftitems := []context_menu_item{}
-	for i := range items {
-		v := items[i]
-		if !v.hide {
-			leftitems = append(leftitems, v)
-		}
-	}
-	maxlen := 0
-	for _, v := range leftitems {
-		x := len(v.item.Cmd.desc)
-		if x > maxlen {
-			debug.DebugLog("menu", "maxlen", maxlen, v.item.Cmd.desc)
-		}
-		maxlen = max(maxlen, x)
-	}
-	sss := strings.Repeat(menu_break_line, maxlen)
-	for i := range leftitems {
-		v := &leftitems[i]
-		if strings.Index(v.item.Cmd.desc, menu_break_line) == 0 {
-			v.item.Cmd.desc = sss
-		}
-	}
-	return leftitems
-}
 
 // getbox implements context_menu_handle.
 func (code CodeContextMenu) getbox() *tview.Box {
@@ -249,7 +224,7 @@ func update_selection_menu(code *CodeView) {
 			main.ZoomWeb(true)
 		}, hide: !tty},
 	}
-	code.rightmenu_items = addjust_menu_width(items)
+	code.rightmenu_items = items
 }
 
 func SplitDown(code *CodeView) context_menu_item {
