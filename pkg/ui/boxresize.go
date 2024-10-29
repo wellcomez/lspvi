@@ -5,13 +5,14 @@ package mainui
 
 import (
 	"encoding/json"
-	"log"
+	// "log"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type move_direction int
@@ -42,6 +43,21 @@ type editor_mouse_resize struct {
 	cb_begin_drag    func(*ui_reszier)
 }
 
+func (resize *editor_mouse_resize) LastIndex() int {
+	return len(resize.contorls) - 1
+}
+func (resize *editor_mouse_resize) remove(view *view_link) (yes bool) {
+	var contorls []*ui_reszier
+	for _, v := range resize.contorls {
+		if v.view_link.id != view.id {
+			contorls = append(contorls, v)
+		} else {
+			yes = true
+		}
+	}
+	resize.contorls = contorls
+	return false
+}
 func (resize *editor_mouse_resize) add(parent *view_link, index int) *editor_mouse_resize {
 	main := resize.main
 	a := new_ui_resize(parent, main, resize, resize.layout.dir == tview.FlexRow)
@@ -160,7 +176,7 @@ func (m *editor_mouse_resize) update_editerea_layout() {
 		}
 		if !add {
 			_, _, width, height := item.GetRect()
-			log.Println(index, "update width", width, height)
+			debug.DebugLog("resizer", index, "update width", width, height)
 			if m.layout.dir == tview.FlexColumn {
 				m.layout.AddItem(item, width, 0, false)
 			}
@@ -314,7 +330,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 			if !yes {
 				if x >= bLeftX && x <= bRightX && resize.resize_vertical {
 
-					if uprange_1 <= y && y <= top{
+					if uprange_1 <= y && y <= top {
 						resize.left = move_direction_vetical
 						yes = resize.layout.allow(resize, edge_top)
 						resize.edge = edge_top
@@ -357,7 +373,7 @@ func (resize *ui_reszier) checkdrag(action tview.MouseAction, event *tcell.Event
 					case edge_rigt:
 						zoomin = x < resize.beginX
 					}
-					log.Println("zoom in", resize.view_link.id.getname(), zoomin, resize.beginX, "->", x)
+					debug.DebugLog("resizer", "zoom in", resize.view_link.id.getname(), zoomin, resize.beginX, "->", x)
 				} else if resize.left == move_direction_vetical {
 					if y == resize.beginY {
 						break
