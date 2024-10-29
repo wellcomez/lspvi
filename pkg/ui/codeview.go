@@ -411,51 +411,7 @@ func (main *mainui) qf_grep_word(opt QueryOption) {
 	quickview.qf_grep_word(opt)
 }
 
-func (quickview *quick_view) qf_grep_word(opt QueryOption) {
-	var main = quickview.main
-	rightmenu_select_text := opt.Query
-	key := SearchKey{
-		&lspcore.SymolSearchKey{
-			Key: rightmenu_select_text,
-		},
-		&opt,
-	}
-	quickview.new_search(data_grep_word, key)
-	add := 0
-	buf := []ref_with_caller{}
-	buf2 := []ref_with_caller{}
-	coping := false
-	quickview.grep = main.open_picker_grep(opt, func(end bool, ss ref_with_caller) bool {
-		var ret = rightmenu_select_text == key.Key && quickview.Type == data_grep_word
-		if ret {
-			if add > 1000 {
-				return false
-			}
-			if coping {
-				buf2 = append(buf2, ss)
-			} else {
-				if len(buf2) > 0 {
-					buf = append(buf, buf2...)
-					buf2 = []ref_with_caller{}
-				}
-				buf = append(buf, ss)
-			}
-			if add < 15 || len(buf) >= 100 || end {
-				main.App().QueueUpdateDraw(func() {
-					coping = true
-					for _, s := range buf {
-						add++
-						quickview.AddResult(end, data_grep_word, s, key)
-					}
-					main.Tab().UpdatePageTitle()
-					buf = []ref_with_caller{}
-					coping = false
-				})
-			}
-		}
-		return true
-	})
-}
+
 
 
 func (code *CodeView) get_selected_lines() editor_selection {

@@ -25,6 +25,7 @@ import (
 	// "zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/grep"
 )
 
 type quick_preview struct {
@@ -596,12 +597,19 @@ func (qk *quick_view) String() string {
 }
 
 func (qk *quick_view) get_current_index_string(index int) string {
+	scanned := ""
+	if qk.Type == data_grep_word && qk.grep != nil {
+		scanned = fmt.Sprintf("%d", qk.grep.filecounter)
+	}
 	var s = qk.Type.String()
 	coutn := qk.view.GetItemCount()
 	if coutn > 0 {
 		index += 1
 	}
 	key := qk.searchkey.Key
+	if len(scanned) > 0 {
+		return fmt.Sprintf("%s %s %s %d/%d", s, key, scanned, index, coutn)
+	}
 	return fmt.Sprintf("%s %s %d/%d", s, key, index, coutn)
 }
 
@@ -908,4 +916,56 @@ func new_qf_history(main MainService) (*quickfix_history, error) {
 		return nil, err
 	}
 	return qf, nil
+}
+func (quickview *quick_view) qf_grep_word(opt QueryOption) {
+	var main = quickview.main
+	rightmenu_select_text := opt.Query
+	key := SearchKey{
+		&lspcore.SymolSearchKey{
+			Key: rightmenu_select_text,
+		},
+		&opt,
+	}
+	quickview.new_search(data_grep_word, key)
+	add := 0
+	buf := []ref_with_caller{}
+	buf2 := []ref_with_caller{}
+	coping := false
+
+	quickview.grep = main.open_picker_grep(opt, func(end bool, ss ref_with_caller) bool {
+		var ret = rightmenu_select_text == key.Key && quickview.Type == data_grep_word
+		if ret {
+			if add > 1000 {
+				return false
+			}
+			if coping {
+				buf2 = append(buf2, ss)
+			} else {
+				if len(buf2) > 0 {
+					buf = append(buf, buf2...)
+					buf2 = []ref_with_caller{}
+				}
+				buf = append(buf, ss)
+			}
+			if add < 15 || len(buf) >= 100 || end {
+				main.App().QueueUpdateDraw(func() {
+					coping = true
+					for _, s := range buf {
+						add++
+						quickview.AddResult(end, data_grep_word, s, key)
+					}
+					main.Tab().UpdatePageTitle()
+					buf = []ref_with_caller{}
+					coping = false
+				})
+			}
+		}
+		return true
+	})
+	quickview.grep.grep_progress = func(p grep.GrepProgress) {
+		quickview.currentstate = quickview.get_current_index_string(quickview.view.GetCurrentItem())
+		go main.App().QueueUpdateDraw(func() {
+			quickview.main.Tab().UpdatePageTitle()
+		})
+	}
 }

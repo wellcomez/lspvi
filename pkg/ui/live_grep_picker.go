@@ -45,6 +45,7 @@ type livewgreppicker struct {
 	not_live       bool
 	grepword       bool
 	filecounter    int
+	grep_progress  func(p grep.GrepProgress)
 }
 
 // name implements picker.
@@ -651,9 +652,13 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 			g.CB = pk.grep_callback
 			g.GrepProgress(func(p grep.GrepProgress) {
 				pk.filecounter = p.FileCount
-				go pk.main.App().QueueUpdateDraw(func() {
-					pk.update_title()
-				})
+				if pk.grep_progress != nil {
+					pk.grep_progress(p)
+				} else {
+					go pk.main.App().QueueUpdateDraw(func() {
+						pk.update_title()
+					})
+				}
 			})
 			g.Kick(global_prj_root)
 		}
