@@ -23,6 +23,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 
 	// "zen108.com/lspvi/pkg/debug"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -742,8 +743,10 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 		qk.main.App().ForceDraw()
 	})
 	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		debug.DebugLog("quickview", "changed=", index, "currentIndex=", qk.view.GetCurrentItem())
 		lastIndex = index
 		if ref, err := qk.data.get_data(index); err == nil && ref != nil {
+			debug.DebugLog("quickview", "open", ref.Loc)
 			qk.currentstate = qk.get_current_index_string(index)
 			qk.cq.OpenFileHistory(ref.Loc.URI.AsPath().String(), &ref.Loc)
 			qk.main.Tab().UpdatePageTitle()
