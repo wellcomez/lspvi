@@ -25,10 +25,20 @@ func fmt_bold_string(s string) string {
 
 type colorstring struct {
 	line []colortext
-	// _result string
 	text string
 }
 
+func (line *colorstring) len() (ret int) {
+	for _, v := range line.line {
+		ret = ret + len([]rune(v.text))
+	}
+	return
+}
+func (line *colorstring) setfg(bg tcell.Color) {
+	for i := range line.line {
+		line.line[i].color = bg
+	}
+}
 func (line *colorstring) setbg(bg tcell.Color) {
 	for i := range line.line {
 		line.line[i].bg = bg
@@ -89,10 +99,11 @@ func (line *colorstring) add_color_text_list(s []colortext) *colorstring {
 	return line
 }
 func (line *colorstring) Replace(old string, new string, n int) {
-	for _, v := range line.line {
+	for i := range line.line {
+		v := &line.line[i]
 		if count := strings.Count(v.text, old); count > 0 && n > 0 {
 			replace_count := min(count, n)
-			line.Replace(old, new, replace_count)
+			v.text = strings.Replace(v.text, old, new, replace_count)
 			n = n - replace_count
 		}
 	}

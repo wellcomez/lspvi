@@ -145,6 +145,16 @@ func (view *qf_index_view_history) Add(data qf_history_data, add bool) error {
 	return err
 }
 
+func (view *qf_index_view) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+	return func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+		menu := view.main.Right_context_menu()
+		if action, event = menu.handle_menu_mouse_action(action, event, view.right_context, view.Box); action == tview.MouseConsumed {
+			consumed = true
+			return true, nil
+		}
+		return view.List.MouseHandler()(action, event, setFocus)
+	}
+}
 func (view *qf_index_view_history) add_or_remove_data(data qf_history_data, add bool) error {
 	h, err := new_qf_history(view.main)
 	if err != nil {

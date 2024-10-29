@@ -20,12 +20,12 @@ import (
 
 type umlview struct {
 	*view_link
-	preview            *tview.Flex
-	file               *file_tree_view
-	layout             *tview.Flex
-	Name               string
-	main               *mainui
-	file_right_context uml_filetree_context
+	preview *tview.Flex
+	file    *file_tree_view
+	layout  *tview.Flex
+	Name    string
+	main    *mainui
+	// file_right_context uml_filetree_context
 }
 
 type uml_filetree_context struct {
@@ -143,9 +143,19 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 		Name:      file.Name,
 		main:      main,
 	}
-	ret.file_right_context = uml_filetree_context{qk: file, main: main}
+	file_right_context := uml_filetree_context{qk: file, main: main}
 	// update_filetree_menu(ret)
 	file.openfile = ret.openfile
+	file.view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		menu := main.Right_context_menu()
+		if file.view.InRect(event.Position()) {
+			update_filetree_menu(ret, file.view.GetCurrentNode())
+			if a, e := menu.handle_menu_mouse_action(action, event, file_right_context, file.view.Box); a == tview.MouseConsumed {
+				return a, e
+			}
+		}
+		return action, event
+	})
 	file.StartMonitor()
 	return ret, nil
 }
@@ -189,5 +199,5 @@ func update_filetree_menu(ret *umlview, node *tview.TreeNode) {
 			},
 		},
 	}
-	ret.file.menu_item = addjust_menu_width(menus)
+	ret.file.menu_item = menus
 }

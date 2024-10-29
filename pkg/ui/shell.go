@@ -54,10 +54,10 @@ type Term struct {
 	*tview.Box
 	current *terminal_pty
 	*view_link
-	termlist      []*terminal_pty
-	sel           selectarea
-	right_context *term_right_menu
-	main          *mainui
+	termlist []*terminal_pty
+	sel      selectarea
+	// right_context *term_right_menu
+	main *mainui
 }
 type ptyread struct {
 	term *terminal_pty
@@ -186,10 +186,9 @@ func NewTerminal(main *mainui, app *tview.Application, shellname string) *Term {
 		&view_link{id: view_term},
 		[]*terminal_pty{},
 		selectarea{},
-		nil,
 		main,
 	}
-	ret.right_context = &term_right_menu{
+	right_context := term_right_menu{
 		view: ret,
 		menu_item: &menudata{[]context_menu_item{
 			{item: cmditem{Cmd: cmdactor{desc: "Copy "}}, handle: func() {
@@ -202,6 +201,9 @@ func NewTerminal(main *mainui, app *tview.Application, shellname string) *Term {
 	}
 	term := ret.new_pty(shellname, nil)
 	ret.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if a, e := main.Right_context_menu().handle_menu_mouse_action(action, event, right_context, ret.Box); a == tview.MouseConsumed {
+			return a, e
+		}
 		return ret.handle_mouse(action, app, event)
 	})
 	ret.current = term

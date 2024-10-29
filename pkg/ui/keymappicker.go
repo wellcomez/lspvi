@@ -13,7 +13,7 @@ import (
 type fzflist_impl struct {
 	list   *customlist
 	parent *fzfmain
-	click  *GridListClickCheck
+	// click  *GridListClickCheck
 }
 type keymap_picker_impl struct {
 	*fzflist_impl
@@ -111,6 +111,6 @@ func (impl *fzflist_impl) grid(input *tview.InputField) *tview.Grid {
 	list := impl.list
 	layout := grid_list_whole_screen(list, input)
 	layout.SetBorder(true)
-	impl.click = NewGridListClickCheck(layout, list, 1)
+	// impl.click = NewGridListClickCheck(layout, list, 1)
 	return layout
 }

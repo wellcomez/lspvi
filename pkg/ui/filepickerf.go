@@ -64,9 +64,8 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	} else {
 		ret.UpdateData(impl, global_walk)
 	}
-	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+	list.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
 		if ret.fzf != nil {
-			index := list.GetCurrentItem()
 			data_index := ret.fzf.get_data_index(index)
 			file := ret.filewalk.Filelist[data_index]
 			v.main.OpenFileHistory(file, nil)

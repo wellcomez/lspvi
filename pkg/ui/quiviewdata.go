@@ -497,7 +497,7 @@ func replaceSegment[T any](original []T, start, end int, newSlice []T) []T {
 //		}
 //		return append(original[:start], append(newSlice, original[end:]...)...)
 //	}
-func (rootnode *FlexTreeNodeRoot) Toggle(node *FlexTreeNode) {
+func (rootnode *FlexTreeNodeRoot) Toggle(node *FlexTreeNode, color bool) {
 	if r, e := node.GetRange(rootnode); e == nil {
 		expand := len(node.child) > 0
 		n := node.loadcount
@@ -514,8 +514,14 @@ func (rootnode *FlexTreeNodeRoot) Toggle(node *FlexTreeNode) {
 			}
 		}
 		node.child = child
-		x := node.ListItem()
-		rootnode.ListItem = replaceSegment(rootnode.ListItem, r[0], r[1], x)
+		if !color {
+			x := node.ListItem()
+			rootnode.ListItem = replaceSegment[string](rootnode.ListItem, r[0], r[1], x)
+		} else {
+			x := node.ListItemColorString()
+			rootnode.ColorstringItem = replaceSegment[colorstring](rootnode.ColorstringItem, r[0], r[1], x)
+
+		}
 	}
 }
 func (root *FlexTreeNodeRoot) LoadMore(node *FlexTreeNode, color bool) {

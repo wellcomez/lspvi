@@ -29,7 +29,9 @@ func new_customlist(two bool) *customlist {
 	ret.List = NewList()
 	ret.ShowSecondaryText(two)
 	ret.main_color_text = [][]colortext{}
-	ret.second_color_text = [][]colortext{}
+	if two {
+		ret.second_color_text = [][]colortext{}
+	}
 	ret.fuzz = false
 	return ret
 }
@@ -103,9 +105,11 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		if selected {
 			for i := range main_text {
 				main_text[i].color = 0
+				main_text[i].bg = 0
 			}
 			for i := range second_text {
 				second_text[i].color = 0
+				second_text[i].bg = 0
 			}
 		}
 
@@ -150,17 +154,18 @@ func (l *customlist) draw_item_color_new(segment []colortext, screen tcell.Scree
 	x := offset_x
 	max := x + width
 	for _, e := range segment {
-		for _, r := range e.text {
+		var rr = []rune(e.text)
+		for i := range rr {
+			r := rr[i]
 			if x < max {
-				if e.color == 0 {
-					screen.SetContent(x, y, r, nil, normal_style)
-				} else {
-					x1 := normal_style.Foreground(e.color)
-					if e.bg > 0 {
-						x1 = x1.Background(e.bg)
-					}
-					screen.SetContent(x, y, r, nil, x1)
+				x1 := normal_style
+				if e.color > 0 {
+					x1 = normal_style.Foreground(e.color)
 				}
+				if e.bg > 0 {
+					x1 = x1.Background(e.bg)
+				}
+				screen.SetContent(x, y, r, nil, x1)
 				x++
 			} else {
 				break

@@ -31,27 +31,29 @@ func (impl *prev_picker_impl) flex(input *tview.InputField, linenum int) *tview.
 		list := impl.listcustom
 		list.SetBorder(true)
 		layout := layout_list_row_edit(list, code, input)
-		impl.list_click_check = NewFlexListClickCheck(layout, list, linenum)
-		impl.list_click_check.on_list_selected = func() {
-			if impl.on_list_selected != nil {
-				impl.on_list_selected()
-			} else {
-				impl.update_preview()
-			}
-		}
+		// list_click_check := NewFlexListClickCheck(layout, list, linenum)
+		// list_click_check.on_list_selected = func() {
+		// 	if impl.on_list_selected != nil {
+		// 		impl.on_list_selected()
+		// 	} else {
+		// 		impl.update_preview()
+		// 	}
+		// }
+		// impl.list_click_check = list_click_check
 		return layout
 	} else {
 		list := impl.listcustom
 		list.SetBorder(true)
 		layout := layout_list_row_edit(list, code, input)
-		impl.list_click_check = NewFlexListClickCheck(layout, list, linenum)
-		impl.list_click_check.on_list_selected = func() {
-			if impl.on_list_selected != nil {
-				impl.on_list_selected()
-			} else {
-				impl.update_preview()
-			}
-		}
+		// list_click_check := NewFlexListClickCheck(layout, list, linenum)
+		// list_click_check.on_list_selected = func() {
+		// 	if impl.on_list_selected != nil {
+		// 		impl.on_list_selected()
+		// 	} else {
+		// 		impl.update_preview()
+		// 	}
+		// }
+		// impl.list_click_check = list_click_check
 		return layout
 	}
 }
@@ -62,18 +64,19 @@ func (impl *prev_picker_impl) grid(input *tview.InputField, linenum int) *tview.
 	var layout *tview.Grid
 	if impl.listcustom != nil {
 		layout = layout_list_edit(impl.listcustom, code, input)
-		list = impl.listcustom
+		// list = impl.listcustom
 	} else {
 		layout = layout_list_edit(list, code, input)
 	}
-	impl.list_click_check = NewGridListClickCheck(layout, list, linenum)
-	impl.list_click_check.on_list_selected = func() {
-		if impl.on_list_selected != nil {
-			impl.on_list_selected()
-		} else {
-			impl.update_preview()
-		}
-	}
+	// list_click_check := NewGridListClickCheck(layout, list, linenum)
+	// list_click_check.on_list_selected = func() {
+	// 	if impl.on_list_selected != nil {
+	// 		impl.on_list_selected()
+	// 	} else {
+	// 		impl.update_preview()
+	// 	}
+	// }
+	// impl.list_click_check = list_click_check
 	return layout
 }
 func (pk *refpicker) row(input *tview.InputField) *tview.Flex {
@@ -108,8 +111,8 @@ type prev_picker_impl struct {
 	listcustom *customlist
 	codeprev   CodeEditor
 	// cq               *CodeOpenQueue
-	parent           *fzfmain
-	list_click_check *GridListClickCheck
+	parent *fzfmain
+	// list_click_check *GridListClickCheck
 	on_list_selected func()
 	listdata         []ref_line
 	livekeydelay     opendelay
@@ -120,6 +123,7 @@ type opendelay struct {
 	// line     i
 	code CodeEditor
 	st   int64
+	app  *tview.Application
 }
 
 func (k *opendelay) OnKey(filename string, line int) {
@@ -137,8 +141,12 @@ func (k *opendelay) OnKey(filename string, line int) {
 			debug.DebugLog("openprev", "skip isloading", filename, line)
 			return
 		}
+
+		debug.DebugLog("openprev", "open", filename, line)
 		// k.imp.LoadFileNoLsp(filename, line)
-		k.code.LoadFileNoLsp(filename, line)
+		go k.app.QueueUpdateDraw(func() {
+			k.code.LoadFileNoLsp(filename, line)
+		})
 	}()
 }
 func (imp *prev_picker_impl) PrevOpenLocation(filename string, loc lsp.Location) {
@@ -368,7 +376,7 @@ func new_preview_picker(v *fzfmain) *prev_picker_impl {
 		// editor:   editor,
 	}
 	// x.cq = NewCodeOpenQueue(x.codeprev, nil)
-	x.livekeydelay.code = x.codeprev
+	x.livekeydelay = opendelay{code: x.codeprev, app: v.main.App()}
 	return x
 }
 func (pk *refpicker) load(ranges lsp.Range) {
@@ -451,7 +459,9 @@ func (pk *refpicker) refresh_list(data []*list_tree_node) {
 	}
 	fzf := new_fzf_on_list_data(listview, fzfdata, true)
 	pk.impl.fzf = fzf
+	lastindex := -1
 	listview.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		lastindex = index
 		dataindex := fzf.get_data_index(index)
 		if ref, err := pk.impl.quick_view_data_model.get_data(dataindex); err == nil {
 			loc := ref.Loc
@@ -461,11 +471,13 @@ func (pk *refpicker) refresh_list(data []*list_tree_node) {
 		}
 	})
 	listview.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
-		dataindex := fzf.get_data_index(index)
-		if ref, err := pk.impl.quick_view_data_model.get_data(dataindex); err == nil {
-			loc := ref.Loc
-			pk.impl.parent.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+		if lastindex == index {
+			dataindex := fzf.get_data_index(index)
+			if ref, err := pk.impl.quick_view_data_model.get_data(dataindex); err == nil {
+				loc := ref.Loc
+				pk.impl.parent.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+			}
+			pk.impl.parent.hide()
 		}
-		pk.impl.parent.hide()
 	})
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 
 	// "zen108.com/lspvi/pkg/debug"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -49,7 +50,7 @@ func new_quick_preview(main MainService) *quick_preview {
 	return &quick_preview{
 		codeprev: codeprev,
 		frame:    frame,
-		delay:    opendelay{code: codeprev},
+		delay:    opendelay{code: codeprev, app: main.App()},
 	}
 }
 
@@ -70,15 +71,15 @@ type quick_view struct {
 	Name      string
 	main      MainService
 	// menu         *contextmenu
-	menuitem      []context_menu_item
-	searchkey     SearchKey
-	right_context quick_view_context
+	menuitem  []context_menu_item
+	searchkey SearchKey
 
 	cmd_search_key string
 	grep           *greppicker
 	sel            *list_multi_select
 	flex_tree      *FlexTreeNodeRoot
 	cq             *CodeOpenQueue
+	currentstate   string
 }
 type list_view_tree_extend struct {
 	root           []list_tree_node
@@ -481,7 +482,8 @@ func new_quikview(main *mainui) *quick_view {
 		cq:        NewCodeOpenQueue(nil, main),
 	}
 
-	ret.right_context.qk = ret
+	var right_context quick_view_context
+	right_context.qk = ret
 
 	ret.menuitem = []context_menu_item{
 		{item: cmditem{Cmd: cmdactor{desc: "Open "}}, handle: func() {
@@ -522,6 +524,12 @@ func new_quikview(main *mainui) *quick_view {
 	}
 	ret.sel = &list_multi_select{list: view}
 	main.sel.Add(ret.sel)
+	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		if a, e := main.Right_context_menu().handle_menu_mouse_action(action, event, right_context, view.Box); a == tview.MouseConsumed {
+			return a, e
+		}
+		return action, event
+	})
 	return ret
 }
 
@@ -584,9 +592,12 @@ func (qk *quick_view) OnSearch(txt string) {
 
 // String
 func (qk *quick_view) String() string {
+	return qk.currentstate
+}
+
+func (qk *quick_view) get_current_index_string(index int) string {
 	var s = qk.Type.String()
 	coutn := qk.view.GetItemCount()
-	index := qk.view.GetCurrentItem()
 	if coutn > 0 {
 		index += 1
 	}
@@ -660,6 +671,7 @@ func (qk *quick_view) new_search(t DateType, key SearchKey) {
 	if qk.grep != nil {
 		qk.grep.close()
 	}
+	qk.new_quickview_data(t, nil)
 	switch t {
 	case data_grep_word, data_search:
 		qk.view.Key = key.Key
@@ -677,16 +689,19 @@ func (qk *quick_view) new_search(t DateType, key SearchKey) {
 	})
 	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		vvv := qk.data.Refs.Refs[index]
-		// qk.quickview.update_preview(vvv.Loc)
 		qk.cq.OpenFileHistory(vvv.Loc.URI.AsPath().String(), &vvv.Loc)
 		qk.main.Tab().UpdatePageTitle()
 	})
 }
 
+func (qk *quick_view) new_quickview_data(t DateType, Refs []ref_with_caller) {
+	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), &qk.searchkey, Refs, true)
+}
+
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key SearchKey) {
 	qk.new_search(t, key)
 	qk.view.SetCurrentItem(-1)
-	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), &qk.searchkey, Refs, true)
+	qk.new_quickview_data(t, Refs)
 	qk.data.go_build_listview_data()
 	tree := qk.data.build_flextree_data(10)
 	data := tree.ListColorString()
@@ -699,21 +714,17 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 		qk.main.App().ForceDraw()
 	}
 	qk.flex_tree = tree
+	use_color := true
+	lastIndex := -1
 	qk.view.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-		current_index := qk.view.GetCurrentItem()
-		if current_index != i {
-			return
-		}
 		qk.quickview.visisble = false
 		item, pos, more, parent := tree.GetNodeIndex(i)
 		switch pos {
 
 		case NodePostion_Root:
 			{
-				if false {
-					tree.LoadMore(item, true)
-				} else {
-					tree.Toggle(item)
+				if lastIndex == i || tree.loadcount == 0 {
+					tree.Toggle(item, use_color)
 				}
 				loaddata(tree.ColorstringItem, i)
 			}
@@ -722,7 +733,7 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 				if n, err := tree.GetCaller(i); err == nil {
 					qk.cq.OpenFileHistory(n.Loc.URI.AsPath().String(), &n.Loc)
 					if more {
-						tree.LoadMore(parent, true)
+						tree.LoadMore(parent, use_color)
 						loaddata(tree.ColorstringItem, i)
 					}
 				}
@@ -737,8 +748,11 @@ func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key Sea
 		qk.main.App().ForceDraw()
 	})
 	qk.view.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		debug.DebugLog("quickview", "changed=", index, "currentIndex=", qk.view.GetCurrentItem())
+		lastIndex = index
 		if ref, err := qk.data.get_data(index); err == nil && ref != nil {
-			// qk.quickview.update_preview(ref.Loc)
+			debug.DebugLog("quickview", "open", ref.Loc)
+			qk.currentstate = qk.get_current_index_string(index)
 			qk.cq.OpenFileHistory(ref.Loc.URI.AsPath().String(), &ref.Loc)
 			qk.main.Tab().UpdatePageTitle()
 		}

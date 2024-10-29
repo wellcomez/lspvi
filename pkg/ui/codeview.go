@@ -160,7 +160,7 @@ type CodeView struct {
 	// mouse_select_area    bool
 	rightmenu_items []context_menu_item
 	right_menu_data *right_menu_data
-	rightmenu       CodeContextMenu
+	// rightmenu       CodeContextMenu
 	// LineNumberUnderMouse int
 	not_preview bool
 	insert      bool
@@ -371,7 +371,7 @@ func NewCodeView(main MainService) *CodeView {
 		not_preview: false,
 	}
 	ret.right_menu_data = &right_menu_data{}
-	ret.rightmenu = CodeContextMenu{code: &ret}
+	rightmenu := CodeContextMenu{code: &ret}
 	ret.main = main
 	ret.map_key_handle()
 	// var colorscheme femto.Colorscheme
@@ -388,7 +388,17 @@ func NewCodeView(main MainService) *CodeView {
 	root.SetRuntimeFiles(runtime.Files)
 	// root.SetColorscheme(colorscheme)
 	root.SetInputCapture(ret.handle_key)
-	root.SetMouseCapture(ret.handle_mouse)
+	root.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (a tview.MouseAction, e *tcell.EventMouse) {
+		menu := main.Right_context_menu()
+		if a, e = rightmenu.on_mouse(action, event); a == tview.MouseConsumed {
+			menu.Show(event, rightmenu)
+			return
+		}
+		if a, e = menu.handle_menu_mouse_action(action, event, rightmenu, root.View.Box); a == tview.MouseConsumed {
+			return a, e
+		}
+		return ret.handle_mouse(action, event)
+	})
 	ret.view = root
 	ret.InsertMode(false)
 	root.code = &ret
@@ -447,27 +457,6 @@ func (quickview *quick_view) qf_grep_word(opt QueryOption) {
 	})
 }
 
-func addjust_menu_width(items []context_menu_item) []context_menu_item {
-	leftitems := []context_menu_item{}
-	for i := range items {
-		v := items[i]
-		if !v.hide {
-			leftitems = append(leftitems, v)
-		}
-	}
-	maxlen := 0
-	for _, v := range leftitems {
-		maxlen = max(maxlen, len(v.item.Cmd.desc))
-	}
-	sss := strings.Repeat("-", maxlen)
-	for i := range leftitems {
-		v := &leftitems[i]
-		if strings.Index(v.item.Cmd.desc, "-") == 0 {
-			v.item.Cmd.desc = sss
-		}
-	}
-	return leftitems
-}
 
 func (code *CodeView) get_selected_lines() editor_selection {
 	ss := code.view.Cursor.CurSelection
@@ -998,7 +987,6 @@ func (code *CodeView) word_left() {
 func (m *mainui) CopyToClipboard(s string) {
 	if proxy != nil {
 		proxy.set_browser_selection(s)
-		return
 	}
 	clipboard.WriteAll(s)
 }
@@ -1172,15 +1160,15 @@ func (code *CodeView) action_grep_word(selected bool) {
 	}
 	if !selected {
 		main.open_picker_grep(QueryOption{}, nil)
-		return
+	} else {
+		code.view.Cursor.SelectWord()
+		word := code.view.Cursor.GetSelection()
+		x := DefaultQuery(word)
+		main.open_picker_grep(
+			x,
+			nil,
+		)
 	}
-	code.view.Cursor.SelectWord()
-	word := code.view.Cursor.GetSelection()
-	x := DefaultQuery(word)
-	main.open_picker_grep(
-		x,
-		nil,
-	)
 }
 
 func (code *CodeView) action_goto_define(line *lspcore.OpenOption) {

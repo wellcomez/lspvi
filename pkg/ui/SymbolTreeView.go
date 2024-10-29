@@ -6,7 +6,6 @@ package mainui
 import (
 	// "log"
 	"fmt"
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -131,12 +130,8 @@ type symboltree_view_context struct {
 }
 
 func (menu symboltree_view_context) on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
-	if action == tview.MouseRightClick {
-		yes, focuse := menu.qk.view.MouseHandler()(tview.MouseLeftClick, event, nil)
-		log.Println(yes, focuse)
-		return tview.MouseConsumed, nil
-	}
-	return tview.MouseConsumed, nil
+	rm := menu.qk.main.Right_context_menu()
+	return rm.handle_menu_mouse_action(action, event, menu,menu.qk.view.Box)
 }
 
 // getbox implements context_menu_handle.
@@ -324,6 +319,9 @@ func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 		style := tcell.StyleDefault.Background(bg)
 		waiter.SetTextStyle(style)
 	}
+	symbol_tree.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		return ret.right_context.on_mouse(action, event)
+	})
 	ret.view.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		if ret.show_wait {
 			// log.Println("click", x, y, width, height)

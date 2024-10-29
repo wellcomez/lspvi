@@ -51,6 +51,9 @@ func (node *CallNode) Ignore(uid int64) bool {
 	return false
 }
 
+type FileTree struct {
+	*Tree
+}
 type callinview struct {
 	*view_link
 	view           *Tree
@@ -104,6 +107,10 @@ func new_callview(main MainService) *callinview {
 	}
 	view.SetInputCapture(ret.KeyHandle)
 	view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		menu := main.Right_context_menu()
+		if a, e := menu.handle_menu_mouse_action(action, event, ret.right_context, view.Box); a == tview.MouseConsumed {
+			return a, e
+		}
 		return action, event
 	})
 	ret.cq = NewCodeOpenQueue(nil, main)
@@ -177,13 +184,13 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 				go ret.get_next_callin(value, main)
 			}
 		}, hide: hidecallin},
-		{item: create_menu_item("-"), handle: func() {}, hide: hidecallin},
+		{item: create_menu_item(menu_break_line), handle: func() {}, hide: hidecallin},
 		{item: cmditem{Cmd: cmdactor{desc: "Save"}}, handle: func() {}},
 		{item: cmditem{Cmd: cmdactor{desc: "Delete"}}, handle: func() {
 			ret.DeleteCurrentNode()
 		}},
 	}
-	return addjust_menu_width(menuitem)
+	return menuitem
 }
 
 func reload_callin(ret *callinview, taskindex int, node *tview.TreeNode) {

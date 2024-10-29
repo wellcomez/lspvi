@@ -4,7 +4,9 @@
 package mainui
 
 import (
+	"fmt"
 	"path/filepath"
+	// "strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -62,10 +64,12 @@ func (menu CodeContextMenu) on_mouse(action tview.MouseAction, event *tcell.Even
 		// move cursor to mouse postion
 		code.set_loc(Loc)
 		update_selection_menu(code)
+		return tview.MouseConsumed, nil
 
 	}
 	return action, event
 }
+
 
 // getbox implements context_menu_handle.
 func (code CodeContextMenu) getbox() *tview.Box {
@@ -80,6 +84,8 @@ func (code CodeContextMenu) getbox() *tview.Box {
 	}
 	return code.code.view.Box
 }
+
+var menu_break_line = fmt.Sprintf("%c", BoxDrawingsLightHorizontal)
 
 // menuitem implements context_menu_handle.
 func (code CodeContextMenu) menuitem() []context_menu_item {
@@ -142,7 +148,7 @@ func update_selection_menu(code *CodeView) {
 			fileexplorer.ChangeDir(dir)
 			fileexplorer.FocusFile(code.Path())
 		}},
-		{item: create_menu_item("-------------"), handle: func() {
+		{item: create_menu_item(menu_break_line), handle: func() {
 		}},
 		{item: create_menu_item("Bookmark"), handle: func() {
 			code.bookmark()
@@ -175,7 +181,7 @@ func update_selection_menu(code *CodeView) {
 			code.main.CopyToClipboard(data)
 
 		}, hide: menudata.previous_selection.emtry()},
-		{item: create_menu_item("-"), handle: func() {
+		{item: create_menu_item(menu_break_line), handle: func() {
 		}},
 		{item: create_menu_item(toggle_file_view), handle: func() {
 			main.toggle_view(view_file)
@@ -184,12 +190,12 @@ func update_selection_menu(code *CodeView) {
 			main.toggle_view(view_outline_list)
 		}},
 
-		{item: create_menu_item("-"), handle: func() {
+		{item: create_menu_item(menu_break_line), handle: func() {
 		}},
 		SplitDown(code),
 		SplitRight(code),
 		SplitClose(code),
-		{item: create_menu_item("-"), handle: func() {
+		{item: create_menu_item(menu_break_line), handle: func() {
 		}},
 		{
 			item: create_menu_item("External open "),
@@ -209,7 +215,7 @@ func update_selection_menu(code *CodeView) {
 				}
 			},
 		},
-		{item: create_menu_item("-"), handle: func() {
+		{item: create_menu_item(menu_break_line), handle: func() {
 		}, hide: !tty},
 		{item: create_menu_item("Zoom-in Browser"), handle: func() {
 			main.ZoomWeb(false)
@@ -218,7 +224,7 @@ func update_selection_menu(code *CodeView) {
 			main.ZoomWeb(true)
 		}, hide: !tty},
 	}
-	code.rightmenu_items = addjust_menu_width(items)
+	code.rightmenu_items = items
 }
 
 func SplitDown(code *CodeView) context_menu_item {
