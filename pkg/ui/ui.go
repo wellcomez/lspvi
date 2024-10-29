@@ -807,6 +807,10 @@ func MainUI(arg *Arguments) {
 		})
 	}()
 
+	code_area_resizer := new_editor_resize(main, code_area, nil, nil)
+	SplitCode.resize = code_area_resizer
+	code_area_resizer.add(code.view_link, 0)
+
 	edit_area_resizer := new_editor_resize(main, editor_area, nil, nil)
 	edit_area_resizer.add(main.fileexplorer.view_link, 0)
 	edit_area_resizer.add(SplitCode.layout.view_link, 1)
@@ -830,7 +834,7 @@ func MainUI(arg *Arguments) {
 		})
 	}()
 
-	resizer := []editor_mouse_resize{*console_area_resizer, *edit_area_resizer, *main_layout_resizer}
+	resizer := []editor_mouse_resize{*code_area_resizer, *console_area_resizer, *edit_area_resizer, *main_layout_resizer}
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		return handle_mouse_event(main, action, event, mainmenu, resizer)
 	})
@@ -930,8 +934,6 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 		}
 	}
 
-	
-
 	main.sel.handle_mouse_selection(action, event)
 	// new_top_toolbar(main).handle_mouse_event(action, event)
 
@@ -999,7 +1001,6 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 	}
 	return main_layout
 }
-
 
 func (main *mainui) cleanlog() {
 	main.log.clean()
