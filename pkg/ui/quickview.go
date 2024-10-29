@@ -671,6 +671,7 @@ func (qk *quick_view) new_search(t DateType, key SearchKey) {
 	if qk.grep != nil {
 		qk.grep.close()
 	}
+	qk.new_quickview_data(t, nil)
 	switch t {
 	case data_grep_word, data_search:
 		qk.view.Key = key.Key
@@ -693,10 +694,14 @@ func (qk *quick_view) new_search(t DateType, key SearchKey) {
 	})
 }
 
+func (qk *quick_view) new_quickview_data(t DateType, Refs []ref_with_caller) {
+	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), &qk.searchkey, Refs, true)
+}
+
 func (qk *quick_view) UpdateListView(t DateType, Refs []ref_with_caller, key SearchKey) {
 	qk.new_search(t, key)
 	qk.view.SetCurrentItem(-1)
-	qk.data = *new_quikview_data(qk.main, t, qk.main.current_editor().Path(), &qk.searchkey, Refs, true)
+	qk.new_quickview_data(t, Refs)
 	qk.data.go_build_listview_data()
 	tree := qk.data.build_flextree_data(10)
 	data := tree.ListColorString()
