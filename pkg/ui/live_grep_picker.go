@@ -43,6 +43,8 @@ type livewgreppicker struct {
 	impl           *grep_impl
 	quick_view     *quick_view_delegate
 	not_live       bool
+	grepword       bool
+	filecounter    int
 }
 
 // name implements picker.
@@ -80,6 +82,7 @@ func (pk livewgreppicker) open_view_from_normal_list(cur int, prev bool) bool {
 		item := pk.impl.result.data[cur]
 		fpath := item.Loc.URI.AsPath().String()
 		lineNumber := item.Loc.Range.Start.Line
+		debug.DebugLog("live grep", "open normal file", item.Loc)
 		if prev {
 			pk.PrevOpen(fpath, lineNumber)
 		} else {
@@ -236,9 +239,9 @@ func update_title_with_index(grepx *livewgreppicker, index int) {
 	}
 
 	x1 := grepx.parent.input.GetText()
-	Type := fmt.Sprintf("LiveGrep %s", x1)
+	Type := fmt.Sprintf("LiveGrep %d %s", grepx.filecounter, x1)
 	if grepx.not_live {
-		Type = fmt.Sprintf("Search %s in Files", x1)
+		Type = fmt.Sprintf("Search %s in Files %d", x1, grepx.filecounter)
 	}
 	s := fmt.Sprintf("%s %d/%d", Type, index, x)
 	grepx.parent.update_dialog_title(s)
@@ -248,10 +251,10 @@ func (impl *livewgreppicker) update_preview() {
 	impl.open_view(impl.grep_list_view.GetCurrentItem(), true)
 }
 func (grepx *livewgreppicker) update_list_druring_final() {
-	if grepx.not_live {
-		grepx.end_of_grep()
-	} else {
+	if !grepx.not_live || grepx.grepword {
 		grepx.end_of_livegrep()
+	} else {
+		grepx.end_of_grep()
 	}
 }
 
@@ -302,7 +305,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			return
 		}
 		tree := qk.build_flextree_data(5)
-		data := tree.ListString()
+		data := tree.ListColorString()
 		debug.DebugLog(livegreptag, "treen-end")
 		if task != grepx.impl.taskid {
 			debug.DebugLog(livegreptag, "=======abort-2")
@@ -311,13 +314,14 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 		grep.quick = *qk
 		view := grepx.grep_list_view
 		view.Clear()
+		use_color := true
 		for i := range data {
 			v := data[i]
 			if task != grepx.impl.taskid {
 				debug.DebugLog(livegreptag, "=======abort-3")
 				return
 			}
-			view.AddItem(v, "", nil)
+			view.AddColorItem(v.line, nil, nil)
 		}
 		lastindex := -1
 		view.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
@@ -331,16 +335,18 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			switch pos {
 			case NodePostion_Root:
 				{
-					tree.Toggle(parent, false)
-					go RefreshTreeList(view, tree, index)
+					if lastindex == index || tree.loadcount == 0 {
+						tree.Toggle(parent, use_color)
+					}
+					go RefreshTreeList(view, tree, index,use_color)
 					grepx.update_title()
 					return
 				}
 			case NodePostion_LastChild:
 				{
 					if parent.HasMore() {
-						tree.LoadMore(parent, false)
-						go RefreshTreeList(view, tree, index)
+						tree.LoadMore(parent, use_color)
+						go RefreshTreeList(view, tree, index,use_color)
 					}
 				}
 			case NodePostion_Child:
@@ -373,10 +379,16 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 	}()
 }
 
-func RefreshTreeList(view *customlist, tree *FlexTreeNodeRoot, index int) {
+func RefreshTreeList(view *customlist, tree *FlexTreeNodeRoot, index int, usecolor bool) {
 	view.Clear()
-	for _, v := range tree.ListItem {
-		view.AddItem(v, "", nil)
+	if usecolor {
+		for _, v := range tree.ColorstringItem {
+			view.AddColorItem(v.line, nil, nil)
+		}
+	} else {
+		for _, v := range tree.ListItem {
+			view.AddItem(v, "", nil)
+		}
 	}
 	view.SetCurrentItem(index)
 }
@@ -439,7 +451,7 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 		grepx.main.App().ForceDraw()
 	}
 }
-func (grepx *livewgreppicker) end(task int, o *grep.GrepOutput) {
+func (grepx *livewgreppicker) grep_callback(task int, o *grep.GrepOutput) {
 	if grepx.quick_view == nil {
 		if grepx.parent != nil && !grepx.parent.Visible {
 			grepx.stop_grep()
@@ -618,7 +630,13 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 			}
 			impl.grep = g
 			impl.result = grepresult{}
-			g.CB = pk.end
+			g.CB = pk.grep_callback
+			g.GrepProgress(func(p grep.GrepProgress) {
+				pk.filecounter = p.FileCount
+				go pk.main.App().QueueUpdateDraw(func() {
+					pk.update_title()
+				})
+			})
 			g.Kick(global_prj_root)
 		}
 	}

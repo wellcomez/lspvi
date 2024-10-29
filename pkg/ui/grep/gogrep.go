@@ -285,7 +285,7 @@ func (grep *Gorep) GrepProgress(callback func(p GrepProgress)) {
 			if grep.grep_status != GrepRunning {
 				break
 			}
-			timer := time.NewTimer(time.Microsecond * 500)
+			timer := time.NewTimer(time.Second)
 			<-timer.C
 			timer.Stop()
 			callback(GrepProgress{FileCount: grep.filecount})

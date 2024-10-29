@@ -139,6 +139,7 @@ func (v *fzfmain) use_col() bool {
 }
 func (v *fzfmain) OpenGrepWordFzf(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker {
 	sym := new_grep_picker(v, word)
+	sym.grepword = true
 	sym.parent.Visible = qf == nil
 	if qf != nil {
 		sym.quick_view = &quick_view_delegate{qf}

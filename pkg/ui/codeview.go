@@ -1181,15 +1181,15 @@ func (code *CodeView) action_grep_word(selected bool) {
 	}
 	if !selected {
 		main.open_picker_grep(QueryOption{}, nil)
-		return
+	} else {
+		code.view.Cursor.SelectWord()
+		word := code.view.Cursor.GetSelection()
+		x := DefaultQuery(word)
+		main.open_picker_grep(
+			x,
+			nil,
+		)
 	}
-	code.view.Cursor.SelectWord()
-	word := code.view.Cursor.GetSelection()
-	x := DefaultQuery(word)
-	main.open_picker_grep(
-		x,
-		nil,
-	)
 }
 
 func (code *CodeView) action_goto_define(line *lspcore.OpenOption) {
