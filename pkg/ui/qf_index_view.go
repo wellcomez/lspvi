@@ -185,7 +185,7 @@ func (menu qf_index_menu_context) menuitem() []context_menu_item {
 	viewid := menu.view.id
 	switch viewid {
 	case view_callin, view_quickview, view_bookmark:
-		hide := viewid != view_callin
+		hide := false //viewid != view_callin
 		return []context_menu_item{
 			{item: cmditem{Cmd: cmdactor{desc: "Delete "}}, handle: func() {
 				if len(ret.qfh.selected) > 0 && ret.qfh.selected[0] != ret.qfh.selected[1] {

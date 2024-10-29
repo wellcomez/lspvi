@@ -15,6 +15,7 @@ type CodeSplit struct {
 	main            *mainui
 	index           []view_id
 	active_codeview *CodeView
+	resize          *editor_mouse_resize
 }
 
 func (s *CodeSplit) AddCode(d *CodeView) {
@@ -24,7 +25,7 @@ func (s *CodeSplit) AddCode(d *CodeView) {
 	s.code_collection[d.id] = d
 	s.index = append(s.index, d.id)
 	s.last = max(d.id, s.last)
-	s.layout.AddItem(d.view, 0, 1, false)
+	s.layout.AddItem(d.view, 0, d.Width, false)
 }
 func (s *CodeSplit) SetActive(v *CodeView) {
 	s.active_codeview = v
@@ -32,7 +33,6 @@ func (s *CodeSplit) SetActive(v *CodeView) {
 func (s *CodeSplit) New() *CodeView {
 	a := NewCodeView(s.main)
 	a.id = s.last + 1
-	s.AddCode(a)
 	set_view_focus_cb([]view_id{a.id}, s.main)
 	return a
 }
@@ -100,6 +100,7 @@ func (SplitCode *CodeSplit) Remove(code *CodeView) {
 			SplitCode.index = append(SplitCode.index[:i], SplitCode.index[i+1:]...)
 		}
 	}
+	SplitCode.resize.remove(code.view_link)
 	SplitCode.code_collection = s
 	global_file_watch.Remove(code)
 }
@@ -121,13 +122,16 @@ func create_split_codeview(code *CodeView) *CodeView {
 	codeview2 := SplitCode.New()
 	codeview2.view.SetBorder(true)
 	SplitCode.SetActive(codeview2)
-	// code.main.Right_context_menu().add(codeview2.rightmenu)
+	codeview2.view_link.Width = code.Width
+	codeview2.view_link.Height = code.Height
+	SplitCode.AddCode(codeview2)
+	SplitCode.resize.add(codeview2.view_link, SplitCode.resize.LastIndex()+1)
 	return codeview2
 }
-func (code *CodeView) OpenBelow(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption)  {
-	code2 :=code.main.Codeview2()
+func (code *CodeView) OpenBelow(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) {
+	code2 := code.main.Codeview2()
 	code2.open_file_lspon_line_option(filename, line, focus, option)
-	code.main.ActiveTab(view_code_below,true)
+	code.main.ActiveTab(view_code_below, true)
 }
 func (code *CodeView) NewTab(filename string, line *lsp.Location, focus bool, option *lspcore.OpenOption) *CodeView {
 	codeview2 := create_split_codeview(code)

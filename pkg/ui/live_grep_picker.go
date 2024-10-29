@@ -45,6 +45,7 @@ type livewgreppicker struct {
 	not_live       bool
 	grepword       bool
 	filecounter    int
+	grep_progress  func(p grep.GrepProgress)
 }
 
 // name implements picker.
@@ -292,15 +293,15 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 		debug.DebugLog(livegreptag, "start to trelist")
 		defer debug.DebugLog(livegreptag, "end to treelist")
 		main := grepx.main
-		save:= grepx.grepword
+		save := grepx.grepword
 		qk := new_quikview_data(main,
 			data_grep_word,
 			main.current_editor().Path(),
 			&SearchKey{
 				&lspcore.SymolSearchKey{Key: grep.key},
 				&grep.query_option,
-				},
-			Refs, 
+			},
+			Refs,
 			save)
 		if grepx.tmp_quick_data != nil {
 			debug.DebugLog(livegreptag, "tmp_quick_data", grepx.tmp_quick_data.abort)
@@ -321,7 +322,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			return
 		}
 		grep.quick = *qk
-		if save{
+		if save {
 			qk.Save()
 		}
 		view := grepx.grep_list_view
@@ -379,6 +380,12 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			if caller, err := tree.GetCaller(index); err == nil {
 				loc := caller.Loc
 				grepx.PrevOpen(loc.URI.AsPath().String(), loc.Range.Start.Line)
+			}
+			if _, pos, _, parent := tree.GetNodeIndex(index); pos == NodePostion_LastChild {
+				if parent.HasMore() {
+					tree.LoadMore(parent, use_color)
+					go RefreshTreeList(view, tree, index, use_color)
+				}
 			}
 			grepx.update_title()
 		})
@@ -645,9 +652,13 @@ func (pk *livewgreppicker) __updatequery(query_option QueryOption) {
 			g.CB = pk.grep_callback
 			g.GrepProgress(func(p grep.GrepProgress) {
 				pk.filecounter = p.FileCount
-				go pk.main.App().QueueUpdateDraw(func() {
-					pk.update_title()
-				})
+				if pk.grep_progress != nil {
+					pk.grep_progress(p)
+				} else {
+					go pk.main.App().QueueUpdateDraw(func() {
+						pk.update_title()
+					})
+				}
 			})
 			g.Kick(global_prj_root)
 		}

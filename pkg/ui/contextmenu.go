@@ -145,9 +145,6 @@ type context_menu_handle interface {
 func (t *contextmenu) menu_text() (ret []colorstring, size int) {
 	maxstring := ""
 	for _, v := range t.impl.items {
-		if v.hide {
-			continue
-		}
 		var r = []rune(v.item.Cmd.desc)
 		if len(r) > 0 && r[0] == BoxDrawingsLightHorizontal {
 			continue
@@ -163,9 +160,6 @@ func (t *contextmenu) menu_text() (ret []colorstring, size int) {
 	debug.DebugLog("menu", "max string", maxstring)
 	fmtstr := "%-" + fmt.Sprint(size) + "s"
 	for _, v := range t.impl.items {
-		if v.hide {
-			continue
-		}
 		keystr := v.item.Key.string()
 		var color colorstring
 		if strings.Index(v.item.Cmd.desc, menu_break_line) == 0 {
@@ -186,10 +180,11 @@ func (t *contextmenu) menu_text() (ret []colorstring, size int) {
 	return
 }
 func (t *contextmenu) set_items(items []context_menu_item) {
-	// t.parent = parent
-
-	impl := &contextmenu_impl{
-		items: items,
+	impl := &contextmenu_impl{}
+	for _, v := range items {
+		if !v.hide {
+			impl.items = append(impl.items, v)
+		}
 	}
 	t.impl = impl
 	command_list := []cmditem{}
