@@ -142,8 +142,7 @@ type context_menu_handle interface {
 	on_mouse(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse)
 }
 
-func (t *contextmenu) menu_text() (ret []colorstring) {
-	size := 0
+func (t *contextmenu) menu_text() (ret []colorstring, size int) {
 	maxstring := ""
 	for _, v := range t.impl.items {
 		if v.hide {
@@ -159,6 +158,7 @@ func (t *contextmenu) menu_text() (ret []colorstring) {
 		}
 		size = max(x, size)
 	}
+	size += 2
 
 	debug.DebugLog("menu", "max string", maxstring)
 	fmtstr := "%-" + fmt.Sprint(size) + "s"
@@ -183,9 +183,9 @@ func (t *contextmenu) menu_text() (ret []colorstring) {
 			ret = append(ret, color)
 		}
 	}
-	return ret
+	return
 }
-func (t *contextmenu) set_items(items []context_menu_item) int {
+func (t *contextmenu) set_items(items []context_menu_item) {
 	// t.parent = parent
 
 	impl := &contextmenu_impl{
@@ -201,16 +201,13 @@ func (t *contextmenu) set_items(items []context_menu_item) int {
 		main:    t.main,
 	}
 	t.new_list()
-	ret := 0
-	menu_items := t.menu_text()
+	menu_items, size := t.menu_text()
 	for _, s := range menu_items {
 		t.table.AddColorItem(s.line, nil, nil)
-		ret = max(ret, s.len())
 	}
 	t.impl = impl
 	t.height = len(menu_items)
-	t.width = ret + 2
-	return ret
+	t.width = size + 4
 }
 func new_contextmenu(m *mainui) *contextmenu {
 	t := contextmenu{
