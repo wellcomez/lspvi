@@ -14,6 +14,7 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 	// "strings"
 
+	"github.com/reinhrst/fzf-lib"
 	sitter "github.com/smacker/go-tree-sitter"
 	"github.com/tectiv3/go-lsp"
 
@@ -784,7 +785,57 @@ func (s SourceFile) Same(s1 SourceFile) bool {
 }
 
 var loaded_files = make(map[string]*TreeSitter)
+var lang_ts_symbol = make(map[string]*LangTreesitterSymbol)
 
+type LangTreesitterSymbol struct {
+	fzf    *fzf.Fzf
+	ext    string
+	files  []string
+	symbol []*Symbol
+}
+
+func GetLangTreeSitterSymbol(name string) (s *LangTreesitterSymbol) {
+	if s, ok := lang_ts_symbol[name]; ok {
+		return s
+	} else {
+		s := NewLangTreeSitterSymbol(name)
+		lang_ts_symbol[name] = s
+		return s
+	}
+}
+func (sym *LangTreesitterSymbol) WorkspaceQuery(query string) (ret []lsp.SymbolInformation, err error) {
+	sym.fzf.Search(query)
+	result := <-sym.fzf.GetResultChannel()
+	for _, m := range result.Matches {
+		// if m.Score < 50 {
+		// 	continue
+		// }
+		s := sym.symbol[m.HayIndex].SymInfo
+		ret = append(ret, s)
+	}
+	return
+}
+func NewLangTreeSitterSymbol(name string) (s *LangTreesitterSymbol) {
+	s = &LangTreesitterSymbol{}
+	var ret []*Symbol
+	ext := filepath.Ext(name)
+	s.ext = ext
+	for file, ts := range loaded_files {
+		if filepath.Ext(file) == ext {
+			ret = append(ret, ts.Outline...)
+		}
+		s.files = append(s.files, file)
+	}
+	keys := []string{}
+	for _, v := range ret {
+		keys = append(keys, v.SymInfo.Name)
+	}
+	s.symbol = ret
+	opt := fzf.DefaultOptions()
+	opt.Fuzzy = true
+	s.fzf = fzf.New(keys, opt)
+	return
+}
 func NewTreeSitterParse(name string, data string) *TreeSitter {
 	if len(name) == 0 {
 		return nil
@@ -835,6 +886,10 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 	}
 	if ts.tsdef.parser != nil {
 		ts.tsdef.parser(ts, nil)
+	}
+	if _, yes := lang_ts_symbol[filepath.Ext(ts.filename.filepathname)]; yes {
+		ss := NewLangTreeSitterSymbol(ts.filename.filepathname)
+		lang_ts_symbol[ss.ext] = ss
 	}
 	go ts.callback_to_ui(cb)
 	// }()

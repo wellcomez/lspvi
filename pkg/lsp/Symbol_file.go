@@ -203,6 +203,9 @@ func (sym *Symbol_file) build_class_symbol(symbols []lsp.SymbolInformation, begi
 }
 func (sym *Symbol_file) WorkspaceQuery(query string) ([]lsp.SymbolInformation, error) {
 	if sym.lsp == nil {
+		if s := GetLangTreeSitterSymbol(sym.Filename); s != nil {
+			return s.WorkspaceQuery(query)
+		}
 		return nil, errors.New("lsp is nil")
 	}
 	return sym.lsp.WorkSpaceSymbol(query)
