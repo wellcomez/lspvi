@@ -389,7 +389,7 @@ func fzf_color_pos(colors []int) []Pos {
 			if last.Y == v {
 				last.Y = v + 1
 				colors2[len(colors2)-1] = last
-			} else {
+			} else if v > last.Y {
 				colors2 = append(colors2, Pos{v, v + 1})
 			}
 		}
