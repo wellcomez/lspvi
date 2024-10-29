@@ -982,6 +982,11 @@ func (code *CodeView) Paste() {
 		view := code.view
 		checker := code.NewChangeChecker()
 		defer checker.End()
+		sel := code.view.Cursor.CurSelection
+		if sel[1].GreaterThan(sel[0]) {
+			code.view.Buf.Replace(sel[0], sel[1], text)
+			return
+		}
 		if has_break {
 			code.view.Cursor.End()
 			t := "\n" + text[0:len(text)-1]
