@@ -720,7 +720,13 @@ func AllKeyMap(m mainui) (items []cmditem) {
 
 func (m *mainui) helpkey(print bool) []string {
 	m.save_keyboard_config()
-	types := []cmdkeytype{cmd_key_escape, cmd_key_leader, cmd_key_menu}
+	vimkey := []cmdkeytype{cmd_key_escape, cmd_key_leader, cmd_key_menu}
+	var types []cmdkeytype
+	if m.CmdLine().Vim.Enable() {
+		types = append(types, vimkey...)
+	} else {
+		types = append(types, cmd_key_menu)
+	}
 	// if print {
 	types = append(types, cmd_key_rune)
 	types = append(types, cmd_key_tcell_key)

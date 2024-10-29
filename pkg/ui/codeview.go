@@ -711,11 +711,14 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			}
 		}
 	}
-	if h, ok := code.key_map[event.Key()]; ok {
-		h(code)
-		return nil
+	enable_vim := code.main.CmdLine().Vim.Enable()
+	if enable_vim {
+		if h, ok := code.key_map[event.Key()]; ok {
+			h(code)
+			return nil
+		}
 	}
-	if code.insert {
+	if code.insert || !enable_vim {
 		var status1 = code.NewChangeChecker()
 		code.view.HandleEvent(event)
 		changed := status1.End()
