@@ -292,7 +292,16 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 		debug.DebugLog(livegreptag, "start to trelist")
 		defer debug.DebugLog(livegreptag, "end to treelist")
 		main := grepx.main
-		qk := new_quikview_data(main, data_grep_word, main.current_editor().Path(), &SearchKey{&lspcore.SymolSearchKey{Key: grep.key}, &grep.query_option}, Refs, false)
+		save:= grepx.grepword
+		qk := new_quikview_data(main,
+			data_grep_word,
+			main.current_editor().Path(),
+			&SearchKey{
+				&lspcore.SymolSearchKey{Key: grep.key},
+				&grep.query_option,
+				},
+			Refs, 
+			save)
 		if grepx.tmp_quick_data != nil {
 			debug.DebugLog(livegreptag, "tmp_quick_data", grepx.tmp_quick_data.abort)
 			grepx.tmp_quick_data.abort = true
@@ -312,6 +321,9 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 			return
 		}
 		grep.quick = *qk
+		if save{
+			qk.Save()
+		}
 		view := grepx.grep_list_view
 		view.Clear()
 		use_color := true
@@ -338,7 +350,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 					if lastindex == index || tree.loadcount == 0 {
 						tree.Toggle(parent, use_color)
 					}
-					go RefreshTreeList(view, tree, index,use_color)
+					go RefreshTreeList(view, tree, index, use_color)
 					grepx.update_title()
 					return
 				}
@@ -346,7 +358,7 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 				{
 					if parent.HasMore() {
 						tree.LoadMore(parent, use_color)
-						go RefreshTreeList(view, tree, index,use_color)
+						go RefreshTreeList(view, tree, index, use_color)
 					}
 				}
 			case NodePostion_Child:
