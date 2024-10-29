@@ -834,7 +834,7 @@ func MainUI(arg *Arguments) {
 		})
 	}()
 
-	resizer := []editor_mouse_resize{*code_area_resizer, *console_area_resizer, *edit_area_resizer, *main_layout_resizer}
+	resizer := []*editor_mouse_resize{code_area_resizer, console_area_resizer, edit_area_resizer, main_layout_resizer}
 	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 		return handle_mouse_event(main, action, event, mainmenu, resizer)
 	})
@@ -910,7 +910,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 	// main.code_navigation_bar.Draw(screen)
 }
 
-func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
+func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []*editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
 	spacemenu := main.layout.spacemenu
 	// dialog := main.Dialog()
 
