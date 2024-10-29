@@ -27,7 +27,6 @@ type CodeEditor interface {
 	FileName() string
 	Path() string
 
-
 	//handle key event
 	handle_key(event *tcell.EventKey) *tcell.EventKey
 
@@ -97,6 +96,7 @@ type CodeEditor interface {
 
 	//copy Paste
 	copyline(bool)
+	GetCode(lsp.Location) string
 	Paste()
 
 	//InsertMode
