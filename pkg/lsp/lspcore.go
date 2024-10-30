@@ -141,7 +141,7 @@ func (core *lspcore) Initialized() error {
 		return nil
 	}
 	core.inited_called = true
-	return core.conn.Notify(context.Background(), "initialized", lsp.InitializedParams{},)
+	return core.conn.Notify(context.Background(), "initialized", lsp.InitializedParams{})
 	// return nil
 }
 
@@ -585,18 +585,27 @@ func (core *lspcore) GetDefine(file string, pos lsp.Position) ([]lsp.Location, e
 }
 func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
 	var referenced = lsp.ReferenceParams{
-		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
-			WorkDoneToken: jsonrpc.ProgressToken(file + "refer"),
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			Position: pos,
+			TextDocument: lsp.TextDocumentIdentifier{
+				URI: lsp.NewDocumentURI(file),
+			},
 		},
-		PartialResultParams: &lsp.PartialResultParams{
-			PartialResultToken: jsonrpc.ProgressToken(file + "refer"),
+		Context: &lsp.ReferenceContext{
+			IncludeDeclaration: true,
 		},
+		// WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
+		// 	WorkDoneToken: jsonrpc.ProgressToken(file + "refer"),
+		// },
+		// PartialResultParams: &lsp.PartialResultParams{
+		// 	PartialResultToken: jsonrpc.ProgressToken(file + "refer"),
+		// },
 	}
-	referenced.TextDocument.URI = lsp.NewDocumentURI(file)
-	referenced.Position = pos
-	referenced.Context = &lsp.ReferenceContext{
-		IncludeDeclaration: true,
-	}
+	// referenced.TextDocument.URI = lsp.NewDocumentURI(file)
+	// referenced.Position = pos
+	// referenced.Context = &lsp.ReferenceContext{
+	// 	IncludeDeclaration: true,
+	// }
 	var result []interface{}
 	var ret []lsp.Location
 	err := core.conn.Call(context.Background(), "textDocument/references", referenced, &result)
