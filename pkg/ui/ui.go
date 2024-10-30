@@ -846,7 +846,7 @@ func MainUI(arg *Arguments) {
 		// }
 	})
 	view_id_init(main)
-	main.quickview.RestoreLast()
+	go main.quickview.RestoreLast()
 	UpdateTitleAndColor(main_layout.Box, code.Path())
 	go func() {
 		app.QueueUpdateDraw(func() {
