@@ -219,12 +219,12 @@ type VmapPosition struct {
 
 // vimstate structure
 type vimstate struct {
-	Escape    bool
-	Find      bool
-	Command   bool
-	VMap      bool
-	vmapBegin *VmapPosition
-	vmapEnd   *VmapPosition
+	Escape  bool
+	Find    bool
+	Command bool
+	VMap    bool
+	// vmapBegin *VmapPosition
+	// vmapEnd   *VmapPosition
 	Virtual   bool
 	Insert    bool
 	Leader    bool
@@ -882,7 +882,7 @@ func (v *Vim) EnterEscape() {
 	// return
 	TurnOffComplete(v)
 	v.app.cmdline.Clear()
-	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}
+	v.vi = vimstate{Escape: true, VMap: false}
 	v.app.current_editor().ResetSelection()
 	f := v.app.get_focus_view_id()
 	if f == view_cmd || f == view_none {
