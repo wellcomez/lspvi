@@ -195,8 +195,10 @@ func (code *CodeView) Reload() {
 		x := code.LspContentFullChangeEvent()
 		go sym.NotifyCodeChange(x)
 		offset := code.view.Topline
+		loc := code.view.Cursor.Loc
 		code.openfile(code.Path(), true, func(bool) {
 			code.view.Topline = offset
+			code.view.Cursor.GotoLoc(loc)
 			if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
 				s.LspLoadSymbol()
 			}
