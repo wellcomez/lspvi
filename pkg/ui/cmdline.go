@@ -80,30 +80,30 @@ func new_cmdline(main *mainui) *cmdline {
 		},
 	}
 	code.cmds = []cmd_processor{
-		{vi_quick_prev, []string{"cp"}, "", func(s []string, c cmd_processor) {
+		{id: vi_quick_prev, arg0: []string{"cp"}, run: func(s []string, c cmd_processor) {
 			get_cmd_actor(main, vi_quick_prev).handle()
-		}, nil},
-		{vi_quick_next, []string{"cn"}, "", func(s []string, c cmd_processor) {
+		}},
+		{id: vi_quick_next, arg0: []string{"cn"}, run: func(s []string, c cmd_processor) {
 			get_cmd_actor(main, vi_quick_next).handle()
-		}, nil},
-		{cmd_clean_log, []string{"cleanlog"}, "", func(s []string, c cmd_processor) {
+		}},
+		{id: cmd_clean_log, arg0: []string{"cleanlog"}, run: func(s []string, c cmd_processor) {
 			get_cmd_actor(main, cmd_clean_log).handle()
-		}, nil},
-		{cmd_save, []string{"w"}, "", func(s []string, c cmd_processor) {
+		}},
+		{id: cmd_save, arg0: []string{"w"}, run: func(s []string, c cmd_processor) {
 			get_cmd_actor(main, vi_save).handle()
-		}, nil},
-		{cmd_quit, []string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string, c cmd_processor) {
+		}},
+		{id: cmd_quit, arg0: []string{"q", "quit", "q!", "qa", "x"}, run: func(s []string, c cmd_processor) {
 			main.Close()
-		}, nil},
-		{cmd_reload, []string{"e!"}, "", func(s []string, c cmd_processor) {
+		}},
+		{id: cmd_reload, arg0: []string{"e!"}, run: func(s []string, c cmd_processor) {
 			get_cmd_actor(main, cmd_reload).handle()
-		}, nil},
-		{split_right, []string{"vs"}, "", func(s []string, c cmd_processor) {
+		}},
+		{id: split_right, arg0: []string{"vs"}, run: func(s []string, c cmd_processor) {
 			get_cmd_actor(main, split_right).handle()
-		}, nil},
-		{close_tab, []string{"closetab"}, "", func(s []string, c cmd_processor) {
+		}},
+		{id: close_tab, arg0: []string{"closetab"}, run: func(s []string, c cmd_processor) {
 			get_cmd_actor(main, close_tab).handle()
-		}, nil},
+		}},
 		{open_picker_help, []string{"h", "help"}, "", func(s []string, c cmd_processor) {
 			get_cmd_actor(main, open_picker_help).handle()
 		}, nil},
