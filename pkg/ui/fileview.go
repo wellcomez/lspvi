@@ -64,7 +64,7 @@ var py_icon = fmt.Sprintf("%c", '\ue73c')
 var js_icon = fmt.Sprintf("%c", '\ue74f')
 var ts_icon = fmt.Sprintf("%c", '\U000f03e6')
 var html_icon = fmt.Sprintf("%c", '\U000f0c01')
-var cpp_icon = fmt.Sprintf("%c", '\U000f03e4')
+// var cpp_icon = fmt.Sprintf("%c", '\U000f03e4')
 var css_icon = fmt.Sprintf("%c", '\U000f03e7')
 var png_icon = fmt.Sprintf("%c", '\uf1c5')
 var json_icon = fmt.Sprintf("%c", '\ueb0f')
@@ -85,8 +85,8 @@ type extset struct {
 
 var fileicons = []extset{
 	{go_icon, []string{"go"}},
-	{c_icon, []string{"c", "cpp"}},
-	{h_icon, []string{"h"}},
+	{c_icon, []string{"c", "cpp","cc"}},
+	{h_icon, []string{"h","hpp"}},
 	{py_icon, []string{"py"}},
 	{js_icon, []string{"js"}},
 	{ts_icon, []string{"tsx", "ts"}},
@@ -104,7 +104,7 @@ var fileicons = []extset{
 	{fmt.Sprintf("%c", '\uf1c1'), []string{"pdf"}},
 	{fmt.Sprintf("%c", '\uf1c2'), []string{"doc"}},
 	{fmt.Sprintf("%c", '\ueefc'), []string{"csv"}},
-	{fmt.Sprintf("%c", '\uf1c6'), []string{"zip", "gz", "tar", "rar", "bz2", "7z"}},
+	{fmt.Sprintf("%c", '\uf1c6'), []string{"zip", "gz", "tar", "rar", "bz2", "7z","tgz"}},
 	{rust_icon, []string{"rs"}},
 	{fmt.Sprintf("%c", '\U000f0b02'), []string{"uml"}},
 }
