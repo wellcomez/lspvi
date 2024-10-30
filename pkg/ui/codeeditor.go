@@ -96,7 +96,7 @@ type CodeEditor interface {
 
 	//copy Paste
 	copyline(bool)
-	GetCode(lsp.Location) string
+	GetCode(lsp.Location) (string,error)
 	Paste()
 
 	//InsertMode

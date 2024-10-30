@@ -488,51 +488,41 @@ func (m *mainui) get_declare(pos lsp.Range, filepath string) {
 }
 func (m *mainui) get_implementation(pos lsp.Range, filename string, option *lspcore.OpenOption) {
 	x := lspcore.SymolParam{Ranges: pos, File: filename}
-	x.Key = m.get_editor_range_text(filename, pos)
-	if lsp, err := m.lspmgr.Open(x.File); err == nil {
-		lsp.GetImplement(x, option)
-		return
-	} else {
-		m.lspmgr.Handle.OnGetImplement(
-			lspcore.SymolSearchKey{Key: x.Key, File: x.File},
-			lspcore.ImplementationResult{}, err, option)
+	var err error
+	if x.Key, err = m.get_editor_range_text(filename, pos); err == nil {
+		if lsp, e := m.lspmgr.Open(x.File); e == nil {
+			lsp.GetImplement(x, option)
+			return
+		} else {
+			err = e
+		}
 	}
+	m.lspmgr.Handle.OnGetImplement(
+		lspcore.SymolSearchKey{Key: x.Key, File: x.File},
+		lspcore.ImplementationResult{}, err, option)
 }
 func (m *mainui) get_refer(pos lsp.Range, filename string) {
 	x := lspcore.SymolParam{Ranges: pos, File: filename}
 	sym, err := m.lspmgr.Open(filename)
 	if err == nil {
-		x.Key = m.get_editor_range_text(filename, pos)
-		sym.Reference(x)
-	} else {
-		m.lspmgr.Handle.OnLspRefenceChanged(
-			lspcore.SymolSearchKey{Key: x.Key, File: x.File},
-			[]lsp.Location{}, err)
+		if x.Key, err = m.get_editor_range_text(filename, pos); err == nil {
+			sym.Reference(x)
+			return
+		}
 	}
+	m.lspmgr.Handle.OnLspRefenceChanged(
+		lspcore.SymolSearchKey{Key: x.Key, File: x.File},
+		[]lsp.Location{}, err)
 }
 
-func (m mainui) get_editor_range_text(filename string, pos lsp.Range) string {
+func (m mainui) get_editor_range_text(filename string, pos lsp.Range) (string, error) {
 	if m.current_editor().Path() == filename {
-		lines := m.current_editor().GetLines(pos.Start.Line, pos.End.Line)
-		if len(lines) == 1 {
-			return lines[0][pos.Start.Character:pos.End.Character]
-		}
-		a := []string{
-			lines[0][pos.Start.Character:],
-		}
-		for i := 1; i < len(lines)-1; i++ {
-			a = append(a, lines[i])
-		}
-		if pos.End.Line > len(lines)+pos.Start.Line {
-			a = append(a, lines[len(lines)-1][:pos.End.Character])
-		}
-		return strings.Join(a, "")
-
+		return m.codeview.GetCode(lsp.Location{URI: lsp.NewDocumentURI(filename), Range: pos})
 	} else if body, err := lspcore.NewBody(lsp.Location{URI: lsp.NewDocumentURI(filename), Range: pos}); err == nil {
-		return body.String()
+		return body.String(), nil
 	} else {
 		n := filepath.Base(filename)
-		return fmt.Sprintf("%s %d:%d %d:%d", n, pos.Start.Line, pos.Start.Character, pos.End.Line, pos.End.Character)
+		return fmt.Sprintf("%s %d:%d %d:%d", n, pos.Start.Line, pos.Start.Character, pos.End.Line, pos.End.Character), nil
 	}
 }
 

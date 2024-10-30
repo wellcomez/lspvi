@@ -280,9 +280,10 @@ func (c *SymbolTreeView) copycode() {
 	value := cur.GetReference()
 	if value != nil {
 		if sym, ok := value.(lsp.SymbolInformation); ok {
-			s := c.editor.GetCode(sym.Location)
-			if len(s) > 0 {
-				clipboard.WriteAll(s)
+			if s, err := c.editor.GetCode(sym.Location); err == nil {
+				if len(s) > 0 {
+					clipboard.WriteAll(s)
+				}
 			}
 		}
 	}

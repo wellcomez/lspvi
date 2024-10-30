@@ -1002,14 +1002,19 @@ func (code *CodeView) Paste() {
 	}
 }
 
-func (c CodeView) GetCode(loc lsp.Location) string {
+func (c CodeView) GetCode(loc lsp.Location) (ret string, err error) {
 	lines := c.GetLines(loc.Range.Start.Line, loc.Range.End.Line)
 	if len(lines) == 1 {
-		return lines[0]
+		return substring(lines[0], loc.Range.Start.Character, loc.Range.End.Character)
 	}
-	lines[0] = lines[0][loc.Range.Start.Character:]
-	lines[len(lines)-1] = lines[len(lines)-1][:loc.Range.End.Character]
-	return strings.Join(lines, "\n")
+
+	if lines[0], err = substring(lines[0], loc.Range.Start.Character, -1); err != nil {
+		return "", err
+	}
+	if lines[len(lines)-1], err = substring(lines[len(lines)-1], 0, loc.Range.End.Character); err != nil {
+		return "", err
+	}
+	return strings.Join(lines, "\n"), nil
 }
 func (code *CodeView) copyline(line bool) {
 	cmd := code.main.CmdLine()
