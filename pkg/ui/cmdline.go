@@ -79,34 +79,26 @@ func new_cmdline(main *mainui) *cmdline {
 			nil,
 		},
 	}
+	var create_cmd_item = func(id command_id, arg []string) (ret cmd_processor) {
+		ret = cmd_processor{
+			id:   id,
+			arg0: arg,
+			run: func(s []string, c cmd_processor) {
+				get_cmd_actor(main, id).handle()
+			},
+		}
+		return
+	}
 	code.cmds = []cmd_processor{
-		{id: vi_quick_prev, arg0: []string{"cp"}, run: func(s []string, c cmd_processor) {
-			get_cmd_actor(main, vi_quick_prev).handle()
-		}},
-		{id: vi_quick_next, arg0: []string{"cn"}, run: func(s []string, c cmd_processor) {
-			get_cmd_actor(main, vi_quick_next).handle()
-		}},
-		{id: cmd_clean_log, arg0: []string{"cleanlog"}, run: func(s []string, c cmd_processor) {
-			get_cmd_actor(main, cmd_clean_log).handle()
-		}},
-		{id: cmd_save, arg0: []string{"w"}, run: func(s []string, c cmd_processor) {
-			get_cmd_actor(main, vi_save).handle()
-		}},
-		{id: cmd_quit, arg0: []string{"q", "quit", "q!", "qa", "x"}, run: func(s []string, c cmd_processor) {
-			main.Close()
-		}},
-		{id: cmd_reload, arg0: []string{"e!"}, run: func(s []string, c cmd_processor) {
-			get_cmd_actor(main, cmd_reload).handle()
-		}},
-		{id: split_right, arg0: []string{"vs"}, run: func(s []string, c cmd_processor) {
-			get_cmd_actor(main, split_right).handle()
-		}},
-		{id: close_tab, arg0: []string{"closetab"}, run: func(s []string, c cmd_processor) {
-			get_cmd_actor(main, close_tab).handle()
-		}},
-		{open_picker_help, []string{"h", "help"}, "", func(s []string, c cmd_processor) {
-			get_cmd_actor(main, open_picker_help).handle()
-		}, nil},
+		create_cmd_item(vi_quick_prev, []string{"cp"}),
+		create_cmd_item(vi_quick_next, []string{"cn"}),
+		create_cmd_item(cmd_clean_log, []string{"cleanlog"}),
+		create_cmd_item(cmd_save, []string{"w"}),
+		create_cmd_item(cmd_quit, []string{"q", "quit", "q!", "qa", "x"}),
+		create_cmd_item(cmd_reload, []string{"e!"}),
+		create_cmd_item(split_right, []string{"vs"}),
+		create_cmd_item(close_tab, []string{"closetab"}),
+		create_cmd_item(open_picker_help, []string{"h", "help"}),
 		{-1, []string{"search", "grep"}, "search", func(args []string, c cmd_processor) {
 			code.OnSearchCommand(args)
 		}, nil},
