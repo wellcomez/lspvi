@@ -503,16 +503,17 @@ func (m *mainui) get_implementation(pos lsp.Range, filename string, option *lspc
 }
 func (m *mainui) get_refer(pos lsp.Range, filename string) {
 	x := lspcore.SymolParam{Ranges: pos, File: filename}
-	sym, err := m.lspmgr.Open(filename)
+	loc := lsp.Location{URI: lsp.NewDocumentURI(filename), Range: pos}
+	ret, err := m.lspmgr.GetReference(loc)
 	if err == nil {
-		if x.Key, err = m.get_editor_range_text(filename, pos); err == nil {
-			sym.Reference(x)
-			return
+		var item []lsp.CallHierarchyItem
+		if item, err = m.lspmgr.PrepareCallHierarchy(loc); err == nil && len(item) > 0 {
+			x.Key = item[0].Name
 		}
 	}
 	m.lspmgr.Handle.OnLspRefenceChanged(
 		lspcore.SymolSearchKey{Key: x.Key, File: x.File},
-		[]lsp.Location{}, err)
+		ret, err)
 }
 
 func (m mainui) get_editor_range_text(filename string, pos lsp.Range) (string, error) {

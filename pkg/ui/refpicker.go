@@ -309,18 +309,30 @@ func (pk refpicker) Load() {
 
 func get_loc_caller(m MainService, file []lsp.Location, lsp *lspcore.Symbol_file) []ref_with_caller {
 	ref_call_in := []ref_with_caller{}
+	lspmgr := m.Lspmgr()
 	for _, v := range file {
-		stacks, err := lsp.Caller(v, false)
-		if err == nil {
-			a := newFunction(stacks, v)
-			if a != nil {
-				ref_call_in = append(ref_call_in, *a)
-				continue
+		ref := ref_with_caller{Loc: v}
+		if err := ref.get_caller(lspmgr); err == nil {
+			ref_call_in = append(ref_call_in, ref)
+		} else {
+			if lsp == nil {
+				lsp, err = lspmgr.Open(v.URI.AsPath().String())
+				if err != nil {
+					continue
+				}
 			}
+			stacks, err := lsp.Caller(v, false)
+			if err == nil {
+				a := newFunction(stacks, v)
+				if a != nil {
+					ref_call_in = append(ref_call_in, *a)
+					continue
+				}
 
+			}
+			caller, _ := m.Lspmgr().GetCallEntry(v.URI.AsPath().String(), v.Range)
+			ref_call_in = append(ref_call_in, ref_with_caller{Loc: v, Caller: caller})
 		}
-		caller, _ := m.Lspmgr().GetCallEntry(v.URI.AsPath().String(), v.Range)
-		ref_call_in = append(ref_call_in, ref_with_caller{Loc: v, Caller: caller})
 
 	}
 	return ref_call_in
