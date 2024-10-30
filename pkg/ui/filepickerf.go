@@ -200,7 +200,7 @@ func (wk *DirWalk) __UpdateQuery(query string) {
 		w.Add(1)
 		go func() {
 			defer w.Done()
-			f.task.OnSearch(query, false)
+			f.task.OnSearchSortScore(query, 50)
 			result[index] = fzf_result{
 				selected_index:   f.task.selected_index,
 				selected_postion: f.task.selected_postion,
