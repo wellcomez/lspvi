@@ -215,10 +215,11 @@ func (v *fzfmain) symbol_picker_tree(code CodeEditor) {
 func (v *fzfmain) symbol_picker_2(code CodeEditor) {
 
 	var Current = code.LspSymbol()
-	var ts = code.TreeSitter()
 	if Current == nil || len(Current.Class_object) == 0 {
-		Current = &lspcore.Symbol_file{
-			Class_object: ts.Outline,
+		if ts := code.TreeSitter(); ts != nil {
+			Current = &lspcore.Symbol_file{
+				Class_object: ts.Outline,
+			}
 		}
 	}
 	sym := new_current_document_picker(v, Current)
@@ -229,18 +230,14 @@ func (v *fzfmain) symbol_picker_2(code CodeEditor) {
 
 // OpenFileFzf
 func (v *fzfmain) OpenFileFzf(root string) {
-	filewalk := NewDirWalk(root, v)
-	v.Frame = tview.NewFrame(filewalk.grid(v.input))
-	v.input.SetLabel(">")
-	v.input.SetChangedFunc(func(s string) {
-		v.currentpicker.UpdateQuery(s)
-	})
-	v.app.SetFocus(v.input)
-	v.Visible = true
-	v.currentpicker = filepicker{
-		impl: filewalk,
-	}
+	currentpicker := new_file_picker(root, v)
+	grid := currentpicker.grid(v.input)
+	v.create_dialog_content(grid, currentpicker)
 }
+
+
+
+
 func (v *fzfmain) Open(t fuzzpicktype) {
 	v.app.SetFocus(v.input)
 	v.Visible = true

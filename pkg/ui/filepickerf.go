@@ -18,7 +18,17 @@ import (
 func (pk *DirWalk) grid(input *tview.InputField) *tview.Grid {
 	return pk.fzflist_impl.grid(input)
 }
-
+func ( currentpicker filepicker) grid(input* tview.InputField) *tview.Grid {
+	x := currentpicker.impl.grid(input)
+	return x
+}
+func new_file_picker(root string, v *fzfmain) filepicker {
+	impl := NewDirWalk(root, v)
+	currentpicker := filepicker{
+		impl: impl,
+	}
+	return currentpicker
+}
 type filepicker struct {
 	impl *DirWalk
 }
