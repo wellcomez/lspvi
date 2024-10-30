@@ -141,8 +141,7 @@ func (core *lspcore) Initialized() error {
 		return nil
 	}
 	core.inited_called = true
-	var result interface{}
-	return core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{}, &result)
+	return core.conn.Notify(context.Background(), "initialized", lsp.InitializedParams{},)
 	// return nil
 }
 
