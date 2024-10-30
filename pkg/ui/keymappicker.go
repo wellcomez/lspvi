@@ -117,7 +117,6 @@ func (impl *fzflist_impl) set_fuzz(fuzz bool) {
 func (impl *fzflist_impl) grid(input *tview.InputField) *tview.Grid {
 	list := impl.list
 	layout := grid_list_whole_screen(list, input)
-	layout.SetBorder(true)
-	// impl.click = NewGridListClickCheck(layout, list, 1)
+	// layout.SetBorder(true)
 	return layout
 }
