@@ -135,7 +135,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}}
 	case close_tab:
 		return cmdactor{id, "CloseTab", func() bool {
-			SplitClose(m.current_editor())
+			SplitClose(m.current_editor()).handle()
 			return true
 		}}
 	case split_right:
