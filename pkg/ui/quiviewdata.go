@@ -94,6 +94,25 @@ func (qk *quick_view_data) get_data(index int) (*ref_with_caller, error) {
 	}
 	return &qk.Refs.Refs[index], nil
 }
+func (call *ref_with_caller) get_caller(lspmgr *lspcore.LspWorkspace) bool {
+	var file string = call.Loc.URI.AsPath().String()
+	if ret, err := lspmgr.PrepareCallHierarchy(call.Loc); err == nil && len(ret) > 0 {
+		if stack, err := lspmgr.CallHierarchyIncomingCalls(ret[0]); err == nil && len(stack) > 0 {
+			for _, s := range stack {
+				if s.From.URI.AsPath().String() == file {
+					// yes := s.From.Range.Overlaps(call.Loc.Range)
+					// debug.DebugLog("asyn-call", yes)
+					call.Caller = &lspcore.CallStackEntry{
+						Name: s.From.Name,
+						Item: ret[0],
+					}
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
 func (qk *quick_view_data) async_open(call *ref_with_caller, cb func(error, bool)) {
 	var file string = call.Loc.URI.AsPath().String()
 	var r lsp.Range = call.Loc.Range
@@ -132,6 +151,8 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 				filename := v.URI.AsPath().String()
 				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
 					caller.Caller = c
+					changed = true
+				} else if caller.get_caller(lspmgr) {
 					changed = true
 				} else if sym == nil {
 					go qk.async_open(caller, func(err error, b bool) {
@@ -206,6 +227,8 @@ func (quickview_data *quick_view_data) BuildListString(root string) []*colorstri
 				filename := v.URI.AsPath().String()
 				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
 					caller.Caller = c
+					changed = true
+				} else if caller.get_caller(lspmgr) {
 					changed = true
 				} else if sym == nil {
 					quickview_data.async_open(&caller, func(err error, b bool) {

@@ -400,10 +400,32 @@ func (wk *LspWorkspace) OpenBuffer(filename string, buffer string) (*Symbol_file
 	return ret, err
 
 }
+func (wk *LspWorkspace) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) (ret []lsp.CallHierarchyIncomingCall, err error) {
+	filename := param.URI.AsPath().String()
+	if lsp := wk.getClient(filename); lsp != nil {
+		return lsp.CallHierarchyIncomingCalls(param)
+	}
+	return nil, err
+}
+func (wk *LspWorkspace) PrepareCallHierarchy(loc lsp.Location) (ret []lsp.CallHierarchyItem, err error) {
+	filename := loc.URI.AsPath().String()
+	if lsp := wk.getClient(filename); lsp != nil {
+		return lsp.PrepareCallHierarchy(loc)
+	}
+	return nil, err
+}
+func (wk *LspWorkspace) GetReference(loc lsp.Location) (ret []lsp.Location, err error) {
+	filename := loc.URI.AsPath().String()
+	if lsp := wk.getClient(filename); lsp != nil {
+		return lsp.GetReferences(filename, loc.Range.Start)
+	}
+	return nil, err
+}
 
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)
 	wk.current = ret
+	debug.InfoLog(DebugTag, "open", filename, "len", len(wk.filemap))
 	return ret, err
 
 }
