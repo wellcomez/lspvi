@@ -796,6 +796,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 	}
 	funcolor := global_theme.search_highlight_color()
 	code := caller.get_code(funcolor)
+	ret.a(" ")
 	if caller.Caller != nil {
 		var c1 colortext
 		if prev != nil && (prev.Caller.ClassName == caller.Caller.ClassName && prev.Caller.Name == caller.Caller.Name) {
@@ -833,13 +834,13 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 			callname = strings.TrimRight(callname, " ")
 			callname = icon + callname
 			x := colortext{callname + " > ", caller_color, 0}
-			liner := fmt.Sprintf("%-4d ", v.Range.Start.Line+1)
-			ret.a(liner)
+			liner := fmt.Sprintf(":%-4d ", v.Range.Start.Line+1)
+			// ret.a(liner)
 			if c1.text != "" {
-				return ret.add_color_text(c1).add_color_text(x).a(" ").add_color_text_list(code.line)
+				return ret.add_color_text(c1).add_color_text(x).a(" ").a(liner).add_color_text_list(code.line)
 				// return fmt.Sprintf(":%-4d %s%s %s", v.Range.Start.Line+1, c1, x, line)
 			} else {
-				return ret.add_color_text(x).a(" ").add_color_text_list(code.line)
+				return ret.add_color_text(x).a(" ").a(liner).add_color_text_list(code.line)
 			}
 		}
 	} else {
