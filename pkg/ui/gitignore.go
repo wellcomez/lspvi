@@ -60,6 +60,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"zen108.com/lspvi/pkg/debug"
 )
 
 ////////////////////////////////////////////////////////////
@@ -250,7 +252,7 @@ func (gi *GitIgnore) MatchesPathHow2(f string) (bool, *IgnorePattern) {
 	for end {
 		yes = <-matched
 		if mip != nil {
-			println("%s\n", mip.Line)
+			debug.WarnLog("gitignore", "MatchesPathHow", mip.Line)
 		}
 		if yes {
 			break
