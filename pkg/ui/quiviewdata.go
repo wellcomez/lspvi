@@ -173,12 +173,12 @@ func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_w
 		line.a(fmt.Sprintf("%3d. ", lineno)).add_color_text_list(list_text.line)
 		if len(tree.children) > 0 {
 			if !tree.expand {
-				line.pepend(fmt.Sprintf("%c", IconCollapse), color)
+				line.prepend(fmt.Sprintf("%c", IconCollapse), color)
 			} else {
-				line.pepend(fmt.Sprintf("%c", IconExpaned), color)
+				line.prepend(fmt.Sprintf("%c", IconExpaned), color)
 			}
 		} else {
-			line.pepend(" ", 0)
+			line.prepend(" ", 0)
 		}
 	} else {
 		line.add_color_text_list(list_text.line)
@@ -221,7 +221,7 @@ func (quickview_data *quick_view_data) BuildListString(root string) []*colorstri
 			continue
 		}
 		x := fmt.Sprintf("%3d. ", i+1)
-		secondline.pepend(x, 0)
+		secondline.prepend(x, 0)
 		data = append(data, secondline)
 	}
 	if changed {
@@ -315,7 +315,7 @@ func (v *FlexTreeNode) ListItemColorString() (ret []colorstring) {
 	for i, c := range v.child {
 		s := *c.data.color_string
 		if i == lastIndex && m {
-			s.pepend(down, tcell.ColorRed)
+			s.prepend(down, tcell.ColorRed)
 		}
 		ret = append(ret, s)
 

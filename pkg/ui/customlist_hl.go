@@ -108,7 +108,7 @@ func (line *colorstring) Replace(old string, new string, n int) {
 		}
 	}
 }
-func (line *colorstring) pepend(s string, color tcell.Color) *colorstring {
+func (line *colorstring) prepend(s string, color tcell.Color) *colorstring {
 	if len(s) > 0 {
 		line.line = append([]colortext{{s, color, 0}}, line.line...)
 	}

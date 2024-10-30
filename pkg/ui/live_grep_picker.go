@@ -460,7 +460,7 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 			lineNumber := o.Loc.Range.Start.Line
 			path := trim_project_filename(fpath, global_prj_root)
 			data := colorstring{}
-			data.add_color_text_list(line.line).pepend(fmt.Sprintf("%s:%d ", path, lineNumber+1), 0)
+			data.add_color_text_list(line.line).prepend(fmt.Sprintf("%s:%d ", path, lineNumber+1), 0)
 			grepx.grep_list_view.AddItem(data.ColorText(), "", nil)
 		}
 		if openpreview {

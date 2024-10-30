@@ -668,7 +668,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	if len(secondline.line) == 0 {
 		return
 	}
-	qk.view.AddItem(secondline.pepend(fmt.Sprintf("%3d. ", qk.view.GetItemCount()+1), 0).ColorText(), "", nil)
+	qk.view.AddItem(secondline.prepend(fmt.Sprintf("%3d. ", qk.view.GetItemCount()+1), 0).ColorText(), "", nil)
 }
 
 func (qk *quick_view) new_search(t DateType, key SearchKey) {
