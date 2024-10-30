@@ -178,7 +178,7 @@ func (v *fzfmain) OpenKeymapFzf() {
 }
 func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
-	v.Frame.SetBorder(true)
+	// v.Frame.SetBorder(true)
 	v.input.SetLabel(">")
 	v.input.SetText("")
 	UpdateTitleAndColor(v.Frame.Box, sym.name())
