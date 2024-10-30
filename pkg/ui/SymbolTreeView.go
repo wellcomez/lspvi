@@ -374,7 +374,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 			if len(lines) > 0 {
 				line := lines[0]
 				var beginline = Range.Start.Line
-				line = strings.TrimLeft(line, "\t")
+				// line = strings.TrimLeft(line, "\t")
 				idx := strings.Index(line, sym.Name)
 				if idx >= 0 {
 					r := lsp.Range{
