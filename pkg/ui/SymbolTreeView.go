@@ -310,12 +310,12 @@ func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy"), func() {
 		ret.handle_commnad(copy_data)
 	}, false})
-	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy code"), func() {
+	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Code"), func() {
 		ret.copycode()
 	}, false})
-	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Path"), func() {
-		ret.handle_commnad(copy_path)
-	}, false})
+	// menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Path"), func() {
+	// 	ret.handle_commnad(copy_path)
+	// }, false})
 	ret.right_context = symboltree_view_context{
 		qk:        ret,
 		menu_item: menu_item,

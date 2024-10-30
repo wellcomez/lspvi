@@ -291,7 +291,7 @@ func substring(s string, b, e int) (string, error) {
 		if e == -1 {
 			return s[b:], nil
 		}
-		if e < len(s) {
+		if e <= len(s) {
 			return s[b:e], nil
 		}
 	}
