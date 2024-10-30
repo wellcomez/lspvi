@@ -62,12 +62,13 @@ func (l lsp_base) InitializeLsp(wk WorkSpace) (err error) {
 	if !l.core.inited {
 		err = l.core.lang.InitializeLsp(l.core, wk)
 		if err == nil {
-			l.core.Initialized()
-			l.core.Progress_notify()
-			debug.InfoLog(DebugTag, "InitializeLsp OK: ", l.core.lang)
-		} else {
-			debug.WarnLog(DebugTag, "InitializeLsp failed: ", err)
+			if err = l.core.Initialized(); err == nil {
+				l.core.Progress_notify()
+				debug.InfoLog(DebugTag, "InitializeLsp OK: ", l.core.lang)
+				return
+			}
 		}
+		debug.ErrorLog(DebugTag, "InitializeLsp failed: ", err)
 	}
 	return
 }
