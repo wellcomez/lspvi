@@ -98,13 +98,13 @@ func new_cmdline(main *mainui) *cmdline {
 		{cmd_reload, []string{"e!"}, "", func(s []string, c cmd_processor) {
 			get_cmd_actor(main, cmd_reload).handle()
 		}, nil},
-		{split_right, []string{"vs"}, "Split right", func(s []string, c cmd_processor) {
+		{split_right, []string{"vs"}, "", func(s []string, c cmd_processor) {
 			get_cmd_actor(main, split_right).handle()
 		}, nil},
-		{close_tab, []string{"closetab"}, "CloseTab", func(s []string, c cmd_processor) {
+		{close_tab, []string{"closetab"}, "", func(s []string, c cmd_processor) {
 			get_cmd_actor(main, close_tab).handle()
 		}, nil},
-		{open_picker_help, []string{"h", "help"}, "help", func(s []string, c cmd_processor) {
+		{open_picker_help, []string{"h", "help"}, "", func(s []string, c cmd_processor) {
 			get_cmd_actor(main, open_picker_help).handle()
 		}, nil},
 		{-1, []string{"search", "grep"}, "search", func(args []string, c cmd_processor) {
