@@ -49,8 +49,10 @@ type DirWalk struct {
 	result_count int
 	delay_query  string
 
-	run chan string
-	end chan bool
+	run          chan string
+	end          chan bool
+	select_index []int
+	// fzfdata      []string
 }
 
 var global_walk *filewalk.Filewalk
@@ -65,6 +67,7 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 		"",
 		make(chan string),
 		make(chan bool),
+		nil,
 	}
 	impl.set_fuzz(true)
 	list := impl.list
@@ -78,14 +81,7 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 	} else {
 		ret.UpdateData(impl, global_walk)
 	}
-	list.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
-		// if ret.fzf != nil {br
-		// 	data_index := ret.fzf.get_data_index(index)
-		// 	file := ret.filewalk.Filelist[data_index]
-		// 	v.main.OpenFileHistory(file, nil)
-		// }
-		v.hide()
-	})
+
 	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		ret.update_title()
 	})
@@ -124,15 +120,25 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 	for _, v := range data {
 		fzfdata = append(fzfdata, trim_project_filename(v, global_prj_root))
 	}
-	_, _, _, h := impl.list.GetRect()
+	dir.list.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
+		if len(dir.select_index) > 0 {
+			data_index := dir.select_index[index]
+			file := data[data_index]
+			dir.parent.main.OpenFileHistory(file, nil)
+			dir.parent.hide()
+		}
+	})
+	impl.list.Clear()
+	dir.select_index = []int{}
 	for i, v := range fzfdata {
-		if i > 4*h {
+		if i > 500 {
 			break
 		}
 		impl.list.AddColorItem([]colortext{
 			{FileIcon(v) + " ", 0, 0},
 			{v, 0, 0},
 		}, nil, nil)
+		dir.select_index = append(dir.select_index, i)
 	}
 	begin := 0
 	for {
@@ -211,23 +217,26 @@ func (wk *DirWalk) __UpdateQuery(query string) {
 	_, _, _, h := wk.list.GetRect()
 	n := 0
 	wk.list.Clear()
-	maxlen := 10 * h
+	maxlen := max(10*h, 1000)
+	select_index := []int{}
 	for fzf_index, fzf_sub_result := range result {
 		for i, v := range fzf_sub_result.selected_index {
 			if n > maxlen {
 				break
 			}
 			file := wk.fzf[fzf_index].task.data[v]
+			select_index = append(select_index, fzf_sub_result.begin_index+v)
 			t1 := convert_string_colortext(fzf_sub_result.selected_postion[i], file, 0, hl)
 			var sss = []colortext{{FileIcon(file) + " ", 0, 0}}
 			wk.list.AddColorItem(append(sss, t1...),
 				nil, nil)
 			n++
 		}
-		if n > 4*h {
+		if n > maxlen {
 			break
 		}
 	}
+	wk.select_index = select_index
 	go wk.parent.app.QueueUpdateDraw(func() {
 		wk.list.SetCurrentItem(0)
 	})
