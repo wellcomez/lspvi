@@ -435,12 +435,13 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 
 	cpp := create_lang_lsp(wk, CPP, lsp_lang_cpp{}, lsp_config.C)
 	golang := create_lang_lsp(wk, GO, lsp_lang_go{}, lsp_config.Golang)
+	rs := create_lang_lsp(wk, RUST, lsp_lang_rs{}, lsp_config.Golang)
 	py := create_lang_lsp(wk, PYTHON, lsp_lang_py{}, lsp_config.Py)
 	ts := create_lang_lsp(wk, TYPE_SCRIPT, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, lsp_config.Typescript)
 	js := create_lang_lsp(wk, JAVASCRIPT, lsp_ts{LanguageID: string(JAVASCRIPT)}, lsp_config.Javascript)
 	ret := &LspWorkspace{
 		clients: []lspclient{
-			cpp, py, golang, ts, js,
+			cpp, py, golang, ts, js, rs,
 		},
 		Wk:              wk,
 		lock_symbol_map: &sync.Mutex{},
