@@ -379,7 +379,7 @@ func (c cmd_processor) to_cmditem(arg []string) (a cmditem) {
 			desc: strings.Join(append([]string{c.descriptor}, arg...), " "),
 			id:   c.id,
 			handle: func() bool {
-				c.run(arg)
+				c.run(arg,c)
 				return true
 			},
 		},

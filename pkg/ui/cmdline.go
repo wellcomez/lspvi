@@ -44,71 +44,84 @@ func new_cmdline(main *mainui) *cmdline {
 	input.SetFieldBackgroundColor(tcell.ColorBlack)
 	input.SetInputCapture(code.Keyhandle)
 	code.Vim = NewVim(main)
+	setopt := []setopt{
+		{
+			[]string{"colorscheme"},
+			func() {
+				main.open_colorescheme()
+			},
+		},
+		{
+			[]string{"wrap"}, func() {
+				global_config.Wrap = !global_config.Wrap
+				global_config.Save()
+				for _, v := range SplitCode.code_collection {
+					v.change_wrap_appearance()
+				}
+			},
+		},
+		{
+			[]string{"vim"},
+			func() {
+				global_config.enablevim = !global_config.enablevim
+				global_config.Vim.Enable = &global_config.enablevim
+				global_config.Save()
+			},
+		},
+	}
 	code.cmds = []cmd_processor{
-		{-1, []string{"cn", "cp"}, "next/prev quick fix", func(s []string) {
+		{-1, []string{"cn", "cp"}, "next/prev quick fix", func(s []string, c cmd_processor) {
 			command := s[0]
 			if command != "cn" {
 				get_cmd_actor(main, vi_quick_prev).handle()
 			} else {
 				get_cmd_actor(main, vi_quick_next).handle()
 			}
-		}},
-		{cmd_clean_log, []string{"cleanlog"}, "Clear log", func(s []string) {
+		}, nil},
+		{cmd_clean_log, []string{"cleanlog"}, "Clear log", func(s []string, c cmd_processor) {
 			main.cleanlog()
-		}},
-		{cmd_save, []string{"w"}, "save", func(s []string) {
+		}, nil},
+		{cmd_save, []string{"w"}, "save", func(s []string, c cmd_processor) {
 			main.current_editor().Save()
-		}},
-		{cmd_quit, []string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string) {
+		}, nil},
+		{cmd_quit, []string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string, c cmd_processor) {
 			main.Close()
-		}},
-		{cmd_reload, []string{"e!"}, "Reload", func(s []string) {
+		}, nil},
+		{cmd_reload, []string{"e!"}, "Reload", func(s []string, c cmd_processor) {
 			main.current_editor().Reload()
-		}},
-		{-1, []string{"h", "help"}, "help", func(s []string) {
+		}, nil},
+		{-1, []string{"h", "help"}, "help", func(s []string, c cmd_processor) {
 			main.helpkey(true)
-		}},
-		{-1, []string{"search", "grep"}, "search", func(args []string) {
+		}, nil},
+		{-1, []string{"search", "grep"}, "search", func(args []string, c cmd_processor) {
 			code.OnSearchCommand(args)
-		}},
-		{-1, []string{"set"}, "set", func(args []string) {
-			code.OnSet(args)
-		}},
+		}, nil},
+		{-1, []string{"set"}, "set", func(args []string, c cmd_processor) {
+			s := strings.Join(args, " ")
+			for _, v := range c.opt {
+				s1 := strings.Join(v.name, " ")
+				if s1 == s {
+					v.handle()
+				}
+			}
+		}, setopt},
 	}
 
 	return code
 }
-func (cmd *cmdline) OnSet(args []string) bool {
-	if len(args) == 1 || len(args) == 0 {
-		return false
-	}
-	switch args[1] {
-	case "colorscheme":
-		{
-			cmd.main.open_colorescheme()
-		}
-	case "wrap":
-		{
-			global_config.Wrap = !global_config.Wrap
-			global_config.Save()
-			for _, v := range SplitCode.code_collection {
-				v.change_wrap_appearance()
-			}
-		}
-	}
-	return true
+
+type setopt struct {
+	name   []string
+	handle func()
 }
+
 func (cmdline *cmdline) ConvertCmdItem() (ret []cmditem) {
 	comands := cmdline.cmds
 	for i := range comands {
 		c := comands[i]
-		// if c.id < 0 {
-		// 	continue
-		// }
-		if c.arg0[0] == "set" {
-			ss := []string{"colorscheme", "wrap"}
-			for _, v := range ss {
-				a := c.to_cmditem([]string{v})
+		if len(c.opt) > 0 {
+			for _, v := range c.opt {
+				a := c.to_cmditem(v.name)
 				ret = append(ret, a)
 			}
 		} else {
@@ -131,7 +144,8 @@ type cmd_processor struct {
 	id         command_id
 	arg0       []string
 	descriptor string
-	run        func([]string)
+	run        func([]string, cmd_processor)
+	opt        []setopt
 }
 
 func (cmd *cmd_processor) displaystring() string {
@@ -162,7 +176,7 @@ func (cmd *cmdline) OnComand(commandinput string) bool {
 	}
 	for _, v := range cmd.cmds {
 		if v.is(command) {
-			v.run(args)
+			v.run(args, v)
 			return true
 		}
 	}
