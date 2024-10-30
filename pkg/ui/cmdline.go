@@ -44,29 +44,39 @@ func new_cmdline(main *mainui) *cmdline {
 	input.SetFieldBackgroundColor(tcell.ColorBlack)
 	input.SetInputCapture(code.Keyhandle)
 	code.Vim = NewVim(main)
-	setopt := []setopt{
+	setopt := []cmd_processor{
 		{
+			-1,
 			[]string{"colorscheme"},
-			func() {
+			"set colorscheme",
+			func([]string, cmd_processor) {
 				main.open_colorescheme()
 			},
+			nil,
 		},
 		{
-			[]string{"wrap"}, func() {
+			-1,
+			[]string{"wrap"},
+			"change editor wrap",
+			func([]string, cmd_processor) {
 				global_config.Wrap = !global_config.Wrap
 				global_config.Save()
 				for _, v := range SplitCode.code_collection {
 					v.change_wrap_appearance()
 				}
 			},
+			nil,
 		},
 		{
+			-1,
 			[]string{"vim"},
-			func() {
+			"switch vim mode",
+			func([]string, cmd_processor) {
 				global_config.enablevim = !global_config.enablevim
 				global_config.Vim.Enable = &global_config.enablevim
 				global_config.Save()
 			},
+			nil,
 		},
 	}
 	code.cmds = []cmd_processor{
@@ -99,9 +109,9 @@ func new_cmdline(main *mainui) *cmdline {
 		{-1, []string{"set"}, "set", func(args []string, c cmd_processor) {
 			s := strings.Join(args, " ")
 			for _, v := range c.opt {
-				s1 := strings.Join(v.name, " ")
+				s1 := strings.Join(v.arg0, " ")
 				if s1 == s {
-					v.handle()
+					v.run(nil, v)
 				}
 			}
 		}, setopt},
@@ -110,18 +120,14 @@ func new_cmdline(main *mainui) *cmdline {
 	return code
 }
 
-type setopt struct {
-	name   []string
-	handle func()
-}
-
 func (cmdline *cmdline) ConvertCmdItem() (ret []cmditem) {
 	comands := cmdline.cmds
 	for i := range comands {
 		c := comands[i]
 		if len(c.opt) > 0 {
 			for _, v := range c.opt {
-				a := c.to_cmditem(v.name)
+				a := c.to_cmditem(v.arg0)
+				a.Cmd.desc = v.descriptor
 				ret = append(ret, a)
 			}
 		} else {
@@ -145,7 +151,7 @@ type cmd_processor struct {
 	arg0       []string
 	descriptor string
 	run        func([]string, cmd_processor)
-	opt        []setopt
+	opt        []cmd_processor
 }
 
 func (cmd *cmd_processor) displaystring() string {
