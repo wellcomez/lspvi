@@ -1239,7 +1239,7 @@ func (vl *view_link) next_view(t direction) view_id {
 }
 func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 	eventname := event.Name()
-	debug.DebugLog("main ui recieved ",
+	debug.TraceLog("main ui recieved ",
 		main.get_focus_view_id(), "eventname", eventname, "runne", strconv.QuoteRune(event.Rune()), event.Modifiers())
 	//Ctrl+O
 	dialog := main.Dialog()
