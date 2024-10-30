@@ -451,7 +451,7 @@ func (c *SymbolTreeView) handle_commnad(cmd command_id) {
 			switch cmd {
 			case copy_path:
 				{
-					c.main.CopyToClipboard(fmt.Sprintf("%s:%d", sym.Location.URI.AsPath().String(), sym.Location.Range.Start.Line))
+					c.main.CopyToClipboard(fmt.Sprintf("%s:%d", sym.Location.URI.AsPath().String(), sym.Location.Range.Start.Line+1))
 				}
 			case copy_data:
 				{
