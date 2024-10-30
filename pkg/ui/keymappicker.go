@@ -64,8 +64,13 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	keys = append(keys, v.main.CmdLine().ConvertCmdItem()...)
 	// keys = append(keys, v.main.vi_key_map()...)
 	keymaplist := []string{}
+	maxlen := 0
 	for _, v := range keys {
-		keymaplist = append(keymaplist, fmt.Sprintf("%-20s %s", v.Key.displaystring(), v.Cmd.desc))
+		maxlen = max(maxlen, len(v.Key.displaystring()))
+	}
+	fmtstr := "%-" + fmt.Sprintf("%ds", maxlen+4) + " %s"
+	for _, v := range keys {
+		keymaplist = append(keymaplist, fmt.Sprintf(fmtstr, v.Key.displaystring(), v.Cmd.desc))
 	}
 
 	x := new_fzflist_impl(v)
