@@ -311,28 +311,29 @@ func new_fzf_on_list(list *customlist, fuzz bool) *fzf_on_listview {
 	}
 	return ret
 }
-func (fzf *fzf_on_listview) OnSearch(txt string, update bool) string {
+func (fzfdata *fzf_on_listview) OnSearch(txt string, update bool) string {
 	var result fzflib.SearchResult
-	old := fzf.query
-	if len(txt) > 0 && fzf.fzf != nil {
-		fzf.fzf.Search(txt)
-		fzf.query = txt
-		result = <-fzf.fzf.GetResultChannel()
-		fzf.selected_index = []int{}
-		fzf.selected_postion = [][]int{}
+	old := fzfdata.query
+	fzf := fzfdata.fzf
+	if len(txt) > 0 && fzf != nil {
+		fzf.Search(txt)
+		fzfdata.query = txt
+		result = <-fzf.GetResultChannel()
+		fzfdata.selected_index = []int{}
+		fzfdata.selected_postion = [][]int{}
 		ss := []string{}
 		for _, v := range result.Matches {
-			fzf.selected_index = append(fzf.selected_index, int(v.HayIndex))
-			fzf.selected_postion = append(fzf.selected_postion, v.Positions)
+			fzfdata.selected_index = append(fzfdata.selected_index, int(v.HayIndex))
+			fzfdata.selected_postion = append(fzfdata.selected_postion, v.Positions)
 			ss = append(ss, v.Key)
 		}
-		fzf.selected_text = ss
+		fzfdata.selected_text = ss
 	} else {
-		fzf.reset_selection_index()
+		fzfdata.reset_selection_index()
 
 	}
 	if update {
-		fzf.refresh_list()
+		fzfdata.refresh_list()
 	}
 	return old
 }
