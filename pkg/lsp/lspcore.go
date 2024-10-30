@@ -61,6 +61,12 @@ type lspcore struct {
 	config LangConfig
 }
 
+// Handle implements jsonrpc2.Handler.
+func (core *lspcore) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	debug.DebugLog(DebugTag, "lspcore.Handle", req.Method, req.Notif)
+	core.handle.Handle(ctx, con, req)
+}
+
 func (core *lspcore) RunComandInConfig() bool {
 	x := core.config
 	if len(x.Cmd) > 0 {
@@ -118,7 +124,7 @@ func (core *lspcore) Launch_Lsp_Server(cmd *exec.Cmd) error {
 	conn := jsonrpc2.NewConn(
 		context.Background(),
 		jsonrpc2.NewBufferedStream(rwc, jsonrpc2.VSCodeObjectCodec{}),
-		core.handle,
+		core,
 	)
 	core.conn = conn
 	return nil
@@ -843,7 +849,7 @@ func mainxx2() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
+	debug.DebugLogf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
 
 }
 func notificationDispatcher(method string, req json.RawMessage) (ret string, err error) {
