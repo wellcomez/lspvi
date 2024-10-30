@@ -80,25 +80,23 @@ func new_cmdline(main *mainui) *cmdline {
 		},
 	}
 	code.cmds = []cmd_processor{
-		{-1, []string{"cn", "cp"}, "next/prev quick fix", func(s []string, c cmd_processor) {
-			command := s[0]
-			if command != "cn" {
-				get_cmd_actor(main, vi_quick_prev).handle()
-			} else {
-				get_cmd_actor(main, vi_quick_next).handle()
-			}
+		{vi_quick_prev, []string{"cp"}, "", func(s []string, c cmd_processor) {
+			get_cmd_actor(main, vi_quick_prev).handle()
 		}, nil},
-		{cmd_clean_log, []string{"cleanlog"}, "Clear log", func(s []string, c cmd_processor) {
-			main.cleanlog()
+		{vi_quick_next, []string{"cn"}, "", func(s []string, c cmd_processor) {
+			get_cmd_actor(main, vi_quick_next).handle()
 		}, nil},
-		{cmd_save, []string{"w"}, "save", func(s []string, c cmd_processor) {
-			main.current_editor().Save()
+		{cmd_clean_log, []string{"cleanlog"}, "", func(s []string, c cmd_processor) {
+			get_cmd_actor(main, cmd_clean_log).handle()
+		}, nil},
+		{cmd_save, []string{"w"}, "", func(s []string, c cmd_processor) {
+			get_cmd_actor(main, vi_save).handle()
 		}, nil},
 		{cmd_quit, []string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string, c cmd_processor) {
 			main.Close()
 		}, nil},
-		{cmd_reload, []string{"e!"}, "Reload", func(s []string, c cmd_processor) {
-			main.current_editor().Reload()
+		{cmd_reload, []string{"e!"}, "", func(s []string, c cmd_processor) {
+			get_cmd_actor(main, cmd_reload).handle()
 		}, nil},
 		{split_right, []string{"vs"}, "Split right", func(s []string, c cmd_processor) {
 			get_cmd_actor(main, split_right).handle()
@@ -106,8 +104,8 @@ func new_cmdline(main *mainui) *cmdline {
 		{close_tab, []string{"closetab"}, "CloseTab", func(s []string, c cmd_processor) {
 			get_cmd_actor(main, close_tab).handle()
 		}, nil},
-		{-1, []string{"h", "help"}, "help", func(s []string, c cmd_processor) {
-			main.helpkey(true)
+		{open_picker_help, []string{"h", "help"}, "help", func(s []string, c cmd_processor) {
+			get_cmd_actor(main, open_picker_help).handle()
 		}, nil},
 		{-1, []string{"search", "grep"}, "search", func(args []string, c cmd_processor) {
 			code.OnSearchCommand(args)
@@ -130,6 +128,7 @@ func (cmdline *cmdline) ConvertCmdItem() (ret []cmditem) {
 	comands := cmdline.cmds
 	for i := range comands {
 		c := comands[i]
+
 		if len(c.opt) > 0 {
 			for _, v := range c.opt {
 				a := c.to_cmditem(v.arg0)
@@ -138,6 +137,10 @@ func (cmdline *cmdline) ConvertCmdItem() (ret []cmditem) {
 			}
 		} else {
 			a := c.to_cmditem(nil)
+			if c.id != -1 {
+				v := get_cmd_actor(cmdline.main, c.id)
+				a.Cmd.desc = v.desc
+			}
 			ret = append(ret, a)
 		}
 	}
