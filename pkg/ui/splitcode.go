@@ -79,16 +79,16 @@ func (c CodeSplit) TabView(index int) *CodeView {
 	return nil
 }
 
-func SplitClose(code *CodeView) context_menu_item {
+func SplitClose(code CodeEditor) context_menu_item {
 	return context_menu_item{item: create_menu_item("Close"), handle: func() {
 		SplitCode.Remove(code)
 		// code.main.Right_context_menu().remove(code.rightmenu)
-	}, hide: !(code.id > view_code)}
+	}, hide: !(code.vid() > view_code)}
 }
 
-func (SplitCode *CodeSplit) Remove(code *CodeView) {
-	SplitCode.layout.RemoveItem(code.view)
-	id := code.id
+func (SplitCode *CodeSplit) Remove(code CodeEditor) {
+	SplitCode.layout.RemoveItem(code.Primitive())
+	id := code.vid()
 	var s = make(map[view_id]*CodeView)
 	for k, v := range SplitCode.code_collection {
 		if v != code {
@@ -100,9 +100,9 @@ func (SplitCode *CodeSplit) Remove(code *CodeView) {
 			SplitCode.index = append(SplitCode.index[:i], SplitCode.index[i+1:]...)
 		}
 	}
-	SplitCode.resize.remove(code.view_link)
+	SplitCode.resize.remove(code.Viewlink())
 	SplitCode.code_collection = s
-	global_file_watch.Remove(code)
+	global_file_watch.Remove(code.ContentChangeHandle())
 }
 func SplitRight(code *CodeView) context_menu_item {
 	return context_menu_item{item: create_menu_item("SplitRight"), handle: func() {
@@ -118,12 +118,12 @@ func (code *CodeView) SplitRight() *CodeView {
 	return codeview2
 }
 
-func create_split_codeview(code *CodeView) *CodeView {
+func create_split_codeview(code CodeEditor) *CodeView {
 	codeview2 := SplitCode.New()
 	codeview2.view.SetBorder(true)
 	SplitCode.SetActive(codeview2)
-	codeview2.view_link.Width = code.Width
-	codeview2.view_link.Height = code.Height
+	codeview2.view_link.Width = code.Viewlink().Width
+	codeview2.view_link.Height = code.Viewlink().Height
 	SplitCode.AddCode(codeview2)
 	SplitCode.resize.add(codeview2.view_link, SplitCode.resize.LastIndex()+1)
 	return codeview2

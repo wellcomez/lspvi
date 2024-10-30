@@ -86,6 +86,8 @@ const (
 	cmd_clean_log
 	cmd_save
 	cmd_reload
+	split_right
+	close_tab
 )
 
 func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_item {
@@ -131,6 +133,19 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.current_editor().Reload()
 			return true
 		}}
+	case close_tab:
+		return cmdactor{id, "CloseTab", func() bool {
+			SplitClose(m.current_editor())
+			return true
+		}}
+	case split_right:
+		return cmdactor{id, "Split right", func() bool {
+			editor := m.current_editor()
+			codeview2 := create_split_codeview(editor)
+			filename := editor.Path()
+			codeview2.open_file_lspon_line_option(filename, nil, true, nil)
+			return true
+		}}
 	case open_picker_qfh:
 		return cmdactor{id, "Quickfix history", func() bool {
 			m.open_qfh_query()
@@ -143,7 +158,6 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}}
 	case open_picker_document_symbol:
 		return cmdactor{id, "Open symbol", func() bool {
-
 			m.open_document_symbol_picker()
 			return true
 		}}

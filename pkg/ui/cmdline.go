@@ -100,6 +100,12 @@ func new_cmdline(main *mainui) *cmdline {
 		{cmd_reload, []string{"e!"}, "Reload", func(s []string, c cmd_processor) {
 			main.current_editor().Reload()
 		}, nil},
+		{split_right, []string{"vs"}, "Split right", func(s []string, c cmd_processor) {
+			get_cmd_actor(main, split_right).handle()
+		}, nil},
+		{close_tab, []string{"closetab"}, "CloseTab", func(s []string, c cmd_processor) {
+			get_cmd_actor(main, close_tab).handle()
+		}, nil},
 		{-1, []string{"h", "help"}, "help", func(s []string, c cmd_processor) {
 			main.helpkey(true)
 		}, nil},

@@ -90,6 +90,9 @@ func (code *CodeView) Match() {
 		code.view.JumpToMatchingBrace()
 	}
 }
+func (code CodeView) Viewlink() *view_link {
+	return code.view_link
+}
 func (code CodeView) vid() view_id {
 	return code.id
 }
@@ -1341,6 +1344,10 @@ func (c CodeView) async_lsp_open(cb func(sym *lspcore.Symbol_file)) {
 			}
 		})
 	}
+}
+
+func (code *CodeView) ContentChangeHandle() change_reciever {
+	return code
 }
 func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus bool) {
 	code.open_file_lspon_line_option(filename, line, focus, nil)
