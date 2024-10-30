@@ -2,8 +2,9 @@ package lspcore
 
 import (
 	// "fmt"
-	"github.com/tectiv3/go-lsp"
 	"os/exec"
+
+	"github.com/tectiv3/go-lsp"
 )
 
 func (l lsp_ts) IsSource(filename string) bool {
@@ -34,7 +35,7 @@ func (l lsp_ts) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	if !core.RunComandInConfig() {
 		core.cmd = exec.Command(cmd, "--stdio")
 	}
-	err := core.Lauch_Lsp_Server(core.cmd)
+	err := core.Launch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
 }

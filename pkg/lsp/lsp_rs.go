@@ -24,7 +24,7 @@ func (l lsp_lang_rs) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	if !core.RunComandInConfig() {
 		core.cmd = exec.Command("rust-analyzer")
 	}
-	err := core.Lauch_Lsp_Server(core.cmd)
+	err := core.Launch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
 }

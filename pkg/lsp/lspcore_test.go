@@ -26,13 +26,21 @@ func (h LspHandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 	println("handle", req.Method)
 }
 
-var cpp_wk = WorkSpace{Path: cpp_root, Callback: LspHandle{}}
-var js_wk = WorkSpace{Path: filepath.Join(test_root, "testjs"), Callback: LspHandle{}}
+type log2 struct {
+}
+
+func (log2) LspLogOutput(string, string) {
+
+}
+
+var logcb log2
+var cpp_wk = WorkSpace{Path: cpp_root, Callback: logcb}
+var js_wk = WorkSpace{Path: filepath.Join(test_root, "testjs"), Callback: logcb}
 
 func Test_lspcore_init(t *testing.T) {
 	lspcore := &lspcore{}
 	cmd := exec.Command("clangd")
-	err := lspcore.Lauch_Lsp_Server(cmd)
+	err := lspcore.Launch_Lsp_Server(cmd)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,7 +52,7 @@ func Test_lspcore_init(t *testing.T) {
 }
 func Test_lspcpp_init(t *testing.T) {
 	client := lsp_base{
-		core: &lspcore{lang: lsp_lang_cpp{}, handle: cpp_wk.Callback, LanguageID: string(CPP)},
+		core: &lspcore{lang: lsp_lang_cpp{}, handle: nil, LanguageID: string(CPP)},
 		wk:   &cpp_wk}
 	err := client.Launch_Lsp_Server()
 	if err != nil {
@@ -58,7 +66,7 @@ func Test_lspcpp_init(t *testing.T) {
 func Test_lsp_js_init(t *testing.T) {
 	// testjs
 	client := lsp_base{
-		core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT)}, handle: js_wk.Callback, LanguageID: string(JAVASCRIPT)},
+		core: &lspcore{lang: lsp_ts{LanguageID: string(JAVASCRIPT)}, handle: nil, LanguageID: string(JAVASCRIPT)},
 		wk:   &js_wk}
 	err := client.Launch_Lsp_Server()
 	if err != nil {
@@ -70,11 +78,11 @@ func Test_lsp_js_init(t *testing.T) {
 	}
 	index_js := filepath.Join(js_wk.Path, "index.js")
 	index_ts := filepath.Join(js_wk.Path, "index.ts")
-	err = client.DidOpen(index_js)
+	err = client.DidOpen(SourceCode{Path: index_js}, 0)
 	if err != nil {
 		t.Error(err)
 	}
-	err = client.DidOpen(index_ts)
+	err = client.DidOpen(SourceCode{Path: index_ts}, 0)
 	if err != nil {
 		t.Error(err)
 	}
@@ -112,7 +120,7 @@ func Test_lsp_js_init(t *testing.T) {
 func Test_lspcpp_open(t *testing.T) {
 
 	client := lsp_base{
-		core: &lspcore{lang: lsp_lang_cpp{}, handle: cpp_wk.Callback, LanguageID: string(CPP)},
+		core: &lspcore{lang: lsp_lang_cpp{}, handle: nil, LanguageID: string(CPP)},
 		wk:   &cpp_wk,
 	}
 	err := client.Launch_Lsp_Server()
@@ -123,7 +131,7 @@ func Test_lspcpp_open(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = client.DidOpen(d_cpp)
+	err = client.DidOpen(SourceCode{Path: d_cpp}, 1)
 	if err != nil {
 		log.Fatal(err)
 	}

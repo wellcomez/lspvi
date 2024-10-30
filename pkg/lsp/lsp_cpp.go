@@ -145,7 +145,7 @@ func (l lsp_lang_cpp) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	if !core.RunComandInConfig() {
 		core.cmd = exec.Command(cmd, root, "--background-index")
 	}
-	err := core.Lauch_Lsp_Server(core.cmd)
+	err := core.Launch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
 }

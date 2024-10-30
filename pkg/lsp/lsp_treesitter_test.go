@@ -26,7 +26,7 @@ func Test_C(t *testing.T) {
 }
 func Test_cpp_outline(t *testing.T) {
 	filename := "/home/z/dev/lsp/goui/pkg/lsp/tests/cpp/d.h"
-	ts := GetNewTreeSitter(filename,nil)
+	ts := GetNewTreeSitter(filename,CodeChangeEvent{})
 	ts.Init(func(ts *TreeSitter) {
 
 	})
@@ -34,7 +34,7 @@ func Test_cpp_outline(t *testing.T) {
 
 func Test_rs_outline(t *testing.T) {
 	filename := "/home/z/dev/gnvim/ui/src/render.rs"
-	ts := GetNewTreeSitter(filename,nil)
+	ts := GetNewTreeSitter(filename,CodeChangeEvent{})
 	ts.Init(func(ts *TreeSitter) {
 
 	})

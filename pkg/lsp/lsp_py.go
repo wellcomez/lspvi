@@ -31,7 +31,7 @@ func (l lsp_lang_py) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 		return nil
 	}
 	core.cmd = exec.Command("python3", "-m", "pylsp")
-	err := core.Lauch_Lsp_Server(core.cmd)
+	err := core.Launch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
 }

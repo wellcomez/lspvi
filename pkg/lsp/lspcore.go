@@ -16,6 +16,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
+
 	// "github.com/tectiv3/go-lsp/jsonrpc"
 	"zen108.com/lspvi/pkg/debug"
 
@@ -84,7 +85,7 @@ func (e lsp_server_errorlog) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
+func (core *lspcore) Launch_Lsp_Server(cmd *exec.Cmd) error {
 
 	// cmd := exec.Command("clangd", "--log=verbose")
 	stdin, err := cmd.StdinPipe()
@@ -495,7 +496,7 @@ func (core *lspcore) document_semantictokens_full(file string) (result *lsp.Sema
 		},
 	}
 	var r lsp.SemanticTokens
-	if err = core.conn.Call(context.Background(), "textDocument/semanticTokens/full", params, &r);err==nil{
+	if err = core.conn.Call(context.Background(), "textDocument/semanticTokens/full", params, &r); err == nil {
 		result = &r
 	}
 	return
