@@ -553,31 +553,31 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 	return fmt.Errorf("sym lsp is nil")
 }
 
-func newFunction1(DidSave bool, sym *Symbol_file, OpenClose bool) {
-	if DidSave {
-		buf, err := os.ReadFile(sym.Filename)
-		var text string
-		if err == nil {
-			text = string(buf)
-		}
-		sym.lsp.DidSave(sym.Filename, text)
-	} else if OpenClose {
-		wk := sym.Wk
-		if err := wk.CloseSymbolFile(sym); err != nil {
-			debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose close symbol file failed", err)
-		} else if sym, err := sym.Wk.Open(sym.Filename); sym != nil {
-			if err != nil {
-				debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose open symbol file failed", err)
-			}
-			if err := sym.LspLoadSymbol(); err != nil {
-				debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose load symbol failed", err, sym.Filename)
-			} else {
-				debug.InfoLog(LSP_DEBUG_TAG, "OpenClose load symbol success", sym.Filename)
-			}
-		}
+// func newFunction1(DidSave bool, sym *Symbol_file, OpenClose bool) {
+// 	if DidSave {
+// 		buf, err := os.ReadFile(sym.Filename)
+// 		var text string
+// 		if err == nil {
+// 			text = string(buf)
+// 		}
+// 		sym.lsp.DidSave(sym.Filename, text)
+// 	} else if OpenClose {
+// 		wk := sym.Wk
+// 		if err := wk.CloseSymbolFile(sym); err != nil {
+// 			debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose close symbol file failed", err)
+// 		} else if sym, err := sym.Wk.Open(sym.Filename); sym != nil {
+// 			if err != nil {
+// 				debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose open symbol file failed", err)
+// 			}
+// 			if err := sym.LspLoadSymbol(); err != nil {
+// 				debug.ErrorLog(LSP_DEBUG_TAG, "OpenClose load symbol failed", err, sym.Filename)
+// 			} else {
+// 				debug.InfoLog(LSP_DEBUG_TAG, "OpenClose load symbol success", sym.Filename)
+// 			}
+// 		}
 
-	}
-}
+// 	}
+// }
 func (sym *Symbol_file) DidSave() {
 	if sym.lsp != nil {
 		buf, err := os.ReadFile(sym.Filename)
