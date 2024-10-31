@@ -40,20 +40,20 @@ jobs:
         run: go build -o ${{ matrix.output }}
 
       # Create package with additional files
-      - name: Package Release
-        shell: bash
-        run: |
-          mkdir release
-          cp ${{ matrix.output }} release/
-          cp README.md release/ || true
-          cp LICENSE release/ || true
-          cp -r configs/* release/ || true
+      # - name: Package Release
+      #   shell: bash
+      #   run: |
+      #     mkdir release
+      #     cp ${{ matrix.output }} release/
+      #     cp README.md release/ || true
+      #     # cp LICENSE release/ || true
+      #     # cp -r configs/* release/ || true
           
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            7z a ${{ matrix.archive }} ./release/*
-          else
-            tar -czf ${{ matrix.archive }} -C release .
-          fi
+      #     if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+      #       7z a ${{ matrix.archive }} ./release/*
+      #     else
+      #       tar -czf ${{ matrix.archive }} -C release .
+      #     fi
 
       # Create Release and upload
       - name: Create Release
@@ -76,6 +76,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ matrix.archive }}
-          asset_name: ${{ matrix.archive }}
+          asset_path: ./${{ matrix.output }}
+          asset_name: ${{ matrix.output }}
           asset_content_type: application/octet-stream
