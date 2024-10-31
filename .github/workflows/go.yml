@@ -45,12 +45,12 @@ jobs:
 
 
     - name: Release
-    uses: softprops/action-gh-release@v1
-    if: startsWith(github.ref, 'refs/tags/')
-    with:
-      files: ${{ matrix.output }}
-    env:
-      GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: ${{ matrix.output }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
 
       
     # - name: Create Release
