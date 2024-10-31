@@ -43,20 +43,27 @@ jobs:
       run: go build -o ${{ matrix.output }}
 
 
-      
+
+    - name: Release
+    uses: softprops/action-gh-release@v1
+    if: startsWith(github.ref, 'refs/tags/')
+    with:
+      files: ${{ matrix.output }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.RTOKEN }}
 
       
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
-      with:
-          tag_name: v${{ github.run_number }}  # Or your version like v1.0.0
-          # Don't use refs/tags/ prefix
-          release_name: Release v${{ github.run_number }}
-          draft: false
-          prerelease: false
+    # - name: Create Release
+    #   id: create_release
+    #   uses: actions/create-release@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+    #   with:
+    #       tag_name: v${{ github.run_number }}  # Or your version like v1.0.0
+    #       # Don't use refs/tags/ prefix
+    #       release_name: Release v${{ github.run_number }}
+    #       draft: false
+    #       prerelease: false
 
 
 
