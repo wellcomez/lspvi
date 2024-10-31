@@ -426,13 +426,19 @@ func java_outline(ts *TreeSitter, cb outlinecb) {
 	ts.Outline = s.Class_object
 }
 
-type outlinecb func(*TreeSitter, []*lsp.SymbolInformation) []*lsp.SymbolInformation
+type outlinecb func(*TreeSitter, *OutlineSymolList)
+type OutlineSymolList struct {
+	items []*lsp.SymbolInformation
+}
 
+func (o *OutlineSymolList) Add(item *lsp.SymbolInformation) {
+	o.items = append(o.items, item)
+}
 func rs_outline(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {
 		return
 	}
-	items := []*lsp.SymbolInformation{}
+	items := OutlineSymolList{}
 	var ret []Outline
 	if ts.tsdef.outline != nil {
 		if r, err := ts.query_buf_outline(ts.tsdef.outline); err != nil {
@@ -482,7 +488,7 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 			}
 		}
 		if sym != nil {
-			items = append(items, sym)
+			items.Add(sym)
 		}
 	}
 	lang := lsp_dummy{}
@@ -497,37 +503,15 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 	var s = Symbol_file{lsp: lsp_base{core: core}}
 	document_symbol := []lsp.SymbolInformation{}
 	if cb != nil {
-		items = cb(ts, items)
+		cb(ts, &items)
 	}
-	for _, v := range items {
+	for _, v := range items.items {
 		document_symbol = append(document_symbol, *v)
 	}
 	s.build_class_symbol(document_symbol, 0, nil)
 	ts.Outline = s.Class_object
 }
 
-func foreach_check(items []*lsp.SymbolInformation, Range lsp.Range, item *TreeSitterSymbol, check func(*lsp.SymbolInformation, *TreeSitterSymbol) bool) {
-	var matched *lsp.SymbolInformation
-	for i := range items {
-		v := items[i]
-		r := v.Location.Range
-		if Range.Overlaps(r) {
-			if matched == nil {
-				matched = v
-			} else {
-				prev_range := matched.Location.Range
-				new_range := v.Location.Range
-				if new_range.Overlaps(prev_range) {
-					matched = v
-				}
-			}
-		}
-	}
-	if matched == nil {
-		return
-	}
-	check(matched, item)
-}
 func bash_parser(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {
 		return
@@ -552,8 +536,8 @@ func bash_parser(ts *TreeSitter, cb outlinecb) {
 		return ts.Outline[i].SymInfo.Location.Range.Start.Line < ts.Outline[j].SymInfo.Location.Range.Start.Line
 	})
 }
-func yaml_group(ts *TreeSitter, si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
-	items := si
+func yaml_group(ts *TreeSitter, si *OutlineSymolList) {
+	items := si.items
 	sort.Slice(items, func(i, j int) bool {
 		return items[i].Location.Range.Start.Line < items[j].Location.Range.Start.Line
 	})
@@ -579,18 +563,18 @@ func yaml_group(ts *TreeSitter, si []*lsp.SymbolInformation) []*lsp.SymbolInform
 			ret = append(ret, newone)
 		}
 	}
-	return ret
+	si.items = ret
 }
 
 var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(func(ts *TreeSitter, o outlinecb) {
-		rs_outline(ts, func(ts *TreeSitter, si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
-			if len(si) > 0 {
+		rs_outline(ts, func(ts *TreeSitter, si *OutlineSymolList) {
+			if len(si.items) > 0 {
 				lines := []string{}
 				if len(ts.sourceCode) > 0 {
 					lines = strings.Split(string(ts.sourceCode), "\n")
 				}
-				ret := si
+				ret := append([]*lsp.SymbolInformation{}, si.items...)
 				for _, v := range ret {
 					if is_class(v.Kind) {
 						line := lines[v.Location.Range.Start.Line]
@@ -602,9 +586,8 @@ var tree_sitter_lang_map = []*ts_lang_def{
 						continue
 					}
 				}
-				return ret
+				si.items = ret
 			}
-			return si
 		})
 	}).set_default_outline(),
 	new_tsdef("cpp", lsp_dummy{}, ts_cpp.GetLanguage()).set_ext([]string{"hpp", "cc", "cpp"}).setparser(rs_outline),
@@ -619,7 +602,7 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("css", lsp_dummy{}, ts_css.GetLanguage()).set_ext([]string{"css"}).setparser(rs_outline),
 	new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),
 	new_tsdef("html", lsp_dummy{}, ts_html.GetLanguage()).set_ext([]string{"html"}).setparser(rs_outline),
-	new_tsdef("toml", lsp_dummy{}, ts_toml.GetLanguage()).set_ext([]string{"toml"}).setparser( func(ts *TreeSitter, o outlinecb) {
+	new_tsdef("toml", lsp_dummy{}, ts_toml.GetLanguage()).set_ext([]string{"toml"}).setparser(func(ts *TreeSitter, o outlinecb) {
 		rs_outline(ts, yaml_group)
 	}),
 	new_tsdef("json", lsp_dummy{}, ts_json.GetLanguage()).set_ext([]string{"json"}).setparser(func(ts *TreeSitter, o outlinecb) {
