@@ -498,7 +498,7 @@ func (m *mainui) get_implementation(pos lsp.Range, filename string, option *lspc
 		}
 	}
 	m.lspmgr.Handle.OnGetImplement(
-		lspcore.SymolSearchKey{Key: x.Key, File: x.File},
+		lspcore.SymolSearchKey{Key: x.Key, File: x.File, Ranges: x.Ranges},
 		lspcore.ImplementationResult{}, err, option)
 }
 func (m *mainui) get_refer(pos lsp.Range, filename string) {
@@ -512,7 +512,7 @@ func (m *mainui) get_refer(pos lsp.Range, filename string) {
 		}
 	}
 	m.lspmgr.Handle.OnLspRefenceChanged(
-		lspcore.SymolSearchKey{Key: x.Key, File: x.File},
+		lspcore.SymolSearchKey{Key: x.Key, File: filename, Ranges: x.Ranges},
 		ret, err)
 }
 
