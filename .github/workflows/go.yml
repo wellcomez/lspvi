@@ -5,9 +5,9 @@ name: Go
 
 on:
   push:
-    branches: [ "fzfmac" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "fzfmac" ]
+    branches: [ "master" ]
 
 jobs:
 
@@ -20,16 +20,13 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.21.3'
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v4.0.3
-      with:
-        node-version: 18.17.1
+
     - name: Run Build
       run: |
         echo "Manually triggered build"
         # Add your build commands here
     - name: Build
-      run: all=1 web=1 bash build.sh
+      run:  go build
 
     - name: Create Release
       id: create_release
@@ -42,15 +39,7 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Upload macOS Artifact
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./lspvi-darwin
-        asset_name: lspvi-darwin
-        asset_content_type: application/octet-stream
+
 
     - name: Upload Linux Artifact
       uses: actions/upload-release-asset@v1
@@ -58,6 +47,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./lspvi-linux
-        asset_name: lspvi-linux
+        asset_path: ./lspvi
+        asset_name: lspvi
         asset_content_type: application/octet-stream
