@@ -368,6 +368,11 @@ func (sym *Symbol_file) CallHierarchyIncomingCall(callitem lsp.CallHierarchyItem
 	sym.on_error(err)
 	return
 }
+func (sym *Symbol_file) TreeSitter() {
+	sym.Ts = GetNewTreeSitter(sym.Filename, CodeChangeEvent{File: sym.Filename, Full: true})
+	sym.Ts.initblock()
+	sym.Class_object = sym.Ts.Outline
+}
 func (sym *Symbol_file) PrepareCallHierarchy(loc lsp.Location) (ret []lsp.CallHierarchyItem, err error) {
 	if sym.lsp == nil {
 		err = fmt.Errorf("lsp is null")
@@ -576,8 +581,8 @@ func (sym *Symbol_file) NotifyCodeChange(event CodeChangeEvent) error {
 // 			}
 // 		}
 
-// 	}
-// }
+//		}
+//	}
 func (sym *Symbol_file) DidSave() {
 	if sym.lsp != nil {
 		buf, err := os.ReadFile(sym.Filename)
