@@ -47,7 +47,9 @@ func (view *qf_index_view_history) DeleteRange(seleteRange []int) {
 func (view *qf_index_view_history) Delete(index int) {
 	view.List.RemoveItem(index)
 	if len(view.keys) > 0 {
-		view.Add(view.keys[index], false)
+		x := view.keys[index]
+		view.Add(x, false)
+	
 	}
 }
 func (ret *qf_index_view) Load(viewid view_id) bool {
@@ -156,7 +158,7 @@ func (view *qf_index_view) MouseHandler() func(action tview.MouseAction, event *
 	}
 }
 func (view *qf_index_view_history) add_or_remove_data(data qf_history_data, add bool) error {
-	h, err := new_qf_history(view.main)
+	h, err := new_qf_history(view.main.lspmgr.Wk)
 	if err != nil {
 		return err
 	}

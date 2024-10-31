@@ -4,13 +4,8 @@
 package mainui
 
 import (
-	"crypto/md5"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"log"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -102,7 +97,7 @@ type qf_history_data struct {
 }
 
 func (main *mainui) save_qf_uirefresh(data qf_history_data) error {
-	h, err := new_qf_history(main)
+	h, err := new_qf_history(main.Lspmgr().Wk)
 	if err != nil {
 		return err
 	}
@@ -125,112 +120,14 @@ func (qk quick_view) save() error {
 	return nil
 }
 
-func (qf *quickfix_history) save_history(
-	root string,
-	data qf_history_data, add bool,
-) error {
-	dir := qf.qfdir
-	uid := ""
-	if add {
-		uid = search_key_uid(data.Key)
-		uid = strings.ReplaceAll(uid, root, "")
-		hexbuf := md5.Sum([]byte(uid))
-		uid = hex.EncodeToString(hexbuf[:])
-		data.UID = uid
-	} else {
-		uid = data.UID
-	}
-	filename := filepath.Join(dir, uid+".json")
-	if !add {
-		if len(data.UID) != 0 {
-			return os.Remove(filename)
-		} else if data.Type == data_callin {
-			return os.RemoveAll(data.Key.File)
-		} else {
-			return fmt.Errorf("uid is empty")
-		}
-	}
-	buf, error := json.Marshal(data)
-	if error != nil {
-		return error
-	}
-	os.WriteFile(qf.last, buf, 0666)
-	return os.WriteFile(filename, buf, 0666)
-}
-
-type quickfix_history struct {
-	Wk    lspcore.WorkSpace
-	last  string
-	qfdir string
-}
 
 func (qk *quick_view) RestoreLast() {
-	data, _ := qk.ReadLast()
+	data, _ := qf_history_ReadLast(qk.main.Lspmgr().Wk)
 	if data != nil {
 		qk.UpdateListView(data.Type, data.Result.Refs, data.Key)
 	}
 }
-func (qk *quick_view) ReadLast() (*qf_history_data, error) {
-	h, err := new_qf_history(qk.main)
-	if err != nil {
-		return nil, err
-	}
-	buf, err := os.ReadFile(h.last)
-	if err != nil {
-		return nil, err
-	}
-	var ret qf_history_data
-	err = json.Unmarshal(buf, &ret)
-	if err == nil {
-		return &ret, nil
 
-	}
-	return nil, err
-}
-func (h *quickfix_history) Load() ([]qf_history_data, error) {
-	var ret = []qf_history_data{}
-	dir, err := h.InitDir()
-	if err != nil {
-		return ret, err
-	}
-	dirs, err := os.ReadDir(dir)
-	if err != nil {
-		return ret, err
-	}
-	for _, v := range dirs {
-		if v.IsDir() {
-			continue
-		}
-		filename := filepath.Join(dir, v.Name())
-		buf, err := os.ReadFile(filename)
-		if err != nil {
-			continue
-		}
-		var result qf_history_data
-		err = json.Unmarshal(buf, &result)
-		if err != nil {
-			continue
-		}
-		ret = append(ret, result)
-	}
-	umlDir := filepath.Join(h.Wk.Export, "uml")
-	dirs, err = os.ReadDir(umlDir)
-	if err != nil {
-		return ret, err
-	}
-	for _, dir := range dirs {
-		var result = qf_history_data{
-			Type: data_callin,
-			Key: SearchKey{&lspcore.SymolSearchKey{
-				Key:  dir.Name(),
-				File: filepath.Join(umlDir, dir.Name()),
-			}, nil},
-		}
-		ret = append(ret, result)
-
-	}
-	return ret, nil
-}
 
 type quick_view_context struct {
 	qk *quick_view
@@ -258,7 +155,7 @@ type fzf_list_item struct {
 	maintext, secondText string
 }
 type fzf_on_listview struct {
-	selected_index   []int
+	selected_index []int
 	// selected_text    []string
 	selected_postion [][]int
 	fzf              *fzflib.Fzf
@@ -582,14 +479,7 @@ func remove_color(sss []string) []string {
 	}
 	return aa
 }
-func (qf *quickfix_history) InitDir() (string, error) {
-	Dir := filepath.Join(qf.Wk.Export, "qf")
-	if checkDirExists(Dir) {
-		return Dir, nil
-	}
-	err := os.Mkdir(Dir, 0755)
-	return Dir, err
-}
+
 
 func checkDirExists(dirPath string) bool {
 	_, err := os.Stat(dirPath)
@@ -938,19 +828,6 @@ func (caller *ref_with_caller) LoadLines() *filecache {
 	return caller.filecache
 }
 
-func new_qf_history(main MainService) (*quickfix_history, error) {
-	qf := &quickfix_history{
-		Wk:   main.Lspmgr().Wk,
-		last: filepath.Join(main.Lspmgr().Wk.Export, "quickfix_last.json"),
-	}
-	qfdir, err := qf.InitDir()
-	qf.qfdir = qfdir
-	if err != nil {
-		log.Println("save ", err)
-		return nil, err
-	}
-	return qf, nil
-}
 func (quickview *quick_view) qf_grep_word(opt QueryOption) {
 	var main = quickview.main
 	rightmenu_select_text := opt.Query
