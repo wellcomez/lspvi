@@ -57,7 +57,7 @@ jobs:
         if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
           7z a ${{ matrix.archive }} ./release/*
         else
-          tar -czf ${{ matrix.archive }} -C release .
+          tar -czf ${{ matrix.archive }} -C release
         fi
 
       # Create Release and upload
