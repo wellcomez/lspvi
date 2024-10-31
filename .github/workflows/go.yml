@@ -50,9 +50,9 @@ jobs:
       run: |
         mkdir release
         cp ${{ matrix.output }} release/
-        cp README.md release/ || true
-        cp LICENSE release/ || true
-        cp -r configs/* release/ || true
+        # cp README.md release/ || true
+        # cp LICENSE release/ || true
+        # cp -r configs/* release/ || true
         
         if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
           7z a ${{ matrix.archive }} ./release/*
