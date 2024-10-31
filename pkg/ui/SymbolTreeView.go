@@ -13,7 +13,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	"zen108.com/lspvi/pkg/debug"
+	// "zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -94,7 +94,7 @@ func (t *Tree) MouseHandler() func(action tview.MouseAction, event *tcell.EventM
 			return false, nil
 		}
 		if action == tview.MouseLeftDown {
-			debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset())
+			// debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset())
 			action = t.action
 
 			t.action = tview.MouseLeftClick
@@ -102,7 +102,7 @@ func (t *Tree) MouseHandler() func(action tview.MouseAction, event *tcell.EventM
 		} else if action == tview.MouseLeftClick {
 			if t.event != nil {
 				detal := event.When().UnixMilli() - t.event.When().UnixMilli()
-				debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset(), detal)
+				// debug.DebugLog("treeview", mouseActionStrings[action], "offset", t.GetScrollOffset(), detal)
 				if detal < 500 {
 					return true, t
 				}
