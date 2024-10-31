@@ -85,10 +85,11 @@ jobs:
     #     asset_content_type: application/octet-stream
 
 
-    - name: Upload all Artifact
+    - name: Upload Release Asset
+      if: startsWith(github.ref, 'refs/tags/')
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+        GITHUB_TOKEN: ${{ secrets.ROKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./${{ matrix.output }}
