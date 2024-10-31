@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
           submodules: true  # This tells checkout action to clone submodules
-          token: ${{ secrets.PAT_TOKEN }}  # Personal Access Token with repo scope
+          token: ${{ secrets.GH_PAT }}  # Personal Access Token with repo scope
 
     - name: Set up Go
       uses: actions/setup-go@v4
