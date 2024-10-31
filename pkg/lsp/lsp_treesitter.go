@@ -518,11 +518,11 @@ func bash_parser(ts *TreeSitter, cb outlinecb) {
 	}
 	Outline := []*Symbol{}
 	if ts.tsdef.local != nil {
-		lines, err := ts.query_buf(ts.tsdef.local)
+		lines, err := ts.query_buf_outline(ts.tsdef.local)
 		if err != nil {
 			return
 		}
-		ss := get_ts_symbol(lines, ts)
+		ss := treesitter_local(lines, ts)
 		for _, v := range ss {
 			Outline = append(Outline, &Symbol{
 				SymInfo:   v,
@@ -1109,7 +1109,84 @@ func (ts *TreeSitter) callback_to_ui(cb func(*TreeSitter)) {
 	}
 }
 
-func get_ts_symbol(ret TreesiterSymbolLine, ts *TreeSitter) []lsp.SymbolInformation {
+type ts_scope struct {
+	*TreeSitterSymbol
+	elements []lsp.SymbolInformation
+	symbol   *lsp.SymbolInformation
+}
+
+func treesitter_local(ret []Outline, ts *TreeSitter) (result []lsp.SymbolInformation) {
+	prefix := "local.definition."
+	symbol_kind := map[string]lsp.SymbolKind{
+		prefix + "method":      lsp.SymbolKindMethod,
+		prefix + "function":    lsp.SymbolKindFunction,
+		prefix + "namespace":   lsp.SymbolKindNamespace,
+		prefix + "field":       lsp.SymbolKindField,
+		prefix + "var":         lsp.SymbolKindVariable,
+		prefix + "constructor": lsp.SymbolKindConstructor,
+		prefix + "type.class":  lsp.SymbolKindClass,
+		prefix + "type":        lsp.SymbolKindClass,
+	}
+	tsscope := []ts_scope{}
+	for i := range ret {
+		line := ret[i]
+		for i := 0; i < len(line); i++ {
+			s := line[i]
+			if s.SymbolName == "local.scope" {
+				tsscope = append(tsscope, ts_scope{
+					&TreeSitterSymbol{
+						Begin: s.Begin, End: s.End,
+						Code:       s.Code,
+						SymbolName: s.SymbolName,
+						Symbol:     s.Symbol},
+					nil, nil,
+				})
+			} else {
+				for i := range tsscope {
+					v := tsscope[i]
+					p := lsp.Range{
+						Start: lsp.Position{Line: int(s.Begin.Row), Character: int(s.Begin.Column)},
+						End:   lsp.Position{Line: int(s.End.Row), Character: int(s.End.Column)},
+					}
+					if v.lsprange().Overlaps(p) {
+						switch s.SymbolName {
+						case "local.definition.function":
+							if v.Symbol == "function_definition" {
+								symbol := lsp.SymbolInformation{
+									Name: s.Code,
+									Kind: lsp.SymbolKindFunction,
+									Location: lsp.Location{
+										URI:   lsp.NewDocumentURI(ts.filename.Path()),
+										Range: v.lsprange(),
+									},
+								}
+								v.symbol = &symbol
+								result = append(result, symbol)
+							}
+						}
+						// pos := fmt.Sprint(s.Begin.Row, ":", s.Begin.Column, s.End.Row, ":", s.End.Column)
+						Range := s.lsprange()
+						if kind, ok := symbol_kind[s.SymbolName]; ok {
+							s := lsp.SymbolInformation{
+								Name: s.Code,
+								Kind: kind,
+								Location: lsp.Location{
+									URI:   lsp.NewDocumentURI(ts.filename.Path()),
+									Range: Range,
+								},
+							}
+							v.elements = append(v.elements, s)
+						}
+						tsscope[i] = v
+						break
+					}
+				}
+			}
+		}
+	}
+	return
+}
+func get_ts_symbol(ret []Outline, ts *TreeSitter) []lsp.SymbolInformation {
 	prefix := "local.definition."
 	symbols := []lsp.SymbolInformation{}
 	scopes := []TreeSitterSymbol{}
@@ -1157,7 +1234,7 @@ func get_ts_symbol(ret TreesiterSymbolLine, ts *TreeSitter) []lsp.SymbolInformat
 					switch kind {
 					case lsp.SymbolKindVariable:
 						{
-							add = newFunction(scopes, Range, add)
+							add = in_scope_range(scopes, Range, add)
 						}
 					}
 					if !add {
@@ -1207,7 +1284,7 @@ func (s TreeSitterSymbol) PositionInfo() string {
 	return pos
 }
 
-func newFunction(scopes []TreeSitterSymbol, Range lsp.Range, add bool) bool {
+func in_scope_range(scopes []TreeSitterSymbol, Range lsp.Range, add bool) bool {
 	for _, v := range scopes {
 		if Range.Overlaps(v.lsprange()) {
 			// if v.Symbol == "method_declaration" || v.Symbol == "function_definition" {
