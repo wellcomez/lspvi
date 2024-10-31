@@ -91,6 +91,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RTOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ matrix.output }}
+        asset_path: ./${{ matrix.output }}
         asset_name: ${{ matrix.output }}
         asset_content_type: application/octet-stream
