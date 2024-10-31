@@ -1,60 +1,31 @@
-(((comment) @_jsdoc_comment
-  (#match? @_jsdoc_comment "(?s)^/[*][*][^*].*[*]/$")) @content
-  (#set! "language" "jsdoc"))
-
-((regex) @content
-  (#set! "language" "regex"))
+; Parse the contents of tagged template literals using
+; a language inferred from the tag.
 
 (call_expression
-  function: (identifier) @_name (#eq? @_name "css")
-  arguments: (template_string (string_fragment) @content
-                              (#set! "language" "css"))
-)
+  function: [
+    (identifier) @injection.language
+    (member_expression
+      property: (property_identifier) @injection.language)
+  ]
+  arguments: (template_string (string_fragment) @injection.content)
+  (#set! injection.combined)
+  (#set! injection.include-children))
 
-(call_expression
-  function: (identifier) @_name (#eq? @_name "html")
-  arguments: (template_string) @content
-                              (#set! "language" "html")
-)
 
-(call_expression
-  function: (identifier) @_name (#eq? @_name "js")
-  arguments: (template_string (string_fragment) @content
-                              (#set! "language" "javascript"))
-)
+; Parse regex syntax within regex literals
 
-(call_expression
-  function: (identifier) @_name (#eq? @_name "json")
-  arguments: (template_string (string_fragment) @content
-                              (#set! "language" "json"))
-)
+((regex_pattern) @injection.content
+ (#set! injection.language "regex"))
 
-(call_expression
-  function: (identifier) @_name (#eq? @_name "sql")
-  arguments: (template_string (string_fragment) @content
-                              (#set! "language" "sql"))
-)
+ ; Parse JSDoc annotations in comments
 
-(call_expression
-  function: (identifier) @_name (#eq? @_name "ts")
-  arguments: (template_string (string_fragment) @content
-                              (#set! "language" "typescript"))
-)
+((comment) @injection.content
+ (#set! injection.language "jsdoc"))
 
+; Parse Ember/Glimmer/Handlebars/HTMLBars/etc. template literals
+; e.g.: await render(hbs`<SomeComponent />`)
 (call_expression
-  function: (identifier) @_name (#match? @_name "^ya?ml$")
-  arguments: (template_string (string_fragment) @content
-                              (#set! "language" "yaml"))
-)
-
-(call_expression
-  function: (identifier) @_name (#match? @_name "^g(raph)?ql$")
-  arguments: (template_string (string_fragment) @content
-                              (#set! "language" "graphql"))
-)
-
-(call_expression
-  function: (identifier) @_name (#match? @_name "^g(raph)?ql$")
-  arguments: (arguments (template_string (string_fragment) @content
-                              (#set! "language" "graphql")))
-)
+  function: ((identifier) @_name
+             (#eq? @_name "hbs"))
+  arguments: ((template_string) @glimmer
+              (#offset! @glimmer 0 1 0 -1)))

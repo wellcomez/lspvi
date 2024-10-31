@@ -47,8 +47,6 @@
 
 ; Special identifiers
 ;--------------------
-(glimmer_opening_tag) @tag.builtin
-(glimmer_closing_tag) @tag.builtin
 
 ((identifier) @constructor
  (#match? @constructor "^[A-Z]"))
@@ -60,13 +58,6 @@
  ] @constant
  (#match? @constant "^[A-Z_][A-Z\\d_]+$"))
 
-((identifier) @variable.builtin
- (#match? @variable.builtin "^(arguments|module|console|window|document)$")
- (#is-not? local))
-
-((identifier) @function.builtin
- (#eq? @function.builtin "require")
- (#is-not? local))
 
 ; Literals
 ;---------
