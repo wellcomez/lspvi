@@ -44,54 +44,43 @@ jobs:
 
 
 
-    - name: Release
-      uses: softprops/action-gh-release@v1
+      # Create package with additional files
+    - name: Package Release
+      shell: bash
+      run: |
+        mkdir release
+        cp ${{ matrix.output }} release/
+        cp README.md release/ || true
+        cp LICENSE release/ || true
+        cp -r configs/* release/ || true
+        
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          7z a ${{ matrix.archive }} ./release/*
+        else
+          tar -czf ${{ matrix.archive }} -C release .
+        fi
+
+      # Create Release and upload
+    - name: Create Release
+      id: create_release
       if: startsWith(github.ref, 'refs/tags/')
-      with:
-        files: ${{ matrix.output }}
+      uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
-
-      
-    # - name: Create Release
-    #   id: create_release
-    #   uses: actions/create-release@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.RTOKEN }}
-    #   with:
-    #       tag_name: v${{ github.run_number }}  # Or your version like v1.0.0
-    #       # Don't use refs/tags/ prefix
-    #       release_name: Release v${{ github.run_number }}
-    #       draft: false
-    #       prerelease: false
-
-
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: ${{ matrix.output }}
-        path: ${{ matrix.output }}
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
 
-
-    # - name: Upload Linux Artifact
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.RTOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_path: ./lspvi-amd64-linux
-    #     asset_name: lspvi-amd64-linux
-    #     asset_content_type: application/octet-stream
-
-
+      # Upload the archive
     - name: Upload Release Asset
       if: startsWith(github.ref, 'refs/tags/')
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.ROKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./${{ matrix.output }}
-        asset_name: ${{ matrix.output }}
+        asset_path: ./${{ matrix.archive }}
+        asset_name: ${{ matrix.archive }}
         asset_content_type: application/octet-stream
