@@ -297,15 +297,17 @@ func (o Outline) Symbol(ts *TreeSitter) (ret *lsp.SymbolInformation, done bool) 
 		c := ts_to_symbol(item, ts)
 		ret = &c
 		switch item.Symbol {
+		case "property_identifier":
+			c.Kind = lsp.SymbolKindProperty
 		case "interface_declaration":
 			c.Kind = lsp.SymbolKindInterface
 		case "type_declaration":
 			c.Kind = lsp.SymbolKindClass
-		case "field_declaration":
+		case "field_declaration","public_field_definition":
 			c.Kind = lsp.SymbolKindField
 		case "enum_specifier":
 			c.Kind = lsp.SymbolKindEnum
-		case "method_elem", "method_declaration":
+		case "method_elem", "method_declaration","method_definition":
 			c.Kind = lsp.SymbolKindMethod
 		case "struct_specifier":
 			c.Kind = lsp.SymbolKindStruct
