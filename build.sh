@@ -41,7 +41,11 @@ fi
 if [[ -n $win ]]; then
   sudo apt-get update
   sudo apt-get install gcc-mingw-w64
-  sudo apt-get install x86_64-w64-mingw32-g++
+  # For just the 64-bit compiler
+  sudo apt-get install gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+  # For just the 32-bit compiler
+  sudo apt-get install gcc-mingw-w64-i686 g++-mingw-w64-i686
+  # sudo apt-get install x86_64-w64-mingw32-g++
   build_win_x64
 fi
 if [[ -n $linux ]]; then
