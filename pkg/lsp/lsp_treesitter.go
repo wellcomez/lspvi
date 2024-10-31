@@ -437,7 +437,9 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 							switch item.Symbol {
 							case "fn", "func":
 								{
-									v.Kind = lsp.SymbolKindFunction
+									if v.Kind != lsp.SymbolKindMethod {
+										v.Kind = lsp.SymbolKindFunction
+									}
 									return true
 								}
 							case "class":
@@ -606,10 +608,14 @@ const (
 	ts_load_call ts_call = iota
 )
 
+type block_call struct {
+	done chan bool
+}
 type ts_init_call struct {
-	t    *TreeSitter
-	cb   func(*TreeSitter)
-	call ts_call
+	t     *TreeSitter
+	cb    func(*TreeSitter)
+	call  ts_call
+	block *block_call
 }
 type TreesitterInit struct {
 	t     chan ts_init_call
@@ -631,6 +637,9 @@ func (ts_int *TreesitterInit) Run(t ts_init_call) {
 					switch call.call {
 					case ts_load_call:
 						t.Loadfile(t.tsdef.tslang, cb)
+						if call.block != nil {
+							call.block.done <- true
+						}
 					default:
 					}
 				}
@@ -646,9 +655,14 @@ func (t *TreeSitter) DefaultOutline() bool {
 func (t *TreeSitter) Init(cb func(*TreeSitter)) error {
 	return t.init(cb)
 }
-func (t *TreeSitter) init(cb func(*TreeSitter)) error {
+func (t *TreeSitter) initblock() error {
+	var b = &block_call{
+		done: make(chan bool),
+	}
 	if t.tsdef != nil {
-		t.tsdef.intiqueue.Run(ts_init_call{t, cb, ts_load_call})
+
+		t.tsdef.intiqueue.Run(ts_init_call{t, nil, ts_load_call, b})
+		<-b.done
 		return nil
 	}
 	for i := range tree_sitter_lang_map {
@@ -657,7 +671,25 @@ func (t *TreeSitter) init(cb func(*TreeSitter)) error {
 			v.load_scm()
 			t.tsdef = v
 			// t.Loadfile(v.tslang, cb)
-			t.tsdef.intiqueue.Run(ts_init_call{t, cb, ts_load_call})
+			t.tsdef.intiqueue.Run(ts_init_call{t, nil, ts_load_call, b})
+			<-b.done
+			return nil
+		}
+	}
+	return fmt.Errorf("not implemented")
+}
+func (t *TreeSitter) init(cb func(*TreeSitter)) error {
+	if t.tsdef != nil {
+		t.tsdef.intiqueue.Run(ts_init_call{t, cb, ts_load_call, nil})
+		return nil
+	}
+	for i := range tree_sitter_lang_map {
+		v := tree_sitter_lang_map[i]
+		if ts_name := v.get_ts_name(t.filename.Path()); len(ts_name) > 0 {
+			v.load_scm()
+			t.tsdef = v
+			// t.Loadfile(v.tslang, cb)
+			t.tsdef.intiqueue.Run(ts_init_call{t, cb, ts_load_call, nil})
 			return nil
 		}
 	}
@@ -913,7 +945,10 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 		ss := NewLangTreeSitterSymbol(ts.filename.filepathname)
 		lang_ts_symbol[ss.ext] = ss
 	}
-	go ts.callback_to_ui(cb)
+	if cb != nil {
+		go ts.callback_to_ui(cb)
+		return nil
+	}
 	// }()
 	return nil
 }
