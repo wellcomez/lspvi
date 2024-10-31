@@ -74,26 +74,26 @@ jobs:
         prerelease: false
 
       # Upload the archive
-    # - name: Upload Release Asset
-    #   if: startsWith(github.ref, 'refs/tags/')
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_path: ./${{ matrix.output }}
-    #     asset_name: ${{ matrix.output }}
-    #     asset_content_type: application/octet-stream
-
-
-    - name: Upload Linux Artifact
+    - name: Upload Release Asset
+      if: startsWith(github.ref, 'refs/tags/')
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./${{ matrix.output }}
         asset_name: ${{ matrix.output }}
-        # asset_path: ./lspvi-amd64-linux
-        # asset_name: lspvi-amd64-linux
         asset_content_type: application/octet-stream
+
+
+    # - name: Upload Linux Artifact
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_path: ./${{ matrix.output }}
+    #     asset_name: ${{ matrix.output }}
+    #     # asset_path: ./lspvi-amd64-linux
+    #     # asset_name: lspvi-amd64-linux
+    #     asset_content_type: application/octet-stream
