@@ -29,6 +29,9 @@ jobs:
 
     - name: Build
       run:  go build -o lspvi-amd64-linux
+      
+    - name: Buildwin
+      run: win=1 bash build.sh
 
     - name: Create Release
       id: create_release
@@ -54,4 +57,15 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./lspvi-amd64-linux
         asset_name: lspvi-amd64-linux
+        asset_content_type: application/octet-stream
+
+
+    - name: Upload win64 Artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./llspvi-window-x64
+        asset_name: lspvi-window-x64
         asset_content_type: application/octet-stream
