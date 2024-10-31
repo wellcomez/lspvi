@@ -85,12 +85,12 @@ jobs:
     #     asset_content_type: application/octet-stream
 
 
-    # - name: Upload win64 Artifact
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.RTOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_path: ./lspvi-window-x64
-    #     asset_name: lspvi-window-x64
-    #     asset_content_type: application/octet-stream
+    - name: Upload all Artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ matrix.output }}
+        asset_name: ${{ matrix.output }}
+        asset_content_type: application/octet-stream
