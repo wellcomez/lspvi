@@ -39,6 +39,8 @@ if [[ -n $mac ]]; then
   build_os
 fi
 if [[ -n $win ]]; then
+  sudo apt-get update
+  sudo apt-get install gcc-mingw-w64
   build_win_x64
 fi
 if [[ -n $linux ]]; then
