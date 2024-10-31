@@ -512,12 +512,13 @@ func (l *LpsTextView) Draw(screen tcell.Screen) {
 	_, bg, _ := default_style.Decompose()
 	default_style = default_style.Background(bg)
 	breaknum := 0
-	for i, line := range l.lines {
+	for i, v:= range l.lines {
 		PosY := y + i + breaknum
 		var symline *[]lspcore.TreeSitterSymbol
 		if sym, ok := l.HlLine[i]; ok {
 			symline = &sym
 		}
+		line:=[]rune(v)
 		for col, v := range line {
 			style := default_style
 			if symline != nil {

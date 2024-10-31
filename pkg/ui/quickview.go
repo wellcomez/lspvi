@@ -259,7 +259,7 @@ type fzf_list_item struct {
 }
 type fzf_on_listview struct {
 	selected_index   []int
-	selected_text    []string
+	// selected_text    []string
 	selected_postion [][]int
 	fzf              *fzflib.Fzf
 	listview         *customlist
@@ -311,28 +311,61 @@ func new_fzf_on_list(list *customlist, fuzz bool) *fzf_on_listview {
 	}
 	return ret
 }
-func (fzf *fzf_on_listview) OnSearch(txt string, update bool) string {
+func (fzfdata *fzf_on_listview) OnSearchSortScore(txt string, score int) {
 	var result fzflib.SearchResult
-	old := fzf.query
-	if len(txt) > 0 && fzf.fzf != nil {
-		fzf.fzf.Search(txt)
-		fzf.query = txt
-		result = <-fzf.fzf.GetResultChannel()
-		fzf.selected_index = []int{}
-		fzf.selected_postion = [][]int{}
+	fzf := fzfdata.fzf
+	if len(txt) > 0 && fzf != nil {
+		fzf.Search(txt)
+		fzfdata.query = txt
+		result = <-fzf.GetResultChannel()
+		fzfdata.selected_index = []int{}
+		fzfdata.selected_postion = [][]int{}
+		// ss := []string{}
+
+		var Matches []fzflib.MatchResult
+		for _, v := range result.Matches {
+			if v.Score < score {
+				continue
+			}
+			Matches = append(Matches, v)
+		}
+		sort.Slice(Matches, func(i, j int) bool {
+			return Matches[i].Score > Matches[j].Score
+		})
+		for _, v := range Matches {
+			fzfdata.selected_index = append(fzfdata.selected_index, int(v.HayIndex))
+			fzfdata.selected_postion = append(fzfdata.selected_postion, v.Positions)
+			// ss = append(ss, v.Key)
+		}
+		// fzfdata.selected_text = ss
+	} else {
+		fzfdata.reset_selection_index()
+
+	}
+}
+func (fzfdata *fzf_on_listview) OnSearch(txt string, update bool) string {
+	var result fzflib.SearchResult
+	old := fzfdata.query
+	fzf := fzfdata.fzf
+	if len(txt) > 0 && fzf != nil {
+		fzf.Search(txt)
+		fzfdata.query = txt
+		result = <-fzf.GetResultChannel()
+		fzfdata.selected_index = []int{}
+		fzfdata.selected_postion = [][]int{}
 		ss := []string{}
 		for _, v := range result.Matches {
-			fzf.selected_index = append(fzf.selected_index, int(v.HayIndex))
-			fzf.selected_postion = append(fzf.selected_postion, v.Positions)
+			fzfdata.selected_index = append(fzfdata.selected_index, int(v.HayIndex))
+			fzfdata.selected_postion = append(fzfdata.selected_postion, v.Positions)
 			ss = append(ss, v.Key)
 		}
-		fzf.selected_text = ss
+		// fzfdata.selected_text = ss
 	} else {
-		fzf.reset_selection_index()
+		fzfdata.reset_selection_index()
 
 	}
 	if update {
-		fzf.refresh_list()
+		fzfdata.refresh_list()
 	}
 	return old
 }
@@ -344,7 +377,7 @@ func (fzf *fzf_on_listview) reset_selection_index() {
 		fzf.selected_index = append(fzf.selected_index, i)
 		fzf.selected_postion = append(fzf.selected_postion, []int{})
 	}
-	fzf.selected_text = make([]string, len(fzf.selected_index))
+	// fzf.selected_text = make([]string, len(fzf.selected_index))
 }
 func (fzf *fzf_on_listview) get_data_index(index int) int {
 	if len(fzf.selected_index) == 0 {
@@ -668,7 +701,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	if len(secondline.line) == 0 {
 		return
 	}
-	qk.view.AddItem(secondline.pepend(fmt.Sprintf("%3d. ", qk.view.GetItemCount()+1), 0).ColorText(), "", nil)
+	qk.view.AddItem(secondline.prepend(fmt.Sprintf("%3d. ", qk.view.GetItemCount()+1), 0).ColorText(), "", nil)
 }
 
 func (qk *quick_view) new_search(t DateType, key SearchKey) {
@@ -796,6 +829,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 	}
 	funcolor := global_theme.search_highlight_color()
 	code := caller.get_code(funcolor)
+	ret.a(" ")
 	if caller.Caller != nil {
 		var c1 colortext
 		if prev != nil && (prev.Caller.ClassName == caller.Caller.ClassName && prev.Caller.Name == caller.Caller.Name) {
@@ -833,13 +867,13 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 			callname = strings.TrimRight(callname, " ")
 			callname = icon + callname
 			x := colortext{callname + " > ", caller_color, 0}
-			liner := fmt.Sprintf("%-4d ", v.Range.Start.Line+1)
-			ret.a(liner)
+			liner := fmt.Sprintf(":%-4d ", v.Range.Start.Line+1)
+			// ret.a(liner)
 			if c1.text != "" {
-				return ret.add_color_text(c1).add_color_text(x).a(" ").add_color_text_list(code.line)
+				return ret.add_color_text(c1).add_color_text(x).a(" ").a(liner).add_color_text_list(code.line)
 				// return fmt.Sprintf(":%-4d %s%s %s", v.Range.Start.Line+1, c1, x, line)
 			} else {
-				return ret.add_color_text(x).a(" ").add_color_text_list(code.line)
+				return ret.add_color_text(x).a(" ").a(liner).add_color_text_list(code.line)
 			}
 		}
 	} else {

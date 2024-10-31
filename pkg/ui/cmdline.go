@@ -44,75 +44,95 @@ func new_cmdline(main *mainui) *cmdline {
 	input.SetFieldBackgroundColor(tcell.ColorBlack)
 	input.SetInputCapture(code.Keyhandle)
 	code.Vim = NewVim(main)
+	setopt := []cmd_processor{
+		{
+			-1,
+			[]string{"colorscheme"},
+			"set colorscheme",
+			func([]string, cmd_processor) {
+				main.open_colorescheme()
+			},
+			nil,
+		},
+		{
+			-1,
+			[]string{"wrap"},
+			"change editor wrap",
+			func([]string, cmd_processor) {
+				global_config.Wrap = !global_config.Wrap
+				global_config.Save()
+				for _, v := range SplitCode.code_collection {
+					v.change_wrap_appearance()
+				}
+			},
+			nil,
+		},
+		{
+			-1,
+			[]string{"vim"},
+			"switch vim mode",
+			func([]string, cmd_processor) {
+				global_config.enablevim = !global_config.enablevim
+				global_config.Vim.Enable = &global_config.enablevim
+				global_config.Save()
+			},
+			nil,
+		},
+	}
+	var create_cmd_item = func(id command_id, arg []string) (ret cmd_processor) {
+		ret = cmd_processor{
+			id:   id,
+			arg0: arg,
+			run: func(s []string, c cmd_processor) {
+				get_cmd_actor(main, id).handle()
+			},
+		}
+		return
+	}
 	code.cmds = []cmd_processor{
-		{-1, []string{"cn", "cp"}, "next/prev quick fix", func(s []string) {
-			command := s[0]
-			if command != "cn" {
-				get_cmd_actor(main, vi_quick_prev).handle()
-			} else {
-				get_cmd_actor(main, vi_quick_next).handle()
-			}
-		}},
-		{cmd_clean_log, []string{"cleanlog"}, "Clear log", func(s []string) {
-			main.cleanlog()
-		}},
-		{cmd_save, []string{"w"}, "save", func(s []string) {
-			main.current_editor().Save()
-		}},
-		{cmd_quit, []string{"q", "quit", "q!", "qa", "x"}, "quit", func(s []string) {
-			main.Close()
-		}},
-		{cmd_reload, []string{"e!"}, "Reload", func(s []string) {
-			main.current_editor().Reload()
-		}},
-		{-1, []string{"h", "help"}, "help", func(s []string) {
-			main.helpkey(true)
-		}},
-		{-1, []string{"search", "grep"}, "search", func(args []string) {
+		create_cmd_item(vi_quick_prev, []string{"cp"}),
+		create_cmd_item(vi_quick_next, []string{"cn"}),
+		create_cmd_item(cmd_clean_log, []string{"cleanlog"}),
+		create_cmd_item(cmd_save, []string{"w"}),
+		create_cmd_item(cmd_quit, []string{"q", "quit", "q!", "qa", "x"}),
+		create_cmd_item(cmd_reload, []string{"e!"}),
+		create_cmd_item(split_right, []string{"vs"}),
+		create_cmd_item(close_tab, []string{"closetab"}),
+		create_cmd_item(open_picker_help, []string{"h", "help"}),
+		{-1, []string{"search", "grep"}, "search", func(args []string, c cmd_processor) {
 			code.OnSearchCommand(args)
-		}},
-		{-1, []string{"set"}, "set", func(args []string) {
-			code.OnSet(args)
-		}},
+		}, nil},
+		{-1, []string{"set"}, "set", func(args []string, c cmd_processor) {
+			s := strings.Join(args, " ")
+			for _, v := range c.opt {
+				s1 := strings.Join(v.arg0, " ")
+				if s1 == s {
+					v.run(nil, v)
+				}
+			}
+		}, setopt},
 	}
 
 	return code
 }
-func (cmd *cmdline) OnSet(args []string) bool {
-	if len(args) == 1 || len(args) == 0 {
-		return false
-	}
-	switch args[1] {
-	case "colorscheme":
-		{
-			cmd.main.open_colorescheme()
-		}
-	case "wrap":
-		{
-			global_config.Wrap = !global_config.Wrap
-			global_config.Save()
-			for _, v := range SplitCode.code_collection {
-				v.change_wrap_appearance()
-			}
-		}
-	}
-	return true
-}
+
 func (cmdline *cmdline) ConvertCmdItem() (ret []cmditem) {
 	comands := cmdline.cmds
 	for i := range comands {
 		c := comands[i]
-		// if c.id < 0 {
-		// 	continue
-		// }
-		if c.arg0[0] == "set" {
-			ss := []string{"colorscheme", "wrap"}
-			for _, v := range ss {
-				a := c.to_cmditem([]string{v})
+
+		if len(c.opt) > 0 {
+			for _, v := range c.opt {
+				a := c.to_cmditem(v.arg0)
+				a.Cmd.desc = v.descriptor
 				ret = append(ret, a)
 			}
 		} else {
 			a := c.to_cmditem(nil)
+			if c.id != -1 {
+				v := get_cmd_actor(cmdline.main, c.id)
+				a.Cmd.desc = v.desc
+			}
 			ret = append(ret, a)
 		}
 	}
@@ -131,7 +151,8 @@ type cmd_processor struct {
 	id         command_id
 	arg0       []string
 	descriptor string
-	run        func([]string)
+	run        func([]string, cmd_processor)
+	opt        []cmd_processor
 }
 
 func (cmd *cmd_processor) displaystring() string {
@@ -162,7 +183,7 @@ func (cmd *cmdline) OnComand(commandinput string) bool {
 	}
 	for _, v := range cmd.cmds {
 		if v.is(command) {
-			v.run(args)
+			v.run(args, v)
 			return true
 		}
 	}
@@ -199,12 +220,12 @@ type VmapPosition struct {
 
 // vimstate structure
 type vimstate struct {
-	Escape    bool
-	Find      bool
-	Command   bool
-	VMap      bool
-	vmapBegin *VmapPosition
-	vmapEnd   *VmapPosition
+	Escape  bool
+	Find    bool
+	Command bool
+	VMap    bool
+	// vmapBegin *VmapPosition
+	// vmapEnd   *VmapPosition
 	Virtual   bool
 	Insert    bool
 	Leader    bool
@@ -862,7 +883,7 @@ func (v *Vim) EnterEscape() {
 	// return
 	TurnOffComplete(v)
 	v.app.cmdline.Clear()
-	v.vi = vimstate{Escape: true, VMap: false, vmapBegin: nil, vmapEnd: nil}
+	v.vi = vimstate{Escape: true, VMap: false}
 	v.app.current_editor().ResetSelection()
 	f := v.app.get_focus_view_id()
 	if f == view_cmd || f == view_none {

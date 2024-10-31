@@ -16,7 +16,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/tectiv3/go-lsp"
-	"github.com/tectiv3/go-lsp/jsonrpc"
+
+	// "github.com/tectiv3/go-lsp/jsonrpc"
 	"zen108.com/lspvi/pkg/debug"
 
 	// "github.com/tectiv3/go-lsp/jsonrpc"
@@ -60,6 +61,12 @@ type lspcore struct {
 	config LangConfig
 }
 
+// Handle implements jsonrpc2.Handler.
+func (core *lspcore) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	debug.DebugLog(DebugTag, "lspcore.Handle", req.Method, req.Notif)
+	core.handle.Handle(ctx, con, req)
+}
+
 func (core *lspcore) RunComandInConfig() bool {
 	x := core.config
 	if len(x.Cmd) > 0 {
@@ -84,7 +91,7 @@ func (e lsp_server_errorlog) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
+func (core *lspcore) Launch_Lsp_Server(cmd *exec.Cmd) error {
 
 	// cmd := exec.Command("clangd", "--log=verbose")
 	stdin, err := cmd.StdinPipe()
@@ -117,7 +124,7 @@ func (core *lspcore) Lauch_Lsp_Server(cmd *exec.Cmd) error {
 	conn := jsonrpc2.NewConn(
 		context.Background(),
 		jsonrpc2.NewBufferedStream(rwc, jsonrpc2.VSCodeObjectCodec{}),
-		core.handle,
+		core,
 	)
 	core.conn = conn
 	return nil
@@ -141,8 +148,7 @@ func (core *lspcore) Initialized() error {
 		return nil
 	}
 	core.inited_called = true
-	var result interface{}
-	return core.conn.Call(context.Background(), "initialized", lsp.InitializedParams{}, &result)
+	return core.conn.Notify(context.Background(), "initialized", lsp.InitializedParams{})
 	// return nil
 }
 
@@ -489,37 +495,26 @@ func (core *lspcore) newTextDocument(file string, version int, content string) (
 	}
 	return x, nil
 }
-func (core *lspcore) document_semantictokens_full(file string) (*lsp.SemanticTokens, error) {
+func (core *lspcore) document_semantictokens_full(file string) (result *lsp.SemanticTokens, err error) {
 	params := lsp.SemanticTokensParams{
-		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
-			WorkDoneToken: jsonrpc.ProgressToken(file),
-		},
-		PartialResultParams: &lsp.PartialResultParams{
-			PartialResultToken: jsonrpc.ProgressToken(file),
-		},
 		TextDocument: lsp.TextDocumentIdentifier{
 			URI: lsp.NewDocumentURI(file),
 		},
 	}
-	var result lsp.SemanticTokens
-	err := core.conn.Call(context.Background(), "textDocument/semanticTokens/full", params, &result)
-	if err != nil {
-		return nil, err
+	var r lsp.SemanticTokens
+	if err = core.conn.Call(context.Background(), "textDocument/semanticTokens/full", params, &r); err == nil {
+		result = &r
 	}
-	return &result, nil
+	return
 }
 
 func (core *lspcore) GetDeclare(file string, pos lsp.Position) ([]lsp.Location, error) {
 	var referenced = lsp.DeclarationParams{
-		PartialResultParams: &lsp.PartialResultParams{
-			PartialResultToken: jsonrpc.ProgressToken(file),
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{
+				URI: lsp.NewDocumentURI(file),
+			},
 		},
-		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
-			WorkDoneToken: jsonrpc.ProgressToken(file),
-		},
-	}
-	referenced.TextDocument = lsp.TextDocumentIdentifier{
-		URI: lsp.NewDocumentURI(file),
 	}
 	referenced.Position = pos
 	var result []interface{}
@@ -586,17 +581,15 @@ func (core *lspcore) GetDefine(file string, pos lsp.Position) ([]lsp.Location, e
 }
 func (core *lspcore) GetReferences(file string, pos lsp.Position) ([]lsp.Location, error) {
 	var referenced = lsp.ReferenceParams{
-		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
-			WorkDoneToken: jsonrpc.ProgressToken(file + "refer"),
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			Position: pos,
+			TextDocument: lsp.TextDocumentIdentifier{
+				URI: lsp.NewDocumentURI(file),
+			},
 		},
-		PartialResultParams: &lsp.PartialResultParams{
-			PartialResultToken: jsonrpc.ProgressToken(file + "refer"),
+		Context: &lsp.ReferenceContext{
+			IncludeDeclaration: true,
 		},
-	}
-	referenced.TextDocument.URI = lsp.NewDocumentURI(file)
-	referenced.Position = pos
-	referenced.Context = &lsp.ReferenceContext{
-		IncludeDeclaration: true,
 	}
 	var result []interface{}
 	var ret []lsp.Location
@@ -620,12 +613,6 @@ type ImplementationResult struct {
 
 func (core *lspcore) GetImplement(file string, pos lsp.Position) (ImplementationResult, error) {
 	var referenced = lsp.ImplementationParams{
-		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
-			// WorkDoneToken: jsonrpc.ProgressToken(file + "refer"),
-		},
-		PartialResultParams: &lsp.PartialResultParams{
-			// PartialResultToken: jsonrpc.ProgressToken(file + "refer"),
-		},
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{
 				URI: lsp.NewDocumentURI(file),
@@ -752,12 +739,6 @@ func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 		TextDocument: lsp.TextDocumentIdentifier{
 			URI: uri,
 		},
-		WorkDoneProgressParams: &lsp.WorkDoneProgressParams{
-			WorkDoneToken: jsonrpc.ProgressToken(file + "symbol"),
-		},
-		PartialResultParams: &lsp.PartialResultParams{
-			PartialResultToken: jsonrpc.ProgressToken(file + "symol"),
-		},
 	}
 	var result []interface{}
 	err := core.conn.Call(context.Background(), "textDocument/documentSymbol", parameter, &result)
@@ -868,7 +849,7 @@ func mainxx2() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
+	debug.DebugLogf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
 
 }
 func notificationDispatcher(method string, req json.RawMessage) (ret string, err error) {

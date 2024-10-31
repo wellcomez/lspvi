@@ -22,6 +22,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/vmihailenco/msgpack/v5"
+	"zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/pty"
 )
 
@@ -114,7 +115,7 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 				tempfile := filepath.Join(wk.temp, x)
 				err := os.WriteFile(tempfile, file.Buf, 0666)
 				if err != nil {
-					fmt.Println(err)
+					debug.DebugLog("xterm ", err)
 				} else {
 					buf, err := msgpack.Marshal(Ws_open_file{
 						Filename: filepath.Join("/temp", x),
@@ -315,7 +316,7 @@ func NewRouter(root string) *mux.Router {
 	// r.Handle("/static/", http.StripPrefix("/static/", fileServer))
 	r.HandleFunc("/node_modules/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		println(path)
+		// println(path)
 		buf, _ := os.ReadFile(filepath.Join(".", path))
 		w.Write(buf)
 	}).Methods("GET")

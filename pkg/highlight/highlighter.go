@@ -361,7 +361,7 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 		}
 		line := input.LineBytes(i)
 		var match_tree_match LineMatch = make(LineMatch)
-		if len(h.Tree)>0  {
+		if len(h.Tree) > 0 {
 			if sym_in_line, ok := h.Tree[i]; ok {
 				for _, v := range sym_in_line {
 					x := []string{"@" + v.SymbolName}
@@ -376,7 +376,7 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 					// code := string(line[v.Begin.Column:v.End.Column])
 					for _, key := range x {
 						if value, ok := Groups[key]; ok {
-							if _, ok := match_tree_match[int(v.Begin.Column)]; ok {
+							if c, ok := match_tree_match[int(v.Begin.Column)]; ok && c != 0 {
 								// vartype := GroupsArray[groupvalue]
 								// log.Println("===hh>>", i, fmt.Sprintf("%10s \"%s\"", fmt.Sprintf("%d:%d;%d", v.Begin.Row, v.Begin.Column, v.End.Column), code), key, "->", vartype)
 								// yes = true

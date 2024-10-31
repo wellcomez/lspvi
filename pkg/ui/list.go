@@ -547,6 +547,9 @@ func (l *List) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.
 			}
 		case tcell.KeyRune:
 			ch := event.Rune()
+			if ch == ' '{
+				return
+			}
 			if ch != ' ' {
 				// It's not a space bar. Is it a shortcut?
 				var found bool

@@ -248,6 +248,15 @@ func (wk LspWorkspace) IsSource(filename string) bool {
 }
 func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, error) {
 	filename := entry.Item.URI.AsPath().String()
+	symbolfile, ok := wk.get(filename)
+	if !ok {
+		symbolfile = wk.OpenNoLsp(filename)
+		symbolfile.LoadTreeSitter(true)
+	}
+	if sym, _ := symbolfile.find_stack_symbol(entry); sym != nil {
+		return sym, nil
+	}
+
 	symbolfile, isnew, err := wk.open(filename)
 	if err != nil {
 		return nil, err
@@ -400,10 +409,32 @@ func (wk *LspWorkspace) OpenBuffer(filename string, buffer string) (*Symbol_file
 	return ret, err
 
 }
+func (wk *LspWorkspace) CallHierarchyIncomingCalls(param lsp.CallHierarchyItem) (ret []lsp.CallHierarchyIncomingCall, err error) {
+	filename := param.URI.AsPath().String()
+	if lsp := wk.getClient(filename); lsp != nil {
+		return lsp.CallHierarchyIncomingCalls(param)
+	}
+	return nil, err
+}
+func (wk *LspWorkspace) PrepareCallHierarchy(loc lsp.Location) (ret []lsp.CallHierarchyItem, err error) {
+	filename := loc.URI.AsPath().String()
+	if lsp := wk.getClient(filename); lsp != nil {
+		return lsp.PrepareCallHierarchy(loc)
+	}
+	return nil, err
+}
+func (wk *LspWorkspace) GetReference(loc lsp.Location) (ret []lsp.Location, err error) {
+	filename := loc.URI.AsPath().String()
+	if lsp := wk.getClient(filename); lsp != nil {
+		return lsp.GetReferences(filename, loc.Range.Start)
+	}
+	return nil, err
+}
 
 func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	ret, _, err := wk.open(filename)
 	wk.current = ret
+	debug.InfoLog(DebugTag, "open", filename, "len", len(wk.filemap))
 	return ret, err
 
 }
@@ -435,12 +466,13 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 
 	cpp := create_lang_lsp(wk, CPP, lsp_lang_cpp{}, lsp_config.C)
 	golang := create_lang_lsp(wk, GO, lsp_lang_go{}, lsp_config.Golang)
+	rs := create_lang_lsp(wk, RUST, lsp_lang_rs{}, lsp_config.Golang)
 	py := create_lang_lsp(wk, PYTHON, lsp_lang_py{}, lsp_config.Py)
 	ts := create_lang_lsp(wk, TYPE_SCRIPT, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, lsp_config.Typescript)
 	js := create_lang_lsp(wk, JAVASCRIPT, lsp_ts{LanguageID: string(JAVASCRIPT)}, lsp_config.Javascript)
 	ret := &LspWorkspace{
 		clients: []lspclient{
-			cpp, py, golang, ts, js,
+			cpp, py, golang, ts, js, rs,
 		},
 		Wk:              wk,
 		lock_symbol_map: &sync.Mutex{},

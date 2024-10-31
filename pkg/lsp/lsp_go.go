@@ -49,7 +49,7 @@ func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 			)
 		}
 	}
-	err := core.Lauch_Lsp_Server(core.cmd)
+	err := core.Launch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
 }
@@ -168,7 +168,7 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 	/*if d, e := json.MarshalIndent(result, " ", ""); e == nil {
 		log.Println(LSP_DEBUG_TAG, string(d))
 	}*/
-	core.CapabilitiesStatus= result.Capabilities
+	core.CapabilitiesStatus = result.Capabilities
 	if data, err := result.Capabilities.TextDocumentSync.MarshalJSON(); err == nil {
 		if err = json.Unmarshal(data, &r); err == nil {
 			core.sync = &r

@@ -90,6 +90,9 @@ func (code *CodeView) Match() {
 		code.view.JumpToMatchingBrace()
 	}
 }
+func (code CodeView) Viewlink() *view_link {
+	return code.view_link
+}
 func (code CodeView) vid() view_id {
 	return code.id
 }
@@ -192,8 +195,10 @@ func (code *CodeView) Reload() {
 		x := code.LspContentFullChangeEvent()
 		go sym.NotifyCodeChange(x)
 		offset := code.view.Topline
+		loc := code.view.Cursor.Loc
 		code.openfile(code.Path(), true, func(bool) {
 			code.view.Topline = offset
+			code.view.Cursor.GotoLoc(loc)
 			if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
 				s.LspLoadSymbol()
 			}
@@ -1002,14 +1007,19 @@ func (code *CodeView) Paste() {
 	}
 }
 
-func (c CodeView) GetCode(loc lsp.Location) string {
+func (c CodeView) GetCode(loc lsp.Location) (ret string, err error) {
 	lines := c.GetLines(loc.Range.Start.Line, loc.Range.End.Line)
 	if len(lines) == 1 {
-		return lines[0]
+		return substring(lines[0], loc.Range.Start.Character, loc.Range.End.Character)
 	}
-	lines[0] = lines[0][loc.Range.Start.Character:]
-	lines[len(lines)-1] = lines[len(lines)-1][:loc.Range.End.Character]
-	return strings.Join(lines, "\n")
+
+	if lines[0], err = substring(lines[0], loc.Range.Start.Character, -1); err != nil {
+		return "", err
+	}
+	if lines[len(lines)-1], err = substring(lines[len(lines)-1], 0, loc.Range.End.Character); err != nil {
+		return "", err
+	}
+	return strings.Join(lines, "\n"), nil
 }
 func (code *CodeView) copyline(line bool) {
 	cmd := code.main.CmdLine()
@@ -1336,6 +1346,10 @@ func (c CodeView) async_lsp_open(cb func(sym *lspcore.Symbol_file)) {
 			}
 		})
 	}
+}
+
+func (code *CodeView) ContentChangeHandle() change_reciever {
+	return code
 }
 func (code *CodeView) LoadFileWithLsp(filename string, line *lsp.Location, focus bool) {
 	code.open_file_lspon_line_option(filename, line, focus, nil)

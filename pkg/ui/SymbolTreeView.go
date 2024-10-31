@@ -280,9 +280,10 @@ func (c *SymbolTreeView) copycode() {
 	value := cur.GetReference()
 	if value != nil {
 		if sym, ok := value.(lsp.SymbolInformation); ok {
-			s := c.editor.GetCode(sym.Location)
-			if len(s) > 0 {
-				clipboard.WriteAll(s)
+			if s, err := c.editor.GetCode(sym.Location); err == nil {
+				if len(s) > 0 {
+					clipboard.WriteAll(s)
+				}
 			}
 		}
 	}
@@ -309,12 +310,12 @@ func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy"), func() {
 		ret.handle_commnad(copy_data)
 	}, false})
-	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy code"), func() {
+	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Code"), func() {
 		ret.copycode()
 	}, false})
-	menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Path"), func() {
-		ret.handle_commnad(copy_path)
-	}, false})
+	// menu_item = append(menu_item, context_menu_item{create_menu_item("Copy Path"), func() {
+	// 	ret.handle_commnad(copy_path)
+	// }, false})
 	ret.right_context = symboltree_view_context{
 		qk:        ret,
 		menu_item: menu_item,
@@ -373,7 +374,7 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 			if len(lines) > 0 {
 				line := lines[0]
 				var beginline = Range.Start.Line
-				line = strings.TrimLeft(line, "\t")
+				// line = strings.TrimLeft(line, "\t")
 				idx := strings.Index(line, sym.Name)
 				if idx >= 0 {
 					r := lsp.Range{
@@ -450,7 +451,7 @@ func (c *SymbolTreeView) handle_commnad(cmd command_id) {
 			switch cmd {
 			case copy_path:
 				{
-					c.main.CopyToClipboard(fmt.Sprintf("%s:%d", sym.Location.URI.AsPath().String(), sym.Location.Range.Start.Line))
+					c.main.CopyToClipboard(fmt.Sprintf("%s:%d", sym.Location.URI.AsPath().String(), sym.Location.Range.Start.Line+1))
 				}
 			case copy_data:
 				{

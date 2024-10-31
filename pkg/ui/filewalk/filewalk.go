@@ -139,7 +139,7 @@ func (r *Filewalk) walk(root string) {
 			}
 		}
 		if is_git_root(path) {
-			println(path)
+			// println(path)
 			r.waitReports.Add(1)
 			go r.walk(path)
 			return fastwalk.SkipDir

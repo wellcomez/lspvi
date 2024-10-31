@@ -94,6 +94,26 @@ func (qk *quick_view_data) get_data(index int) (*ref_with_caller, error) {
 	}
 	return &qk.Refs.Refs[index], nil
 }
+func (call *ref_with_caller) get_caller(lspmgr *lspcore.LspWorkspace) (err error) {
+	var file string = call.Loc.URI.AsPath().String()
+	var ret []lsp.CallHierarchyItem
+	if ret, err = lspmgr.PrepareCallHierarchy(call.Loc); err == nil && len(ret) > 0 {
+		var stack []lsp.CallHierarchyIncomingCall
+		if stack, err = lspmgr.CallHierarchyIncomingCalls(ret[0]); err == nil && len(stack) > 0 {
+			for _, s := range stack {
+				if s.From.URI.AsPath().String() == file {
+					// yes := s.From.Range.Overlaps(call.Loc.Range)
+					// debug.DebugLog("asyn-call", yes)
+					call.Caller = &lspcore.CallStackEntry{
+						Name: s.From.Name,
+						Item: ret[0],
+					}
+				}
+			}
+		}
+	}
+	return
+}
 func (qk *quick_view_data) async_open(call *ref_with_caller, cb func(error, bool)) {
 	var file string = call.Loc.URI.AsPath().String()
 	var r lsp.Range = call.Loc.Range
@@ -134,11 +154,16 @@ func (tree *list_tree_node) quickfix_listitem_string(qk *quick_view_data, lineno
 					caller.Caller = c
 					changed = true
 				} else if sym == nil {
-					go qk.async_open(caller, func(err error, b bool) {
-						if b {
-							qk.Save()
-						}
-					})
+					if err := caller.get_caller(lspmgr); err == nil {
+						changed = true
+					} else {
+						debug.DebugLog("get_caller", err)
+						go qk.async_open(caller, func(err error, b bool) {
+							if b {
+								qk.Save()
+							}
+						})
+					}
 				}
 			}
 		}
@@ -173,12 +198,12 @@ func (tree *list_tree_node) get_treenode_text(qk *quick_view_data, caller *ref_w
 		line.a(fmt.Sprintf("%3d. ", lineno)).add_color_text_list(list_text.line)
 		if len(tree.children) > 0 {
 			if !tree.expand {
-				line.pepend(fmt.Sprintf("%c", IconCollapse), color)
+				line.prepend(fmt.Sprintf("%c", IconCollapse), color)
 			} else {
-				line.pepend(fmt.Sprintf("%c", IconExpaned), color)
+				line.prepend(fmt.Sprintf("%c", IconExpaned), color)
 			}
 		} else {
-			line.pepend(" ", 0)
+			line.prepend(" ", 0)
 		}
 	} else {
 		line.add_color_text_list(list_text.line)
@@ -207,12 +232,18 @@ func (quickview_data *quick_view_data) BuildListString(root string) []*colorstri
 				if c, sym := lspmgr.GetCallEntry(filename, v.Range); c != nil {
 					caller.Caller = c
 					changed = true
+					changed = true
 				} else if sym == nil {
-					quickview_data.async_open(&caller, func(err error, b bool) {
-						if b {
-							quickview_data.Save()
-						}
-					})
+					if err := caller.get_caller(lspmgr); err == nil {
+						changed = true
+					} else {
+						debug.DebugLog("get caller fail", err)
+						quickview_data.async_open(&caller, func(err error, b bool) {
+							if b {
+								quickview_data.Save()
+							}
+						})
+					}
 				}
 			}
 		}
@@ -221,7 +252,7 @@ func (quickview_data *quick_view_data) BuildListString(root string) []*colorstri
 			continue
 		}
 		x := fmt.Sprintf("%3d. ", i+1)
-		secondline.pepend(x, 0)
+		secondline.prepend(x, 0)
 		data = append(data, secondline)
 	}
 	if changed {
@@ -315,7 +346,7 @@ func (v *FlexTreeNode) ListItemColorString() (ret []colorstring) {
 	for i, c := range v.child {
 		s := *c.data.color_string
 		if i == lastIndex && m {
-			s.pepend(down, tcell.ColorRed)
+			s.prepend(down, tcell.ColorRed)
 		}
 		ret = append(ret, s)
 

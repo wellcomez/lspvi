@@ -10,7 +10,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"zen108.com/lspvi/pkg/debug"
+	// "zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -33,7 +33,7 @@ func (c current_document_pick) UpdateQuery(query string) {
 	for i, v := range fzf.selected_index {
 		filter[v] = true
 		selected_postion[v] = fzf.selected_postion[i]
-		debug.DebugLog("selected ", fzf.selected_text[i], v)
+		// debug.DebugLog("selected ", fzf.selected_text[i], v)
 	}
 	list := c.impl.listcustom
 	list.Clear()

@@ -78,6 +78,8 @@ var command_name = []string{
 	"cmd_clean_log",
 	"cmd_save",
 	"cmd_reload",
+	"split_right",
+	"close_tab",
 }
 
 type cmditem struct {
@@ -368,7 +370,6 @@ func (m mainui) save_keyboard_config() {
 	global_config.Save()
 }
 
-
 func (c cmd_processor) to_cmditem(arg []string) (a cmditem) {
 	a = cmditem{
 		Key: cmdkey{
@@ -379,7 +380,7 @@ func (c cmd_processor) to_cmditem(arg []string) (a cmditem) {
 			desc: strings.Join(append([]string{c.descriptor}, arg...), " "),
 			id:   c.id,
 			handle: func() bool {
-				c.run(arg)
+				c.run(arg, c)
 				return true
 			},
 		},
@@ -416,6 +417,7 @@ func (config LspviConfig) ParseKeyBind(m *mainui) (menu, global, escape, lead []
 	}
 	return
 }
+
 var mouseActionStrings = []string{
 	"MouseMove",
 	"MouseLeftDown",

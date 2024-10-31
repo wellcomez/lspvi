@@ -9,6 +9,7 @@ import (
 )
 
 type CodeEditor interface {
+	ContentChangeHandle() change_reciever
 	//Complete
 	HasComplete() bool
 	CloseComplete()
@@ -61,10 +62,14 @@ type CodeEditor interface {
 	LoadFileNoLsp(filename string, line int) error
 	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
 
-	//goto line
-	Clear()
-	GetLines(begin, end int) []string
+	//viewid
 	vid() view_id
+	Viewlink() *view_link
+
+	//clear
+	Clear()
+
+	//goto line
 	goto_line_end()
 	goto_line_head()
 	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
@@ -94,13 +99,17 @@ type CodeEditor interface {
 	deleteword()
 	deltext()
 
-	//copy Paste
+	//code content
+	GetLines(begin, end int) []string
 	copyline(bool)
-	GetCode(lsp.Location) string
+
+	//copy Paste
+	GetCode(lsp.Location) (string, error)
 	Paste()
 
 	//InsertMode
 	InsertMode(yes bool)
+
 	//history
 	EditorPosition() *EditorPosition
 
