@@ -36,10 +36,13 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.RTOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
+          tag_name: v${{ github.run_number }}  # Or your version like v1.0.0
+          # Don't use refs/tags/ prefix
+          release_name: Release v${{ github.run_number }}
+          draft: false
+          prerelease: false
+
+
 
 
 
