@@ -19,6 +19,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 
 	ts_bash "github.com/smacker/go-tree-sitter/bash"
+	ts_json "github.com/smacker/go-tree-sitter/json"
 	ts_c "github.com/smacker/go-tree-sitter/c"
 	ts_cpp "github.com/smacker/go-tree-sitter/cpp"
 	ts_css "github.com/smacker/go-tree-sitter/css"
@@ -615,6 +616,7 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),
 	new_tsdef("html", lsp_dummy{}, ts_html.GetLanguage()).set_ext([]string{"html"}).setparser(rs_outline),
 	new_tsdef("toml", lsp_dummy{}, ts_toml.GetLanguage()).set_ext([]string{"toml"}).setparser(rs_outline),
+	new_tsdef("json", lsp_dummy{}, ts_json.GetLanguage()).set_ext([]string{"json"}).setparser(rs_outline),
 	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(java_outline),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
 	new_tsdef(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}).setparser(rs_outline).set_default_outline(),
