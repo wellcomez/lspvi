@@ -50,15 +50,19 @@ type TreeSitterSymbol struct {
 	Code       string
 	Symbol     string
 }
+type ts_symbol_parser interface {
+	resolve([]TreeSitterSymbol, *lsp.SymbolInformation, string) (bool, error)
+}
 type TreeSitter struct {
-	filename   SourceFile
-	content    []byte
-	parser     *sitter.Parser
-	tree       *sitter.Tree
-	sourceCode []byte
-	HlLine     TreesiterSymbolLine
-	Outline    []*Symbol
-	tsdef      *ts_lang_def
+	filename       SourceFile
+	content        []byte
+	parser         *sitter.Parser
+	tree           *sitter.Tree
+	sourceCode     []byte
+	HlLine         TreesiterSymbolLine
+	Outline        []*Symbol
+	tsdef          *ts_lang_def
+	symbol_resolve ts_symbol_parser
 }
 
 // tree.Edit(sitter.EditInput{
@@ -399,9 +403,13 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 			if !err {
 				continue
 			}
+			line_done:=false
 			for _, item := range line {
 				if item.Symbol == "line_comment" {
 					continue
+				}
+				if line_done{
+					break
 				}
 				code := item.Code
 				Range := item.lsprange()
@@ -428,6 +436,15 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 							c.Kind = lsp.SymbolKindFunction
 						default:
 							debug.TraceLogf("query_result:%s| symbol:%20s    | code:%20s", item.SymbolName, item.Symbol, item.Code)
+						}
+						if len(code) > 0 {
+							if ts.symbol_resolve != nil {
+								if yes, _ := ts.symbol_resolve.resolve(line, &c, code); yes {
+									items = append(items, &c)
+									line_done = true
+									break
+								}
+							}
 						}
 						items = append(items, &c)
 					}
@@ -469,7 +486,13 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 			}
 		}
 	}
-	var s = Symbol_file{lsp: lsp_base{core: &lspcore{lang: lsp_dummy{}}}}
+	lang := lsp_dummy{}
+	core := &lspcore{lang: lang}
+	lsp_lang_go := lsp_lang_go{}
+	if lsp_lang_go.IsMe(ts.filename.Path()) {
+		core = &lspcore{lang: lsp_lang_go}
+	}
+	var s = Symbol_file{lsp: lsp_base{core: core}}
 	document_symbol := []lsp.SymbolInformation{}
 	if cb != nil {
 		items = cb(ts, items)
@@ -915,11 +938,48 @@ func GetNewTreeSitter(name string, event CodeChangeEvent) *TreeSitter {
 	loaded_files[name] = v
 	return v
 }
+
+type ts_go_symbol_resolve struct {
+}
+
+// resolve implements ts_symbol_parser.
+func (t ts_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.SymbolInformation, code string) (done bool, err error) {
+	done = false
+	if sym.Kind == lsp.SymbolKindMethod {
+		method_name := ""
+		class_name := ""
+		for i, v := range line {
+			if v.Symbol == "field_identifier" {
+				method_name = v.Code
+				continue
+			}
+			if v.Symbol == ")" {
+				if i-1 > 0 && line[i-1].SymbolName == "context" {
+					class_name = line[i-1].Code
+				}
+			}
+		}
+		if len(method_name) > 0 && len(class_name) > 0 {
+			sym.ContainerName = class_name
+			sym.Name = fmt.Sprintf("(%s).%s", class_name, method_name)
+			done = true
+		}
+		return
+	}
+	return
+}
+
 func NewTreeSitter(name string, content []byte) *TreeSitter {
+
 	ret := &TreeSitter{
 		parser:   sitter.NewParser(),
 		filename: NewFile(name),
 		content:  content,
+	}
+	yes := lsp_lang_go{}.IsMe(name)
+	if yes {
+		var golang ts_go_symbol_resolve
+		ret.symbol_resolve = golang
 	}
 	ret.HlLine = make(map[int][]TreeSitterSymbol)
 	return ret
