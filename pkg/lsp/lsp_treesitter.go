@@ -974,8 +974,15 @@ type cpp_go_symbol_resolve struct {
 }
 
 func (t *cpp_go_symbol_resolve) trim_symbol_name(sym *lsp.SymbolInformation) {
-	sym.Name = strings.ReplaceAll(sym.Name, "\n", "")
-	sym.Name = strings.ReplaceAll(sym.Name, " ", "")
+	if strings.Contains(sym.Name, ":") {
+		debug.DebugLog("cpp_go_symbol_resolve", "trim_symbol_name", "sym.Name", sym.Name)
+	}
+	if idx := strings.Index(sym.Name, "\n"); idx > 0 {
+		name := sym.Name[:idx]
+		nam2 := sym.Name[idx+1:]
+		nam2 = strings.TrimLeft(nam2, " ")
+		sym.Name = name + nam2
+	}
 }
 func (t *cpp_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.SymbolInformation, code string) (done bool, err error) {
 	if strings.Index(code, "PrerenderActivationNavigationState") > 0 {
@@ -986,6 +993,7 @@ func (t *cpp_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.Symbol
 		t.class_obbject = append(t.class_obbject, sym)
 		return
 	}
+	t.trim_symbol_name(sym)
 	if sym.Kind == lsp.SymbolKindField {
 		for _, v := range line {
 			if v.Symbol == ")" && v.SymbolName == "context" {
@@ -1004,23 +1012,11 @@ func (t *cpp_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.Symbol
 
 	} else if sym.Kind == lsp.SymbolKindFunction || sym.Kind == lsp.SymbolKindMethod {
 
-		for _, v := range line {
-			if v.Symbol == "qualified_identifier" && v.SymbolName == "name" {
-				if strings.Index(v.Code, "::") > 0 {
-					sym.Name = v.Code
-					t.trim_symbol_name(sym)
-					sym.Kind = lsp.SymbolKindMethod
-					done = true
-					return
-				}
-			}
+		if strings.Index(sym.Name, "::") > 0 {
+			sym.Kind = lsp.SymbolKindMethod
+			done = true
+			return
 		}
-		// for _, v := range line {
-		// 	if v.SymbolName == "name" && strings.Index(v.Code, "::") > 0 {
-		// 		debug.DebugLog("xx")
-		// 		// sym.Kind = lsp.SymbolKindMethod
-		// 	}
-		// }
 		t.change_to_method(sym)
 	}
 	return
@@ -1028,7 +1024,7 @@ func (t *cpp_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.Symbol
 
 func (t *cpp_go_symbol_resolve) change_to_method(sym *lsp.SymbolInformation) bool {
 	for _, v := range t.class_obbject {
-		if v.Location.Range.Overlaps(sym.Location.Range) {
+		if sym.Location.Range.Start.AfterOrEq(v.Location.Range.Start) && sym.Location.Range.End.BeforeOrEq(v.Location.Range.End) {
 			sym.Kind = lsp.SymbolKindMethod
 			return true
 		}
