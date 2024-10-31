@@ -574,8 +574,8 @@ var tree_sitter_lang_map = []*ts_lang_def{
 			return si
 		})
 	}).set_default_outline(),
-	new_tsdef("cpp", lsp_lang_cpp{}, ts_cpp.GetLanguage()).set_ext([]string{"h", "hpp", "cc", "cpp"}).setparser(rs_outline),
-	new_tsdef("c", lsp_lang_cpp{}, ts_c.GetLanguage()).setparser(rs_outline),
+	new_tsdef("cpp", lsp_dummy{}, ts_cpp.GetLanguage()).set_ext([]string{"hpp", "cc", "cpp"}).setparser(rs_outline),
+	new_tsdef("c", lsp_dummy{}, ts_c.GetLanguage()).setparser(rs_outline).set_ext([]string{"c","h"}),
 	new_tsdef("python", lsp_lang_py{}, ts_py.GetLanguage()).setparser(rs_outline),
 	new_tsdef("lua", lsp_dummy{}, ts_lua.GetLanguage()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
