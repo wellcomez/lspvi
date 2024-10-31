@@ -61,16 +61,17 @@ jobs:
     #     fi
 
       # Create Release and upload
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
-      with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: false
+    # - name: Create Release
+    #   id: create_release
+    #   if: startsWith(github.ref, 'refs/tags/')
+    #   uses: actions/create-release@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+    #   with:
+    #     tag_name: ${{ github.ref_name }}
+    #     release_name: Release ${{ github.ref_name }}
+    #     draft: false
+    #     prerelease: false
 
       # Upload the archive
     - name: Upload Release Asset
