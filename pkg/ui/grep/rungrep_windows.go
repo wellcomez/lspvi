@@ -11,17 +11,12 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 func RunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
-	if grep.bAbort {
+	if grep.IsAbort(){
 		return
 	}
-	defer func() {
-		<-semFopenLimit
-		grep.waitGreps.Done()
-	}()
 	if strings.HasPrefix(fpath, grep.global_prj_root) {
 		debug.InfoLog("Ignore ", fpath)
 	}
-	semFopenLimit <- 1
 	grep.filecount++
 	mem,err:=	os.ReadFile(fpath)
 	if err!=nil{
@@ -29,7 +24,7 @@ func RunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 		return
 	}
 	isBinary := verifyBinary(mem)
-	if isBinary && !grep.scope.binary {
+	if isBinary  {
 		return
 	}
 
@@ -39,23 +34,27 @@ func RunGrep(grep *Gorep, fpath string, out chan<- GrepInfo) {
 	scanner.Split(bufio.ScanLines)
 	lineNumber := 0
 
-	var ret = GrepInfo{fpath, lineNumber, "", 0}
+	var ret = GrepInfo{fpath, lineNumber, "", 0, false, -1}
 	for scanner.Scan() {
+		if grep.IsAbort() {
+			return
+		}
 		lineNumber++
 		strline := scanner.Text()
-		finded := grep.newFunction1(strline)
-		if finded {
+		X := grep.Match(strline)
+		if len(X) > 0 {
 			if !grep.just_grep_file {
 				if isBinary {
-					out <- GrepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath), 1}
+					out <- GrepInfo{fpath, 0, fmt.Sprintf("Binary file %s matches", fpath), 1, false, X[0]}
 					return
 				} else {
-					out <- GrepInfo{fpath, lineNumber, strline, 1}
+					out <- GrepInfo{fpath, lineNumber, strline, 1, false, X[0]}
 				}
 			} else {
 				if ret.Matched == 0 {
 					ret.LineNumber = lineNumber
 					ret.Line = strline
+					ret.X = X[0]
 				}
 				ret.Matched++
 			}
