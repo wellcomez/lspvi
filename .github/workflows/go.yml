@@ -12,7 +12,19 @@ on:
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+          - os: macos-latest
+            output: lspvi-darwin
+          - os: ubuntu-latest
+            output: lspvi-linux
+          - os: windows-latest
+            output: lspvi.exe
+
+    runs-on: ${{ matrix.os }}
+    
     steps:
     - uses: actions/checkout@v4
       with:
@@ -28,13 +40,11 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Build
-      run:  go build -o lspvi-amd64-linux
+      run: go build -o ${{ matrix.output }}
+
+
       
-    - name: Buildwin
-      run: win=1 bash build.sh
-      
-    - name: Buildmac
-      run: mac=1 bash build.sh
+
       
     - name: Create Release
       id: create_release
@@ -50,25 +60,30 @@ jobs:
 
 
 
-
-
-    - name: Upload Linux Artifact
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./lspvi-amd64-linux
-        asset_name: lspvi-amd64-linux
-        asset_content_type: application/octet-stream
+        name: ${{ matrix.output }}
+        path: ${{ matrix.output }}
 
 
-    - name: Upload win64 Artifact
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./lspvi-window-x64
-        asset_name: lspvi-window-x64
-        asset_content_type: application/octet-stream
+    # - name: Upload Linux Artifact
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_path: ./lspvi-amd64-linux
+    #     asset_name: lspvi-amd64-linux
+    #     asset_content_type: application/octet-stream
+
+
+    # - name: Upload win64 Artifact
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_path: ./lspvi-window-x64
+    #     asset_name: lspvi-window-x64
+    #     asset_content_type: application/octet-stream
