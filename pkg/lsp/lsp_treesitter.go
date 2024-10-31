@@ -303,11 +303,11 @@ func (o Outline) Symbol(ts *TreeSitter) (ret *lsp.SymbolInformation, done bool) 
 			c.Kind = lsp.SymbolKindInterface
 		case "type_declaration":
 			c.Kind = lsp.SymbolKindClass
-		case "field_declaration","public_field_definition":
+		case "field_declaration", "public_field_definition":
 			c.Kind = lsp.SymbolKindField
 		case "enum_specifier":
 			c.Kind = lsp.SymbolKindEnum
-		case "method_elem", "method_declaration","method_definition":
+		case "method_elem", "method_declaration", "method_definition":
 			c.Kind = lsp.SymbolKindMethod
 		case "struct_specifier":
 			c.Kind = lsp.SymbolKindStruct
@@ -552,6 +552,35 @@ func bash_parser(ts *TreeSitter, cb outlinecb) {
 		return ts.Outline[i].SymInfo.Location.Range.Start.Line < ts.Outline[j].SymInfo.Location.Range.Start.Line
 	})
 }
+func yaml_group(ts *TreeSitter, si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
+	items := si
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].Location.Range.Start.Line < items[j].Location.Range.Start.Line
+	})
+	ret := []*lsp.SymbolInformation{}
+	for _, newone := range items {
+		var find *lsp.SymbolInformation
+		for _, prev := range ret {
+			if newone.Location.Range.Overlaps(prev.Location.Range) {
+				if find == nil {
+					find = prev
+				} else {
+					if prev.Location.Range.Overlaps(find.Location.Range) {
+						find = prev
+					}
+				}
+			}
+		}
+		if find == nil {
+			ret = append(ret, newone)
+		} else {
+			find.Kind = lsp.SymbolKindInterface
+			newone.Kind = lsp.SymbolKindField
+			ret = append(ret, newone)
+		}
+	}
+	return ret
+}
 
 var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("go", lsp_lang_go{}, ts_go.GetLanguage()).setparser(func(ts *TreeSitter, o outlinecb) {
@@ -584,42 +613,18 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("lua", lsp_dummy{}, ts_lua.GetLanguage()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.GetLanguage()).set_ext([]string{"rs"}).setparser(rs_outline),
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.GetLanguage()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
-		rs_outline(ts, func(ts *TreeSitter, si []*lsp.SymbolInformation) []*lsp.SymbolInformation {
-			items := si
-			sort.Slice(items, func(i, j int) bool {
-				return items[i].Location.Range.Start.Line < items[j].Location.Range.Start.Line
-			})
-			ret := []*lsp.SymbolInformation{}
-			for _, newone := range items {
-				var find *lsp.SymbolInformation
-				for _, prev := range ret {
-					if newone.Location.Range.Overlaps(prev.Location.Range) {
-						if find == nil {
-							find = prev
-						} else {
-							if prev.Location.Range.Overlaps(find.Location.Range) {
-								find = prev
-							}
-						}
-					}
-				}
-				if find == nil {
-					ret = append(ret, newone)
-				} else {
-					find.Kind = lsp.SymbolKindInterface
-					newone.Kind = lsp.SymbolKindField
-					ret = append(ret, newone)
-				}
-			}
-			return ret
-		})
+		rs_outline(ts, yaml_group)
 	}),
 	new_tsdef("proto", lsp_dummy{}, ts_protobuf.GetLanguage()).set_ext([]string{"proto"}).setparser(rs_outline),
 	new_tsdef("css", lsp_dummy{}, ts_css.GetLanguage()).set_ext([]string{"css"}).setparser(rs_outline),
 	new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),
 	new_tsdef("html", lsp_dummy{}, ts_html.GetLanguage()).set_ext([]string{"html"}).setparser(rs_outline),
-	new_tsdef("toml", lsp_dummy{}, ts_toml.GetLanguage()).set_ext([]string{"toml"}).setparser(rs_outline),
-	new_tsdef("json", lsp_dummy{}, ts_json.GetLanguage()).set_ext([]string{"json"}).setparser(rs_outline),
+	new_tsdef("toml", lsp_dummy{}, ts_toml.GetLanguage()).set_ext([]string{"toml"}).setparser( func(ts *TreeSitter, o outlinecb) {
+		rs_outline(ts, yaml_group)
+	}),
+	new_tsdef("json", lsp_dummy{}, ts_json.GetLanguage()).set_ext([]string{"json"}).setparser(func(ts *TreeSitter, o outlinecb) {
+		rs_outline(ts, yaml_group)
+	}),
 	new_tsdef("java", lsp_dummy{}, ts_java.GetLanguage()).set_ext([]string{"java"}).setparser(java_outline),
 	new_tsdef("bash", lsp_dummy{}, ts_bash.GetLanguage()).set_ext([]string{"sh"}).setparser(bash_parser),
 	new_tsdef(ts_name_tsx, lsp_dummy{}, ts_tsx.GetLanguage()).set_ext([]string{"tsx"}).setparser(rs_outline).set_default_outline(),
