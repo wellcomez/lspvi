@@ -248,6 +248,15 @@ func (wk LspWorkspace) IsSource(filename string) bool {
 }
 func (wk LspWorkspace) find_from_stackentry(entry *CallStackEntry) (*Symbol, error) {
 	filename := entry.Item.URI.AsPath().String()
+	symbolfile, ok := wk.get(filename)
+	if !ok {
+		symbolfile = wk.OpenNoLsp(filename)
+		symbolfile.LoadTreeSitter(true)
+	}
+	if sym, _ := symbolfile.find_stack_symbol(entry); sym != nil {
+		return sym, nil
+	}
+
 	symbolfile, isnew, err := wk.open(filename)
 	if err != nil {
 		return nil, err

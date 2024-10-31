@@ -204,7 +204,8 @@ func (callnode CallNode) reload_callin(ret *callinview, node *tview.TreeNode) {
 }
 
 func reload_callin_task(ret *callinview, task lspcore.CallInTask, node *tview.TreeNode) {
-	if sym, err := ret.main.Lspmgr().Open(task.Loc.URI.AsPath().String()); err == nil {
+	if sym := ret.main.Lspmgr().OpenNoLsp(task.Loc.URI.AsPath().String()); sym == nil {
+		sym.LoadTreeSitter(true)
 		task := lspcore.NewCallInTask(task.Loc, sym.LspClient(), task.TraceLevel)
 		if node != nil {
 			ret.DeleteNode(node)
@@ -252,10 +253,8 @@ func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main Ma
 				sym := ref.call
 				loc := lsp.Location{URI: sym.URI, Range: sym.Range}
 				filepath := sym.URI.AsPath().String()
-				symbolfile, err := main.Lspmgr().Open(filepath)
-				if err != nil {
-					return err
-				}
+				symbolfile := main.Lspmgr().OpenNoLsp(filepath)
+				symbolfile.LoadTreeSitter(true)
 				call_hiera, err := symbolfile.PrepareCallHierarchy(loc)
 				if err != nil {
 					return err
@@ -366,10 +365,8 @@ func (ret *callinview) get_next_callin_callee_at_leaf(value interface{}, main Ma
 				sym := ref.call
 				loc := lsp.Location{URI: sym.URI, Range: sym.Range}
 				filepath := sym.URI.AsPath().String()
-				symbolfile, err := main.Lspmgr().Open(filepath)
-				if err != nil {
-					return err
-				}
+				symbolfile := main.Lspmgr().OpenNoLsp(filepath)
+				symbolfile.LoadTreeSitter(true)
 				call_hiera, err := symbolfile.PrepareCallHierarchy(loc)
 				if err != nil {
 					return err

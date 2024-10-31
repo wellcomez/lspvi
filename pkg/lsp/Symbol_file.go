@@ -368,7 +368,12 @@ func (sym *Symbol_file) CallHierarchyIncomingCall(callitem lsp.CallHierarchyItem
 	sym.on_error(err)
 	return
 }
-func (sym *Symbol_file) TreeSitter() {
+func (sym *Symbol_file) LoadTreeSitter(justempty bool) {
+	if justempty {
+		if len(sym.Class_object) > 0 {
+			return
+		}
+	}
 	sym.Ts = GetNewTreeSitter(sym.Filename, CodeChangeEvent{File: sym.Filename, Full: true})
 	sym.Ts.initblock()
 	sym.Class_object = sym.Ts.Outline
