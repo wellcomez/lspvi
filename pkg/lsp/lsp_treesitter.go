@@ -64,6 +64,8 @@ type TreeSitter struct {
 	Outline        []*Symbol
 	tsdef          *ts_lang_def
 	symbol_resolve ts_symbol_parser
+
+	InjectOutline []*Symbol
 }
 
 // tree.Edit(sitter.EditInput{
@@ -734,14 +736,22 @@ type ts_inject struct {
 	lang    string
 	content []TreeSitterSymbol
 	hline   TreesiterSymbolLine
+	Outline []*Symbol
 }
 
+func offset_lsp_range(r lsp.Range, offset int) (ret lsp.Range) {
+	r.Start.Line = r.Start.Line + offset
+	r.End.Line = r.End.Line + offset
+	ret = r
+	return
+}
 func (inject *ts_inject) hl() {
 	for _, v := range inject.content {
 		t := NewTreeSitterParse(inject.lang, v.Code)
 		if t.load_ts_def() {
 			t.Loadfile(t.tsdef.tslang, nil)
 
+			var Outline []*Symbol
 			var HlLine = make(TreesiterSymbolLine)
 			for k, l := range t.HlLine {
 				for i := range l {
@@ -750,6 +760,17 @@ func (inject *ts_inject) hl() {
 				}
 				HlLine[k+int(v.Begin.Row)] = l
 			}
+			for _, sym := range t.Outline {
+				sym.SymInfo.Location.Range = offset_lsp_range(sym.SymInfo.Location.Range, int(v.Begin.Row))
+				var Members []Symbol
+				for _, m := range sym.Members {
+					m.SymInfo.Location.Range = offset_lsp_range(m.SymInfo.Location.Range, int(v.Begin.Row))
+					Members = append(Members, m)
+				}
+				sym.Members = Members
+				Outline = append(Outline, sym)
+			}
+			inject.Outline = Outline
 			for k, l := range HlLine {
 				if line, ok := inject.hline[k]; ok {
 					line = append(line, l...)
@@ -763,7 +784,7 @@ func (inject *ts_inject) hl() {
 	}
 }
 
-func (ts TreeSitter) get_higlight(queryname string) (ret TreesiterSymbolLine, err error) {
+func (ts *TreeSitter) get_higlight(queryname string) (ret TreesiterSymbolLine, err error) {
 	if queryname == query_highlights {
 		ret, err = ts.query_buf(ts.tsdef.hl)
 		if ts.tsdef.inject != nil {
@@ -789,6 +810,7 @@ func (ts TreeSitter) get_higlight(queryname string) (ret TreesiterSymbolLine, er
 			}
 			for _, v := range inejcts {
 				v.hl()
+				ts.InjectOutline = append(ts.InjectOutline, v.Outline...)
 			}
 			for _, inj := range inejcts {
 				for lienno, v := range inj.hline {
