@@ -698,7 +698,7 @@ func (k *keymap) global_key_map() []cmditem {
 		}
 	}
 */
-func (m mainui) keymap(keytype cmdkeytype, printit bool) []string {
+func (m mainui) keymap(keytype cmdkeytype, printit bool,fmtstr string) []string {
 	ret := []string{}
 	var items = AllKeyMap(m)
 
@@ -712,10 +712,10 @@ func (m mainui) keymap(keytype cmdkeytype, printit bool) []string {
 		}
 		var s string
 		if !printit {
-			s = fmt.Sprintf("|%-20s |%s|", pre+k.Key.displaystring(), k.Cmd.desc)
+			s = fmt.Sprintf(fmtstr, pre+k.Key.displaystring(), k.Cmd.desc)
 
 		} else {
-			s = fmt.Sprintf("%-20s %s", k.Key.displaystring(), k.Cmd.desc)
+			s = fmt.Sprintf(fmtstr, k.Key.displaystring(), k.Cmd.desc)
 		}
 
 		ret = append(ret, s)
@@ -747,7 +747,7 @@ func (m *mainui) helpkey(print bool) []string {
 	fmt_str := ""
 	ret := []string{}
 	if print {
-		fmt_str = "%-20s %s"
+		fmt_str = "\t%-20s %s"
 	} else {
 		fmt_str = "|%-20s|%s|"
 	}
@@ -757,7 +757,7 @@ func (m *mainui) helpkey(print bool) []string {
 	ret = append(ret, s)
 
 	for _, k := range types {
-		s := m.keymap(k, print)
+		s := m.keymap(k, print,fmt_str)
 		ret = append(ret, s...)
 	}
 	for _, v := range m.cmdline.ConvertCmdItem() {
