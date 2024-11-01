@@ -298,7 +298,7 @@ func (cmd cmdkey) displaystring() string {
 	case cmd_key_leader:
 		t = append(t, "space")
 	case cmd_key_command:
-		t = append(t, cmd.key...)
+		t = append([]string{}, cmd.key...)
 		return strings.Join(t, ",")
 
 	}

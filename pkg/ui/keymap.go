@@ -698,7 +698,7 @@ func (k *keymap) global_key_map() []cmditem {
 		}
 	}
 */
-func (m mainui) keymap(keytype cmdkeytype, markdown bool) []string {
+func (m mainui) keymap(keytype cmdkeytype, printit bool) []string {
 	ret := []string{}
 	var items = AllKeyMap(m)
 
@@ -711,11 +711,11 @@ func (m mainui) keymap(keytype cmdkeytype, markdown bool) []string {
 			pre = "ctrl+w "
 		}
 		var s string
-		if markdown {
-			s = fmt.Sprintf("|%-10s |%s|", pre+k.Key.displaystring(), k.Cmd.desc)
+		if !printit {
+			s = fmt.Sprintf("|%-20s |%s|", pre+k.Key.displaystring(), k.Cmd.desc)
 
 		} else {
-			s = fmt.Sprintf("%-10s %s", k.Key.displaystring(), k.Cmd.desc)
+			s = fmt.Sprintf("%-20s %s", k.Key.displaystring(), k.Cmd.desc)
 		}
 
 		ret = append(ret, s)
@@ -744,26 +744,26 @@ func (m *mainui) helpkey(print bool) []string {
 	// if print {
 	types = append(types, cmd_key_rune)
 	types = append(types, cmd_key_tcell_key)
-	// }
+	fmt_str := ""
 	ret := []string{}
 	if print {
-		s := fmt.Sprintf("|%-10s |%s|", "key", "function")
-		ret = append(ret, s)
-		s = fmt.Sprintf("|%-10s |%s|", "---", "---")
-		ret = append(ret, s)
+		fmt_str = "%-20s %s"
+	} else {
+		fmt_str = "|%-20s|%s|"
 	}
+	s := fmt.Sprintf(fmt_str, "key", "function")
+	ret = append(ret, s)
+	s = fmt.Sprintf(fmt_str, "---", "---")
+	ret = append(ret, s)
+
 	for _, k := range types {
 		s := m.keymap(k, print)
 		ret = append(ret, s...)
 	}
-	for _, v := range m.cmdline.cmds {
-		if print {
-			ret = append(ret, fmt.Sprintf("|%-10s |%s|", v.displaystring(), v.descriptor))
-		} else {
-			ret = append(ret, fmt.Sprintf("%-10s %s", v.displaystring(), v.descriptor))
-		}
+	for _, v := range m.cmdline.ConvertCmdItem() {
+		ret = append(ret, fmt.Sprintf(fmt_str, v.Key.displaystring(), v.Cmd.desc))
 	}
-	if print {
+	if !print {
 		for _, l := range ret {
 			m.update_log_view(l + "\n")
 		}

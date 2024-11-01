@@ -14,8 +14,10 @@ type arg struct {
 
 func main() {
 	gui := flag.Bool("gui", false, "guimain")
-	ws := flag.String("ws", "", "guimain")
+	ws := flag.String("ws", "", "websocket address")
 	tty := flag.Bool("tty", false, "guimain")
+	grep := flag.Bool("grep", false, "grep")
+	help := flag.Bool("help", false, "help")
 	root := flag.String("root", "", "root-dir")
 	file := flag.String("file", "", "source file")
 	flag.Parse()
@@ -24,9 +26,11 @@ func main() {
 		File: *file,
 		Tty:  *tty,
 		Ws:   *ws,
+		Grep: *grep,
+		Help: *help,
 	}
 	if *gui {
-		mainui.StartWebUI(*arg,nil)
+		mainui.StartWebUI(*arg, nil)
 		return
 	}
 	mainui.MainUI(arg)

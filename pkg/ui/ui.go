@@ -680,6 +680,8 @@ type Arguments struct {
 	Ws   string
 	Tty  bool
 	Cert string
+	Grep bool
+	Help bool
 }
 
 func (main *mainui) update_log_view(s string) {
@@ -856,6 +858,12 @@ func MainUI(arg *Arguments) {
 		// 	main.quickview.menu.Draw(screen)
 		// }
 	})
+	if arg.Help {
+		for _,v := range main.helpkey(true) {
+			println(v)
+		}
+		return
+	}
 	view_id_init(main)
 	go main.quickview.RestoreLast()
 	UpdateTitleAndColor(main_layout.Box, code.Path())
