@@ -4,6 +4,7 @@
 ## b
 ## c
 ~~~go
+    func (t *Tree) load_ts_lang(cb chan<- bool) error {}
 	for i := range tree_sitter_lang_map {
 		v := tree_sitter_lang_map[i]
 		if ts_name := v.get_ts_name(t.filename.Path()); len(ts_name) > 0 {
