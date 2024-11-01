@@ -1,0 +1,69 @@
+name: Go
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+          submodules: true  # This tells checkout action to clone submodules
+          token: ${{ secrets.GH_PAT }}  # Personal Access Token with repo scope
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21.3'
+
+    - name: pull
+      run: git submodule update --init --recursive
+
+    - name: Build
+      run:  go build -o lspvi-amd64-linux
+      
+    - name: Buildwin
+      run: win=1 bash build.sh
+      
+      
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+      with:
+          tag_name: v${{ github.run_number }}  # Or your version like v1.0.0
+          # Don't use refs/tags/ prefix
+          release_name: Release v${{ github.run_number }}
+          draft: false
+          prerelease: false
+
+
+
+
+
+    - name: Upload Linux Artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./lspvi-amd64-linux
+        asset_name: lspvi-amd64-linux
+        asset_content_type: application/octet-stream
+
+
+    - name: Upload win64 Artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./lspvi-window-x64
+        asset_name: lspvi-window-x64
+        asset_content_type: application/octet-stream
