@@ -117,6 +117,7 @@ type ts_lang_def struct {
 	def_ext         []string
 	parser          func(*TreeSitter, outlinecb)
 	hl              *sitter.Query
+	inject          *sitter.Query
 	local           *sitter.Query
 	outline         *sitter.Query
 	default_outline bool
@@ -125,6 +126,7 @@ type ts_lang_def struct {
 	intiqueue *TreesitterInit
 }
 
+const inject_query = "injections"
 const query_highlights = "highlights"
 const query_locals = "locals"
 const query_outline = "outline"
@@ -144,6 +146,7 @@ func new_tsdef(
 		nil,
 		nil,
 		nil,
+		nil,
 		true,
 		false,
 		&TreesitterInit{make(chan ts_init_call, 20), false},
@@ -157,6 +160,16 @@ func (ret *ts_lang_def) load_scm() {
 		return
 	}
 	ret.scm_loaded = true
+	if h, er := ret.query(query_highlights); er == nil {
+		ret.hl = h
+	} else {
+		debug.ErrorLog(DebugTag, "fail to load highlights ", ret.name, er)
+	}
+	if h, er := ret.query(inject_query); er == nil {
+		ret.inject = h
+	} else {
+		debug.ErrorLog(DebugTag, "fail to load ", inject_query, ret.name, er)
+	}
 	if h, er := ret.query(query_highlights); er == nil {
 		ret.hl = h
 	} else {
@@ -697,22 +710,90 @@ func (t *TreeSitter) init(cb func(*TreeSitter)) error {
 		t.tsdef.intiqueue.Run(ts_init_call{t, cb, ts_load_call, nil})
 		return nil
 	}
+	// t.Loadfile(v.tslang, cb)
+	if t.load_ts_def() {
+		t.tsdef.intiqueue.Run(ts_init_call{t, cb, ts_load_call, nil})
+		return nil
+	}
+	return fmt.Errorf("not implemented")
+}
+
+func (t *TreeSitter) load_ts_def() bool {
 	for i := range tree_sitter_lang_map {
 		v := tree_sitter_lang_map[i]
 		if ts_name := v.get_ts_name(t.filename.Path()); len(ts_name) > 0 {
 			v.load_scm()
 			t.tsdef = v
-			// t.Loadfile(v.tslang, cb)
-			t.tsdef.intiqueue.Run(ts_init_call{t, cb, ts_load_call, nil})
-			return nil
+			return true
 		}
 	}
-	return fmt.Errorf("not implemented")
+	return false
 }
 
-func (t TreeSitter) query(queryname string) (TreesiterSymbolLine, error) {
+type ts_inject struct {
+	lang    string
+	content []TreeSitterSymbol
+	hline   TreesiterSymbolLine
+}
+
+func (inject *ts_inject) hl() {
+	for _, v := range inject.content {
+		t := NewTreeSitterParse(inject.lang, v.Code)
+		if t.load_ts_def() {
+			t.Loadfile(t.tsdef.tslang, nil)
+			for k, l := range t.HlLine {
+				newline := int(v.Begin.Row) + k
+				if line, ok := inject.hline[newline]; ok {
+					line = append(line, l...)
+					inject.hline[newline] = line
+				} else {
+					inject.hline[newline] = l
+				}
+			}
+		}
+		// ts.HlLine
+	}
+}
+
+func (ts TreeSitter) get_higlight(queryname string) (ret TreesiterSymbolLine, err error) {
 	if queryname == query_highlights {
-		return t.query_buf(t.tsdef.hl)
+		ret, err = ts.query_buf(ts.tsdef.hl)
+		if ts.tsdef.inject != nil {
+			inejcts := []*ts_inject{}
+			if injected, err := ts.query_buf_outline(ts.tsdef.inject); err == nil && len(injected) > 0 {
+				debug.DebugLog(DebugTag, "inject", len(injected))
+				var d *ts_inject
+				for _, aaa := range injected {
+					for _, v := range aaa {
+						if v.SymbolName == "_lang" {
+							d = &ts_inject{}
+							d.lang = "inject." + v.Code
+							d.content = nil
+							d.hline = make(TreesiterSymbolLine)
+							inejcts = append(inejcts, d)
+						} else {
+							if d != nil {
+								d.content = append(d.content, v)
+							}
+						}
+					}
+				}
+			}
+			for _, v := range inejcts {
+				v.hl()
+			}
+			for _, inj := range inejcts {
+				for lienno,v:=range inj.hline	{
+					if line, ok := ret[lienno]; ok {
+						line = append(line, v...)
+						ret[lienno] = line
+					} else {
+						ret[lienno] = v
+					}
+				}
+			}
+		}
+		return
 	}
 	return make(TreesiterSymbolLine), nil
 }
@@ -1082,7 +1163,7 @@ func (ts *TreeSitter) Loadfile(lang *sitter.Language, cb func(*TreeSitter)) erro
 		return err
 	}
 	// go func() {
-	ret, hlerr := ts.query(query_highlights)
+	ret, hlerr := ts.get_higlight(query_highlights)
 	ts.HlLine = ret
 	if hlerr != nil {
 		debug.ErrorLog("fail to load highlights", hlerr)
