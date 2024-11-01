@@ -21,7 +21,7 @@ jobs:
             archive: lspvi-linux
           - os: windows-latest
             output: lspvi.exe
-            archive: lspvi-windows
+            archive: lspvi.exe
 
     runs-on: ${{ matrix.os }}
     
