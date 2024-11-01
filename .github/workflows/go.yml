@@ -89,6 +89,7 @@ jobs:
 
       - name: Get Release Upload URL
         id: get_upload_url
+        shell: bash
         run: |
           if [ "${{ steps.check_release.outputs.release_exists }}" == "true" ]; then
             echo "upload_url=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .upload_url)" >> $GITHUB_OUTPUT
