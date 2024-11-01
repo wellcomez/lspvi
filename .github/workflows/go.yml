@@ -15,13 +15,13 @@ jobs:
         include:
           - os: macos-latest
             output: lspvi-darwin
-            archive: lspvi-darwin.tar.gz
+            archive: lspvi-darwin
           - os: ubuntu-latest
             output: lspvi-linux
-            archive: lspvi-linux.tar.gz
+            archive: lspvi-linux
           - os: windows-latest
             output: lspvi.exe
-            archive: lspvi-windows.zip
+            archive: lspvi-windows
 
     runs-on: ${{ matrix.os }}
     
