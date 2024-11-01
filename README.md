@@ -50,9 +50,6 @@ above lsp serveries you have installed
 
 ```sh
 git submodule init  && git submodule update --recursive
-pushd pkg/lspr
-bash build.sh -w
-popd
 go build
 ./lspvi --root "prj root"
 ```
@@ -80,11 +77,12 @@ cd docker
    ./dockbuild.sh 
    ```
 
-# Keymap
+## Keymap
 
 It supports most of common keymap of [neo]vim. **Space** will invoke menu and  choose **help** or   **space + h** will invoke keymap help.
 
 ![keymap](keymap.png)
+
 | key            | function               |
 | -------------- | ---------------------- |
 | escape + f     | file in file           |
