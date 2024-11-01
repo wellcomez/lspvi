@@ -27,7 +27,7 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Build
-      run:  go build -o lspvi-macos-amd64-linux
+      run:  go build -o lspvi-macos-amd64
       
       
       
@@ -82,23 +82,13 @@ jobs:
 
 
 
-    - name: Upload Linux Artifact
+    - name: Upload Artifact
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.RTOKEN }}
       with:
         upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
-        asset_path: ./lspvi-amd64-linux
-        asset_name: lspvi-amd64-linux
+        asset_path: ./lspvi-macos-amd64 
+        asset_name: lspvi-macos-amd64
         asset_content_type: application/octet-stream
 
-
-    - name: Upload win64 Artifact
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
-      with:
-        upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
-        asset_path: ./lspvi-window-x64
-        asset_name: lspvi-window-x64
-        asset_content_type: application/octet-stream
