@@ -101,9 +101,9 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RTOKEN }}
         with:
           upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
-          asset_path: ./${{ matrix.archive }}
-          asset_name: ${{ matrix.archive }}
+          asset_path: ./${{ matrix.output }}
+          asset_name: ${{ matrix.output }}
           asset_content_type: application/octet-stream
