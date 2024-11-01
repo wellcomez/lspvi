@@ -64,9 +64,8 @@ func (mgr symbol_colortheme) get_default_style() *tcell.Style {
 	}
 	return nil
 }
-func (mgr *symbol_colortheme) set_currsor_line() *tcell.Style {
-	ret := mgr.get_color("cursorline")
-	if ret != nil {
+func (mgr *symbol_colortheme) set_currsor_line()  {
+	if ret := mgr.get_color("visual");ret!=nil{
 		mgr.colorscheme["cursor-line"] = *ret
 		// if _, ok := mgr.colorscheme["selection"]; !ok {
 		// 	mgr.colorscheme["selection"] = *ret
@@ -85,10 +84,7 @@ func (mgr *symbol_colortheme) set_currsor_line() *tcell.Style {
 	}
 	if n, ok := mgr.colorscheme["normal"]; ok {
 		mgr.colorscheme["default"] = n
-		return &n
 	}
-	return ret
-
 }
 
 func hexToRGB(hex string) (int32, int32, int32, error) {
