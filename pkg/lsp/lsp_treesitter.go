@@ -737,6 +737,7 @@ type ts_inject struct {
 	content []TreeSitterSymbol
 	hline   TreesiterSymbolLine
 	Outline []*Symbol
+	hostfile string
 }
 
 func offset_lsp_range(r lsp.Range, offset int) (ret lsp.Range) {
@@ -762,6 +763,7 @@ func (inject *ts_inject) hl() {
 			}
 			for _, sym := range t.Outline {
 				sym.SymInfo.Location.Range = offset_lsp_range(sym.SymInfo.Location.Range, int(v.Begin.Row))
+				sym.SymInfo.Location.URI = lsp.NewDocumentURI(inject.hostfile)
 				var Members []Symbol
 				for _, m := range sym.Members {
 					m.SymInfo.Location.Range = offset_lsp_range(m.SymInfo.Location.Range, int(v.Begin.Row))
@@ -799,6 +801,7 @@ func (ts *TreeSitter) get_higlight(queryname string) (ret TreesiterSymbolLine, e
 							d.lang = "inject." + v.Code
 							d.content = nil
 							d.hline = make(TreesiterSymbolLine)
+							d.hostfile = ts.filename.Path()
 							inejcts = append(inejcts, d)
 						} else {
 							if d != nil {

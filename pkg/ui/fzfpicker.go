@@ -213,16 +213,28 @@ func (v *fzfmain) symbol_picker_tree(code CodeEditor) {
 }
 
 func (v *fzfmain) symbol_picker_2(code CodeEditor) {
-
+	var pickSymbol lspcore.Symbol_file
 	var Current = code.LspSymbol()
 	if Current == nil || len(Current.Class_object) == 0 {
 		if ts := code.TreeSitter(); ts != nil {
-			Current = &lspcore.Symbol_file{
+			pickSymbol = lspcore.Symbol_file{
 				Class_object: ts.Outline,
 			}
 		}
+
+	} else {
+		pickSymbol = *Current
 	}
-	sym := new_current_document_picker(v, Current)
+	if ts := code.TreeSitter(); ts != nil {
+		// ts.InjectOutline
+		if len(ts.InjectOutline) > 0 {
+			loc := ts.InjectOutline[0].SymInfo.Location
+			inject := lspcore.Symbol{SymInfo: lsp.SymbolInformation{Name: "-----inject code----", Kind: lsp.SymbolKindArray, Location: loc}}
+			pickSymbol.Class_object = append(pickSymbol.Class_object, &inject)
+			pickSymbol.Class_object = append(pickSymbol.Class_object, ts.InjectOutline...)
+		}
+	}
+	sym := new_current_document_picker(v, &pickSymbol)
 	x := sym.impl.grid(v.input, 1)
 	v.currentpicker = sym
 	v.create_dialog_content(x, sym)
@@ -234,9 +246,6 @@ func (v *fzfmain) OpenFileFzf(root string) {
 	grid := currentpicker.grid(v.input)
 	v.create_dialog_content(grid, currentpicker)
 }
-
-
-
 
 func (v *fzfmain) Open(t fuzzpicktype) {
 	v.app.SetFocus(v.input)
