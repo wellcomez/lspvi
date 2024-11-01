@@ -785,17 +785,15 @@ func MainUI(arg *Arguments) {
 	mainmenu := main.create_menu_bar(tab_area)
 
 	main.create_right_context_menu()
-
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
-	if len(filearg) == 0 {
-		load_from_history(main)
-	} else {
-		main.OpenFileHistory(filearg, nil)
+	if !arg.Grep {
+		if len(filearg) == 0 {
+			load_from_history(main)
+		} else {
+			main.OpenFileHistory(filearg, nil)
+		}
 	}
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		// if main.codeview2.view.HasFocus() {
-		// 	return main.codeview2.handle_key(event)
-		// }
 		return main.handle_key(event)
 	})
 	console_area_resizer := new_editor_resize(main, main.layout.console, nil, nil)
@@ -859,13 +857,18 @@ func MainUI(arg *Arguments) {
 		// }
 	})
 	if arg.Help {
-		for _,v := range main.helpkey(true) {
+		for _, v := range main.helpkey(true) {
 			println(v)
 		}
 		return
 	}
 	view_id_init(main)
-	go main.quickview.RestoreLast()
+	if !arg.Grep {
+		go main.quickview.RestoreLast()
+	}
+	if arg.Grep {
+		main.open_picker_livegrep()
+	}
 	UpdateTitleAndColor(main_layout.Box, code.Path())
 	go func() {
 		app.QueueUpdateDraw(func() {
