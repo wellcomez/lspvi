@@ -72,11 +72,11 @@ jobs:
       run: |
         # echo "upload_url=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_OUTPUT
         # echo "upload_url=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .upload_url)" >> $GITHUB_OUTPUT
-        # if [ "${{ steps.check_release.outputs.release_exists }}" == "true" ]; then
-        echo "upload_url=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .upload_url)" >> $GITHUB_OUTPUT
-        # else
-        echo "upload_url=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_OUTPUT
-        # fi
+        if [ "${{ steps.check_release.outputs.release_exists }}" == "true" ]; then
+            echo "upload_url=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .upload_url)" >> $GITHUB_OUTPUT
+        else
+            echo "upload_url=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_OUTPUT
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.RTOKEN }}
 
