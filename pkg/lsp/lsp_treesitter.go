@@ -741,13 +741,21 @@ func (inject *ts_inject) hl() {
 		t := NewTreeSitterParse(inject.lang, v.Code)
 		if t.load_ts_def() {
 			t.Loadfile(t.tsdef.tslang, nil)
+
+			var HlLine = make(TreesiterSymbolLine)
 			for k, l := range t.HlLine {
-				newline := int(v.Begin.Row) + k
-				if line, ok := inject.hline[newline]; ok {
+				for i := range l {
+					l[i].Begin.Row = v.Begin.Row + l[i].Begin.Row
+					l[i].End.Row = v.Begin.Row + l[i].End.Row
+				}
+				HlLine[k+int(v.Begin.Row)] = l
+			}
+			for k, l := range HlLine {
+				if line, ok := inject.hline[k]; ok {
 					line = append(line, l...)
-					inject.hline[newline] = line
+					inject.hline[k] = line
 				} else {
-					inject.hline[newline] = l
+					inject.hline[k] = l
 				}
 			}
 		}
@@ -783,7 +791,7 @@ func (ts TreeSitter) get_higlight(queryname string) (ret TreesiterSymbolLine, er
 				v.hl()
 			}
 			for _, inj := range inejcts {
-				for lienno,v:=range inj.hline	{
+				for lienno, v := range inj.hline {
 					if line, ok := ret[lienno]; ok {
 						line = append(line, v...)
 						ret[lienno] = line
