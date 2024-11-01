@@ -297,6 +297,10 @@ func (cmd cmdkey) displaystring() string {
 		t = append(t, fmt.Sprintf("%c", cmd.Rune))
 	case cmd_key_leader:
 		t = append(t, "space")
+	case cmd_key_command:
+		t = append(t, cmd.key...)
+		return strings.Join(t, ",")
+
 	}
 	t = append(t, cmd.key...)
 	return strings.Join(t, " + ")

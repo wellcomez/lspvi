@@ -77,14 +77,16 @@
 |Tab        |Tab|
 |Ctrl-D     |PageDown|
 |Ctrl-U     |PageUp|
-|cp         ||
-|cn         ||
-|cleanlog   ||
-|w          ||
-|q,quit,q!,qa,x ||
-|e!         ||
-|vs         ||
-|closetab   ||
-|h,help     ||
-|search,grep |search|
-|set        |set|
+|cp         |Prev|
+|cn         |Quick next|
+|cleanlog   |Clean log|
+|w          |Save|
+|q + quit + q! + qa + x |Quit|
+|e!         |Reload|
+|vs         |Split right|
+|closetab   |CloseTab|
+|h + help   |Help|
+|search + grep |search|
+|set + colorscheme |set colorscheme|
+|set + wrap |change editor wrap|
+|set + vim  |switch vim mode|
