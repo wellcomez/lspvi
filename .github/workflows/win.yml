@@ -27,7 +27,7 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Build
-      run:  go build -o lspvi-win-x64
+      run:  go build -o lspvi-win-x64.exe
       
       
       
@@ -88,7 +88,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RTOKEN }}
       with:
         upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
-        asset_path: ./lspvi-win-x64
-        asset_name: lspvi-win-x64
+        asset_path: ./lspvi-win-x64.exe
+        asset_name: lspvi-win-x64.exe
         asset_content_type: application/octet-stream
 
