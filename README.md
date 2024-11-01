@@ -29,7 +29,8 @@ lspvi -gui
 - open browser 
 
 start with 13000
-[http:://localhost:1300x](http:://localhost:13000)
+**https** must be used
+[https:://localhost:1300x](https:://localhost:13000)
 
 ![webpng](web.png)
 - with power of xterm.js 
