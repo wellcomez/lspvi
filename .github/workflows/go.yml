@@ -57,14 +57,23 @@ jobs:
 
       - name: Check if release exists
         id: check_release
+        shell: bash
         run: |
-          if gh release view ${{ github.ref_name }} &> /dev/null; then
-            echo "release_exists=true" >> $GITHUB_OUTPUT
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            if gh release view ${{ github.ref_name }} 2>&1; then
+              echo "release_exists=true" >> $env:GITHUB_OUTPUT
+            else
+              echo "release_exists=false" >> $env:GITHUB_OUTPUT
+            fi
           else
-            echo "release_exists=false" >> $GITHUB_OUTPUT
+            if gh release view ${{ github.ref_name }} &> /dev/null; then
+              echo "release_exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "release_exists=false" >> $GITHUB_OUTPUT
+            fi
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RTOKEN}}
 
       - name: Create Release
         id: create_release
@@ -78,14 +87,23 @@ jobs:
           draft: false
           prerelease: false
 
-      # Upload the archive
+      - name: Get Release Upload URL
+        id: get_upload_url
+        run: |
+          if [ "${{ steps.check_release.outputs.release_exists }}" == "true" ]; then
+            echo "upload_url=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .upload_url)" >> $GITHUB_OUTPUT
+          else
+            echo "upload_url=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+
       - name: Upload Release Asset
-        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.RTOKEN}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ matrix.output }}
-          asset_name: ${{ matrix.output }}
+          upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
+          asset_path: ./${{ matrix.archive }}
+          asset_name: ${{ matrix.archive }}
           asset_content_type: application/octet-stream
