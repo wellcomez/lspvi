@@ -112,3 +112,16 @@ jobs:
         asset_path: ./lspvi-window-x64
         asset_name: lspvi-window-x64
         asset_content_type: application/octet-stream
+
+    - name: Upload jar
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.RTOKEN }}
+      with:
+        upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
+        asset_path: ./plantuml-1.2024.6.jar
+        asset_name: plantuml-1.2024.6.jar
+        asset_content_type: application/octet-stream
+
+
+        
