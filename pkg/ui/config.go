@@ -14,8 +14,9 @@ import (
 type highlight struct {
 	Search string `yaml:"search"`
 }
-type color struct {
-	Highlight highlight `yaml:"highlight"`
+type ColorConfig struct {
+	Highlight  *highlight `yaml:"highlight,omitempty"`
+	Cursorline *string    `yaml:"cursorline,omitempty"`
 }
 type vimmode struct {
 	Leadkey string `yaml:"leadkey,omitempty"`
@@ -25,7 +26,7 @@ type LspviConfig struct {
 	Colorscheme string            `yaml:"colorscheme"`
 	Wrap        bool              `yaml:"wrap"`
 	Lsp         lspcore.LspConfig `yaml:"lsp"`
-	Color       color             `yaml:"color"`
+	Color       ColorConfig       `yaml:"color"`
 	Vim         *vimmode          `yaml:"vim,omitempty"`
 	enablevim   bool
 	Keyboard    lspvi_command_map `yaml:"keyboard"`
@@ -63,7 +64,7 @@ func NewLspviconfig() *LspviConfig {
 	default_ret := LspviConfig{
 		Colorscheme: "darcula",
 		Wrap:        false,
-		Color:       color{},
+		Color:       ColorConfig{},
 		enablevim:   false,
 	}
 	return &default_ret

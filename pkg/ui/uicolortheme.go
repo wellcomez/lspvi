@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	rgb "image/color"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/pgavlin/femto/runtime"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/treesittertheme"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
@@ -95,16 +97,40 @@ func IntToRGB(colorInt tcell.Color) rgb.RGBA {
 	r, g, b := colorInt.RGB()
 	return rgb.RGBA{uint8(r), uint8(g), uint8(b), 255} // 默认Alpha通道为255（完全不透明）
 }
+func HexToRGB(hexString string) (int, int, int, error) {
+	// 去掉前缀 #
+	hexString = strings.TrimPrefix(hexString, "#")
+
+	// 将十六进制字符串转换为整数
+	value, err := strconv.ParseUint(hexString, 16, 32)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	// 提取红色、绿色和蓝色的分量
+	blue := int(value & 255)
+	green := int((value >> 8) & 255)
+	red := int((value >> 16) & 255)
+
+	return red, green, blue, nil
+}
 func (mgr *symbol_colortheme) set_currsor_line() {
 	if ret := mgr.get_color("cursorline"); ret != nil {
 		_, bg, _ := ret.Decompose()
-		x := lightenColor(IntToRGB(bg), 0.0)
+		ss := bg.Hex()
+		debug.DebugLogf("color", "#%x %s", ss, mgr.name)
+		x := lightenColor(IntToRGB(bg), 0.2)
 		v := ColorToCellColor(x)
 		s := ret.Background(v)
-		mgr.colorscheme["cursor-line"] = s //*ret
-		// if _, ok := mgr.colorscheme["selection"]; !ok {
-		// 	mgr.colorscheme["selection"] = *ret
-		// }
+		_, bg, _ = s.Decompose()
+		debug.DebugLogf("color", "#%x %s", bg.Hex(), mgr.name)
+		mgr.colorscheme["cursor-line"] = s
+	}
+	if bg := global_config.Color.Cursorline; bg != nil {
+		if r, g, b, err := hexToRGB(*bg); err == nil {
+			s := tcell.StyleDefault.Background(tcell.NewRGBColor(r, g, b))
+			mgr.colorscheme["cursor-line"] = s
+		}
 	}
 	if ret := mgr.get_color("visual"); ret != nil {
 		mgr.colorscheme["selection"] = *ret
