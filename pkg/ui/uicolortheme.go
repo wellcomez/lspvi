@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	rgb "image/color"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
 	"github.com/pgavlin/femto/runtime"
@@ -17,6 +19,31 @@ import (
 	"zen108.com/lspvi/pkg/treesittertheme"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
+
+func ColorToCellColor(c rgb.Color) tcell.Color {
+	r, g, b, _ := c.RGBA()
+	// 将每个通道的值从16位转换为8位
+	r8 := int32(r >> 8)
+	g8 := int32(g >> 8)
+	b8 := int32(b >> 8)
+	return tcell.NewRGBColor(r8, g8, b8)
+}
+func lightenColor(c rgb.Color, factor float64) rgb.Color {
+	r, g, b, a := c.RGBA()
+	r = uint32(float64(r) * (1 + factor))
+	g = uint32(float64(g) * (1 + factor))
+	b = uint32(float64(b) * (1 + factor))
+	if r > 65535 {
+		r = 65535
+	}
+	if g > 65535 {
+		g = 65535
+	}
+	if b > 65535 {
+		b = 65535
+	}
+	return rgb.RGBA{uint8(r >> 8), uint8(g >> 8), uint8(b >> 8), uint8(a >> 8)}
+}
 
 // var console_board_color = tcell.ColorGreen
 
@@ -64,9 +91,17 @@ func (mgr symbol_colortheme) get_default_style() *tcell.Style {
 	}
 	return nil
 }
-func (mgr *symbol_colortheme) set_currsor_line()  {
-	if ret := mgr.get_color("visual");ret!=nil{
-		mgr.colorscheme["cursor-line"] = *ret
+func IntToRGB(colorInt tcell.Color) rgb.RGBA {
+	r, g, b := colorInt.RGB()
+	return rgb.RGBA{uint8(r), uint8(g), uint8(b), 100} // 默认Alpha通道为255（完全不透明）
+}
+func (mgr *symbol_colortheme) set_currsor_line() {
+	if ret := mgr.get_color("CursorLine"); ret != nil {
+		_, bg, _ := ret.Decompose()
+		x := lightenColor(IntToRGB(bg), 0.2)
+		v := ColorToCellColor(x)
+		s := ret.Background(v)
+		mgr.colorscheme["cursor-line"] = s //*ret
 		// if _, ok := mgr.colorscheme["selection"]; !ok {
 		// 	mgr.colorscheme["selection"] = *ret
 		// }
