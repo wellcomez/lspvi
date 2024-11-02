@@ -24,6 +24,8 @@ type File struct {
 func main() {
 	// Sample YAML data as a string
 	x := "/home/z/dev/lsp/goui/pkg/treesittertheme/colorscheme/"
+	// os.getcwd()
+	x = "."
 	dirs, err := os.ReadDir(x)
 	if err != nil {
 		return
@@ -67,7 +69,7 @@ func main() {
 			continue
 		}
 		ret := []string{}
-		bg := "#263238"
+		bg := ""
 		for _, v := range data.Data {
 			if v.Group == "Normal" {
 				if len(v.Background) > 0 {
@@ -85,12 +87,11 @@ func main() {
 			if len(v.Background) > 0 {
 				b = v.Background
 			}
-
 			Foreground := v.Foreground
-			if strings.ToLower(v.Group) == "cursorline" {
-				Foreground = b
-				b = ""
-			}
+			// if strings.ToLower(v.Group) == "cursorline" {
+			// 	Foreground = b
+			// 	b = ""
+			// }
 			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), strings.ToUpper(Foreground), strings.ToUpper(b))
 			ret = append(ret, s)
 		}

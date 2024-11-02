@@ -93,12 +93,12 @@ func (mgr symbol_colortheme) get_default_style() *tcell.Style {
 }
 func IntToRGB(colorInt tcell.Color) rgb.RGBA {
 	r, g, b := colorInt.RGB()
-	return rgb.RGBA{uint8(r), uint8(g), uint8(b), 100} // 默认Alpha通道为255（完全不透明）
+	return rgb.RGBA{uint8(r), uint8(g), uint8(b), 255} // 默认Alpha通道为255（完全不透明）
 }
 func (mgr *symbol_colortheme) set_currsor_line() {
-	if ret := mgr.get_color("CursorLine"); ret != nil {
+	if ret := mgr.get_color("cursorline"); ret != nil {
 		_, bg, _ := ret.Decompose()
-		x := lightenColor(IntToRGB(bg), 0.2)
+		x := lightenColor(IntToRGB(bg), 0.0)
 		v := ColorToCellColor(x)
 		s := ret.Background(v)
 		mgr.colorscheme["cursor-line"] = s //*ret
