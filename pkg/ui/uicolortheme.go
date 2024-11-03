@@ -117,14 +117,14 @@ func HexToRGB(hexString string) (int, int, int, error) {
 func (mgr *symbol_colortheme) set_currsor_line() {
 	if ret := mgr.get_color("cursorline"); ret != nil {
 		_, bg, _ := ret.Decompose()
-		ss := bg.Hex()
-		debug.DebugLogf("color", "#%x %s", ss, mgr.name)
-		x := lightenColor(IntToRGB(bg), 0.2)
-		v := ColorToCellColor(x)
-		s := ret.Background(v)
-		_, bg, _ = s.Decompose()
+		// ss := bg.Hex()
+		// debug.DebugLogf("color", "#%x %s", ss, mgr.name)
+		// x := lightenColor(IntToRGB(bg), 0.2)
+		// v := ColorToCellColor(x)
+		// s := ret.Background(v)
+		// _, bg, _ = ret.Decompose()
 		debug.DebugLogf("color", "#%x %s", bg.Hex(), mgr.name)
-		mgr.colorscheme["cursor-line"] = s
+		mgr.colorscheme["cursor-line"] = ret.Foreground(bg)
 	}
 	if bg := global_config.Color.Cursorline; bg != nil {
 		if r, g, b, err := hexToRGB(*bg); err == nil {
