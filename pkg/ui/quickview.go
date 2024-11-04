@@ -120,14 +120,12 @@ func (qk quick_view) save() error {
 	return nil
 }
 
-
 func (qk *quick_view) RestoreLast() {
 	data, _ := qf_history_ReadLast(qk.main.Lspmgr().Wk)
 	if data != nil {
 		qk.UpdateListView(data.Type, data.Result.Refs, data.Key)
 	}
 }
-
 
 type quick_view_context struct {
 	qk *quick_view
@@ -480,7 +478,6 @@ func remove_color(sss []string) []string {
 	return aa
 }
 
-
 func checkDirExists(dirPath string) bool {
 	_, err := os.Stat(dirPath)
 	if err == nil {
@@ -591,7 +588,7 @@ func (qk *quick_view) AddResult(end bool, t DateType, caller ref_with_caller, ke
 	if len(secondline.line) == 0 {
 		return
 	}
-	qk.view.AddItem(secondline.prepend(fmt.Sprintf("%3d. ", qk.view.GetItemCount()+1), 0).ColorText(), "", nil)
+	qk.view.AddColorItem(secondline.prepend(fmt.Sprintf("%3d. ", qk.view.GetItemCount()+1), 0).line, nil, nil)
 }
 
 func (qk *quick_view) new_search(t DateType, key SearchKey) {

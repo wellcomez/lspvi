@@ -456,12 +456,15 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 	if yes {
 		for _, o := range data {
 			fpath := o.Loc.URI.AsPath().String()
-			line := o.get_code(*global_theme.get_default_style())
+			style := global_theme.search_highlight_color_style()
+			line := o.get_code(style)
 			lineNumber := o.Loc.Range.Start.Line
 			path := trim_project_filename(fpath, global_prj_root)
 			data := colorstring{}
 			data.add_color_text_list(line.line).prepend(fmt.Sprintf("%s:%d ", path, lineNumber+1), 0)
-			grepx.grep_list_view.AddItem(data.ColorText(), "", nil)
+			if list := grepx.grep_list_view; list != nil {
+				list.AddColorItem(data.line, nil, nil)
+			}
 		}
 		if openpreview {
 			grepx.update_preview()
