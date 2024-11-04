@@ -92,6 +92,12 @@ func main() {
 			// 	Foreground = b
 			// 	b = ""
 			// }
+			if b=="#0"{
+				b = "#000000"
+			}
+			if Foreground == "#0" {
+				Foreground = "#000000"
+			}
 			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), strings.ToUpper(Foreground), strings.ToUpper(b))
 			ret = append(ret, s)
 		}
