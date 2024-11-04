@@ -600,6 +600,11 @@ var tree_sitter_lang_map = []*ts_lang_def{
 						}
 						continue
 					}
+					if is_memeber(v.Kind) {
+						if strings.Index(v.Name, "(().") == 0 {
+							v.Name =strings.Replace(v.Name, "(().", "", 1)
+						}
+					}
 				}
 				si.items = ret
 			}
@@ -733,10 +738,10 @@ func (t *TreeSitter) load_ts_def() bool {
 }
 
 type ts_inject struct {
-	lang    string
-	content []TreeSitterSymbol
-	hline   TreesiterSymbolLine
-	Outline []*Symbol
+	lang     string
+	content  []TreeSitterSymbol
+	hline    TreesiterSymbolLine
+	Outline  []*Symbol
 	hostfile string
 }
 
