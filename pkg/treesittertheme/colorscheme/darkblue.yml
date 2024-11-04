@@ -105,8 +105,8 @@ Data:
    foreground: "#ffa500"
 
  - Group: "Underlined"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "Ignore"
    foreground: "#40"
@@ -132,9 +132,9 @@ Data:
    background: "#666666"
 
  - Group: "Visual"
-   background: "#ffffff"
    foreground: "#8080ff"
    reverse: true
+   background: "#ffffff"
 
  - Group: "StatusLine"
    foreground: "#40"
@@ -169,19 +169,19 @@ Data:
    background: "#af5faf"
 
  - Group: "LspReferenceText"
-   background: "#ffffff"
    foreground: "#8080ff"
    reverse: true
+   background: "#ffffff"
 
  - Group: "LspReferenceRead"
-   background: "#ffffff"
    foreground: "#8080ff"
    reverse: true
+   background: "#ffffff"
 
  - Group: "LspReferenceWrite"
-   background: "#ffffff"
    foreground: "#8080ff"
    reverse: true
+   background: "#ffffff"
 
  - Group: "@variable"
    foreground: "#90fff0"
@@ -331,8 +331,8 @@ Data:
    foreground: "#ffa500"
 
  - Group: "@string.special.url"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@string.special.path"
    foreground: "#ffa500"
@@ -362,8 +362,8 @@ Data:
    strikethrough: true
 
  - Group: "@markup.underline"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@markup.heading"
    foreground: "#ff00ff"
@@ -399,8 +399,8 @@ Data:
    foreground: "#90fff0"
 
  - Group: "@markup.link.url"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@markup.raw"
    foreground: "#80a0ff"
@@ -417,3 +417,5 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ffa500"
 
+ - Group: "Search"
+   foreground: "#90fff0"

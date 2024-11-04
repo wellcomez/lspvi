@@ -1,7 +1,7 @@
 Data:
  - Group: "LineNr"
-   foreground: "#807d7c"
    background: "#90300"
+   foreground: "#807d7c"
 
  - Group: "Comment"
    foreground: "#5c5855"
@@ -109,12 +109,12 @@ Data:
    foreground: "#db2d20"
 
  - Group: "Ignore"
-   foreground: "#a5a2a2"
    background: "#90300"
+   foreground: "#a5a2a2"
 
  - Group: "Error"
-   foreground: "#db2d20"
    background: "#90300"
+   foreground: "#db2d20"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -135,12 +135,12 @@ Data:
    background: "#4a4543"
 
  - Group: "StatusLine"
-   foreground: "#a5a2a2"
    background: "#4a4543"
+   foreground: "#a5a2a2"
 
  - Group: "Normal"
-   foreground: "#a5a2a2"
    background: "#90300"
+   foreground: "#a5a2a2"
 
  - Group: "DiagnosticError"
    foreground: "#db2d20"
@@ -155,35 +155,35 @@ Data:
    foreground: "#b5e4f4"
 
  - Group: "DiffAdd"
-   foreground: "#1a252"
    background: "#90300"
+   foreground: "#1a252"
 
  - Group: "DiffChange"
-   foreground: "#5c5855"
    background: "#90300"
+   foreground: "#5c5855"
 
  - Group: "DiffDelete"
-   foreground: "#db2d20"
    background: "#90300"
+   foreground: "#db2d20"
 
  - Group: "LspReferenceText"
-   special: 8420732
    underline: true
+   special: 8420732
 
  - Group: "LspReferenceRead"
-   special: 8420732
    underline: true
+   special: 8420732
 
  - Group: "LspReferenceWrite"
-   special: 8420732
    underline: true
+   special: 8420732
 
  - Group: "@variable"
    foreground: "#db2d20"
 
  - Group: "@variable.builtin"
-   italic: true
    foreground: "#db2d20"
+   italic: true
 
  - Group: "@variable.parameter"
    foreground: "#a5a2a2"
@@ -216,8 +216,8 @@ Data:
    foreground: "#1a0e4"
 
  - Group: "@function.builtin"
-   italic: true
    foreground: "#1a0e4"
+   italic: true
 
  - Group: "@function.call"
    foreground: "#1a0e4"
@@ -244,8 +244,8 @@ Data:
    foreground: "#fded02"
 
  - Group: "@type.builtin"
-   italic: true
    foreground: "#fded02"
+   italic: true
 
  - Group: "@type.definition"
    foreground: "#fded02"
@@ -263,8 +263,8 @@ Data:
    foreground: "#a5a2a2"
 
  - Group: "@Comment"
-   italic: true
    foreground: "#5c5855"
+   italic: true
 
  - Group: "@keyword"
    foreground: "#a16a94"
@@ -330,8 +330,8 @@ Data:
    foreground: "#1a252"
 
  - Group: "@string.special.url"
-   foreground: "#e8bbd0"
    underline: true
+   foreground: "#e8bbd0"
 
  - Group: "@string.special.path"
    foreground: "#cdab53"
@@ -397,8 +397,8 @@ Data:
    foreground: "#cdab53"
 
  - Group: "@markup.link.url"
-   foreground: "#e8bbd0"
    underline: true
+   foreground: "#e8bbd0"
 
  - Group: "@markup.raw"
    foreground: "#e8bbd0"
@@ -415,3 +415,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#cdab53"
 
+ - Group: "search"
+   foreground: "#3a3432"
+   background: "#fded02"
+ - Group: "insearch"
+   foreground: "#3a3432"
+   background: "#e8bbd0"

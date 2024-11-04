@@ -3,8 +3,8 @@ Data:
    foreground: "#595f6f"
 
  - Group: "Comment"
-   italic: true
    foreground: "#7f8490"
+   italic: true
 
  - Group: "Constant"
    foreground: "#f39660"
@@ -100,8 +100,8 @@ Data:
    foreground: "#e2e2e3"
 
  - Group: "SpecialComment"
-   italic: true
    foreground: "#7f8490"
+   italic: true
 
  - Group: "Debug"
    foreground: "#e7c664"
@@ -134,12 +134,12 @@ Data:
    background: "#3b3e48"
 
  - Group: "StatusLine"
-   foreground: "#e2e2e3"
    background: "#3b3e48"
+   foreground: "#e2e2e3"
 
  - Group: "Normal"
-   foreground: "#e2e2e3"
    background: "#2c2e34"
+   foreground: "#e2e2e3"
 
  - Group: "DiagnosticError"
    foreground: "#fc5d7c"
@@ -253,8 +253,8 @@ Data:
    foreground: "#f39660"
 
  - Group: "@Comment"
-   italic: true
    foreground: "#7f8490"
+   italic: true
 
  - Group: "@keyword"
    foreground: "#fc5d7c"
@@ -353,32 +353,32 @@ Data:
    underline: true
 
  - Group: "@markup.heading"
-   foreground: "#fc5d7c"
    bold: true
+   foreground: "#fc5d7c"
 
  - Group: "@markup.heading.1"
-   foreground: "#fc5d7c"
    bold: true
+   foreground: "#fc5d7c"
 
  - Group: "@markup.heading.2"
-   foreground: "#fc5d7c"
    bold: true
+   foreground: "#fc5d7c"
 
  - Group: "@markup.heading.3"
-   foreground: "#fc5d7c"
    bold: true
+   foreground: "#fc5d7c"
 
  - Group: "@markup.heading.4"
-   foreground: "#fc5d7c"
    bold: true
+   foreground: "#fc5d7c"
 
  - Group: "@markup.heading.5"
-   foreground: "#fc5d7c"
    bold: true
+   foreground: "#fc5d7c"
 
  - Group: "@markup.heading.6"
-   foreground: "#fc5d7c"
    bold: true
+   foreground: "#fc5d7c"
 
  - Group: "@markup.quote"
    foreground: "#7f8490"
@@ -393,8 +393,8 @@ Data:
    foreground: "#b39df3"
 
  - Group: "@markup.link.url"
-   foreground: "#76cce0"
    underline: true
+   foreground: "#76cce0"
 
  - Group: "@markup.raw"
    foreground: "#e7c664"
@@ -411,3 +411,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#7f8490"
 
+ - Group: "search"
+   foreground: "#2c2e34"
+   background: "#a7df78"
+ - Group: "insearch"
+   foreground: "#2c2e34"
+   background: "#ff6077"

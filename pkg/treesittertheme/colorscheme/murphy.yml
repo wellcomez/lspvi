@@ -105,8 +105,8 @@ Data:
    foreground: "#ff00ff"
 
  - Group: "Underlined"
-   foreground: "#afaf"
    underline: true
+   foreground: "#afaf"
 
  - Group: "Ignore"
    true: 6
@@ -326,8 +326,8 @@ Data:
    foreground: "#ff00ff"
 
  - Group: "@string.special.url"
-   foreground: "#afaf"
    underline: true
+   foreground: "#afaf"
 
  - Group: "@string.special.path"
    foreground: "#ff00ff"
@@ -357,36 +357,36 @@ Data:
    strikethrough: true
 
  - Group: "@markup.underline"
-   foreground: "#afaf"
    underline: true
+   foreground: "#afaf"
 
  - Group: "@markup.heading"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.1"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.2"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.3"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.4"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.5"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.6"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.quote"
    foreground: "#ff00ff"
@@ -401,8 +401,8 @@ Data:
    foreground: "#ffff"
 
  - Group: "@markup.link.url"
-   foreground: "#afaf"
    underline: true
+   foreground: "#afaf"
 
  - Group: "@markup.raw"
    foreground: "#ffa700"
@@ -419,3 +419,5 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ff00ff"
 
+ - Group: "Search"
+   foreground: "#ffffff"

@@ -105,17 +105,17 @@ Data:
    foreground: "#5fafaf"
 
  - Group: "Underlined"
-   foreground: "#dadada"
    underline: true
+   foreground: "#dadada"
 
  - Group: "Ignore"
    foreground: "#dadada"
 
  - Group: "Error"
-   background: "#0"
-   bold: true
    foreground: "#ff5f5f"
    reverse: true
+   bold: true
+   background: "#0"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -133,14 +133,14 @@ Data:
    background: "#363841"
 
  - Group: "Visual"
-   background: "#0"
    foreground: "#ffaf00"
    reverse: true
+   background: "#0"
 
  - Group: "StatusLine"
-   background: "#d7d7ff"
    foreground: "#0"
    bold: true
+   background: "#d7d7ff"
 
  - Group: "Normal"
    foreground: "#dadada"
@@ -159,34 +159,34 @@ Data:
    foreground: "#d3d3d3"
 
  - Group: "DiffAdd"
-   background: "#0"
    foreground: "#af5f"
    reverse: true
+   background: "#0"
 
  - Group: "DiffChange"
-   background: "#0"
    foreground: "#87afff"
    reverse: true
+   background: "#0"
 
  - Group: "DiffDelete"
-   background: "#0"
    foreground: "#d7005f"
    reverse: true
+   background: "#0"
 
  - Group: "LspReferenceText"
-   background: "#0"
    foreground: "#ffaf00"
    reverse: true
+   background: "#0"
 
  - Group: "LspReferenceRead"
-   background: "#0"
    foreground: "#ffaf00"
    reverse: true
+   background: "#0"
 
  - Group: "LspReferenceWrite"
-   background: "#0"
    foreground: "#ffaf00"
    reverse: true
+   background: "#0"
 
  - Group: "@variable"
    foreground: "#87d75f"
@@ -336,8 +336,8 @@ Data:
    foreground: "#5fafaf"
 
  - Group: "@string.special.url"
-   foreground: "#dadada"
    underline: true
+   foreground: "#dadada"
 
  - Group: "@string.special.path"
    foreground: "#5fafaf"
@@ -367,8 +367,8 @@ Data:
    strikethrough: true
 
  - Group: "@markup.underline"
-   foreground: "#dadada"
    underline: true
+   foreground: "#dadada"
 
  - Group: "@markup.heading"
    true: 6
@@ -404,8 +404,8 @@ Data:
    foreground: "#87d75f"
 
  - Group: "@markup.link.url"
-   foreground: "#dadada"
    underline: true
+   foreground: "#dadada"
 
  - Group: "@markup.raw"
    foreground: "#af87d7"
@@ -422,3 +422,5 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#5fafaf"
 
+ - Group: "Search"
+   foreground: "#00afff"

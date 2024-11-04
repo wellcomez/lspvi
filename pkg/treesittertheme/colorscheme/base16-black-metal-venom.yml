@@ -10,7 +10,7 @@ Data:
    foreground: "#aaaaaa"
 
  - Group: "String"
-   foreground: "#aa9988"
+   foreground: "#f8f7f2"
 
  - Group: "Function"
    foreground: "#888888"
@@ -19,7 +19,7 @@ Data:
    foreground: "#999999"
 
  - Group: "Type"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "Character"
    foreground: "#5f8787"
@@ -46,10 +46,10 @@ Data:
    foreground: "#999999"
 
  - Group: "Repeat"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "Label"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "Operator"
    foreground: "#999999"
@@ -61,7 +61,7 @@ Data:
    foreground: "#5f8787"
 
  - Group: "PreProc"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "Include"
    foreground: "#888888"
@@ -73,19 +73,19 @@ Data:
    foreground: "#5f8787"
 
  - Group: "PreCondit"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "Type"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "StorageClass"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "Structure"
    foreground: "#999999"
 
  - Group: "Typedef"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "Special"
    foreground: "#aaaaaa"
@@ -94,7 +94,7 @@ Data:
    foreground: "#444444"
 
  - Group: "Tag"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "Delimiter"
    foreground: "#444444"
@@ -155,7 +155,7 @@ Data:
    foreground: "#aaaaaa"
 
  - Group: "DiffAdd"
-   foreground: "#aa9988"
+   foreground: "#f8f7f2"
    background: "#0"
 
  - Group: "DiffChange"
@@ -167,16 +167,16 @@ Data:
    background: "#0"
 
  - Group: "LspReferenceText"
-   special: 10066329
    underline: true
+   special: 10066329
 
  - Group: "LspReferenceRead"
-   special: 10066329
    underline: true
+   special: 10066329
 
  - Group: "LspReferenceWrite"
-   special: 10066329
    underline: true
+   special: 10066329
 
  - Group: "@variable"
    foreground: "#5f8787"
@@ -210,7 +210,7 @@ Data:
    foreground: "#aaaaaa"
 
  - Group: "@label"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "@function"
    foreground: "#888888"
@@ -238,23 +238,23 @@ Data:
    foreground: "#c1c1c1"
 
  - Group: "@String"
-   foreground: "#aa9988"
+   foreground: "#f8f7f2"
 
  - Group: "@type"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "@type.builtin"
    italic: true
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "@type.definition"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "@type.class"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "@attribute"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "@attribute.builtin"
    foreground: "#aaaaaa"
@@ -306,16 +306,16 @@ Data:
    foreground: "#999999"
 
  - Group: "@keyword.directive"
-   foreground: "#777755"
+   foreground: "#79241f"
 
  - Group: "@keyword.directive.define"
    foreground: "#999999"
 
  - Group: "@string"
-   foreground: "#aa9988"
+   foreground: "#f8f7f2"
 
  - Group: "@string.documentation"
-   foreground: "#aa9988"
+   foreground: "#f8f7f2"
 
  - Group: "@string.regexp"
    foreground: "#aaaaaa"
@@ -327,11 +327,11 @@ Data:
    foreground: "#444444"
 
  - Group: "@string.special.symbol"
-   foreground: "#aa9988"
+   foreground: "#f8f7f2"
 
  - Group: "@string.special.url"
-   foreground: "#aaaaaa"
    underline: true
+   foreground: "#aaaaaa"
 
  - Group: "@string.special.path"
    foreground: "#444444"
@@ -397,8 +397,8 @@ Data:
    foreground: "#444444"
 
  - Group: "@markup.link.url"
-   foreground: "#aaaaaa"
    underline: true
+   foreground: "#aaaaaa"
 
  - Group: "@markup.raw"
    foreground: "#aaaaaa"
@@ -415,3 +415,6 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#444444"
 
+ - Group: "Search"
+   foreground: "#121212"
+   foreground: "#79241f"

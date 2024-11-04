@@ -1,11 +1,11 @@
 Data:
  - Group: "LineNr"
-   foreground: "#72696a"
    background: "#2c2525"
+   foreground: "#72696a"
 
  - Group: "Comment"
-   italic: true
    foreground: "#8c8384"
+   italic: true
 
  - Group: "Constant"
    foreground: "#85dacc"
@@ -14,12 +14,12 @@ Data:
    foreground: "#f9cc6c"
 
  - Group: "Function"
-   italic: true
    foreground: "#adda78"
+   italic: true
 
  - Group: "Keyword"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "Type"
    foreground: "#85dacc"
@@ -40,8 +40,8 @@ Data:
    foreground: "#fff1f3"
 
  - Group: "Function"
-   italic: true
    foreground: "#adda78"
+   italic: true
 
  - Group: "Statement"
    foreground: "#ff6188"
@@ -59,8 +59,8 @@ Data:
    foreground: "#ff6188"
 
  - Group: "Keyword"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "Exception"
    foreground: "#ff6188"
@@ -69,8 +69,8 @@ Data:
    foreground: "#adda78"
 
  - Group: "Include"
-   italic: true
    foreground: "#85dacc"
+   italic: true
 
  - Group: "Define"
    foreground: "#ff6188"
@@ -106,8 +106,8 @@ Data:
    foreground: "#fff1f3"
 
  - Group: "SpecialComment"
-   italic: true
    foreground: "#72696a"
+   italic: true
 
  - Group: "Debug"
    foreground: "#f38d70"
@@ -140,12 +140,12 @@ Data:
    background: "#5b5353"
 
  - Group: "StatusLine"
-   foreground: "#c3b7b8"
    background: "#403838"
+   foreground: "#c3b7b8"
 
  - Group: "Normal"
-   foreground: "#fff1f3"
    background: "#2c2525"
+   foreground: "#fff1f3"
 
  - Group: "DiagnosticError"
    foreground: "#ffc0b9"
@@ -211,8 +211,8 @@ Data:
    foreground: "#ff6188"
 
  - Group: "@function"
-   italic: true
    foreground: "#adda78"
+   italic: true
 
  - Group: "@function.builtin"
    foreground: "#85dacc"
@@ -221,16 +221,16 @@ Data:
    foreground: "#fff1f3"
 
  - Group: "@function.macro"
-   italic: true
    foreground: "#adda78"
+   italic: true
 
  - Group: "@function.method"
-   italic: true
    foreground: "#adda78"
+   italic: true
 
  - Group: "@function.method.call"
-   italic: true
    foreground: "#adda78"
+   italic: true
 
  - Group: "@constructor"
    foreground: "#85dacc"
@@ -263,66 +263,66 @@ Data:
    foreground: "#fff1f3"
 
  - Group: "@Comment"
-   italic: true
    foreground: "#8c8384"
+   italic: true
 
  - Group: "@keyword"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.coroutine"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.function"
-   italic: true
    foreground: "#85dacc"
+   italic: true
 
  - Group: "@keyword.operator"
    foreground: "#ff6188"
 
  - Group: "@keyword.import"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.type"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.modifier"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.repeat"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.return"
    foreground: "#ff6188"
 
  - Group: "@keyword.debug"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.exception"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.conditional"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.conditional.ternary"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.directive"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@keyword.directive.define"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "@string"
    foreground: "#f9cc6c"
@@ -376,32 +376,32 @@ Data:
    underline: true
 
  - Group: "@markup.heading"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.1"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.2"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.3"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.4"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.5"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.6"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.quote"
    foreground: "#fff1f3"
@@ -433,3 +433,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#fff1f3"
 
+ - Group: "search"
+   foreground: "#2c2525"
+   background: "#f9cc6c"
+ - Group: "insearch"
+   foreground: "#2c2525"
+   background: "#f38d70"

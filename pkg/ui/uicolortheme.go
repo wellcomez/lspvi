@@ -178,9 +178,11 @@ func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
 		}
 		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
 	}
-	if color := mgr.get_color("keyword"); color != nil {
-		a, _, _ := color.Decompose()
-		return a
+	for _, key := range []string{"search", "keyword"} {
+		if color := mgr.get_color(key); color != nil {
+			a, _, _ := color.Decompose()
+			return a
+		}
 	}
 	return tcell.ColorYellow
 }

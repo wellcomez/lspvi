@@ -142,25 +142,11 @@ local function save_scheme(colorscheme)
             link = false
         })
 
-        group = "Search"
-        f:write(" - Group: " .. '"' .. group .. '"' .. "\n")
-        local c = search_highlight.fg
-        if c then
-            local k = "foreground"
-            local d = string.format("#%06x", c)
-            f:write("   " .. tostring(k) .. ": \"" .. tostring(d) .. "\"\n")
-        end
-        local k = "background"
-        c = search_highlight.bg
-        if c then
-            local k = "foreground"
-            local d = string.format("#%06x", c)
-            f:write("   " .. tostring(k) .. ": \"" .. tostring(d) .. "\"\n")
-        end
         local incsearch_highlight = vim.api.nvim_get_hl(0, {
             name = 'IncSearch',
             link = false
         })
+        save_hlresult(search_highlight, "search", f)
         save_hlresult(incsearch_highlight, "insearch", f)
 
         -- Close the file

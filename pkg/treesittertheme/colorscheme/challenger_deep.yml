@@ -1,7 +1,7 @@
 Data:
  - Group: "LineNr"
-   foreground: "#565575"
    background: "#100e23"
+   foreground: "#565575"
 
  - Group: "Comment"
    foreground: "#767676"
@@ -106,16 +106,16 @@ Data:
    foreground: "#aaffe4"
 
  - Group: "Underlined"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "Ignore"
    foreground: "#1e1c31"
 
  - Group: "Error"
    background: "#100e23"
-   foreground: "#ff5458"
    bold: true
+   foreground: "#ff5458"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -139,8 +139,8 @@ Data:
    background: "#565575"
 
  - Group: "Normal"
-   foreground: "#cbe3e7"
    background: "#1e1c31"
+   foreground: "#cbe3e7"
 
  - Group: "DiagnosticError"
    foreground: "#ffc0b9"
@@ -320,8 +320,8 @@ Data:
    foreground: "#aaffe4"
 
  - Group: "@string.special.url"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "@string.special.path"
    foreground: "#aaffe4"
@@ -381,16 +381,16 @@ Data:
    foreground: "#aaffe4"
 
  - Group: "@markup.link"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "@markup.link.label"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "@markup.link.url"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "@markup.raw"
    foreground: "#aaffe4"
@@ -407,3 +407,8 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#aaffe4"
 
+ - Group: "search"
+   background: "#565575"
+ - Group: "insearch"
+   foreground: "#cbe3e7"
+   background: "#ff8080"

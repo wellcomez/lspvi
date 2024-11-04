@@ -1,7 +1,7 @@
 Data:
  - Group: "LineNr"
-   foreground: "#655d5d"
    background: "#f4ecec"
+   foreground: "#655d5d"
 
  - Group: "Comment"
    foreground: "#7e7777"
@@ -109,12 +109,12 @@ Data:
    foreground: "#ca4949"
 
  - Group: "Ignore"
-   foreground: "#585050"
    background: "#f4ecec"
+   foreground: "#585050"
 
  - Group: "Error"
-   foreground: "#ca4949"
    background: "#f4ecec"
+   foreground: "#ca4949"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -135,12 +135,12 @@ Data:
    background: "#8a8585"
 
  - Group: "StatusLine"
-   foreground: "#585050"
    background: "#8a8585"
+   foreground: "#585050"
 
  - Group: "Normal"
-   foreground: "#585050"
    background: "#f4ecec"
+   foreground: "#585050"
 
  - Group: "DiagnosticError"
    foreground: "#ca4949"
@@ -155,28 +155,28 @@ Data:
    foreground: "#5485b6"
 
  - Group: "DiffAdd"
-   foreground: "#4b8b8b"
    background: "#f4ecec"
+   foreground: "#4b8b8b"
 
  - Group: "DiffChange"
-   foreground: "#7e7777"
    background: "#f4ecec"
+   foreground: "#7e7777"
 
  - Group: "DiffDelete"
-   foreground: "#ca4949"
    background: "#f4ecec"
+   foreground: "#ca4949"
 
  - Group: "LspReferenceText"
-   special: 6643037
    underline: true
+   special: 6643037
 
  - Group: "LspReferenceRead"
-   special: 6643037
    underline: true
+   special: 6643037
 
  - Group: "LspReferenceWrite"
-   special: 6643037
    underline: true
+   special: 6643037
 
  - Group: "@variable"
    foreground: "#ca4949"
@@ -330,8 +330,8 @@ Data:
    foreground: "#4b8b8b"
 
  - Group: "@string.special.url"
-   foreground: "#b45a3c"
    underline: true
+   foreground: "#b45a3c"
 
  - Group: "@string.special.path"
    foreground: "#bd5187"
@@ -397,8 +397,8 @@ Data:
    foreground: "#bd5187"
 
  - Group: "@markup.link.url"
-   foreground: "#b45a3c"
    underline: true
+   foreground: "#b45a3c"
 
  - Group: "@markup.raw"
    foreground: "#b45a3c"
@@ -415,3 +415,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#bd5187"
 
+ - Group: "Search"
+   foreground: "#e7dfdf"
+   foreground: "#a06e3b"
+ - Group: "insearch"
+   foreground: "#e7dfdf"
+   foreground: "#b45a3c"
