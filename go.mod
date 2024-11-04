@@ -59,6 +59,7 @@ require (
 	github.com/tree-sitter/tree-sitter-html v0.20.5-0.20240818004741-d11201a263d0
 	github.com/tree-sitter/tree-sitter-javascript v0.21.5-0.20240818005344-15887341e5b5
 	github.com/tree-sitter/tree-sitter-markdown v0.0.0-00010101000000-000000000000
+	github.com/tree-sitter/tree-sitter-ruby v0.21.1-0.20240818211811-7dbc1e2d0e2d
 	github.com/tree-sitter/tree-sitter-rust v0.21.3-0.20240818005432-2b43eafe6447
 	github.com/tree-sitter/tree-sitter-typescript v0.23.0
 )
