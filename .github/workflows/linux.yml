@@ -2,10 +2,10 @@ name: build-linux
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "ts2" ]
     tags: [ 'v*' ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "ts2" ]
 
 jobs:
 
