@@ -309,9 +309,9 @@ func (code *CodeView) OnFindInfileWordOption(fzf bool, noloop bool, whole bool) 
 	return word
 }
 
-func (code *CodeView) OnSearch(txt string, whole bool) []SearchPos {
+func (code *CodeView) OnSearch(txt string, whole bool) (ret []SearchPos) {
 	Buf := code.view.Buf
-	ret := search_text_in_buffer(txt, Buf, whole)
+	ret = search_text_in_buffer(txt, Buf, whole)
 	if code.view.HasFocus() {
 		Y := code.view.Cursor.Loc.Y
 		closeI := 0
@@ -322,9 +322,9 @@ func (code *CodeView) OnSearch(txt string, whole bool) []SearchPos {
 		}
 		ret2 := ret[closeI:]
 		ret1 := ret[0:closeI]
-		return append(ret2, ret1...)
+		ret = append(ret2, ret1...)
 	}
-	return ret
+	return
 }
 
 func search_text_in_buffer(txt string, Buf *femto.Buffer, whole bool) []SearchPos {
