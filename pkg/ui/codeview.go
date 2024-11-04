@@ -246,7 +246,7 @@ func (code *CodeView) InsertMode(yes bool) {
 		code.view.complete.Hide()
 	}
 	if !code.insert {
-		code.update_codetext_hlsearch(nil, 0)
+		// code.update_codetext_hlsearch(nil, 0)
 	}
 }
 func (code *CodeView) SelectWordFromCopyCursor(c femto.Cursor) femto.Cursor {
