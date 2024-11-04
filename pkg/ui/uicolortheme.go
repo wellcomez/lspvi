@@ -167,7 +167,22 @@ func hexToRGB(hex string) (int32, int32, int32, error) {
 
 	return int32(r), int32(g), int32(b), nil
 }
-
+func (mgr *symbol_colortheme) search_highlight_color_style() (ret tcell.Style) {
+	if rgb := global_config.Color.Highlight.Search; rgb != "" {
+		if r, g, b, err := hexToRGB(rgb); err == nil {
+			v := tcell.NewRGBColor(r, g, b)
+			return mgr.get_default_style().Foreground(v)
+		}
+		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
+	}
+	for _, key := range []string{"search", "keyword"} {
+		if color := mgr.get_color(key); color != nil {
+			ret = *color
+			return
+		}
+	}
+	return mgr.get_default_style().Foreground(tcell.ColorYellow)
+}
 func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
 	if rgb := global_config.Color.Highlight.Search; rgb != "" {
 		if r, g, b, err := hexToRGB(rgb); err == nil {

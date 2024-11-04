@@ -717,7 +717,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 		return ret.add_color_text(colortext{path, tcell.ColorYellow, bg})
 		//return ret.a(path)
 	}
-	funcolor := global_theme.search_highlight_color()
+	funcolor := global_theme.search_highlight_color_style()
 	code := caller.get_code(funcolor)
 	ret.a(" ")
 	if caller.Caller != nil {
@@ -771,7 +771,7 @@ func (caller *ref_with_caller) ListItem(root string, parent bool, prev *ref_with
 	}
 }
 
-func (caller *ref_with_caller) get_code(funcolor tcell.Color) (ret *colorstring) {
+func (caller *ref_with_caller) get_code(funcolor tcell.Style) (ret *colorstring) {
 	ret = &colorstring{}
 	lines := caller.lines
 
@@ -809,7 +809,7 @@ func (caller *ref_with_caller) get_code(funcolor tcell.Color) (ret *colorstring)
 			if len(a2) > 0 && a2[0] == '*' {
 				a2 = " " + a2
 			}
-			return ret.a(a1).add_string_color(a, funcolor).a(a2)
+			return ret.a(a1).add_string_style(a, funcolor).a(a2)
 		}
 	}
 	return ret.a(line)

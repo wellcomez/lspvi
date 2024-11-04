@@ -456,7 +456,7 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 	if yes {
 		for _, o := range data {
 			fpath := o.Loc.URI.AsPath().String()
-			line := o.get_code(0)
+			line := o.get_code(*global_theme.get_default_style())
 			lineNumber := o.Loc.Range.Start.Line
 			path := trim_project_filename(fpath, global_prj_root)
 			data := colorstring{}
