@@ -199,7 +199,9 @@ func (code *CodeView) Reload() {
 		loc := code.view.Cursor.Loc
 		code.openfile(code.Path(), true, func(bool) {
 			code.view.Topline = offset
-			code.view.Cursor.GotoLoc(loc)
+			if code.view.Buf.NumLines > loc.Y {
+				// code.view.Cursor.GotoLoc(loc)
+			}
 			if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
 				s.LspLoadSymbol()
 			}
@@ -242,6 +244,9 @@ func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
 	if !code.insert {
 		code.view.complete.Hide()
+	}
+	if !code.insert {
+		code.update_codetext_hlsearch(nil, 0)
 	}
 }
 func (code *CodeView) SelectWordFromCopyCursor(c femto.Cursor) femto.Cursor {
