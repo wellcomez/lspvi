@@ -134,39 +134,39 @@ Data:
    background: "#161c23"
 
  - Group: "StatusLine"
-   background: "#415367"
    foreground: "#e5ded6"
+   background: "#415367"
 
  - Group: "Normal"
-   background: "#161c23"
    foreground: "#e5ded6"
+   background: "#161c23"
 
  - Group: "DiagnosticError"
-   background: "#161c23"
    foreground: "#d32c5d"
+   background: "#161c23"
 
  - Group: "DiagnosticWarn"
    true: 6
 
  - Group: "DiagnosticInfo"
-   background: "#161c23"
    foreground: "#59dcd8"
+   background: "#161c23"
 
  - Group: "DiagnosticHint"
-   background: "#161c23"
    foreground: "#23a580"
+   background: "#161c23"
 
  - Group: "DiffAdd"
-   background: "#161c23"
    foreground: "#57a331"
+   background: "#161c23"
 
  - Group: "DiffChange"
-   background: "#161c23"
    foreground: "#dcb659"
+   background: "#161c23"
 
  - Group: "DiffDelete"
-   background: "#161c23"
    foreground: "#dc597f"
+   background: "#161c23"
 
  - Group: "LspReferenceText"
    reverse: true

@@ -113,10 +113,10 @@ Data:
    foreground: "#0"
 
  - Group: "Error"
-   foreground: "#ff005f"
    reverse: true
-   bold: true
    background: "#0"
+   foreground: "#ff005f"
+   bold: true
 
  - Group: "Added"
    foreground: "#5523"
@@ -134,14 +134,14 @@ Data:
    background: "#eeeeee"
 
  - Group: "Visual"
-   foreground: "#ffaf00"
    reverse: true
    background: "#0"
+   foreground: "#ffaf00"
 
  - Group: "StatusLine"
-   foreground: "#eeeeee"
    bold: true
    background: "#0"
+   foreground: "#eeeeee"
 
  - Group: "Normal"
    foreground: "#0"
@@ -160,34 +160,34 @@ Data:
    foreground: "#d3d3d3"
 
  - Group: "DiffAdd"
-   foreground: "#87d787"
    reverse: true
    background: "#0"
+   foreground: "#87d787"
 
  - Group: "DiffChange"
-   foreground: "#afafd7"
    reverse: true
    background: "#0"
+   foreground: "#afafd7"
 
  - Group: "DiffDelete"
-   foreground: "#d78787"
    reverse: true
    background: "#0"
+   foreground: "#d78787"
 
  - Group: "LspReferenceText"
-   foreground: "#ffaf00"
    reverse: true
    background: "#0"
+   foreground: "#ffaf00"
 
  - Group: "LspReferenceRead"
-   foreground: "#ffaf00"
    reverse: true
    background: "#0"
+   foreground: "#ffaf00"
 
  - Group: "LspReferenceWrite"
-   foreground: "#ffaf00"
    reverse: true
    background: "#0"
+   foreground: "#ffaf00"
 
  - Group: "@variable"
    foreground: "#0"
@@ -426,5 +426,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#0"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#00afff"
+   background: "#000000"
+ - Group: "insearch"
+   foreground: "#ffaf00"
+   background: "#000000"

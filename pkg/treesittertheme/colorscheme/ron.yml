@@ -124,9 +124,9 @@ Data:
    background: "#0"
 
  - Group: "Error"
-   foreground: "#ff0000"
    reverse: true
    background: "#ffffff"
+   foreground: "#ff0000"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -147,9 +147,9 @@ Data:
    reverse: true
 
  - Group: "StatusLine"
-   foreground: "#ffff"
    bold: true
    background: "#ff"
+   foreground: "#ffff"
 
  - Group: "Normal"
    foreground: "#ffff"
@@ -434,5 +434,8 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ffff00"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#000000"
+   background: "#a9a9a9"
+ - Group: "insearch"
+   background: "#4682b4"

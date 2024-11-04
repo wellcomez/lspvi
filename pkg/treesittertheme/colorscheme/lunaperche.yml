@@ -142,10 +142,10 @@ Data:
    background: "#5f87"
 
  - Group: "StatusLine"
-   foreground: "#c6c6c6"
    reverse: true
-   bold: true
    background: "#0"
+   foreground: "#c6c6c6"
+   bold: true
 
  - Group: "Normal"
    foreground: "#c6c6c6"
@@ -429,5 +429,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#5fafaf"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#000000"
+   background: "#ffd787"
+ - Group: "insearch"
+   foreground: "#000000"
+   background: "#5fd75f"

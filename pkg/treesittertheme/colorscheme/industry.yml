@@ -148,9 +148,9 @@ Data:
    background: "#6c6c6c"
 
  - Group: "StatusLine"
-   foreground: "#0"
    bold: true
    background: "#dadada"
+   foreground: "#0"
 
  - Group: "Normal"
    foreground: "#dadada"
@@ -449,5 +449,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ff0000"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#000000"
+   background: "#ffff00"
+ - Group: "insearch"
+   foreground: "#000000"
+   background: "#00ff00"

@@ -415,6 +415,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#5e5e5e"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#e3e3e3"
-   foreground: "#a0a0a0"
+   background: "#a0a0a0"
+ - Group: "insearch"
+   foreground: "#e3e3e3"
+   background: "#999999"

@@ -113,8 +113,8 @@ Data:
    background: "#c0c0c0"
 
  - Group: "Error"
-   foreground: "#ffa0a0"
    reverse: true
+   foreground: "#ffa0a0"
 
  - Group: "Added"
    foreground: "#ffa0a0"
@@ -132,9 +132,9 @@ Data:
    background: "#666666"
 
  - Group: "Visual"
-   foreground: "#8080ff"
    reverse: true
    background: "#ffffff"
+   foreground: "#8080ff"
 
  - Group: "StatusLine"
    foreground: "#40"
@@ -169,19 +169,19 @@ Data:
    background: "#af5faf"
 
  - Group: "LspReferenceText"
-   foreground: "#8080ff"
    reverse: true
    background: "#ffffff"
+   foreground: "#8080ff"
 
  - Group: "LspReferenceRead"
-   foreground: "#8080ff"
    reverse: true
    background: "#ffffff"
+   foreground: "#8080ff"
 
  - Group: "LspReferenceWrite"
-   foreground: "#8080ff"
    reverse: true
    background: "#ffffff"
+   foreground: "#8080ff"
 
  - Group: "@variable"
    foreground: "#90fff0"
@@ -417,5 +417,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ffa500"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#90fff0"
+   background: "#0030ff"
+ - Group: "insearch"
+   foreground: "#ffffff"
+   background: "#0030ff"

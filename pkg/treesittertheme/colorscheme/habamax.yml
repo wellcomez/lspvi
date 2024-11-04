@@ -111,9 +111,9 @@ Data:
    true: 6
 
  - Group: "Error"
-   foreground: "#d75f5f"
    reverse: true
    background: "#1c1c1c"
+   foreground: "#d75f5f"
 
  - Group: "Added"
    foreground: "#87af87"
@@ -415,5 +415,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#5f8787"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#1c1c1c"
+   background: "#87af87"
+ - Group: "insearch"
+   foreground: "#1c1c1c"
+   background: "#ffaf5f"

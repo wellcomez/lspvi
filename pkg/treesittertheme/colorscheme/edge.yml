@@ -3,8 +3,8 @@ Data:
    foreground: "#535c6a"
 
  - Group: "Comment"
-   foreground: "#758094"
    italic: true
+   foreground: "#758094"
 
  - Group: "Constant"
    foreground: "#deb974"
@@ -100,8 +100,8 @@ Data:
    foreground: "#c5cdd9"
 
  - Group: "SpecialComment"
-   foreground: "#758094"
    italic: true
+   foreground: "#758094"
 
  - Group: "Debug"
    foreground: "#deb974"
@@ -134,12 +134,12 @@ Data:
    background: "#3b3e48"
 
  - Group: "StatusLine"
-   background: "#363944"
    foreground: "#c5cdd9"
+   background: "#363944"
 
  - Group: "Normal"
-   background: "#2c2e34"
    foreground: "#c5cdd9"
+   background: "#2c2e34"
 
  - Group: "DiagnosticError"
    foreground: "#ec7279"
@@ -253,8 +253,8 @@ Data:
    foreground: "#5dbbc1"
 
  - Group: "@Comment"
-   foreground: "#758094"
    italic: true
+   foreground: "#758094"
 
  - Group: "@keyword"
    foreground: "#d38aea"

@@ -24,10 +24,14 @@ type HLResult struct {
 	Current      MatchPosition
 	SearchResult SearchLine
 }
-func(h* HLResult)Update(){
-	for line := range h.SearchResult.Lines{
+
+func (h *HLResult) Update() {
+	for line := range h.SearchResult.Lines {
 		h.update_line(line)
 	}
+}
+func (h *HLResult) GetPosition(lineno int) []MatchPosition {
+	return h.SearchResult.Lines[lineno]
 }
 func (h *HLResult) update_line(lineno int) {
 	sym_in_line := h.Tree[lineno]

@@ -1,7 +1,7 @@
 Data:
  - Group: "LineNr"
-   background: "#f1419"
    foreground: "#bfbdb6"
+   background: "#f1419"
 
  - Group: "Comment"
    foreground: "#3e4b59"
@@ -109,12 +109,12 @@ Data:
    foreground: "#f07178"
 
  - Group: "Ignore"
-   background: "#f1419"
    foreground: "#e6e1cf"
+   background: "#f1419"
 
  - Group: "Error"
-   background: "#f1419"
    foreground: "#f07178"
+   background: "#f1419"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -135,12 +135,12 @@ Data:
    background: "#272d38"
 
  - Group: "StatusLine"
-   background: "#272d38"
    foreground: "#e6e1cf"
+   background: "#272d38"
 
  - Group: "Normal"
-   background: "#f1419"
    foreground: "#e6e1cf"
+   background: "#f1419"
 
  - Group: "DiagnosticError"
    foreground: "#f07178"
@@ -155,16 +155,16 @@ Data:
    foreground: "#95e6cb"
 
  - Group: "DiffAdd"
-   background: "#f1419"
    foreground: "#b8cc52"
+   background: "#f1419"
 
  - Group: "DiffChange"
-   background: "#f1419"
    foreground: "#3e4b59"
+   background: "#f1419"
 
  - Group: "DiffDelete"
-   background: "#f1419"
    foreground: "#f07178"
+   background: "#f1419"
 
  - Group: "LspReferenceText"
    underline: true
@@ -415,9 +415,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#e6b673"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#131721"
-   foreground: "#ffb454"
+   background: "#ffb454"
  - Group: "insearch"
    foreground: "#131721"
-   foreground: "#ff8f40"
+   background: "#ff8f40"

@@ -132,14 +132,14 @@ Data:
    background: "#666666"
 
  - Group: "Visual"
-   foreground: "#0"
    bold: true
    background: "#a9a9a9"
+   foreground: "#0"
 
  - Group: "StatusLine"
-   foreground: "#ffffff"
    bold: true
    background: "#ee"
+   foreground: "#ffffff"
 
  - Group: "Normal"
    foreground: "#cccccc"
@@ -170,19 +170,19 @@ Data:
    background: "#af5faf"
 
  - Group: "LspReferenceText"
-   foreground: "#0"
    bold: true
    background: "#a9a9a9"
+   foreground: "#0"
 
  - Group: "LspReferenceRead"
-   foreground: "#0"
    bold: true
    background: "#a9a9a9"
+   foreground: "#0"
 
  - Group: "LspReferenceWrite"
-   foreground: "#0"
    bold: true
    background: "#a9a9a9"
+   foreground: "#0"
 
  - Group: "@variable"
    foreground: "#40ffff"
@@ -425,5 +425,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ffa500"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#ff0000"
+   background: "#000000"
+ - Group: "insearch"
+   foreground: "#00cd00"
+   background: "#000000"

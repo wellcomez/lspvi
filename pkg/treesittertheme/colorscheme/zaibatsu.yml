@@ -111,9 +111,9 @@ Data:
    foreground: "#878092"
 
  - Group: "Error"
-   foreground: "#d70000"
    reverse: true
    background: "#ffffff"
+   foreground: "#d70000"
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -155,19 +155,19 @@ Data:
    foreground: "#d3d3d3"
 
  - Group: "DiffAdd"
-   foreground: "#87ff00"
    reverse: true
    background: "#362b49"
+   foreground: "#87ff00"
 
  - Group: "DiffChange"
-   foreground: "#afafff"
    reverse: true
    background: "#362b49"
+   foreground: "#afafff"
 
  - Group: "DiffDelete"
-   foreground: "#ff5faf"
    reverse: true
    background: "#362b49"
+   foreground: "#ff5faf"
 
  - Group: "LspReferenceText"
    foreground: "#e0024"
@@ -412,5 +412,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#87ff00"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#87ffff"
+   background: "#0e0024"
+ - Group: "insearch"
+   foreground: "#ffaf00"
+   background: "#0e0024"

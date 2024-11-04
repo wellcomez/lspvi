@@ -18,8 +18,8 @@ Data:
    foreground: "#ff79c6"
 
  - Group: "Type"
-   foreground: "#8be9fd"
    italic: true
+   foreground: "#8be9fd"
 
  - Group: "Character"
    foreground: "#ff79c6"
@@ -76,8 +76,8 @@ Data:
    foreground: "#ff79c6"
 
  - Group: "Type"
-   foreground: "#8be9fd"
    italic: true
+   foreground: "#8be9fd"
 
  - Group: "StorageClass"
    foreground: "#ff79c6"
@@ -101,8 +101,8 @@ Data:
    foreground: "#f8f8f2"
 
  - Group: "SpecialComment"
-   foreground: "#8be9fd"
    italic: true
+   foreground: "#8be9fd"
 
  - Group: "Debug"
    foreground: "#ff79c6"
@@ -112,12 +112,12 @@ Data:
    foreground: "#f8f8f2"
 
  - Group: "Ignore"
-   background: "#282a36"
    foreground: "#f8f8f2"
+   background: "#282a36"
 
  - Group: "Error"
-   special: 16733525
    foreground: "#ff5555"
+   special: 16733525
 
  - Group: "Added"
    foreground: "#b3f6c0"
@@ -142,12 +142,12 @@ Data:
    background: "#424450"
 
  - Group: "Normal"
-   background: "#282a36"
    foreground: "#f8f8f2"
+   background: "#282a36"
 
  - Group: "DiagnosticError"
-   special: 16733525
    foreground: "#ff5555"
+   special: 16733525
 
  - Group: "DiagnosticWarn"
    foreground: "#ffb86c"
@@ -165,8 +165,8 @@ Data:
    foreground: "#ffb86c"
 
  - Group: "DiffDelete"
-   background: "#21222c"
    foreground: "#ff5555"
+   background: "#21222c"
 
  - Group: "LspReferenceText"
    background: "#44475a"
@@ -181,12 +181,12 @@ Data:
    foreground: "#f8f8f2"
 
  - Group: "@variable.builtin"
-   foreground: "#bd93f9"
    italic: true
+   foreground: "#bd93f9"
 
  - Group: "@variable.parameter"
-   foreground: "#ffb86c"
    italic: true
+   foreground: "#ffb86c"
 
  - Group: "@variable.parameter.builtin"
    foreground: "#ff79c6"
@@ -210,8 +210,8 @@ Data:
    foreground: "#ff79c6"
 
  - Group: "@label"
-   foreground: "#bd93f9"
    italic: true
+   foreground: "#bd93f9"
 
  - Group: "@function"
    foreground: "#50fa7b"
@@ -241,23 +241,23 @@ Data:
    foreground: "#f1fa8c"
 
  - Group: "@type"
-   foreground: "#8be9fd"
    italic: true
+   foreground: "#8be9fd"
 
  - Group: "@type.builtin"
    foreground: "#ff79c6"
 
  - Group: "@type.definition"
-   foreground: "#8be9fd"
    italic: true
+   foreground: "#8be9fd"
 
  - Group: "@type.class"
-   foreground: "#8be9fd"
    italic: true
+   foreground: "#8be9fd"
 
  - Group: "@attribute"
-   foreground: "#50fa7b"
    italic: true
+   foreground: "#50fa7b"
 
  - Group: "@attribute.builtin"
    foreground: "#ff79c6"

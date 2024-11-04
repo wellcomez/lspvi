@@ -114,10 +114,10 @@ Data:
    foreground: "#3c3836"
 
  - Group: "Error"
-   foreground: "#9d0006"
    reverse: true
-   bold: true
    background: "#fbf1c7"
+   foreground: "#9d0006"
+   bold: true
 
  - Group: "Added"
    foreground: "#5523"
@@ -139,10 +139,10 @@ Data:
    background: "#76678"
 
  - Group: "StatusLine"
-   foreground: "#bdae93"
    reverse: true
-   bold: true
    background: "#3c3836"
+   foreground: "#bdae93"
+   bold: true
 
  - Group: "Normal"
    foreground: "#3c3836"
@@ -161,19 +161,19 @@ Data:
    foreground: "#d3d3d3"
 
  - Group: "DiffAdd"
-   foreground: "#79740e"
    reverse: true
    background: "#fbf1c7"
+   foreground: "#79740e"
 
  - Group: "DiffChange"
-   foreground: "#427b58"
    reverse: true
    background: "#fbf1c7"
+   foreground: "#427b58"
 
  - Group: "DiffDelete"
-   foreground: "#9d0006"
    reverse: true
    background: "#fbf1c7"
+   foreground: "#9d0006"
 
  - Group: "LspReferenceText"
    foreground: "#fbf1c7"
@@ -432,5 +432,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ff5f00"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#98971a"
+   background: "#fbf1c7"
+ - Group: "insearch"
+   foreground: "#ff5f00"
+   background: "#fbf1c7"

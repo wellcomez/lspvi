@@ -125,10 +125,10 @@ Data:
    true: 6
 
  - Group: "Error"
-   foreground: "#ff0000"
    reverse: true
-   bold: true
    background: "#ffffff"
+   foreground: "#ff0000"
+   bold: true
 
  - Group: "Added"
    foreground: "#5523"
@@ -150,9 +150,9 @@ Data:
    background: "#cccccc"
 
  - Group: "StatusLine"
-   foreground: "#ffffff"
    bold: true
    background: "#0"
+   foreground: "#ffffff"
 
  - Group: "Normal"
    foreground: "#0"
@@ -451,5 +451,8 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#6a5acd"
 
- - Group: "Search"
+ - Group: "search"
    foreground: "#ffdab9"
+   background: "#cd00cd"
+ - Group: "insearch"
+   foreground: "#2e8b57"
