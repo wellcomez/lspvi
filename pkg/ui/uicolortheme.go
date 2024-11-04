@@ -190,7 +190,7 @@ func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
 		}
 		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
 	}
-	for _, key := range []string{"search", "keyword"} {
+	for _, key := range []string{"keyword"} {
 		if color := mgr.get_color(key); color != nil {
 			a, _, _ := color.Decompose()
 			return a
