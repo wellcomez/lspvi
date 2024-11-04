@@ -560,9 +560,9 @@ func GetColumnStyle(symline *[]lspcore.TreeSitterSymbol, col uint32, bg tcell.Co
 }
 
 func newFunction1(pos lspcore.TreeSitterSymbol) (tcell.Style, error) {
-	style := global_theme.get_color(pos.SymbolName)
+	style := global_theme.get_color(pos.CaptureName)
 	if style == nil {
-		style = global_theme.get_color("@" + pos.SymbolName)
+		style = global_theme.get_color("@" + pos.CaptureName)
 	}
 	if style == nil {
 		return tcell.Style{}, fmt.Errorf("not found")

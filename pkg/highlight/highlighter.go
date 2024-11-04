@@ -365,10 +365,10 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 		if len(h.HighLights.Tree) > 0 {
 			if sym_in_line, ok := h.HighLights.Tree[i]; ok {
 				for _, v := range sym_in_line {
-					x := []string{"@" + v.SymbolName}
-					ind := strings.Index(v.SymbolName, ".")
+					x := []string{"@" + v.CaptureName}
+					ind := strings.Index(v.CaptureName, ".")
 					if ind > 0 {
-						s := v.SymbolName[0:ind]
+						s := v.CaptureName[0:ind]
 						x = append(x, "@"+s)
 						// x = append(x, v.SymobName)
 						x = append(x, s)
