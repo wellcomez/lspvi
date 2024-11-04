@@ -19,7 +19,7 @@ import (
 	ts_rust "github.com/tree-sitter/tree-sitter-rust/bindings/go"
 	tree_sitter_typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 	tree_sitter_json "github.com/tree-sitter/tree-sitter-json/bindings/go"
-	// import ts_yaml "github.com/tree-sitter-grammars/tree-sitter-yaml"
+	ts_yaml "github.com/tree-sitter-grammars/tree-sitter-yaml"
 	ts_lua "github.com/tree-sitter-grammars/tree-sitter-lua/bindings/go"
 	ts_toml "github.com/tree-sitter-grammars/tree-sitter-toml"
 	"github.com/tree-sitter/tree-sitter-markdown/bindings/go"
@@ -188,9 +188,9 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("python", lsp_lang_py{}, ts_py.Language()).setparser(rs_outline),
 	new_tsdef("lua", lsp_dummy{}, ts_lua.Language()).set_ext([]string{"lua"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.Language()).set_ext([]string{"rs"}).setparser(rs_outline),
-	// new_tsdef("yaml", lsp_dummy{}, ts_yaml.Language()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
-	// 	rs_outline(ts, yaml_group)
-	// }),
+	new_tsdef("yaml", lsp_dummy{}, ts_yaml.Language()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
+		rs_outline(ts, yaml_group)
+	}),
 	// new_tsdef("proto", lsp_dummy{}, ts_protobuf.GetLanguage()).set_ext([]string{"proto"}).setparser(rs_outline),
 	new_tsdef("css", lsp_dummy{}, ts_css.Language()).set_ext([]string{"css"}).setparser(rs_outline),
 	// new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),

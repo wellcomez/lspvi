@@ -68,6 +68,7 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82 // indirect
+	github.com/tree-sitter-grammars/tree-sitter-yaml v0.6.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 )
 
