@@ -106,25 +106,25 @@ Data:
    foreground: "#aaffe4"
 
  - Group: "Underlined"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "Ignore"
    foreground: "#1e1c31"
 
  - Group: "Error"
+   bold: true
    background: "#100e23"
    foreground: "#ff5458"
-   bold: true
 
  - Group: "Added"
-   foreground: "#b3f6c0"
+   foreground: "#5523"
 
  - Group: "Changed"
-   foreground: "#8cf8f7"
+   foreground: "#7373"
 
  - Group: "Removed"
-   foreground: "#ffc0b9"
+   foreground: "#590008"
 
  - Group: "CursorLine"
    background: "#100e23"
@@ -143,16 +143,16 @@ Data:
    background: "#1e1c31"
 
  - Group: "DiagnosticError"
-   foreground: "#ffc0b9"
+   foreground: "#590008"
 
  - Group: "DiagnosticWarn"
-   foreground: "#fce094"
+   foreground: "#6b5300"
 
  - Group: "DiagnosticInfo"
-   foreground: "#8cf8f7"
+   foreground: "#7373"
 
  - Group: "DiagnosticHint"
-   foreground: "#a6dbff"
+   foreground: "#4c73"
 
  - Group: "DiffAdd"
    foreground: "#95ffa4"
@@ -173,19 +173,19 @@ Data:
    background: "#565575"
 
  - Group: "@variable"
-   foreground: "#e0e2ea"
+   foreground: "#14161b"
 
  - Group: "@variable.builtin"
    foreground: "#aaffe4"
 
  - Group: "@variable.parameter"
-   foreground: "#e0e2ea"
+   foreground: "#14161b"
 
  - Group: "@variable.parameter.builtin"
    foreground: "#aaffe4"
 
  - Group: "@variable.member"
-   foreground: "#e0e2ea"
+   foreground: "#14161b"
 
  - Group: "@constant"
    foreground: "#ffe9aa"
@@ -320,8 +320,8 @@ Data:
    foreground: "#aaffe4"
 
  - Group: "@string.special.url"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "@string.special.path"
    foreground: "#aaffe4"
@@ -381,16 +381,16 @@ Data:
    foreground: "#aaffe4"
 
  - Group: "@markup.link"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "@markup.link.label"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "@markup.link.url"
-   foreground: "#cbe3e7"
    underline: true
+   foreground: "#cbe3e7"
 
  - Group: "@markup.raw"
    foreground: "#aaffe4"
@@ -407,3 +407,8 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#aaffe4"
 
+ - Group: "search"
+   background: "#565575"
+ - Group: "insearch"
+   foreground: "#cbe3e7"
+   background: "#ff8080"

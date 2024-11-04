@@ -105,8 +105,8 @@ Data:
    foreground: "#ffa500"
 
  - Group: "Underlined"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "Ignore"
    foreground: "#0"
@@ -132,14 +132,14 @@ Data:
    background: "#666666"
 
  - Group: "Visual"
+   bold: true
    background: "#a9a9a9"
    foreground: "#0"
-   bold: true
 
  - Group: "StatusLine"
+   bold: true
    background: "#ee"
    foreground: "#ffffff"
-   bold: true
 
  - Group: "Normal"
    foreground: "#cccccc"
@@ -170,19 +170,19 @@ Data:
    background: "#af5faf"
 
  - Group: "LspReferenceText"
+   bold: true
    background: "#a9a9a9"
    foreground: "#0"
-   bold: true
 
  - Group: "LspReferenceRead"
+   bold: true
    background: "#a9a9a9"
    foreground: "#0"
-   bold: true
 
  - Group: "LspReferenceWrite"
+   bold: true
    background: "#a9a9a9"
    foreground: "#0"
-   bold: true
 
  - Group: "@variable"
    foreground: "#40ffff"
@@ -332,8 +332,8 @@ Data:
    foreground: "#ffa500"
 
  - Group: "@string.special.url"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@string.special.path"
    foreground: "#ffa500"
@@ -363,36 +363,36 @@ Data:
    strikethrough: true
 
  - Group: "@markup.underline"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@markup.heading"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.1"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.2"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.3"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.4"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.5"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.6"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.quote"
    foreground: "#ffa500"
@@ -407,8 +407,8 @@ Data:
    foreground: "#40ffff"
 
  - Group: "@markup.link.url"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@markup.raw"
    foreground: "#80a0ff"
@@ -425,3 +425,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ffa500"
 
+ - Group: "search"
+   foreground: "#ff0000"
+   background: "#000000"
+ - Group: "insearch"
+   foreground: "#00cd00"
+   background: "#000000"

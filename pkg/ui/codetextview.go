@@ -45,10 +45,14 @@ var split_icon = '\ueb56'
 
 func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 	vid := code.code.vid()
+	changemark := ""
+	if len(code.linechange.LineMark) > 0 {
+		changemark = "*"
+	}
 	name := filepath.Base(code.code.FileName())
 	FileWithIcon(name)
 	var runes = []rune{}
-	for _, v := range FileWithIcon(name) + " " {
+	for _, v := range FileWithIcon(name) + changemark + " " {
 		runes = append(runes, v)
 	}
 	sytle := code.IconStyle(code.main)

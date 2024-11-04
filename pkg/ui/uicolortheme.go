@@ -98,16 +98,13 @@ func IntToRGB(colorInt tcell.Color) rgb.RGBA {
 	return rgb.RGBA{uint8(r), uint8(g), uint8(b), 255} // 默认Alpha通道为255（完全不透明）
 }
 func HexToRGB(hexString string) (int, int, int, error) {
-	// 去掉前缀 #
 	hexString = strings.TrimPrefix(hexString, "#")
 
-	// 将十六进制字符串转换为整数
 	value, err := strconv.ParseUint(hexString, 16, 32)
 	if err != nil {
 		return 0, 0, 0, err
 	}
 
-	// 提取红色、绿色和蓝色的分量
 	blue := int(value & 255)
 	green := int((value >> 8) & 255)
 	red := int((value >> 16) & 255)
@@ -170,7 +167,22 @@ func hexToRGB(hex string) (int32, int32, int32, error) {
 
 	return int32(r), int32(g), int32(b), nil
 }
-
+func (mgr *symbol_colortheme) search_highlight_color_style() (ret tcell.Style) {
+	if rgb := global_config.Color.Highlight.Search; rgb != "" {
+		if r, g, b, err := hexToRGB(rgb); err == nil {
+			v := tcell.NewRGBColor(r, g, b)
+			return mgr.get_default_style().Foreground(v)
+		}
+		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
+	}
+	for _, key := range []string{"search", "keyword"} {
+		if color := mgr.get_color(key); color != nil {
+			ret = *color
+			return
+		}
+	}
+	return mgr.get_default_style().Foreground(tcell.ColorYellow)
+}
 func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
 	if rgb := global_config.Color.Highlight.Search; rgb != "" {
 		if r, g, b, err := hexToRGB(rgb); err == nil {
@@ -178,9 +190,11 @@ func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
 		}
 		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
 	}
-	if color := mgr.get_color("keyword"); color != nil {
-		a, _, _ := color.Decompose()
-		return a
+	for _, key := range []string{"keyword"} {
+		if color := mgr.get_color(key); color != nil {
+			a, _, _ := color.Decompose()
+			return a
+		}
 	}
 	return tcell.ColorYellow
 }

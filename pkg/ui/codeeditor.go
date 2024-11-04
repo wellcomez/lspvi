@@ -53,6 +53,7 @@ type CodeEditor interface {
 
 	//search
 	OnSearch(txt string, whole bool) []SearchPos
+	code_search(main MainService, qf *quick_view, changed bool)
 
 	//load
 	IsLoading() bool

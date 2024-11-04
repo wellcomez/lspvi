@@ -376,32 +376,32 @@ Data:
    underline: true
 
  - Group: "@markup.heading"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.1"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.2"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.3"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.4"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.5"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.heading.6"
-   foreground: "#f9cc6c"
    bold: true
+   foreground: "#f9cc6c"
 
  - Group: "@markup.quote"
    foreground: "#fff1f3"
@@ -433,3 +433,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#fff1f3"
 
+ - Group: "search"
+   foreground: "#2c2525"
+   background: "#f9cc6c"
+ - Group: "insearch"
+   foreground: "#2c2525"
+   background: "#f38d70"

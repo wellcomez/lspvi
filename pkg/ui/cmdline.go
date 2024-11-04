@@ -706,7 +706,7 @@ func (v *Vim) VimKeyModelMethod(event *tcell.EventKey) (bool, *tcell.EventKey) {
 		if event.Rune() == '/' || event.Rune() == '?' {
 			if v.vi.Escape {
 				if v.app.searchcontext == nil {
-					v.app.searchcontext = NewGenericSearch(v.app.current_editor().vid(), "")
+					v.app.searchcontext = NewGenericSearch(v.app.current_editor().vid(), search_option{whole: true, txt: ""})
 				}
 				aa := (event.Rune() == '/')
 				v.app.searchcontext.next_or_prev = aa

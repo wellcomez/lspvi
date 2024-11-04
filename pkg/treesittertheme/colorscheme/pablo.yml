@@ -15,8 +15,8 @@ Data:
    foreground: "#c0c0"
 
  - Group: "Keyword"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "Type"
    foreground: "#c000"
@@ -40,32 +40,32 @@ Data:
    foreground: "#c0c0"
 
  - Group: "Statement"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "Conditional"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "Repeat"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "Label"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "Operator"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "Keyword"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "Exception"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "PreProc"
    foreground: "#ff00"
@@ -113,8 +113,8 @@ Data:
    foreground: "#ff"
 
  - Group: "Underlined"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "Ignore"
    foreground: "#0"
@@ -218,8 +218,8 @@ Data:
    foreground: "#ff"
 
  - Group: "@label"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@function"
    foreground: "#c0c0"
@@ -243,8 +243,8 @@ Data:
    foreground: "#ff"
 
  - Group: "@operator"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@String"
    foreground: "#ffff"
@@ -274,20 +274,20 @@ Data:
    foreground: "#808080"
 
  - Group: "@keyword"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.coroutine"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.function"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.operator"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.import"
    foreground: "#ff00"
@@ -296,31 +296,31 @@ Data:
    foreground: "#c000"
 
  - Group: "@keyword.modifier"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.repeat"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.return"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.debug"
    foreground: "#ff"
 
  - Group: "@keyword.exception"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.conditional"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.conditional.ternary"
-   foreground: "#c0c000"
    bold: true
+   foreground: "#c0c000"
 
  - Group: "@keyword.directive"
    foreground: "#ff00"
@@ -347,8 +347,8 @@ Data:
    foreground: "#ff"
 
  - Group: "@string.special.url"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@string.special.path"
    foreground: "#ff"
@@ -378,36 +378,36 @@ Data:
    strikethrough: true
 
  - Group: "@markup.underline"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@markup.heading"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.1"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.2"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.3"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.4"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.5"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.heading.6"
-   foreground: "#ff00ff"
    bold: true
+   foreground: "#ff00ff"
 
  - Group: "@markup.quote"
    foreground: "#ff"
@@ -422,8 +422,8 @@ Data:
    foreground: "#c0c0"
 
  - Group: "@markup.link.url"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@markup.raw"
    foreground: "#808080"
@@ -440,3 +440,8 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ff"
 
+ - Group: "search"
+   foreground: "#000000"
+   background: "#c0c000"
+ - Group: "insearch"
+   foreground: "#ffffff"

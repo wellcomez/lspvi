@@ -8,7 +8,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	lspcore "zen108.com/lspvi/pkg/lsp"
+	hlresult "zen108.com/lspvi/pkg/highlight/result"
+	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 func sliceStart(slc []byte, index int) []byte {
@@ -87,7 +88,7 @@ type Highlighter struct {
 	lastRegion *region
 	Def        *Def
 	// Tdongshangnezha reeSitter
-	Tree lspcore.TreesiterSymbolLine
+	HighLights hlresult.HLResult
 }
 
 // NewHighlighter returns a new highlighter from the given syntax definition
@@ -361,8 +362,8 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 		}
 		line := input.LineBytes(i)
 		var match_tree_match LineMatch = make(LineMatch)
-		if len(h.Tree) > 0 {
-			if sym_in_line, ok := h.Tree[i]; ok {
+		if len(h.HighLights.Tree) > 0 {
+			if sym_in_line, ok := h.HighLights.Tree[i]; ok {
 				for _, v := range sym_in_line {
 					x := []string{"@" + v.SymbolName}
 					ind := strings.Index(v.SymbolName, ".")
@@ -409,6 +410,13 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 
 		input.SetMatch(i, match)
 	}
+}
+func (b *Highlighter) UpdateCurrentPos(result hlresult.MatchPosition) {
+	b.HighLights.Current = result
+}
+
+func (b *Highlighter) UpdateHLResult(result hlresult.HLResult) {
+	b.HighLights = result
 }
 
 // ReHighlightStates will scan down from `startline` and set the appropriate end of line state

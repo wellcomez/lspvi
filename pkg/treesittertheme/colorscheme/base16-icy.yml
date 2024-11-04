@@ -167,16 +167,16 @@ Data:
    background: "#21012"
 
  - Group: "LspReferenceText"
-   special: 409672
    underline: true
+   special: 409672
 
  - Group: "LspReferenceRead"
-   special: 409672
    underline: true
+   special: 409672
 
  - Group: "LspReferenceWrite"
-   special: 409672
    underline: true
+   special: 409672
 
  - Group: "@variable"
    foreground: "#16c1d9"
@@ -330,8 +330,8 @@ Data:
    foreground: "#4dd0e1"
 
  - Group: "@string.special.url"
-   foreground: "#b3ebf2"
    underline: true
+   foreground: "#b3ebf2"
 
  - Group: "@string.special.path"
    foreground: "#97a7"
@@ -397,8 +397,8 @@ Data:
    foreground: "#97a7"
 
  - Group: "@markup.link.url"
-   foreground: "#b3ebf2"
    underline: true
+   foreground: "#b3ebf2"
 
  - Group: "@markup.raw"
    foreground: "#b3ebf2"
@@ -415,3 +415,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#97a7"
 
+ - Group: "search"
+   foreground: "#031619"
+   background: "#80deea"
+ - Group: "insearch"
+   foreground: "#031619"
+   background: "#b3ebf2"

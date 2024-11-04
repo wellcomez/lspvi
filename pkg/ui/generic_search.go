@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/tectiv3/go-lsp"
+	hlresult "zen108.com/lspvi/pkg/highlight/result"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -21,16 +22,18 @@ type GenericSearch struct {
 	key          string
 	currentIndex int
 	next_or_prev bool
+	option       search_option
 }
 
 // NewGenericSearch is a constructor function for GenericSearch
-func NewGenericSearch(view view_id, key string) *GenericSearch {
+func NewGenericSearch(view view_id, option search_option) *GenericSearch {
 	return &GenericSearch{
 		indexList:    make([]SearchPos, 0),
 		view:         view,
-		key:          key,
+		key:          option.txt,
 		currentIndex: 0,
 		next_or_prev: true,
+		option:       option,
 	}
 }
 
@@ -87,14 +90,13 @@ func (gs *GenericSearch) ResultNumber() int {
 
 func search_on_ui(option search_option, main *mainui) {
 	txt := option.txt
-	tofzf := option.tofzf
+	// tofzf := option.tofzf
 	noloop := option.noloop
-	whole := option.whole
-	if len(txt) == 0 {
+	if len(option.txt) == 0 {
 		prev := main.prefocused
 		switch prev {
 		case view_bookmark:
-			main.bookmark_view.OnSearch(txt)
+			main.bookmark_view.OnSearch(option.txt)
 		}
 		return
 	}
@@ -109,12 +111,12 @@ func search_on_ui(option search_option, main *mainui) {
 	}
 	changed := true
 	if main.searchcontext == nil {
-		main.searchcontext = NewGenericSearch(prefocused, txt)
+		main.searchcontext = NewGenericSearch(prefocused, option)
 	} else {
 		prev := main.searchcontext.next_or_prev
 		changed = main.searchcontext.Changed(prefocused, txt) || noloop
 		if changed {
-			main.searchcontext = NewGenericSearch(prefocused, txt)
+			main.searchcontext = NewGenericSearch(prefocused, option)
 			main.searchcontext.next_or_prev = prev
 		}
 		// if tofzf || !noloop {
@@ -146,37 +148,47 @@ func search_on_ui(option search_option, main *mainui) {
 		}
 	default:
 		{
-			var code = main.current_editor()
-			if changed {
-				gs.indexList = code.OnSearch(txt, whole)
-				pos := gs.GetIndex()
-				code.goto_location_no_history(convert_search_pos_lsprange(pos, gs), true, nil)
-				if tofzf {
-					locs := convert_to_fzfsearch(gs, main)
-					main.ActiveTab(view_quickview, false)
-					data := []ref_with_caller{}
-					for _, loc := range locs {
-						data = append(data, ref_with_caller{
-							Loc: loc,
-						})
-					}
-					grep := QueryOption{}
-					grep.Wholeword = whole 
-					grep.Query = txt
-					main.quickview.UpdateListView(data_search, data, SearchKey{&lspcore.SymolSearchKey{Key: txt}, &grep})
-				}
-			} else {
-				var pos SearchPos
-				if gs.next_or_prev {
-					pos = gs.GetNext()
-				} else {
-					pos = gs.GetPrev()
-				}
-				code.goto_location_no_history(convert_search_pos_lsprange(pos, gs), true, nil)
-			}
+			code := main.current_editor()
+			code.code_search(main, main.quickview, changed)
 			main.page.update_title(gs.String())
 		}
 	}
+}
+
+func (code *CodeView) code_search(main MainService, qf *quick_view, changed bool) {
+	var gs *GenericSearch = main.Searchcontext()
+	if changed {
+		gs.indexList = code.OnSearch(gs.key, gs.option.whole)
+		pos := gs.GetIndex()
+		code.goto_search_result(pos)
+		if gs.option.tofzf {
+			locs := convert_to_fzfsearch(gs, main)
+			main.ActiveTab(view_quickview, false)
+			data := []ref_with_caller{}
+			for _, loc := range locs {
+				data = append(data, ref_with_caller{
+					Loc: loc,
+				})
+			}
+			grep := QueryOption{}
+			grep.Wholeword = gs.option.whole
+			grep.Query = gs.option.txt
+			qf.UpdateListView(data_search, data, SearchKey{&lspcore.SymolSearchKey{Key: gs.option.txt}, &grep})
+		}
+	} else {
+		var pos SearchPos
+		if gs.next_or_prev {
+			pos = gs.GetNext()
+		} else {
+			pos = gs.GetPrev()
+		}
+		code.goto_search_result(pos)
+	}
+}
+func (code *CodeView) goto_search_result(pos SearchPos) {
+	gs := code.main.Searchcontext()
+	code.view.Buf.UpdateCurrent(hlresult.MatchPosition{Begin: pos.X, End: pos.X + len(gs.key), Y: pos.Y})
+	code.goto_location_no_history(convert_search_pos_lsprange(pos, gs), true, nil)
 }
 
 func convert_search_pos_lsprange(loc SearchPos, gs *GenericSearch) lsp.Range {
@@ -193,12 +205,12 @@ func convert_search_pos_lsprange(loc SearchPos, gs *GenericSearch) lsp.Range {
 	return x
 }
 
-func convert_to_fzfsearch(gs *GenericSearch, main *mainui) []lsp.Location {
+func convert_to_fzfsearch(gs *GenericSearch, main MainService) []lsp.Location {
 	var locs []lsp.Location
 	for _, loc := range gs.indexList {
 		x := convert_search_pos_lsprange(loc, gs)
 		loc := lsp.Location{
-			URI:   lsp.NewDocumentURI(main.codeview.Path()),
+			URI:   lsp.NewDocumentURI(main.current_editor().Path()),
 			Range: x,
 		}
 		locs = append(locs, loc)

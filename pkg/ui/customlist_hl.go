@@ -123,6 +123,13 @@ func (line *colorstring) add_string_color_bg(s string, color, bg tcell.Color) *c
 	}
 	return line
 }
+func (line *colorstring) add_string_style(s string, color tcell.Style) *colorstring {
+	if len(s) > 0 {
+		f,g,_:=color.Decompose()
+		line.line = append(line.line, colortext{s, f, g})
+	}
+	return line
+}
 func (line *colorstring) add_string_color(s string, color tcell.Color) *colorstring {
 	if len(s) > 0 {
 		line.line = append(line.line, colortext{s, color, 0})

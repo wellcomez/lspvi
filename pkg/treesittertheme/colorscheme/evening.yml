@@ -15,12 +15,12 @@ Data:
    foreground: "#ffff"
 
  - Group: "Keyword"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "Type"
-   foreground: "#ff00"
    bold: true
+   foreground: "#ff00"
 
  - Group: "Character"
    foreground: "#ffa0a0"
@@ -41,32 +41,32 @@ Data:
    foreground: "#ffff"
 
  - Group: "Statement"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "Conditional"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "Repeat"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "Label"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "Operator"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "Keyword"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "Exception"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "PreProc"
    foreground: "#ff80ff"
@@ -84,20 +84,20 @@ Data:
    foreground: "#ff80ff"
 
  - Group: "Type"
-   foreground: "#ff00"
    bold: true
+   foreground: "#ff00"
 
  - Group: "StorageClass"
-   foreground: "#ff00"
    bold: true
+   foreground: "#ff00"
 
  - Group: "Structure"
-   foreground: "#ff00"
    bold: true
+   foreground: "#ff00"
 
  - Group: "Typedef"
-   foreground: "#ff00"
    bold: true
+   foreground: "#ff00"
 
  - Group: "Special"
    foreground: "#ffa500"
@@ -118,16 +118,16 @@ Data:
    foreground: "#ffa500"
 
  - Group: "Underlined"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "Ignore"
    foreground: "#333333"
 
  - Group: "Error"
+   reverse: true
    background: "#ffffff"
    foreground: "#ff0000"
-   reverse: true
 
  - Group: "Added"
    foreground: "#ffa0a0"
@@ -149,9 +149,9 @@ Data:
    background: "#999999"
 
  - Group: "StatusLine"
+   bold: true
    background: "#ffffff"
    foreground: "#333333"
-   bold: true
 
  - Group: "Normal"
    foreground: "#ffffff"
@@ -224,8 +224,8 @@ Data:
    foreground: "#ffa500"
 
  - Group: "@label"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@function"
    foreground: "#ffff"
@@ -249,26 +249,26 @@ Data:
    foreground: "#ffa500"
 
  - Group: "@operator"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@String"
    foreground: "#ffa0a0"
 
  - Group: "@type"
-   foreground: "#ff00"
    bold: true
+   foreground: "#ff00"
 
  - Group: "@type.builtin"
    foreground: "#ffa500"
 
  - Group: "@type.definition"
-   foreground: "#ff00"
    bold: true
+   foreground: "#ff00"
 
  - Group: "@type.class"
-   foreground: "#ff00"
    bold: true
+   foreground: "#ff00"
 
  - Group: "@attribute"
    foreground: "#ff80ff"
@@ -283,54 +283,54 @@ Data:
    foreground: "#80a0ff"
 
  - Group: "@keyword"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.coroutine"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.function"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.operator"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.import"
    foreground: "#ff80ff"
 
  - Group: "@keyword.type"
-   foreground: "#ff00"
    bold: true
+   foreground: "#ff00"
 
  - Group: "@keyword.modifier"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.repeat"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.return"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.debug"
    foreground: "#ffa500"
 
  - Group: "@keyword.exception"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.conditional"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.conditional.ternary"
-   foreground: "#ffff60"
    bold: true
+   foreground: "#ffff60"
 
  - Group: "@keyword.directive"
    foreground: "#ff80ff"
@@ -357,8 +357,8 @@ Data:
    foreground: "#ffa500"
 
  - Group: "@string.special.url"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@string.special.path"
    foreground: "#ffa500"
@@ -388,8 +388,8 @@ Data:
    strikethrough: true
 
  - Group: "@markup.underline"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@markup.heading"
    foreground: "#ff80ff"
@@ -425,8 +425,8 @@ Data:
    foreground: "#ffff"
 
  - Group: "@markup.link.url"
-   foreground: "#80a0ff"
    underline: true
+   foreground: "#80a0ff"
 
  - Group: "@markup.raw"
    foreground: "#80a0ff"
@@ -443,3 +443,8 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#ffa500"
 
+ - Group: "search"
+   foreground: "#000000"
+   background: "#ffff00"
+ - Group: "insearch"
+   foreground: "#00ff00"

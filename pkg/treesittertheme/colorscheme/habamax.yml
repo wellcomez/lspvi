@@ -111,9 +111,9 @@ Data:
    true: 6
 
  - Group: "Error"
+   reverse: true
    background: "#1c1c1c"
    foreground: "#d75f5f"
-   reverse: true
 
  - Group: "Added"
    foreground: "#87af87"
@@ -358,32 +358,32 @@ Data:
    underline: true
 
  - Group: "@markup.heading"
-   foreground: "#d7d787"
    bold: true
+   foreground: "#d7d787"
 
  - Group: "@markup.heading.1"
-   foreground: "#d7d787"
    bold: true
+   foreground: "#d7d787"
 
  - Group: "@markup.heading.2"
-   foreground: "#d7d787"
    bold: true
+   foreground: "#d7d787"
 
  - Group: "@markup.heading.3"
-   foreground: "#d7d787"
    bold: true
+   foreground: "#d7d787"
 
  - Group: "@markup.heading.4"
-   foreground: "#d7d787"
    bold: true
+   foreground: "#d7d787"
 
  - Group: "@markup.heading.5"
-   foreground: "#d7d787"
    bold: true
+   foreground: "#d7d787"
 
  - Group: "@markup.heading.6"
-   foreground: "#d7d787"
    bold: true
+   foreground: "#d7d787"
 
  - Group: "@markup.quote"
    foreground: "#5f8787"
@@ -415,3 +415,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#5f8787"
 
+ - Group: "search"
+   foreground: "#1c1c1c"
+   background: "#87af87"
+ - Group: "insearch"
+   foreground: "#1c1c1c"
+   background: "#ffaf5f"

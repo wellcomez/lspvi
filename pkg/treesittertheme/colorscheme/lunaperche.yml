@@ -15,8 +15,8 @@ Data:
    true: 6
 
  - Group: "Keyword"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "Type"
    foreground: "#5fd75f"
@@ -40,32 +40,32 @@ Data:
    true: 6
 
  - Group: "Statement"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "Conditional"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "Repeat"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "Label"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "Operator"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "Keyword"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "Exception"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "PreProc"
    foreground: "#5fd7d7"
@@ -142,10 +142,10 @@ Data:
    background: "#5f87"
 
  - Group: "StatusLine"
-   background: "#0"
-   bold: true
-   foreground: "#c6c6c6"
    reverse: true
+   background: "#0"
+   foreground: "#c6c6c6"
+   bold: true
 
  - Group: "Normal"
    foreground: "#c6c6c6"
@@ -217,8 +217,8 @@ Data:
    foreground: "#5fafaf"
 
  - Group: "@label"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@function"
    true: 6
@@ -242,8 +242,8 @@ Data:
    foreground: "#5fafaf"
 
  - Group: "@operator"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@String"
    foreground: "#ffd787"
@@ -273,20 +273,20 @@ Data:
    foreground: "#5fafff"
 
  - Group: "@keyword"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.coroutine"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.function"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.operator"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.import"
    foreground: "#5fd7d7"
@@ -295,31 +295,31 @@ Data:
    foreground: "#5fd75f"
 
  - Group: "@keyword.modifier"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.repeat"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.return"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.debug"
    foreground: "#5fafaf"
 
  - Group: "@keyword.exception"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.conditional"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.conditional.ternary"
-   foreground: "#e4e4e4"
    bold: true
+   foreground: "#e4e4e4"
 
  - Group: "@keyword.directive"
    foreground: "#5fd7d7"
@@ -429,3 +429,9 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#5fafaf"
 
+ - Group: "search"
+   foreground: "#000000"
+   background: "#ffd787"
+ - Group: "insearch"
+   foreground: "#000000"
+   background: "#5fd75f"

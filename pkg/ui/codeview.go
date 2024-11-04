@@ -19,6 +19,7 @@ import (
 	"github.com/pgavlin/femto/runtime"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	hlresult "zen108.com/lspvi/pkg/highlight/result"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 
@@ -309,9 +310,9 @@ func (code *CodeView) OnFindInfileWordOption(fzf bool, noloop bool, whole bool) 
 	return word
 }
 
-func (code *CodeView) OnSearch(txt string, whole bool) []SearchPos {
+func (code *CodeView) OnSearch(txt string, whole bool) (ret []SearchPos) {
 	Buf := code.view.Buf
-	ret := search_text_in_buffer(txt, Buf, whole)
+	ret = search_text_in_buffer(txt, Buf, whole)
 	if code.view.HasFocus() {
 		Y := code.view.Cursor.Loc.Y
 		closeI := 0
@@ -322,9 +323,31 @@ func (code *CodeView) OnSearch(txt string, whole bool) []SearchPos {
 		}
 		ret2 := ret[closeI:]
 		ret1 := ret[0:closeI]
-		return append(ret2, ret1...)
+		ret = append(ret2, ret1...)
 	}
-	return ret
+	code.update_codetext_hlsearch(ret, len(txt))
+	return
+}
+
+func (code *CodeView) update_codetext_hlsearch(ret []SearchPos, len int) {
+	var pos = hlresult.NewSearchLine()
+	for _, v := range ret {
+		pos.Add(hlresult.MatchPosition{
+			Y:     v.Y,
+			Begin: v.X,
+			End:   v.X + len,
+		})
+	}
+	v := hlresult.HLResult{SearchResult: pos}
+	if ts := code.TreeSitter(); ts != nil {
+		var HlLine = make(lspcore.TreesiterSymbolLine)
+		for k, v := range ts.HlLine {
+			HlLine[k] = v
+		}
+		v.Tree = HlLine
+		v.Update()
+	}
+	code.view.Buf.SetTreesitter(v)
 }
 
 func search_text_in_buffer(txt string, Buf *femto.Buffer, whole bool) []SearchPos {
@@ -1553,11 +1576,11 @@ func (code *CodeView) set_color() {
 	code.set_codeview_colortheme(global_theme)
 }
 func (code *CodeView) set_synax_color(theme *symbol_colortheme) {
-	if ts := code.TreeSitter(); ts == nil {
-		code.view.Buf.SetTreesitter(lspcore.TreesiterSymbolLine{})
-	} else {
-		code.view.Buf.SetTreesitter(ts.HlLine)
+	x := lspcore.TreesiterSymbolLine{}
+	if ts := code.TreeSitter(); ts != nil {
+		x = ts.HlLine
 	}
+	code.view.Buf.SetTreesitter(hlresult.HLResult{Tree: x})
 	code.view.SetColorscheme(theme.colorscheme)
 }
 

@@ -424,3 +424,7 @@ Data:
  - Group: "@markup.list.unchecked"
    foreground: "#4c77e4"
 
+ - Group: "search"
+   background: "#303047"
+ - Group: "insearch"
+   background: "#57109a"
