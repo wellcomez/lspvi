@@ -411,6 +411,10 @@ func (h *Highlighter) HighlightMatches(input LineStates, startline, endline int)
 		input.SetMatch(i, match)
 	}
 }
+func (b *Highlighter) UpdateCurrentPos(result hlresult.MatchPosition) {
+	b.HighLights.Current = result
+}
+
 func (b *Highlighter) UpdateHLResult(result hlresult.HLResult) {
 	b.HighLights = result
 }
