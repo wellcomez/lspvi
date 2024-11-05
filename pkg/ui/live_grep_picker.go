@@ -60,8 +60,7 @@ func (pk livewgreppicker) open_view_from_tree(index int, prev bool) {
 		if prev {
 			pk.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
 		} else {
-			pk.main.OpenFileHistory(data.Loc.URI.AsPath().String(), &data.Loc)
-
+			pk.parent.open_in_edior(data.Loc)
 		}
 	}
 }

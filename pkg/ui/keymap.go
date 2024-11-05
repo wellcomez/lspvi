@@ -467,6 +467,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case open_lspvi_configfile:
 		return cmdactor{id, "lspvi config file", func() bool {
 			m.OpenFileHistory(lspviroot.configfile, nil)
+			m.current_editor().Acitve()
 			return true
 		}}
 	case open_picker_help:

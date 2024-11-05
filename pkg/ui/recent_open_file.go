@@ -23,6 +23,7 @@ func (r *recent_open_file) add(filename string) {
 			filename = trim_project_filename(filename, global_prj_root)
 			r.list.AddItem(filename, "", func() {
 				r.main.OpenFileHistory(filepath, nil)
+				r.main.current_editor().Acitve()
 			})
 		})
 	}()
