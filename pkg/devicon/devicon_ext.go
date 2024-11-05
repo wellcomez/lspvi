@@ -1,5 +1,7 @@
 package devicon
 
+import "fmt"
+
 var icons_by_file_extension = []Icon{
 	{Key: "3gp",
 		Icon:        "",
@@ -2617,4 +2619,46 @@ var icons_by_file_extension = []Icon{
 		Cterm_color: "214",
 		Name:        "Zst",
 	},
+}
+
+type extgroup struct {
+	key string
+	ext []string
+}
+
+var fileicons = []extgroup{
+	{"cxx", []string{"c", "cpp", "cc"}},
+	{"hxx", []string{"h", "hpp"}},
+	// {py_icon, []string{"py"}},
+	// {js_icon, []string{"js"}},
+	// {ts_icon, []string{"tsx", "ts"}},
+	// {html_icon, []string{"html"}},
+	// {json_icon, []string{"json"}},
+	// {txt_icon, []string{"txt"}},
+	// {go_mod_icon, []string{"go.mod"}},
+	// {markdown_icon, []string{"md"}},
+	// {png_icon, []string{"png"}},
+	// {css_icon, []string{"css"}},
+	// {lua_icon, []string{"lua"}},
+	{"java", []string{"java", "jar"}},
+	// {fmt.Sprintf("%c", '\ue673'), []string{"makefile"}},
+	// {fmt.Sprintf("%c", '\uebca'), []string{"sh"}},
+	// {fmt.Sprintf("%c", '\uf1c1'), []string{"pdf"}},
+	// {fmt.Sprintf("%c", '\uf1c2'), []string{"doc"}},
+	// {fmt.Sprintf("%c", '\ueefc'), []string{"csv"}},
+	// {fmt.Sprintf("%c", '\uf1c6'), []string{"zip", "gz", "tar", "rar", "bz2", "7z", "tgz"}},
+	// {rust_icon, []string{"rs"}},
+	// {fmt.Sprintf("%c", '\U000f0b02'), []string{"uml"}},
+}
+
+func get_common_ext(ext string) (ret string, err error) {
+	for _, group := range fileicons {
+		for _, e := range group.ext {
+			if e == ext {
+				return group.key, nil
+			}
+		}
+	}
+	err = fmt.Errorf("not found")
+	return
 }

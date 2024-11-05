@@ -3,6 +3,7 @@ package devicon
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 )
 
 type Icon struct {
@@ -26,17 +27,26 @@ var map_icons_by_file_extension = array_to_map(icons_by_file_extension)
 
 func FindIconPath(filename string) (ret Icon, err error) {
 	var name = filepath.Base(filename)
+	name = strings.ToLower(name)
 	if v, ok := map_icons_by_fileName[name]; ok {
 		return v, nil
 	}
 	x := filepath.Ext(filename)
-	if len(x) > 1 {
-		if x[0] == '.' {
-			x = x[1:]
+	if len(x) > 0 {
+		if len(x) > 1 {
+			if x[0] == '.' {
+				x = x[1:]
+			}
 		}
-	}
-	if v, ok := map_icons_by_file_extension[x]; ok {
-		return v, nil
+		if v, ok := map_icons_by_file_extension[x]; ok {
+			return v, nil
+		}
+		x = strings.ToLower(x)
+		if ext2, e := get_common_ext(x); e == nil {
+			if v, ok := map_icons_by_file_extension[ext2]; ok {
+				return v, nil
+			}
+		}
 	}
 	err = fmt.Errorf("not found")
 	return
@@ -1034,7 +1044,6 @@ var icons_by_fileName = []Icon{
 		Name:        "XSettingsdConf",
 	},
 }
-
 
 var icons_by_operating_system = []Icon{
 	{Key: "apple",
