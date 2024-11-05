@@ -22,7 +22,7 @@ func (t *MainLayout) MouseHandler() func(action tview.MouseAction, event *tcell.
 	dialog := t.dialog
 	dialoghandle := func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
 		if !InRect(event, dialog.Frame) {
-			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
+			if action == tview.MouseLeftClick  {
 				dialog.hide()
 			}
 		} else {
