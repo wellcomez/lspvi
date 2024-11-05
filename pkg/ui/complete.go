@@ -394,10 +394,10 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	heplview.main = complete.editor.main
 	filename := complete.filename()
 	txt := strings.Join(ret, "\n")
-	heplview.Load(txt, filename)
+	height := heplview.Load(txt, filename)
 	loc := complete.editor.Cursor.Loc
-	loc.Y = loc.Y - complete.editor.Topline - len(ret) + 1
-	heplview.SetRect(loc.X, loc.Y, width+2, len(ret)+2)
+	loc.Y = loc.Y - complete.editor.Topline - height - 1
+	heplview.SetRect(loc.X, loc.Y, width+2, height)
 	complete.heplview = heplview
 	return heplview
 }
@@ -407,7 +407,7 @@ func (complete *completemenu) filename() string {
 	return filename
 }
 
-func (heplview *LpsTextView) Load(txt string, filename string) {
+func (heplview *LpsTextView) Load(txt string, filename string) int {
 	// v := (femto.NewBufferFromString(txt, filename))
 	// v.SetRuntimeFiles(runtime.Files)
 	heplview.Box = tview.NewBox()
@@ -419,6 +419,7 @@ func (heplview *LpsTextView) Load(txt string, filename string) {
 			heplview.HlLine = ts.HlLine
 		})
 	})
+	return len(heplview.lines)
 }
 func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspret *lspcore.Complete) {
 	var editor = complete.editor
@@ -597,7 +598,7 @@ func (l *completemenu) Draw(screen tcell.Screen) {
 		ssss := l.document.lines
 		document_width := 0
 		for _, v := range ssss {
-			document_width = max(document_width, len(v))
+			document_width = max(document_width, len([]rune(v)))
 		}
 		l.document.SetRect(x+w1, y, document_width, h)
 		l.document.Draw(screen)
