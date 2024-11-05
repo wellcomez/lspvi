@@ -103,9 +103,7 @@ func (pk *workspace_query_picker) on_query_1(query string, arg []lsp.SymbolInfor
 
 			pk.impl.list.AddColorItem(colors, nil, func() {
 				sym := sym[index]
-				main := pk.impl.parent.main
-				main.OpenFileHistory(sym.Location.URI.AsPath().String(), &sym.Location)
-				pk.impl.parent.hide()
+				pk.impl.parent.open_in_edior(sym.Location)
 			})
 		}
 		pk.impl.list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
@@ -221,9 +219,7 @@ func (pk *workspace_query_picker) newMethod(arg []lsp.SymbolInformation, query s
 
 			pk.impl.list.AddColorItem(colors, nil, func() {
 				sym := Symbols[index]
-				main := pk.impl.parent.main
-				main.OpenFileHistory(sym.sym.Location.URI.AsPath().String(), &sym.sym.Location)
-				pk.impl.parent.hide()
+				pk.impl.parent.open_in_edior(sym.sym.Location)
 			})
 		}
 		pk.impl.list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
