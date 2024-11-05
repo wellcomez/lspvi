@@ -65,7 +65,7 @@ type fzfmain struct {
 }
 type fuzzpicktype int
 
-func (parent *fzfmain) open_id_edior(Location lsp.Location) {
+func (parent *fzfmain) open_in_edior(Location lsp.Location) {
 	main := parent.main
 	main.OpenFileHistory(Location.URI.AsPath().String(), &Location)
 	main.current_editor().Acitve()

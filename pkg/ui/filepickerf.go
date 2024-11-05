@@ -136,7 +136,7 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 		if len(dir.select_index) > 0 {
 			data_index := dir.select_index[index]
 			file := data[data_index]
-			dir.parent.open_id_edior(lsp.Location{URI: lsp.NewDocumentURI(file)})
+			dir.parent.open_in_edior(lsp.Location{URI: lsp.NewDocumentURI(file)})
 		}
 	})
 	impl.list.Clear()

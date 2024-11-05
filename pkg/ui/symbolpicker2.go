@@ -187,7 +187,7 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 		}
 		if sym := impl.get_current_item_symbol(index); sym != nil {
 			file := sym.sym.SymInfo.Location
-			v.open_id_edior(file)
+			v.open_in_edior(file)
 		}
 
 	})
