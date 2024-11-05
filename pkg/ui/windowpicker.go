@@ -40,9 +40,9 @@ func (u *uipicker) name() string {
 	return "ui"
 }
 
-func new_uipciker(v *fzfmain) (ret *uipicker) {
+func new_uipciker(dialog *fzfmain) (ret *uipicker) {
 	ret = &uipicker{
-		fzflist_impl: new_fzflist_impl(v),
+		fzflist_impl: new_fzflist_impl(dialog),
 	}
 	windows_id := []view_id{view_outline_list, view_file, view_cmd}
 	windows_id = append(windows_id, tab_view_id...)
@@ -53,18 +53,24 @@ func new_uipciker(v *fzfmain) (ret *uipicker) {
 	windows_id = append(a, windows_id...)
 	data := []string{}
 	for _, v := range windows_id {
+		link := dialog.main.to_view_link(v)
+		hide := ""
+		if link != nil && link.Hide {
+			hide = "(hidden)"
+		}
 		if v >= view_code {
 			var code = SplitCode.code_collection[v]
 			active := ""
 			if s := SplitCode.active_codeview; s != nil && s.vid() == v {
 				active = "*"
 			}
-			name := fmt.Sprintf("%d %s%s", v-view_code+1, code.Path(), active)
+			name := fmt.Sprintf("%d %s%s", v-view_code+1, code.Path(), active) + " " + hide
 			ret.list.AddItem(name, "", nil)
 			data = append(data, name)
 		} else {
-			ret.list.AddItem(v.getname(), "", nil)
-			data = append(data, v.getname())
+			x := v.getname() + " " + hide
+			ret.list.AddItem(x, "", nil)
+			data = append(data, x)
 		}
 	}
 	ret.fzf = new_fzf_on_list_data(ret.list, data, true)
@@ -78,18 +84,21 @@ func new_uipciker(v *fzfmain) (ret *uipicker) {
 
 			}
 		}
+		if link := dialog.main.to_view_link(vid); link != nil && link.Hide {
+			dialog.main.toggle_view(vid)
+		}
 		if is_tab {
-			v.main.ActiveTab(vid, true)
+			dialog.main.ActiveTab(vid, true)
 		} else {
-			v.main.set_viewid_focus(vid)
+			dialog.main.set_viewid_focus(vid)
 			if vid >= view_code {
 				code := SplitCode.code_collection[vid]
 				code.Acitve()
 				SplitCode.active_codeview = code
 			}
 		}
-		v.main.App().ForceDraw()
-		v.hide()
+		dialog.main.App().ForceDraw()
+		dialog.hide()
 	})
 	return
 }
