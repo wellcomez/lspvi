@@ -472,7 +472,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 		debug.DebugLog("complete", "replace", replace, "=>", newtext)
 		editor.Buf.Replace(
 			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-			femto.Loc{X: r.End.Character, Y: r.End.Line},
+			femto.Loc{X: editor.Cursor.Loc.X, Y: r.End.Line},
 			newtext)
 		Event := []lspcore.TextChangeEvent{{
 			Type:  lspcore.TextChangeTypeReplace,
