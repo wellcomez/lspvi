@@ -95,7 +95,7 @@ var fileicons = []extset{
 	// {html_icon, []string{"html"}},
 	// {json_icon, []string{"json"}},
 	// {txt_icon, []string{"txt"}},
-	// {go_mod_icon, []string{"go.mod"}},
+	{go_mod_icon, []string{"go.mod"}},
 	// {markdown_icon, []string{"md"}},
 	// {png_icon, []string{"png"}},
 	// {css_icon, []string{"css"}},

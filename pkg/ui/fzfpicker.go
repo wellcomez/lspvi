@@ -151,6 +151,14 @@ func (v *fzfmain) OpenGrepWordFzf(word QueryOption, qf func(bool, ref_with_calle
 	sym.livewgreppicker.UpdateQuery(word.Query)
 	return sym
 }
+
+func (v *fzfmain) OpenLiveGrepCurrentFile(file string) {
+	var option = DefaultQuery("")
+	option = option.Whole(false).Cap(false).Key("").SetPathPattern(file)
+	sym := new_live_grep_picker(v, option)
+	x := sym.grid(v.input)
+	v.create_dialog_content(x, sym)
+}
 func (v *fzfmain) OpenLiveGrepFzf() {
 	sym := new_live_grep_picker(v, DefaultQuery(""))
 	x := sym.grid(v.input)

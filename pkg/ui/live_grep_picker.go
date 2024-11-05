@@ -539,6 +539,14 @@ func (a QueryOption) Whole(b bool) QueryOption {
 	a.Wholeword = b
 	return a
 }
+func (a QueryOption) SetPathPattern(b string) QueryOption {
+	a.PathPattern= b
+	return a
+}
+func (a QueryOption) Key(b string) QueryOption {
+	a.Query = b
+	return a
+}
 func (a QueryOption) Cap(b bool) QueryOption {
 	a.Ignorecase = !b
 	return a

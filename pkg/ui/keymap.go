@@ -25,6 +25,7 @@ const (
 	open_picker_qfh
 	open_picker_wkq
 	open_picker_livegrep
+	open_picker_livegrep_line
 	open_picker_history
 	open_picker_grep_word
 	open_picker_global_search
@@ -184,6 +185,13 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case open_picker_livegrep:
 		return cmdactor{id, "Live grep", func() bool {
 			m.open_picker_livegrep()
+			return true
+		}}
+	case open_picker_livegrep_line:
+		return cmdactor{id, "Find current file", func() bool {
+			dialog := m.Dialog()
+			filename := m.current_editor().Path()
+			dialog.OpenLiveGrepCurrentFile(filename)
 			return true
 		}}
 	case open_picker_history:
@@ -673,7 +681,7 @@ func (k *keymap) global_key_map() []cmditem {
 		get_cmd_actor(m, handle_ctrl_c).tcell_key(tcell.KeyCtrlC),
 		get_cmd_actor(m, handle_ctrl_v).tcell_key(tcell.KeyCtrlV),
 		get_cmd_actor(m, goto_back).tcell_key(tcell.KeyCtrlO),
-		get_cmd_actor(m, find_in_file).tcell_key(tcell.KeyCtrlF),
+		get_cmd_actor(m, open_picker_livegrep_line).tcell_key(tcell.KeyCtrlF),
 		get_cmd_actor(m, goto_forward).runne('O'),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
 		get_cmd_actor(m, open_picker_help).runne('p').Alt(),
@@ -698,7 +706,7 @@ func (k *keymap) global_key_map() []cmditem {
 		}
 	}
 */
-func (m mainui) keymap(keytype cmdkeytype, printit bool,fmtstr string) []string {
+func (m mainui) keymap(keytype cmdkeytype, printit bool, fmtstr string) []string {
 	ret := []string{}
 	var items = AllKeyMap(m)
 
@@ -757,7 +765,7 @@ func (m *mainui) helpkey(print bool) []string {
 	ret = append(ret, s)
 
 	for _, k := range types {
-		s := m.keymap(k, print,fmt_str)
+		s := m.keymap(k, print, fmt_str)
 		ret = append(ret, s...)
 	}
 	for _, v := range m.cmdline.ConvertCmdItem() {
