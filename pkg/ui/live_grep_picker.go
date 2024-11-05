@@ -120,6 +120,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	// file_include.SetPlaceholder(global_prj_root)
 	file_include.SetChangedFunc(func(text string) {
 		pk.impl.query_option.PathPattern = text
+		pk.__updatequery(pk.impl.query_option)
 		debug.DebugLog("dialog", text)
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
@@ -176,18 +177,21 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	exclude.selected = pk.impl.query_option.Exclude
 	exclude.click = func(b bool) {
 		pk.impl.query_option.Exclude = b
+		pk.__updatequery(pk.impl.query_option)
 	}
 
 	cap := NewIconButton('\ueab1')
 	cap.selected = !pk.impl.query_option.Ignorecase
 	cap.click = func(b bool) {
 		pk.impl.query_option.Ignorecase = !b
+		pk.__updatequery(pk.impl.query_option)
 	}
 
 	word := NewIconButton('\ueb7e')
 	word.selected = pk.impl.query_option.Wholeword
 	word.click = func(b bool) {
 		pk.impl.query_option.Wholeword = b
+		pk.__updatequery(pk.impl.query_option)
 	}
 	input_filter.
 		AddItem(exclude, 2, 0, false).

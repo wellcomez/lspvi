@@ -124,7 +124,6 @@ func (c *minitoolbar) Draw(screen tcell.Screen) (b, e int) {
 	return
 }
 
-
 // func new_top_toolbar(main *mainui) *minitoolbar {
 // 	str_back = '\U000f0b28'
 // 	str_forward = '\U000f0b2a'
@@ -236,7 +235,7 @@ func (c *IconButton) Primitive() tview.Primitive {
 func (c *IconButton) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
 	return func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
 		if InRect(event, c) {
-			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
+			if action == tview.MouseLeftClick {
 				c.selected = !c.selected
 				if c.click != nil {
 					c.click(c.selected)
