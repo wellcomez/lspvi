@@ -252,7 +252,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 			t = " " + t
 		}
 		f, _, _ := style.Decompose()
-		complete.AddColorItem([]colortext{{t, f,0}}, nil, func() {
+		complete.AddColorItem([]colortext{{t, f, 0}}, nil, func() {
 			complete.handle_complete_result(v, &param)
 		})
 	}
@@ -512,13 +512,18 @@ func (l *LpsTextView) Draw(screen tcell.Screen) {
 	_, bg, _ := default_style.Decompose()
 	default_style = default_style.Background(bg)
 	breaknum := 0
-	for i, v:= range l.lines {
+	menu_width := 0
+	for _, v := range l.lines {
+		line := []rune(v)
+		menu_width = max(len(line), menu_width)
+	}
+	for i, v := range l.lines {
 		PosY := y + i + breaknum
 		var symline *[]lspcore.TreeSitterSymbol
 		if sym, ok := l.HlLine[i]; ok {
 			symline = &sym
 		}
-		line:=[]rune(v)
+		line := []rune(v)
 		for col, v := range line {
 			style := default_style
 			if symline != nil {
@@ -533,7 +538,7 @@ func (l *LpsTextView) Draw(screen tcell.Screen) {
 			n := col / w
 			screen.SetContent(Posx, PosY+n, v, nil, style)
 		}
-		for col := len(line); col < w; col++ {
+		for col := len(line); col < menu_width; col++ {
 			x1 := col % w
 			Posx := x + x1
 			n := col / w
