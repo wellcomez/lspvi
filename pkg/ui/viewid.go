@@ -100,14 +100,16 @@ func focus_viewid(m *mainui) view_id {
 	}
 	return view_none
 }
-func (v view_id) is_tab() bool {
-	switch v {
-	case view_quickview, view_callin, view_uml, view_log, view_term, view_code_below:
-		return true
-	default:
-		return false
-	}
 
+var tab_view_id = []view_id{view_quickview, view_callin, view_uml, view_log, view_term, view_code_below}
+
+func (v view_id) is_tab() bool {
+	for _, s := range tab_view_id {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
 func view_id_init(m *mainui) {
 	config_main_tab_order(m)
@@ -260,9 +262,9 @@ var all_view_name_map = map[view_id]string{
 	view_uml:              "UML",
 	view_cmd:              "cmd",
 	view_file:             "File",
-	view_outline_list:     "Ooutline",
+	view_outline_list:     "Outline",
 	view_bookmark:         "Bookmark",
-	view_qf_index_view:    "view_qf_index_view",
+	view_qf_index_view:    "Quickfix",
 	view_recent_open_file: "Opened",
 	view_term:             "Term",
 	view_code_below:       "code",

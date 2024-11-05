@@ -267,6 +267,11 @@ func (v *fzfmain) symbol_picker_2(code CodeEditor) {
 	v.currentpicker = sym
 	v.create_dialog_content(x, sym)
 }
+func (v *fzfmain) OpenUIPicker() {
+	currentpicker := new_uipciker(v)
+	grid := currentpicker.grid(v.input)
+	v.create_dialog_content(grid, currentpicker)
+}
 
 // OpenFileFzf
 func (v *fzfmain) OpenFileFzf(root string) {
