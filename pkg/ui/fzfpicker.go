@@ -199,6 +199,7 @@ func (v *fzfmain) OpenKeymapFzf() {
 	sym := new_keymap_picker(v)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
+	v.size = dialogsize{x: 0.2, y: 2, width: 0.6, height: 16}
 }
 func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
@@ -337,9 +338,20 @@ func (v *fzfmain) Draw(screen tcell.Screen) {
 		width, height := screen.Size()
 		w := int(v.size.width * float32(width))
 		h := int(v.size.height * float32(height))
-
+		if v.size.height > 1 {
+			h = int(v.size.height)
+		}
+		if v.size.width > 1 {
+			w = int(v.size.width)
+		}
 		x := int(v.size.x * float32(width))
+		if v.size.x > 1 {
+			x = int(v.size.x)
+		}
 		y := int(v.size.y * float32(height))
+		if v.size.y > 1 {
+			y = int(v.size.y)
+		}
 		v.Frame.SetRect(x, y, w, h)
 		v.Frame.Draw(screen)
 	}

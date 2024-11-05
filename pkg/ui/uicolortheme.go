@@ -139,7 +139,7 @@ func (mgr *symbol_colortheme) set_currsor_line() {
 	if ret := mgr.get_color("linenr"); ret != nil {
 		mgr.colorscheme["line-number"] = *ret
 		if line := mgr.get_color("cursorline"); line != nil {
-			f,_,_:=mgr.get_color("keyword").Decompose()
+			f, _, _ := mgr.get_color("keyword").Decompose()
 			_, b, _ := line.Decompose()
 			mgr.colorscheme["current-line-number"] = ret.Background(b).Foreground(f)
 		}
@@ -267,8 +267,8 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.page.SetBackgroundColor(bg)
 	main.page.SetBorderColor(fg)
 
-	main.layout.spacemenu.table.SetBackgroundColor(bg)
-	main.layout.spacemenu.load_spacemenu()
+	main.layout.mainlayout.spacemenu.table.SetBackgroundColor(bg)
+	main.layout.mainlayout.spacemenu.load_spacemenu()
 
 	main.right_context_menu.table.SetBackgroundColor(bg)
 

@@ -140,6 +140,9 @@ func (t *space_menu) load_spacemenu() {
 		t.table.AddItem(s, "", 0, func() {
 		})
 	}
+	t.table.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		return t.handle_mouse(action, event)
+	})
 	t.table.ShowSecondaryText(false)
 	t.table.SetBorder(true)
 	t.table.SetTitle("menu")
@@ -159,7 +162,7 @@ func (menu *space_menu) handle_mouse(action tview.MouseAction, event *tcell.Even
 		index = min(index, len(menu.impl.items)-1)
 		index = max(0, index)
 		menu.table.SetCurrentItem(index)
-	} else if action == tview.MouseLeftDown {
+	} else if action == tview.MouseLeftClick {
 		menu.impl.items[menu.table.GetCurrentItem()].handle()
 		menu.closemenu()
 	}

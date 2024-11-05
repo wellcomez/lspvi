@@ -82,7 +82,6 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 		nil,
 	}
 	impl.set_fuzz(true)
-	list := impl.list
 
 	if global_walk == nil || global_walk.Root != global_prj_root {
 		global_walk = filewalk.NewFilewalk(global_prj_root)
@@ -94,9 +93,6 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 		ret.UpdateData(impl, global_walk)
 	}
 
-	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		ret.update_title()
-	})
 	go func() {
 		for {
 			select {
@@ -132,7 +128,15 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 	for _, v := range data {
 		fzfdata = append(fzfdata, trim_project_filename(v, global_prj_root))
 	}
+	lastindex := -1
+	dir.list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		lastindex = index
+		dir.update_title()
+	})
 	dir.list.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
+		if lastindex != index {
+			return
+		}
 		if len(dir.select_index) > 0 {
 			data_index := dir.select_index[index]
 			file := data[data_index]

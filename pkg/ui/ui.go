@@ -70,7 +70,6 @@ type rootlayout struct {
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
 	mainlayout  *MainLayout
-	spacemenu   *space_menu
 	// hide_cb     func()
 }
 
@@ -800,7 +799,8 @@ func MainUI(arg *Arguments) {
 	main_layout := main.create_main_layout(editor_area, console_layout, tab_area)
 	main.layout.code_area = code_area
 	mainmenu := main.create_menu_bar(tab_area)
-
+	spacemenu := main.create_space_menu(mainmenu)
+	main_layout.spacemenu = spacemenu
 	main.create_right_context_menu()
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
 	if !arg.Grep {
@@ -924,7 +924,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 	if main.right_context_menu.visible {
 		main.right_context_menu.Draw(screen)
 	}
-	main.layout.spacemenu.Draw(screen)
+	main.layout.mainlayout.spacemenu.Draw(screen)
 	dialog := main.Dialog()
 	if dialog.Visible {
 		dialog.Draw(screen)
@@ -940,7 +940,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []*editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
-	spacemenu := main.layout.spacemenu
+	// spacemenu := main.layout.spacemenu
 	// dialog := main.Dialog()
 
 	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
@@ -949,18 +949,6 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 	}
 	if main.right_context_menu.visible {
 		return nil, tview.MouseConsumed
-	}
-	if spacemenu.visible {
-		action, event := spacemenu.handle_mouse(action, event)
-		if action == tview.MouseConsumed {
-			return event, action
-		}
-		if !InRect(event, mainmenu) {
-			if action != tview.MouseMove {
-				spacemenu.closemenu()
-			}
-			return nil, tview.MouseConsumed
-		}
 	}
 
 	main.sel.handle_mouse_selection(action, event)
@@ -1055,21 +1043,22 @@ func (main *mainui) create_menu_bar(tab_area *tview.Flex) *tview.Button {
 
 	mainmenu := tview.NewButton("Menu")
 	mainmenu.SetSelectedFunc(func() {
-		if main.layout.spacemenu.visible {
-			main.layout.spacemenu.closemenu()
-		} else {
-			main.layout.spacemenu.openmenu()
+		if spacemenu := main.layout.mainlayout.spacemenu; spacemenu != nil {
+			if spacemenu.visible {
+				spacemenu.closemenu()
+			} else {
+				spacemenu.openmenu()
+			}
 		}
 	})
 
 	tab_area.AddItem(mainmenu, 10, 0, false)
 
-	main.create_space_menu(mainmenu)
 	return mainmenu
 }
 
-func (main *mainui) create_space_menu(mainmenu *tview.Button) {
-	spacemenu := new_spacemenu(main)
+func (main *mainui) create_space_menu(mainmenu *tview.Button) (spacemenu *space_menu) {
+	spacemenu = new_spacemenu(main)
 	spacemenu.menustate = func(s *space_menu) {
 		if s.visible {
 			mainmenu.Focus(nil)
@@ -1077,7 +1066,7 @@ func (main *mainui) create_space_menu(mainmenu *tview.Button) {
 			mainmenu.Blur()
 		}
 	}
-	main.layout.spacemenu = spacemenu
+	return
 }
 
 func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
@@ -1286,9 +1275,11 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		dialog.handle_key(event)
 		return nil
 	}
-	if main.layout.spacemenu.visible {
-		main.layout.spacemenu.handle_key(event)
-		return nil
+	if spacemenu := main.layout.mainlayout.spacemenu; spacemenu != nil {
+		if spacemenu.visible {
+			spacemenu.handle_key(event)
+			return nil
+		}
 	}
 	if main.term.HasFocus() {
 		return event

@@ -595,7 +595,7 @@ func (l LeaderHandle) State() string {
 
 // HanldeKey implements vim_mode_handle.
 func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
-	l.main.layout.spacemenu.visible = false
+	l.main.layout.mainlayout.spacemenu.visible = false
 	ch := event.Rune()
 	state := l.state
 	input := state.input
@@ -796,7 +796,7 @@ func (v *Vim) EnterLead() bool {
 		input := &inputdelay{cmdlist: sss}
 		lead.state.input = input
 		v.vi_handle = lead
-		v.app.layout.spacemenu.visible = true
+		v.app.layout.mainlayout.spacemenu.visible = true
 		v.update_editor_mode()
 		return true
 	} else {

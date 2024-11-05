@@ -94,7 +94,14 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	}
 	fzf := new_fzf_on_list_data(list, fzfdata, true)
 	ret.impl.fzf = fzf
+	lastindex := -1
+	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		lastindex = index
+	})
 	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		if lastindex != i {
+			return
+		}
 		dataindex := fzf.get_data_index(i)
 		ret.newMethod(dataindex)
 	})
