@@ -825,7 +825,7 @@ func (caller *ref_with_caller) LoadLines() *filecache {
 	return caller.filecache
 }
 
-func (quickview *quick_view) qf_grep_word(opt QueryOption) {
+func (quickview *quick_view) SearchInProject(opt QueryOption) {
 	var main = quickview.main
 	rightmenu_select_text := opt.Query
 	key := SearchKey{

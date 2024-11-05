@@ -7,6 +7,7 @@ package mainui
 import (
 	// "context"
 	// "encoding/json"
+	// "runtime/pprof"
 	"strconv"
 	"time"
 
@@ -25,6 +26,9 @@ import (
 	"github.com/tectiv3/go-lsp"
 
 	// femto "zen108.com/lspvi/pkg/highlight"
+	// "net/http"
+	// _ "net/http/pprof" // Import pprof for profiling
+
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	fileloader "zen108.com/lspvi/pkg/ui/fileload"
@@ -163,8 +167,9 @@ type MainService interface {
 	CanGoBack() bool
 	CanGoFoward() bool
 
-	//Search
-	qf_grep_word(QueryOption)
+	//Search in whole project
+	SearchInProject(QueryOption)
+	//search in current ui
 	OnSearch(option search_option)
 	Searchcontext() *GenericSearch
 
@@ -692,6 +697,18 @@ var apparg Arguments
 var GlobalApp *tview.Application
 
 func MainUI(arg *Arguments) {
+	// go func() {
+	// 	fmt.Println(http.ListenAndServe("localhost:6060", nil))
+	// }()
+	// f, err := os.Create("cpu.prof")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// if err := pprof.StartCPUProfile(f); err != nil {
+	// 	log.Fatal("could not start CPU profile: ", err)
+	// }
+	// defer pprof.StopCPUProfile() // Ensure profiling is stopped when main exits
+
 	apparg = *arg
 	var filearg = ""
 	//  "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"

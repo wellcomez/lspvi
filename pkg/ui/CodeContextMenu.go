@@ -166,7 +166,7 @@ func update_selection_menu(code *CodeView) {
 			main.OnSearch(search_option{sss.selected_text, true, true, false})
 			main.ActiveTab(view_quickview, false)
 		}, hide: menudata.previous_selection.emtry()},
-		{item: create_menu_item("Search"), handle: func() {
+		{item: create_menu_item("Search in file"), handle: func() {
 			sss := menudata.select_text
 			menudata.SelectInEditor(code.view.Cursor)
 			main.OnSearch(search_option{sss, true, true, false})
@@ -174,7 +174,7 @@ func update_selection_menu(code *CodeView) {
 		}, hide: len(menudata.select_text) == 0},
 		{item: create_menu_item("Grep word"), handle: func() {
 			rightmenu_select_text := menudata.select_text
-			main.qf_grep_word(DefaultQuery(rightmenu_select_text).Whole(true))
+			main.SearchInProject(DefaultQuery(rightmenu_select_text).Whole(true))
 			menudata.SelectInEditor(code.view.Cursor)
 		}, hide: len(menudata.select_text) == 0},
 		{item: create_menu_item("Copy Selection"), handle: func() {

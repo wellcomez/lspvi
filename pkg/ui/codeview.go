@@ -438,10 +438,10 @@ func NewCodeView(main MainService) *CodeView {
 	return &ret
 }
 
-func (main *mainui) qf_grep_word(opt QueryOption) {
+func (main *mainui) SearchInProject(opt QueryOption) {
 	main.ActiveTab(view_quickview, false)
 	quickview := main.quickview
-	quickview.qf_grep_word(opt)
+	quickview.SearchInProject(opt)
 }
 
 func (code *CodeView) get_selected_lines() editor_selection {
