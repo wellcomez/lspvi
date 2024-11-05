@@ -9,6 +9,7 @@ import (
 )
 
 type CodeEditor interface {
+	Acitve()
 	ContentChangeHandle() change_reciever
 	//Complete
 	HasComplete() bool

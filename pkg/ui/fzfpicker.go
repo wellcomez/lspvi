@@ -65,6 +65,12 @@ type fzfmain struct {
 }
 type fuzzpicktype int
 
+func (parent *fzfmain) open_id_edior(Location lsp.Location) {
+	main := parent.main
+	main.OpenFileHistory(Location.URI.AsPath().String(), &Location)
+	main.current_editor().Acitve()
+	parent.hide()
+}
 func (parent *fzfmain) update_dialog_title(s string) {
 	UpdateTitleAndColor(parent.Frame.Box, s)
 }
@@ -158,10 +164,10 @@ func (v *fzfmain) OpenLiveGrepCurrentFile(key string, file string) {
 	sym := new_live_grep_picker(v, option)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
-	
+
 	sym.file_include.SetText(file)
 	v.input.SetText(option.Query)
-	if option.Query!=""{
+	if option.Query != "" {
 		sym.UpdateQuery(option.Query)
 	}
 }
@@ -194,7 +200,7 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
 	v.Frame.SetBorder(true)
 	v.input.SetLabel(">")
-//	v.input.SetText("")
+	//	v.input.SetText("")
 	UpdateTitleAndColor(v.Frame.Box, sym.name())
 	v.app.SetFocus(v.input)
 	v.Visible = true

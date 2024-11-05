@@ -91,6 +91,14 @@ func (code *CodeView) Match() {
 		code.view.JumpToMatchingBrace()
 	}
 }
+
+func (code *CodeView) Acitve() {
+	if global_config.enablevim {
+		code.main.CmdLine().Vim.EnterEscape()
+	} else {
+		code.main.set_viewid_focus(code.id)
+	}
+}
 func (code CodeView) Viewlink() *view_link {
 	return code.view_link
 }
@@ -547,7 +555,7 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 				code.SetCurrenteditor()
 				code.main.CmdLine().input.Blur()
 				if code.id != view_code_below {
-					if action==tview.MouseLeftClick{
+					if action == tview.MouseLeftClick {
 						// code.view.Cursor.SelectWord()
 					}
 					symboltree := code.main.OutLineView()
