@@ -100,7 +100,7 @@ var fileicons = []extset{
 	// {png_icon, []string{"png"}},
 	// {css_icon, []string{"css"}},
 	// {lua_icon, []string{"lua"}},
-	{java_icon, []string{"java", "jar"}},
+	// {java_icon, []string{"java", "jar"}},
 	// {fmt.Sprintf("%c", '\ue673'), []string{"makefile"}},
 	// {fmt.Sprintf("%c", '\uebca'), []string{"sh"}},
 	// {fmt.Sprintf("%c", '\uf1c1'), []string{"pdf"}},
