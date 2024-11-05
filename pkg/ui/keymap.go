@@ -191,7 +191,8 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		return cmdactor{id, "Find current file", func() bool {
 			dialog := m.Dialog()
 			filename := m.current_editor().Path()
-			dialog.OpenLiveGrepCurrentFile(filename)
+			key:=m.current_editor().GetSelection()
+			dialog.OpenLiveGrepCurrentFile(key,filename)
 			return true
 		}}
 	case open_picker_history:

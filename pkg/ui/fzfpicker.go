@@ -152,13 +152,18 @@ func (v *fzfmain) OpenGrepWordFzf(word QueryOption, qf func(bool, ref_with_calle
 	return sym
 }
 
-func (v *fzfmain) OpenLiveGrepCurrentFile(file string) {
-	var option = DefaultQuery("")
-	option = option.Whole(false).Cap(false).Key("").SetPathPattern(file)
+func (v *fzfmain) OpenLiveGrepCurrentFile(key string, file string) {
+	var option = DefaultQuery(key)
+	option = option.Whole(false).Cap(false).Key(key).SetPathPattern(file)
 	sym := new_live_grep_picker(v, option)
 	x := sym.grid(v.input)
-	sym.file_include.SetText(file)
 	v.create_dialog_content(x, sym)
+	
+	sym.file_include.SetText(file)
+	v.input.SetText(option.Query)
+	if option.Query!=""{
+		sym.UpdateQuery(option.Query)
+	}
 }
 func (v *fzfmain) OpenLiveGrepFzf() {
 	sym := new_live_grep_picker(v, DefaultQuery(""))
@@ -189,7 +194,7 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
 	v.Frame.SetBorder(true)
 	v.input.SetLabel(">")
-	v.input.SetText("")
+//	v.input.SetText("")
 	UpdateTitleAndColor(v.Frame.Box, sym.name())
 	v.app.SetFocus(v.input)
 	v.Visible = true

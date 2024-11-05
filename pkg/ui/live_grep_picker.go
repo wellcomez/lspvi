@@ -214,7 +214,7 @@ func new_live_grep_picker(v *fzfmain, q QueryOption) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v)
 	impl := &grep_impl{taskid: int(time.Now().Second()) * 100, query_option: q}
-	impl.query_option.Ignorecase = true
+	// impl.query_option.Ignorecase = q.Ignorecase
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
 		grep_list_view:   new_customlist(false),
