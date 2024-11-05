@@ -1,6 +1,8 @@
 package mainui
 
 import (
+	"fmt"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -42,16 +44,22 @@ func new_uipciker(v *fzfmain) (ret *uipicker) {
 	ret = &uipicker{
 		fzflist_impl: new_fzflist_impl(v),
 	}
-	windows_id := []view_id{view_outline_list}
+	windows_id := []view_id{view_outline_list, view_file, view_cmd}
 	windows_id = append(windows_id, tab_view_id...)
+	a := []view_id{}
 	for k, _ := range SplitCode.code_collection {
-		windows_id = append(windows_id, k)
+		a = append(a, k)
 	}
+	windows_id = append(a, windows_id...)
 	data := []string{}
 	for _, v := range windows_id {
 		if v >= view_code {
 			var code = SplitCode.code_collection[v]
-			name := code.Path()
+			active := ""
+			if s := SplitCode.active_codeview; s != nil && s.vid() == v {
+				active = "*"
+			}
+			name := fmt.Sprintf("%d %s%s", v-view_code+1, code.Path(), active)
 			ret.list.AddItem(name, "", nil)
 			data = append(data, name)
 		} else {
@@ -75,9 +83,12 @@ func new_uipciker(v *fzfmain) (ret *uipicker) {
 		} else {
 			v.main.set_viewid_focus(vid)
 			if vid >= view_code {
-				SplitCode.code_collection[vid].Acitve()
+				code := SplitCode.code_collection[vid]
+				code.Acitve()
+				SplitCode.active_codeview = code
 			}
 		}
+		v.main.App().ForceDraw()
 		v.hide()
 	})
 	return
