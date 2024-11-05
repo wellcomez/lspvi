@@ -200,7 +200,7 @@ func (code *CodeView) Reload() {
 		code.openfile(code.Path(), true, func(bool) {
 			code.view.Topline = offset
 			if code.view.Buf.NumLines > loc.Y {
-				// code.view.Cursor.GotoLoc(loc)
+				code.view.Cursor.GotoLoc(loc)
 			}
 			if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
 				s.LspLoadSymbol()
@@ -1448,8 +1448,6 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 	if err == nil {
 		if code.id.is_editor() {
 			global_file_watch.Add(filename)
-		}
-		if code.main != nil {
 			code.main.Recent_open().add(filename)
 		}
 	}
