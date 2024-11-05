@@ -92,12 +92,17 @@ func main() {
 			// 	Foreground = b
 			// 	b = ""
 			// }
-			if b=="#0"{
+			var make6 = func(c string) string {
+				if len(c) < 7 && len(c) > 1 {
+					c = "#" + strings.Repeat("0", 7-len(c)) + c[1:]
+				}
+				return c
+			}
+			if b == "#0" {
 				b = "#000000"
 			}
-			if Foreground == "#0" {
-				Foreground = "#000000"
-			}
+			b = make6(b)
+			Foreground = make6(Foreground)
 			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), strings.ToUpper(Foreground), strings.ToUpper(b))
 			ret = append(ret, s)
 		}
