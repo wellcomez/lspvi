@@ -2,6 +2,8 @@ package lspcore
 
 import (
 	ts_protobuf "github.com/smacker/go-tree-sitter/protobuf"
+	ts_swift "github.com/smacker/go-tree-sitter/swift"
+	ts_csharp "github.com/smacker/go-tree-sitter/csharp"
 	"github.com/tectiv3/go-lsp"
 	ts_lua "github.com/tree-sitter-grammars/tree-sitter-lua/bindings/go"
 	ts_toml "github.com/tree-sitter-grammars/tree-sitter-toml"
@@ -191,6 +193,8 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.Language()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
 		rs_outline(ts, yaml_group)
 	}),
+	new_tsdef("csharp", lsp_dummy{}, ts_csharp.Language()).set_ext([]string{"cs"}).setparser(rs_outline),
+	new_tsdef("swift", lsp_dummy{}, ts_swift.Language()).set_ext([]string{"swift"}).setparser(rs_outline),
 	new_tsdef("proto", lsp_dummy{}, ts_protobuf.Language()).set_ext([]string{"proto"}).setparser(rs_outline),
 	new_tsdef("css", lsp_dummy{}, ts_css.Language()).set_ext([]string{"css"}).setparser(rs_outline),
 	// new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),
