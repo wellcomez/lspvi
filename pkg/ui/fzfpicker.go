@@ -157,6 +157,7 @@ func (v *fzfmain) OpenLiveGrepCurrentFile(file string) {
 	option = option.Whole(false).Cap(false).Key("").SetPathPattern(file)
 	sym := new_live_grep_picker(v, option)
 	x := sym.grid(v.input)
+	sym.file_include.SetText(file)
 	v.create_dialog_content(x, sym)
 }
 func (v *fzfmain) OpenLiveGrepFzf() {

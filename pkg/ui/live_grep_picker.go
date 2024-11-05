@@ -42,6 +42,7 @@ type livewgreppicker struct {
 	main           MainService
 	impl           *grep_impl
 	quick_view     *quick_view_delegate
+	file_include  *tview.InputField
 	not_live       bool
 	grepword       bool
 	filecounter    int
@@ -122,6 +123,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 		debug.DebugLog("dialog", text)
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
+	pk.file_include = file_include
 	var searchIcon = fmt.Sprintf("%c", '\ue68f')
 	// searchIcon = "" // Search icon from Nerd Fonts
 	// searchIcon = fmt.Sprintf("%c %c %c %c", '\uF15B','\ue731','\uf0b0','\uf15c')+fmt.Sprintf("%c",'\uea6d')
