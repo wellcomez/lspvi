@@ -135,7 +135,12 @@ func (complete *completemenu) HandleKeyInput(event *tcell.EventKey, after []lspc
 		complete.Hide()
 		return
 	}
+	ch := event.Rune()
+	ok := (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_' || (ch >= '0' && ch <= '9')
 	if complete.CheckTrigeKey(event) {
+		return
+	}
+	if !ok {
 		return
 	}
 	if complete := complete; complete != nil {
