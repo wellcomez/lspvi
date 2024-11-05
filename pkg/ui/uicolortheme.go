@@ -138,10 +138,11 @@ func (mgr *symbol_colortheme) set_currsor_line() {
 	}
 	if ret := mgr.get_color("linenr"); ret != nil {
 		mgr.colorscheme["line-number"] = *ret
-	}
-	if ret := mgr.get_color("@function"); ret != nil {
-		f, _, _ := ret.Decompose()
-		mgr.colorscheme["current-line-number"] = ret.Foreground(f)
+		if line := mgr.get_color("cursorline"); line != nil {
+			f,_,_:=mgr.get_color("keyword").Decompose()
+			_, b, _ := line.Decompose()
+			mgr.colorscheme["current-line-number"] = ret.Background(b).Foreground(f)
+		}
 	}
 	if n, ok := mgr.colorscheme["normal"]; ok {
 		mgr.colorscheme["default"] = n
