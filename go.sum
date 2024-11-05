@@ -83,6 +83,8 @@ github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e h1:NIWzmHbFtBpi6jU8
 github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e/go.mod h1:MUSbrp5Wz07aEcYSqWssAF2CZmolhfrRjYBEC72aUlQ=
 github.com/tree-sitter-grammars/tree-sitter-lua v0.2.0 h1:gRvCiiA8CsNZlG2UwsrIhfXpV4Ui45nxbWnuQQQGz24=
 github.com/tree-sitter-grammars/tree-sitter-lua v0.2.0/go.mod h1:CSY99pkhwiZJex7wCI3mAgpkqZxrj0vsRd38qVVLaTQ=
+github.com/tree-sitter-grammars/tree-sitter-zig v1.0.2 h1:Huaxv70pedRrzno1lgfHuofLhxwykRZqviKInWDumAE=
+github.com/tree-sitter-grammars/tree-sitter-zig v1.0.2/go.mod h1:l8xmLzBVWSze52A+OWXnFVwoWp90WOzUgqJFqHzffQY=
 github.com/tree-sitter/go-tree-sitter v0.24.0 h1:kRZb6aBNfcI/u0Qh8XEt3zjNVnmxTisDBN+kXK0xRYQ=
 github.com/tree-sitter/go-tree-sitter v0.24.0/go.mod h1:x681iFVoLMEwOSIHA1chaLkXlroXEN7WY+VHGFaoDbk=
 github.com/tree-sitter/tree-sitter-bash v0.23.1 h1:oE5BM8ME0W29RwWrCNI+kEEDdm/tWlbUr8LtsGIt07Q=

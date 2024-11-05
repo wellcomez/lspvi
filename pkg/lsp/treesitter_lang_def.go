@@ -1,9 +1,9 @@
 package lspcore
 
 import (
+	ts_csharp "github.com/smacker/go-tree-sitter/csharp"
 	ts_protobuf "github.com/smacker/go-tree-sitter/protobuf"
 	ts_swift "github.com/smacker/go-tree-sitter/swift"
-	ts_csharp "github.com/smacker/go-tree-sitter/csharp"
 	"github.com/tectiv3/go-lsp"
 	ts_lua "github.com/tree-sitter-grammars/tree-sitter-lua/bindings/go"
 	ts_toml "github.com/tree-sitter-grammars/tree-sitter-toml"
@@ -23,6 +23,8 @@ import (
 	tree_sitter_ruby "github.com/tree-sitter/tree-sitter-ruby/bindings/go"
 	ts_rust "github.com/tree-sitter/tree-sitter-rust/bindings/go"
 	tree_sitter_typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
+
+	tree_sitter_zig "github.com/tree-sitter-grammars/tree-sitter-zig/bindings/go"
 	"path/filepath"
 	"strings"
 	"unsafe"
@@ -189,6 +191,7 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("c", lsp_dummy{}, ts_c.Language()).setparser(rs_outline).set_ext([]string{"c", "h"}),
 	new_tsdef("python", lsp_lang_py{}, ts_py.Language()).setparser(rs_outline),
 	new_tsdef("lua", lsp_dummy{}, ts_lua.Language()).set_ext([]string{"lua"}).setparser(rs_outline),
+	new_tsdef("zig", lsp_dummy{}, tree_sitter_zig.Language()).set_ext([]string{"zig"}).setparser(rs_outline),
 	new_tsdef("rust", lsp_dummy{}, ts_rust.Language()).set_ext([]string{"rs"}).setparser(rs_outline),
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.Language()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
 		rs_outline(ts, yaml_group)
