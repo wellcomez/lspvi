@@ -85,12 +85,9 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	}
 	list := ret.impl.list
 	fzfdata := []string{}
-	for i, v := range keymaplist {
-		index := i
+	for _, v := range keymaplist {
 		fzfdata = append(fzfdata, v)
-		list.AddItem(v, "", func() {
-			ret.newMethod(index)
-		})
+		list.AddItem(v, "", nil)
 	}
 	fzf := new_fzf_on_list_data(list, fzfdata, true)
 	ret.impl.fzf = fzf
