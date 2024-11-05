@@ -31,7 +31,7 @@ func (pk keymap_picker) close() {
 
 // name implements picker.
 func (pk keymap_picker) name() string {
-	return "key map"
+	return fmt.Sprintf("Key mapping [%d/%d]", pk.impl.list.GetCurrentItem(), pk.impl.list.GetItemCount())
 }
 
 // UpdateQuery implements picker.
@@ -93,9 +93,11 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	ret.impl.fzf = fzf
 	lastindex := -1
 	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		v.update_dialog_title(ret.name())
 		lastindex = index
 	})
 	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		v.update_dialog_title(ret.name())
 		if lastindex != i {
 			return
 		}
