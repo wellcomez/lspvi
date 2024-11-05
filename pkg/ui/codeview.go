@@ -1477,7 +1477,6 @@ func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	// b := code.view.Buf
 	// b.Settings["syntax"] = false
-	code.file = NewFile(fileload.FileName)
 	var filename = fileload.FileName
 	code.LoadBuffer(fileload)
 	sym := code.main.Lspmgr().OpenNoLsp(filename)
@@ -1544,6 +1543,7 @@ func (view *codetextview) is_softwrap() bool {
 	return view.Buf.Settings["softwrap"] == true
 }
 func (code *CodeView) LoadBuffer(file fileloader.FileLoader) {
+	code.file = NewFile(file.FileName)
 	buffer := file.Buff
 	if buffer == nil {
 		buffer = femto.NewBufferFromString("", file.FileName)
