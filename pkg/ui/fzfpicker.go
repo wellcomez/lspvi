@@ -54,6 +54,9 @@ func (a *clickdetector) handle(action tview.MouseAction, event *tcell.EventMouse
 	return action, event
 }
 
+type dialogsize struct {
+	x, y, width, height float32
+}
 type fzfmain struct {
 	Frame         *tview.Frame
 	input         *tview.InputField
@@ -62,6 +65,7 @@ type fzfmain struct {
 	main          MainService
 	currentpicker picker
 	clickcheck    clickdetector
+	size          dialogsize
 }
 type fuzzpicktype int
 
@@ -211,6 +215,9 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 			v.currentpicker.UpdateQuery(text)
 		}
 	})
+	v.size = dialogsize{width: 0.75, height: 0.75}
+	v.size.x = (1 - v.size.width) * 0.5
+	v.size.y = (1 - v.size.height) * 0.5
 }
 
 var modetree = 0
@@ -328,9 +335,12 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 func (v *fzfmain) Draw(screen tcell.Screen) {
 	if v.Visible {
 		width, height := screen.Size()
-		w := width * 3 / 4
-		h := height * 3 / 4
-		v.Frame.SetRect((width-w)/2, (height-h)/2, w, h)
+		w := int(v.size.width * float32(width))
+		h := int(v.size.height * float32(height))
+
+		x := int(v.size.x * float32(width))
+		y := int(v.size.y * float32(height))
+		v.Frame.SetRect(x, y, w, h)
 		v.Frame.Draw(screen)
 	}
 }
