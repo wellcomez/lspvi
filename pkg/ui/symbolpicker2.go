@@ -186,9 +186,8 @@ func new_current_document_picker(v *fzfmain, symbol *lspcore.Symbol_file) curren
 			return
 		}
 		if sym := impl.get_current_item_symbol(index); sym != nil {
-			file := sym.sym.SymInfo.Location.URI.AsPath().String()
-			v.main.OpenFileHistory(file, &sym.sym.SymInfo.Location)
-			v.hide()
+			file := sym.sym.SymInfo.Location
+			v.open_id_edior(file)
 		}
 
 	})

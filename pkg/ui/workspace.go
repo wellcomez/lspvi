@@ -194,6 +194,7 @@ func new_workspace_picker(v *fzfmain) *workspace_picker {
 		if i == lastindex {
 			c := &gload_workspace_list.Projects[ret.fzf.get_data_index(i)]
 			impl.parent.main.on_select_project(c)
+			impl.parent.main.current_editor().Acitve()
 			impl.parent.hide()
 		}
 	})

@@ -487,9 +487,10 @@ func (pk *refpicker) refresh_list(data []*list_tree_node) {
 			dataindex := fzf.get_data_index(index)
 			if ref, err := pk.impl.quick_view_data_model.get_data(dataindex); err == nil {
 				loc := ref.Loc
-				pk.impl.parent.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+				pk.impl.parent.open_id_edior(loc)
+			} else {
+				pk.impl.parent.hide()
 			}
-			pk.impl.parent.hide()
 		}
 	})
 }

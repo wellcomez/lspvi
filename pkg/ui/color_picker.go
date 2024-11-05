@@ -106,11 +106,12 @@ func new_color_picker(v *fzfmain) *color_picker {
 		a := ret.impl.data[ret.fzf.get_data_index(i)]
 		v.main.on_change_color(a.name)
 		global_theme.update_dialog_color(v)
-		_,bg , _ := global_theme.get_default_style().Decompose()
+		_, bg, _ := global_theme.get_default_style().Decompose()
 		ret.gridlayout.SetBackgroundColor(bg)
 		ret.gridlayout.SetBorderColor(tview.Styles.BorderColor)
 		global_theme.update_listbox_color(list.List)
 		if lastindex == i {
+			v.main.current_editor().Acitve()
 			v.hide()
 		}
 	})
