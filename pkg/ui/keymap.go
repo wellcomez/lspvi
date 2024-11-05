@@ -143,9 +143,10 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case split_right:
 		return cmdactor{id, "Split right", func() bool {
 			editor := m.current_editor()
-			codeview2 := create_split_codeview(editor)
+			v := create_split_codeview(editor)
 			filename := editor.Path()
-			codeview2.open_file_lspon_line_option(filename, nil, true, nil)
+			v.open_file_lspon_line_option(filename, nil, true, nil)
+			m.App().ForceDraw()
 			return true
 		}}
 	case open_picker_ui:

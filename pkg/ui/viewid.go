@@ -101,7 +101,7 @@ func focus_viewid(m *mainui) view_id {
 	return view_none
 }
 
-var tab_view_id = []view_id{view_quickview, view_callin, view_uml, view_log, view_term, view_code_below}
+var tab_view_id = []view_id{view_quickview, view_callin, view_uml, view_log, view_bookmark, view_term, view_code_below}
 
 func (v view_id) is_tab() bool {
 	for _, s := range tab_view_id {
