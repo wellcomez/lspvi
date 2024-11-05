@@ -42,7 +42,7 @@ type livewgreppicker struct {
 	main           MainService
 	impl           *grep_impl
 	quick_view     *quick_view_delegate
-	file_include  *tview.InputField
+	file_include   *tview.InputField
 	not_live       bool
 	grepword       bool
 	filecounter    int
@@ -88,7 +88,7 @@ func (pk livewgreppicker) open_view_from_normal_list(cur int, prev bool) bool {
 		if prev {
 			pk.PrevOpen(fpath, lineNumber)
 		} else {
-			pk.main.OpenFileHistory(fpath, &item.Loc)
+			pk.parent.open_in_edior(item.Loc)
 		}
 	}
 	return false
@@ -281,9 +281,8 @@ func (grepx *livewgreppicker) end_of_grep() {
 			o = &grepx.impl.result.data[dataindex]
 		}
 		if o != nil {
-			grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
+			grepx.parent.open_in_edior(o.Loc)
 		}
-		grepx.parent.hide()
 	}
 }
 
@@ -373,9 +372,8 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 					if lastindex == index {
 						if caller, err := tree.GetCaller(index); err == nil {
 							loc := caller.Loc
-							grepx.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+							grepx.parent.open_in_edior(loc)
 						}
-						grepx.parent.hide()
 					}
 				}
 			}
@@ -546,7 +544,7 @@ func (a QueryOption) Whole(b bool) QueryOption {
 	return a
 }
 func (a QueryOption) SetPathPattern(b string) QueryOption {
-	a.PathPattern= b
+	a.PathPattern = b
 	return a
 }
 func (a QueryOption) Key(b string) QueryOption {
@@ -614,7 +612,6 @@ func (pk *livewgreppicker) set_list_handle() {
 		if lastindex == i {
 			idx := pk.grep_list_view.GetCurrentItem()
 			pk.open_view_from_normal_list(idx, false)
-			pk.parent.hide()
 		}
 	})
 }
