@@ -1,29 +1,30 @@
 package lspcore
 
 import (
+	ts_protobuf "github.com/smacker/go-tree-sitter/protobuf"
+	"github.com/tectiv3/go-lsp"
+	ts_lua "github.com/tree-sitter-grammars/tree-sitter-lua/bindings/go"
+	ts_toml "github.com/tree-sitter-grammars/tree-sitter-toml"
+	ts_yaml "github.com/tree-sitter-grammars/tree-sitter-yaml"
+	sitter "github.com/tree-sitter/go-tree-sitter"
+	ts_bash "github.com/tree-sitter/tree-sitter-bash/bindings/go"
+	ts_c "github.com/tree-sitter/tree-sitter-c/bindings/go"
+	ts_cpp "github.com/tree-sitter/tree-sitter-cpp/bindings/go"
+	ts_css "github.com/tree-sitter/tree-sitter-css/bindings/go"
+	ts_go "github.com/tree-sitter/tree-sitter-go/bindings/go"
+	ts_html "github.com/tree-sitter/tree-sitter-html/bindings/go"
+	ts_java "github.com/tree-sitter/tree-sitter-java/bindings/go"
+	ts_js "github.com/tree-sitter/tree-sitter-javascript/bindings/go"
+	tree_sitter_json "github.com/tree-sitter/tree-sitter-json/bindings/go"
+	"github.com/tree-sitter/tree-sitter-markdown/bindings/go"
+	ts_py "github.com/tree-sitter/tree-sitter-python/bindings/go"
+	tree_sitter_ruby "github.com/tree-sitter/tree-sitter-ruby/bindings/go"
+	ts_rust "github.com/tree-sitter/tree-sitter-rust/bindings/go"
+	tree_sitter_typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 	"path/filepath"
 	"strings"
 	"unsafe"
 	"zen108.com/lspvi/pkg/debug"
-	sitter "github.com/tree-sitter/go-tree-sitter"
-	ts_go "github.com/tree-sitter/tree-sitter-go/bindings/go"
-	"github.com/tectiv3/go-lsp"
-	ts_c "github.com/tree-sitter/tree-sitter-c/bindings/go"
-	ts_cpp "github.com/tree-sitter/tree-sitter-cpp/bindings/go"
-	ts_css "github.com/tree-sitter/tree-sitter-css/bindings/go"
-	ts_html "github.com/tree-sitter/tree-sitter-html/bindings/go"
-	ts_java "github.com/tree-sitter/tree-sitter-java/bindings/go"
-	ts_bash "github.com/tree-sitter/tree-sitter-bash/bindings/go"
-	ts_js "github.com/tree-sitter/tree-sitter-javascript/bindings/go"
-	ts_py "github.com/tree-sitter/tree-sitter-python/bindings/go"
-	ts_rust "github.com/tree-sitter/tree-sitter-rust/bindings/go"
-	tree_sitter_typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
-	tree_sitter_json "github.com/tree-sitter/tree-sitter-json/bindings/go"
-	ts_yaml "github.com/tree-sitter-grammars/tree-sitter-yaml"
-	ts_lua "github.com/tree-sitter-grammars/tree-sitter-lua/bindings/go"
-	ts_toml "github.com/tree-sitter-grammars/tree-sitter-toml"
-	"github.com/tree-sitter/tree-sitter-markdown/bindings/go"
-	tree_sitter_ruby "github.com/tree-sitter/tree-sitter-ruby/bindings/go"
 )
 
 type ts_lang_def struct {
@@ -153,7 +154,6 @@ func (s *ts_lang_def) is_me(file string) bool {
 	return false
 }
 
-
 var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("go", lsp_lang_go{}, ts_go.Language()).setparser(func(ts *TreeSitter, o outlinecb) {
 		rs_outline(ts, func(ts *TreeSitter, si *OutlineSymolList) {
@@ -191,7 +191,7 @@ var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("yaml", lsp_dummy{}, ts_yaml.Language()).set_ext([]string{"yaml", "yml"}).setparser(func(ts *TreeSitter, o outlinecb) {
 		rs_outline(ts, yaml_group)
 	}),
-	// new_tsdef("proto", lsp_dummy{}, ts_protobuf.GetLanguage()).set_ext([]string{"proto"}).setparser(rs_outline),
+	new_tsdef("proto", lsp_dummy{}, ts_protobuf.Language()).set_ext([]string{"proto"}).setparser(rs_outline),
 	new_tsdef("css", lsp_dummy{}, ts_css.Language()).set_ext([]string{"css"}).setparser(rs_outline),
 	// new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),
 	new_tsdef("html", lsp_dummy{}, ts_html.Language()).set_ext([]string{"html"}).setparser(rs_outline),
