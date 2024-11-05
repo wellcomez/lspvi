@@ -111,6 +111,9 @@ func HexToRGB(hexString string) (int, int, int, error) {
 
 	return red, green, blue, nil
 }
+func (mgr *symbol_colortheme) select_line_style() tcell.Style {
+	return mgr.colorscheme["cursor-line"]
+}
 func (mgr *symbol_colortheme) set_currsor_line() {
 	if ret := mgr.get_color("cursorline"); ret != nil {
 		_, bg, _ := ret.Decompose()

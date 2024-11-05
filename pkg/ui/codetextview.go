@@ -300,7 +300,8 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 	sym := GetClosestSymbol(symbol, r)
 	begin := x
 	style := global_theme.get_default_style()
-	textStyle := global_theme.select_style()
+	fg, _, _ := global_theme.get_default_style().Decompose()
+	textStyle := global_theme.select_line_style().Foreground(fg)
 
 	b1 := BoxDrawingsLightVertical
 	if v.HasFocus() {
@@ -313,10 +314,10 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 	x1 = strings.ReplaceAll(x1, "/", " > ") + " > "
 	for _, v := range x1 {
 		begin = txt.Add(colorchar{
-			begin, y, v, *textStyle})
+			begin, y, v, textStyle})
 	}
 	if sym != nil {
-		begin = txt.Add(colorchar{begin, y, ' ', *textStyle})
+		begin = txt.Add(colorchar{begin, y, ' ', textStyle})
 
 		if len(sym.Classname) > 0 {
 			s := style
@@ -337,7 +338,7 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 			}
 			for _, v := range " >" {
 				begin = txt.Add(colorchar{
-					begin, y, v, *textStyle})
+					begin, y, v, textStyle})
 			}
 		}
 		if len(sym.SymInfo.Name) > 0 {
@@ -370,7 +371,7 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 	for {
 		if begin < x+w-1 {
 			begin = txt.Add(colorchar{
-				begin, y, ' ', *textStyle})
+				begin, y, ' ', textStyle})
 		} else {
 			break
 		}
