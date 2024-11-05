@@ -84,6 +84,9 @@ func new_cmdline(main *mainui) *cmdline {
 			id:   id,
 			arg0: arg,
 			run: func(s []string, c cmd_processor) {
+				code.command_history.add(command_history_record{
+					strings.Join(arg, " "), false,
+				})
 				get_cmd_actor(main, id).handle()
 			},
 		}

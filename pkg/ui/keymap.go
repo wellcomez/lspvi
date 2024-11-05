@@ -191,8 +191,8 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		return cmdactor{id, "Find current file", func() bool {
 			dialog := m.Dialog()
 			filename := m.current_editor().Path()
-			key:=m.current_editor().GetSelection()
-			dialog.OpenLiveGrepCurrentFile(key,filename)
+			key := m.current_editor().GetSelection()
+			dialog.OpenLiveGrepCurrentFile(key, filename)
 			return true
 		}}
 	case open_picker_history:
@@ -428,14 +428,18 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case vi_quick_prev:
 		{
 			return cmdactor{id, "Prev", func() bool {
-				// m.quickview.go_prev()
+				index := m.Quickfix().view.GetCurrentItem()
+				count := m.Quickfix().view.GetItemCount()
+				m.Quickfix().view.SetCurrentItem((index + 1 + count) % count)
 				return true
 			}}
 		}
 	case vi_quick_next:
 		{
 			return cmdactor{id, "Quick next", func() bool {
-				// m.quickview.go_next()
+				index := m.Quickfix().view.GetCurrentItem()
+				count := m.Quickfix().view.GetItemCount()
+				m.Quickfix().view.SetCurrentItem((index - 1 + count) % count)
 				return true
 			}}
 		}

@@ -77,6 +77,8 @@ type MainService interface {
 	App() *tview.Application
 	//tty
 	RunInBrowser() bool
+	//quickview
+	Quickfix() *quick_view
 	//cmdline
 	CmdLine() *cmdline
 	Close()
@@ -308,6 +310,9 @@ func (m mainui) App() *tview.Application {
 }
 func (m mainui) Lspmgr() *lspcore.LspWorkspace {
 	return m.lspmgr
+}
+func (m mainui) Quickfix() *quick_view {
+	return m.quickview
 }
 func (m mainui) CmdLine() *cmdline {
 	return m.cmdline
