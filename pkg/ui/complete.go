@@ -141,6 +141,7 @@ func (complete *completemenu) HandleKeyInput(event *tcell.EventKey, after []lspc
 		return
 	}
 	if !ok {
+		complete.Hide()
 		return
 	}
 	if complete := complete; complete != nil {
