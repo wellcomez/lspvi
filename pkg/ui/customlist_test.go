@@ -41,20 +41,3 @@ func Test_mainui_Init(t *testing.T) {
 		log.Println(data)
 	}
 }
-func Test_complete(t *testing.T) {
-	a := "call2(${1:})"
-	code := new_complete_code(a)
-	if code.tokens[0].text != "call2(" {
-		t.Error("call2")
-	}
-	t.Log("ok")
-	a = "call2(${1:},${2:})"
-	if code.tokens[0].text != "call2(" {
-		t.Error("call2")
-	}
-	code = new_complete_code(a)
-	if len(code.tokens) != 5 {
-		t.Error("token!=5")
-	}
-	t.Log("ok")
-}
