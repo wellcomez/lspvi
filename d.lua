@@ -8,8 +8,10 @@ local highlight_groups = {"LineNr", "Comment", -- "Variable",
                           "Underlined", "Ignore", "Error", "Added", "Changed", "Removed", "CursorLine", "CursorColumn",
                           "Visual", "StatusLine", "Normal", "DiagnosticError", "DiagnosticWarn", "DiagnosticInfo",
                           "DiagnosticHint", -- > 
-"DiffAdd", "DiffChange", "DiffDelete", "LspReferenceText", "LspReferenceRead", "LspReferenceWrite", "@variable", --                    ; various variable names
-                          "@variable.builtin", --            ; built-in variable names (e.g. `this`)
+"DiffAdd", "DiffChange", "DiffDelete", 
+"LspReferenceText", "LspReferenceRead", "LspReferenceWrite", 
+"@variable", --                    ; various variable names
+"@variable.builtin", --            ; built-in variable names (e.g. `this`)
 "@variable.parameter", --          ; parameters of a function
 "@variable.parameter.builtin", --  ; special parameters (e.g. `_`, `it`)
 "@variable.member", --             ; object and struct fields
