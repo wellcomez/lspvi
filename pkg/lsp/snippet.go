@@ -27,7 +27,7 @@ func (t complete_token) is_arg() bool {
 	return len(t.arg.capture) > 0
 }
 
-type complete_code struct {
+type CompleteCodeLine struct {
 	snip      snippet
 	snip_args []snippet_arg
 	tokens    []complete_token
@@ -57,14 +57,14 @@ func (r snippet) args() (args []snippet_arg) {
 	}
 	return
 }
-func (code complete_code) SnipCount() (a int) {
+func (code CompleteCodeLine) SnipCount() (a int) {
 	return len(code.snip_args)
 }
-func (code complete_code) Len() (a int) {
+func (code CompleteCodeLine) Len() (a int) {
 	a = len(code.tokens)
 	return
 }
-func (code complete_code) Token(a int) (ret complete_token, err error) {
+func (code CompleteCodeLine) Token(a int) (ret complete_token, err error) {
 	if a < len(code.tokens) {
 		ret = code.tokens[a]
 	} else {
@@ -72,15 +72,15 @@ func (code complete_code) Token(a int) (ret complete_token, err error) {
 	}
 	return
 }
-func (code complete_code) Text() string {
+func (code CompleteCodeLine) Text() string {
 	ret := []string{}
 	for _, v := range code.tokens {
 		ret = append(ret, v.Text)
 	}
 	return strings.Join(ret, "")
 }
-func NewCompleteCode(raw string) (ret *complete_code) {
-	ret = &complete_code{snip: snippet{raw: raw}}
+func NewCompleteCode(raw string) (ret *CompleteCodeLine) {
+	ret = &CompleteCodeLine{snip: snippet{raw: raw}}
 	ret.snip_args = ret.snip.args()
 	tokens := []complete_token{}
 	s := raw
@@ -114,7 +114,7 @@ func NewCompleteCode(raw string) (ret *complete_code) {
 
 var snip_zero = "$0\\"
 
-func (code *complete_code) string_to_token(sss string) (ret []complete_token) {
+func (code *CompleteCodeLine) string_to_token(sss string) (ret []complete_token) {
 	x1 := sss
 	for {
 		if ind := strings.Index(x1, snip_zero); ind > 0 {
