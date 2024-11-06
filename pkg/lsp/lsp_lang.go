@@ -3,6 +3,7 @@ package lspcore
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
@@ -15,9 +16,9 @@ type lsplang interface {
 	Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool
 	IsMe(filename string) bool
 	CompleteHelpCallback(lsp.CompletionList, *Complete, error)
+	LspHelp(*lspcore) (LspSignatureHelp, LspCompleteUtil, error)
 }
 type lsp_lang_common struct {
-	core *lspcore
 }
 type Document struct {
 	Value string `json:"value"`
@@ -32,7 +33,8 @@ func (v *Document) Parser(a []byte) error {
 	}
 	return nil
 }
-func (a lsp_lang_common) LspHelp() (help LspSignatureHelp, complete LspCompleteUtil) {
+func (a lsp_lang_common) LspHelp(*lspcore) (h LspSignatureHelp, c LspCompleteUtil, err error) {
+	err = fmt.Errorf("not support")
 	return
 }
 func (a lsp_lang_common) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete, err error) {

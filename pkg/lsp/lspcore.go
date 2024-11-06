@@ -60,6 +60,10 @@ type lspcore struct {
 	config LangConfig
 }
 
+func (core *lspcore) LspHelp() ( LspSignatureHelp,  LspCompleteUtil,error) {
+	return core.lang.LspHelp(core)
+}
+
 // Handle implements jsonrpc2.Handler.
 func (core *lspcore) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
 	debug.DebugLog(DebugTag, "lspcore.Handle", req.Method, req.Notif)

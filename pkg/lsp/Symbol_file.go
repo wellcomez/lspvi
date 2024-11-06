@@ -36,21 +36,12 @@ type LspCompleteUtil struct {
 	Document    func(v lsp.CompletionItem) (text []string)
 }
 
-func (sym Symbol_file) LspSignatureHelp() (ret LspSignatureHelp, err error) {
+func (sym Symbol_file) LspHelp() (h LspSignatureHelp, c LspCompleteUtil, err error) {
 	if sym.lsp == nil {
 		err = fmt.Errorf("lsp is nil")
 		return
 	}
-	ret = sym.lsp.HelpTrigger()
-	return
-}
-func (sym Symbol_file) LspComplete() (ret LspCompleteUtil, err error) {
-	if sym.lsp == nil {
-		err = fmt.Errorf("lsp is nil")
-		return
-	}
-	ret = sym.lsp.CompleteTrigger()
-	return
+	return sym.lsp.LspHelp()
 }
 func (sym Symbol_file) LspClient() lspclient {
 	return sym.lsp
