@@ -195,3 +195,41 @@ func (l lsp_lang_go) IsMe(filename string) bool {
 	var ext = []string{"go", "gomod", "gowork", "gotmpl"}
 	return IsMe(filename, ext)
 }
+func (a lsp_lang_go) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete, err error) {
+	document := []string{}
+	for index := range cl.Items {
+
+		v := cl.Items[index]
+		var text = []string{}
+		text = create_complete_go(v)
+		document = append(document, strings.Join(text, "\n"))
+	}
+	ret.Result = &CompleteResult{Document: document}
+}
+
+func create_complete_go(v lsp.CompletionItem) (text []string) {
+	s := ""
+	switch v.Kind {
+	case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
+		n := strings.Replace(v.Detail, "func", "", -1)
+		s = fmt.Sprintf("func %s %s", v.Label, n)
+	case lsp.CompletionItemKindVariable:
+		s = fmt.Sprintf("%s %s", v.Label, v.Detail)
+	case lsp.CompletionItemKindStruct:
+		s = fmt.Sprintf("type %s %s", v.Label, v.Detail)
+	case lsp.CompletionItemKindClass:
+		s = fmt.Sprintf("%s %s", v.Label, v.Detail)
+	default:
+		s = fmt.Sprintf("%s %s", v.Label, v.Detail)
+	}
+	debug.DebugLogf("complete", "go parse %d %s ", v.Kind, s)
+	text = append(text, s)
+	var doc Document
+	if doc.Parser(v.Documentation) == nil {
+		ss := strings.Split(doc.Value, "\n")
+		for _, v := range ss {
+			text = append(text, "//"+v)
+		}
+	}
+	return
+}
