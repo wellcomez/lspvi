@@ -357,7 +357,7 @@ func (d *help_signature_docs) comment_line(n int) (ret []string) {
 		comment, _ := tablewriter.WrapString(d.value, n)
 		var ss = []string{}
 		for _, v := range comment {
-			ss = append(ss, "//"+v)
+			ss = append(ss, "//"+strings.ReplaceAll(v, "\t", "  "))
 		}
 		ret = append(ret, ss...)
 	}
@@ -382,8 +382,9 @@ func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
 	var ret = []string{}
 	var doc []*help_signature_docs = helpview.doc
 	filename := complete.filename()
+	n40 := 100
 	for _, v := range doc {
-		ret = append(ret, v.comment_line(40)...)
+		ret = append(ret, v.comment_line(n40)...)
 	}
 	txt := strings.Join(ret, "\n")
 	height := len(helpview.lines)
@@ -394,7 +395,7 @@ func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
 	loc := complete.editor.Cursor.Loc
 	_, y, _, _ := complete.editor.GetRect()
 	Y := y + loc.Y - complete.editor.Topline - (height - 1)
-	helpview.SetRect(loc.X, Y, 40, height)
+	helpview.SetRect(loc.X, Y, n40, height)
 }
 
 func (complete *completemenu) filename() string {
@@ -502,19 +503,17 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 	return req
 }
 func (l *LpsTextView) Draw(screen tcell.Screen) {
-	x, y, w, _ := l.GetInnerRect()
-	// w = 40
+	begingX, y, _, _ := l.GetInnerRect()
 	default_style := *global_theme.select_style()
 	_, bg, _ := default_style.Decompose()
-	default_style = default_style.Background(bg)
-	breaknum := 0
 	menu_width := 0
-	for _, v := range l.lines {
+	for i := range l.lines {
+		v := l.lines[i]
 		line := []rune(v)
 		menu_width = max(len(line), menu_width)
 	}
 	for i, v := range l.lines {
-		PosY := y + i + breaknum
+		PosY := y + i
 		var symline *[]lspcore.TreeSitterSymbol
 		if sym, ok := l.HlLine[i]; ok {
 			symline = &sym
@@ -527,24 +526,13 @@ func (l *LpsTextView) Draw(screen tcell.Screen) {
 					style = s
 				}
 			}
-
-			x1 := col % w
-			Posx := x + x1
-
-			n := col / w
-			screen.SetContent(Posx, PosY+n, v, nil, style)
+			Posx := begingX + col
+			screen.SetContent(Posx, PosY, v, nil, style)
 		}
 		for col := len(line); col < menu_width; col++ {
-			x1 := col % w
-			Posx := x + x1
-			n := col / w
-			screen.SetContent(Posx, PosY+n, ' ', nil, default_style)
+			Posx := begingX + col
+			screen.SetContent(Posx, PosY, ' ', nil, default_style)
 		}
-		n := len(line) / w
-		if len(line)%w > 0 {
-			n++
-		}
-		breaknum += (n - 1)
 	}
 }
 
