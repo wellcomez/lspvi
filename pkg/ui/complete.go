@@ -628,6 +628,10 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 		newtext := v.TextEdit.NewText
 		switch v.Kind {
 		case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
+			toke := new_complete_code(newtext)
+			if toke.tokens != nil {
+
+			}
 			re := regexp.MustCompile(`\$\{.*\}`)
 			index := re.FindAllStringIndex(newtext, 1)
 			if len(index) > 0 {
@@ -691,9 +695,14 @@ type snippet_arg struct {
 	capture string
 }
 type complete_token struct {
-	snip snippet_arg
+	arg  snippet_arg
 	text string
 }
+
+func (t complete_token) is_arg() bool {
+	return len(t.arg.capture) > 0
+}
+
 type complete_code struct {
 	snip      snippet
 	snip_args []snippet_arg
@@ -718,18 +727,22 @@ func (r snippet) args() (args []snippet_arg) {
 	}
 	return
 }
-func new_complete_snippet(raw string) (ret *complete_code) {
+func new_complete_code(raw string) (ret *complete_code) {
 	ret = &complete_code{snip: snippet{raw: raw}}
 	ret.snip_args = ret.snip.args()
 	tokens := []complete_token{}
 	s := raw
-	for _, v := range ret.snip_args {
+	for i, v := range ret.snip_args {
 		ss := strings.Split(s, v.capture)
 		if len(ss) > 0 {
 			tokens = append(tokens, complete_token{text: ss[0]})
-			tokens = append(tokens, complete_token{text: v.capture, snip: v})
+			tokens = append(tokens, complete_token{text: v.capture, arg: v})
 			if len(ss) > 1 {
-				s = ss[1]
+				if len(ret.snip_args) == i+1 {
+					tokens = append(tokens, complete_token{text: ss[1]})
+				} else {
+					s = ss[1]
+				}
 			} else {
 				break
 			}

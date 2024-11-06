@@ -28,16 +28,33 @@ func Test_mainui_Init(t *testing.T) {
 	}
 	r := pasrse_bold_color_string("a**123**b")
 	println(r.b.text, r.m.text, r.a.text)
-	r3 := parse_key_string("ab123cd", colortext{"123",tcell.Color100,0})
+	r3 := parse_key_string("ab123cd", colortext{"123", tcell.Color100, 0})
 	log.Println(r3)
 	s := colorpaser{data: "a123**123**a**[123]abc**"}
 	ret := s.Parse()
 	x := color_maintext(ret)
 	log.Println(x)
 	log.Println(ret)
-	if ret[0].color==0{
-		ss:=colorpaser{data:ret[0].text}
-		data:= ss.ParseKey([]colortext{{"123",tcell.Color100,0}})
+	if ret[0].color == 0 {
+		ss := colorpaser{data: ret[0].text}
+		data := ss.ParseKey([]colortext{{"123", tcell.Color100, 0}})
 		log.Println(data)
 	}
+}
+func Test_complete(t *testing.T) {
+	a := "call2(${1:})"
+	code := new_complete_code(a)
+	if code.tokens[0].text != "call2(" {
+		t.Error("call2")
+	}
+	t.Log("ok")
+	a = "call2(${1:},${2:})"
+	if code.tokens[0].text != "call2(" {
+		t.Error("call2")
+	}
+	code = new_complete_code(a)
+	if len(code.tokens) != 5 {
+		t.Error("token!=5")
+	}
+	t.Log("ok")
 }
