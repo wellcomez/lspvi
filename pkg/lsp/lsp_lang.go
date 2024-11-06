@@ -10,8 +10,8 @@ import (
 )
 
 type LspUtil struct {
-	signature LspSignatureHelp
-	complete  LspCompleteUtil
+	Signature LspSignatureHelp
+	Complete  LspCompleteUtil
 }
 type lsplang interface {
 	Launch_Lsp_Server(core *lspcore, wk WorkSpace) error
@@ -20,7 +20,7 @@ type lsplang interface {
 	Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool
 	IsMe(filename string) bool
 	CompleteHelpCallback(lsp.CompletionList, *Complete, error)
-	LspHelp(*lspcore) (LspUtil ,error)
+	LspHelp(*lspcore) (LspUtil, error)
 }
 type lsp_lang_common struct {
 }
@@ -48,8 +48,8 @@ func (a lsp_lang_common) LspHelp(core *lspcore) (ret LspUtil, err error) {
 		h.TriggerChar = core.CapabilitiesStatus.SignatureHelpProvider.TriggerCharacters
 	}
 	ret = LspUtil{
-		signature: h,
-		complete:  c,
+		Signature: h,
+		Complete:  c,
 	}
 	return
 }

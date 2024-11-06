@@ -237,3 +237,28 @@ func create_complete_go(v lsp.CompletionItem) (text []string) {
 	}
 	return
 }
+
+func (a lsp_lang_go) LspHelp(core *lspcore) (ret LspUtil, err error) {
+	ret, err = a.lsp_lang_common.LspHelp(core)
+	ret.Complete.Document = create_complete_go
+	ret.Signature.Document = func(v lsp.SignatureHelp) (text []string) {
+		for _, s := range v.Signatures {
+			text = append(text, s.Label)
+			// for _, p := range s.Parameters {
+
+			// }
+			var signature_document Document
+			// if len(v.Parameters) > 0 {
+			// 	ret.label = v.Label
+			// }
+			if signature_document.Parser(s.Documentation) == nil {
+				ss := strings.Split(signature_document.Value, "\n")
+				for _, v := range ss {
+					text = append(text, "//"+v)
+				}
+			}
+		}
+		return
+	}
+	return
+}
