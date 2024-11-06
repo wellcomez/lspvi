@@ -491,6 +491,7 @@ func create_lang_lsp(wk WorkSpace, lang LanguageIdentifier, l lsplang, config La
 			handle:     wk,
 			LanguageID: string(lang)},
 	}
+	cpp.core.lang.core = cpp.core
 	return cpp
 }
 

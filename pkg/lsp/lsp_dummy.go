@@ -3,7 +3,7 @@ package lspcore
 import "github.com/tectiv3/go-lsp"
 
 type lsp_dummy struct {
-	lsp_lang_base
+	lsp_lang_common
 }
 
 // InitializeLsp implements lsplang.

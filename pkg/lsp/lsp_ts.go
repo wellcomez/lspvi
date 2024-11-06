@@ -22,7 +22,7 @@ func (l lsp_ts) IsSource(filename string) bool {
 // }
 
 type lsp_ts struct {
-	lsp_lang_base
+	lsp_lang_common
 	LanguageID string
 }
 

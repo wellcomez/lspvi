@@ -15,7 +15,7 @@ import (
 )
 
 type lsp_lang_go struct {
-	lsp_lang_base
+	lsp_lang_common
 }
 
 func (l lsp_lang_go) IsSource(filename string) bool {
