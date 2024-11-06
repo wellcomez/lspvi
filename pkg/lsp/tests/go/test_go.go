@@ -15,15 +15,18 @@ type struct1 struct {
 	a, b, c int
 }
 
-func (a *struct1) a123(c,b int) {
-	// a.call2()
+func (a *struct1) a3456(c, b int) {
 	var s = &struct0{}
-// call1 test 
-func (a struct1) call1()  {
-
 }
+
+// a.call2()
+// call1 test
+func (a struct1) call1() {
+	a.a3456(1, 2)
+}
+
 // call2  test2
-func (a *struct1) call2(c,b int) {
+func (a *struct1) call2(c, b int) {
 	// a.call2()
 	var s = &struct0{}
 }
