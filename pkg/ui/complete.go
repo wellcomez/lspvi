@@ -28,6 +28,9 @@ type HelpBox struct {
 	begin femto.Loc
 	end   femto.Loc
 	prev  *lsp.SignatureHelp
+
+	doc    []*help_signature_docs
+	loaded bool
 }
 
 func (v HelpBox) IsShown(view *codetextview) bool {
@@ -82,7 +85,7 @@ type completemenu struct {
 	editor        *codetextview
 	task          *complete_task
 	document      *LpsTextView
-	heplview      *HelpBox
+	helpview      *HelpBox
 }
 type complete_task struct {
 	current  lspcore.Complete
@@ -104,7 +107,7 @@ func (m *completemenu) Show(yes bool) {
 		m.show = true
 	} else {
 		m.Hide()
-		m.heplview = nil
+		m.helpview = nil
 	}
 }
 func (m *completemenu) Hide() {
@@ -189,7 +192,7 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 		case lspcore.TriggerCharComplete:
 			{
 				complete.Hide()
-				complete.heplview = nil
+				complete.helpview = nil
 				return false
 			}
 		}
@@ -270,7 +273,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 }
 func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.SignatureHelp, err error) {
 	debug.DebugLog("complete", "help", ret, arg.Pos, arg.TriggerCharacter, err)
-	c.heplview = nil
+	c.helpview = nil
 	if err != nil {
 		return
 	}
@@ -298,7 +301,7 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 		c.editor.Cursor.Loc = replace_range
 		debug.DebugLog("complete", "signature")
 	} else {
-		c.heplview = nil
+		c.helpview = nil
 	}
 	debug.DebugLog("help", ret, arg, err)
 }
@@ -317,8 +320,8 @@ func (complete *completemenu) OnTrigeHelp(tg lspcore.TriggerChar) bool {
 		debug.DebugLog("help", help)
 
 		var prev *lsp.SignatureHelp
-		if complete.heplview != nil {
-			prev = complete.heplview.prev
+		if complete.helpview != nil {
+			prev = complete.helpview.prev
 		}
 		help := complete.new_help_box(help, lspcore.SignatureHelp{})
 		help.begin = loc
@@ -330,40 +333,68 @@ func (complete *completemenu) OnTrigeHelp(tg lspcore.TriggerChar) bool {
 	return false
 }
 
-func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspcore.SignatureHelp) *HelpBox {
-	ret := []string{""}
-	width := 0
-	for _, v := range help.Signatures {
-		lines := []string{}
-		var signature_document lspcore.Document
+type help_signature_docs struct {
+	label string
+	value string
+}
 
-		if len(v.Parameters) > 0 {
-			line := v.Label
-			lines = append(lines, line)
-		}
-		if signature_document.Parser(v.Documentation) == nil {
-			comment, _ := tablewriter.WrapString(signature_document.Value, 20)
-			for _, v := range comment {
-				lines = append(lines, "//"+v)
-			}
-		}
-		for _, v := range lines {
-			if len(v) > 0 {
-				width = max(len(v), width)
-				ret = append(ret, v)
-			}
-		}
+func new_help_signature_docs(v lsp.SignatureInformation) (ret *help_signature_docs) {
+	ret = &help_signature_docs{}
+	var signature_document lspcore.Document
+	if len(v.Parameters) > 0 {
+		ret.label = v.Label
 	}
-	heplview := NewHelpBox()
-	heplview.main = complete.editor.main
+	if signature_document.Parser(v.Documentation) == nil {
+		ret.value = signature_document.Value
+	}
+	return
+}
+func (d *help_signature_docs) comment_line(n int) (ret []string) {
+	n = min(len(d.label), n)
+	comment, _ := tablewriter.WrapString(d.label, n)
+	ret = append(ret, comment...)
+	if len(d.value) > 0 {
+		comment, _ := tablewriter.WrapString(d.value, n)
+		var ss = []string{}
+		for _, v := range comment {
+			ss = append(ss, "//"+v)
+		}
+		ret = append(ret, ss...)
+	}
+	return
+}
+
+func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspcore.SignatureHelp) *HelpBox {
+	// width := 0
+	var doc = []*help_signature_docs{}
+	for _, v := range help.Signatures {
+		doc = append(doc, new_help_signature_docs(v))
+	}
+
+	helepview := NewHelpBox()
+	helepview.doc = doc
+	helepview.main = complete.editor.main
+	complete.helpview = helepview
+	return helepview
+}
+
+func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
+	var ret = []string{}
+	var doc []*help_signature_docs = helpview.doc
 	filename := complete.filename()
+	for _, v := range doc {
+		ret = append(ret, v.comment_line(40)...)
+	}
 	txt := strings.Join(ret, "\n")
-	height := heplview.Load(txt, filename)
+	height := len(helpview.lines)
+	if !helpview.loaded {
+		height = helpview.Load(txt, filename)
+		helpview.loaded = true
+	}
 	loc := complete.editor.Cursor.Loc
-	loc.Y = loc.Y - complete.editor.Topline - height - 1
-	heplview.SetRect(loc.X, loc.Y, width+2, height)
-	complete.heplview = heplview
-	return heplview
+	_, y, _, _ := complete.editor.GetRect()
+	Y := y + loc.Y - complete.editor.Topline - (height - 1)
+	helpview.SetRect(loc.X, Y, 40, height)
 }
 
 func (complete *completemenu) filename() string {
@@ -371,19 +402,19 @@ func (complete *completemenu) filename() string {
 	return filename
 }
 
-func (heplview *LpsTextView) Load(txt string, filename string) int {
-	// v := (femto.NewBufferFromString(txt, filename))
-	// v.SetRuntimeFiles(runtime.Files)
-	heplview.Box = tview.NewBox()
-	heplview.lines = strings.Split(txt, "\n")
+func (helpview *LpsTextView) Load(txt string, filename string) int {
+	if helpview.Box == nil {
+		helpview.Box = tview.NewBox()
+	}
+	helpview.lines = strings.Split(txt, "\n")
 	ts := lspcore.NewTreeSitterParse(filename, txt)
 	ts.Init(func(ts *lspcore.TreeSitter) {
 		debug.DebugLog("init")
-		heplview.main.App().QueueUpdateDraw(func() {
-			heplview.HlLine = ts.HlLine
+		helpview.main.App().QueueUpdateDraw(func() {
+			helpview.HlLine = ts.HlLine
 		})
 	})
-	return len(heplview.lines)
+	return len(helpview.lines)
 }
 func (complete *completemenu) handle_complete_result_old(v lsp.CompletionItem, lspret *lspcore.Complete) {
 	var editor = complete.editor
@@ -567,8 +598,9 @@ func (l *completemenu) Draw(screen tcell.Screen) {
 		l.document.SetRect(x+w1, y, document_width, h)
 		l.document.Draw(screen)
 	}
-	if help := l.heplview; help != nil {
+	if help := l.helpview; help != nil {
 		if help.IsShown(l.editor) {
+			help.UpdateLayout(l)
 			help.Draw(screen)
 		}
 	}
