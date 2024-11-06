@@ -16,7 +16,7 @@ type lsplang interface {
 	IsMe(filename string) bool
 	CompleteHelpCallback(lsp.CompletionList, *Complete, error)
 }
-type lsplang_base struct {
+type lsp_lang_base struct {
 }
 type Document struct {
 	Value string `json:"value"`
@@ -31,8 +31,10 @@ func (v *Document) Parser(a []byte) error {
 	}
 	return nil
 }
-
-func (a lsplang_base) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete, err error) {
+func (a lsp_lang_base) LspHelp() (help LspSignatureHelp, complete LspCompleteUtil) {
+	return
+}
+func (a lsp_lang_base) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete, err error) {
 	document := []string{}
 	for index := range cl.Items {
 

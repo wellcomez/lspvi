@@ -48,14 +48,10 @@ type lsp_base struct {
 }
 
 func (l lsp_base) HelpTrigger() LspSignatureHelp {
-	return LspSignatureHelp{
-		l.core.HelpTrigger(),
-	}
+	return LspSignatureHelp{}
 }
 func (l lsp_base) CompleteTrigger() LspCompleteUtil {
-	return LspCompleteUtil{
-		l.core.CompleteTrigger(),
-	}
+	return LspCompleteUtil{}
 }
 func (l lsp_base) Format(opt FormatOption) ([]lsp.TextEdit, error) {
 	return l.core.TextDocumentFormatting(opt)

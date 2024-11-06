@@ -9,7 +9,7 @@ import (
 )
 
 type lsp_lang_rs struct {
-	lsplang_base
+	lsp_lang_base
 }
 
 func (l lsp_lang_rs) IsSource(filename string) bool {

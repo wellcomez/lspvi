@@ -22,7 +22,7 @@ var root_files = []string{
 }
 
 type lsp_lang_cpp struct {
-	lsplang_base
+	lsp_lang_base
 }
 
 // IsMe implements lsplang.
