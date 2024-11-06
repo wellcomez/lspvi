@@ -6,7 +6,6 @@ package mainui
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -299,6 +298,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 }
 func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.SignatureHelp, err error) {
 	debug.DebugLog("complete", "help", ret, arg.Pos, arg.TriggerCharacter, err)
+	c.heplview = nil
 	if err != nil {
 		return
 	}
@@ -622,136 +622,43 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 	var help *lspcore.SignatureHelp
 	if v.TextEdit != nil {
 		r := v.TextEdit.Range
-		//checker := complete.editor.code.NewChangeChecker()
-		//checker.not_notify = true
-
 		newtext := v.TextEdit.NewText
-		switch v.Kind {
-		case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
-			toke := new_complete_code(newtext)
-			if toke.tokens != nil {
-
-			}
-			re := regexp.MustCompile(`\$\{.*\}`)
-			index := re.FindAllStringIndex(newtext, 1)
-			if len(index) > 0 {
-				var xy = index[0]
-				var Pos lsp.Position
-
-				Pos.Character = xy[0] + r.Start.Character - 1
+		code := lspcore.NewCompleteCode(newtext)
+		sss := code.Text()
+		end := lsp.Position{Line: editor.Cursor.Loc.Y, Character: editor.Cursor.Loc.X}
+		if code.SnipCount() > 0 {
+			if t, err := code.Token(0); err == nil {
+				Pos := r.Start
+				Pos.Character = Pos.Character + len(t.Text) - 1
 				Pos.Line = r.Start.Line
-
-				// start := lsp.Position{
-				// 	Line:      Pos.Line,
-				// 	Character: Pos.Character,
-				// }
-				// end := start
-
-				// chr := newtext[xy[0]-1 : xy[0]]
-
-				newtext = re.ReplaceAllString(newtext, "")
-
 				help = &lspcore.SignatureHelp{
 					HelpCb:           complete.hanlde_help_signature,
 					Pos:              Pos,
 					IsVisiable:       false,
-					CompleteSelected: v.TextEdit.NewText,
+					CompleteSelected: sss,
 				}
 			}
 		}
-		// line := editor.Buf.Line(r.Start.Line)
-		// replace := ""
-		// if len(line) > r.End.Character {
-		// 	r.End.Character = r.End.Character + 1
-		// 	replace = line[r.Start.Character:r.End.Character]
-		// } else {
-		// 	replace = line[r.Start.Character:]
-		// 	r.End.Character = len(line)
-		// }
-		// debug.DebugLog("complete", "replace", replace, "=>", newtext)
 		editor.Buf.Replace(
 			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-			femto.Loc{X: editor.Cursor.Loc.X, Y: r.End.Line},
-			newtext)
+			femto.Loc{X: end.Character, Y: end.Line},
+			sss)
 		Event := []lspcore.TextChangeEvent{{
 			Type:  lspcore.TextChangeTypeReplace,
-			Range: r,
-			Text:  newtext}}
+			Range: lsp.Range{Start: r.Start, End: end},
+			Text:  sss}}
 		lspret.Sym.NotifyCodeChange(lspcore.CodeChangeEvent{
 			File:   lspret.Sym.Filename,
 			Events: Event})
 		if help != nil {
-			help.TriggerCharacter = editor.Buf.Line(help.Pos.Line)[help.Pos.Character : help.Pos.Character+1]
+			editor.Cursor.Loc = femto.Loc{X: help.Pos.Character, Y: help.Pos.Line}
+			x := editor.Buf.Line(help.Pos.Line)
+			help.TriggerCharacter = x[help.Pos.Character : help.Pos.Character+1]
 			go lspret.Sym.SignatureHelp(*help)
 		}
 		return
 	}
 	editor.Buf.Insert(complete.loc, v.Label)
-}
-
-type snippet_arg struct {
-	index   int
-	name    string
-	capture string
-}
-type complete_token struct {
-	arg  snippet_arg
-	text string
-}
-
-func (t complete_token) is_arg() bool {
-	return len(t.arg.capture) > 0
-}
-
-type complete_code struct {
-	snip      snippet
-	snip_args []snippet_arg
-	tokens    []complete_token
-}
-type snippet struct {
-	raw string
-}
-
-func (r snippet) args() (args []snippet_arg) {
-	newtext := r.raw
-	re2 := regexp.MustCompile(`\$\{(\d+):?([^}]*)\}`)
-	matches := re2.FindAllStringSubmatch(newtext, -1)
-	for _, match := range matches {
-		if len(match) == 3 {
-			debug.DebugLog("complete", "match", "no", match[1], "default-arg", strconv.Quote(match[2]))
-			if x, err := strconv.Atoi(match[1]); err == nil {
-				a := snippet_arg{index: x, name: match[2], capture: match[0]}
-				args = append(args, a)
-			}
-		}
-	}
-	return
-}
-func new_complete_code(raw string) (ret *complete_code) {
-	ret = &complete_code{snip: snippet{raw: raw}}
-	ret.snip_args = ret.snip.args()
-	tokens := []complete_token{}
-	s := raw
-	for i, v := range ret.snip_args {
-		ss := strings.Split(s, v.capture)
-		if len(ss) > 0 {
-			tokens = append(tokens, complete_token{text: ss[0]})
-			tokens = append(tokens, complete_token{text: v.capture, arg: v})
-			if len(ss) > 1 {
-				if len(ret.snip_args) == i+1 {
-					tokens = append(tokens, complete_token{text: ss[1]})
-				} else {
-					s = ss[1]
-				}
-			} else {
-				break
-			}
-		} else {
-			tokens = append(tokens, complete_token{text: s})
-		}
-	}
-	ret.tokens = tokens
-	return
 }
 
 /*func (complete *completemenu) handle_complete_result_old(v lsp.CompletionItem, lspret *lspcore.Complete) {

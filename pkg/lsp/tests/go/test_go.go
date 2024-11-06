@@ -22,6 +22,7 @@ func (a struct1) call1()  {
 // call2  test2
 func (a *struct1) call2(c,b int) {
 	// a.call2()
+	var s = &struct0{}
 }
 func aa() {
 }
