@@ -5,14 +5,14 @@ package mainui
 
 import (
 	"fmt"
-	"regexp"
-	"strings"
-	"time"
-
 	"github.com/gdamore/tcell/v2"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"regexp"
+	"strings"
+	"time"
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
@@ -194,36 +194,8 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 			}
 		}
 	}
-
-	// if help := complete.heplview; help != nil && help.IsShown(codetext) {
-	// 	x := codetext.Cursor.Loc
-	// 	ch := codetext.Buf.Line(x.Y)[x.X-1]
-	// 	if ret, err := sym.SignatureHelp(lspcore.SignatureHelp{
-	// 		IsVisiable:          true,
-	// 		Pos:                 Loc2Pos(x),
-	// 		TriggerCharacter:    fmt.Sprintf("%c", ch),
-	// 		ActiveSignatureHelp: help.prev,
-	// 	}); err == nil {
-	// 		debug.DebugLog("complete", "--------", len(ret.Signatures))
-	// 	}
-	// 	return true
-	// }
 	return false
 }
-
-// type Document struct {
-// 	Value string `json:"value"`
-// }
-
-// func (v *Document) Parser(a []byte) error {
-// 	if err := json.Unmarshal(a, v); err != nil {
-// 		return err
-// 	}
-// 	if len(v.Value) == 0 {
-// 		return errors.New("no value")
-// 	}
-// 	return nil
-// }
 
 func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspcore.Complete, err error) {
 	var editor = complete.editor
@@ -325,6 +297,8 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 		helpview.end = end
 		c.editor.Cursor.Loc = replace_range
 		debug.DebugLog("complete", "signature")
+	} else {
+		c.heplview = nil
 	}
 	debug.DebugLog("help", ret, arg, err)
 }
@@ -362,40 +336,23 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	for _, v := range help.Signatures {
 		lines := []string{}
 		var signature_document lspcore.Document
-		comment := []string{}
 
 		if len(v.Parameters) > 0 {
 			line := v.Label
-			// line := ""
-			// ret2 := []string{}
-			// for _, p := range v.Parameters {
-			// 	a := string(p.Label)
-			// 	a = strings.ReplaceAll(a, "\"", "")
-			// 	var document Document
-			// 	if document.Parser(p.Documentation) == nil {
-			// 		comment = append(comment, fmt.Sprintf("%s %s", a, document.Value))
-			// 	}
-			// 	ret2 = append(ret2, a)
-			// }
-			// line = strings.Join(ret2, ",")
-			// line = fmt.Sprintf("%s", line)
-			// if helpcall.CompleteSelected != "" {
-			// 	line = helpcall.CreateSignatureHelp(line)
-			// }
-			width = max(len(line), width)
 			lines = append(lines, line)
 		}
 		if signature_document.Parser(v.Documentation) == nil {
-			comment = append(comment, "//"+signature_document.Value)
-			line_document := strings.Join(comment, "\n")
-			if len(line_document) > 0 {
-				lines = append(lines, line_document)
+			comment, _ := tablewriter.WrapString(signature_document.Value, 20)
+			for _, v := range comment {
+				lines = append(lines, "//"+v)
 			}
 		}
-		for i := range lines {
-			lines[i] = " " + lines[i]
+		for _, v := range lines {
+			if len(v) > 0 {
+				width = max(len(v), width)
+				ret = append(ret, v)
+			}
 		}
-		ret = append(ret, strings.Join(lines, "\n"))
 	}
 	heplview := NewHelpBox()
 	heplview.main = complete.editor.main
