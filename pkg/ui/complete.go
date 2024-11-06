@@ -655,16 +655,16 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				}
 			}
 		}
-		line := editor.Buf.Line(r.Start.Line)
-		replace := ""
-		if len(line) > r.End.Character {
-			r.End.Character = r.End.Character + 1
-			replace = line[r.Start.Character:r.End.Character]
-		} else {
-			replace = line[r.Start.Character:]
-			r.End.Character = len(line)
-		}
-		debug.DebugLog("complete", "replace", replace, "=>", newtext)
+		// line := editor.Buf.Line(r.Start.Line)
+		// replace := ""
+		// if len(line) > r.End.Character {
+		// 	r.End.Character = r.End.Character + 1
+		// 	replace = line[r.Start.Character:r.End.Character]
+		// } else {
+		// 	replace = line[r.Start.Character:]
+		// 	r.End.Character = len(line)
+		// }
+		// debug.DebugLog("complete", "replace", replace, "=>", newtext)
 		editor.Buf.Replace(
 			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
 			femto.Loc{X: editor.Cursor.Loc.X, Y: r.End.Line},
@@ -690,25 +690,55 @@ type snippet_arg struct {
 	name    string
 	capture string
 }
+type complete_token struct {
+	snip snippet_arg
+	text string
+}
+type complete_code struct {
+	snip      snippet
+	snip_args []snippet_arg
+	tokens    []complete_token
+}
 type snippet struct {
 	raw string
 }
 
-func (r snippet) args() {
+func (r snippet) args() (args []snippet_arg) {
 	newtext := r.raw
 	re2 := regexp.MustCompile(`\$\{(\d+):?([^}]*)\}`)
 	matches := re2.FindAllStringSubmatch(newtext, -1)
-	var args = []snippet_arg{}
 	for _, match := range matches {
 		if len(match) == 3 {
 			debug.DebugLog("complete", "match", "no", match[1], "default-arg", strconv.Quote(match[2]))
 			if x, err := strconv.Atoi(match[1]); err == nil {
-				a := snippet_arg{index: x, name: match[2]}
+				a := snippet_arg{index: x, name: match[2], capture: match[0]}
 				args = append(args, a)
-				//newtext2= strings.ReplaceAll(newtext2, match[0], "")
 			}
 		}
 	}
+	return
+}
+func new_complete_snippet(raw string) (ret *complete_code) {
+	ret = &complete_code{snip: snippet{raw: raw}}
+	ret.snip_args = ret.snip.args()
+	tokens := []complete_token{}
+	s := raw
+	for _, v := range ret.snip_args {
+		ss := strings.Split(s, v.capture)
+		if len(ss) > 0 {
+			tokens = append(tokens, complete_token{text: ss[0]})
+			tokens = append(tokens, complete_token{text: v.capture, snip: v})
+			if len(ss) > 1 {
+				s = ss[1]
+			} else {
+				break
+			}
+		} else {
+			tokens = append(tokens, complete_token{text: s})
+		}
+	}
+	ret.tokens = tokens
+	return
 }
 
 /*func (complete *completemenu) handle_complete_result_old(v lsp.CompletionItem, lspret *lspcore.Complete) {
