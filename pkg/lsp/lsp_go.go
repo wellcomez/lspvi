@@ -204,7 +204,7 @@ func (a lsp_lang_go) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete, 
 		text = create_complete_go(v)
 		document = append(document, strings.Join(text, "\n"))
 	}
-	ret.Result = &CompleteResult{Document: document}
+	ret.Result = &CompleteResult{Document: document, Complete: create_complete_go}
 }
 
 func create_complete_go(v lsp.CompletionItem) (text []string) {

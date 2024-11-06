@@ -267,23 +267,24 @@ func (client *lspcore) DidClose(file string) error {
 }
 
 type SignatureHelp struct {
-	Pos                 lsp.Position
-	File                string
-	HelpCb              func(lsp.SignatureHelp, SignatureHelp, error)
-	IsVisiable          bool
-	TriggerCharacter    string
-	Continued           bool
+	Pos              lsp.Position
+	File             string
+	HelpCb           func(lsp.SignatureHelp, SignatureHelp, error)
+	IsVisiable       bool
+	TriggerCharacter string
+	Continued        bool
 	//CompleteSelected    string
 	ActiveSignatureHelp *lsp.SignatureHelp
 }
 
 /*func (h SignatureHelp) CreateSignatureHelp(s string) string {*/
-	/*re := regexp.MustCompile(`\$\{\d+:?\}`)*/
-	/*return re.ReplaceAllString(h.CompleteSelected, s)*/
+/*re := regexp.MustCompile(`\$\{\d+:?\}`)*/
+/*return re.ReplaceAllString(h.CompleteSelected, s)*/
 /*}*/
 
 type CompleteResult struct {
 	Document []string
+	Complete func(v lsp.CompletionItem) []string
 }
 type Complete struct {
 	Pos                  lsp.Position
