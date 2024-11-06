@@ -539,7 +539,7 @@ func (l *LspTextView) Draw(screen tcell.Screen) {
 func GetColumnStyle(symline *[]lspcore.TreeSitterSymbol, col uint32, bg tcell.Color) (style tcell.Style, err error) {
 	for _, pos := range *symline {
 		if col >= pos.Begin.Column && col <= pos.End.Column {
-			if s, e := newFunction1(pos); e == nil {
+			if s, e := get_position_style(pos); e == nil {
 				style = s.Background(bg)
 				return
 			}
@@ -548,7 +548,7 @@ func GetColumnStyle(symline *[]lspcore.TreeSitterSymbol, col uint32, bg tcell.Co
 	return style, fmt.Errorf("not found")
 }
 
-func newFunction1(pos lspcore.TreeSitterSymbol) (tcell.Style, error) {
+func get_position_style(pos lspcore.TreeSitterSymbol) (tcell.Style, error) {
 	style := global_theme.get_color(pos.CaptureName)
 	if style == nil {
 		style = global_theme.get_color("@" + pos.CaptureName)
