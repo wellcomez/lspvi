@@ -399,6 +399,18 @@ type TriggerChar struct {
 	Ch   string
 }
 
+func (core *lspcore) CompleteTrigger() (ret []string) {
+	if c := core.CapabilitiesStatus.CompletionProvider; c != nil {
+		ret = c.TriggerCharacters
+	}
+	return
+}
+func (core *lspcore) HelpTrigger() (ret []string) {
+	if c := core.CapabilitiesStatus.SignatureHelpProvider; c != nil {
+		ret = c.TriggerCharacters
+	}
+	return
+}
 func (core *lspcore) IsTrigger(param string) (TriggerChar, error) {
 	if c := core.CapabilitiesStatus.CompletionProvider; c != nil {
 		for _, a := range c.TriggerCharacters {

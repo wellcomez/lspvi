@@ -38,12 +38,25 @@ type lspclient interface {
 	Resolve(sym lsp.SymbolInformation, symbolfile *Symbol_file) bool
 	Close()
 	syncOption() *TextDocumentSyncOptions
+
+	HelpTrigger() LspSignatureHelp
+	CompleteTrigger() LspCompleteUtil
 }
 type lsp_base struct {
 	core *lspcore
 	wk   *WorkSpace
 }
 
+func (l lsp_base) HelpTrigger() LspSignatureHelp {
+	return LspSignatureHelp{
+		l.core.HelpTrigger(),
+	}
+}
+func (l lsp_base) CompleteTrigger() LspCompleteUtil {
+	return LspCompleteUtil{
+		l.core.CompleteTrigger(),
+	}
+}
 func (l lsp_base) Format(opt FormatOption) ([]lsp.TextEdit, error) {
 	return l.core.TextDocumentFormatting(opt)
 }

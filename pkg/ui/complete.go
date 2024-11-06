@@ -197,7 +197,10 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		if index < len(cl.Items) {
 			if param.Result != nil && len(param.Result.Document) == len(cl.Items) {
 				text := param.Result.Document[index]
-				complete.document.Load(text, complete.filename())
+				ss, _ := tablewriter.WrapString(text, 60)
+				complete.document.Load(
+					strings.Join(ss, "\n"),
+					complete.filename())
 			} else {
 				v := cl.Items[index]
 				var text = []string{
@@ -320,8 +323,6 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	complete.helpview = helpview
 	return helpview
 }
-
-
 
 func (complete *completemenu) filename() string {
 	filename := complete.editor.code.FileName()

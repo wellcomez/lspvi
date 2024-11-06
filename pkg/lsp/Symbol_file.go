@@ -27,7 +27,29 @@ type Symbol_file struct {
 	Ts           *TreeSitter
 	lspopen      bool
 }
+type LspSignatureHelp struct {
+	TriggerChar []string
+}
+type LspCompleteUtil struct {
+	TriggerChar []string
+}
 
+func (sym Symbol_file) LspSignatureHelp() (ret LspSignatureHelp, err error) {
+	if sym.lsp == nil {
+		err = fmt.Errorf("lsp is nil")
+		return
+	}
+	ret = sym.lsp.HelpTrigger()
+	return
+}
+func (sym Symbol_file) LspComplete() (ret LspCompleteUtil, err error) {
+	if sym.lsp == nil {
+		err = fmt.Errorf("lsp is nil")
+		return
+	}
+	ret = sym.lsp.CompleteTrigger()
+	return
+}
 func (sym Symbol_file) LspClient() lspclient {
 	return sym.lsp
 }
