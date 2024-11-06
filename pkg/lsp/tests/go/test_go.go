@@ -15,6 +15,9 @@ type struct1 struct {
 	a, b, c int
 }
 
+func (a *struct1) a123(c,b int) {
+	// a.call2()
+	var s = &struct0{}
 // call1 test 
 func (a struct1) call1()  {
 

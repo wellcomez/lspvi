@@ -325,11 +325,11 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 		doc = append(doc, new_help_signature_docs(v))
 	}
 
-	helepview := NewHelpBox()
-	helepview.doc = doc
-	helepview.main = complete.editor.main
-	complete.helpview = helepview
-	return helepview
+	helpview := NewHelpBox()
+	helpview.doc = doc
+	helpview.main = complete.editor.main
+	complete.helpview = helpview
+	return helpview
 }
 
 func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
@@ -347,16 +347,15 @@ func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
 		helpview.loaded = true
 	}
 	loc := complete.editor.Cursor.Loc
-	_, y, _, _ := complete.editor.GetRect()
-	Y := y + loc.Y - complete.editor.Topline - (height - 1)
-	helpview.SetRect(loc.X, Y, n40, height)
+	edit_x, edit_y, _, _ := complete.editor.GetRect()
+	Y := edit_y + loc.Y - complete.editor.Topline - (height - 1)
+	helpview.SetRect(helpview.begin.X+edit_x, Y, n40, height)
 }
 
 func (complete *completemenu) filename() string {
 	filename := complete.editor.code.FileName()
 	return filename
 }
-
 
 func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.Complete {
 
@@ -425,7 +424,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 		if code.SnipCount() > 0 {
 			if t, err := code.Token(0); err == nil {
 				Pos := r.Start
-				Pos.Character = Pos.Character + len(t.Text) - 1
+				Pos.Character = Pos.Character + len(t.Text)
 				Pos.Line = r.Start.Line
 				help = &lspcore.SignatureHelp{
 					HelpCb:           complete.hanlde_help_signature,
@@ -449,7 +448,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 		if help != nil {
 			editor.Cursor.Loc = femto.Loc{X: help.Pos.Character, Y: help.Pos.Line}
 			x := editor.Buf.Line(help.Pos.Line)
-			help.TriggerCharacter = x[help.Pos.Character : help.Pos.Character+1]
+			help.TriggerCharacter = x[help.Pos.Character-1 : help.Pos.Character]
 			debug.DebugLog("complete", "help", "TriggerCharacter", help.TriggerCharacter)
 			go lspret.Sym.SignatureHelp(*help)
 		}
