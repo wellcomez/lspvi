@@ -5,6 +5,7 @@ import (
 	// "encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 
 	// "log"
 	"os"
@@ -60,6 +61,7 @@ func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (ret lsp.SignatureHelp, e
 		}
 		return
 	}
+	debug.DebugLog("help", "lsp signature help", "pos", arg.Pos.String(), strconv.Quote(arg.TriggerCharacter))
 	ret, err = s.lsp.SignatureHelp(arg)
 	s.on_error(err)
 	return

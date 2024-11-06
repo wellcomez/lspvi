@@ -10,59 +10,11 @@ import (
 	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	"regexp"
 	"strings"
 	"time"
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
-
-type LspTextView struct {
-	*tview.Box
-	lines  []string
-	HlLine lspcore.TreesiterSymbolLine
-	main   MainService
-}
-type HelpBox struct {
-	*LspTextView
-	begin femto.Loc
-	end   femto.Loc
-	prev  *lsp.SignatureHelp
-
-	doc    []*help_signature_docs
-	loaded bool
-}
-
-func (v HelpBox) IsShown(view *codetextview) bool {
-	loc := view.Cursor.Loc
-	if v.begin.Y == loc.Y {
-		begin := v.begin
-		line := view.Buf.Line(begin.Y)
-		if begin.X > len(line) {
-			return false
-		}
-		ss := line[begin.X:]
-		if index := strings.Index(ss, ")"); index >= 0 {
-			v.end.X = begin.X + index
-		} else if v.begin.LessThan(loc) {
-			return true
-		}
-		if v.begin.GreaterThan(loc) || v.end.LessThan(loc) {
-			return false
-		}
-		return true
-	}
-	return false
-}
-func NewHelpBox() *HelpBox {
-	ret := &HelpBox{
-		LspTextView: &LspTextView{
-			Box: tview.NewBox(),
-		},
-	}
-	// x := global_theme.get_color("selection")
-	return ret
-}
 
 type CompleteMenu interface {
 	MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive)
@@ -217,7 +169,9 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 	width := 0
 	for i := range cl.Items {
 		v := cl.Items[i]
-		debug.DebugLog("complete", "item", "Detail=", v.Detail, "InsertText=", v.InsertText, "Label=", v.Label, string(v.Documentation))
+		debug.DebugLog("complete", "item", "Detail=", v.Detail,
+			// "InsertText=", v.InsertText,
+			"Label=", v.Label, string(v.Documentation))
 		if v.LabelDetails != nil {
 			debug.DebugLog("complete", "item", "LabelDetail", v.LabelDetails.Description, v.LabelDetails.Detail)
 		}
@@ -403,88 +357,7 @@ func (complete *completemenu) filename() string {
 	return filename
 }
 
-func (helpview *LspTextView) Load(txt string, filename string) int {
-	if helpview.Box == nil {
-		helpview.Box = tview.NewBox()
-	}
-	helpview.lines = strings.Split(txt, "\n")
-	ts := lspcore.NewTreeSitterParse(filename, txt)
-	ts.Init(func(ts *lspcore.TreeSitter) {
-		debug.DebugLog("init")
-		helpview.main.App().QueueUpdateDraw(func() {
-			helpview.HlLine = ts.HlLine
-		})
-	})
-	return len(helpview.lines)
-}
-// func (complete *completemenu) handle_complete_result_old(v lsp.CompletionItem, lspret *lspcore.Complete) {
-// 	var editor = complete.editor
-// 	complete.show = false
-// 	var help *lspcore.SignatureHelp
-// 	if v.TextEdit != nil {
-// 		r := v.TextEdit.Range
-// 		//checker := complete.editor.code.NewChangeChecker()
-// 		//checker.not_notify = true
 
-// 		newtext := v.TextEdit.NewText
-// 		switch v.Kind {
-// 		case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
-// 			re := regexp.MustCompile(`\$\{.*\}`)
-// 			index := re.FindAllStringIndex(newtext, 1)
-// 			if len(index) > 0 {
-// 				var xy = index[0]
-// 				var Pos lsp.Position
-
-// 				Pos.Character = xy[0] + r.Start.Character - 1
-// 				Pos.Line = r.Start.Line
-
-// 				// start := lsp.Position{
-// 				// 	Line:      Pos.Line,
-// 				// 	Character: Pos.Character,
-// 				// }
-// 				// end := start
-
-// 				// chr := newtext[xy[0]-1 : xy[0]]
-
-// 				newtext = re.ReplaceAllString(newtext, "")
-
-// 				help = &lspcore.SignatureHelp{
-// 					HelpCb:           complete.hanlde_help_signature,
-// 					Pos:              Pos,
-// 					IsVisiable:       false,
-// 					CompleteSelected: v.TextEdit.NewText,
-// 				}
-// 			}
-// 		}
-// 		line := editor.Buf.Line(r.Start.Line)
-// 		replace := ""
-// 		if len(line) > r.End.Character {
-// 			r.End.Character = r.End.Character + 1
-// 			replace = line[r.Start.Character:r.End.Character]
-// 		} else {
-// 			replace = line[r.Start.Character:]
-// 			r.End.Character = len(line)
-// 		}
-// 		debug.DebugLog("complete", "replace", replace, "=>", newtext)
-// 		editor.Buf.Replace(
-// 			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-// 			femto.Loc{X: editor.Cursor.Loc.X, Y: r.End.Line},
-// 			newtext)
-// 		Event := []lspcore.TextChangeEvent{{
-// 			Type:  lspcore.TextChangeTypeReplace,
-// 			Range: r,
-// 			Text:  newtext}}
-// 		lspret.Sym.NotifyCodeChange(lspcore.CodeChangeEvent{
-// 			File:   lspret.Sym.Filename,
-// 			Events: Event})
-// 		if help != nil {
-// 			help.TriggerCharacter = editor.Buf.Line(help.Pos.Line)[help.Pos.Character : help.Pos.Character+1]
-// 			go lspret.Sym.SignatureHelp(*help)
-// 		}
-// 		return
-// 	}
-// 	editor.Buf.Insert(complete.loc, v.Label)
-// }
 func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.Complete {
 
 	req := lspcore.Complete{
@@ -502,62 +375,7 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 	}
 	return req
 }
-func (l *LspTextView) Draw(screen tcell.Screen) {
-	begingX, y, _, _ := l.GetInnerRect()
-	default_style := *global_theme.select_style()
-	_, bg, _ := default_style.Decompose()
-	menu_width := 0
-	for i := range l.lines {
-		v := l.lines[i]
-		line := []rune(v)
-		menu_width = max(len(line), menu_width)
-	}
-	for i, v := range l.lines {
-		PosY := y + i
-		var symline *[]lspcore.TreeSitterSymbol
-		if sym, ok := l.HlLine[i]; ok {
-			symline = &sym
-		}
-		line := []rune(v)
-		for col, v := range line {
-			style := default_style
-			if symline != nil {
-				if s, e := GetColumnStyle(symline, uint32(col), bg); e == nil {
-					style = s
-				}
-			}
-			Posx := begingX + col
-			screen.SetContent(Posx, PosY, v, nil, style)
-		}
-		for col := len(line); col < menu_width; col++ {
-			Posx := begingX + col
-			screen.SetContent(Posx, PosY, ' ', nil, default_style)
-		}
-	}
-}
 
-func GetColumnStyle(symline *[]lspcore.TreeSitterSymbol, col uint32, bg tcell.Color) (style tcell.Style, err error) {
-	for _, pos := range *symline {
-		if col >= pos.Begin.Column && col <= pos.End.Column {
-			if s, e := get_position_style(pos); e == nil {
-				style = s.Background(bg)
-				return
-			}
-		}
-	}
-	return style, fmt.Errorf("not found")
-}
-
-func get_position_style(pos lspcore.TreeSitterSymbol) (tcell.Style, error) {
-	style := global_theme.get_color(pos.CaptureName)
-	if style == nil {
-		style = global_theme.get_color("@" + pos.CaptureName)
-	}
-	if style == nil {
-		return tcell.Style{}, fmt.Errorf("not found")
-	}
-	return *style, nil
-}
 func (l *completemenu) Draw(screen tcell.Screen) {
 	v := l.editor
 	x, y, _, _ := l.editor.GetInnerRect()
@@ -600,6 +418,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 	if v.TextEdit != nil {
 		r := v.TextEdit.Range
 		newtext := v.TextEdit.NewText
+		debug.DebugLog("complete", "completereuslt", newtext, v.Kind, v.TextEdit)
 		code := lspcore.NewCompleteCode(newtext)
 		sss := code.Text()
 		end := lsp.Position{Line: editor.Cursor.Loc.Y, Character: editor.Cursor.Loc.X}
@@ -631,12 +450,10 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 			editor.Cursor.Loc = femto.Loc{X: help.Pos.Character, Y: help.Pos.Line}
 			x := editor.Buf.Line(help.Pos.Line)
 			help.TriggerCharacter = x[help.Pos.Character : help.Pos.Character+1]
+			debug.DebugLog("complete", "help", "TriggerCharacter", help.TriggerCharacter)
 			go lspret.Sym.SignatureHelp(*help)
 		}
 		return
 	}
 	editor.Buf.Insert(complete.loc, v.Label)
 }
-
-	editor.Buf.Insert(complete.loc, v.Label)
-}*/
