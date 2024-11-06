@@ -97,7 +97,7 @@ func (complete *completemenu) HandleKeyInput(event *tcell.EventKey, after []lspc
 	if end {
 		return
 	}
-	ok := (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_' || (ch >= '0' && ch <= '9')
+	ok := (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_' || (ch >= '0' && ch <= '9') || ch == ' '
 	if !ok && !is_tiggle {
 		complete.Hide()
 		return
