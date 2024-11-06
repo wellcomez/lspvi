@@ -17,14 +17,14 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
-type LpsTextView struct {
+type LspTextView struct {
 	*tview.Box
 	lines  []string
 	HlLine lspcore.TreesiterSymbolLine
 	main   MainService
 }
 type HelpBox struct {
-	*LpsTextView
+	*LspTextView
 	begin femto.Loc
 	end   femto.Loc
 	prev  *lsp.SignatureHelp
@@ -56,7 +56,7 @@ func (v HelpBox) IsShown(view *codetextview) bool {
 }
 func NewHelpBox() *HelpBox {
 	ret := &HelpBox{
-		LpsTextView: &LpsTextView{
+		LspTextView: &LspTextView{
 			Box: tview.NewBox(),
 		},
 	}
@@ -84,7 +84,7 @@ type completemenu struct {
 	width, height int
 	editor        *codetextview
 	task          *complete_task
-	document      *LpsTextView
+	document      *LspTextView
 	helpview      *HelpBox
 }
 type complete_task struct {
@@ -121,7 +121,7 @@ func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
 		femto.Loc{X: 0, Y: 0},
 		0, 0,
 		txt, nil,
-		&LpsTextView{Box: tview.NewBox(), main: main}, nil}
+		&LspTextView{Box: tview.NewBox(), main: main}, nil}
 	return &ret
 }
 
@@ -350,7 +350,7 @@ func new_help_signature_docs(v lsp.SignatureInformation) (ret *help_signature_do
 	return
 }
 func (d *help_signature_docs) comment_line(n int) (ret []string) {
-	n = min(len(d.label), n)
+	n = max(len(d.label), n)
 	comment, _ := tablewriter.WrapString(d.label, n)
 	ret = append(ret, comment...)
 	if len(d.value) > 0 {
@@ -382,7 +382,7 @@ func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
 	var ret = []string{}
 	var doc []*help_signature_docs = helpview.doc
 	filename := complete.filename()
-	n40 := 100
+	n40 := 60
 	for _, v := range doc {
 		ret = append(ret, v.comment_line(n40)...)
 	}
@@ -403,7 +403,7 @@ func (complete *completemenu) filename() string {
 	return filename
 }
 
-func (helpview *LpsTextView) Load(txt string, filename string) int {
+func (helpview *LspTextView) Load(txt string, filename string) int {
 	if helpview.Box == nil {
 		helpview.Box = tview.NewBox()
 	}
@@ -502,7 +502,7 @@ func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.C
 	}
 	return req
 }
-func (l *LpsTextView) Draw(screen tcell.Screen) {
+func (l *LspTextView) Draw(screen tcell.Screen) {
 	begingX, y, _, _ := l.GetInnerRect()
 	default_style := *global_theme.select_style()
 	_, bg, _ := default_style.Decompose()
