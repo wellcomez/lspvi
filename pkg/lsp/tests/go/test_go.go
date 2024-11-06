@@ -23,6 +23,7 @@ func (a *struct1) a3456(c, b int) {
 // call1 test
 func (a struct1) call1() {
 	a.a3456(1, 2)
+	a.a3456(a.a,a.a0)
 }
 
 // call2  test2

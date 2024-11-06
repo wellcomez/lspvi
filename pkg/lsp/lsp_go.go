@@ -242,14 +242,16 @@ func create_complete_go(v lsp.CompletionItem) (text []string) {
 }
 
 func (a lsp_lang_go) LspHelp(core *lspcore) (ret LspUtil, err error) {
-	ret, err = a.lsp_lang_common.LspHelp(core)
+	ret, _ = a.lsp_lang_common.LspHelp(core)
 	ret.Complete.Document = create_complete_go
-	ret.Signature.Document = func(v lsp.SignatureHelp) (text []string) {
+	ret.Signature.Document = func(v lsp.SignatureHelp, call SignatureHelp) (text []string) {
 		for _, s := range v.Signatures {
-			text = append(text, s.Label)
-			// for _, p := range s.Parameters {
-
-			// }
+			method := s.Label
+			switch call.Kind {
+			case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
+				method = fmt.Sprintf("func %s", method)
+			}
+			text = append(text, method)
 			var signature_document Document
 			// if len(v.Parameters) > 0 {
 			// 	ret.label = v.Label

@@ -29,7 +29,7 @@ type Symbol_file struct {
 }
 type LspSignatureHelp struct {
 	TriggerChar []string
-	Document    func(v lsp.SignatureHelp) (text []string)
+	Document    func(v lsp.SignatureHelp, call SignatureHelp) (text []string)
 }
 type LspCompleteUtil struct {
 	TriggerChar []string

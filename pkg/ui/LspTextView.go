@@ -110,10 +110,10 @@ func (helpview *LspTextView) Load(txt string, filename string) int {
 
 func (l *LspTextView) Draw(screen tcell.Screen) {
 	l.Box.DrawForSubclass(screen, l)
-	begingX, y, _, _ := l.GetInnerRect()
+	begingX, y, w, _ := l.GetInnerRect()
 	default_style := *global_theme.select_style()
 	_, bg, _ := default_style.Decompose()
-	menu_width := 0
+	menu_width := w
 	for i := range l.lines {
 		v := l.lines[i]
 		line := []rune(v)

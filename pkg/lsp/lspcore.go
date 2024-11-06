@@ -60,7 +60,7 @@ type lspcore struct {
 	config LangConfig
 }
 
-func (core *lspcore) LspHelp() ( LspUtil,error) {
+func (core *lspcore) LspHelp() (LspUtil, error) {
 	return core.lang.LspHelp(core)
 }
 
@@ -271,14 +271,14 @@ func (client *lspcore) DidClose(file string) error {
 }
 
 type SignatureHelp struct {
-	Pos              lsp.Position
-	File             string
-	HelpCb           func(lsp.SignatureHelp, SignatureHelp, error)
-	IsVisiable       bool
-	TriggerCharacter string
-	Continued        bool
-	//CompleteSelected    string
+	Pos                 lsp.Position
+	File                string
+	HelpCb              func(lsp.SignatureHelp, SignatureHelp, error)
+	IsVisiable          bool
+	TriggerCharacter    string
+	Continued           bool
 	ActiveSignatureHelp *lsp.SignatureHelp
+	Kind                lsp.CompletionItemKind
 }
 
 /*func (h SignatureHelp) CreateSignatureHelp(s string) string {*/

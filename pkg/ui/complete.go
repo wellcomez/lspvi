@@ -40,6 +40,7 @@ type completemenu struct {
 	task          *complete_task
 	document      *LspTextView
 	helpview      *HelpBox
+	Util          lspcore.LspUtil
 }
 type complete_task struct {
 	current  lspcore.Complete
@@ -75,7 +76,7 @@ func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
 		femto.Loc{X: 0, Y: 0},
 		0, 0,
 		txt, nil,
-		&LspTextView{Box: tview.NewBox(), main: main}, nil}
+		&LspTextView{Box: tview.NewBox(), main: main}, nil, lspcore.LspUtil{}}
 	return &ret
 }
 
@@ -101,6 +102,11 @@ func (complete *completemenu) HandleKeyInput(event *tcell.EventKey, after []lspc
 	if !ok && !is_tiggle {
 		complete.Hide()
 		return
+	}
+	if u, err := lsp.LspHelp(); err == nil {
+		complete.Util = u
+	} else {
+		complete.Util = lspcore.LspUtil{}
 	}
 	if complete := complete; complete != nil {
 		for _, v := range after {
@@ -375,8 +381,14 @@ func (d *help_signature_docs) comment_line(n int) (ret []string) {
 func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspcore.SignatureHelp) *HelpBox {
 	// width := 0
 	var doc = []*help_signature_docs{}
-	for _, v := range help.Signatures {
-		doc = append(doc, new_help_signature_docs(v))
+	if d := complete.Util.Signature.Document; d == nil {
+		for _, v := range help.Signatures {
+			doc = append(doc, new_help_signature_docs(v))
+		}
+	} else {
+		doc = append(doc, &help_signature_docs{
+			label: strings.Join(d(help, helpcall), "\n"),
+		})
 	}
 
 	helpview := NewHelpBox()
@@ -465,6 +477,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 					HelpCb:     complete.hanlde_help_signature,
 					Pos:        Pos,
 					IsVisiable: false,
+					Kind:       v.Kind,
 				}
 			}
 		}
