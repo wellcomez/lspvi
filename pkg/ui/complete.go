@@ -417,74 +417,74 @@ func (helpview *LspTextView) Load(txt string, filename string) int {
 	})
 	return len(helpview.lines)
 }
-func (complete *completemenu) handle_complete_result_old(v lsp.CompletionItem, lspret *lspcore.Complete) {
-	var editor = complete.editor
-	complete.show = false
-	var help *lspcore.SignatureHelp
-	if v.TextEdit != nil {
-		r := v.TextEdit.Range
-		//checker := complete.editor.code.NewChangeChecker()
-		//checker.not_notify = true
+// func (complete *completemenu) handle_complete_result_old(v lsp.CompletionItem, lspret *lspcore.Complete) {
+// 	var editor = complete.editor
+// 	complete.show = false
+// 	var help *lspcore.SignatureHelp
+// 	if v.TextEdit != nil {
+// 		r := v.TextEdit.Range
+// 		//checker := complete.editor.code.NewChangeChecker()
+// 		//checker.not_notify = true
 
-		newtext := v.TextEdit.NewText
-		switch v.Kind {
-		case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
-			re := regexp.MustCompile(`\$\{.*\}`)
-			index := re.FindAllStringIndex(newtext, 1)
-			if len(index) > 0 {
-				var xy = index[0]
-				var Pos lsp.Position
+// 		newtext := v.TextEdit.NewText
+// 		switch v.Kind {
+// 		case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
+// 			re := regexp.MustCompile(`\$\{.*\}`)
+// 			index := re.FindAllStringIndex(newtext, 1)
+// 			if len(index) > 0 {
+// 				var xy = index[0]
+// 				var Pos lsp.Position
 
-				Pos.Character = xy[0] + r.Start.Character - 1
-				Pos.Line = r.Start.Line
+// 				Pos.Character = xy[0] + r.Start.Character - 1
+// 				Pos.Line = r.Start.Line
 
-				// start := lsp.Position{
-				// 	Line:      Pos.Line,
-				// 	Character: Pos.Character,
-				// }
-				// end := start
+// 				// start := lsp.Position{
+// 				// 	Line:      Pos.Line,
+// 				// 	Character: Pos.Character,
+// 				// }
+// 				// end := start
 
-				// chr := newtext[xy[0]-1 : xy[0]]
+// 				// chr := newtext[xy[0]-1 : xy[0]]
 
-				newtext = re.ReplaceAllString(newtext, "")
+// 				newtext = re.ReplaceAllString(newtext, "")
 
-				help = &lspcore.SignatureHelp{
-					HelpCb:           complete.hanlde_help_signature,
-					Pos:              Pos,
-					IsVisiable:       false,
-					CompleteSelected: v.TextEdit.NewText,
-				}
-			}
-		}
-		line := editor.Buf.Line(r.Start.Line)
-		replace := ""
-		if len(line) > r.End.Character {
-			r.End.Character = r.End.Character + 1
-			replace = line[r.Start.Character:r.End.Character]
-		} else {
-			replace = line[r.Start.Character:]
-			r.End.Character = len(line)
-		}
-		debug.DebugLog("complete", "replace", replace, "=>", newtext)
-		editor.Buf.Replace(
-			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-			femto.Loc{X: editor.Cursor.Loc.X, Y: r.End.Line},
-			newtext)
-		Event := []lspcore.TextChangeEvent{{
-			Type:  lspcore.TextChangeTypeReplace,
-			Range: r,
-			Text:  newtext}}
-		lspret.Sym.NotifyCodeChange(lspcore.CodeChangeEvent{
-			File:   lspret.Sym.Filename,
-			Events: Event})
-		if help != nil {
-			help.TriggerCharacter = editor.Buf.Line(help.Pos.Line)[help.Pos.Character : help.Pos.Character+1]
-			go lspret.Sym.SignatureHelp(*help)
-		}
-		return
-	}
-	editor.Buf.Insert(complete.loc, v.Label)
-}
+// 				help = &lspcore.SignatureHelp{
+// 					HelpCb:           complete.hanlde_help_signature,
+// 					Pos:              Pos,
+// 					IsVisiable:       false,
+// 					CompleteSelected: v.TextEdit.NewText,
+// 				}
+// 			}
+// 		}
+// 		line := editor.Buf.Line(r.Start.Line)
+// 		replace := ""
+// 		if len(line) > r.End.Character {
+// 			r.End.Character = r.End.Character + 1
+// 			replace = line[r.Start.Character:r.End.Character]
+// 		} else {
+// 			replace = line[r.Start.Character:]
+// 			r.End.Character = len(line)
+// 		}
+// 		debug.DebugLog("complete", "replace", replace, "=>", newtext)
+// 		editor.Buf.Replace(
+// 			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
+// 			femto.Loc{X: editor.Cursor.Loc.X, Y: r.End.Line},
+// 			newtext)
+// 		Event := []lspcore.TextChangeEvent{{
+// 			Type:  lspcore.TextChangeTypeReplace,
+// 			Range: r,
+// 			Text:  newtext}}
+// 		lspret.Sym.NotifyCodeChange(lspcore.CodeChangeEvent{
+// 			File:   lspret.Sym.Filename,
+// 			Events: Event})
+// 		if help != nil {
+// 			help.TriggerCharacter = editor.Buf.Line(help.Pos.Line)[help.Pos.Character : help.Pos.Character+1]
+// 			go lspret.Sym.SignatureHelp(*help)
+// 		}
+// 		return
+// 	}
+// 	editor.Buf.Insert(complete.loc, v.Label)
+// }
 func (complete *completemenu) CreateRequest(e lspcore.TextChangeEvent) lspcore.Complete {
 
 	req := lspcore.Complete{
