@@ -321,25 +321,7 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	return helpview
 }
 
-func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
-	var ret = []string{}
-	var doc []*help_signature_docs = helpview.doc
-	filename := complete.filename()
-	n40 := 60
-	for _, v := range doc {
-		ret = append(ret, v.comment_line(n40)...)
-	}
-	txt := strings.Join(ret, "\n")
-	height := len(helpview.lines)
-	if !helpview.loaded {
-		height = helpview.Load(txt, filename)
-		helpview.loaded = true
-	}
-	loc := complete.editor.Cursor.Loc
-	edit_x, edit_y, _, _ := complete.editor.GetRect()
-	Y := edit_y + loc.Y - complete.editor.Topline - (height - 1)
-	helpview.SetRect(helpview.begin.X+edit_x, Y, n40, height)
-}
+
 
 func (complete *completemenu) filename() string {
 	filename := complete.editor.code.FileName()

@@ -24,12 +24,42 @@ type HelpBox struct {
 	// end   femto.Loc
 	prev *lsp.SignatureHelp
 
-	doc      []*help_signature_docs
-	loaded   bool
-	Complete *lspcore.CompleteCodeLine
+	doc       []*help_signature_docs
+	loaded    bool
+	Complete  *lspcore.CompleteCodeLine
+	hasborder bool
 	//Complete            *lspcore.complete_code
 }
 
+func (b *HelpBox) SetBorder(show bool) {
+	b.Box.SetBorder(show)
+	b.hasborder = show
+	if show {
+		b.SetBorderStyle(global_theme.select_style().Foreground(tview.Styles.BorderColor))
+	}
+}
+func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
+	var ret = []string{}
+	var doc []*help_signature_docs = helpview.doc
+	filename := complete.filename()
+	n40 := 60
+	for _, v := range doc {
+		ret = append(ret, v.comment_line(n40)...)
+	}
+	txt := strings.Join(ret, "\n")
+	height := len(helpview.lines)
+	if !helpview.loaded {
+		height = helpview.Load(txt, filename)
+		helpview.loaded = true
+	}
+	if helpview.hasborder {
+		height += 2
+	}
+	loc := complete.editor.Cursor.Loc
+	edit_x, edit_y, _, _ := complete.editor.GetRect()
+	Y := edit_y + loc.Y - complete.editor.Topline - (height - 1)
+	helpview.SetRect(helpview.begin.X+edit_x, Y, n40, height)
+}
 func (v HelpBox) IsShown(view *codetextview) bool {
 	loc := view.Cursor.Loc
 	if v.begin.Y == loc.Y {
@@ -59,6 +89,7 @@ func NewHelpBox() *HelpBox {
 		},
 	}
 	// x := global_theme.get_color("selection")
+	ret.SetBorder(true)
 	return ret
 }
 
@@ -78,6 +109,7 @@ func (helpview *LspTextView) Load(txt string, filename string) int {
 }
 
 func (l *LspTextView) Draw(screen tcell.Screen) {
+	l.Box.DrawForSubclass(screen, l)
 	begingX, y, _, _ := l.GetInnerRect()
 	default_style := *global_theme.select_style()
 	_, bg, _ := default_style.Decompose()
