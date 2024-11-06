@@ -29,7 +29,7 @@ type CompleteMenu interface {
 	SetRect(int, int, int, int)
 	InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive))
 	StartComplete(v lspcore.CodeChangeEvent) bool
-	CheckTrigeKey(event *tcell.EventKey) bool
+	CheckTrigeKey(event *tcell.EventKey) (bool, bool)
 }
 type completemenu struct {
 	*customlist
@@ -93,11 +93,12 @@ func (complete *completemenu) HandleKeyInput(event *tcell.EventKey, after []lspc
 		return
 	}
 	ch := event.Rune()
-	ok := (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_' || (ch >= '0' && ch <= '9')
-	if complete.CheckTrigeKey(event) {
+	is_tiggle, end := complete.CheckTrigeKey(event)
+	if end {
 		return
 	}
-	if !ok {
+	ok := (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_' || (ch >= '0' && ch <= '9')
+	if !ok && !is_tiggle {
 		complete.Hide()
 		return
 	}
@@ -130,7 +131,7 @@ func Loc2Pos(loc femto.Loc) (pos lsp.Position) {
 	pos.Character = loc.X
 	return
 }
-func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
+func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) (is_trigge bool, end bool) {
 	var sym *lspcore.Symbol_file = complete.editor.code.LspSymbol()
 	var codetext *codetextview = complete.editor
 	key := fmt.Sprintf("%c", event.Rune())
@@ -140,18 +141,22 @@ func (complete *completemenu) CheckTrigeKey(event *tcell.EventKey) bool {
 		case lspcore.TriggerCharHelp:
 			{
 				if codetext.complete.OnTrigeHelp(tg) {
-					return true
+					is_trigge = true
+					end = true
+					return
 				}
 			}
 		case lspcore.TriggerCharComplete:
 			{
 				complete.Hide()
 				complete.helpview = nil
-				return false
+				is_trigge = true
+				end = false
+				return
 			}
 		}
 	}
-	return false
+	return
 }
 
 func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspcore.Complete, err error) {
