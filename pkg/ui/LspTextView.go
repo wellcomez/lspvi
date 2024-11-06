@@ -21,11 +21,13 @@ type LspTextView struct {
 type HelpBox struct {
 	*LspTextView
 	begin femto.Loc
-	end   femto.Loc
-	prev  *lsp.SignatureHelp
+	// end   femto.Loc
+	prev *lsp.SignatureHelp
 
-	doc    []*help_signature_docs
-	loaded bool
+	doc      []*help_signature_docs
+	loaded   bool
+	Complete *lspcore.CompleteCodeLine
+	//Complete            *lspcore.complete_code
 }
 
 func (v HelpBox) IsShown(view *codetextview) bool {
@@ -37,12 +39,13 @@ func (v HelpBox) IsShown(view *codetextview) bool {
 			return false
 		}
 		ss := line[begin.X:]
+		end := begin
 		if index := strings.Index(ss, ")"); index >= 0 {
-			v.end.X = begin.X + index
+			end.X = begin.X + index
 		} else if v.begin.LessThan(loc) {
 			return true
 		}
-		if v.begin.GreaterThan(loc) || v.end.LessThan(loc) {
+		if v.begin.GreaterThan(loc) || end.LessThan(loc) {
 			return false
 		}
 		return true
@@ -73,7 +76,6 @@ func (helpview *LspTextView) Load(txt string, filename string) int {
 	})
 	return len(helpview.lines)
 }
-
 
 func (l *LspTextView) Draw(screen tcell.Screen) {
 	begingX, y, _, _ := l.GetInnerRect()

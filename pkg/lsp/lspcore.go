@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -274,14 +273,14 @@ type SignatureHelp struct {
 	IsVisiable          bool
 	TriggerCharacter    string
 	Continued           bool
-	CompleteSelected    string
+	//CompleteSelected    string
 	ActiveSignatureHelp *lsp.SignatureHelp
 }
 
-func (h SignatureHelp) CreateSignatureHelp(s string) string {
-	re := regexp.MustCompile(`\$\{\d+:?\}`)
-	return re.ReplaceAllString(h.CompleteSelected, s)
-}
+/*func (h SignatureHelp) CreateSignatureHelp(s string) string {*/
+	/*re := regexp.MustCompile(`\$\{\d+:?\}`)*/
+	/*return re.ReplaceAllString(h.CompleteSelected, s)*/
+/*}*/
 
 type CompleteResult struct {
 	Document []string

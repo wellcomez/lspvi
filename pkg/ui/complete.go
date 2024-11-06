@@ -5,13 +5,15 @@ package mainui
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	"strings"
-	"time"
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
@@ -225,8 +227,14 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		complete.task = nil
 	}()
 }
+func print_help(ret lsp.SignatureHelp) string {
+	if len(ret.Signatures) > 0 {
+		return "help_retuslt:" + ret.Signatures[0].Label
+	}
+	return ""
+}
 func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.SignatureHelp, err error) {
-	debug.DebugLog("complete", "help", ret, arg.Pos, arg.TriggerCharacter, err)
+	debug.DebugLog("help", "help-return", print_help(ret), arg.Pos.String(), arg.TriggerCharacter, err)
 	c.helpview = nil
 	if err != nil {
 		return
@@ -234,30 +242,11 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 	check := c.editor.code.NewChangeChecker()
 	defer check.End()
 	if len(ret.Signatures) > 0 {
-		helpview := c.new_help_box(ret, arg)
-		// x := ret.Signatures[0]
-		// var array = []string{}
-		// for _, v := range x.Parameters {
-		// 	array = append(array, string(v.Label))
-		// }
-		// ss := strings.Join(array, ",")
-		replace_range := femto.Loc{
-			X: arg.Pos.Character + 1,
-			Y: arg.Pos.Line,
-		}
-		ss := ""
-		c.editor.View.Buf.Insert(replace_range, ss)
-		helpview.begin = replace_range
-		helpview.prev = &ret
-		end := replace_range
-		end.X = end.X + len(ss)
-		helpview.end = end
-		c.editor.Cursor.Loc = replace_range
-		debug.DebugLog("complete", "signature")
+		c.new_help_box(ret, arg)
+		debug.DebugLog("complete", "new-help-signature")
 	} else {
 		c.helpview = nil
 	}
-	debug.DebugLog("help", ret, arg, err)
 }
 func (complete *completemenu) OnTrigeHelp(tg lspcore.TriggerChar) bool {
 	sym := complete.editor.code.LspSymbol()
@@ -271,7 +260,7 @@ func (complete *completemenu) OnTrigeHelp(tg lspcore.TriggerChar) bool {
 		TriggerCharacter: tg.Ch,
 		Continued:        false,
 	}); err == nil && len(help.Signatures) > 0 {
-		debug.DebugLog("help", help)
+		debug.DebugLog("help", print_help(help))
 
 		var prev *lsp.SignatureHelp
 		if complete.helpview != nil {
@@ -279,7 +268,6 @@ func (complete *completemenu) OnTrigeHelp(tg lspcore.TriggerChar) bool {
 		}
 		help := complete.new_help_box(help, lspcore.SignatureHelp{})
 		help.begin = loc
-		help.end = loc
 		help.prev = prev
 		complete.editor.main.App().ForceDraw()
 		return true
@@ -305,7 +293,7 @@ func new_help_signature_docs(v lsp.SignatureInformation) (ret *help_signature_do
 }
 func (d *help_signature_docs) comment_line(n int) (ret []string) {
 	n = max(len(d.label), n)
-	comment, _ := tablewriter.WrapString(d.label, n)
+	comment, _ := tablewriter.WrapString("\t"+d.label+"\t"+"\n"+"\t", n)
 	ret = append(ret, comment...)
 	if len(d.value) > 0 {
 		comment, _ := tablewriter.WrapString(d.value, n)
@@ -328,6 +316,7 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	helpview := NewHelpBox()
 	helpview.doc = doc
 	helpview.main = complete.editor.main
+	helpview.begin = femto.Loc{X: helpcall.Pos.Character, Y: helpcall.Pos.Line}
 	complete.helpview = helpview
 	return helpview
 }
@@ -427,10 +416,9 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				Pos.Character = Pos.Character + len(t.Text)
 				Pos.Line = r.Start.Line
 				help = &lspcore.SignatureHelp{
-					HelpCb:           complete.hanlde_help_signature,
-					Pos:              Pos,
-					IsVisiable:       false,
-					CompleteSelected: sss,
+					HelpCb:     complete.hanlde_help_signature,
+					Pos:        Pos,
+					IsVisiable: false,
 				}
 			}
 		}
@@ -449,7 +437,8 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 			editor.Cursor.Loc = femto.Loc{X: help.Pos.Character, Y: help.Pos.Line}
 			x := editor.Buf.Line(help.Pos.Line)
 			help.TriggerCharacter = x[help.Pos.Character-1 : help.Pos.Character]
-			debug.DebugLog("complete", "help", "TriggerCharacter", help.TriggerCharacter)
+			debug.DebugLog("complete", "help", strconv.Quote(sss), "TriggerCharacter", help.Pos, strconv.Quote(help.TriggerCharacter), x[:help.Pos.Character])
+			debug.DebugLog("complete", "help", "TriggerCharacter", "len=", len(x), x)
 			go lspret.Sym.SignatureHelp(*help)
 		}
 		return
