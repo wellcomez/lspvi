@@ -55,6 +55,7 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 		Path:       root,
 		Export:     lspviroot.export,
 		Callback:   main,
+		NotifyHanlde: main,
 		ConfigFile: ConfigFile})
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main

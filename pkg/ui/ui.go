@@ -220,6 +220,10 @@ type mainui struct {
 	lsp_log_file *os.File
 }
 
+func (m *mainui) PublishDiagnostics(param lsp.PublishDiagnosticsParams) {
+	debug.DebugLog("PublishDiagnostics: ", param.URI.AsPath().String())
+}
+
 // OnWatchFileChange implements change_reciever.
 func (main *mainui) OnWatchFileChange(file string, event fsnotify.Event) bool {
 	if event.Op&fsnotify.Write != fsnotify.Write {

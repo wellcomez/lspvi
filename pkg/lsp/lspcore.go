@@ -139,11 +139,12 @@ type LspLog interface {
 
 // WorkSpace
 type WorkSpace struct {
-	Path        string
-	Export      string
-	Callback    LspLog
-	LspCoreList []lspcore
-	ConfigFile  string
+	Path         string
+	Export       string
+	Callback     LspLog
+	NotifyHanlde lsp_notify_handle
+	LspCoreList  []lspcore
+	ConfigFile   string
 }
 
 func (core *lspcore) Initialized() error {
@@ -214,7 +215,7 @@ func (w WorkSpace) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 	var logerr error
 	if _, err := json.MarshalIndent(req, " ", " "); err == nil {
 		if a, err := json.Marshal(req.Params); err == nil {
-			if ret, err := notificationDispatcher(req.Method, a); err == nil {
+			if ret, err := notificationDispatcher(req.Method, a,w.NotifyHanlde); err == nil {
 				data := fmt.Sprintf("\nMethod: %s\n Params: %s", req.Method, ret)
 				w.Callback.LspLogOutput(data, "lsp-notify")
 			} else {
@@ -868,7 +869,12 @@ func mainxx2() {
 	debug.DebugLogf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)
 
 }
-func notificationDispatcher(method string, req json.RawMessage) (ret string, err error) {
+
+type lsp_notify_handle interface {
+	PublishDiagnostics(lsp.PublishDiagnosticsParams)
+}
+
+func notificationDispatcher(method string, req json.RawMessage, cb lsp_notify_handle) (ret string, err error) {
 	switch method {
 	case "$/progress":
 		var param lsp.ProgressParams
@@ -916,6 +922,9 @@ func notificationDispatcher(method string, req json.RawMessage) (ret string, err
 			// client.errorHandler(err)
 			return
 		}
+		s, _ := json.Marshal(param)
+		ret = string(s)
+		cb.PublishDiagnostics(param)
 		// client.handler.TextDocumentPublishDiagnostics(logger, &param)
 	default:
 		// if handler, ok := client.customNotification[method]; ok {

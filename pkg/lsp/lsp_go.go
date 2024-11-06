@@ -229,7 +229,7 @@ func create_complete_go(v lsp.CompletionItem) (text []string) {
 	default:
 		s = fmt.Sprintf("%s %s", v.Label, v.Detail)
 	}
-	debug.DebugLogf("complete", "go parse %d %s ", v.Kind, s)
+	// debug.DebugLogf("complete", "go parse %d %s ", v.Kind, s)
 	text = append(text, s)
 	var doc Document
 	if doc.Parser(v.Documentation) == nil {
