@@ -146,8 +146,8 @@ local function save_scheme(colorscheme)
             name = 'IncSearch',
             link = false
         })
-        save_hlresult(search_highlight, "search", f)
-        save_hlresult(incsearch_highlight, "insearch", f)
+        -- save_hlresult(search_highlight, "search", f)
+        -- save_hlresult(incsearch_highlight, "insearch", f)
 
         -- Close the file
         f:close()
@@ -156,21 +156,23 @@ local function save_scheme(colorscheme)
     end
 
     -- local highlight_groups_default = vim.fn.getcompletion("", "highlight")
-    local highlight_groups_default = {"LineNr", "Comment", -- "Variable",
-    "Constant", "String", "Function", "Keyword", "Type", "Character", "Number", "Boolean", "Float", "Identifier",
-                                      "Function", "Statement", "Conditional", "Repeat", "Label", "Operator", "Keyword",
-                                      "Exception", "PreProc", "Include", "Define", "Macro", "PreCondit", "Type",
-                                      "StorageClass", "Structure", "Typedef", "Special", "SpecialChar", "Tag",
-                                      "Delimiter", "SpecialComment", "Debug", "Underlined", "Ignore", "Error", "Added",
-                                      "Changed", "Removed", "CursorLine", "CursorColumn", "Visual", "StatusLine",
-                                      "Normal", "DiagnosticError", "DiagnosticWarn", "DiagnosticInfo", "DiagnosticHint", -- > 
-                                      "DiffAdd", "DiffChange", "DiffDelete", "LspReferenceText", "LspReferenceRead",
-                                      "LspReferenceWrite"}
+    local highlight_groups_names = {"Normal", "Comment", "Constant", "String", "Character", "Number", "Boolean",
+                                    "Identifier", "Function", "Statement", "Conditional", "Repeat", "Label", "Operator",
+                                    "Keyword", "Exception", "PreProc", "Include", "Define", "Macro", "Type",
+                                    "StorageClass", "Structure", "Typedef", "Special", "SpecialChar", "Tag",
+                                    "Delimiter", "SpecialComment", "Error", "Todo", "Underlined", "Bold", "Italic",
+                                    "Ignore", "ErrorMsg", "WarningMsg", "Folded", "FoldColumn", "DiffAdd", "DiffChange",
+                                    "DiffDelete", "DiffText", "SignColumn", "CursorLine", "CursorColumn", "ColorColumn",
+                                    "Conceal", "LineNr", "CursorLineNr", "StatusLine", "StatusLineNC", "Whitespace",
+                                    "NonText", "SpecialKey", "Pmenu", "PmenuSel", "PmenuSbar", "PmenuThumb", "TabLine",
+                                    "TabLineFill", "TabLineSel", "Title", "Visual", "VisualNOS", "QuickFixLine",
+                                    "Search", "IncSearch", "MatchParen", "SpellBad", "SpellCap", "SpellRare",
+                                    "SpellLocal"}
     local highlight_groups = vim.fn.getcompletion("@", "highlight")
 
     local mergedArray = {}
     -- 将第二个数组的元素插入到新数组中
-    for _, value in ipairs(highlight_groups_default) do
+    for _, value in ipairs(highlight_groups_names) do
         table.insert(mergedArray, value)
     end
     -- 将第一个数组的元素插入到新数组中

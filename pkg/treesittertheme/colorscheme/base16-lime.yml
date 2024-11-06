@@ -1,7 +1,7 @@
 Data:
- - Group: "LineNr"
-   foreground: "#515155"
+ - Group: "Normal"
    background: "#1a1a2f"
+   foreground: "#818175"
 
  - Group: "Comment"
    foreground: "#313140"
@@ -12,15 +12,6 @@ Data:
  - Group: "String"
    foreground: "#8cd97c"
 
- - Group: "Function"
-   foreground: "#2b926f"
-
- - Group: "Keyword"
-   foreground: "#1b825f"
-
- - Group: "Type"
-   foreground: "#ffd15e"
-
  - Group: "Character"
    foreground: "#ff662a"
 
@@ -28,9 +19,6 @@ Data:
    foreground: "#ff773a"
 
  - Group: "Boolean"
-   foreground: "#ff773a"
-
- - Group: "Float"
    foreground: "#ff773a"
 
  - Group: "Identifier"
@@ -72,9 +60,6 @@ Data:
  - Group: "Macro"
    foreground: "#ff662a"
 
- - Group: "PreCondit"
-   foreground: "#ffd15e"
-
  - Group: "Type"
    foreground: "#ffd15e"
 
@@ -102,28 +87,61 @@ Data:
  - Group: "SpecialComment"
    foreground: "#4cad83"
 
- - Group: "Debug"
+ - Group: "Error"
+   background: "#1a1a2f"
    foreground: "#ff662a"
+
+ - Group: "Todo"
+   background: "#202030"
+   foreground: "#ffd15e"
 
  - Group: "Underlined"
    foreground: "#ff662a"
 
+ - Group: "Bold"
+   bold: true
+
+ - Group: "Italic"
+   italic: true
+
  - Group: "Ignore"
+   background: "#1a1a2f"
    foreground: "#818175"
-   background: "#1a1a2f"
 
- - Group: "Error"
+ - Group: "ErrorMsg"
+   background: "#1a1a2f"
    foreground: "#ff662a"
+
+ - Group: "WarningMsg"
+   foreground: "#ff662a"
+
+ - Group: "Folded"
+   background: "#202030"
+   foreground: "#313140"
+
+ - Group: "FoldColumn"
    background: "#1a1a2f"
+   foreground: "#4cad83"
 
- - Group: "Added"
-   foreground: "#b3f6c0"
+ - Group: "DiffAdd"
+   background: "#1a1a2f"
+   foreground: "#8cd97c"
 
- - Group: "Changed"
-   foreground: "#8cf8f7"
+ - Group: "DiffChange"
+   background: "#1a1a2f"
+   foreground: "#313140"
 
- - Group: "Removed"
-   foreground: "#ffc0b9"
+ - Group: "DiffDelete"
+   background: "#1a1a2f"
+   foreground: "#ff662a"
+
+ - Group: "DiffText"
+   background: "#1a1a2f"
+   foreground: "#2b926f"
+
+ - Group: "SignColumn"
+   background: "#1a1a2f"
+   foreground: "#515155"
 
  - Group: "CursorLine"
    background: "#202030"
@@ -131,52 +149,103 @@ Data:
  - Group: "CursorColumn"
    background: "#202030"
 
+ - Group: "ColorColumn"
+   background: "#202030"
+
+ - Group: "Conceal"
+   background: "#1a1a2f"
+   foreground: "#2b926f"
+
+ - Group: "LineNr"
+   background: "#1a1a2f"
+   foreground: "#515155"
+
+ - Group: "CursorLineNr"
+   background: "#202030"
+   foreground: "#515155"
+
+ - Group: "StatusLine"
+   background: "#2a2a3f"
+   foreground: "#818175"
+
+ - Group: "StatusLineNC"
+   background: "#202030"
+   foreground: "#515155"
+
+ - Group: "Whitespace"
+   foreground: "#313140"
+
+ - Group: "NonText"
+   foreground: "#313140"
+
+ - Group: "SpecialKey"
+   foreground: "#313140"
+
+ - Group: "Pmenu"
+   background: "#202030"
+   foreground: "#818175"
+
+ - Group: "PmenuSel"
+   background: "#818175"
+   foreground: "#202030"
+
+ - Group: "PmenuSbar"
+   background: "#202030"
+   foreground: "#818175"
+
+ - Group: "PmenuThumb"
+   background: "#4f5258"
+
+ - Group: "TabLine"
+   background: "#202030"
+   foreground: "#313140"
+
+ - Group: "TabLineFill"
+   background: "#202030"
+   foreground: "#313140"
+
+ - Group: "TabLineSel"
+   background: "#202030"
+   foreground: "#8cd97c"
+
+ - Group: "Title"
+   foreground: "#2b926f"
+
  - Group: "Visual"
    background: "#2a2a3f"
 
- - Group: "StatusLine"
-   foreground: "#818175"
-   background: "#2a2a3f"
-
- - Group: "Normal"
-   foreground: "#818175"
-   background: "#1a1a2f"
-
- - Group: "DiagnosticError"
+ - Group: "VisualNOS"
    foreground: "#ff662a"
 
- - Group: "DiagnosticWarn"
-   foreground: "#1b825f"
+ - Group: "QuickFixLine"
+   background: "#202030"
 
- - Group: "DiagnosticInfo"
-   foreground: "#2b926f"
+ - Group: "Search"
+   background: "#ffd15e"
+   foreground: "#202030"
 
- - Group: "DiagnosticHint"
-   foreground: "#4cad83"
+ - Group: "IncSearch"
+   background: "#ff773a"
+   foreground: "#202030"
 
- - Group: "DiffAdd"
-   foreground: "#8cd97c"
-   background: "#1a1a2f"
+ - Group: "MatchParen"
+   background: "#313140"
 
- - Group: "DiffChange"
-   foreground: "#313140"
-   background: "#1a1a2f"
+ - Group: "SpellBad"
+   undercurl: true
+   special: 16737834
 
- - Group: "DiffDelete"
-   foreground: "#ff662a"
-   background: "#1a1a2f"
+ - Group: "SpellCap"
+   undercurl: true
+   special: 2855535
 
- - Group: "LspReferenceText"
-   special: 5329237
-   underline: true
+ - Group: "SpellRare"
+   undercurl: true
+   special: 1802847
 
- - Group: "LspReferenceRead"
-   special: 5329237
-   underline: true
-
- - Group: "LspReferenceWrite"
-   special: 5329237
-   underline: true
+ - Group: "SpellLocal"
+   undercurl: true
+   special: 5025155
 
  - Group: "@attribute"
    foreground: "#ffd15e"
@@ -207,8 +276,8 @@ Data:
    foreground: "#2b926f"
 
  - Group: "@comment.todo"
-   foreground: "#ffd15e"
    background: "#202030"
+   foreground: "#ffd15e"
 
  - Group: "@comment.warning"
    foreground: "#1b825f"
@@ -238,16 +307,16 @@ Data:
    foreground: "#1b825f"
 
  - Group: "@diff.delta"
-   foreground: "#313140"
    background: "#1a1a2f"
+   foreground: "#313140"
 
  - Group: "@diff.minus"
-   foreground: "#ff662a"
    background: "#1a1a2f"
+   foreground: "#ff662a"
 
  - Group: "@diff.plus"
-   foreground: "#8cd97c"
    background: "#1a1a2f"
+   foreground: "#8cd97c"
 
  - Group: "@enum"
    foreground: "#ffd15e"
@@ -290,12 +359,12 @@ Data:
    foreground: "#2b926f"
 
  - Group: "@ibl.indent.char.1"
-   nocombine: true
    foreground: "#2a2a3f"
+   nocombine: true
 
  - Group: "@ibl.scope.char.1"
-   nocombine: true
    foreground: "#515155"
+   nocombine: true
 
  - Group: "@ibl.scope.underline.1"
    special: 5329237
@@ -530,12 +599,12 @@ Data:
    foreground: "#ff662a"
 
  - Group: "@text.diff.add"
-   foreground: "#8cd97c"
    background: "#1a1a2f"
+   foreground: "#8cd97c"
 
  - Group: "@text.diff.delete"
-   foreground: "#ff662a"
    background: "#1a1a2f"
+   foreground: "#ff662a"
 
  - Group: "@text.emphasis"
    foreground: "#ff773a"
@@ -570,8 +639,8 @@ Data:
    foreground: "#2b926f"
 
  - Group: "@text.todo"
-   foreground: "#ffd15e"
    background: "#202030"
+   foreground: "#ffd15e"
 
  - Group: "@text.underline"
    foreground: "#1a1a2f"
@@ -613,9 +682,3 @@ Data:
  - Group: "@variable.parameter"
    foreground: "#818175"
 
- - Group: "search"
-   foreground: "#202030"
-   background: "#ffd15e"
- - Group: "insearch"
-   foreground: "#202030"
-   background: "#ff773a"
