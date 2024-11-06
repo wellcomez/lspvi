@@ -167,32 +167,54 @@ Data:
    background: "#ffffff"
 
  - Group: "LspReferenceText"
-   underline: true
    special: 10526880
+   underline: true
 
  - Group: "LspReferenceRead"
-   underline: true
    special: 10526880
+   underline: true
 
  - Group: "LspReferenceWrite"
-   underline: true
    special: 10526880
+   underline: true
 
- - Group: "@variable"
+ - Group: "@attribute"
+   foreground: "#808000"
+
+ - Group: "@boolean"
+   foreground: "#ffff00"
+
+ - Group: "@character"
    foreground: "#800000"
 
- - Group: "@variable.builtin"
+ - Group: "@character.special"
+   foreground: "#ff00"
+
+ - Group: "@class"
+   foreground: "#808000"
+
+ - Group: "@comment"
+   foreground: "#c0c0c0"
    italic: true
+
+ - Group: "@comment.error"
    foreground: "#800000"
 
- - Group: "@variable.parameter"
-   foreground: "#808080"
-
- - Group: "@variable.parameter.builtin"
+ - Group: "@comment.hint"
    foreground: "#8080"
 
- - Group: "@variable.member"
-   foreground: "#808080"
+ - Group: "@comment.info"
+   foreground: "#80"
+
+ - Group: "@comment.todo"
+   foreground: "#808000"
+   background: "#eaeaea"
+
+ - Group: "@comment.warning"
+   foreground: "#800080"
+
+ - Group: "@conditional"
+   foreground: "#800080"
 
  - Group: "@constant"
    foreground: "#ffff00"
@@ -203,21 +225,57 @@ Data:
  - Group: "@constant.macro"
    foreground: "#ffff00"
 
- - Group: "@module"
+ - Group: "@constructor"
+   foreground: "#80"
+
+ - Group: "@debug"
    foreground: "#800000"
 
- - Group: "@module.builtin"
-   foreground: "#8080"
+ - Group: "@decorator"
+   foreground: "#800000"
 
- - Group: "@label"
+ - Group: "@define"
+   foreground: "#800080"
+
+ - Group: "@diff.delta"
+   foreground: "#c0c0c0"
+   background: "#ffffff"
+
+ - Group: "@diff.minus"
+   foreground: "#800000"
+   background: "#ffffff"
+
+ - Group: "@diff.plus"
+   foreground: "#8000"
+   background: "#ffffff"
+
+ - Group: "@enum"
    foreground: "#808000"
+
+ - Group: "@enumMember"
+   foreground: "#ffff00"
+
+ - Group: "@error"
+   foreground: "#800000"
+
+ - Group: "@event"
+   foreground: "#800000"
+
+ - Group: "@exception"
+   foreground: "#800000"
+
+ - Group: "@field"
+   foreground: "#808080"
+
+ - Group: "@float"
+   foreground: "#ffff00"
 
  - Group: "@function"
    foreground: "#80"
 
  - Group: "@function.builtin"
-   italic: true
    foreground: "#80"
+   italic: true
 
  - Group: "@function.call"
    foreground: "#80"
@@ -231,60 +289,52 @@ Data:
  - Group: "@function.method.call"
    foreground: "#80"
 
- - Group: "@constructor"
+ - Group: "@ibl.indent.char.1"
+   nocombine: true
+   foreground: "#d5d5d5"
+
+ - Group: "@ibl.scope.char.1"
+   nocombine: true
+   foreground: "#a0a0a0"
+
+ - Group: "@ibl.scope.underline.1"
+   special: 10526880
+   underline: true
+
+ - Group: "@ibl.whitespace.char.1"
+   foreground: "#c0c0c0"
+
+ - Group: "@include"
    foreground: "#80"
 
- - Group: "@operator"
-   foreground: "#808080"
-
- - Group: "@String"
-   foreground: "#8000"
-
- - Group: "@type"
-   foreground: "#808000"
-
- - Group: "@type.builtin"
-   italic: true
-   foreground: "#808000"
-
- - Group: "@type.definition"
-   foreground: "#808000"
-
- - Group: "@type.class"
-   foreground: "#808000"
-
- - Group: "@attribute"
-   foreground: "#808000"
-
- - Group: "@attribute.builtin"
-   foreground: "#8080"
-
- - Group: "@property"
-   foreground: "#808080"
-
- - Group: "@Comment"
-   italic: true
-   foreground: "#c0c0c0"
+ - Group: "@interface"
+   foreground: "#800080"
 
  - Group: "@keyword"
    foreground: "#800080"
 
- - Group: "@keyword.coroutine"
+ - Group: "@keyword.conditional"
    foreground: "#800080"
+
+ - Group: "@keyword.debug"
+   foreground: "#800000"
+
+ - Group: "@keyword.directive"
+   foreground: "#808000"
+
+ - Group: "@keyword.directive.define"
+   foreground: "#800080"
+
+ - Group: "@keyword.exception"
+   foreground: "#800000"
 
  - Group: "@keyword.function"
-   foreground: "#800080"
-
- - Group: "@keyword.operator"
    foreground: "#800080"
 
  - Group: "@keyword.import"
    foreground: "#80"
 
- - Group: "@keyword.type"
-   foreground: "#800080"
-
- - Group: "@keyword.modifier"
+ - Group: "@keyword.operator"
    foreground: "#800080"
 
  - Group: "@keyword.repeat"
@@ -293,34 +343,159 @@ Data:
  - Group: "@keyword.return"
    foreground: "#800080"
 
- - Group: "@keyword.debug"
-   foreground: "#800000"
-
- - Group: "@keyword.exception"
-   foreground: "#800000"
-
- - Group: "@keyword.conditional"
-   foreground: "#800080"
-
- - Group: "@keyword.conditional.ternary"
-   foreground: "#800080"
-
- - Group: "@keyword.directive"
+ - Group: "@keyword.storage"
    foreground: "#808000"
 
- - Group: "@keyword.directive.define"
+ - Group: "@label"
+   foreground: "#808000"
+
+ - Group: "@lsp.mod.deprecated"
+   strikethrough: true
+   special: 16761017
+
+ - Group: "@lsp.type.class"
+   foreground: "#808000"
+
+ - Group: "@lsp.type.decorator"
+   foreground: "#80"
+
+ - Group: "@lsp.type.enum"
+   foreground: "#808000"
+
+ - Group: "@lsp.type.enumMember"
+   foreground: "#ffff00"
+
+ - Group: "@lsp.type.event"
+   foreground: "#808000"
+
+ - Group: "@lsp.type.function"
+   foreground: "#80"
+
+ - Group: "@lsp.type.interface"
+   foreground: "#808000"
+
+ - Group: "@lsp.type.macro"
+   foreground: "#800000"
+
+ - Group: "@lsp.type.method"
+   foreground: "#80"
+
+ - Group: "@lsp.type.namespace"
+   foreground: "#800000"
+
+ - Group: "@lsp.type.parameter"
+   foreground: "#808080"
+
+ - Group: "@lsp.type.property"
+   foreground: "#808080"
+
+ - Group: "@lsp.type.struct"
+   foreground: "#808000"
+
+ - Group: "@lsp.type.type"
+   foreground: "#808000"
+
+ - Group: "@lsp.type.variable"
+   foreground: "#800000"
+
+ - Group: "@markup.heading"
+   foreground: "#80"
+
+ - Group: "@markup.italic"
+   italic: true
+
+ - Group: "@markup.link"
+   foreground: "#808080"
+
+ - Group: "@markup.link.label"
+   foreground: "#ff00"
+
+ - Group: "@markup.link.url"
+   foreground: "#ffff00"
+   underline: true
+
+ - Group: "@markup.list"
+   foreground: "#ff00"
+
+ - Group: "@markup.raw"
+   foreground: "#ffff00"
+
+ - Group: "@markup.strikethrough"
+   foreground: "#808080"
+
+ - Group: "@markup.strong"
+   bold: true
+
+ - Group: "@markup.underline"
+   underline: true
+
+ - Group: "@method"
+   foreground: "#80"
+
+ - Group: "@method.call"
+   foreground: "#80"
+
+ - Group: "@modifier"
+   foreground: "#800000"
+
+ - Group: "@module"
+   foreground: "#800000"
+
+ - Group: "@module.builtin"
+   foreground: "#8080"
+
+ - Group: "@namespace"
+   foreground: "#800000"
+
+ - Group: "@none"
+   foreground: "#808080"
+
+ - Group: "@number"
+   foreground: "#ffff00"
+
+ - Group: "@number.float"
+   foreground: "#ffff00"
+
+ - Group: "@operator"
+   foreground: "#808080"
+
+ - Group: "@parameter"
+   foreground: "#808080"
+
+ - Group: "@preproc"
+   foreground: "#808000"
+
+ - Group: "@property"
+   foreground: "#808080"
+
+ - Group: "@punctuation.bracket"
+   foreground: "#808080"
+
+ - Group: "@punctuation.delimiter"
+   foreground: "#ff00"
+
+ - Group: "@punctuation.special"
+   foreground: "#ff00"
+
+ - Group: "@regexp"
+   foreground: "#8080"
+
+ - Group: "@repeat"
    foreground: "#800080"
+
+ - Group: "@storageclass"
+   foreground: "#808000"
 
  - Group: "@string"
    foreground: "#8000"
 
- - Group: "@string.documentation"
-   foreground: "#8000"
-
- - Group: "@string.regexp"
+ - Group: "@string.escape"
    foreground: "#8080"
 
- - Group: "@string.escape"
+ - Group: "@string.regex"
+   foreground: "#8080"
+
+ - Group: "@string.regexp"
    foreground: "#8080"
 
  - Group: "@string.special"
@@ -330,90 +505,113 @@ Data:
    foreground: "#8000"
 
  - Group: "@string.special.url"
-   underline: true
    foreground: "#ffff00"
+   underline: true
 
- - Group: "@string.special.path"
-   foreground: "#ff00"
+ - Group: "@struct"
+   foreground: "#808000"
 
- - Group: "@character"
+ - Group: "@symbol"
+   foreground: "#8000"
+
+ - Group: "@tag"
    foreground: "#800000"
 
- - Group: "@character.special"
+ - Group: "@tag.attribute"
+   foreground: "#808000"
+
+ - Group: "@tag.delimiter"
    foreground: "#ff00"
 
- - Group: "@boolean"
+ - Group: "@text"
+   foreground: "#808080"
+
+ - Group: "@text.danger"
+   foreground: "#800000"
+
+ - Group: "@text.diff.add"
+   foreground: "#8000"
+   background: "#ffffff"
+
+ - Group: "@text.diff.delete"
+   foreground: "#800000"
+   background: "#ffffff"
+
+ - Group: "@text.emphasis"
    foreground: "#ffff00"
-
- - Group: "@number"
-   foreground: "#ffff00"
-
- - Group: "@number.float"
-   foreground: "#ffff00"
-
- - Group: "@markup.strong"
-   bold: true
-
- - Group: "@markup.italic"
    italic: true
 
- - Group: "@markup.strikethrough"
+ - Group: "@text.environment"
+   foreground: "#800000"
+
+ - Group: "@text.environment.name"
+   foreground: "#808000"
+
+ - Group: "@text.literal"
+   foreground: "#ffff00"
+
+ - Group: "@text.math"
+   foreground: "#ffff00"
+
+ - Group: "@text.note"
+   foreground: "#808000"
+
+ - Group: "@text.reference"
    foreground: "#808080"
 
- - Group: "@markup.underline"
+ - Group: "@text.strike"
+   strikethrough: true
+   foreground: "#ffffff"
+
+ - Group: "@text.strong"
+   bold: true
+
+ - Group: "@text.title"
+   foreground: "#80"
+
+ - Group: "@text.todo"
+   foreground: "#808000"
+   background: "#eaeaea"
+
+ - Group: "@text.underline"
+   foreground: "#ffffff"
    underline: true
 
- - Group: "@markup.heading"
-   foreground: "#80"
+ - Group: "@text.uri"
+   foreground: "#ffff00"
+   underline: true
 
- - Group: "@markup.heading.1"
-   foreground: "#80"
+ - Group: "@text.warning"
+   foreground: "#800080"
 
- - Group: "@markup.heading.2"
-   foreground: "#80"
+ - Group: "@type"
+   foreground: "#808000"
 
- - Group: "@markup.heading.3"
-   foreground: "#80"
+ - Group: "@type.builtin"
+   foreground: "#808000"
+   italic: true
 
- - Group: "@markup.heading.4"
-   foreground: "#80"
+ - Group: "@type.definition"
+   foreground: "#808000"
 
- - Group: "@markup.heading.5"
-   foreground: "#80"
+ - Group: "@type.qualifier"
+   foreground: "#800080"
 
- - Group: "@markup.heading.6"
-   foreground: "#80"
+ - Group: "@typeParameter"
+   foreground: "#808000"
 
- - Group: "@markup.quote"
-   foreground: "#8080"
+ - Group: "@variable"
+   foreground: "#800000"
 
- - Group: "@markup.math"
-   foreground: "#8080"
+ - Group: "@variable.builtin"
+   foreground: "#800000"
+   italic: true
 
- - Group: "@markup.link"
+ - Group: "@variable.member"
    foreground: "#808080"
 
- - Group: "@markup.link.label"
-   foreground: "#ff00"
-
- - Group: "@markup.link.url"
-   underline: true
-   foreground: "#ffff00"
-
- - Group: "@markup.raw"
-   foreground: "#ffff00"
-
- - Group: "@markup.raw.block"
-   foreground: "#ffff00"
-
- - Group: "@markup.list"
-   foreground: "#ff00"
-
- - Group: "@markup.list.checked"
-   foreground: "#ff00"
-
- - Group: "@markup.list.unchecked"
-   foreground: "#ff00"
+ - Group: "@variable.parameter"
+   foreground: "#808080"
 
  - Group: "search"
    foreground: "#eaeaea"

@@ -4,8 +4,8 @@ Data:
    background: "#2c2525"
 
  - Group: "Comment"
-   italic: true
    foreground: "#8c8384"
+   italic: true
 
  - Group: "Constant"
    foreground: "#85dacc"
@@ -14,12 +14,12 @@ Data:
    foreground: "#f9cc6c"
 
  - Group: "Function"
-   italic: true
    foreground: "#adda78"
+   italic: true
 
  - Group: "Keyword"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "Type"
    foreground: "#85dacc"
@@ -40,8 +40,8 @@ Data:
    foreground: "#fff1f3"
 
  - Group: "Function"
-   italic: true
    foreground: "#adda78"
+   italic: true
 
  - Group: "Statement"
    foreground: "#ff6188"
@@ -59,8 +59,8 @@ Data:
    foreground: "#ff6188"
 
  - Group: "Keyword"
-   italic: true
    foreground: "#ff6188"
+   italic: true
 
  - Group: "Exception"
    foreground: "#ff6188"
@@ -69,8 +69,8 @@ Data:
    foreground: "#adda78"
 
  - Group: "Include"
-   italic: true
    foreground: "#85dacc"
+   italic: true
 
  - Group: "Define"
    foreground: "#ff6188"
@@ -106,8 +106,8 @@ Data:
    foreground: "#fff1f3"
 
  - Group: "SpecialComment"
-   italic: true
    foreground: "#72696a"
+   italic: true
 
  - Group: "Debug"
    foreground: "#f38d70"
@@ -177,20 +177,33 @@ Data:
  - Group: "LspReferenceWrite"
    background: "#5b5353"
 
- - Group: "@variable"
-   foreground: "#fff1f3"
+ - Group: "@annotation"
+   foreground: "#adda78"
 
- - Group: "@variable.builtin"
-   foreground: "#f38d70"
+ - Group: "@attribute"
+   foreground: "#adda78"
 
- - Group: "@variable.parameter"
-   foreground: "#fff1f3"
+ - Group: "@boolean"
+   foreground: "#a8a9eb"
 
- - Group: "@variable.parameter.builtin"
-   foreground: "#fff1f3"
+ - Group: "@character"
+   foreground: "#f9cc6c"
 
- - Group: "@variable.member"
-   foreground: "#fff1f3"
+ - Group: "@character.special"
+   foreground: "#a8a9eb"
+
+ - Group: "@comment"
+   foreground: "#8c8384"
+   italic: true
+
+ - Group: "@conceal"
+   foreground: "#72696a"
+
+ - Group: "@conditional"
+   foreground: "#ff6188"
+
+ - Group: "@conditional.ternary"
+   foreground: "#ff6188"
 
  - Group: "@constant"
    foreground: "#85dacc"
@@ -201,18 +214,69 @@ Data:
  - Group: "@constant.macro"
    foreground: "#a8a9eb"
 
- - Group: "@module"
+ - Group: "@constructor"
    foreground: "#85dacc"
 
- - Group: "@module.builtin"
-   foreground: "#fff1f3"
-
- - Group: "@label"
+ - Group: "@debug"
    foreground: "#ff6188"
 
- - Group: "@function"
-   italic: true
+ - Group: "@define"
+   foreground: "#85dacc"
+
+ - Group: "@definition"
    foreground: "#adda78"
+
+ - Group: "@definition.associated"
+   foreground: "#adda78"
+
+ - Group: "@definition.constant"
+   foreground: "#adda78"
+
+ - Group: "@definition.enum"
+   foreground: "#adda78"
+
+ - Group: "@definition.field"
+   foreground: "#adda78"
+
+ - Group: "@definition.function"
+   foreground: "#adda78"
+
+ - Group: "@definition.import"
+   foreground: "#fff1f3"
+
+ - Group: "@definition.macro"
+   foreground: "#adda78"
+
+ - Group: "@definition.method"
+   foreground: "#adda78"
+
+ - Group: "@definition.namespace"
+   foreground: "#fff1f3"
+
+ - Group: "@definition.parameter"
+   foreground: "#f38d70"
+
+ - Group: "@definition.type"
+   foreground: "#adda78"
+
+ - Group: "@definition.var"
+   foreground: "#adda78"
+
+ - Group: "@error"
+   foreground: "#fd6883"
+
+ - Group: "@exception"
+   foreground: "#ff6188"
+
+ - Group: "@field"
+   foreground: "#fff1f3"
+
+ - Group: "@float"
+   foreground: "#a8a9eb"
+
+ - Group: "@function"
+   foreground: "#adda78"
+   italic: true
 
  - Group: "@function.builtin"
    foreground: "#85dacc"
@@ -221,25 +285,218 @@ Data:
    foreground: "#fff1f3"
 
  - Group: "@function.macro"
-   italic: true
    foreground: "#adda78"
-
- - Group: "@function.method"
    italic: true
-   foreground: "#adda78"
 
- - Group: "@function.method.call"
-   italic: true
-   foreground: "#adda78"
+ - Group: "@ibl.indent.char.1"
+   nocombine: true
+   foreground: "#72696a"
 
- - Group: "@constructor"
+ - Group: "@ibl.scope.char.1"
+   nocombine: true
+   foreground: "#72696a"
+   background: "#2c2525"
+
+ - Group: "@ibl.scope.underline.1"
+   special: 7498090
+   underline: true
+
+ - Group: "@ibl.whitespace.char.1"
+   nocombine: true
+   foreground: "#72696a"
+
+ - Group: "@include"
    foreground: "#85dacc"
+   italic: true
+
+ - Group: "@keyword"
+   foreground: "#ff6188"
+   italic: true
+
+ - Group: "@keyword.function"
+   foreground: "#85dacc"
+   italic: true
+
+ - Group: "@keyword.operator"
+   foreground: "#ff6188"
+
+ - Group: "@keyword.return"
+   foreground: "#ff6188"
+
+ - Group: "@label"
+   foreground: "#ff6188"
+
+ - Group: "@lsp.mod.deprecated"
+   strikethrough: true
+   special: 16761017
+
+ - Group: "@lsp.type.event"
+   foreground: "#85dacc"
+
+ - Group: "@markup"
+   foreground: "#fff1f3"
+
+ - Group: "@markup.italic"
+   italic: true
+
+ - Group: "@markup.strikethrough"
+   strikethrough: true
+
+ - Group: "@markup.strong"
+   bold: true
+
+ - Group: "@markup.underline"
+   underline: true
+
+ - Group: "@math"
+   foreground: "#f9cc6c"
+
+ - Group: "@method"
+   foreground: "#adda78"
+
+ - Group: "@method.call"
+   foreground: "#fff1f3"
+
+ - Group: "@module.builtin"
+   foreground: "#fff1f3"
+
+ - Group: "@namespace"
+   foreground: "#a8a9eb"
+
+ - Group: "@number"
+   foreground: "#a8a9eb"
 
  - Group: "@operator"
    foreground: "#ff6188"
 
- - Group: "@String"
+ - Group: "@parameter"
+   foreground: "#f38d70"
+
+ - Group: "@parameter.reference"
+   foreground: "#fff1f3"
+
+ - Group: "@preproc"
+   foreground: "#adda78"
+
+ - Group: "@property"
+   foreground: "#fff1f3"
+
+ - Group: "@punctuation.bracket"
+   foreground: "#fff1f3"
+
+ - Group: "@punctuation.delimiter"
+   foreground: "#fff1f3"
+
+ - Group: "@punctuation.special"
+   foreground: "#ff6188"
+
+ - Group: "@reference"
+   foreground: "#fff1f3"
+
+ - Group: "@repeat"
+   foreground: "#ff6188"
+
+ - Group: "@scope"
+   foreground: "#fff1f3"
+
+ - Group: "@storageclass"
+   foreground: "#85dacc"
+
+ - Group: "@storageclass.lifetime"
+   foreground: "#85dacc"
+
+ - Group: "@strike"
+   foreground: "#72696a"
+
+ - Group: "@string"
    foreground: "#f9cc6c"
+
+ - Group: "@string.escape"
+   foreground: "#a8a9eb"
+
+ - Group: "@string.regex"
+   foreground: "#a8a9eb"
+
+ - Group: "@string.special"
+   foreground: "#a8a9eb"
+
+ - Group: "@symbol"
+   foreground: "#a8a9eb"
+
+ - Group: "@tag"
+   foreground: "#ff6188"
+
+ - Group: "@tag.attribute"
+   foreground: "#adda78"
+
+ - Group: "@tag.delimiter"
+   foreground: "#fff1f3"
+
+ - Group: "@text"
+   foreground: "#adda78"
+
+ - Group: "@text.danger"
+   bold: true
+   foreground: "#fd6883"
+
+ - Group: "@text.diff.add"
+   foreground: "#527728"
+
+ - Group: "@text.diff.delete"
+   foreground: "#842335"
+
+ - Group: "@text.emphasis"
+   bold: true
+
+ - Group: "@text.environment"
+   foreground: "#a8a9eb"
+
+ - Group: "@text.environment.name"
+   foreground: "#85dacc"
+
+ - Group: "@text.literal"
+   foreground: "#f9cc6c"
+
+ - Group: "@text.math"
+   foreground: "#f9cc6c"
+
+ - Group: "@text.note"
+   bold: true
+   foreground: "#85dacc"
+
+ - Group: "@text.quote"
+   foreground: "#72696a"
+
+ - Group: "@text.reference"
+   foreground: "#f38d70"
+   italic: true
+
+ - Group: "@text.strike"
+   foreground: "#72696a"
+
+ - Group: "@text.strong"
+   bold: true
+
+ - Group: "@text.title"
+   bold: true
+   foreground: "#f9cc6c"
+
+ - Group: "@text.todo"
+   foreground: "#85dacc"
+
+ - Group: "@text.underline"
+   underline: true
+
+ - Group: "@text.uri"
+   foreground: "#85dacc"
+   underline: true
+
+ - Group: "@text.warning"
+   bold: true
+   foreground: "#f9cc6c"
+
+ - Group: "@todo"
+   foreground: "#85dacc"
 
  - Group: "@type"
    foreground: "#85dacc"
@@ -250,188 +507,18 @@ Data:
  - Group: "@type.definition"
    foreground: "#85dacc"
 
- - Group: "@type.class"
+ - Group: "@type.qualifier"
+   foreground: "#ff6188"
+
+ - Group: "@uri"
    foreground: "#85dacc"
-
- - Group: "@attribute"
-   foreground: "#adda78"
-
- - Group: "@attribute.builtin"
-   foreground: "#fff1f3"
-
- - Group: "@property"
-   foreground: "#fff1f3"
-
- - Group: "@Comment"
-   italic: true
-   foreground: "#8c8384"
-
- - Group: "@keyword"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.coroutine"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.function"
-   italic: true
-   foreground: "#85dacc"
-
- - Group: "@keyword.operator"
-   foreground: "#ff6188"
-
- - Group: "@keyword.import"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.type"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.modifier"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.repeat"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.return"
-   foreground: "#ff6188"
-
- - Group: "@keyword.debug"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.exception"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.conditional"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.conditional.ternary"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.directive"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@keyword.directive.define"
-   italic: true
-   foreground: "#ff6188"
-
- - Group: "@string"
-   foreground: "#f9cc6c"
-
- - Group: "@string.documentation"
-   foreground: "#f9cc6c"
-
- - Group: "@string.regexp"
-   foreground: "#a8a9eb"
-
- - Group: "@string.escape"
-   foreground: "#a8a9eb"
-
- - Group: "@string.special"
-   foreground: "#a8a9eb"
-
- - Group: "@string.special.symbol"
-   foreground: "#a8a9eb"
-
- - Group: "@string.special.url"
    underline: true
 
- - Group: "@string.special.path"
-   foreground: "#a8a9eb"
-
- - Group: "@character"
-   foreground: "#f9cc6c"
-
- - Group: "@character.special"
-   foreground: "#a8a9eb"
-
- - Group: "@boolean"
-   foreground: "#a8a9eb"
-
- - Group: "@number"
-   foreground: "#a8a9eb"
-
- - Group: "@number.float"
-   foreground: "#a8a9eb"
-
- - Group: "@markup.strong"
-   bold: true
-
- - Group: "@markup.italic"
-   italic: true
-
- - Group: "@markup.strikethrough"
-   strikethrough: true
-
- - Group: "@markup.underline"
-   underline: true
-
- - Group: "@markup.heading"
-   bold: true
-   foreground: "#f9cc6c"
-
- - Group: "@markup.heading.1"
-   bold: true
-   foreground: "#f9cc6c"
-
- - Group: "@markup.heading.2"
-   bold: true
-   foreground: "#f9cc6c"
-
- - Group: "@markup.heading.3"
-   bold: true
-   foreground: "#f9cc6c"
-
- - Group: "@markup.heading.4"
-   bold: true
-   foreground: "#f9cc6c"
-
- - Group: "@markup.heading.5"
-   bold: true
-   foreground: "#f9cc6c"
-
- - Group: "@markup.heading.6"
-   bold: true
-   foreground: "#f9cc6c"
-
- - Group: "@markup.quote"
+ - Group: "@variable"
    foreground: "#fff1f3"
 
- - Group: "@markup.math"
-   foreground: "#fff1f3"
-
- - Group: "@markup.link"
-   underline: true
-
- - Group: "@markup.link.label"
-   underline: true
-
- - Group: "@markup.link.url"
-   underline: true
-
- - Group: "@markup.raw"
-   foreground: "#fff1f3"
-
- - Group: "@markup.raw.block"
-   foreground: "#fff1f3"
-
- - Group: "@markup.list"
-   foreground: "#fff1f3"
-
- - Group: "@markup.list.checked"
-   foreground: "#fff1f3"
-
- - Group: "@markup.list.unchecked"
-   foreground: "#fff1f3"
+ - Group: "@variable.builtin"
+   foreground: "#f38d70"
 
  - Group: "search"
    foreground: "#2c2525"

@@ -8,10 +8,8 @@ local highlight_groups = {"LineNr", "Comment", -- "Variable",
                           "Underlined", "Ignore", "Error", "Added", "Changed", "Removed", "CursorLine", "CursorColumn",
                           "Visual", "StatusLine", "Normal", "DiagnosticError", "DiagnosticWarn", "DiagnosticInfo",
                           "DiagnosticHint", -- > 
-"DiffAdd", "DiffChange", "DiffDelete", 
-"LspReferenceText", "LspReferenceRead", "LspReferenceWrite", 
-"@variable", --                    ; various variable names
-"@variable.builtin", --            ; built-in variable names (e.g. `this`)
+"DiffAdd", "DiffChange", "DiffDelete", "LspReferenceText", "LspReferenceRead", "LspReferenceWrite", "@variable", --                    ; various variable names
+                          "@variable.builtin", --            ; built-in variable names (e.g. `this`)
 "@variable.parameter", --          ; parameters of a function
 "@variable.parameter.builtin", --  ; special parameters (e.g. `_`, `it`)
 "@variable.member", --             ; object and struct fields
@@ -157,8 +155,31 @@ local function save_scheme(colorscheme)
         print("Highlight settings saved to " .. file)
     end
 
+    -- local highlight_groups_default = vim.fn.getcompletion("", "highlight")
+    local highlight_groups_default = {"LineNr", "Comment", -- "Variable",
+    "Constant", "String", "Function", "Keyword", "Type", "Character", "Number", "Boolean", "Float", "Identifier",
+                                      "Function", "Statement", "Conditional", "Repeat", "Label", "Operator", "Keyword",
+                                      "Exception", "PreProc", "Include", "Define", "Macro", "PreCondit", "Type",
+                                      "StorageClass", "Structure", "Typedef", "Special", "SpecialChar", "Tag",
+                                      "Delimiter", "SpecialComment", "Debug", "Underlined", "Ignore", "Error", "Added",
+                                      "Changed", "Removed", "CursorLine", "CursorColumn", "Visual", "StatusLine",
+                                      "Normal", "DiagnosticError", "DiagnosticWarn", "DiagnosticInfo", "DiagnosticHint", -- > 
+                                      "DiffAdd", "DiffChange", "DiffDelete", "LspReferenceText", "LspReferenceRead",
+                                      "LspReferenceWrite"}
+    local highlight_groups = vim.fn.getcompletion("@", "highlight")
+
+    local mergedArray = {}
+    -- 将第二个数组的元素插入到新数组中
+    for _, value in ipairs(highlight_groups_default) do
+        table.insert(mergedArray, value)
+    end
+    -- 将第一个数组的元素插入到新数组中
+    for _, value in ipairs(highlight_groups) do
+        table.insert(mergedArray, value)
+    end
+
     -- Call the function
-    save_highlights_to_file(highlight_groups, output_file)
+    save_highlights_to_file(mergedArray, output_file)
 end
 
 local function set_colorscheme(theme_name)
