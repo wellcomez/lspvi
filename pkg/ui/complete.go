@@ -188,7 +188,8 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		if err != nil {
 			style = tcell.StyleDefault
 		}
-		if i, ok := lspcore.LspIcon[int(v.Kind)]; ok {
+		symbol_kind := get_symbol_kind(v)
+		if i, ok := lspcore.LspIcon[int(symbol_kind)]; ok {
 			t = i + " " + t
 		} else {
 			t = " " + t
@@ -234,6 +235,63 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		complete.show = false
 		complete.task = nil
 	}()
+}
+
+func get_symbol_kind(v lsp.CompletionItem) lsp.SymbolKind {
+	var symbol_kind lsp.SymbolKind
+	switch v.Kind {
+	case lsp.CompletionItemKindText:
+		symbol_kind = lsp.SymbolKindString
+	case lsp.CompletionItemKindMethod:
+		symbol_kind = lsp.SymbolKindMethod
+	case lsp.CompletionItemKindFunction:
+		symbol_kind = lsp.SymbolKindFunction
+	case lsp.CompletionItemKindConstructor:
+		symbol_kind = lsp.SymbolKindConstructor
+	case lsp.CompletionItemKindField:
+		symbol_kind = lsp.SymbolKindField
+	case lsp.CompletionItemKindVariable:
+		symbol_kind = lsp.SymbolKindVariable
+	case lsp.CompletionItemKindClass:
+		symbol_kind = lsp.SymbolKindClass
+	case lsp.CompletionItemKindInterface:
+		symbol_kind = lsp.SymbolKindInterface
+	case lsp.CompletionItemKindModule:
+		symbol_kind = lsp.SymbolKindModule
+	case lsp.CompletionItemKindProperty:
+		symbol_kind = lsp.SymbolKindProperty
+	case lsp.CompletionItemKindUnit:
+		symbol_kind = lsp.SymbolKindNumber
+	case lsp.CompletionItemKindValue:
+		symbol_kind = lsp.SymbolKindConstant
+	case lsp.CompletionItemKindEnum:
+		symbol_kind = lsp.SymbolKindEnum
+	case lsp.CompletionItemKindKeyword:
+		symbol_kind = lsp.SymbolKindNull
+	case lsp.CompletionItemKindSnippet:
+		symbol_kind = lsp.SymbolKindNull
+	case lsp.CompletionItemKindColor:
+		symbol_kind = lsp.SymbolKindNull
+	case lsp.CompletionItemKindFile:
+		symbol_kind = lsp.SymbolKindFile
+	case lsp.CompletionItemKindReference:
+		symbol_kind = lsp.SymbolKindNull
+	case lsp.CompletionItemKindFolder:
+		symbol_kind = lsp.SymbolKindNull
+	case lsp.CompletionItemKindEnumMember:
+		symbol_kind = lsp.SymbolKindEnumMember
+	case lsp.CompletionItemKindConstant:
+		symbol_kind = lsp.SymbolKindConstant
+	case lsp.CompletionItemKindStruct:
+		symbol_kind = lsp.SymbolKindStruct
+	case lsp.CompletionItemKindEvent:
+		symbol_kind = lsp.SymbolKindEvent
+	case lsp.CompletionItemKindOperator:
+		symbol_kind = lsp.SymbolKindOperator
+	case lsp.CompletionItemKindTypeParameter:
+		symbol_kind = lsp.SymbolKindTypeParameter
+	}
+	return symbol_kind
 }
 func print_help(ret lsp.SignatureHelp) string {
 	if len(ret.Signatures) > 0 {

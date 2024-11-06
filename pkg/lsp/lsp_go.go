@@ -210,7 +210,10 @@ func (a lsp_lang_go) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete, 
 func create_complete_go(v lsp.CompletionItem) (text []string) {
 	s := ""
 	switch v.Kind {
-	case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
+	case lsp.CompletionItemKindMethod:
+		n := strings.Replace(v.Detail, "func", "", -1)
+		s = fmt.Sprintf("func(...) %s %s", v.Label, n)
+	case lsp.CompletionItemKindFunction:
 		n := strings.Replace(v.Detail, "func", "", -1)
 		s = fmt.Sprintf("func %s %s", v.Label, n)
 	case lsp.CompletionItemKindVariable:
