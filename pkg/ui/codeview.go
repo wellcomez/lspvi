@@ -1709,8 +1709,9 @@ func is_lsprange_ok(loc lsp.Range) bool {
 }
 func (code *CodeView) goto_line_history(line int, historyin bool) {
 	if line == -1 {
-		code.view.EndOfLine()
-		return
+		line = code.view.Buf.NumLines - 1
+		// code.view.SelectToEndOfLine()
+		// return
 	}
 	if code.main != nil {
 		code.main.Navigation().history.SaveToHistory(code)
