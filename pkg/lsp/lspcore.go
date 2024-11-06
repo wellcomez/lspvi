@@ -60,7 +60,7 @@ type lspcore struct {
 	config LangConfig
 }
 
-func (core *lspcore) LspHelp() ( LspSignatureHelp,  LspCompleteUtil,error) {
+func (core *lspcore) LspHelp() ( LspUtil,error) {
 	return core.lang.LspHelp(core)
 }
 

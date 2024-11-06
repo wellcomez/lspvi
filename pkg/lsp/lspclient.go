@@ -38,14 +38,14 @@ type lspclient interface {
 	Resolve(sym lsp.SymbolInformation, symbolfile *Symbol_file) bool
 	Close()
 	syncOption() *TextDocumentSyncOptions
-	LspHelp() (LspSignatureHelp, LspCompleteUtil, error)
+	LspHelp() (LspUtil, error)
 }
 type lsp_base struct {
 	core *lspcore
 	wk   *WorkSpace
 }
 
-func (l lsp_base) LspHelp() (LspSignatureHelp, LspCompleteUtil, error) {
+func (l lsp_base) LspHelp() (LspUtil, error) {
 	return l.core.LspHelp()
 }
 func (l lsp_base) Format(opt FormatOption) ([]lsp.TextEdit, error) {

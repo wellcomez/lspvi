@@ -36,7 +36,7 @@ type LspCompleteUtil struct {
 	Document    func(v lsp.CompletionItem) (text []string)
 }
 
-func (sym Symbol_file) LspHelp() (h LspSignatureHelp, c LspCompleteUtil, err error) {
+func (sym Symbol_file) LspHelp() (ret LspUtil, err error) {
 	if sym.lsp == nil {
 		err = fmt.Errorf("lsp is nil")
 		return

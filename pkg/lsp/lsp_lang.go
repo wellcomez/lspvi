@@ -9,6 +9,10 @@ import (
 	"github.com/tectiv3/go-lsp"
 )
 
+type LspUtil struct {
+	signature LspSignatureHelp
+	complete  LspCompleteUtil
+}
 type lsplang interface {
 	Launch_Lsp_Server(core *lspcore, wk WorkSpace) error
 	InitializeLsp(core *lspcore, wk WorkSpace) error
@@ -16,7 +20,7 @@ type lsplang interface {
 	Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool
 	IsMe(filename string) bool
 	CompleteHelpCallback(lsp.CompletionList, *Complete, error)
-	LspHelp(*lspcore) (LspSignatureHelp, LspCompleteUtil, error)
+	LspHelp(*lspcore) (LspUtil ,error)
 }
 type lsp_lang_common struct {
 }
@@ -33,8 +37,20 @@ func (v *Document) Parser(a []byte) error {
 	}
 	return nil
 }
-func (a lsp_lang_common) LspHelp(*lspcore) (h LspSignatureHelp, c LspCompleteUtil, err error) {
+func (a lsp_lang_common) LspHelp(core *lspcore) (ret LspUtil, err error) {
+	var h LspSignatureHelp
+	var c LspCompleteUtil
 	err = fmt.Errorf("not support")
+	if core.CapabilitiesStatus.CompletionProvider != nil {
+		c.TriggerChar = core.CapabilitiesStatus.CompletionProvider.TriggerCharacters
+	}
+	if core.CapabilitiesStatus.SignatureHelpProvider != nil {
+		h.TriggerChar = core.CapabilitiesStatus.SignatureHelpProvider.TriggerCharacters
+	}
+	ret = LspUtil{
+		signature: h,
+		complete:  c,
+	}
 	return
 }
 func (a lsp_lang_common) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete, err error) {
