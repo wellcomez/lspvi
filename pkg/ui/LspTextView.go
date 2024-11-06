@@ -145,7 +145,7 @@ func (l *LspTextView) Draw(screen tcell.Screen) {
 
 func GetColumnStyle(symline *[]lspcore.TreeSitterSymbol, col uint32, bg tcell.Color) (style tcell.Style, err error) {
 	for _, pos := range *symline {
-		if col >= pos.Begin.Column && col <= pos.End.Column {
+		if col >= pos.Begin.Column && col < pos.End.Column {
 			if s, e := get_position_style(pos); e == nil {
 				style = s.Background(bg)
 				return

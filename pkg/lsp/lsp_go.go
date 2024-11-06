@@ -214,11 +214,15 @@ func create_complete_go(v lsp.CompletionItem) (text []string) {
 		n := strings.Replace(v.Detail, "func", "", -1)
 		s = fmt.Sprintf("func %s %s", v.Label, n)
 	case lsp.CompletionItemKindVariable:
-		s = fmt.Sprintf("%s %s", v.Label, v.Detail)
-	case lsp.CompletionItemKindStruct:
+		s = fmt.Sprintf("var %s %s", v.Label, v.Detail)
+	case lsp.CompletionItemKindStruct, lsp.CompletionItemKindInterface:
 		s = fmt.Sprintf("type %s %s", v.Label, v.Detail)
 	case lsp.CompletionItemKindClass:
 		s = fmt.Sprintf("%s %s", v.Label, v.Detail)
+	case lsp.CompletionItemKindConstant:
+		s = fmt.Sprintf("const %s %s", v.Label, v.Detail)
+	case lsp.CompletionItemKindModule:
+		s = fmt.Sprintf("import (\n%s\n)//%s", v.Label, v.Detail)
 	default:
 		s = fmt.Sprintf("%s %s", v.Label, v.Detail)
 	}
