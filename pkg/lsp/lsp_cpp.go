@@ -80,6 +80,8 @@ func complete_cpp(v lsp.CompletionItem) []string {
 		label = fmt.Sprintf("struct %s{}", v.Label)
 	case lsp.CompletionItemKindMethod, lsp.CompletionItemKindFunction:
 		label = fmt.Sprintf("%s %s{}", v.Detail, v.Label)
+	case lsp.CompletionItemKindVariable:
+		label = fmt.Sprintf("%s %s", v.Detail, v.Label)
 	case lsp.CompletionItemKindEnum:
 		label = fmt.Sprintf("enum %s{%s}", v.Detail, v.Label)
 	default:
