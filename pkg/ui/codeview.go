@@ -793,9 +793,7 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyEnter, tcell.KeyUp, tcell.KeyDown:
 			{
-				code.view.complete.InputHandler()(event, func(p tview.Primitive) {
-
-				})
+				code.view.complete.InputHandler()(event, nil)
 				return nil
 			}
 		}
@@ -804,8 +802,7 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyUp, tcell.KeyDown:
 			{
-				code.view.complete.InputHandler()(event, func(p tview.Primitive) {
-				})
+				code.view.complete.InputHandler()(event, nil)
 				return nil
 			}
 		}

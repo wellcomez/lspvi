@@ -49,6 +49,9 @@ type complete_task struct {
 }
 
 func (m *completemenu) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	if m.IsShown() {
+		return m.customlist.InputHandler()
+	}
 	if m.IsShownHelp() {
 		return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 			m.helpview.handle_key(event)
