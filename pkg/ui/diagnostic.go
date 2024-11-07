@@ -116,7 +116,7 @@ func (c *codetextview) HideHoverIfChanged() {
 }
 
 type diagnospicker struct {
-	*fzflist_impl
+	*prev_picker_impl
 	fzf *fzf_on_listview
 	qk  *quick_view_data
 }
@@ -138,7 +138,7 @@ func (d *diagnospicker) handle() func(event *tcell.EventKey, setFocus func(p tvi
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		switch event.Key() {
 		case tcell.KeyUp, tcell.KeyDown, tcell.KeyEnter:
-			d.list.InputHandler()(event, setFocus)
+			d.listcustom.InputHandler()(event, setFocus)
 		}
 	}
 }
@@ -149,7 +149,9 @@ func (d *diagnospicker) name() string {
 }
 
 func new_diagnospicker_picker(dialog *fzfmain) (pk *diagnospicker) {
-	pk = &diagnospicker{fzflist_impl: new_fzflist_impl(dialog)}
+	x := new_preview_picker(dialog)
+	pk = &diagnospicker{prev_picker_impl: x}
+	x.listcustom = new_customlist(false)
 	main := dialog.main
 	dia := main.Dialogsize()
 	var refs []ref_with_caller
@@ -173,14 +175,17 @@ func new_diagnospicker_picker(dialog *fzfmain) (pk *diagnospicker) {
 	tree := qkdata.build_flextree_data(5)
 	data := tree.ListColorString()
 	for _, s := range data {
-		pk.list.AddColorItem(s.line, nil, nil)
+		pk.listcustom.AddColorItem(s.line, nil, nil)
 	}
 	pk.qk = qkdata
 	next_index := -1
-	pk.list.SetChangedFunc(func(index int, s1, s2 string, r rune) {
+	pk.listcustom.SetChangedFunc(func(index int, s1, s2 string, r rune) {
 		next_index = index
+		if data, err := qkdata.get_data(index); err == nil {
+			pk.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
+		}
 	})
-	pk.list.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
+	pk.listcustom.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
 		if index != next_index {
 			return
 		}
@@ -192,6 +197,6 @@ func new_diagnospicker_picker(dialog *fzfmain) (pk *diagnospicker) {
 	for _, v := range data {
 		sss = append(sss, v.plaintext())
 	}
-	pk.fzf = new_fzf_on_list_data(pk.list, sss, true)
+	pk.fzf = new_fzf_on_list_data(pk.listcustom, sss, true)
 	return
 }

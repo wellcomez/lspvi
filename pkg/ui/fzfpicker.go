@@ -274,7 +274,7 @@ func (v *fzfmain) OpenUIPicker() {
 }
 func (v *fzfmain) OpenDiagnosPicker() {
 	currentpicker := new_diagnospicker_picker(v)
-	grid := currentpicker.grid(v.input)
+	grid := currentpicker.flex(v.input,1)
 	v.create_dialog_content(grid, currentpicker)
 }
 
