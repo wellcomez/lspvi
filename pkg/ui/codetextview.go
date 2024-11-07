@@ -19,17 +19,22 @@ import (
 
 type hover_dector struct {
 	Pos   femto.Loc
+	move  bool
 	Abort bool
 }
 
-func new_hover(pos femto.Loc, cb func()) (ret *hover_dector) {
-	ret = &hover_dector{Pos: pos}
+func new_hover(pos femto.Loc, move bool, cb func()) (ret *hover_dector) {
+	ret = &hover_dector{Pos: pos, move: move}
 	ret.start(cb)
 	return
 }
 func (h *hover_dector) start(cb func()) {
 	go func() {
-		timer := time.NewTimer(time.Second * 1)
+		s := time.Second * 1
+		if h.move {
+			s = time.Millisecond * 5
+		}
+		timer := time.NewTimer(s)
 		<-timer.C
 		if h.Abort {
 			return

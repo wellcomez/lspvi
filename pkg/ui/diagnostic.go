@@ -54,7 +54,7 @@ func (prj *project_diagnostic) Update(diags lsp.PublishDiagnosticsParams) {
 		prj.data = append(prj.data, *NewLspDiagnostic(diags))
 	}
 }
-func hove_test(root *codetextview, pos mouse_event_pos, event *tcell.EventMouse) {
+func hove_test(root *codetextview, move bool, pos mouse_event_pos, event *tcell.EventMouse) {
 	if dia := root.code.Dianostic(); !dia.data.IsClear {
 		var new_diagnos_hove = func(v lsp.Diagnostic, mouse tcell.EventMouse) {
 			root.error = nil
@@ -62,7 +62,7 @@ func hove_test(root *codetextview, pos mouse_event_pos, event *tcell.EventMouse)
 				X: pos.X,
 				Y: pos.Y,
 			}
-			root.hover = new_hover(buff_loc, func() {
+			root.hover = new_hover(buff_loc, move, func() {
 				msg := &LspTextView{
 					Box:  tview.NewBox(),
 					main: root.main,
@@ -92,7 +92,7 @@ func hove_test(root *codetextview, pos mouse_event_pos, event *tcell.EventMouse)
 			if ok && v.Range.Start.Line == pos.Y {
 				if hover := root.hover; hover == nil {
 					new_diagnos_hove(v, *event)
-				} else if hover.Pos.Y != pos.Y||hover.Abort {
+				} else if hover.Pos.Y != pos.Y || hover.Abort {
 					new_diagnos_hove(v, *event)
 				}
 				break
@@ -100,7 +100,7 @@ func hove_test(root *codetextview, pos mouse_event_pos, event *tcell.EventMouse)
 		}
 	}
 }
-func (c *codetextview) HideHoverIfChanged () {
+func (c *codetextview) HideHoverIfChanged() {
 	if c.hover != nil {
 		if c.hover.Pos.Y != c.Cursor.Loc.Y {
 			c.hover.Abort = true

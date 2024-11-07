@@ -616,7 +616,10 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		}
 	}
 	root.HideHoverIfChanged()
-
+	switch action {
+	case tview.MouseLeftDoubleClick, tview.MouseLeftClick, tview.MouseMove:
+		hove_test(root, action == tview.MouseMove, pos, event)
+	}
 	switch action {
 
 	case tview.MouseLeftDoubleClick:
@@ -637,7 +640,6 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 	case tview.MouseMove:
 		{
 			// loc := root.tab_loc(pos)
-			hove_test(root, pos, event)
 			if root.mouse_select_area {
 				pos := root.tab_loc(pos)
 				root.Cursor.SetSelectionEnd(pos)
