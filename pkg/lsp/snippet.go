@@ -112,20 +112,28 @@ func NewCompleteCode(raw string) (ret *CompleteCodeLine) {
 	return
 }
 
-var snip_zero = "$0\\"
-
+func get_index_of(s string, ptn []string) (int, string) {
+	for i := range ptn {
+		v := ptn[i]
+		if ind := strings.Index(s, v); ind > 0 {
+			return ind, v
+		}
+	}
+	return -1, ""
+}
 func (code *CompleteCodeLine) string_to_token(sss string) (ret []complete_token) {
 	x1 := sss
+	var snip_zero = "$0\\"
 	for {
-		if ind := strings.Index(x1, snip_zero); ind > 0 {
+		if ind, capture := get_index_of(x1, []string{snip_zero, "$0"}); ind > 0 {
 			arg := snippet_arg{name: "",
-				capture: snip_zero,
-				pos:     strings.Index(code.snip.raw, snip_zero)}
+				capture: capture,
+				pos:     strings.Index(code.snip.raw, capture)}
 			code.snip_args = append(code.snip_args, arg)
 			ret = append(ret, complete_token{Text: x1[:ind]})
 			ret = append(ret, complete_token{Text: "",
 				arg: arg})
-			x1 = x1[ind+len(snip_zero):]
+			x1 = x1[ind+len(capture):]
 		} else {
 			ret = append(ret, complete_token{Text: x1})
 			return

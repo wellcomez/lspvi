@@ -762,7 +762,7 @@ func (code *codetextview) xOffset() int64 {
 //	}
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
-	// prev := get_line_content(lineno, code)
+	// prev := get_line_content(lineno, code
 	if code.view.complete.IsShown() {
 		switch event.Key() {
 		case tcell.KeyEnter, tcell.KeyUp, tcell.KeyDown:
