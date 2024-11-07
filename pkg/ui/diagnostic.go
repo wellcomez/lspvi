@@ -117,13 +117,15 @@ func (c *codetextview) HideHoverIfChanged() {
 
 type diagnospicker struct {
 	*fzflist_impl
-	fzf *fzf_list_item
+	fzf *fzf_on_listview
 	qk  *quick_view_data
 }
 
 // UpdateQuery implements picker.
 func (d *diagnospicker) UpdateQuery(query string) {
 	// panic("unimplemented")
+	d.fzf.OnSearch(query, false)
+	UpdateColorFzfList(d.fzf).SetCurrentItem(0)
 }
 
 // close implements picker.
@@ -134,7 +136,10 @@ func (d *diagnospicker) close() {
 // handle implements picker.
 func (d *diagnospicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-		d.list.InputHandler()(event, setFocus)
+		switch event.Key() {
+		case tcell.KeyUp, tcell.KeyDown, tcell.KeyEnter:
+			d.list.InputHandler()(event, setFocus)
+		}
 	}
 }
 
@@ -183,5 +188,10 @@ func new_diagnospicker_picker(dialog *fzfmain) (pk *diagnospicker) {
 			pk.parent.open_in_edior(data.Loc)
 		}
 	})
+	sss := []string{}
+	for _, v := range data {
+		sss = append(sss, v.plaintext())
+	}
+	pk.fzf = new_fzf_on_list_data(pk.list, sss, true)
 	return
 }
