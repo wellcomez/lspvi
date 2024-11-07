@@ -181,6 +181,12 @@ type CodeView struct {
 	diagnostic editor_diagnostic
 }
 
+func (code *CodeView) NextError(yes bool) {
+	dialogsize := code.Dianostic()
+	if d, e := dialogsize.Next(yes); e == nil {
+		code.goto_location_no_history(d.Range, true, nil)
+	}
+}
 func (code *CodeView) Dianostic() (diagnostic editor_diagnostic) {
 	diagnostic = code.diagnostic
 	return

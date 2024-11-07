@@ -66,6 +66,8 @@ const (
 	next_window_right
 	next_window_down
 	next_window_up
+	next_error
+	prev_error
 	find_in_file
 	find_in_file_vi_word
 	brack_match
@@ -191,6 +193,20 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.open_picker_refs()
 			return true
 		}}
+	case prev_error:
+		{
+			return cmdactor{id, "Next error", func() bool {
+				m.current_editor().NextError(true)
+				return true
+			}}
+		}
+	case next_error:
+		{
+			return cmdactor{id, "Preve ext error", func() bool {
+				m.current_editor().NextError(false)
+				return true
+			}}
+		}
 	case open_picker_bookmark:
 		return cmdactor{id, "Bookmark", func() bool {
 			m.open_picker_bookmark()

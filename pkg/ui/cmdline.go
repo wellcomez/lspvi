@@ -93,6 +93,8 @@ func new_cmdline(main *mainui) *cmdline {
 		return
 	}
 	code.cmds = []cmd_processor{
+		create_cmd_item(next_error, []string{"en"}),
+		create_cmd_item(prev_error, []string{"ep"}),
 		create_cmd_item(vi_quick_prev, []string{"cp"}),
 		create_cmd_item(vi_quick_next, []string{"cn"}),
 		create_cmd_item(cmd_clean_log, []string{"cleanlog"}),

@@ -97,6 +97,7 @@ type CodeEditor interface {
 	word_left()
 	word_right()
 
+	NextError(bool)
 	//undo
 	Undo()
 

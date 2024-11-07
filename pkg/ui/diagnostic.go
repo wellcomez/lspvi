@@ -15,9 +15,24 @@ import (
 type Diagnostic interface {
 }
 type editor_diagnostic struct {
-	data lsp.PublishDiagnosticsParams
+	data  lsp.PublishDiagnosticsParams
+	index int
 }
 
+func (e *editor_diagnostic) Next(yes bool) (ret lsp.Diagnostic, err error) {
+	count := len(e.data.Diagnostics)
+	if count == 0 {
+		err = fmt.Errorf("empty")
+		return
+	}
+	ret = e.data.Diagnostics[e.index]
+	next := 1
+	if !yes {
+		next = -1
+	}
+	e.index = (count + next) % count
+	return
+}
 func NewLspDiagnostic(diags lsp.PublishDiagnosticsParams) *editor_diagnostic {
 	return &editor_diagnostic{
 		data: diags,
@@ -69,8 +84,9 @@ func hove_test(root *codetextview, move bool, pos mouse_event_pos, event *tcell.
 					Box:  tview.NewBox(),
 					main: root.main,
 				}
+				tag := ErrorTag(v)
 				ss := []string{
-					fmt.Sprintf(" %s %s %s ", v.Message, v.Source, v.Code),
+					fmt.Sprintf("%s %s %s %s ", tag, v.Message, v.Source, v.Code),
 					fmt.Sprintf(" %s %d:%d ", filepath.Base(root.code.FileName()),
 						v.Range.Start.Character,
 						buff_loc.Y+1)}
@@ -105,6 +121,21 @@ func hove_test(root *codetextview, move bool, pos mouse_event_pos, event *tcell.
 			}
 		}
 	}
+}
+
+func ErrorTag(v lsp.Diagnostic) string {
+	tag := "I"
+	switch v.Severity {
+	case lsp.DiagnosticSeverityError:
+		tag = "E"
+	case lsp.DiagnosticSeverityHint:
+		tag = "H"
+	case lsp.DiagnosticSeverityWarning:
+		tag = "W"
+	case lsp.DiagnosticSeverityInformation:
+		tag = "I"
+	}
+	return tag
 }
 func (c *codetextview) HideHoverIfChanged() {
 	if c.hover != nil {
@@ -158,13 +189,15 @@ func new_diagnospicker_picker(dialog *fzfmain) (pk *diagnospicker) {
 
 	for _, v := range dia.data {
 		for _, d := range v.data.Diagnostics {
+			tag := ErrorTag(d)
 			var ref = ref_with_caller{
 				Loc: lsp.Location{
 					URI:   v.data.URI,
 					Range: d.Range,
 				},
 				Caller: &lspcore.CallStackEntry{
-					Name: fmt.Sprintf("%s %s %s", d.Message, d.Code, d.Source),
+					Name: fmt.Sprintf("%s %s %s %s", tag, d.Message, d.Code, d.Source),
+					Item: lsp.CallHierarchyItem{Kind: lsp.SymbolKindEnum},
 				},
 			}
 			refs = append(refs, ref)
