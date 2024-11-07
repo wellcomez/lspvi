@@ -15,6 +15,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"zen108.com/lspvi/pkg/devicon"
 )
 
 type dir_open_mode int
@@ -58,7 +59,7 @@ var normal_file = fmt.Sprintf("%c", '\uf15c')
 
 // var go_icon = fmt.Sprintf("%c", '\uf1a0')
 var go_icon = fmt.Sprintf("%c", '\uf0d4')
-var c_icon = fmt.Sprintf("%c", '\U000f0bf2')
+var c_icon = ""
 var h_icon = fmt.Sprintf("%c", '\U0000f0fd')
 var py_icon = fmt.Sprintf("%c", '\ue73c')
 var js_icon = fmt.Sprintf("%c", '\ue74f')
@@ -86,28 +87,28 @@ type extset struct {
 
 var fileicons = []extset{
 	{go_icon, []string{"go"}},
-	{c_icon, []string{"c", "cpp", "cc"}},
-	{h_icon, []string{"h", "hpp"}},
-	{py_icon, []string{"py"}},
-	{js_icon, []string{"js"}},
-	{ts_icon, []string{"tsx", "ts"}},
-	{html_icon, []string{"html"}},
-	{json_icon, []string{"json"}},
-	{txt_icon, []string{"txt"}},
+	// {c_icon, []string{"c", "cpp", "cc"}},
+	// {h_icon, []string{"h", "hpp"}},
+	// {py_icon, []string{"py"}},
+	// {js_icon, []string{"js"}},
+	// {ts_icon, []string{"tsx", "ts"}},
+	// {html_icon, []string{"html"}},
+	// {json_icon, []string{"json"}},
+	// {txt_icon, []string{"txt"}},
 	{go_mod_icon, []string{"go.mod"}},
-	{markdown_icon, []string{"md"}},
-	{png_icon, []string{"png"}},
-	{css_icon, []string{"css"}},
-	{lua_icon, []string{"lua"}},
-	{java_icon, []string{"java", "jar"}},
-	{fmt.Sprintf("%c", '\ue673'), []string{"makefile"}},
-	{fmt.Sprintf("%c", '\uebca'), []string{"sh"}},
-	{fmt.Sprintf("%c", '\uf1c1'), []string{"pdf"}},
-	{fmt.Sprintf("%c", '\uf1c2'), []string{"doc"}},
-	{fmt.Sprintf("%c", '\ueefc'), []string{"csv"}},
-	{fmt.Sprintf("%c", '\uf1c6'), []string{"zip", "gz", "tar", "rar", "bz2", "7z", "tgz"}},
-	{rust_icon, []string{"rs"}},
-	{fmt.Sprintf("%c", '\U000f0b02'), []string{"uml"}},
+	// {markdown_icon, []string{"md"}},
+	// {png_icon, []string{"png"}},
+	// {css_icon, []string{"css"}},
+	// {lua_icon, []string{"lua"}},
+	// {java_icon, []string{"java", "jar"}},
+	// {fmt.Sprintf("%c", '\ue673'), []string{"makefile"}},
+	// {fmt.Sprintf("%c", '\uebca'), []string{"sh"}},
+	// {fmt.Sprintf("%c", '\uf1c1'), []string{"pdf"}},
+	// {fmt.Sprintf("%c", '\uf1c2'), []string{"doc"}},
+	// {fmt.Sprintf("%c", '\ueefc'), []string{"csv"}},
+	// {fmt.Sprintf("%c", '\uf1c6'), []string{"zip", "gz", "tar", "rar", "bz2", "7z", "tgz"}},
+	// {rust_icon, []string{"rs"}},
+	// {fmt.Sprintf("%c", '\U000f0b02'), []string{"uml"}},
 }
 
 func verifyBinary(buf []byte) bool {
@@ -152,6 +153,9 @@ func FileIcon(file string) string {
 				return v.icon
 			}
 		}
+	}
+	if icon, err := devicon.FindIconPath(file); err == nil {
+		return icon.Icon
 	}
 	if len(filepath.Ext(file)) == 0 {
 		if buf, err := os.ReadFile(file); err == nil {

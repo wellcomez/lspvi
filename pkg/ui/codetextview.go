@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
@@ -15,6 +16,32 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
+
+type hover_dector struct {
+	Pos   femto.Loc
+	move  bool
+	Abort bool
+}
+
+func new_hover(pos femto.Loc, move bool, cb func()) (ret *hover_dector) {
+	ret = &hover_dector{Pos: pos, move: move}
+	ret.start(cb)
+	return
+}
+func (h *hover_dector) start(cb func()) {
+	go func() {
+		s := time.Second * 1
+		if h.move {
+			s = time.Millisecond * 5
+		}
+		timer := time.NewTimer(s)
+		<-timer.C
+		if h.Abort {
+			return
+		}
+		cb()
+	}()
+}
 
 type codetextview struct {
 	*femto.View
@@ -27,6 +54,8 @@ type codetextview struct {
 	PasteHandlerImpl     func(text string, setFocus func(tview.Primitive))
 	main                 MainService
 	complete             CompleteMenu
+	hover                *hover_dector
+	error                *LspTextView
 }
 
 func (view *codetextview) IconStyle(main MainService) tcell.Style {
@@ -257,6 +286,9 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 			code_navbar_draw_runne(screen, i, y, ch, tcell.StyleDefault.Foreground(tview.Styles.BorderColor).Background(tview.Styles.PrimitiveBackgroundColor))
 		}
 		v.complete.Draw(screen)
+		if v.error != nil {
+			v.error.Draw(screen)
+		}
 	}
 	// newFunction1(v, x, y, w,screen)
 }
@@ -300,7 +332,8 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 	sym := GetClosestSymbol(symbol, r)
 	begin := x
 	style := global_theme.get_default_style()
-	textStyle := global_theme.select_style()
+	fg, _, _ := global_theme.get_default_style().Decompose()
+	textStyle := global_theme.select_line_style().Foreground(fg)
 
 	b1 := BoxDrawingsLightVertical
 	if v.HasFocus() {
@@ -313,10 +346,10 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 	x1 = strings.ReplaceAll(x1, "/", " > ") + " > "
 	for _, v := range x1 {
 		begin = txt.Add(colorchar{
-			begin, y, v, *textStyle})
+			begin, y, v, textStyle})
 	}
 	if sym != nil {
-		begin = txt.Add(colorchar{begin, y, ' ', *textStyle})
+		begin = txt.Add(colorchar{begin, y, ' ', textStyle})
 
 		if len(sym.Classname) > 0 {
 			s := style
@@ -337,7 +370,7 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 			}
 			for _, v := range " >" {
 				begin = txt.Add(colorchar{
-					begin, y, v, *textStyle})
+					begin, y, v, textStyle})
 			}
 		}
 		if len(sym.SymInfo.Name) > 0 {
@@ -370,7 +403,7 @@ func (v *codetextview) DrawNavigationBar(x int, y int, w int, screen tcell.Scree
 	for {
 		if begin < x+w-1 {
 			begin = txt.Add(colorchar{
-				begin, y, ' ', *textStyle})
+				begin, y, ' ', textStyle})
 		} else {
 			break
 		}
@@ -403,11 +436,12 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 }
 func (root *codetextview) change_line_color(screen tcell.Screen, x int, topY int, style tcell.Style) {
 	line := root.Cursor.Loc.Y
-	x1 := root.GetLineNoFormDraw(line)
-	by := x1 - root.Topline
+	Y := root.GetLineNoForDraw(line)
+	by := Y - root.Topline
+	LineR := by + topY
 	sss := fmt.Sprintf("%d", line)
 	for i, ch := range sss {
-		screen.SetContent(x+i, by+topY, ch, nil,
+		screen.SetContent(x+i, LineR, ch, nil,
 			style.Foreground(tcell.ColorDarkGreen).Background(root.GetBackgroundColor()))
 	}
 }
@@ -419,10 +453,9 @@ func (root *codetextview) draw_line_mark(mark bookmarkfile, ch rune, bottom int,
 			b = append(b, line)
 		}
 		for _, line := range b {
-			x1 := root.GetLineNoFormDraw(line)
+			x1 := root.GetLineNoForDraw(line)
 			by := x1 - root.Topline
-			screen.SetContent(x, by+topY, ch, nil,
-				style.Foreground(global_theme.search_highlight_color()).Background(root.GetBackgroundColor()))
+			screen.SetContent(x, by+topY, ch, nil, style)
 		}
 	}
 }
@@ -437,18 +470,11 @@ func new_codetext_view(buffer *femto.Buffer, main MainService) *codetextview {
 		nil,
 		nil,
 		main,
-		nil,
+		nil, nil, nil,
 	}
 	root.complete = Newcompletemenu(main, root)
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		style := tcell.StyleDefault
-		_, topY, _, _ := root.GetInnerRect()
-		bottom := root.Bottomline()
-		mark := root.bookmark
-		bookmark_icon := '\uf02e'
-		root.draw_line_mark(mark, bookmark_icon, bottom, screen, x, topY, style)
-		root.draw_line_mark(root.linechange, '*', bottom, screen, x, topY, style)
-		// root.change_line_color(screen, x, topY, style)
+		root.draw_line_number(screen, x)
 		return root.GetInnerRect()
 	})
 	// root.Buf.Settings["scrollbar"] = true
@@ -456,4 +482,43 @@ func new_codetext_view(buffer *femto.Buffer, main MainService) *codetextview {
 	// root.addbookmark(1, true)
 	// root.addbookmark(20, true)
 	return root
+}
+
+func (root *codetextview) draw_line_number(screen tcell.Screen, x int) {
+	style := tcell.StyleDefault
+	style = style.Foreground(global_theme.search_highlight_color()).Background(root.GetBackgroundColor())
+	_, topY, _, _ := root.GetInnerRect()
+	bottom := root.Bottomline()
+	mark := root.bookmark
+	bookmark_icon := '\uf02e'
+	root.draw_line_mark(mark, bookmark_icon, bottom, screen, x, topY, style)
+	root.draw_line_mark(root.linechange, '*', bottom, screen, x, topY, style)
+	dialogsize := root.code.Dianostic()
+	if !dialogsize.data.IsClear {
+		mark := get_dialog_line(dialogsize, lsp.DiagnosticSeverityError)
+		if len(mark.LineMark) > 0 {
+			error_style := style
+			if s, e := global_theme.get_styles([]string{"@error", "error"}); e == nil {
+				error_style = s
+			}
+			root.draw_line_mark(mark, '\uea87', bottom, screen, x, topY, error_style)
+		}
+		mark = get_dialog_line(dialogsize, lsp.DiagnosticSeverityWarning)
+		if len(mark.LineMark) > 0 {
+			error_style := style
+			if s, e := global_theme.get_styles([]string{"@text.warning", "warningmsg"}); e == nil {
+				error_style = s
+			}
+			root.draw_line_mark(mark, '\uea6c', bottom, screen, x, topY, error_style)
+		}
+	}
+}
+
+func get_dialog_line(dialogsize editor_diagnostic, level lsp.DiagnosticSeverity) (errline bookmarkfile) {
+	for _, v := range dialogsize.data.Diagnostics {
+		if v.Severity == level {
+			errline.LineMark = append(errline.LineMark, LineMark{Line: v.Range.Start.Line + 1})
+		}
+	}
+	return
 }

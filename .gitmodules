@@ -4,3 +4,12 @@
 [submodule "pkg/go-tree-sitter"]
 	path = pkg/go-tree-sitter
 	url = git@github.com:wellcomez/go-tree-sitter.git
+[submodule "pkg/tree-sitter-yaml"]
+	path = pkg/tree-sitter-yaml
+	url = git@github.com:tree-sitter-grammars/tree-sitter-yaml.git
+[submodule "pkg/tree-sitter-markdown"]
+	path = pkg/tree-sitter-markdown
+	url = git@github.com:tree-sitter-grammars/tree-sitter-markdown.git
+[submodule "pkg/tree-sitter-toml"]
+	path = pkg/tree-sitter-toml
+	url = git@github.com:tree-sitter-grammars/tree-sitter-toml.git

@@ -5,6 +5,7 @@ import (
 	// "encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 
 	// "log"
 	"os"
@@ -26,7 +27,22 @@ type Symbol_file struct {
 	Ts           *TreeSitter
 	lspopen      bool
 }
+type LspSignatureHelp struct {
+	TriggerChar []string
+	Document    func(v lsp.SignatureHelp, call SignatureHelp) (text []string)
+}
+type LspCompleteUtil struct {
+	TriggerChar []string
+	Document    func(v lsp.CompletionItem) (text []string)
+}
 
+func (sym Symbol_file) LspHelp() (ret LspUtil, err error) {
+	if sym.lsp == nil {
+		err = fmt.Errorf("lsp is nil")
+		return
+	}
+	return sym.lsp.LspHelp()
+}
 func (sym Symbol_file) LspClient() lspclient {
 	return sym.lsp
 }
@@ -60,6 +76,7 @@ func (s *Symbol_file) SignatureHelp(arg SignatureHelp) (ret lsp.SignatureHelp, e
 		}
 		return
 	}
+	debug.DebugLog("help", "lsp signature help", "pos", arg.Pos.String(), strconv.Quote(arg.TriggerCharacter), filepath.Base(arg.File))
 	ret, err = s.lsp.SignatureHelp(arg)
 	s.on_error(err)
 	return

@@ -54,6 +54,9 @@ func (a *clickdetector) handle(action tview.MouseAction, event *tcell.EventMouse
 	return action, event
 }
 
+type dialogsize struct {
+	x, y, width, height float32
+}
 type fzfmain struct {
 	Frame         *tview.Frame
 	input         *tview.InputField
@@ -62,9 +65,16 @@ type fzfmain struct {
 	main          MainService
 	currentpicker picker
 	clickcheck    clickdetector
+	size          dialogsize
 }
 type fuzzpicktype int
 
+func (parent *fzfmain) open_in_edior(Location lsp.Location) {
+	main := parent.main
+	main.OpenFileHistory(Location.URI.AsPath().String(), &Location)
+	main.current_editor().Acitve()
+	parent.hide()
+}
 func (parent *fzfmain) update_dialog_title(s string) {
 	UpdateTitleAndColor(parent.Frame.Box, s)
 }
@@ -151,6 +161,20 @@ func (v *fzfmain) OpenGrepWordFzf(word QueryOption, qf func(bool, ref_with_calle
 	sym.livewgreppicker.UpdateQuery(word.Query)
 	return sym
 }
+
+func (v *fzfmain) OpenLiveGrepCurrentFile(key string, file string) {
+	var option = DefaultQuery(key)
+	option = option.Whole(false).Cap(false).Key(key).SetPathPattern(file)
+	sym := new_live_grep_picker(v, option)
+	x := sym.grid(v.input)
+	v.create_dialog_content(x, sym)
+
+	sym.file_include.SetText(file)
+	v.input.SetText(option.Query)
+	if option.Query != "" {
+		sym.UpdateQuery(option.Query)
+	}
+}
 func (v *fzfmain) OpenLiveGrepFzf() {
 	sym := new_live_grep_picker(v, DefaultQuery(""))
 	x := sym.grid(v.input)
@@ -175,12 +199,13 @@ func (v *fzfmain) OpenKeymapFzf() {
 	sym := new_keymap_picker(v)
 	x := sym.grid(v.input)
 	v.create_dialog_content(x, sym)
+	v.size = dialogsize{x: 0.2, y: 2, width: 0.6, height: 16}
 }
 func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 	v.Frame = tview.NewFrame(grid)
 	v.Frame.SetBorder(true)
 	v.input.SetLabel(">")
-	v.input.SetText("")
+	//	v.input.SetText("")
 	UpdateTitleAndColor(v.Frame.Box, sym.name())
 	v.app.SetFocus(v.input)
 	v.Visible = true
@@ -191,6 +216,9 @@ func (v *fzfmain) create_dialog_content(grid tview.Primitive, sym picker) {
 			v.currentpicker.UpdateQuery(text)
 		}
 	})
+	v.size = dialogsize{width: 0.75, height: 0.75}
+	v.size.x = (1 - v.size.width) * 0.5
+	v.size.y = (1 - v.size.height) * 0.5
 }
 
 var modetree = 0
@@ -238,6 +266,11 @@ func (v *fzfmain) symbol_picker_2(code CodeEditor) {
 	x := sym.impl.grid(v.input, 1)
 	v.currentpicker = sym
 	v.create_dialog_content(x, sym)
+}
+func (v *fzfmain) OpenUIPicker() {
+	currentpicker := new_uipciker(v)
+	grid := currentpicker.grid(v.input)
+	v.create_dialog_content(grid, currentpicker)
 }
 
 // OpenFileFzf
@@ -308,9 +341,23 @@ func Newfuzzpicker(main *mainui, app *tview.Application) *fzfmain {
 func (v *fzfmain) Draw(screen tcell.Screen) {
 	if v.Visible {
 		width, height := screen.Size()
-		w := width * 3 / 4
-		h := height * 3 / 4
-		v.Frame.SetRect((width-w)/2, (height-h)/2, w, h)
+		w := int(v.size.width * float32(width))
+		h := int(v.size.height * float32(height))
+		if v.size.height > 1 {
+			h = int(v.size.height)
+		}
+		if v.size.width > 1 {
+			w = int(v.size.width)
+		}
+		x := int(v.size.x * float32(width))
+		if v.size.x > 1 {
+			x = int(v.size.x)
+		}
+		y := int(v.size.y * float32(height))
+		if v.size.y > 1 {
+			y = int(v.size.y)
+		}
+		v.Frame.SetRect(x, y, w, h)
 		v.Frame.Draw(screen)
 	}
 }

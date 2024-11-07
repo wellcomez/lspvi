@@ -91,6 +91,14 @@ func (code *CodeView) Match() {
 		code.view.JumpToMatchingBrace()
 	}
 }
+
+func (code *CodeView) Acitve() {
+	if global_config.enablevim {
+		code.main.CmdLine().Vim.EnterEscape()
+	} else {
+		code.main.set_viewid_focus(code.id)
+	}
+}
 func (code CodeView) Viewlink() *view_link {
 	return code.view_link
 }
@@ -169,9 +177,17 @@ type CodeView struct {
 	not_preview bool
 	insert      bool
 	//diff        *Differ
-	loading bool
+	loading    bool
+	diagnostic editor_diagnostic
 }
 
+func (code *CodeView) Dianostic() (diagnostic editor_diagnostic) {
+	diagnostic = code.diagnostic
+	return
+}
+func (code *CodeView) UpdateDianostic(diagnostic editor_diagnostic) {
+	code.diagnostic = diagnostic
+}
 func (code *CodeView) NewChangeChecker() code_change_cheker {
 	return new_code_change_checker(code)
 }
@@ -199,7 +215,9 @@ func (code *CodeView) Reload() {
 		loc := code.view.Cursor.Loc
 		code.openfile(code.Path(), true, func(bool) {
 			code.view.Topline = offset
-			code.view.Cursor.GotoLoc(loc)
+			if code.view.Buf.NumLines > loc.Y {
+				code.view.Cursor.GotoLoc(loc)
+			}
 			if s, _ := code.main.Lspmgr().Get(code.Path()); s != nil {
 				s.LspLoadSymbol()
 			}
@@ -242,6 +260,9 @@ func (code *CodeView) InsertMode(yes bool) {
 	code.insert = yes
 	if !code.insert {
 		code.view.complete.Hide()
+	}
+	if !code.insert {
+		// code.update_codetext_hlsearch(nil, 0)
 	}
 }
 func (code *CodeView) SelectWordFromCopyCursor(c femto.Cursor) femto.Cursor {
@@ -433,10 +454,10 @@ func NewCodeView(main MainService) *CodeView {
 	return &ret
 }
 
-func (main *mainui) qf_grep_word(opt QueryOption) {
+func (main *mainui) SearchInProject(opt QueryOption) {
 	main.ActiveTab(view_quickview, false)
 	quickview := main.quickview
-	quickview.qf_grep_word(opt)
+	quickview.SearchInProject(opt)
 }
 
 func (code *CodeView) get_selected_lines() editor_selection {
@@ -542,6 +563,9 @@ func (code *CodeView) handle_mouse_impl(action tview.MouseAction, event *tcell.E
 				code.SetCurrenteditor()
 				code.main.CmdLine().input.Blur()
 				if code.id != view_code_below {
+					if action == tview.MouseLeftClick {
+						// code.view.Cursor.SelectWord()
+					}
 					symboltree := code.main.OutLineView()
 					symboltree.editor = code
 					symboltree.Clear()
@@ -591,6 +615,11 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 			return action, event
 		}
 	}
+	root.HideHoverIfChanged()
+	switch action {
+	case tview.MouseLeftDoubleClick, tview.MouseLeftClick, tview.MouseMove:
+		hove_test(root, action == tview.MouseMove, pos, event)
+	}
 	switch action {
 
 	case tview.MouseLeftDoubleClick:
@@ -610,6 +639,7 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		}
 	case tview.MouseMove:
 		{
+			// loc := root.tab_loc(pos)
 			if root.mouse_select_area {
 				pos := root.tab_loc(pos)
 				root.Cursor.SetSelectionEnd(pos)
@@ -709,6 +739,11 @@ func (root *codetextview) tab_loc(pos mouse_event_pos) femto.Loc {
 func (code *codetextview) yOfffset() int {
 	_, offfsety, _, _ := code.GetInnerRect()
 	return offfsety
+}
+func (code *codetextview) lineNumOffset() int64 {
+	v := reflect.ValueOf(code).Elem()
+	field := v.FieldByName("lineNumOffset")
+	return field.Int()
 }
 func (code *codetextview) xOffset() int64 {
 	v := reflect.ValueOf(code).Elem()
@@ -1140,6 +1175,7 @@ func (code *CodeView) move_up_down(up bool) {
 		code.move_selection(vs)
 	}
 	code.update_with_line_changed()
+	code.view.HideHoverIfChanged()
 }
 
 func (code *CodeView) Complete() {
@@ -1443,8 +1479,6 @@ func (code *CodeView) openfile(filename string, reload bool, onload func(newfile
 	if err == nil {
 		if code.id.is_editor() {
 			global_file_watch.Add(filename)
-		}
-		if code.main != nil {
 			code.main.Recent_open().add(filename)
 		}
 	}
@@ -1474,7 +1508,6 @@ func on_treesitter_update(code *CodeView, ts *lspcore.TreeSitter) {
 func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 	// b := code.view.Buf
 	// b.Settings["syntax"] = false
-	code.file = NewFile(fileload.FileName)
 	var filename = fileload.FileName
 	code.LoadBuffer(fileload)
 	sym := code.main.Lspmgr().OpenNoLsp(filename)
@@ -1500,6 +1533,11 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 				on_treesitter_update(code, ts)
 			})
 		}
+	}
+	if dia := code.main.Dialogsize().Find(code.Path()); dia != nil {
+		code.diagnostic = *dia
+	} else {
+		code.diagnostic = editor_diagnostic{}
 	}
 	code.set_loc(femto.Loc{X: 0, Y: 0})
 	if code.main != nil {
@@ -1541,6 +1579,7 @@ func (view *codetextview) is_softwrap() bool {
 	return view.Buf.Settings["softwrap"] == true
 }
 func (code *CodeView) LoadBuffer(file fileloader.FileLoader) {
+	code.file = NewFile(file.FileName)
 	buffer := file.Buff
 	if buffer == nil {
 		buffer = femto.NewBufferFromString("", file.FileName)
@@ -1695,8 +1734,9 @@ func is_lsprange_ok(loc lsp.Range) bool {
 }
 func (code *CodeView) goto_line_history(line int, historyin bool) {
 	if line == -1 {
-		code.view.EndOfLine()
-		return
+		line = code.view.Buf.NumLines - 1
+		// code.view.SelectToEndOfLine()
+		// return
 	}
 	if code.main != nil {
 		code.main.Navigation().history.SaveToHistory(code)

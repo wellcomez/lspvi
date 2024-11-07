@@ -1,9 +1,11 @@
 package lspcore
 
 import "github.com/tectiv3/go-lsp"
+
 type lsp_md struct {
-	lsplang_base
+	lsp_lang_common
 }
+
 // InitializeLsp implements lsplang.
 func (l lsp_md) InitializeLsp(core *lspcore, wk WorkSpace) error {
 	panic("unimplemented")

@@ -31,7 +31,7 @@ func (pk keymap_picker) close() {
 
 // name implements picker.
 func (pk keymap_picker) name() string {
-	return "key map"
+	return fmt.Sprintf("Key mapping [%d/%d]", pk.impl.list.GetCurrentItem(), pk.impl.list.GetItemCount())
 }
 
 // UpdateQuery implements picker.
@@ -60,6 +60,7 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 		keys = append(keys, v.main.key_map_escape()...)
 		keys = append(keys, v.main.key_map_leader()...)
 	}
+	keys = append(keys, v.main.CmdLine().main.global_key_map()...)
 	keys = append(keys, v.main.key_map_space_menu()...)
 	keys = append(keys, v.main.CmdLine().ConvertCmdItem()...)
 	// keys = append(keys, v.main.vi_key_map()...)
@@ -84,16 +85,22 @@ func new_keymap_picker(v *fzfmain) keymap_picker {
 	}
 	list := ret.impl.list
 	fzfdata := []string{}
-	for i, v := range keymaplist {
-		index := i
+	for _, v := range keymaplist {
 		fzfdata = append(fzfdata, v)
-		list.AddItem(v, "", func() {
-			ret.newMethod(index)
-		})
+		list.AddItem(v, "", nil)
 	}
 	fzf := new_fzf_on_list_data(list, fzfdata, true)
 	ret.impl.fzf = fzf
+	lastindex := -1
+	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		v.update_dialog_title(ret.name())
+		lastindex = index
+	})
 	list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		v.update_dialog_title(ret.name())
+		if lastindex != i {
+			return
+		}
 		dataindex := fzf.get_data_index(i)
 		ret.newMethod(dataindex)
 	})

@@ -15,7 +15,7 @@ import (
 )
 
 type lsp_lang_go struct {
-	lsplang_base
+	lsp_lang_common
 }
 
 func (l lsp_lang_go) IsSource(filename string) bool {
@@ -194,4 +194,76 @@ func (core *lspcore) get_sync_option(result lsp.InitializeResult) {
 func (l lsp_lang_go) IsMe(filename string) bool {
 	var ext = []string{"go", "gomod", "gowork", "gotmpl"}
 	return IsMe(filename, ext)
+}
+func (a lsp_lang_go) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete, err error) {
+	document := []string{}
+	for index := range cl.Items {
+
+		v := cl.Items[index]
+		var text = []string{}
+		text = create_complete_go(v)
+		document = append(document, strings.Join(text, "\n"))
+	}
+	ret.Result = &CompleteResult{Document: document, Complete: create_complete_go}
+}
+
+func create_complete_go(v lsp.CompletionItem) (text []string) {
+	s := ""
+	switch v.Kind {
+	case lsp.CompletionItemKindMethod:
+		n := strings.Replace(v.Detail, "func", "", -1)
+		s = fmt.Sprintf("func(...) %s %s", v.Label, n)
+	case lsp.CompletionItemKindFunction:
+		n := strings.Replace(v.Detail, "func", "", -1)
+		s = fmt.Sprintf("func %s %s", v.Label, n)
+	case lsp.CompletionItemKindVariable:
+		s = fmt.Sprintf("var %s %s", v.Label, v.Detail)
+	case lsp.CompletionItemKindStruct, lsp.CompletionItemKindInterface:
+		s = fmt.Sprintf("type %s %s", v.Label, v.Detail)
+	case lsp.CompletionItemKindClass:
+		s = fmt.Sprintf("%s %s", v.Label, v.Detail)
+	case lsp.CompletionItemKindConstant:
+		s = fmt.Sprintf("const %s %s", v.Label, v.Detail)
+	case lsp.CompletionItemKindModule:
+		s = fmt.Sprintf("import (\n%s\n)//%s", v.Label, v.Detail)
+	default:
+		s = fmt.Sprintf("%s %s", v.Label, v.Detail)
+	}
+	// debug.DebugLogf("complete", "go parse %d %s ", v.Kind, s)
+	text = append(text, s)
+	var doc Document
+	if doc.Parser(v.Documentation) == nil {
+		ss := strings.Split(doc.Value, "\n")
+		for _, v := range ss {
+			text = append(text, "//"+v)
+		}
+	}
+	return
+}
+
+func (a lsp_lang_go) LspHelp(core *lspcore) (ret LspUtil, err error) {
+	ret, _ = a.lsp_lang_common.LspHelp(core)
+	ret.Complete.Document = create_complete_go
+	ret.Signature.Document = func(v lsp.SignatureHelp, call SignatureHelp) (text []string) {
+		for _, s := range v.Signatures {
+			method := s.Label
+			switch call.Kind {
+			case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
+				method = fmt.Sprintf("func %s", method)
+			}
+			text = append(text, method)
+			var signature_document Document
+			// if len(v.Parameters) > 0 {
+			// 	ret.label = v.Label
+			// }
+			if signature_document.Parser(s.Documentation) == nil {
+				ss := strings.Split(signature_document.Value, "\n")
+				for _, v := range ss {
+					text = append(text, "//"+v)
+				}
+			}
+		}
+		return
+	}
+	return
 }

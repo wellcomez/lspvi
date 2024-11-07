@@ -84,6 +84,9 @@ func new_cmdline(main *mainui) *cmdline {
 			id:   id,
 			arg0: arg,
 			run: func(s []string, c cmd_processor) {
+				code.command_history.add(command_history_record{
+					strings.Join(arg, " "), false,
+				})
 				get_cmd_actor(main, id).handle()
 			},
 		}
@@ -142,7 +145,7 @@ func (cmd *cmdline) OnSearchCommand(args []string) bool {
 	if len(args) > 1 {
 		arg := args[1]
 
-		cmd.main.qf_grep_word(DefaultQuery(arg).Cap(true))
+		cmd.main.SearchInProject(DefaultQuery(arg).Cap(true))
 	}
 	return true
 }
@@ -595,7 +598,7 @@ func (l LeaderHandle) State() string {
 
 // HanldeKey implements vim_mode_handle.
 func (l LeaderHandle) HanldeKey(event *tcell.EventKey) bool {
-	l.main.layout.spacemenu.visible = false
+	l.main.layout.mainlayout.spacemenu.visible = false
 	ch := event.Rune()
 	state := l.state
 	input := state.input
@@ -796,7 +799,7 @@ func (v *Vim) EnterLead() bool {
 		input := &inputdelay{cmdlist: sss}
 		lead.state.input = input
 		v.vi_handle = lead
-		v.app.layout.spacemenu.visible = true
+		v.app.layout.mainlayout.spacemenu.visible = true
 		v.update_editor_mode()
 		return true
 	} else {

@@ -23,8 +23,10 @@ const (
 	open_picker_colorscheme
 	open_picker_workspace
 	open_picker_qfh
+	open_picker_ui
 	open_picker_wkq
 	open_picker_livegrep
+	open_picker_livegrep_line
 	open_picker_history
 	open_picker_grep_word
 	open_picker_global_search
@@ -141,9 +143,15 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case split_right:
 		return cmdactor{id, "Split right", func() bool {
 			editor := m.current_editor()
-			codeview2 := create_split_codeview(editor)
+			v := create_split_codeview(editor)
 			filename := editor.Path()
-			codeview2.open_file_lspon_line_option(filename, nil, true, nil)
+			v.open_file_lspon_line_option(filename, nil, true, nil)
+			m.App().ForceDraw()
+			return true
+		}}
+	case open_picker_ui:
+		return cmdactor{id, "Window Selector", func() bool {
+			m.Dialog().OpenUIPicker()
 			return true
 		}}
 	case open_picker_qfh:
@@ -186,6 +194,14 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.open_picker_livegrep()
 			return true
 		}}
+	case open_picker_livegrep_line:
+		return cmdactor{id, "Find current file", func() bool {
+			dialog := m.Dialog()
+			filename := m.current_editor().Path()
+			key := m.current_editor().GetSelection()
+			dialog.OpenLiveGrepCurrentFile(key, filename)
+			return true
+		}}
 	case open_picker_history:
 		return cmdactor{id, "History", func() bool {
 			m.open_picker_history()
@@ -215,7 +231,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}}
 	case goto_back:
 		{
-			return cmdactor{id, "Back", func() bool {
+			return cmdactor{id, "Go back", func() bool {
 				m.GoBack()
 				return true
 			}}
@@ -232,7 +248,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}
 	case goto_forward:
 		{
-			return cmdactor{id, "Forward", func() bool {
+			return cmdactor{id, "Go forward", func() bool {
 				m.GoForward()
 				return true
 			}}
@@ -419,14 +435,18 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case vi_quick_prev:
 		{
 			return cmdactor{id, "Prev", func() bool {
-				// m.quickview.go_prev()
+				index := m.Quickfix().view.GetCurrentItem()
+				count := m.Quickfix().view.GetItemCount()
+				m.Quickfix().view.SetCurrentItem((index + 1 + count) % count)
 				return true
 			}}
 		}
 	case vi_quick_next:
 		{
 			return cmdactor{id, "Quick next", func() bool {
-				// m.quickview.go_next()
+				index := m.Quickfix().view.GetCurrentItem()
+				count := m.Quickfix().view.GetItemCount()
+				m.Quickfix().view.SetCurrentItem((index - 1 + count) % count)
 				return true
 			}}
 		}
@@ -458,6 +478,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case open_lspvi_configfile:
 		return cmdactor{id, "lspvi config file", func() bool {
 			m.OpenFileHistory(lspviroot.configfile, nil)
+			m.current_editor().Acitve()
 			return true
 		}}
 	case open_picker_help:
@@ -616,6 +637,7 @@ func (k *keymap) key_map_space_menu() {
 	k.menu = []cmditem{
 		get_cmd_actor(m, open_picker_document_symbol).menu_key(split(key_picker_document_symbol)),
 		get_cmd_actor(m, open_picker_qfh).menu_key(split("q")),
+		get_cmd_actor(m, open_picker_ui).menu_key(split("u")),
 		get_cmd_actor(m, open_picker_refs).menu_key(split(chr_goto_refer)),
 		get_cmd_actor(m, open_picker_bookmark).menu_key(split(chr_bookmark)),
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),
@@ -673,8 +695,8 @@ func (k *keymap) global_key_map() []cmditem {
 		get_cmd_actor(m, handle_ctrl_c).tcell_key(tcell.KeyCtrlC),
 		get_cmd_actor(m, handle_ctrl_v).tcell_key(tcell.KeyCtrlV),
 		get_cmd_actor(m, goto_back).tcell_key(tcell.KeyCtrlO),
-		get_cmd_actor(m, find_in_file).tcell_key(tcell.KeyCtrlF),
-		get_cmd_actor(m, goto_forward).runne('O'),
+		get_cmd_actor(m, open_picker_livegrep_line).tcell_key(tcell.KeyCtrlF),
+		get_cmd_actor(m, goto_forward).runne('O').Ctrl(),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
 		get_cmd_actor(m, open_picker_help).runne('p').Alt(),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTab),
@@ -698,7 +720,7 @@ func (k *keymap) global_key_map() []cmditem {
 		}
 	}
 */
-func (m mainui) keymap(keytype cmdkeytype, printit bool,fmtstr string) []string {
+func (m mainui) keymap(keytype cmdkeytype, printit bool, fmtstr string) []string {
 	ret := []string{}
 	var items = AllKeyMap(m)
 
@@ -757,7 +779,7 @@ func (m *mainui) helpkey(print bool) []string {
 	ret = append(ret, s)
 
 	for _, k := range types {
-		s := m.keymap(k, print,fmt_str)
+		s := m.keymap(k, print, fmt_str)
 		ret = append(ret, s...)
 	}
 	for _, v := range m.cmdline.ConvertCmdItem() {

@@ -22,7 +22,7 @@ var root_files = []string{
 }
 
 type lsp_lang_cpp struct {
-	lsplang_base
+	lsp_lang_common
 }
 
 // IsMe implements lsplang.
@@ -34,15 +34,20 @@ func (a lsp_lang_cpp) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete,
 	for index := range cl.Items {
 
 		v := cl.Items[index]
-		var text = []string{
-			strings.Join([]string{v.Detail, v.Label + " "}, " ")}
-		var doc Document
-		if doc.Parser(v.Documentation) == nil {
-			text = append(text, "//"+doc.Value)
-		}
+		text := complete_cpp(v)
 		document = append(document, strings.Join(text, "\n"))
 	}
-	ret.Result = &CompleteResult{Document: document}
+	ret.Result = &CompleteResult{Document: document, Complete: complete_cpp}
+}
+
+func complete_cpp(v lsp.CompletionItem) []string {
+	var text = []string{
+		strings.Join([]string{v.Detail, v.Label + " "}, " ")}
+	var doc Document
+	if doc.Parser(v.Documentation) == nil {
+		text = append(text, "//"+doc.Value)
+	}
+	return text
 }
 
 // Resolve implements lsplang.

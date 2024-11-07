@@ -11,6 +11,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/ui/filewalk"
 )
@@ -18,7 +19,7 @@ import (
 func (pk *DirWalk) grid(input *tview.InputField) *tview.Grid {
 	return pk.fzflist_impl.grid(input)
 }
-func ( currentpicker filepicker) grid(input* tview.InputField) *tview.Grid {
+func (currentpicker filepicker) grid(input *tview.InputField) *tview.Grid {
 	x := currentpicker.impl.grid(input)
 	return x
 }
@@ -29,6 +30,7 @@ func new_file_picker(root string, v *fzfmain) filepicker {
 	}
 	return currentpicker
 }
+
 type filepicker struct {
 	impl *DirWalk
 }
@@ -80,7 +82,6 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 		nil,
 	}
 	impl.set_fuzz(true)
-	list := impl.list
 
 	if global_walk == nil || global_walk.Root != global_prj_root {
 		global_walk = filewalk.NewFilewalk(global_prj_root)
@@ -92,9 +93,6 @@ func NewDirWalk(root string, v *fzfmain) *DirWalk {
 		ret.UpdateData(impl, global_walk)
 	}
 
-	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		ret.update_title()
-	})
 	go func() {
 		for {
 			select {
@@ -130,12 +128,19 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 	for _, v := range data {
 		fzfdata = append(fzfdata, trim_project_filename(v, global_prj_root))
 	}
+	lastindex := -1
+	dir.list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		lastindex = index
+		dir.update_title()
+	})
 	dir.list.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
+		if lastindex != index {
+			return
+		}
 		if len(dir.select_index) > 0 {
 			data_index := dir.select_index[index]
 			file := data[data_index]
-			dir.parent.main.OpenFileHistory(file, nil)
-			dir.parent.hide()
+			dir.parent.open_in_edior(lsp.Location{URI: lsp.NewDocumentURI(file)})
 		}
 	})
 	impl.list.Clear()

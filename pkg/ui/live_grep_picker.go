@@ -42,6 +42,7 @@ type livewgreppicker struct {
 	main           MainService
 	impl           *grep_impl
 	quick_view     *quick_view_delegate
+	file_include   *tview.InputField
 	not_live       bool
 	grepword       bool
 	filecounter    int
@@ -59,8 +60,7 @@ func (pk livewgreppicker) open_view_from_tree(index int, prev bool) {
 		if prev {
 			pk.PrevOpen(data.Loc.URI.AsPath().String(), data.Loc.Range.Start.Line)
 		} else {
-			pk.main.OpenFileHistory(data.Loc.URI.AsPath().String(), &data.Loc)
-
+			pk.parent.open_in_edior(data.Loc)
 		}
 	}
 }
@@ -87,7 +87,7 @@ func (pk livewgreppicker) open_view_from_normal_list(cur int, prev bool) bool {
 		if prev {
 			pk.PrevOpen(fpath, lineNumber)
 		} else {
-			pk.main.OpenFileHistory(fpath, &item.Loc)
+			pk.parent.open_in_edior(item.Loc)
 		}
 	}
 	return false
@@ -119,9 +119,11 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	// file_include.SetPlaceholder(global_prj_root)
 	file_include.SetChangedFunc(func(text string) {
 		pk.impl.query_option.PathPattern = text
+		pk.__updatequery(pk.impl.query_option)
 		debug.DebugLog("dialog", text)
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
+	pk.file_include = file_include
 	var searchIcon = fmt.Sprintf("%c", '\ue68f')
 	// searchIcon = "" // Search icon from Nerd Fonts
 	// searchIcon = fmt.Sprintf("%c %c %c %c", '\uF15B','\ue731','\uf0b0','\uf15c')+fmt.Sprintf("%c",'\uea6d')
@@ -174,18 +176,21 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	exclude.selected = pk.impl.query_option.Exclude
 	exclude.click = func(b bool) {
 		pk.impl.query_option.Exclude = b
+		pk.__updatequery(pk.impl.query_option)
 	}
 
 	cap := NewIconButton('\ueab1')
 	cap.selected = !pk.impl.query_option.Ignorecase
 	cap.click = func(b bool) {
 		pk.impl.query_option.Ignorecase = !b
+		pk.__updatequery(pk.impl.query_option)
 	}
 
 	word := NewIconButton('\ueb7e')
 	word.selected = pk.impl.query_option.Wholeword
 	word.click = func(b bool) {
 		pk.impl.query_option.Wholeword = b
+		pk.__updatequery(pk.impl.query_option)
 	}
 	input_filter.
 		AddItem(exclude, 2, 0, false).
@@ -212,7 +217,7 @@ func new_live_grep_picker(v *fzfmain, q QueryOption) *livewgreppicker {
 	main := v.main
 	x := new_preview_picker(v)
 	impl := &grep_impl{taskid: int(time.Now().Second()) * 100, query_option: q}
-	impl.query_option.Ignorecase = true
+	// impl.query_option.Ignorecase = q.Ignorecase
 	grep := &livewgreppicker{
 		prev_picker_impl: x,
 		grep_list_view:   new_customlist(false),
@@ -275,9 +280,8 @@ func (grepx *livewgreppicker) end_of_grep() {
 			o = &grepx.impl.result.data[dataindex]
 		}
 		if o != nil {
-			grepx.main.OpenFileHistory(o.Loc.URI.AsPath().String(), &o.Loc)
+			grepx.parent.open_in_edior(o.Loc)
 		}
-		grepx.parent.hide()
 	}
 }
 
@@ -367,9 +371,8 @@ func (grepx *livewgreppicker) end_of_livegrep() {
 					if lastindex == index {
 						if caller, err := tree.GetCaller(index); err == nil {
 							loc := caller.Loc
-							grepx.main.OpenFileHistory(loc.URI.AsPath().String(), &loc)
+							grepx.parent.open_in_edior(loc)
 						}
-						grepx.parent.hide()
 					}
 				}
 			}
@@ -456,12 +459,15 @@ func (grepx *livewgreppicker) update_list_druring_grep() {
 	if yes {
 		for _, o := range data {
 			fpath := o.Loc.URI.AsPath().String()
-			line := o.get_code(*global_theme.get_default_style())
+			style := global_theme.search_highlight_color_style()
+			line := o.get_code(style)
 			lineNumber := o.Loc.Range.Start.Line
 			path := trim_project_filename(fpath, global_prj_root)
 			data := colorstring{}
 			data.add_color_text_list(line.line).prepend(fmt.Sprintf("%s:%d ", path, lineNumber+1), 0)
-			grepx.grep_list_view.AddItem(data.ColorText(), "", nil)
+			if list := grepx.grep_list_view; list != nil {
+				list.AddColorItem(data.line, nil, nil)
+			}
 		}
 		if openpreview {
 			grepx.update_preview()
@@ -536,6 +542,14 @@ func (a QueryOption) Whole(b bool) QueryOption {
 	a.Wholeword = b
 	return a
 }
+func (a QueryOption) SetPathPattern(b string) QueryOption {
+	a.PathPattern = b
+	return a
+}
+func (a QueryOption) Key(b string) QueryOption {
+	a.Query = b
+	return a
+}
 func (a QueryOption) Cap(b bool) QueryOption {
 	a.Ignorecase = !b
 	return a
@@ -597,7 +611,6 @@ func (pk *livewgreppicker) set_list_handle() {
 		if lastindex == i {
 			idx := pk.grep_list_view.GetCurrentItem()
 			pk.open_view_from_normal_list(idx, false)
-			pk.parent.hide()
 		}
 	})
 }

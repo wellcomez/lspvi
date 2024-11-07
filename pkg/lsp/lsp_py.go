@@ -22,7 +22,7 @@ var rootFiles = []string{
 }
 
 type lsp_lang_py struct {
-	lsplang_base
+	lsp_lang_common
 }
 
 // Launch_Lsp_Server implements lsplang.

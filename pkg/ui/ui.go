@@ -7,6 +7,7 @@ package mainui
 import (
 	// "context"
 	// "encoding/json"
+	// "runtime/pprof"
 	"strconv"
 	"time"
 
@@ -25,6 +26,9 @@ import (
 	"github.com/tectiv3/go-lsp"
 
 	// femto "zen108.com/lspvi/pkg/highlight"
+	// "net/http"
+	// _ "net/http/pprof" // Import pprof for profiling
+
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	fileloader "zen108.com/lspvi/pkg/ui/fileload"
@@ -66,14 +70,18 @@ type rootlayout struct {
 	cmdline     *tview.InputField
 	tab_area    *tview.Flex
 	mainlayout  *MainLayout
-	spacemenu   *space_menu
 	// hide_cb     func()
 }
 
 type MainService interface {
+	// Dialogsize
+	Dialogsize() *project_diagnostic
+	//app
 	App() *tview.Application
 	//tty
 	RunInBrowser() bool
+	//quickview
+	Quickfix() *quick_view
 	//cmdline
 	CmdLine() *cmdline
 	Close()
@@ -163,8 +171,9 @@ type MainService interface {
 	CanGoBack() bool
 	CanGoFoward() bool
 
-	//Search
-	qf_grep_word(QueryOption)
+	//Search in whole project
+	SearchInProject(QueryOption)
+	//search in current ui
 	OnSearch(option search_option)
 	Searchcontext() *GenericSearch
 
@@ -212,6 +221,24 @@ type mainui struct {
 	ws           string
 	tab          *tabmgr
 	lsp_log_file *os.File
+	diagnostic   project_diagnostic
+}
+
+func (m *mainui) PublishDiagnostics(param lsp.PublishDiagnosticsParams) {
+	debug.DebugLog("PublishDiagnostics: ", param.URI.AsPath().String(), param.Diagnostics)
+	for i, v := range param.Diagnostics {
+		debug.DebugLog("PublishDiagnostics: ", i, v.Severity, v.Message, v.Range, v.CodeDescription)
+	}
+	m.diagnostic.Update(param)
+	for _, code := range SplitCode.code_collection {
+		if param.URI.AsPath().String() == code.Path() {
+			code.diagnostic = editor_diagnostic{param}
+			return
+		}
+	}
+}
+func (main *mainui) Dialogsize() *project_diagnostic {
+	return &main.diagnostic
 }
 
 // OnWatchFileChange implements change_reciever.
@@ -304,6 +331,9 @@ func (m mainui) App() *tview.Application {
 }
 func (m mainui) Lspmgr() *lspcore.LspWorkspace {
 	return m.lspmgr
+}
+func (m mainui) Quickfix() *quick_view {
+	return m.quickview
 }
 func (m mainui) CmdLine() *cmdline {
 	return m.cmdline
@@ -692,6 +722,18 @@ var apparg Arguments
 var GlobalApp *tview.Application
 
 func MainUI(arg *Arguments) {
+	// go func() {
+	// 	fmt.Println(http.ListenAndServe("localhost:6060", nil))
+	// }()
+	// f, err := os.Create("cpu.prof")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// if err := pprof.StartCPUProfile(f); err != nil {
+	// 	log.Fatal("could not start CPU profile: ", err)
+	// }
+	// defer pprof.StopCPUProfile() // Ensure profiling is stopped when main exits
+
 	apparg = *arg
 	var filearg = ""
 	//  "/home/z/dev/lsp/pylspclient/tests/cpp/test_main.cpp"
@@ -783,7 +825,8 @@ func MainUI(arg *Arguments) {
 	main_layout := main.create_main_layout(editor_area, console_layout, tab_area)
 	main.layout.code_area = code_area
 	mainmenu := main.create_menu_bar(tab_area)
-
+	spacemenu := main.create_space_menu(mainmenu)
+	main_layout.spacemenu = spacemenu
 	main.create_right_context_menu()
 	// codeview.view.SetFocusFunc(main.editor_area_fouched)
 	if !arg.Grep {
@@ -907,7 +950,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 	if main.right_context_menu.visible {
 		main.right_context_menu.Draw(screen)
 	}
-	main.layout.spacemenu.Draw(screen)
+	main.layout.mainlayout.spacemenu.Draw(screen)
 	dialog := main.Dialog()
 	if dialog.Visible {
 		dialog.Draw(screen)
@@ -923,7 +966,7 @@ func handle_draw_after(main *mainui, screen tcell.Screen) {
 }
 
 func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.EventMouse, mainmenu *tview.Button, resizer []*editor_mouse_resize) (*tcell.EventMouse, tview.MouseAction) {
-	spacemenu := main.layout.spacemenu
+	// spacemenu := main.layout.spacemenu
 	// dialog := main.Dialog()
 
 	content_menu_action, _ := main.right_context_menu.handle_mouse(action, event)
@@ -932,18 +975,6 @@ func handle_mouse_event(main *mainui, action tview.MouseAction, event *tcell.Eve
 	}
 	if main.right_context_menu.visible {
 		return nil, tview.MouseConsumed
-	}
-	if spacemenu.visible {
-		action, event := spacemenu.handle_mouse(action, event)
-		if action == tview.MouseConsumed {
-			return event, action
-		}
-		if !InRect(event, mainmenu) {
-			if action != tview.MouseMove {
-				spacemenu.closemenu()
-			}
-			return nil, tview.MouseConsumed
-		}
 	}
 
 	main.sel.handle_mouse_selection(action, event)
@@ -1038,21 +1069,22 @@ func (main *mainui) create_menu_bar(tab_area *tview.Flex) *tview.Button {
 
 	mainmenu := tview.NewButton("Menu")
 	mainmenu.SetSelectedFunc(func() {
-		if main.layout.spacemenu.visible {
-			main.layout.spacemenu.closemenu()
-		} else {
-			main.layout.spacemenu.openmenu()
+		if spacemenu := main.layout.mainlayout.spacemenu; spacemenu != nil {
+			if spacemenu.visible {
+				spacemenu.closemenu()
+			} else {
+				spacemenu.openmenu()
+			}
 		}
 	})
 
 	tab_area.AddItem(mainmenu, 10, 0, false)
 
-	main.create_space_menu(mainmenu)
 	return mainmenu
 }
 
-func (main *mainui) create_space_menu(mainmenu *tview.Button) {
-	spacemenu := new_spacemenu(main)
+func (main *mainui) create_space_menu(mainmenu *tview.Button) (spacemenu *space_menu) {
+	spacemenu = new_spacemenu(main)
 	spacemenu.menustate = func(s *space_menu) {
 		if s.visible {
 			mainmenu.Focus(nil)
@@ -1060,7 +1092,7 @@ func (main *mainui) create_space_menu(mainmenu *tview.Button) {
 			mainmenu.Blur()
 		}
 	}
-	main.layout.spacemenu = spacemenu
+	return
 }
 
 func (main *mainui) add_statusbar_to_tabarea(tab_area *tview.Flex) {
@@ -1269,9 +1301,11 @@ func (main *mainui) handle_key(event *tcell.EventKey) *tcell.EventKey {
 		dialog.handle_key(event)
 		return nil
 	}
-	if main.layout.spacemenu.visible {
-		main.layout.spacemenu.handle_key(event)
-		return nil
+	if spacemenu := main.layout.mainlayout.spacemenu; spacemenu != nil {
+		if spacemenu.visible {
+			spacemenu.handle_key(event)
+			return nil
+		}
 	}
 	if main.term.HasFocus() {
 		return event

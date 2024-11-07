@@ -84,10 +84,8 @@ func new_history_picker(v *fzfmain) history_picker {
 		data_index := sym.fzf.selected_index[i]
 		v := sym.impl.listdata[data_index]
 		parent := sym.impl.parent
-		path := v.filepath
 		loc := v.filepath.GetLocation()
-		parent.main.OpenFileHistory(path.Path, &loc)
-		parent.hide()
+		parent.open_in_edior(loc)
 	})
 	sym.impl.listdata = items
 	sym.fzf = new_fzf_on_list_data(sym.impl.list, fzfdata, true)

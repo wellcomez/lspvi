@@ -7,7 +7,8 @@ import (
 
 type MainLayout struct {
 	*flex_area
-	dialog *fzfmain
+	dialog    *fzfmain
+	spacemenu *space_menu
 }
 
 func NewMainLayout(main *mainui) *MainLayout {
@@ -19,14 +20,21 @@ func NewMainLayout(main *mainui) *MainLayout {
 }
 
 func (t *MainLayout) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+	if spacemenu := t.spacemenu; spacemenu != nil {
+		if spacemenu.visible {
+			return spacemenu.table.MouseHandler()
+		}
+	}
 	dialog := t.dialog
 	dialoghandle := func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
-		if !InRect(event, dialog.Frame) {
-			if action == tview.MouseLeftClick || action == tview.MouseLeftDown {
-				dialog.hide()
+		if dialog.Visible {
+			if !InRect(event, dialog.Frame) {
+				if action == tview.MouseLeftClick {
+					dialog.hide()
+				}
+			} else {
+				return dialog.Frame.MouseHandler()(action, event, setFocus)
 			}
-		} else {
-			return dialog.Frame.MouseHandler()(action, event, setFocus)
 		}
 		return
 	}

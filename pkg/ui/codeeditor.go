@@ -9,6 +9,11 @@ import (
 )
 
 type CodeEditor interface {
+	//Dianostic
+	Dianostic() (diagnostic editor_diagnostic)
+	//active
+	Acitve()
+	//file change
 	ContentChangeHandle() change_reciever
 	//Complete
 	HasComplete() bool

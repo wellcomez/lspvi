@@ -60,18 +60,125 @@ type symbol_colortheme struct {
 func (c symbol_colortheme) select_style() *tcell.Style {
 	return c.get_color("selection")
 }
-func (mgr symbol_colortheme) get_lsp_color(kind lsp.SymbolKind) (tcell.Style, error) {
+func (mgr symbol_colortheme) get_styles(names []string) (tcell.Style, error) {
+	for _, v := range names {
+		if s, ok := mgr.colorscheme[v]; ok {
+			return s, nil
+		}
+	}
+	return tcell.Style{}, fmt.Errorf("not found")
+}
+func (mgr symbol_colortheme) get_lsp_complete_color(kind lsp.CompletionItemKind) (ret tcell.Style, err error) {
+	var get_styles = func(names []string) (tcell.Style, error) {
+		return mgr.get_styles(names)
+	}
+	var get_style = func(names string) (tcell.Style, error) {
+		return get_styles([]string{names})
+	}
 	switch kind {
-	case lsp.SymbolKindClass, lsp.SymbolKindInterface:
-		return mgr.colorscheme.GetColor("@type.class"), nil
-	case lsp.SymbolKindFunction:
-		return mgr.colorscheme.GetColor("@function"), nil
+	case lsp.CompletionItemKindClass:
+		return mgr.get_lsp_color(lsp.SymbolKindClass)
+	case lsp.CompletionItemKindText:
+		return get_style("@text")
+	case lsp.CompletionItemKindMethod:
+		return mgr.get_lsp_color(lsp.SymbolKindMethod)
+	case lsp.CompletionItemKindFunction:
+		return mgr.get_lsp_color(lsp.SymbolKindFunction)
+	case lsp.CompletionItemKindConstructor:
+		return mgr.get_lsp_color(lsp.SymbolKindConstructor)
+	case lsp.CompletionItemKindField:
+		return mgr.get_lsp_color(lsp.SymbolKindField)
+	case lsp.CompletionItemKindVariable:
+		return mgr.get_lsp_color(lsp.SymbolKindVariable)
+	case lsp.CompletionItemKindInterface:
+		return mgr.get_lsp_color(lsp.SymbolKindInterface)
+	case lsp.CompletionItemKindModule:
+		return mgr.get_lsp_color(lsp.SymbolKindModule)
+	case lsp.CompletionItemKindProperty:
+		return mgr.get_lsp_color(lsp.SymbolKindProperty)
+	case lsp.CompletionItemKindEnum:
+		return mgr.get_lsp_color(lsp.SymbolKindEnum)
+	case lsp.CompletionItemKindKeyword:
+		return get_styles([]string{"@keyword", "keyword"})
+	case lsp.CompletionItemKindFile:
+		return mgr.get_lsp_color(lsp.SymbolKindFile)
+	case lsp.CompletionItemKindReference:
+	case lsp.CompletionItemKindFolder:
+		return mgr.get_lsp_color(lsp.SymbolKindFile)
+	case lsp.CompletionItemKindEnumMember:
+		return mgr.get_lsp_color(lsp.SymbolKindEnumMember)
+	case lsp.CompletionItemKindConstant:
+		return mgr.get_lsp_color(lsp.SymbolKindConstant)
+	case lsp.CompletionItemKindStruct:
+		return mgr.get_lsp_color(lsp.SymbolKindStruct)
+	case lsp.CompletionItemKindEvent:
+		return mgr.get_lsp_color(lsp.SymbolKindEvent)
+	case lsp.CompletionItemKindOperator:
+		return mgr.get_lsp_color(lsp.SymbolKindOperator)
+	case lsp.CompletionItemKindTypeParameter:
+		return mgr.get_lsp_color(lsp.SymbolKindTypeParameter)
+	case lsp.CompletionItemKindUnit:
+	case lsp.CompletionItemKindValue:
+	case lsp.CompletionItemKindSnippet:
+	case lsp.CompletionItemKindColor:
+	}
+
+	return tcell.StyleDefault, errors.New("not found")
+}
+func (mgr symbol_colortheme) get_lsp_color(kind lsp.SymbolKind) (tcell.Style, error) {
+	var styles = []string{}
+	switch kind {
+	case lsp.SymbolKindFile:
+
+	case lsp.SymbolKindModule:
+		styles = ([]string{"@module"})
+	case lsp.SymbolKindNamespace:
+		styles = ([]string{"@namespace", "@lsp.type.namespace"})
+	case lsp.SymbolKindPackage:
+		// styles = ([]string{"@namespace", "@lsp.type.namespace"})
+	case lsp.SymbolKindClass:
+		styles = ([]string{"@class", "@type.class", "@lsp.type.class"})
 	case lsp.SymbolKindMethod:
-		return mgr.colorscheme.GetColor("@function.method"), nil
-	case lsp.SymbolKindStruct:
-		return mgr.colorscheme.GetColor("structure"), nil
+		styles = []string{"@method", "@function.method", "lsp.type.method"}
+	case lsp.SymbolKindProperty:
+		styles = ([]string{"@property", "lsp.type.property"})
+	case lsp.SymbolKindField:
+		styles = ([]string{"@field"})
+	case lsp.SymbolKindConstructor:
+		styles = ([]string{"@construct"})
+	case lsp.SymbolKindEnum:
+		styles = ([]string{"@enum", "@lsp.type.enum"})
+	case lsp.SymbolKindInterface:
+		styles = ([]string{"@interface", "@type.class", "lsp.type.interface"})
+	case lsp.SymbolKindFunction:
+		styles = []string{"@function", "@lsp.type.function", "function"}
+	case lsp.SymbolKindVariable:
+		styles = ([]string{"@variable", "@lsp.type.variable"})
 	case lsp.SymbolKindConstant:
-		return mgr.colorscheme.GetColor("@constant"), nil
+		styles = []string{"@constant","constant"}
+	case lsp.SymbolKindString:
+		styles = []string{"@string","string"}
+	case lsp.SymbolKindNumber:
+		styles = []string{"@number","number"}
+	case lsp.SymbolKindBoolean:
+		styles = []string{"@boolean", "boolean"}
+	case lsp.SymbolKindArray:
+	case lsp.SymbolKindObject:
+	case lsp.SymbolKindKey:
+	case lsp.SymbolKindNull:
+	case lsp.SymbolKindEnumMember:
+		styles = ([]string{"@enum", "@lsp.type.enummember", "@enum.member"})
+	case lsp.SymbolKindStruct:
+		styles = ([]string{"@structure", "@lsp.type.structure", "structure"})
+	case lsp.SymbolKindEvent:
+		styles = ([]string{"@event", "@lsp.type.event"})
+	case lsp.SymbolKindOperator:
+		styles = ([]string{"@operator", "operator"})
+	case lsp.SymbolKindTypeParameter:
+		styles = []string{"@type.parameter", "@lsp.type.typeparameter", "parameter"}
+	}
+	if len(styles) > 0 {
+		return mgr.get_styles(styles)
 	}
 	return tcell.StyleDefault, errors.New("not found")
 }
@@ -111,6 +218,9 @@ func HexToRGB(hexString string) (int, int, int, error) {
 
 	return red, green, blue, nil
 }
+func (mgr *symbol_colortheme) select_line_style() tcell.Style {
+	return mgr.colorscheme["cursor-line"]
+}
 func (mgr *symbol_colortheme) set_currsor_line() {
 	if ret := mgr.get_color("cursorline"); ret != nil {
 		_, bg, _ := ret.Decompose()
@@ -135,10 +245,11 @@ func (mgr *symbol_colortheme) set_currsor_line() {
 	}
 	if ret := mgr.get_color("linenr"); ret != nil {
 		mgr.colorscheme["line-number"] = *ret
-	}
-	if ret := mgr.get_color("@function"); ret != nil {
-		f, _, _ := ret.Decompose()
-		mgr.colorscheme["current-line-number"] = ret.Foreground(f)
+		if line := mgr.get_color("cursorline"); line != nil {
+			f, _, _ := mgr.get_color("keyword").Decompose()
+			_, b, _ := line.Decompose()
+			mgr.colorscheme["current-line-number"] = ret.Background(b).Foreground(f)
+		}
 	}
 	if n, ok := mgr.colorscheme["normal"]; ok {
 		mgr.colorscheme["default"] = n
@@ -263,8 +374,8 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.page.SetBackgroundColor(bg)
 	main.page.SetBorderColor(fg)
 
-	main.layout.spacemenu.table.SetBackgroundColor(bg)
-	main.layout.spacemenu.load_spacemenu()
+	main.layout.mainlayout.spacemenu.table.SetBackgroundColor(bg)
+	main.layout.mainlayout.spacemenu.load_spacemenu()
 
 	main.right_context_menu.table.SetBackgroundColor(bg)
 

@@ -103,6 +103,7 @@ func (SplitCode *CodeSplit) Remove(code CodeEditor) {
 	SplitCode.resize.remove(code.Viewlink())
 	SplitCode.code_collection = s
 	global_file_watch.Remove(code.ContentChangeHandle())
+	SplitCode.SetActive(SplitCode.Last())
 }
 func SplitRight(code *CodeView) context_menu_item {
 	return context_menu_item{item: create_menu_item("SplitRight"), handle: func() {

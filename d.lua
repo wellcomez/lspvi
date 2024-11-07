@@ -146,8 +146,8 @@ local function save_scheme(colorscheme)
             name = 'IncSearch',
             link = false
         })
-        save_hlresult(search_highlight, "search", f)
-        save_hlresult(incsearch_highlight, "insearch", f)
+        -- save_hlresult(search_highlight, "search", f)
+        -- save_hlresult(incsearch_highlight, "insearch", f)
 
         -- Close the file
         f:close()
@@ -155,8 +155,33 @@ local function save_scheme(colorscheme)
         print("Highlight settings saved to " .. file)
     end
 
+    -- local highlight_groups_default = vim.fn.getcompletion("", "highlight")
+    local highlight_groups_names = {"Normal", "Comment", "Constant", "String", "Character", "Number", "Boolean",
+                                    "Identifier", "Function", "Statement", "Conditional", "Repeat", "Label", "Operator",
+                                    "Keyword", "Exception", "PreProc", "Include", "Define", "Macro", "Type",
+                                    "StorageClass", "Structure", "Typedef", "Special", "SpecialChar", "Tag",
+                                    "Delimiter", "SpecialComment", "Error", "Todo", "Underlined", "Bold", "Italic",
+                                    "Ignore", "ErrorMsg", "WarningMsg", "Folded", "FoldColumn", "DiffAdd", "DiffChange",
+                                    "DiffDelete", "DiffText", "SignColumn", "CursorLine", "CursorColumn", "ColorColumn",
+                                    "Conceal", "LineNr", "CursorLineNr", "StatusLine", "StatusLineNC", "Whitespace",
+                                    "NonText", "SpecialKey", "Pmenu", "PmenuSel", "PmenuSbar", "PmenuThumb", "TabLine",
+                                    "TabLineFill", "TabLineSel", "Title", "Visual", "VisualNOS", "QuickFixLine",
+                                    "Search", "IncSearch", "MatchParen", "SpellBad", "SpellCap", "SpellRare",
+                                    "SpellLocal"}
+    local highlight_groups = vim.fn.getcompletion("@", "highlight")
+
+    local mergedArray = {}
+    -- 将第二个数组的元素插入到新数组中
+    for _, value in ipairs(highlight_groups_names) do
+        table.insert(mergedArray, value)
+    end
+    -- 将第一个数组的元素插入到新数组中
+    for _, value in ipairs(highlight_groups) do
+        table.insert(mergedArray, value)
+    end
+
     -- Call the function
-    save_highlights_to_file(highlight_groups, output_file)
+    save_highlights_to_file(mergedArray, output_file)
 end
 
 local function set_colorscheme(theme_name)
