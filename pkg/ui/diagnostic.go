@@ -18,6 +18,16 @@ type project_diagnostic struct {
 	data []editor_diagnostic
 }
 
+func (prj *project_diagnostic) Find(path string) (ret *editor_diagnostic) {
+	for _, v := range prj.data {
+		if v.data.URI.AsPath().String() == path {
+			ret = &v
+			return
+		}
+	}
+	return
+}
+
 func (prj *project_diagnostic) Update(diags lsp.PublishDiagnosticsParams) {
 	for i, v := range prj.data {
 		if v.data.URI.AsPath().String() == diags.URI.AsPath().String() {

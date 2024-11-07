@@ -74,6 +74,9 @@ type rootlayout struct {
 }
 
 type MainService interface {
+	// Dialogsize
+	Dialogsize() *project_diagnostic
+	//app
 	App() *tview.Application
 	//tty
 	RunInBrowser() bool
@@ -233,6 +236,9 @@ func (m *mainui) PublishDiagnostics(param lsp.PublishDiagnosticsParams) {
 			return
 		}
 	}
+}
+func (main *mainui) Dialogsize() *project_diagnostic {
+	return &main.diagnostic
 }
 
 // OnWatchFileChange implements change_reciever.

@@ -1522,6 +1522,11 @@ func (code *CodeView) __load_in_main(fileload fileloader.FileLoader) error {
 			})
 		}
 	}
+	if dia := code.main.Dialogsize().Find(code.Path()); dia != nil {
+		code.diagnostic = *dia
+	} else {
+		code.diagnostic = editor_diagnostic{}
+	}
 	code.set_loc(femto.Loc{X: 0, Y: 0})
 	if code.main != nil {
 		code.view.bookmark = *code.main.Bookmark().GetFileBookmark(filename)
