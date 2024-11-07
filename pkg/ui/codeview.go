@@ -685,8 +685,6 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 	return tview.MouseConsumed, nil
 }
 
-
-
 func (root *codetextview) event_to_cursor_position(event *tcell.EventMouse) mouse_event_pos {
 	posX, posY := event.Position()
 	yOffset := root.yOfffset()
@@ -743,6 +741,11 @@ func (root *codetextview) tab_loc(pos mouse_event_pos) femto.Loc {
 func (code *codetextview) yOfffset() int {
 	_, offfsety, _, _ := code.GetInnerRect()
 	return offfsety
+}
+func (code *codetextview) lineNumOffset() int64 {
+	v := reflect.ValueOf(code).Elem()
+	field := v.FieldByName("lineNumOffset")
+	return field.Int()
 }
 func (code *codetextview) xOffset() int64 {
 	v := reflect.ValueOf(code).Elem()

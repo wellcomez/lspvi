@@ -69,7 +69,6 @@ func hove_test(root *codetextview, pos mouse_event_pos, event *tcell.EventMouse)
 				}
 				ss := []string{" " + v.Message + " ", fmt.Sprintf(" %s %d:%d", root.filename, buff_loc.X, buff_loc.Y+1), v.Source}
 				msg.Load(strings.Join(ss, "\n"), root.code.Path())
-
 				go func() {
 					root.main.App().QueueUpdate(func() {
 						w := 0
@@ -80,8 +79,8 @@ func hove_test(root *codetextview, pos mouse_event_pos, event *tcell.EventMouse)
 						ss := &mouse
 						_, y := ss.Position()
 						edit_x, _, _, _ := root.GetInnerRect()
-						x := v.Range.Start.Character + edit_x
-						msg.SetRect(x, y+1, w, h)
+						x := v.Range.Start.Character + int(root.lineNumOffset())
+						msg.SetRect(x+edit_x, y+1, w, h)
 						root.error = msg
 					})
 				}()
