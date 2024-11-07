@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
@@ -15,6 +16,27 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
+
+type hover_dector struct {
+	Pos   femto.Loc
+	Abort bool
+}
+
+func new_hover(pos femto.Loc, cb func()) (ret *hover_dector) {
+	ret = &hover_dector{Pos: pos}
+	ret.start(cb)
+	return
+}
+func (h *hover_dector) start(cb func()) {
+	go func() {
+		timer := time.NewTimer(time.Second * 1)
+		<-timer.C
+		if h.Abort {
+			return
+		}
+		cb()
+	}()
+}
 
 type codetextview struct {
 	*femto.View
@@ -27,6 +49,8 @@ type codetextview struct {
 	PasteHandlerImpl     func(text string, setFocus func(tview.Primitive))
 	main                 MainService
 	complete             CompleteMenu
+	hover                *hover_dector
+	error                *LspTextView
 }
 
 func (view *codetextview) IconStyle(main MainService) tcell.Style {
@@ -257,6 +281,9 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 			code_navbar_draw_runne(screen, i, y, ch, tcell.StyleDefault.Foreground(tview.Styles.BorderColor).Background(tview.Styles.PrimitiveBackgroundColor))
 		}
 		v.complete.Draw(screen)
+		if v.error!=nil{
+			v.error.Draw(screen)
+		}
 	}
 	// newFunction1(v, x, y, w,screen)
 }
@@ -437,7 +464,7 @@ func new_codetext_view(buffer *femto.Buffer, main MainService) *codetextview {
 		nil,
 		nil,
 		main,
-		nil,
+		nil, nil, nil,
 	}
 	root.complete = Newcompletemenu(main, root)
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {

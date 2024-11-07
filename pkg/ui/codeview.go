@@ -615,6 +615,12 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 			return action, event
 		}
 	}
+	if root.hover != nil {
+		if root.hover.Pos.Y != pos.Y {
+			root.error = nil
+			root.hover = nil
+		}
+	}
 	switch action {
 
 	case tview.MouseLeftDoubleClick:
@@ -634,6 +640,8 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		}
 	case tview.MouseMove:
 		{
+			// loc := root.tab_loc(pos)
+			hove_test(root, pos, event)
 			if root.mouse_select_area {
 				pos := root.tab_loc(pos)
 				root.Cursor.SetSelectionEnd(pos)
@@ -675,6 +683,54 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 		cb(action, code_mouse_cb_end)
 	}
 	return tview.MouseConsumed, nil
+}
+
+func hove_test(root *codetextview, pos mouse_event_pos, event *tcell.EventMouse) {
+	if dia := root.code.Dianostic(); !dia.data.IsClear {
+		var new_diagnos_hove = func(v lsp.Diagnostic, mouse tcell.EventMouse) {
+			root.error = nil
+			buff_loc := femto.Loc{
+				X: pos.X,
+				Y: pos.Y,
+			}
+			root.hover = new_hover(buff_loc, func() {
+				msg := &LspTextView{
+					Box:  tview.NewBox(),
+					main: root.main,
+				}
+				ss := []string{" " + v.Message + " ", fmt.Sprintf(" %s %d:%d", root.filename, buff_loc.X, buff_loc.Y+1), v.Source}
+				msg.Load(strings.Join(ss, "\n"), root.code.Path())
+
+				go func() {
+					root.main.App().QueueUpdate(func() {
+						w := 0
+						h := len(msg.lines)
+						for _, v := range msg.lines {
+							w = max(w, len(v))
+						}
+						ss := &mouse
+						_, y := ss.Position()
+						edit_x, _, _, _ := root.GetInnerRect()
+						x := v.Range.Start.Character + edit_x
+						msg.SetRect(x, y+1, w, h)
+						root.error = msg
+					})
+				}()
+			})
+		}
+		for i := range dia.data.Diagnostics {
+			v := dia.data.Diagnostics[i]
+			var ok = v.Severity == lsp.DiagnosticSeverityError || v.Severity == lsp.DiagnosticSeverityWarning
+			if ok && v.Range.Start.Line == pos.Y {
+				if hover := root.hover; hover == nil {
+					new_diagnos_hove(v, *event)
+				} else if hover.Pos.Y != pos.Y {
+					new_diagnos_hove(v, *event)
+				}
+				break
+			}
+		}
+	}
 }
 
 func (root *codetextview) event_to_cursor_position(event *tcell.EventMouse) mouse_event_pos {
