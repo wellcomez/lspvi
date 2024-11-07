@@ -182,26 +182,27 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 	width := 0
 	for i := range cl.Items {
 		v := cl.Items[i]
-		debug.DebugLog("complete", "item", "Detail=", v.Detail,
-			// "InsertText=", v.InsertText,
+		debug.TraceLog("complete", "item", "Detail=", v.Detail,
 			"Label=", v.Label, string(v.Documentation))
 		if v.LabelDetails != nil {
 			debug.DebugLog("complete", "item", "LabelDetail", v.LabelDetails.Description, v.LabelDetails.Detail)
 		}
 		width = max(len(v.Label)+2, width)
 		t := v.Label
-		style, err := global_theme.get_lsp_color(lsp.SymbolKind(v.Kind))
+		style, err := global_theme.get_lsp_complete_color(v.Kind)
 		if err != nil {
 			style = tcell.StyleDefault
 		}
-		symbol_kind := get_symbol_kind(v)
-		if i, ok := lspcore.LspIcon[int(symbol_kind)]; ok {
-			t = i + " " + t
-		} else {
-			t = " " + t
-		}
+		_, icon := complete_icon(v)
+		var text colorstring
 		f, _, _ := style.Decompose()
-		complete.AddColorItem([]colortext{{t, f, 0}}, nil, func() {
+		if icon != "" {
+			t = " " + icon + " " + t
+		} else {
+			t = "  " + t
+		}
+		text.add_color_text(colortext{text: t, color: f, bg: 0})
+		complete.AddColorItem(text.line, nil, func() {
 			complete.handle_complete_result(v, &param)
 		})
 	}
@@ -242,12 +243,16 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		complete.task = nil
 	}()
 }
+func rune_string(r rune) string {
+	return fmt.Sprintf("%c", r)
+}
+func complete_icon(v lsp.CompletionItem) (symbol_kind lsp.SymbolKind, ret string) {
+	symbol_kind = -1
+	ret = rune_string('\ueb63')
 
-func get_symbol_kind(v lsp.CompletionItem) lsp.SymbolKind {
-	var symbol_kind lsp.SymbolKind
 	switch v.Kind {
 	case lsp.CompletionItemKindText:
-		symbol_kind = lsp.SymbolKindString
+		ret = rune_string('\uf15c')
 	case lsp.CompletionItemKindMethod:
 		symbol_kind = lsp.SymbolKindMethod
 	case lsp.CompletionItemKindFunction:
@@ -267,23 +272,23 @@ func get_symbol_kind(v lsp.CompletionItem) lsp.SymbolKind {
 	case lsp.CompletionItemKindProperty:
 		symbol_kind = lsp.SymbolKindProperty
 	case lsp.CompletionItemKindUnit:
-		symbol_kind = lsp.SymbolKindNumber
+		ret = rune_string('\U000f1501')
 	case lsp.CompletionItemKindValue:
-		symbol_kind = lsp.SymbolKindConstant
+		symbol_kind = -1
 	case lsp.CompletionItemKindEnum:
 		symbol_kind = lsp.SymbolKindEnum
 	case lsp.CompletionItemKindKeyword:
-		symbol_kind = lsp.SymbolKindNull
+		ret = rune_string('\ueb62')
 	case lsp.CompletionItemKindSnippet:
-		symbol_kind = lsp.SymbolKindNull
+		ret = rune_string('\ueb66')
 	case lsp.CompletionItemKindColor:
-		symbol_kind = lsp.SymbolKindNull
+		ret = rune_string('\ueb5c')
 	case lsp.CompletionItemKindFile:
 		symbol_kind = lsp.SymbolKindFile
 	case lsp.CompletionItemKindReference:
-		symbol_kind = lsp.SymbolKindNull
+		ret = rune_string('\U000eb36b')
 	case lsp.CompletionItemKindFolder:
-		symbol_kind = lsp.SymbolKindNull
+		ret = rune_string('\ue5ff')
 	case lsp.CompletionItemKindEnumMember:
 		symbol_kind = lsp.SymbolKindEnumMember
 	case lsp.CompletionItemKindConstant:
@@ -297,7 +302,12 @@ func get_symbol_kind(v lsp.CompletionItem) lsp.SymbolKind {
 	case lsp.CompletionItemKindTypeParameter:
 		symbol_kind = lsp.SymbolKindTypeParameter
 	}
-	return symbol_kind
+	if symbol_kind != -1 {
+		if v, yes := lspcore.LspIcon[int(symbol_kind)]; yes {
+			ret = v
+		}
+	}
+	return
 }
 func print_help(ret lsp.SignatureHelp) string {
 	if len(ret.Signatures) > 0 {

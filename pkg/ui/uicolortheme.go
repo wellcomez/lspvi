@@ -60,9 +60,87 @@ type symbol_colortheme struct {
 func (c symbol_colortheme) select_style() *tcell.Style {
 	return c.get_color("selection")
 }
-func (mgr symbol_colortheme) get_lsp_color(kind lsp.SymbolKind) (tcell.Style, error) {
+func (mgr symbol_colortheme) get_styles(names []string) (tcell.Style, error) {
+	for _, v := range names {
+		if s, ok := mgr.colorscheme[v]; ok {
+			return s, nil
+		}
+	}
+	return tcell.Style{}, fmt.Errorf("not found")
+}
+func (mgr symbol_colortheme) get_lsp_complete_color(kind lsp.CompletionItemKind) (ret tcell.Style, err error) {
+	var get_styles = func(names []string) (tcell.Style, error) {
+		return mgr.get_styles(names)
+	}
+	var get_style = func(names string) (tcell.Style, error) {
+		return get_styles([]string{names})
+	}
 	switch kind {
-	case lsp.SymbolKindClass, lsp.SymbolKindInterface:
+	case lsp.CompletionItemKindClass:
+		return mgr.get_lsp_color(lsp.SymbolKindClass)
+	case lsp.CompletionItemKindText:
+		return get_style("@text")
+	case lsp.CompletionItemKindMethod:
+		return mgr.get_lsp_color(lsp.SymbolKindMethod)
+	case lsp.CompletionItemKindFunction:
+		return mgr.get_lsp_color(lsp.SymbolKindFunction)
+	case lsp.CompletionItemKindConstructor:
+		return mgr.get_lsp_color(lsp.SymbolKindConstructor)
+	case lsp.CompletionItemKindField:
+		return mgr.get_lsp_color(lsp.SymbolKindField)
+	case lsp.CompletionItemKindVariable:
+		return mgr.get_lsp_color(lsp.SymbolKindVariable)
+	case lsp.CompletionItemKindInterface:
+		return mgr.get_lsp_color(lsp.SymbolKindInterface)
+	case lsp.CompletionItemKindModule:
+		return mgr.get_lsp_color(lsp.SymbolKindModule)
+	case lsp.CompletionItemKindProperty:
+		return mgr.get_lsp_color(lsp.SymbolKindProperty)
+	case lsp.CompletionItemKindEnum:
+		return mgr.get_lsp_color(lsp.SymbolKindEnum)
+	case lsp.CompletionItemKindKeyword:
+		return get_styles([]string{"@keyword", "keyword"})
+	case lsp.CompletionItemKindFile:
+		return mgr.get_lsp_color(lsp.SymbolKindFile)
+	case lsp.CompletionItemKindReference:
+	case lsp.CompletionItemKindFolder:
+		return mgr.get_lsp_color(lsp.SymbolKindFile)
+	case lsp.CompletionItemKindEnumMember:
+		return mgr.get_lsp_color(lsp.SymbolKindEnumMember)
+	case lsp.CompletionItemKindConstant:
+		return mgr.get_lsp_color(lsp.SymbolKindConstant)
+	case lsp.CompletionItemKindStruct:
+		return mgr.get_lsp_color(lsp.SymbolKindStruct)
+	case lsp.CompletionItemKindEvent:
+		return mgr.get_lsp_color(lsp.SymbolKindEvent)
+	case lsp.CompletionItemKindOperator:
+		return mgr.get_lsp_color(lsp.SymbolKindOperator)
+	case lsp.CompletionItemKindTypeParameter:
+		return mgr.get_lsp_color(lsp.SymbolKindTypeParameter)
+	case lsp.CompletionItemKindUnit:
+	case lsp.CompletionItemKindValue:
+	case lsp.CompletionItemKindSnippet:
+	case lsp.CompletionItemKindColor:
+	}
+
+	return tcell.StyleDefault, errors.New("not found")
+}
+func (mgr symbol_colortheme) get_lsp_color(kind lsp.SymbolKind) (tcell.Style, error) {
+	var styles= []string{}
+	switch kind {
+	case lsp.SymbolKindVariable:
+		styles=([]string{"@variable"})
+	case lsp.SymbolKindField:
+		styles=([]string{"@field"})
+	case lsp.SymbolKindConstructor:
+		styles=([]string{"@construct"})
+	case lsp.SymbolKindProperty:
+		styles=([]string{"@property"})
+	case lsp.SymbolKindModule:
+		styles=([]string{"@module"})
+	case lsp.SymbolKindInterface:
+		styles=([]string{"lsp.type.interface", "@type.class"})
+	case lsp.SymbolKindClass:
 		return mgr.colorscheme.GetColor("@type.class"), nil
 	case lsp.SymbolKindFunction:
 		return mgr.colorscheme.GetColor("@function"), nil
@@ -72,6 +150,15 @@ func (mgr symbol_colortheme) get_lsp_color(kind lsp.SymbolKind) (tcell.Style, er
 		return mgr.colorscheme.GetColor("structure"), nil
 	case lsp.SymbolKindConstant:
 		return mgr.colorscheme.GetColor("@constant"), nil
+	case lsp.SymbolKindEvent:
+		styles=([]string{"@lsp.type.event"})
+	case lsp.SymbolKindEnum:
+		styles=([]string{"@lsp.type.enum", "@enum"})
+	case lsp.SymbolKindEnumMember:
+		styles=([]string{"@lsp.type.enummember", "@enum.member"})
+	}
+	if len(styles)>0{
+		return mgr.get_styles(styles)
 	}
 	return tcell.StyleDefault, errors.New("not found")
 }

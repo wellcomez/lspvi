@@ -221,7 +221,10 @@ type mainui struct {
 }
 
 func (m *mainui) PublishDiagnostics(param lsp.PublishDiagnosticsParams) {
-	debug.DebugLog("PublishDiagnostics: ", param.URI.AsPath().String())
+	debug.DebugLog("PublishDiagnostics: ", param.URI.AsPath().String(), param.Diagnostics)
+	for i, v := range param.Diagnostics {
+		debug.DebugLog("PublishDiagnostics: ", i, v.Severity, v.Message, v.Range, v.CodeDescription)
+	}
 }
 
 // OnWatchFileChange implements change_reciever.
