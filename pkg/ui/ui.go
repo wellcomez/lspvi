@@ -218,6 +218,7 @@ type mainui struct {
 	ws           string
 	tab          *tabmgr
 	lsp_log_file *os.File
+	diagnostic   project_diagnostic
 }
 
 func (m *mainui) PublishDiagnostics(param lsp.PublishDiagnosticsParams) {
@@ -225,7 +226,13 @@ func (m *mainui) PublishDiagnostics(param lsp.PublishDiagnosticsParams) {
 	for i, v := range param.Diagnostics {
 		debug.DebugLog("PublishDiagnostics: ", i, v.Severity, v.Message, v.Range, v.CodeDescription)
 	}
-	global_project_diagnostic.Update(param)
+	m.diagnostic.Update(param)
+	for _, code := range SplitCode.code_collection {
+		if param.URI.AsPath().String() == code.Path() {
+			code.diagnostic = editor_diagnostic{param}
+			return
+		}
+	}
 }
 
 // OnWatchFileChange implements change_reciever.

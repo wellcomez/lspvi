@@ -2,6 +2,8 @@ package mainui
 
 import "github.com/tectiv3/go-lsp"
 
+type Diagnostic interface {
+}
 type editor_diagnostic struct {
 	data lsp.PublishDiagnosticsParams
 }
@@ -34,5 +36,3 @@ func (prj *project_diagnostic) Update(diags lsp.PublishDiagnosticsParams) {
 		prj.data = append(prj.data, *NewLspDiagnostic(diags))
 	}
 }
-
-var global_project_diagnostic project_diagnostic

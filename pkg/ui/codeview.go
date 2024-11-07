@@ -177,9 +177,17 @@ type CodeView struct {
 	not_preview bool
 	insert      bool
 	//diff        *Differ
-	loading bool
+	loading    bool
+	diagnostic editor_diagnostic
 }
 
+func (code *CodeView) Dianostic() (diagnostic editor_diagnostic) {
+	diagnostic = code.diagnostic
+	return
+}
+func (code *CodeView) UpdateDianostic(diagnostic editor_diagnostic) {
+	code.diagnostic = diagnostic
+}
 func (code *CodeView) NewChangeChecker() code_change_cheker {
 	return new_code_change_checker(code)
 }

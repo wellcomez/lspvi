@@ -422,8 +422,7 @@ func (root *codetextview) draw_line_mark(mark bookmarkfile, ch rune, bottom int,
 		for _, line := range b {
 			x1 := root.GetLineNoFormDraw(line)
 			by := x1 - root.Topline
-			screen.SetContent(x, by+topY, ch, nil,
-				style.Foreground(global_theme.search_highlight_color()).Background(root.GetBackgroundColor()))
+			screen.SetContent(x, by+topY, ch, nil, style)
 		}
 	}
 }
@@ -443,13 +442,32 @@ func new_codetext_view(buffer *femto.Buffer, main MainService) *codetextview {
 	root.complete = Newcompletemenu(main, root)
 	root.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		style := tcell.StyleDefault
+		style = style.Foreground(global_theme.search_highlight_color()).Background(root.GetBackgroundColor())
 		_, topY, _, _ := root.GetInnerRect()
 		bottom := root.Bottomline()
 		mark := root.bookmark
 		bookmark_icon := '\uf02e'
 		root.draw_line_mark(mark, bookmark_icon, bottom, screen, x, topY, style)
 		root.draw_line_mark(root.linechange, '*', bottom, screen, x, topY, style)
-		// root.change_line_color(screen, x, topY, style)
+		dialogsize := root.code.Dianostic()
+		if !dialogsize.data.IsClear {
+			mark := get_dialog_line(dialogsize, lsp.DiagnosticSeverityError)
+			if len(mark.LineMark) > 0 {
+				error_style := style
+				if s, e := global_theme.get_styles([]string{"@error", "error"}); e == nil {
+					error_style = s
+				}
+				root.draw_line_mark(mark, '\uea87', bottom, screen, x, topY, error_style)
+			}
+			if len(mark.LineMark) > 0 {
+				error_style := style
+				if s, e := global_theme.get_styles([]string{"@text.warning", "warningmsg"}); e == nil {
+					error_style = s
+				}
+				mark = get_dialog_line(dialogsize, lsp.DiagnosticSeverityWarning)
+				root.draw_line_mark(mark, '\uea6c', bottom, screen, x, topY, error_style)
+			}
+		}
 		return root.GetInnerRect()
 	})
 	// root.Buf.Settings["scrollbar"] = true
@@ -457,4 +475,13 @@ func new_codetext_view(buffer *femto.Buffer, main MainService) *codetextview {
 	// root.addbookmark(1, true)
 	// root.addbookmark(20, true)
 	return root
+}
+
+func get_dialog_line(dialogsize editor_diagnostic, level lsp.DiagnosticSeverity) (errline bookmarkfile) {
+	for _, v := range dialogsize.data.Diagnostics {
+		if v.Severity == level {
+			errline.LineMark = append(errline.LineMark, LineMark{Line: v.Range.Start.Line + 1})
+		}
+	}
+	return
 }
