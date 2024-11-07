@@ -215,7 +215,7 @@ func (w WorkSpace) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2
 	var logerr error
 	if _, err := json.MarshalIndent(req, " ", " "); err == nil {
 		if a, err := json.Marshal(req.Params); err == nil {
-			if ret, err := notificationDispatcher(req.Method, a,w.NotifyHanlde); err == nil {
+			if ret, err := notificationDispatcher(req.Method, a, w.NotifyHanlde); err == nil {
 				data := fmt.Sprintf("\nMethod: %s\n Params: %s", req.Method, ret)
 				w.Callback.LspLogOutput(data, "lsp-notify")
 			} else {
@@ -280,6 +280,7 @@ type SignatureHelp struct {
 	Continued           bool
 	ActiveSignatureHelp *lsp.SignatureHelp
 	Kind                lsp.CompletionItemKind
+	Code                CompleteCodeLine
 }
 
 /*func (h SignatureHelp) CreateSignatureHelp(s string) string {*/
