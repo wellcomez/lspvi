@@ -372,6 +372,7 @@ func (complete *completemenu) OnTrigeHelp(tg lspcore.TriggerChar) bool {
 type help_signature_docs struct {
 	label string
 	value string
+	lines []string
 }
 
 func new_help_signature_docs(v lsp.SignatureInformation) (ret *help_signature_docs) {
@@ -385,7 +386,8 @@ func new_help_signature_docs(v lsp.SignatureInformation) (ret *help_signature_do
 	}
 	return
 }
-func (d *help_signature_docs) comment_line(n int) (ret []string) {
+func (d *help_signature_docs) comment_line(n int) {
+	var ret []string
 	// n = max(len(d.label), n)
 	comment, _ := tablewriter.WrapString("\t"+d.label+"\t"+"\n"+"\t", n)
 	ret = append(ret, comment...)
@@ -397,7 +399,7 @@ func (d *help_signature_docs) comment_line(n int) (ret []string) {
 		}
 		ret = append(ret, ss...)
 	}
-	return
+	d.lines = ret
 }
 
 func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspcore.SignatureHelp) *HelpBox {
@@ -406,10 +408,13 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	if d := complete.Util.Signature.Document; d == nil {
 		for _, v := range help.Signatures {
 			doc = append(doc, new_help_signature_docs(v))
+			for _, v := range doc {
+				v.comment_line(n40)
+			}
 		}
 	} else {
 		doc = append(doc, &help_signature_docs{
-			label: strings.Join(d(help, helpcall), "\n"),
+			lines: d(help, helpcall),
 		})
 	}
 

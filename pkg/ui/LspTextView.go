@@ -12,6 +12,8 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
+const n40 = 60
+
 type LspTextView struct {
 	*tview.Box
 	lines  []string
@@ -43,25 +45,25 @@ func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
 	var ret = []string{}
 	var v = helpview.doc[helpview.current]
 	filename := complete.filename()
-	n40 := 60
 	if len(helpview.doc) > 1 {
 		ret = append(ret, fmt.Sprintf("%d/%d", helpview.current+1, len(helpview.doc)))
 	}
-	ret = append(ret, v.comment_line(n40)...)
+	ret = append(ret, v.lines...)
 	txt := strings.Join(ret, "\n")
 	height := len(helpview.lines)
 	if !helpview.loaded {
 		height = helpview.Load(txt, filename)
 		helpview.loaded = true
 	}
+	width := n40
 	if helpview.hasborder {
 		height += 2
-		n40 = n40 + 2
+		width = width + 2
 	}
 	loc := complete.editor.Cursor.Loc
 	edit_x, edit_y, _, _ := complete.editor.GetRect()
 	Y := edit_y + loc.Y - complete.editor.Topline - (height - 1)
-	helpview.SetRect(helpview.begin.X+edit_x, Y, n40, height)
+	helpview.SetRect(helpview.begin.X+edit_x, Y, width, height)
 }
 func (v HelpBox) IsShown(view *codetextview) bool {
 	loc := view.Cursor.Loc
