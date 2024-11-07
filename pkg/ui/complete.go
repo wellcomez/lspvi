@@ -390,7 +390,7 @@ func (d *help_signature_docs) comment_line(n int) (ret []string) {
 	comment, _ := tablewriter.WrapString("\t"+d.label+"\t"+"\n"+"\t", n)
 	ret = append(ret, comment...)
 	if len(d.value) > 0 {
-		comment, _ := tablewriter.WrapString(d.value, n)
+		comment, _ := tablewriter.WrapString(d.value, 4)
 		var ss = []string{}
 		for _, v := range comment {
 			ss = append(ss, "//"+strings.ReplaceAll(v, "\t", "  "))
