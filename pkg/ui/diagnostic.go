@@ -34,3 +34,5 @@ func (prj *project_diagnostic) Update(diags lsp.PublishDiagnosticsParams) {
 		prj.data = append(prj.data, *NewLspDiagnostic(diags))
 	}
 }
+
+var global_project_diagnostic project_diagnostic

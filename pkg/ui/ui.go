@@ -225,6 +225,7 @@ func (m *mainui) PublishDiagnostics(param lsp.PublishDiagnosticsParams) {
 	for i, v := range param.Diagnostics {
 		debug.DebugLog("PublishDiagnostics: ", i, v.Severity, v.Message, v.Range, v.CodeDescription)
 	}
+	global_project_diagnostic.Update(param)
 }
 
 // OnWatchFileChange implements change_reciever.
