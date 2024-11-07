@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
-	"zen108.com/lspvi/pkg/debug"
+	// "zen108.com/lspvi/pkg/debug"
 )
 
 var file_extensions = []string{"cc", "cpp", "h", "hpp", "cxx", "hxx",
@@ -73,17 +73,19 @@ func complete_cpp(v lsp.CompletionItem) []string {
 	var text = []string{}
 	var doc Document
 	label := v.Label
-	// kindname, _ := completionItemKindMap[int(v.Kind)]
 	switch v.Kind {
 	case lsp.CompletionItemKindClass:
 		label = fmt.Sprintf("class %s{}", v.Label)
 	case lsp.CompletionItemKindStruct:
 		label = fmt.Sprintf("struct %s{}", v.Label)
 	case lsp.CompletionItemKindMethod, lsp.CompletionItemKindFunction:
+		label = fmt.Sprintf("%s %s{}", v.Detail, v.Label)
 	case lsp.CompletionItemKindEnum:
-		label = fmt.Sprintf("enum %s{}", v.Label)
+		label = fmt.Sprintf("enum %s{%s}", v.Detail, v.Label)
+	default:
+		// kindname, _ := completionItemKindMap[int(v.Kind)]
+		// debug.DebugLog("complete", kindname, "detail", v.Detail, "label", v.Label)
 	}
-	// debug.DebugLog("complete", kindname, v.Detail, v.Label)
 	text = append(text, label)
 	if doc.Parser(v.Documentation) == nil {
 		sss := strings.Split(doc.Value, "\n")
