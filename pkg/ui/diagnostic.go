@@ -70,7 +70,9 @@ func hove_test(root *codetextview, move bool, pos mouse_event_pos, event *tcell.
 				}
 				ss := []string{
 					fmt.Sprintf(" %s %s %s ", v.Message, v.Source, v.Code),
-					fmt.Sprintf(" %s %d:%d ", filepath.Base(root.code.FileName()), buff_loc.X, buff_loc.Y+1)}
+					fmt.Sprintf(" %s %d:%d ", filepath.Base(root.code.FileName()),
+						v.Range.Start.Character,
+						buff_loc.Y+1)}
 				msg.Load(strings.Join(ss, "\n"), root.code.Path())
 				go func() {
 					root.main.App().QueueUpdate(func() {
