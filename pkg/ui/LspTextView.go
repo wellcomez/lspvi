@@ -12,6 +12,8 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
+const n40 = 60
+
 type LspTextView struct {
 	*tview.Box
 	lines  []string
@@ -28,6 +30,7 @@ type HelpBox struct {
 	loaded    bool
 	Complete  *lspcore.CompleteCodeLine
 	hasborder bool
+	current   int
 	//Complete            *lspcore.complete_code
 }
 
@@ -40,25 +43,27 @@ func (b *HelpBox) SetBorder(show bool) {
 }
 func (helpview *HelpBox) UpdateLayout(complete *completemenu) {
 	var ret = []string{}
-	var doc []*help_signature_docs = helpview.doc
+	var v = helpview.doc[helpview.current]
 	filename := complete.filename()
-	n40 := 60
-	for _, v := range doc {
-		ret = append(ret, v.comment_line(n40)...)
+	if len(helpview.doc) > 1 {
+		ret = append(ret, fmt.Sprintf("%d/%d", helpview.current+1, len(helpview.doc)))
 	}
+	ret = append(ret, v.lines...)
 	txt := strings.Join(ret, "\n")
 	height := len(helpview.lines)
 	if !helpview.loaded {
 		height = helpview.Load(txt, filename)
 		helpview.loaded = true
 	}
+	width := n40
 	if helpview.hasborder {
 		height += 2
+		width = width + 2
 	}
 	loc := complete.editor.Cursor.Loc
 	edit_x, edit_y, _, _ := complete.editor.GetRect()
 	Y := edit_y + loc.Y - complete.editor.Topline - (height - 1)
-	helpview.SetRect(helpview.begin.X+edit_x, Y, n40, height)
+	helpview.SetRect(helpview.begin.X+edit_x, Y, width, height)
 }
 func (v HelpBox) IsShown(view *codetextview) bool {
 	loc := view.Cursor.Loc
@@ -91,6 +96,22 @@ func NewHelpBox() *HelpBox {
 	// x := global_theme.get_color("selection")
 	ret.SetBorder(true)
 	return ret
+}
+func (help *HelpBox) handle_key(event *tcell.EventKey) {
+	switch event.Key() {
+	case tcell.KeyDown:
+		help.current++
+		if help.current >= len(help.doc) {
+			help.current = 0
+		}
+		help.loaded = false
+	case tcell.KeyUp:
+		help.current--
+		if help.current < 0 {
+			help.current = len(help.doc) - 1
+		}
+		help.loaded = false
+	}
 }
 
 func (helpview *LspTextView) Load(txt string, filename string) int {

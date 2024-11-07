@@ -762,13 +762,23 @@ func (code *codetextview) xOffset() int64 {
 //	}
 
 func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
-	// prev := get_line_content(lineno, code)
+	// prev := get_line_content(lineno, code
 	if code.view.complete.IsShown() {
 		switch event.Key() {
 		case tcell.KeyEnter, tcell.KeyUp, tcell.KeyDown:
 			{
 				code.view.complete.InputHandler()(event, func(p tview.Primitive) {
 
+				})
+				return nil
+			}
+		}
+	}
+	if code.view.complete.IsShownHelp() {
+		switch event.Key() {
+		case tcell.KeyUp, tcell.KeyDown:
+			{
+				code.view.complete.InputHandler()(event, func(p tview.Primitive) {
 				})
 				return nil
 			}
