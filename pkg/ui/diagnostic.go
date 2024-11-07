@@ -118,6 +118,7 @@ func (c *codetextview) HideHoverIfChanged() {
 type diagnospicker struct {
 	*fzflist_impl
 	fzf *fzf_list_item
+	qk  *quick_view_data
 }
 
 // UpdateQuery implements picker.
@@ -169,5 +170,18 @@ func new_diagnospicker_picker(dialog *fzfmain) (pk *diagnospicker) {
 	for _, s := range data {
 		pk.list.AddColorItem(s.line, nil, nil)
 	}
+	pk.qk = qkdata
+	next_index := -1
+	pk.list.SetChangedFunc(func(index int, s1, s2 string, r rune) {
+		next_index = index
+	})
+	pk.list.SetSelectedFunc(func(index int, s1, s2 string, r rune) {
+		if index != next_index {
+			return
+		}
+		if data, err := qkdata.get_data(index); err == nil {
+			pk.parent.open_in_edior(data.Loc)
+		}
+	})
 	return
 }
