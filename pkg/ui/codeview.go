@@ -187,6 +187,19 @@ func (code *CodeView) Dianostic() (diagnostic editor_diagnostic) {
 }
 func (code *CodeView) UpdateDianostic(diagnostic editor_diagnostic) {
 	code.diagnostic = diagnostic
+	hl := hlresult.NewSearchLine()
+	if !diagnostic.data.IsClear {
+		for _, v := range diagnostic.data.Diagnostics {
+			if v.Severity == lsp.DiagnosticSeverityError {
+				hl.Add(hlresult.MatchPosition{
+					Begin: v.Range.Start.Character,
+					End:   v.Range.End.Character,
+					Y:     v.Range.Start.Line,
+				})
+			}
+		}
+	}
+	code.view.Buf.UpdatedDiagnos(hl)
 }
 func (code *CodeView) NewChangeChecker() code_change_cheker {
 	return new_code_change_checker(code)
@@ -349,7 +362,19 @@ func (code *CodeView) OnSearch(txt string, whole bool) (ret []SearchPos) {
 	code.update_codetext_hlsearch(ret, len(txt))
 	return
 }
-
+func (code *CodeView) GetDiagnosLine() (pos hlresult.SearchLine) {
+	pos = hlresult.NewSearchLine()
+	if !code.diagnostic.data.IsClear {
+		for _, v := range code.diagnostic.data.Diagnostics {
+			pos.Add(hlresult.MatchPosition{
+				Y:     v.Range.Start.Line,
+				Begin: v.Range.Start.Character,
+				End:   v.Range.End.Character,
+			})
+		}
+	}
+	return
+}
 func (code *CodeView) update_codetext_hlsearch(ret []SearchPos, len int) {
 	var pos = hlresult.NewSearchLine()
 	for _, v := range ret {
@@ -359,7 +384,8 @@ func (code *CodeView) update_codetext_hlsearch(ret []SearchPos, len int) {
 			End:   v.X + len,
 		})
 	}
-	v := hlresult.HLResult{SearchResult: pos}
+	dialogsize := code.GetDiagnosLine()
+	v := hlresult.HLResult{SearchResult: pos, Diagnos: dialogsize}
 	if ts := code.TreeSitter(); ts != nil {
 		var HlLine = make(lspcore.TreesiterSymbolLine)
 		for k, v := range ts.HlLine {
@@ -1629,7 +1655,8 @@ func (code *CodeView) set_synax_color(theme *symbol_colortheme) {
 	if ts := code.TreeSitter(); ts != nil {
 		x = ts.HlLine
 	}
-	code.view.Buf.SetTreesitter(hlresult.HLResult{Tree: x})
+	dia := code.GetDiagnosLine()
+	code.view.Buf.SetTreesitter(hlresult.HLResult{Tree: x, Diagnos: dia})
 	code.view.SetColorscheme(theme.colorscheme)
 }
 
