@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 var file_extensions = []string{"cc", "cpp", "h", "hpp", "cxx", "hxx",
@@ -40,12 +41,55 @@ func (a lsp_lang_cpp) CompleteHelpCallback(cl lsp.CompletionList, ret *Complete,
 	ret.Result = &CompleteResult{Document: document, Complete: complete_cpp}
 }
 
+var completionItemKindMap = map[int]string{
+	1:  "Text",
+	2:  "Method",
+	3:  "Function",
+	4:  "Constructor",
+	5:  "Field",
+	6:  "Variable",
+	7:  "Class",
+	8:  "Interface",
+	9:  "Module",
+	10: "Property",
+	11: "Unit",
+	12: "Value",
+	13: "Enum",
+	14: "Keyword",
+	15: "Snippet",
+	16: "Color",
+	17: "File",
+	18: "Reference",
+	19: "Folder",
+	20: "EnumMember",
+	21: "Constant",
+	22: "Struct",
+	23: "Event",
+	24: "Operator",
+	25: "TypeParameter",
+}
+
 func complete_cpp(v lsp.CompletionItem) []string {
-	var text = []string{
-		strings.Join([]string{v.Detail, v.Label + " "}, " ")}
+	var text = []string{}
 	var doc Document
+	label := v.Label
+	// kindname, _ := completionItemKindMap[int(v.Kind)]
+	switch v.Kind {
+	case lsp.CompletionItemKindClass:
+		label = fmt.Sprintf("class %s{}", v.Label)
+	case lsp.CompletionItemKindStruct:
+		label = fmt.Sprintf("struct %s{}", v.Label)
+	case lsp.CompletionItemKindMethod, lsp.CompletionItemKindFunction:
+	case lsp.CompletionItemKindEnum:
+		label = fmt.Sprintf("enum %s{}", v.Label)
+	}
+	// debug.DebugLog("complete", kindname, v.Detail, v.Label)
+	text = append(text, label)
 	if doc.Parser(v.Documentation) == nil {
-		text = append(text, "//"+doc.Value)
+		sss := strings.Split(doc.Value, "\n")
+		for _, v := range sss {
+			text = append(text, "//"+strings.ReplaceAll(v, "\t", "  "))
+		}
 	}
 	return text
 }
@@ -156,4 +200,30 @@ func (l lsp_lang_cpp) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 }
 func new_lsp_lang(wk WorkSpace, core *lspcore) lsplang {
 	return lsp_lang_cpp{}
+}
+func (a lsp_lang_cpp) LspHelp(core *lspcore) (ret LspUtil, err error) {
+	ret, _ = a.lsp_lang_common.LspHelp(core)
+	ret.Complete.Document = complete_cpp
+	ret.Signature.Document = func(v lsp.SignatureHelp, call SignatureHelp) (text []string) {
+		for _, s := range v.Signatures {
+			method := s.Label
+			switch call.Kind {
+			case lsp.CompletionItemKindFunction, lsp.CompletionItemKindMethod:
+				// method = fmt.Sprintf("func %s", method)
+			}
+			text = append(text, method)
+			var signature_document Document
+			// if len(v.Parameters) > 0 {
+			// 	ret.label = v.Label
+			// }
+			if signature_document.Parser(s.Documentation) == nil {
+				ss := strings.Split(signature_document.Value, "\n")
+				for _, v := range ss {
+					text = append(text, "//"+v)
+				}
+			}
+		}
+		return
+	}
+	return
 }
