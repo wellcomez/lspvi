@@ -272,6 +272,11 @@ func (v *fzfmain) OpenUIPicker() {
 	grid := currentpicker.grid(v.input)
 	v.create_dialog_content(grid, currentpicker)
 }
+func (v *fzfmain) OpenDiagnosPicker() {
+	currentpicker := new_diagnospicker_picker(v)
+	grid := currentpicker.grid(v.input)
+	v.create_dialog_content(grid, currentpicker)
+}
 
 // OpenFileFzf
 func (v *fzfmain) OpenFileFzf(root string) {

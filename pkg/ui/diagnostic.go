@@ -9,6 +9,7 @@ import (
 	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
 type Diagnostic interface {
@@ -94,7 +95,7 @@ func hove_test(root *codetextview, move bool, pos mouse_event_pos, event *tcell.
 		for i := range dia.data.Diagnostics {
 			v := dia.data.Diagnostics[i]
 			var ok = v.Severity == lsp.DiagnosticSeverityError || v.Severity == lsp.DiagnosticSeverityWarning
-			if ok && v.Range.Start.Line == pos.Y {
+			if ok && v.Range.Start.Line == pos.Y && !move {
 				if hover := root.hover; hover == nil {
 					new_diagnos_hove(v, *event)
 				} else if hover.Pos.Y != pos.Y || hover.Abort {
@@ -112,4 +113,61 @@ func (c *codetextview) HideHoverIfChanged() {
 			c.error = nil
 		}
 	}
+}
+
+type diagnospicker struct {
+	*fzflist_impl
+	fzf *fzf_list_item
+}
+
+// UpdateQuery implements picker.
+func (d *diagnospicker) UpdateQuery(query string) {
+	// panic("unimplemented")
+}
+
+// close implements picker.
+func (d *diagnospicker) close() {
+	// panic("unimplemented")
+}
+
+// handle implements picker.
+func (d *diagnospicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+		d.list.InputHandler()(event, setFocus)
+	}
+}
+
+// name implements picker.
+func (d *diagnospicker) name() string {
+	return ("Diagnostics")
+}
+
+func new_diagnospicker_picker(dialog *fzfmain) (pk *diagnospicker) {
+	pk = &diagnospicker{fzflist_impl: new_fzflist_impl(dialog)}
+	main := dialog.main
+	dia := main.Dialogsize()
+	var refs []ref_with_caller
+
+	for _, v := range dia.data {
+		for _, d := range v.data.Diagnostics {
+			var ref = ref_with_caller{
+				Loc: lsp.Location{
+					URI:   v.data.URI,
+					Range: d.Range,
+				},
+				Caller: &lspcore.CallStackEntry{
+					Name: fmt.Sprintf("%s %s %s", d.Message, d.Code, d.Source),
+				},
+			}
+			refs = append(refs, ref)
+		}
+	}
+	var qkdata = new_quikview_data(main, data_grep_word, "", &SearchKey{&lspcore.SymolSearchKey{Key: "errrors"}, nil}, refs, false)
+	qkdata.tree_to_listemitem()
+	tree := qkdata.build_flextree_data(5)
+	data := tree.ListColorString()
+	for _, s := range data {
+		pk.list.AddColorItem(s.line, nil, nil)
+	}
+	return
 }
