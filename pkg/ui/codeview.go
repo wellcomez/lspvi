@@ -615,12 +615,8 @@ func (root *codetextview) process_mouse(event *tcell.EventMouse, action tview.Mo
 			return action, event
 		}
 	}
-	if root.hover != nil {
-		if root.hover.Pos.Y != pos.Y {
-			root.error = nil
-			root.hover = nil
-		}
-	}
+	root.HideHoverIfChanged()
+
 	switch action {
 
 	case tview.MouseLeftDoubleClick:
@@ -1177,6 +1173,7 @@ func (code *CodeView) move_up_down(up bool) {
 		code.move_selection(vs)
 	}
 	code.update_with_line_changed()
+	code.view.HideHoverIfChanged()
 }
 
 func (code *CodeView) Complete() {

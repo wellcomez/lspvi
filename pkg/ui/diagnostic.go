@@ -92,11 +92,19 @@ func hove_test(root *codetextview, pos mouse_event_pos, event *tcell.EventMouse)
 			if ok && v.Range.Start.Line == pos.Y {
 				if hover := root.hover; hover == nil {
 					new_diagnos_hove(v, *event)
-				} else if hover.Pos.Y != pos.Y {
+				} else if hover.Pos.Y != pos.Y||hover.Abort {
 					new_diagnos_hove(v, *event)
 				}
 				break
 			}
+		}
+	}
+}
+func (c *codetextview) HideHoverIfChanged () {
+	if c.hover != nil {
+		if c.hover.Pos.Y != c.Cursor.Loc.Y {
+			c.hover.Abort = true
+			c.error = nil
 		}
 	}
 }
