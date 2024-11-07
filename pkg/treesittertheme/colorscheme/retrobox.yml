@@ -1,7 +1,7 @@
 Data:
  - Group: "Normal"
-   background: "#fbf1c7"
    foreground: "#3c3836"
+   background: "#fbf1c7"
 
  - Group: "Comment"
    foreground: "#928374"
@@ -89,19 +89,19 @@ Data:
    foreground: "#9d0006"
 
  - Group: "Error"
-   reverse: true
-   background: "#fbf1c7"
    foreground: "#9d0006"
    bold: true
+   background: "#fbf1c7"
+   reverse: true
 
  - Group: "Todo"
-   background: "#fbf1c7"
    foreground: "#3c3836"
    bold: true
+   background: "#fbf1c7"
 
  - Group: "Underlined"
-   foreground: "#76678"
    underline: true
+   foreground: "#76678"
 
  - Group: "Bold"
    true: 6
@@ -113,45 +113,45 @@ Data:
    foreground: "#3c3836"
 
  - Group: "ErrorMsg"
-   background: "#9d0006"
    foreground: "#fbf1c7"
    bold: true
+   background: "#9d0006"
 
  - Group: "WarningMsg"
    foreground: "#9d0006"
    bold: true
 
  - Group: "Folded"
-   background: "#ffffd7"
    foreground: "#928374"
+   background: "#ffffd7"
 
  - Group: "FoldColumn"
-   background: "#fbf1c7"
    foreground: "#928374"
+   background: "#fbf1c7"
 
  - Group: "DiffAdd"
-   reverse: true
-   background: "#fbf1c7"
    foreground: "#79740e"
+   background: "#fbf1c7"
+   reverse: true
 
  - Group: "DiffChange"
-   reverse: true
-   background: "#fbf1c7"
    foreground: "#427b58"
+   background: "#fbf1c7"
+   reverse: true
 
  - Group: "DiffDelete"
-   reverse: true
-   background: "#fbf1c7"
    foreground: "#9d0006"
+   background: "#fbf1c7"
+   reverse: true
 
  - Group: "DiffText"
-   reverse: true
-   background: "#fbf1c7"
    foreground: "#b57614"
+   background: "#fbf1c7"
+   reverse: true
 
  - Group: "SignColumn"
-   background: "#fbf1c7"
    foreground: "#3c3836"
+   background: "#fbf1c7"
 
  - Group: "CursorLine"
    background: "#e5d4b1"
@@ -169,19 +169,19 @@ Data:
    foreground: "#a89984"
 
  - Group: "CursorLineNr"
-   background: "#e5d4b1"
    foreground: "#b57614"
+   background: "#e5d4b1"
 
  - Group: "StatusLine"
-   reverse: true
-   background: "#3c3836"
    foreground: "#bdae93"
    bold: true
+   background: "#3c3836"
+   reverse: true
 
  - Group: "StatusLineNC"
-   reverse: true
-   background: "#3c3836"
    foreground: "#ebdbb2"
+   background: "#3c3836"
+   reverse: true
 
  - Group: "Whitespace"
    foreground: "#e5d4b1"
@@ -193,13 +193,13 @@ Data:
    foreground: "#928374"
 
  - Group: "Pmenu"
-   background: "#e5d4b1"
    foreground: "#3c3836"
+   background: "#e5d4b1"
 
  - Group: "PmenuSel"
-   background: "#76678"
    foreground: "#e5d4b1"
    bold: true
+   background: "#76678"
 
  - Group: "PmenuSbar"
    background: "#e5d4b1"
@@ -208,69 +208,69 @@ Data:
    background: "#a89984"
 
  - Group: "TabLine"
-   background: "#ebdbb2"
    foreground: "#665c54"
+   background: "#ebdbb2"
 
  - Group: "TabLineFill"
-   background: "#ebdbb2"
    foreground: "#ebdbb2"
+   background: "#ebdbb2"
 
  - Group: "TabLineSel"
-   background: "#fbf1c7"
    foreground: "#282828"
    bold: true
+   background: "#fbf1c7"
 
  - Group: "Title"
    foreground: "#79740e"
    bold: true
 
  - Group: "Visual"
-   background: "#76678"
    foreground: "#fbf1c7"
+   background: "#76678"
 
  - Group: "VisualNOS"
-   background: "#76678"
    foreground: "#fbf1c7"
+   background: "#76678"
 
  - Group: "QuickFixLine"
-   reverse: true
-   background: "#fbf1c7"
    foreground: "#427b58"
+   background: "#fbf1c7"
+   reverse: true
 
  - Group: "Search"
-   reverse: true
-   background: "#fbf1c7"
    foreground: "#98971a"
+   background: "#fbf1c7"
+   reverse: true
 
  - Group: "IncSearch"
-   reverse: true
-   background: "#fbf1c7"
    foreground: "#ff5f00"
+   background: "#fbf1c7"
+   reverse: true
 
  - Group: "MatchParen"
-   background: "#e5d4b1"
    underline: true
    bold: true
+   background: "#e5d4b1"
 
  - Group: "SpellBad"
-   undercurl: true
-   special: 10289158
    foreground: "#9d0006"
+   undercurl: true
+   special: "#9d0006"
 
  - Group: "SpellCap"
-   undercurl: true
-   special: 484984
    foreground: "#76678"
+   undercurl: true
+   special: "#76678"
 
  - Group: "SpellRare"
-   undercurl: true
-   special: 9387889
    foreground: "#8f3f71"
+   undercurl: true
+   special: "#8f3f71"
 
  - Group: "SpellLocal"
-   undercurl: true
-   special: 4356952
    foreground: "#427b58"
+   undercurl: true
+   special: "#427b58"
 
  - Group: "@attribute"
    foreground: "#427b58"
@@ -291,9 +291,9 @@ Data:
    foreground: "#928374"
 
  - Group: "@comment.todo"
-   background: "#fbf1c7"
    foreground: "#3c3836"
    bold: true
+   background: "#fbf1c7"
 
  - Group: "@constant"
    foreground: "#8f3f71"
@@ -329,8 +329,8 @@ Data:
    nocombine: true
 
  - Group: "@ibl.scope.underline.1"
-   special: 11049348
    underline: true
+   special: "#a89984"
 
  - Group: "@ibl.whitespace.char.1"
    foreground: "#e5d4b1"
@@ -363,8 +363,8 @@ Data:
    foreground: "#9d0006"
 
  - Group: "@lsp.mod.deprecated"
+   special: "#ff0000"
    strikethrough: true
-   special: 16711680
 
  - Group: "@lsp.type.class"
    foreground: "#427b58"
@@ -431,8 +431,8 @@ Data:
    foreground: "#76678"
 
  - Group: "@markup.link.url"
-   foreground: "#76678"
    underline: true
+   foreground: "#76678"
 
  - Group: "@markup.raw"
    foreground: "#928374"
@@ -444,8 +444,8 @@ Data:
    bold: true
 
  - Group: "@markup.underline"
-   foreground: "#76678"
    underline: true
+   foreground: "#76678"
 
  - Group: "@module"
    foreground: "#76678"
