@@ -126,38 +126,58 @@ func (mgr symbol_colortheme) get_lsp_complete_color(kind lsp.CompletionItemKind)
 	return tcell.StyleDefault, errors.New("not found")
 }
 func (mgr symbol_colortheme) get_lsp_color(kind lsp.SymbolKind) (tcell.Style, error) {
-	var styles= []string{}
+	var styles = []string{}
 	switch kind {
-	case lsp.SymbolKindVariable:
-		styles=([]string{"@variable"})
-	case lsp.SymbolKindField:
-		styles=([]string{"@field"})
-	case lsp.SymbolKindConstructor:
-		styles=([]string{"@construct"})
-	case lsp.SymbolKindProperty:
-		styles=([]string{"@property"})
+	case lsp.SymbolKindFile:
+
 	case lsp.SymbolKindModule:
-		styles=([]string{"@module"})
-	case lsp.SymbolKindInterface:
-		styles=([]string{"lsp.type.interface", "@type.class"})
+		styles = ([]string{"@module"})
+	case lsp.SymbolKindNamespace:
+		styles = ([]string{"@namespace", "@lsp.type.namespace"})
+	case lsp.SymbolKindPackage:
+		// styles = ([]string{"@namespace", "@lsp.type.namespace"})
 	case lsp.SymbolKindClass:
-		return mgr.colorscheme.GetColor("@type.class"), nil
-	case lsp.SymbolKindFunction:
-		return mgr.colorscheme.GetColor("@function"), nil
+		styles = ([]string{"@class", "@type.class", "@lsp.type.class"})
 	case lsp.SymbolKindMethod:
-		return mgr.colorscheme.GetColor("@function.method"), nil
-	case lsp.SymbolKindStruct:
-		return mgr.colorscheme.GetColor("structure"), nil
-	case lsp.SymbolKindConstant:
-		return mgr.colorscheme.GetColor("@constant"), nil
-	case lsp.SymbolKindEvent:
-		styles=([]string{"@lsp.type.event"})
+		styles = []string{"@method", "@function.method", "lsp.type.method"}
+	case lsp.SymbolKindProperty:
+		styles = ([]string{"@property", "lsp.type.property"})
+	case lsp.SymbolKindField:
+		styles = ([]string{"@field"})
+	case lsp.SymbolKindConstructor:
+		styles = ([]string{"@construct"})
 	case lsp.SymbolKindEnum:
-		styles=([]string{"@lsp.type.enum", "@enum"})
+		styles = ([]string{"@enum", "@lsp.type.enum"})
+	case lsp.SymbolKindInterface:
+		styles = ([]string{"@interface", "@type.class", "lsp.type.interface"})
+	case lsp.SymbolKindFunction:
+		styles = []string{"@function", "@lsp.type.function", "function"}
+	case lsp.SymbolKindVariable:
+		styles = ([]string{"@variable", "@lsp.type.variable"})
+	case lsp.SymbolKindConstant:
+		styles = []string{"@constant","constant"}
+	case lsp.SymbolKindString:
+		styles = []string{"@string","string"}
+	case lsp.SymbolKindNumber:
+		styles = []string{"@number","number"}
+	case lsp.SymbolKindBoolean:
+		styles = []string{"@boolean", "boolean"}
+	case lsp.SymbolKindArray:
+	case lsp.SymbolKindObject:
+	case lsp.SymbolKindKey:
+	case lsp.SymbolKindNull:
 	case lsp.SymbolKindEnumMember:
-		styles=([]string{"@lsp.type.enummember", "@enum.member"})
+		styles = ([]string{"@enum", "@lsp.type.enummember", "@enum.member"})
+	case lsp.SymbolKindStruct:
+		styles = ([]string{"@structure", "@lsp.type.structure", "structure"})
+	case lsp.SymbolKindEvent:
+		styles = ([]string{"@event", "@lsp.type.event"})
+	case lsp.SymbolKindOperator:
+		styles = ([]string{"@operator", "operator"})
+	case lsp.SymbolKindTypeParameter:
+		styles = []string{"@type.parameter", "@lsp.type.typeparameter", "parameter"}
 	}
-	if len(styles)>0{
+	if len(styles) > 0 {
 		return mgr.get_styles(styles)
 	}
 	return tcell.StyleDefault, errors.New("not found")
