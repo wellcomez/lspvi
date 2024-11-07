@@ -281,7 +281,7 @@ func (v *codetextview) Draw(screen tcell.Screen) {
 			code_navbar_draw_runne(screen, i, y, ch, tcell.StyleDefault.Foreground(tview.Styles.BorderColor).Background(tview.Styles.PrimitiveBackgroundColor))
 		}
 		v.complete.Draw(screen)
-		if v.error!=nil{
+		if v.error != nil {
 			v.error.Draw(screen)
 		}
 	}
@@ -431,11 +431,12 @@ func (view *codetextview) addbookmark(add bool, comment string) {
 }
 func (root *codetextview) change_line_color(screen tcell.Screen, x int, topY int, style tcell.Style) {
 	line := root.Cursor.Loc.Y
-	x1 := root.GetLineNoFormDraw(line)
-	by := x1 - root.Topline
+	Y := root.GetLineNoForDraw(line)
+	by := Y - root.Topline
+	LineR := by + topY
 	sss := fmt.Sprintf("%d", line)
 	for i, ch := range sss {
-		screen.SetContent(x+i, by+topY, ch, nil,
+		screen.SetContent(x+i, LineR, ch, nil,
 			style.Foreground(tcell.ColorDarkGreen).Background(root.GetBackgroundColor()))
 	}
 }
@@ -447,7 +448,7 @@ func (root *codetextview) draw_line_mark(mark bookmarkfile, ch rune, bottom int,
 			b = append(b, line)
 		}
 		for _, line := range b {
-			x1 := root.GetLineNoFormDraw(line)
+			x1 := root.GetLineNoForDraw(line)
 			by := x1 - root.Topline
 			screen.SetContent(x, by+topY, ch, nil, style)
 		}
