@@ -774,6 +774,16 @@ func (code *CodeView) handle_key(event *tcell.EventKey) *tcell.EventKey {
 			}
 		}
 	}
+	if code.view.complete.IsShownHelp() {
+		switch event.Key() {
+		case tcell.KeyUp, tcell.KeyDown:
+			{
+				code.view.complete.InputHandler()(event, func(p tview.Primitive) {
+				})
+				return nil
+			}
+		}
+	}
 	enable_vim := code.main.CmdLine().Vim.Enable()
 	if enable_vim {
 		if h, ok := code.key_map[event.Key()]; ok {

@@ -24,6 +24,7 @@ type CompleteMenu interface {
 	OnTrigeHelp(tg lspcore.TriggerChar) bool
 	Draw(screen tcell.Screen)
 	IsShown() bool
+	IsShownHelp() bool
 	Show(bool)
 	Hide()
 	SetRect(int, int, int, int)
@@ -47,6 +48,17 @@ type complete_task struct {
 	StartPos femto.Loc
 }
 
+func (m *completemenu) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	if m.IsShownHelp() {
+		return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+			m.helpview.handle_key(event)
+		}
+	}
+	return m.customlist.InputHandler()
+}
+func (m completemenu) IsShownHelp() bool {
+	return m.helpview != nil
+}
 func (m completemenu) IsShown() bool {
 	return m.show
 }
@@ -374,7 +386,7 @@ func new_help_signature_docs(v lsp.SignatureInformation) (ret *help_signature_do
 	return
 }
 func (d *help_signature_docs) comment_line(n int) (ret []string) {
-	n = max(len(d.label), n)
+	// n = max(len(d.label), n)
 	comment, _ := tablewriter.WrapString("\t"+d.label+"\t"+"\n"+"\t", n)
 	ret = append(ret, comment...)
 	if len(d.value) > 0 {
