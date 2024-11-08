@@ -33,6 +33,10 @@ type LspviConfig struct {
 }
 
 func (ret *LspviConfig) Load() (err error) {
+	if _, err := os.Stat(lspviroot.configfile); err != nil {
+		var defaultcfg = NewLspviconfig()
+		defaultcfg.Save()
+	}
 	if buf, e := os.ReadFile(lspviroot.configfile); e != nil {
 		debug.ErrorLog("config", err)
 		return e
@@ -61,11 +65,16 @@ func (ret *LspviConfig) Load() (err error) {
 }
 
 func NewLspviconfig() *LspviConfig {
+	disable := false
 	default_ret := LspviConfig{
 		Colorscheme: "darcula",
 		Wrap:        false,
 		Color:       ColorConfig{},
-		enablevim:   false,
+		Vim: &vimmode{
+			Enable:  &disable,
+			Leadkey: "space",
+		},
+		enablevim: false,
 	}
 	return &default_ret
 }

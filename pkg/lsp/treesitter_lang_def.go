@@ -1,6 +1,8 @@
 package lspcore
 
 import (
+	"fmt"
+
 	ts_csharp "github.com/smacker/go-tree-sitter/csharp"
 	ts_protobuf "github.com/smacker/go-tree-sitter/protobuf"
 	ts_swift "github.com/smacker/go-tree-sitter/swift"
@@ -18,16 +20,16 @@ import (
 	ts_java "github.com/tree-sitter/tree-sitter-java/bindings/go"
 	ts_js "github.com/tree-sitter/tree-sitter-javascript/bindings/go"
 	tree_sitter_json "github.com/tree-sitter/tree-sitter-json/bindings/go"
-	"github.com/tree-sitter/tree-sitter-markdown/bindings/go"
+	tree_sitter_markdown "github.com/tree-sitter/tree-sitter-markdown/bindings/go"
 	ts_py "github.com/tree-sitter/tree-sitter-python/bindings/go"
 	tree_sitter_ruby "github.com/tree-sitter/tree-sitter-ruby/bindings/go"
 	ts_rust "github.com/tree-sitter/tree-sitter-rust/bindings/go"
 	tree_sitter_typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 
-	tree_sitter_zig "github.com/tree-sitter-grammars/tree-sitter-zig/bindings/go"
-	"path/filepath"
 	"strings"
 	"unsafe"
+
+	tree_sitter_zig "github.com/tree-sitter-grammars/tree-sitter-zig/bindings/go"
 	"zen108.com/lspvi/pkg/debug"
 )
 
@@ -100,7 +102,7 @@ func (tsdef *ts_lang_def) create_treesitter(file string) *TreeSitter {
 	return ret
 }
 func (t *ts_lang_def) create_query_buffer(lang string, queryname string) ([]byte, error) {
-	path := filepath.Join("queries", lang, queryname+".scm")
+	path := fmt.Sprintf("queries/%s/%s", lang, queryname+".scm")
 	buf, err := t.read_embbed(path)
 	if err != nil {
 		return nil, err

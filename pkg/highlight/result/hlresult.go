@@ -23,6 +23,7 @@ type HLResult struct {
 	Tree         lspcore.TreesiterSymbolLine
 	Current      MatchPosition
 	SearchResult SearchLine
+	Diagnos      SearchLine
 }
 
 func (h *HLResult) Update() {
@@ -30,7 +31,13 @@ func (h *HLResult) Update() {
 		h.update_line(line)
 	}
 }
-func (h *HLResult) GetPosition(lineno int) []MatchPosition {
+func (h *HLResult) UpdateErrorPosition(l SearchLine) {
+	h.Diagnos = l
+}
+func (h *HLResult) GetErrorPosition(lineno int) []MatchPosition {
+	return h.Diagnos.Lines[lineno]
+}
+func (h *HLResult) GetMatchPosition(lineno int) []MatchPosition {
 	return h.SearchResult.Lines[lineno]
 }
 func (h *HLResult) update_line(lineno int) {

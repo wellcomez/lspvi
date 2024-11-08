@@ -501,7 +501,7 @@ func (root *codetextview) draw_line_number(screen tcell.Screen, x int) {
 			if s, e := global_theme.get_styles([]string{"@error", "error"}); e == nil {
 				error_style = s
 			}
-			root.draw_line_mark(mark, '\uea87', bottom, screen, x, topY, error_style)
+			root.draw_line_mark(mark, 'E', bottom, screen, x, topY, error_style)
 		}
 		mark = get_dialog_line(dialogsize, lsp.DiagnosticSeverityWarning)
 		if len(mark.LineMark) > 0 {
@@ -509,7 +509,7 @@ func (root *codetextview) draw_line_number(screen tcell.Screen, x int) {
 			if s, e := global_theme.get_styles([]string{"@text.warning", "warningmsg"}); e == nil {
 				error_style = s
 			}
-			root.draw_line_mark(mark, '\uea6c', bottom, screen, x, topY, error_style)
+			root.draw_line_mark(mark, 'W', bottom, screen, x, topY, error_style)
 		}
 	}
 }

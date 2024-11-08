@@ -1,7 +1,7 @@
 Data:
  - Group: "Normal"
-   background: "#0"
    foreground: "#87ff87"
+   background: "#0"
 
  - Group: "Comment"
    foreground: "#ffa700"
@@ -88,16 +88,16 @@ Data:
    foreground: "#ff00ff"
 
  - Group: "Error"
-   background: "#ff0000"
    foreground: "#ffffff"
+   background: "#ff0000"
 
  - Group: "Todo"
-   background: "#ffff00"
    foreground: "#ff"
+   background: "#ffff00"
 
  - Group: "Underlined"
-   foreground: "#afaf"
    underline: true
+   foreground: "#afaf"
 
  - Group: "Bold"
    true: 6
@@ -109,35 +109,35 @@ Data:
    true: 6
 
  - Group: "ErrorMsg"
-   background: "#ff0000"
    foreground: "#ffffff"
+   background: "#ff0000"
 
  - Group: "WarningMsg"
    foreground: "#ffa700"
    bold: true
 
  - Group: "Folded"
-   background: "#303030"
    foreground: "#afaf"
+   background: "#303030"
 
  - Group: "FoldColumn"
    foreground: "#afaf"
 
  - Group: "DiffAdd"
-   background: "#5f875f"
    foreground: "#ffffff"
+   background: "#5f875f"
 
  - Group: "DiffChange"
-   background: "#5f87af"
    foreground: "#ffffff"
+   background: "#5f87af"
 
  - Group: "DiffDelete"
-   background: "#af5faf"
    foreground: "#ffffff"
+   background: "#af5faf"
 
  - Group: "DiffText"
-   background: "#c6c6c6"
    foreground: "#0"
+   background: "#c6c6c6"
 
  - Group: "SignColumn"
    foreground: "#afaf"
@@ -162,12 +162,12 @@ Data:
    bold: true
 
  - Group: "StatusLine"
-   background: "#8b"
    foreground: "#ffffff"
+   background: "#8b"
 
  - Group: "StatusLineNC"
-   background: "#3a3a3a"
    foreground: "#ffffff"
+   background: "#3a3a3a"
 
  - Group: "Whitespace"
    foreground: "#afaf"
@@ -179,12 +179,12 @@ Data:
    foreground: "#afaf"
 
  - Group: "Pmenu"
-   background: "#444444"
    foreground: "#ffffff"
+   background: "#444444"
 
  - Group: "PmenuSel"
-   background: "#ffff00"
    foreground: "#0"
+   background: "#ffff00"
 
  - Group: "PmenuSbar"
    background: "#303030"
@@ -193,63 +193,63 @@ Data:
    background: "#bcbcbc"
 
  - Group: "TabLine"
-   background: "#444444"
    foreground: "#87ff87"
+   background: "#444444"
 
  - Group: "TabLineFill"
    background: "#303030"
 
  - Group: "TabLineSel"
-   background: "#0"
    foreground: "#ffffff"
+   background: "#0"
 
  - Group: "Title"
    foreground: "#ff00ff"
    bold: true
 
  - Group: "Visual"
-   background: "#5f00"
    foreground: "#ffffff"
+   background: "#5f00"
 
  - Group: "VisualNOS"
-   background: "#5f00"
    foreground: "#ffffff"
+   background: "#5f00"
 
  - Group: "QuickFixLine"
-   background: "#afaf"
    foreground: "#303030"
+   background: "#afaf"
 
  - Group: "Search"
-   background: "#ff"
    foreground: "#ffffff"
+   background: "#ff"
 
  - Group: "IncSearch"
-   reverse: true
    foreground: "#ffa700"
+   reverse: true
 
  - Group: "MatchParen"
-   background: "#ffd7af"
    foreground: "#303030"
+   background: "#ffd7af"
 
  - Group: "SpellBad"
-   undercurl: true
-   special: 16711680
    foreground: "#ff0000"
+   undercurl: true
+   special: "#ff0000"
 
  - Group: "SpellCap"
-   undercurl: true
-   special: 65535
    foreground: "#ffff"
+   undercurl: true
+   special: "#ffff"
 
  - Group: "SpellRare"
-   undercurl: true
-   special: 16776960
    foreground: "#ffff00"
+   undercurl: true
+   special: "#ffff00"
 
  - Group: "SpellLocal"
-   undercurl: true
-   special: 16766895
    foreground: "#ffd7af"
+   undercurl: true
+   special: "#ffd7af"
 
  - Group: "@attribute"
    foreground: "#ffd7af"
@@ -270,8 +270,8 @@ Data:
    foreground: "#ffa700"
 
  - Group: "@comment.todo"
-   background: "#ffff00"
    foreground: "#ff"
+   background: "#ffff00"
 
  - Group: "@constant"
    foreground: "#ffffff"
@@ -305,8 +305,8 @@ Data:
    nocombine: true
 
  - Group: "@ibl.scope.underline.1"
-   special: 16776960
    underline: true
+   special: "#ffff00"
 
  - Group: "@ibl.whitespace.char.1"
    foreground: "#afaf"
@@ -339,8 +339,8 @@ Data:
    foreground: "#ffff00"
 
  - Group: "@lsp.mod.deprecated"
+   special: "#ff0000"
    strikethrough: true
-   special: 16711680
 
  - Group: "@lsp.type.class"
    foreground: "#bcbcbc"
@@ -404,8 +404,8 @@ Data:
    foreground: "#ffff"
 
  - Group: "@markup.link.url"
-   foreground: "#afaf"
    underline: true
+   foreground: "#afaf"
 
  - Group: "@markup.raw"
    foreground: "#ffa700"
@@ -417,8 +417,8 @@ Data:
    bold: true
 
  - Group: "@markup.underline"
-   foreground: "#afaf"
    underline: true
+   foreground: "#afaf"
 
  - Group: "@module"
    foreground: "#ffff"

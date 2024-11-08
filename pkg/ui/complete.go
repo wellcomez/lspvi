@@ -24,6 +24,7 @@ type CompleteMenu interface {
 	OnTrigeHelp(tg lspcore.TriggerChar) bool
 	Draw(screen tcell.Screen)
 	IsShown() bool
+	IsShownHelp() bool
 	Show(bool)
 	Hide()
 	SetRect(int, int, int, int)
@@ -47,6 +48,20 @@ type complete_task struct {
 	StartPos femto.Loc
 }
 
+func (m *completemenu) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	if m.IsShown() {
+		return m.customlist.InputHandler()
+	}
+	if m.IsShownHelp() {
+		return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+			m.helpview.handle_key(event)
+		}
+	}
+	return m.customlist.InputHandler()
+}
+func (m completemenu) IsShownHelp() bool {
+	return m.helpview != nil
+}
 func (m completemenu) IsShown() bool {
 	return m.show
 }
@@ -171,7 +186,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		return
 	}
 	if !cl.IsIncomplete {
-		return
+		// return
 	}
 	complete.Clear()
 	if complete.task == nil {
@@ -360,6 +375,7 @@ func (complete *completemenu) OnTrigeHelp(tg lspcore.TriggerChar) bool {
 type help_signature_docs struct {
 	label string
 	value string
+	lines []string
 }
 
 func new_help_signature_docs(v lsp.SignatureInformation) (ret *help_signature_docs) {
@@ -373,19 +389,20 @@ func new_help_signature_docs(v lsp.SignatureInformation) (ret *help_signature_do
 	}
 	return
 }
-func (d *help_signature_docs) comment_line(n int) (ret []string) {
-	n = max(len(d.label), n)
+func (d *help_signature_docs) comment_line(n int) {
+	var ret []string
+	// n = max(len(d.label), n)
 	comment, _ := tablewriter.WrapString("\t"+d.label+"\t"+"\n"+"\t", n)
 	ret = append(ret, comment...)
 	if len(d.value) > 0 {
-		comment, _ := tablewriter.WrapString(d.value, n)
+		comment, _ := tablewriter.WrapString(d.value, 4)
 		var ss = []string{}
 		for _, v := range comment {
 			ss = append(ss, "//"+strings.ReplaceAll(v, "\t", "  "))
 		}
 		ret = append(ret, ss...)
 	}
-	return
+	d.lines = ret
 }
 
 func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspcore.SignatureHelp) *HelpBox {
@@ -394,10 +411,13 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	if d := complete.Util.Signature.Document; d == nil {
 		for _, v := range help.Signatures {
 			doc = append(doc, new_help_signature_docs(v))
+			for _, v := range doc {
+				v.comment_line(n40)
+			}
 		}
 	} else {
 		doc = append(doc, &help_signature_docs{
-			label: strings.Join(d(help, helpcall), "\n"),
+			lines: d(help, helpcall),
 		})
 	}
 
@@ -405,6 +425,7 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	helpview.doc = doc
 	helpview.main = complete.editor.main
 	helpview.begin = femto.Loc{X: helpcall.Pos.Character, Y: helpcall.Pos.Line}
+	helpview.Complete = helpcall.Code
 	complete.helpview = helpview
 	return helpview
 }
@@ -488,6 +509,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 					Pos:        Pos,
 					IsVisiable: false,
 					Kind:       v.Kind,
+					Code:       *code,
 				}
 			}
 		}

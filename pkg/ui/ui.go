@@ -232,7 +232,7 @@ func (m *mainui) PublishDiagnostics(param lsp.PublishDiagnosticsParams) {
 	m.diagnostic.Update(param)
 	for _, code := range SplitCode.code_collection {
 		if param.URI.AsPath().String() == code.Path() {
-			code.diagnostic = editor_diagnostic{param}
+			code.UpdateDianostic(editor_diagnostic{param, 0})
 			return
 		}
 	}

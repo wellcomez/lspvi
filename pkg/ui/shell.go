@@ -25,6 +25,7 @@ import (
 
 	// "github.com/pgavlin/femto"
 	// v100 "golang.org/x/term"
+	"zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/pty"
 	terminal "zen108.com/lspvi/pkg/term"
 )
@@ -294,6 +295,10 @@ func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty
 	term.dest.Resize(col, row)
 	go func() {
 		ptyio := pty.RunNoStdin([]string{cmdline})
+		if ptyio == nil {
+			debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
+			return
+		}
 		term.ptystdio = ptyio
 		term.ptystdio.Notify()
 		term.UpdateTermSize()
