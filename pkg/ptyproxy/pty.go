@@ -1,4 +1,4 @@
-package pty
+package ptyproxy
 
 // https://github.com/iyzyi/aiopty
 // https://github.com/photostorm/pty

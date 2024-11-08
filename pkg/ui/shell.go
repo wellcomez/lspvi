@@ -26,12 +26,12 @@ import (
 	// "github.com/pgavlin/femto"
 	// v100 "golang.org/x/term"
 	"zen108.com/lspvi/pkg/debug"
-	"zen108.com/lspvi/pkg/pty"
+	"zen108.com/lspvi/pkg/ptyproxy"
 	terminal "zen108.com/lspvi/pkg/term"
 )
 
 type terminal_pty struct {
-	ptystdio  *pty.Pty
+	ptystdio  *ptyproxy.Pty
 	shellname string
 	ondata    func(*terminal_pty)
 	topline   int
@@ -294,7 +294,7 @@ func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty
 	row := 40
 	term.dest.Resize(col, row)
 	go func() {
-		ptyio := pty.RunNoStdin([]string{cmdline})
+		ptyio := ptyproxy.RunNoStdin([]string{cmdline})
 		if ptyio == nil {
 			debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
 			return

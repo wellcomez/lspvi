@@ -1,4 +1,4 @@
-package pty
+package ptyproxy
 func (pty *Pty) OsUpdateSize(Rows uint16, Cols uint16) {
 	pty.Rows = Rows
 	pty.Cols = Cols

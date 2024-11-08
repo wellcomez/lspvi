@@ -1,6 +1,6 @@
 // +build linux
 
-package pty
+package ptyproxy
 
 import (
 	"os/signal"

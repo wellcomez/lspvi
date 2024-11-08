@@ -23,7 +23,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/vmihailenco/msgpack/v5"
 	"zen108.com/lspvi/pkg/debug"
-	"zen108.com/lspvi/pkg/pty"
+	"zen108.com/lspvi/pkg/ptyproxy"
 )
 
 var use_https = false
@@ -32,7 +32,7 @@ var wk *workdir
 var httpport = 0
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
-var ptystdio *pty.Pty = nil
+var ptystdio *ptyproxy.Pty = nil
 
 type init_call struct {
 	Call    string `json:"call"`
@@ -539,7 +539,7 @@ func create_lspvi_backend(host string, cmdline string) {
 		} else {
 			argnew = append(argnew, "-ws", host)
 		}
-		ptystdio = pty.Ptymain(argnew)
+		ptystdio = ptyproxy.Ptymain(argnew)
 		io.Copy(sss, ptystdio.File)
 		// sss.imp.send_term_stdout([]byte("F5#"))
 		ptystdio = nil
