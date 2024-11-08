@@ -127,7 +127,7 @@ local function save_scheme(colorscheme)
             local hl = vim.api.nvim_get_hl_by_name(group, true)
             f:write(" - Group: " .. '"' .. group .. '"' .. "\n")
             for k, v in pairs(hl) do
-                if k == "foreground" or k == "background" then
+                if k == "foreground" or k == "background" or k == "special" then
                     local d = string.format("#%x", v)
                     f:write("   " .. tostring(k) .. ": \"" .. tostring(d) .. "\"\n")
                 else

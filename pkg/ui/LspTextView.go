@@ -28,10 +28,9 @@ type HelpBox struct {
 
 	doc       []*help_signature_docs
 	loaded    bool
-	Complete  *lspcore.CompleteCodeLine
+	Complete  lspcore.CompleteCodeLine
 	hasborder bool
 	current   int
-	//Complete            *lspcore.complete_code
 }
 
 func (b *HelpBox) SetBorder(show bool) {
@@ -70,6 +69,11 @@ func (v HelpBox) IsShown(view *codetextview) bool {
 	if v.begin.Y == loc.Y {
 		begin := v.begin
 		line := view.Buf.Line(begin.Y)
+		if s, err := v.Complete.Token(0); err == nil {
+			if !strings.Contains(line, s.Text) {
+				return false
+			}
+		}
 		if begin.X > len(line) {
 			return false
 		}

@@ -25,6 +25,7 @@ const (
 	open_picker_qfh
 	open_picker_ui
 	open_picker_wkq
+	open_picker_diagnos
 	open_picker_livegrep
 	open_picker_livegrep_line
 	open_picker_history
@@ -65,6 +66,8 @@ const (
 	next_window_right
 	next_window_down
 	next_window_up
+	next_error
+	prev_error
 	find_in_file
 	find_in_file_vi_word
 	brack_match
@@ -154,6 +157,12 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.Dialog().OpenUIPicker()
 			return true
 		}}
+	case open_picker_diagnos:
+		return cmdactor{id, "Diagnostics", func() bool {
+			m.Dialog().OpenDiagnosPicker()
+			return true
+		}}
+
 	case open_picker_qfh:
 		return cmdactor{id, "Quickfix history", func() bool {
 			m.open_qfh_query()
@@ -184,6 +193,20 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.open_picker_refs()
 			return true
 		}}
+	case prev_error:
+		{
+			return cmdactor{id, "Next error", func() bool {
+				m.current_editor().NextError(true)
+				return true
+			}}
+		}
+	case next_error:
+		{
+			return cmdactor{id, "Preve ext error", func() bool {
+				m.current_editor().NextError(false)
+				return true
+			}}
+		}
 	case open_picker_bookmark:
 		return cmdactor{id, "Bookmark", func() bool {
 			m.open_picker_bookmark()
@@ -638,6 +661,7 @@ func (k *keymap) key_map_space_menu() {
 		get_cmd_actor(m, open_picker_document_symbol).menu_key(split(key_picker_document_symbol)),
 		get_cmd_actor(m, open_picker_qfh).menu_key(split("q")),
 		get_cmd_actor(m, open_picker_ui).menu_key(split("u")),
+		get_cmd_actor(m, open_picker_diagnos).menu_key(split("e")),
 		get_cmd_actor(m, open_picker_refs).menu_key(split(chr_goto_refer)),
 		get_cmd_actor(m, open_picker_bookmark).menu_key(split(chr_bookmark)),
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),

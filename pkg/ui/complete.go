@@ -49,6 +49,9 @@ type complete_task struct {
 }
 
 func (m *completemenu) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	if m.IsShown() {
+		return m.customlist.InputHandler()
+	}
 	if m.IsShownHelp() {
 		return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 			m.helpview.handle_key(event)
@@ -183,7 +186,7 @@ func (complete *completemenu) CompleteCallBack(cl lsp.CompletionList, param lspc
 		return
 	}
 	if !cl.IsIncomplete {
-		return
+		// return
 	}
 	complete.Clear()
 	if complete.task == nil {
@@ -422,6 +425,7 @@ func (complete *completemenu) new_help_box(help lsp.SignatureHelp, helpcall lspc
 	helpview.doc = doc
 	helpview.main = complete.editor.main
 	helpview.begin = femto.Loc{X: helpcall.Pos.Character, Y: helpcall.Pos.Line}
+	helpview.Complete = helpcall.Code
 	complete.helpview = helpview
 	return helpview
 }
@@ -505,6 +509,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 					Pos:        Pos,
 					IsVisiable: false,
 					Kind:       v.Kind,
+					Code:       *code,
 				}
 			}
 		}
