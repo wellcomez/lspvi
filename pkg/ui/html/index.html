@@ -7,21 +7,35 @@
 <html>
 
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.18.0/lib/addon-webgl.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script> -->
+    <script src="/static/vue/vue.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script> -->
+    <script src="/static/xterm/lib/xterm.min.js"></script>
+    <link href="static/xterm/css/xterm.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.5.0/xterm.min.css" integrity="sha512-XpXUuzg5afNt1bsgnrOesXP70TLH8tXYYK5sK+Y0UV+YBvJn9EfRFYWy4HT3TVDfH0nl1CO0lwOxIrt2gk9qjg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- <link href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" rel="stylesheet"> -->
+    <!-- <link href="/static/xterm/css/xterm.min.css" rel="stylesheet"> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script> -->
+    <script src="/static/axios.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.18.0/lib/addon-webgl.min.js"></script> -->
+    <script src="/static/xterm/lib/addon-webgl.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script> -->
+    <script src="/static/xterm/lib/addon-fit.min.js"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-ligatures"></script> -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/xterm-addon-image@0.5.0/lib/xterm-addon-image.min.js"></script> -->
-    <script src="https://cdn.jsdelivr.net/npm/msgpack5@6.0.2/dist/msgpack5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/go.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
+    
+    <!-- <script src="https://cdn.jsdelivr.net/npm/msgpack5@6.0.2/dist/msgpack5.min.js"></script> -->
+    <script src="/static/msgpack5.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script> -->
+    <script src="/static/markdown-it.min.js"></script>
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css"> -->
+    <link rel="stylesheet" href="/static/highlightjs/styles/default.min.css">
+    <!-- <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script> -->
+    <script src="/static/highlightjs/highlight.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/go.min.js"></script> -->
+    <script src="/static/highlightjs/languages/go.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script> -->
+    <script src="/static/clipboard.min.js"></script>
 </head>
 <style>
     /* @font-face {
@@ -64,10 +78,12 @@
             background-color: darkgrey;
             border-radius: 6px;
         }
-        .md img{
+
+        .md img {
             width: 80%;
             height: auto;
         }
+
         .md {
             border: 1px solid #ccc;
             /* 边框，为了视觉上的区分 */
@@ -80,7 +96,7 @@
             left: 5%;
             background-color: whitesmoke;
             padding: 20px;
-            height:90vh;
+            height: 90vh;
             overflow: hidden;
             z-index: 2;
         }

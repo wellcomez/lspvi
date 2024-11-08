@@ -16,7 +16,7 @@ replace github.com/tree-sitter/tree-sitter-markdown => ./pkg/tree-sitter-markdow
 replace github.com/tree-sitter-grammars/tree-sitter-yaml => ./pkg/tree-sitter-yaml/bindings/go
 
 replace github.com/tree-sitter-grammars/tree-sitter-toml => ./pkg/tree-sitter-toml/bindings/go
-
+replace github.com/creack/pty => ./pkg/photostorm/pty
 require (
 	github.com/charlievieth/fastwalk v1.0.8
 	github.com/reinhrst/fzf-lib v0.9.0

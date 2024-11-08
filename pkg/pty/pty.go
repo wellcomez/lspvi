@@ -1,5 +1,8 @@
 package pty
 
+// https://github.com/iyzyi/aiopty
+// https://github.com/photostorm/pty
+// https://github.com/creack/pty/pull/155
 import (
 	"io"
 	"log"
@@ -82,8 +85,9 @@ func setupLogFile(filename string) (*os.File, error) {
 
 type Pty struct {
 	Cmd  *exec.Cmd
-	File *os.File
+	File pty.Pty
 	Ch   chan os.Signal
+	wch  chan bool
 	Rows uint16 // ws_row: Number of rows (in cells).
 	Cols uint16 //
 }
@@ -114,7 +118,7 @@ func RunNoStdin(Args []string) *Pty {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ret := &Pty{Cmd: c, File: f, Ch: make(chan os.Signal, 1)}
+	ret := &Pty{Cmd: c, File: f, Ch: make(chan os.Signal, 1), wch: make(chan bool, 1)}
 
 	return ret
 }
@@ -139,14 +143,25 @@ func RunCommand(Args []string) *Pty {
 		}
 		io.Copy(stdin2, os.Stdin)
 	}()
-	ret := &Pty{File: f, Ch: make(chan os.Signal, 1)}
+	ret := &Pty{File: f, Ch: make(chan os.Signal, 1),wch: make(chan bool, 1),}
 	ret.Notify()
 	go func() {
-		for range ret.Ch {
-			// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
-			// }
-			if err := pty.Setsize(ret.File, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
-				log.Printf("error resizing pty: %s", err)
+		for {
+			select {
+			case <-ret.wch:
+				{
+					if err := pty.Setsize(ret.File, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
+						debug.DebugLogf("pty","error resizing pty: %s", err)
+					}
+				}
+			case <-ret.Ch:
+				{
+					// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
+					// }
+					if err := pty.Setsize(ret.File, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
+						log.Printf("error resizing pty: %s", err)
+					}
+				}
 			}
 		}
 	}()
