@@ -241,7 +241,7 @@ func (xterm_request) handle_xterm_input(message []byte) {
 		if key.Cols != 0 && key.Rows != 0 {
 			ptystdio.UpdateSize(key.Rows, key.Cols)
 		}
-		ptystdio.File.Write([]byte(key.Data))
+		ptystdio.File().Write([]byte(key.Data))
 	}
 }
 
@@ -283,8 +283,8 @@ func new_xterm_init(w init_call, conn *websocket.Conn) *xterm_request {
 				}
 			}
 		} else {
-			ptystdio.File.Write([]byte{27})
-			ptystdio.File.Write([]byte{12})
+			ptystdio.File().Write([]byte{27})
+			ptystdio.File().Write([]byte{12})
 		}
 		if w.Cols != 0 && w.Rows != 0 {
 			ptystdio.UpdateSize(w.Rows, w.Cols)
@@ -540,7 +540,7 @@ func create_lspvi_backend(host string, cmdline string) {
 			argnew = append(argnew, "-ws", host)
 		}
 		ptystdio = ptyproxy.Ptymain(argnew)
-		io.Copy(sss, ptystdio.File)
+		io.Copy(sss, ptystdio.File())
 		// sss.imp.send_term_stdout([]byte("F5#"))
 		ptystdio = nil
 		impl := sss.imp

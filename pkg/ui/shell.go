@@ -18,7 +18,7 @@ import (
 
 	// "os/exec"
 
-	corepty "github.com/creack/pty"
+	// corepty "github.com/creack/pty"
 	// "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -312,7 +312,7 @@ func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty
 		if end != nil {
 			end(true, term)
 		}
-		io.Copy(ptyread{term}, ptyio.File)
+		io.Copy(ptyread{term}, ptyio.File())
 		if end != nil {
 			end(false, term)
 		}
@@ -323,9 +323,7 @@ func (term *terminal_pty) UpdateTermSize() {
 	ptyio := term.ptystdio
 	_, _, w, h := term.ui.GetRect()
 	term.dest.Resize(w, h)
-	if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
-		log.Printf("error resizing pty: %s", err)
-	}
+	ptyio.UpdateSize(uint16(h),uint16(w))
 }
 func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -334,7 +332,7 @@ func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.
 		if t.current.ptystdio != nil {
 			var n int
 			var err error
-			ptyio := t.current.ptystdio.File
+			ptyio := t.current.ptystdio.File()
 			if buf := t.TypedKey(event); buf != nil {
 				n, err = ptyio.Write(buf.buf)
 			} else {
