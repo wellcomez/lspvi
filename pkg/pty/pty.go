@@ -1,5 +1,8 @@
 package pty
 
+// https://github.com/iyzyi/aiopty
+// https://github.com/photostorm/pty
+// https://github.com/creack/pty/pull/155
 import (
 	"io"
 	"log"
