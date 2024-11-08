@@ -2,6 +2,7 @@ package treesittertheme
 
 import (
 	"embed"
+	"fmt"
 	"path/filepath"
 )
 
@@ -11,6 +12,10 @@ var TreesitterSchemeLoader embed.FS
 func LoadTreesitterTheme(theme string) ([]byte, error) {
 	path := filepath.Join("colorscheme", "output", theme+".micro")
 	buf, err := TreesitterSchemeLoader.ReadFile(path)
+	if err != nil {
+		path2 := fmt.Sprintf("colorscheme/output/%s.micro", theme)
+		return TreesitterSchemeLoader.ReadFile(path2)
+	}
 	return buf, err
 }
 func GetTheme() ([]string, error) {
