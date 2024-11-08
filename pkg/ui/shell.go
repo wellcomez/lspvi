@@ -31,7 +31,7 @@ import (
 )
 
 type terminal_pty struct {
-	ptystdio  *ptyproxy.Pty
+	ptystdio  *ptyproxy.PtyCmd
 	shellname string
 	ondata    func(*terminal_pty)
 	topline   int

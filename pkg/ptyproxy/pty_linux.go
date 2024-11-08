@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package ptyproxy
@@ -7,12 +8,12 @@ import (
 	"syscall"
 )
 
-func (pty *Pty) OsUpdateSize(Rows uint16, Cols uint16) {
+func (pty *PtyCmd) OsUpdateSize(Rows uint16, Cols uint16) {
 	pty.Rows = Rows
 	pty.Cols = Cols
 	pty.Ch <- syscall.SIGWINCH
 }
-func (ret Pty)Notify(){
-		signal.Notify(ret.Ch, syscall.SIGWINCH)
+func (ret PtyCmd) Notify() {
+	signal.Notify(ret.Ch, syscall.SIGWINCH)
 
 }

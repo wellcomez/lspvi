@@ -39,12 +39,15 @@ if [[ -n $mac ]]; then
   build_os
 fi
 if [[ -n $win ]]; then
-  sudo apt-get update
-  sudo apt-get install gcc-mingw-w64
-  # For just the 64-bit compiler
-  sudo apt-get install gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
-  # For just the 32-bit compiler
-  sudo apt-get install gcc-mingw-w64-i686 g++-mingw-w64-i686
+  sss=$(which x86_64-w64-mingw32-gcc)
+  if [[ -z $sss ]];then
+    sudo apt-get update
+    sudo apt-get install gcc-mingw-w64
+    # For just the 64-bit compiler
+    sudo apt-get install gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+    # For just the 32-bit compiler
+    sudo apt-get install gcc-mingw-w64-i686 g++-mingw-w64-i686
+  fi
   # sudo apt-get install x86_64-w64-mingw32-g++
   build_win_x64
 fi

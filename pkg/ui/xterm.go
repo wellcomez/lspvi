@@ -32,7 +32,7 @@ var wk *workdir
 var httpport = 0
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
-var ptystdio *ptyproxy.Pty = nil
+var ptystdio *ptyproxy.PtyCmd = nil
 
 type init_call struct {
 	Call    string `json:"call"`

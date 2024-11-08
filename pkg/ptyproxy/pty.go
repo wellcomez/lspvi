@@ -83,7 +83,7 @@ func setupLogFile(filename string) (*os.File, error) {
 	return file, nil
 }
 
-type Pty struct {
+type PtyCmd struct {
 	Cmd  *exec.Cmd
 	File pty.Pty
 	Ch   chan os.Signal
@@ -92,11 +92,11 @@ type Pty struct {
 	Cols uint16 //
 }
 
-func (pty *Pty) UpdateSize(Rows uint16, Cols uint16) {
+func (pty *PtyCmd) UpdateSize(Rows uint16, Cols uint16) {
 	pty.OsUpdateSize(Rows, Cols)
 }
 
-func Ptymain(Args []string) *Pty {
+func Ptymain(Args []string) *PtyCmd {
 	defer logFile.Close()
 	log.SetOutput(logFile)
 
@@ -104,7 +104,7 @@ func Ptymain(Args []string) *Pty {
 	// lspvi := "/Users/jialaizhu/dev/lspvi/lspvi"
 	return RunCommand(Args)
 }
-func RunNoStdin(Args []string) *Pty {
+func RunNoStdin(Args []string) *PtyCmd {
 	c := exec.Command(Args[0])
 	c.Args = Args
 	f, err := pty.Start(c)
@@ -118,12 +118,12 @@ func RunNoStdin(Args []string) *Pty {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ret := &Pty{Cmd: c, File: f, Ch: make(chan os.Signal, 1), wch: make(chan bool, 1)}
+	ret := &PtyCmd{Cmd: c, File: f, Ch: make(chan os.Signal, 1), wch: make(chan bool, 1)}
 
 	return ret
 }
 
-func RunCommand(Args []string) *Pty {
+func RunCommand(Args []string) *PtyCmd {
 	c := exec.Command(Args[0])
 	c.Args = Args
 	f, err := pty.Start(c)
@@ -143,7 +143,7 @@ func RunCommand(Args []string) *Pty {
 		}
 		io.Copy(stdin2, os.Stdin)
 	}()
-	ret := &Pty{File: f, Ch: make(chan os.Signal, 1),wch: make(chan bool, 1),}
+	ret := &PtyCmd{File: f, Ch: make(chan os.Signal, 1), wch: make(chan bool, 1)}
 	ret.Notify()
 	go func() {
 		for {
@@ -151,7 +151,7 @@ func RunCommand(Args []string) *Pty {
 			case <-ret.wch:
 				{
 					if err := pty.Setsize(ret.File, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
-						debug.DebugLogf("pty","error resizing pty: %s", err)
+						debug.DebugLogf("pty", "error resizing pty: %s", err)
 					}
 				}
 			case <-ret.Ch:
