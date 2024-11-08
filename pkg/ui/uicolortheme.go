@@ -155,11 +155,11 @@ func (mgr symbol_colortheme) get_lsp_color(kind lsp.SymbolKind) (tcell.Style, er
 	case lsp.SymbolKindVariable:
 		styles = ([]string{"@variable", "@lsp.type.variable"})
 	case lsp.SymbolKindConstant:
-		styles = []string{"@constant","constant"}
+		styles = []string{"@constant", "constant"}
 	case lsp.SymbolKindString:
-		styles = []string{"@string","string"}
+		styles = []string{"@string", "string"}
 	case lsp.SymbolKindNumber:
-		styles = []string{"@number","number"}
+		styles = []string{"@number", "number"}
 	case lsp.SymbolKindBoolean:
 		styles = []string{"@boolean", "boolean"}
 	case lsp.SymbolKindArray:
@@ -198,7 +198,8 @@ func (mgr symbol_colortheme) get_default_style() *tcell.Style {
 	if n, ok := mgr.colorscheme["normal"]; ok {
 		return &n
 	}
-	return nil
+	ss := tcell.StyleDefault.Foreground(tview.Styles.PrimaryTextColor).Background(tview.Styles.PrimitiveBackgroundColor)
+	return &ss
 }
 func IntToRGB(colorInt tcell.Color) rgb.RGBA {
 	r, g, b := colorInt.RGB()
@@ -279,12 +280,14 @@ func hexToRGB(hex string) (int32, int32, int32, error) {
 	return int32(r), int32(g), int32(b), nil
 }
 func (mgr *symbol_colortheme) search_highlight_color_style() (ret tcell.Style) {
-	if rgb := global_config.Color.Highlight.Search; rgb != "" {
-		if r, g, b, err := hexToRGB(rgb); err == nil {
-			v := tcell.NewRGBColor(r, g, b)
-			return mgr.get_default_style().Foreground(v)
+	if global_config.Color.Highlight != nil {
+		if rgb := global_config.Color.Highlight.Search; rgb != "" {
+			if r, g, b, err := hexToRGB(rgb); err == nil {
+				v := tcell.NewRGBColor(r, g, b)
+				return mgr.get_default_style().Foreground(v)
+			}
+			// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
 		}
-		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
 	}
 	for _, key := range []string{"search", "keyword"} {
 		if color := mgr.get_color(key); color != nil {
@@ -295,11 +298,14 @@ func (mgr *symbol_colortheme) search_highlight_color_style() (ret tcell.Style) {
 	return mgr.get_default_style().Foreground(tcell.ColorYellow)
 }
 func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
-	if rgb := global_config.Color.Highlight.Search; rgb != "" {
-		if r, g, b, err := hexToRGB(rgb); err == nil {
-			return tcell.NewRGBColor(r, g, b)
+	if global_config.Color.Highlight != nil {
+
+		if rgb := global_config.Color.Highlight.Search; rgb != "" {
+			if r, g, b, err := hexToRGB(rgb); err == nil {
+				return tcell.NewRGBColor(r, g, b)
+			}
+			// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
 		}
-		// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
 	}
 	for _, key := range []string{"keyword"} {
 		if color := mgr.get_color(key); color != nil {
@@ -466,8 +472,7 @@ func (coloretheme *symbol_colortheme) __update_default_color(bg tcell.Color, fg 
 //	}
 var global_theme *symbol_colortheme
 
-func new_ui_theme(theme string, main *mainui) *symbol_colortheme {
-	var uicolorscheme *symbol_colortheme
+func new_ui_theme(theme string, main *mainui) (uicolorscheme *symbol_colortheme) {
 	var colorscheme femto.Colorscheme
 	micro_buffer := []byte{}
 	if monokai := runtime.Files.FindFile(femto.RTColorscheme, theme); monokai != nil {
@@ -476,18 +481,22 @@ func new_ui_theme(theme string, main *mainui) *symbol_colortheme {
 
 		}
 	}
+	uicolorscheme = &symbol_colortheme{
+		main: main,
+		name: theme,
+	}
 	buf, err := treesittertheme.LoadTreesitterTheme(theme)
-
 	if err == nil {
 		micro_buffer = append(micro_buffer, buf...)
-	}
-	if len(micro_buffer) > 0 {
-		colorscheme = femto.ParseColorscheme(string(micro_buffer))
-		uicolorscheme = &symbol_colortheme{
-			colorscheme: colorscheme,
-			main:        main,
-			name:        theme,
+		if len(micro_buffer) > 0 {
+			colorscheme = femto.ParseColorscheme(string(micro_buffer))
+			uicolorscheme.colorscheme = colorscheme
+		}
+	} else {
+		if len(micro_buffer) > 0 {
+			colorscheme = femto.ParseColorscheme(string(micro_buffer))
+			uicolorscheme.colorscheme = colorscheme
 		}
 	}
-	return uicolorscheme
+	return
 }
