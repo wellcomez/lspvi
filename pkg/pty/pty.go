@@ -104,7 +104,7 @@ func RunNoStdin(Args []string) *Pty {
 	c.Args = Args
 	f, err := pty.Start(c)
 	if err != nil {
-		log.Panic(err)
+		return nil
 	}
 	// var stdout2 read_out
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
