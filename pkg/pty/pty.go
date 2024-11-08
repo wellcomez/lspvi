@@ -11,6 +11,7 @@ import (
 
 	"github.com/creack/pty"
 	"golang.org/x/term"
+	"zen108.com/lspvi/pkg/debug"
 	// "zen108.com/lspvi/pkg/debug"
 )
 
@@ -104,6 +105,7 @@ func RunNoStdin(Args []string) *Pty {
 	c.Args = Args
 	f, err := pty.Start(c)
 	if err != nil {
+		debug.ErrorLog("pty", err)
 		return nil
 	}
 	// var stdout2 read_out
