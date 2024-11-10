@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"testing"
 
 	"github.com/creack/pty"
 )
@@ -21,4 +22,7 @@ func test_grep() {
 		f.Write([]byte{4})
 	}()
 	io.Copy(os.Stdout, f)
+}
+func TestXxx(t *testing.T) {
+	NewMain([]string{"bash"})	
 }
