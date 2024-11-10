@@ -85,9 +85,9 @@ func setupLogFile(filename string) (*os.File, error) {
 
 type PtyCmd struct {
 	Cmd  *exec.Cmd
-	file pty.Pty
+	file io.ReadWriteCloser 
 	Ch   chan os.Signal
-	wch  chan bool
+	Wch  chan bool
 	Rows uint16 // ws_row: Number of rows (in cells).
 	Cols uint16 //
 }
@@ -121,7 +121,7 @@ func RunNoStdin(Args []string) *PtyCmd {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ret := &PtyCmd{Cmd: c, file: f, Ch: make(chan os.Signal, 1), wch: make(chan bool, 1)}
+	ret := &PtyCmd{Cmd: c, file: f, Ch: make(chan os.Signal, 1), Wch: make(chan bool, 1)}
 
 	return ret
 }
@@ -146,14 +146,14 @@ func RunCommand(Args []string) *PtyCmd {
 		}
 		io.Copy(stdin2, os.Stdin)
 	}()
-	ret := &PtyCmd{file: f, Ch: make(chan os.Signal, 1),wch: make(chan bool, 1),}
+	ret := &PtyCmd{file: f, Ch: make(chan os.Signal, 1),Wch: make(chan bool, 1),}
 	ret.Notify()
 	go func() {
 		for {
 			select {
-			case <-ret.wch:
+			case <-ret.Wch:
 				{
-					if err := pty.Setsize(ret.file, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
+					if err := pty.Setsize(f, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
 						debug.DebugLogf("pty","error resizing pty: %s", err)
 					}
 				}
@@ -161,7 +161,7 @@ func RunCommand(Args []string) *PtyCmd {
 				{
 					// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
 					// }
-					if err := pty.Setsize(ret.file, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
+					if err := pty.Setsize(f, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
 						log.Printf("error resizing pty: %s", err)
 					}
 				}

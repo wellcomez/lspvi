@@ -309,6 +309,13 @@ func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty
 				term.UpdateTermSize()
 			}
 		}()
+		go func() {
+			for range ptyio.Wch {
+				timer := time.After(100 * time.Millisecond)
+				<-timer
+				term.UpdateTermSize()
+			}
+		}()
 		if end != nil {
 			end(true, term)
 		}
@@ -323,7 +330,7 @@ func (term *terminal_pty) UpdateTermSize() {
 	ptyio := term.ptystdio
 	_, _, w, h := term.ui.GetRect()
 	term.dest.Resize(w, h)
-	ptyio.UpdateSize(uint16(h),uint16(w))
+	ptyio.UpdateSize(uint16(h), uint16(w))
 }
 func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {

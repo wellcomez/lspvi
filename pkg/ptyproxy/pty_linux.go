@@ -11,7 +11,8 @@ import (
 func (pty *PtyCmd) OsUpdateSize(Rows uint16, Cols uint16) {
 	pty.Rows = Rows
 	pty.Cols = Cols
-	pty.Ch <- syscall.SIGWINCH
+	// pty.Ch <- syscall.SIGWINCH
+	pty.Wch <- true
 }
 func (ret PtyCmd) Notify() {
 	signal.Notify(ret.Ch, syscall.SIGWINCH)
