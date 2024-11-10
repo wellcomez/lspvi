@@ -84,14 +84,15 @@ func setupLogFile(filename string) (*os.File, error) {
 }
 
 type PtyCmd struct {
-	Cmd  *exec.Cmd
-	file io.ReadWriteCloser 
-	Ch   chan os.Signal
-	Wch  chan bool
-	Rows uint16 // ws_row: Number of rows (in cells).
-	Cols uint16 //
+	Cmd              *exec.Cmd
+	file             io.ReadWriteCloser
+	ws_change_signal chan os.Signal
+	set_size_changed chan bool
+	Rows             uint16 // ws_row: Number of rows (in cells).
+	Cols             uint16 //
 }
-func (pty *PtyCmd)File()io.ReadWriteCloser {
+
+func (pty *PtyCmd) File() io.ReadWriteCloser {
 	return pty.file
 }
 
@@ -121,8 +122,8 @@ func RunNoStdin(Args []string) *PtyCmd {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ret := &PtyCmd{Cmd: c, file: f, Ch: make(chan os.Signal, 1), Wch: make(chan bool, 1)}
-
+	ret := &PtyCmd{Cmd: c, file: f, ws_change_signal: make(chan os.Signal, 1), set_size_changed: make(chan bool, 1)}
+	ret.MonitorSizeChanged(f)
 	return ret
 }
 
@@ -146,29 +147,32 @@ func RunCommand(Args []string) *PtyCmd {
 		}
 		io.Copy(stdin2, os.Stdin)
 	}()
-	ret := &PtyCmd{file: f, Ch: make(chan os.Signal, 1),Wch: make(chan bool, 1),}
+	ret := &PtyCmd{file: f, ws_change_signal: make(chan os.Signal, 1), set_size_changed: make(chan bool, 1)}
 	ret.Notify()
+	// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
+	// }
+	ret.MonitorSizeChanged(f)
+	return ret
+}
+
+func (ptycmd *PtyCmd) MonitorSizeChanged(f pty.Pty) {
 	go func() {
 		for {
 			select {
-			case <-ret.Wch:
+			case <-ptycmd.set_size_changed:
 				{
-					if err := pty.Setsize(f, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
-						debug.DebugLogf("pty","error resizing pty: %s", err)
+					if err := pty.Setsize(f, &pty.Winsize{Rows: ptycmd.Rows, Cols: ptycmd.Cols}); err != nil {
+						debug.DebugLogf("pty", "error resizing pty: %s", err)
 					}
 				}
-			case <-ret.Ch:
+			case <-ptycmd.ws_change_signal:
 				{
-					// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
-					// }
-					if err := pty.Setsize(f, &pty.Winsize{Rows: ret.Rows, Cols: ret.Cols}); err != nil {
+
+					if err := pty.Setsize(f, &pty.Winsize{Rows: ptycmd.Rows, Cols: ptycmd.Cols}); err != nil {
 						log.Printf("error resizing pty: %s", err)
 					}
 				}
 			}
 		}
 	}()
-	return ret
 }
-
-

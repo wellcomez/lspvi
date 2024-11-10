@@ -13,7 +13,7 @@ import (
 	"log"
 
 	// "strings"
-	"time"
+	// "time"
 	"unicode"
 
 	// "os/exec"
@@ -302,20 +302,20 @@ func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty
 		term.ptystdio = ptyio
 		term.ptystdio.Notify()
 		term.UpdateTermSize()
-		go func() {
-			for range ptyio.Ch {
-				timer := time.After(100 * time.Millisecond)
-				<-timer
-				term.UpdateTermSize()
-			}
-		}()
-		go func() {
-			for range ptyio.Wch {
-				timer := time.After(100 * time.Millisecond)
-				<-timer
-				term.UpdateTermSize()
-			}
-		}()
+		// go func() {
+		// 	for range ptyio.Ch {
+		// 		timer := time.After(100 * time.Millisecond)
+		// 		<-timer
+		// 		term.UpdateTermSize()
+		// 	}
+		// }()
+		// go func() {
+		// 	for range ptyio.Wch {
+		// 		timer := time.After(100 * time.Millisecond)
+		// 		<-timer
+		// 		term.UpdateTermSize()
+		// 	}
+		// }()
 		if end != nil {
 			end(true, term)
 		}
