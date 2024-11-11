@@ -50,6 +50,7 @@ const (
 	zoomout
 	copy_data
 	vi_copy_text
+	vi_cut_text
 	vi_del_text
 	vi_undo
 	vi_save
@@ -415,18 +416,23 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.current_editor().action_page_down(false)
 			return true
 		}}
+	case vi_cut_text:
+		return cmdactor{id, "Cut", func() bool {
+			m.current_editor().Cut()
+			return true
+		}}
 	case vi_copy_text:
 		return cmdactor{id, "Copy", func() bool {
 			m.current_editor().copyline(false)
 			return true
 		}}
 	case vi_del_text:
-		return cmdactor{id, "Del", func() bool {
+		return cmdactor{id, "Delete", func() bool {
 			m.current_editor().deltext()
 			return true
 		}}
 	case vi_del_line:
-		return cmdactor{id, "Delete", func() bool {
+		return cmdactor{id, "Delete Line", func() bool {
 			m.current_editor().deleteline()
 			return true
 		}}

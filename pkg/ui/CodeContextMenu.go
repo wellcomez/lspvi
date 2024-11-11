@@ -186,6 +186,9 @@ func update_selection_menu(code *CodeView) {
 			code.main.CopyToClipboard(data)
 
 		}, hide: menudata.previous_selection.emtry()},
+		{item: create_menu_item("Cut"), handle: func() {
+			code.Cut()
+		}, hide: menudata.previous_selection.emtry()},
 		{item: create_menu_item("Paste"), handle: func() {
 			code.Paste()
 		}, hide: !has_clip},

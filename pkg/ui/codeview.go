@@ -1069,6 +1069,11 @@ func (v *codetextview) DeleteWordRight() bool {
 	}
 	return true
 }
+func (code *CodeView) Cut() {
+	checker := code.NewChangeChecker()
+	defer checker.End()
+	code.view.Cut()
+}
 func (code *CodeView) deleteword() {
 	checker := code.NewChangeChecker()
 	defer checker.End()

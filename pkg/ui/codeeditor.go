@@ -128,6 +128,8 @@ type IEditorContent interface {
 	deleteword()
 	deltext()
 
+	Cut()
+
 	//code content
 	GetLines(begin, end int) []string
 	copyline(bool)
