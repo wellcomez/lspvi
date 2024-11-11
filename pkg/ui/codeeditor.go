@@ -20,10 +20,9 @@ type IEditorLoad interface {
 	LoadBuffer(fileloader.FileLoader)
 	LoadFileNoLsp(filename string, line int) error
 	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
-
+	//clear
+	Clear()
 	//goto line
-	goto_line_end()
-	goto_line_head()
 	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
 	goto_line_history(line int, history bool)
 	update_with_line_changed()
@@ -80,26 +79,16 @@ type CodeEditor interface {
 	//load
 	IEditorLoad
 
-	//selected
-	ResetSelection()
-	GetSelection() string
-
 	//viewid
 	vid() view_id
 	Viewlink() *view_link
 
-	//clear
-	Clear()
-
 	//action
 	IEditorArrowKey
 
-	IEditorCopyDelete
+	IEditorContent
 
 	IEditorSearch
-
-	//undo
-	Undo()
 
 	//InsertMode
 	InsertMode(yes bool)
@@ -108,6 +97,9 @@ type CodeEditor interface {
 	EditorPosition() *EditorPosition
 }
 type IEditorArrowKey interface {
+	goto_line_end()
+	goto_line_head()
+
 	action_key_up()
 	action_key_down()
 	action_page_down(bool)
@@ -127,7 +119,10 @@ type IEditorSearch interface {
 	OnSearch(txt string, whole bool) []SearchPos
 	code_search(main MainService, qf *quick_view, changed bool)
 }
-type IEditorCopyDelete interface {
+type IEditorContent interface {
+	//selected
+	ResetSelection()
+	GetSelection() string
 	//delete
 	deleteline()
 	deleteword()
@@ -140,4 +135,7 @@ type IEditorCopyDelete interface {
 	//copy Paste
 	GetCode(lsp.Location) (string, error)
 	Paste()
+
+	//undo
+	Undo()
 }
