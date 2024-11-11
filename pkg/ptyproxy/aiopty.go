@@ -8,10 +8,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/iyzyi/aiopty/pty"
+	"github.com/iyzyi/aiopty/term"
+	"github.com/iyzyi/aiopty/utils/log"
 	goterm "golang.org/x/term"
-	"zen108.com/lspvi/pkg/aiopty/pty"
-	"zen108.com/lspvi/pkg/aiopty/term"
-	"zen108.com/lspvi/pkg/aiopty/utils/log"
 	"zen108.com/lspvi/pkg/debug"
 )
 

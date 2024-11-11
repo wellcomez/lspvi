@@ -6,7 +6,7 @@ package ptyproxy
 import (
 	"os/signal"
 	"syscall"
-	"zen108.com/lspvi/pkg/aiopty/pty"
+	"github.com/iyzyi/aiopty/pty"
 )
 
 func (pty *PtyCmd) OsUpdateSize(Rows uint16, Cols uint16) {
