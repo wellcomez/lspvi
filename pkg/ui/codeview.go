@@ -1060,29 +1060,35 @@ func (code *CodeView) Undo() {
 	checker.CheckRedo(code)
 	// code.on_content_changed(lspcore.CodeChangeEvent{})
 }
+func (v *codetextview) DeleteWordRight() bool {
+	v.SelectWordRight()
+	v.save_delete_to_clip()
+	if v.Cursor.HasSelection() {
+		v.Cursor.DeleteSelection()
+		v.Cursor.ResetSelection()
+	}
+	return true
+}
 func (code *CodeView) deleteword() {
-	code.save_delete_to_clip()
 	checker := code.NewChangeChecker()
 	defer checker.End()
 	code.view.DeleteWordRight()
 }
 func (code *CodeView) deleteline() {
-	code.save_delete_to_clip()
 	checker := code.NewChangeChecker()
 	defer checker.End()
 	code.view.CutLine()
-	// code.on_content_changed()
 }
 
-func (code *CodeView) save_delete_to_clip() {
-	if code.view.Cursor.HasSelection() {
+func (code *codetextview) save_delete_to_clip() {
+	if code.Cursor.HasSelection() {
 		if code.main.CmdLine().Vim.Enable() {
-			clipboard.WriteAll(code.view.Cursor.GetSelection())
+			clipboard.WriteAll(code.Cursor.GetSelection())
 		}
 	}
 }
 func (code *CodeView) deltext() {
-	code.save_delete_to_clip()
+	code.view.save_delete_to_clip()
 	checker := code.NewChangeChecker()
 	defer checker.End()
 	code.view.Delete()
