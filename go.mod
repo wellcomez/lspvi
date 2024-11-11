@@ -16,7 +16,12 @@ replace github.com/tree-sitter/tree-sitter-markdown => ./pkg/tree-sitter-markdow
 replace github.com/tree-sitter-grammars/tree-sitter-yaml => ./pkg/tree-sitter-yaml/bindings/go
 
 replace github.com/tree-sitter-grammars/tree-sitter-toml => ./pkg/tree-sitter-toml/bindings/go
+
 replace github.com/creack/pty => ./pkg/photostorm/pty
+
+replace  "github.com/iyzyi/aiopty" => ./pkg/aiopty
+
+
 require (
 	github.com/charlievieth/fastwalk v1.0.8
 	github.com/reinhrst/fzf-lib v0.9.0
@@ -66,6 +71,7 @@ require (
 
 require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
+	github.com/iyzyi/aiopty v0.1.0 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82 // indirect

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
 )
 
@@ -15,6 +16,11 @@ type snippet_arg struct {
 	capture string
 	pos     int
 }
+
+func (a CompleteCodeLine) InRange(x int) bool {
+	return x > a.start.Character
+}
+
 type complete_token struct {
 	arg  snippet_arg
 	Text string
@@ -31,6 +37,7 @@ type CompleteCodeLine struct {
 	snip      snippet
 	snip_args []snippet_arg
 	tokens    []complete_token
+	start     lsp.Position
 }
 type snippet struct {
 	raw string
@@ -79,7 +86,8 @@ func (code CompleteCodeLine) Text() string {
 	}
 	return strings.Join(ret, "")
 }
-func NewCompleteCode(raw string) (ret *CompleteCodeLine) {
+func NewCompleteCode(edit *lsp.TextEdit) (ret *CompleteCodeLine) {
+	var raw string = edit.NewText
 	ret = &CompleteCodeLine{snip: snippet{raw: raw}}
 	ret.snip_args = ret.snip.args()
 	tokens := []complete_token{}
@@ -108,6 +116,7 @@ func NewCompleteCode(raw string) (ret *CompleteCodeLine) {
 	} else {
 		tokens = append(tokens, ret.string_to_token(s)...)
 	}
+	ret.start = edit.Range.Start
 	ret.tokens = tokens
 	return
 }

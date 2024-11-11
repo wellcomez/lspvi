@@ -1060,6 +1060,20 @@ func (code *CodeView) Undo() {
 	checker.CheckRedo(code)
 	// code.on_content_changed(lspcore.CodeChangeEvent{})
 }
+func (v *codetextview) DeleteWordRight() bool {
+	v.SelectWordRight()
+	v.save_delete_to_clip()
+	if v.Cursor.HasSelection() {
+		v.Cursor.DeleteSelection()
+		v.Cursor.ResetSelection()
+	}
+	return true
+}
+func (code *CodeView) Cut() {
+	checker := code.NewChangeChecker()
+	defer checker.End()
+	code.view.Cut()
+}
 func (code *CodeView) deleteword() {
 	checker := code.NewChangeChecker()
 	defer checker.End()
@@ -1069,9 +1083,17 @@ func (code *CodeView) deleteline() {
 	checker := code.NewChangeChecker()
 	defer checker.End()
 	code.view.CutLine()
-	// code.on_content_changed()
+}
+
+func (code *codetextview) save_delete_to_clip() {
+	if code.Cursor.HasSelection() {
+		if code.main.CmdLine().Vim.Enable() {
+			clipboard.WriteAll(code.Cursor.GetSelection())
+		}
+	}
 }
 func (code *CodeView) deltext() {
+	code.view.save_delete_to_clip()
 	checker := code.NewChangeChecker()
 	defer checker.End()
 	code.view.Delete()
@@ -1089,7 +1111,7 @@ func (code *CodeView) Paste() {
 		defer checker.End()
 		sel := code.view.Cursor.CurSelection
 		if sel[1].GreaterThan(sel[0]) {
-			code.view.Buf.Replace(sel[0], sel[1], text)
+			code.view.Replace(sel[0], sel[1], text)
 			return
 		}
 		if has_break {

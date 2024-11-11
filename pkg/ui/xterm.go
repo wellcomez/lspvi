@@ -23,7 +23,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/vmihailenco/msgpack/v5"
 	"zen108.com/lspvi/pkg/debug"
-	"zen108.com/lspvi/pkg/pty"
+	"zen108.com/lspvi/pkg/ptyproxy"
 )
 
 var use_https = false
@@ -32,7 +32,7 @@ var wk *workdir
 var httpport = 0
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
-var ptystdio *pty.Pty = nil
+var ptystdio ptyproxy.LspPty
 
 type init_call struct {
 	Call    string `json:"call"`
@@ -241,7 +241,7 @@ func (xterm_request) handle_xterm_input(message []byte) {
 		if key.Cols != 0 && key.Rows != 0 {
 			ptystdio.UpdateSize(key.Rows, key.Cols)
 		}
-		ptystdio.File.Write([]byte(key.Data))
+		ptystdio.File().Write([]byte(key.Data))
 	}
 }
 
@@ -253,9 +253,7 @@ func (xterm_request) handle_xterm_resize(message []byte) {
 	err := json.Unmarshal(message, &res)
 
 	if err == nil {
-		if res.Rows != ptystdio.Rows || res.Cols != ptystdio.Cols {
-			ptystdio.UpdateSize(res.Rows, res.Cols)
-		}
+		ptystdio.UpdateSize(res.Rows, res.Cols)
 	}
 }
 
@@ -283,8 +281,8 @@ func new_xterm_init(w init_call, conn *websocket.Conn) *xterm_request {
 				}
 			}
 		} else {
-			ptystdio.File.Write([]byte{27})
-			ptystdio.File.Write([]byte{12})
+			ptystdio.File().Write([]byte{27})
+			ptystdio.File().Write([]byte{12})
 		}
 		if w.Cols != 0 && w.Rows != 0 {
 			ptystdio.UpdateSize(w.Rows, w.Cols)
@@ -539,8 +537,8 @@ func create_lspvi_backend(host string, cmdline string) {
 		} else {
 			argnew = append(argnew, "-ws", host)
 		}
-		ptystdio = pty.Ptymain(argnew)
-		io.Copy(sss, ptystdio.File)
+		ptystdio = ptyproxy.Ptymain(argnew)
+		io.Copy(sss, ptystdio.File())
 		// sss.imp.send_term_stdout([]byte("F5#"))
 		ptystdio = nil
 		impl := sss.imp

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	// "log"
 	"os"
 	"os/exec"
 	"strings"
@@ -28,7 +28,7 @@ type rpchandle struct {
 
 // Handle implements jsonrpc2.Handler.
 func (r rpchandle) Handle(ctx context.Context, con *jsonrpc2.Conn, req *jsonrpc2.Request) {
-	log.Println(con, req)
+	debug.TraceLog(DebugTag, con, req)
 	// panic("unimplemented")
 }
 
@@ -812,14 +812,14 @@ func mainxx2() {
 	cmd := exec.Command("clangd", "--log=verbose")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		log.Fatal(err)
+		debug.ErrorLog(DebugTag, err)
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		debug.ErrorLog(DebugTag, err)
 	}
 	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
+		debug.ErrorLog(DebugTag, err)
 	}
 	rwc := struct {
 		io.Reader
@@ -864,7 +864,8 @@ func mainxx2() {
 		InitializationOptions: initializationOptions,
 		Capabilities:          capabilities,
 	}, &result); err != nil {
-		log.Fatal(err)
+		debug.ErrorLog(DebugTag, err)
+		return
 	}
 
 	debug.DebugLogf("clangd initialized: %+v %+v\n", result.ServerInfo.Name, result.ServerInfo.Version)

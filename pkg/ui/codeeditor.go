@@ -8,17 +8,51 @@ import (
 	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 )
 
-type CodeEditor interface {
+type ICompleteCodeEditor interface {
+	HasComplete() bool
+	CloseComplete()
+	Complete()
+}
+type IEditorLoad interface {
+	IsLoading() bool
+	Reload()
+	Save() error
+	LoadBuffer(fileloader.FileLoader)
+	LoadFileNoLsp(filename string, line int) error
+	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
+	//clear
+	Clear()
+	//goto line
+	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
+	goto_line_history(line int, history bool)
+	update_with_line_changed()
+}
+type IEditorLsp interface {
 	//Dianostic
 	Dianostic() (diagnostic editor_diagnostic)
+	NextError(bool)
+
+	key_call_in()
+	action_goto_declaration()
+	action_get_refer()
+	action_get_implementation(line *lspcore.OpenOption)
+	action_goto_define(line *lspcore.OpenOption)
+	Format()
+	get_symbol_range(sym lspcore.Symbol) lsp.Range
+	LspSymbol() *lspcore.Symbol_file
+	TreeSitter() *lspcore.TreeSitter
+	get_callin(sym lspcore.Symbol)
+	open_picker_refs()
+}
+type CodeEditor interface {
+
 	//active
+
 	Acitve()
 	//file change
 	ContentChangeHandle() change_reciever
 	//Complete
-	HasComplete() bool
-	CloseComplete()
-	Complete()
+	ICompleteCodeEditor
 
 	//code change check
 	NewChangeChecker() code_change_cheker
@@ -40,55 +74,32 @@ type CodeEditor interface {
 	bookmark()
 
 	//lsp
-	key_call_in()
-	action_goto_declaration()
-	action_get_refer()
-	action_get_implementation(line *lspcore.OpenOption)
-	action_goto_define(line *lspcore.OpenOption)
-	Format()
-	get_symbol_range(sym lspcore.Symbol) lsp.Range
-	LspSymbol() *lspcore.Symbol_file
-	TreeSitter() *lspcore.TreeSitter
-	get_callin(sym lspcore.Symbol)
-	open_picker_refs()
-
-	//selected
-	ResetSelection()
-	GetSelection() string
-
-	//search
-	OnSearch(txt string, whole bool) []SearchPos
-	code_search(main MainService, qf *quick_view, changed bool)
+	IEditorLsp
 
 	//load
-	IsLoading() bool
-	Reload()
-	Save() error
-	LoadBuffer(fileloader.FileLoader)
-	LoadFileNoLsp(filename string, line int) error
-	LoadFileWithLsp(filename string, line *lsp.Location, focus bool)
+	IEditorLoad
 
 	//viewid
 	vid() view_id
 	Viewlink() *view_link
 
-	//clear
-	Clear()
+	//action
+	IEditorArrowKey
 
-	//goto line
+	IEditorContent
+
+	IEditorSearch
+
+	//InsertMode
+	InsertMode(yes bool)
+
+	//history
+	EditorPosition() *EditorPosition
+}
+type IEditorArrowKey interface {
 	goto_line_end()
 	goto_line_head()
-	goto_location_no_history(loc lsp.Range, update bool, option *lspcore.OpenOption)
-	goto_line_history(line int, history bool)
-	update_with_line_changed()
 
-	//match
-	action_grep_word(selected bool)
-	Match()
-	OnFindInfile(fzf bool, noloop bool) string
-	OnFindInfileWordOption(fzf bool, noloop bool, whole bool) string
-
-	//action
 	action_key_up()
 	action_key_down()
 	action_page_down(bool)
@@ -96,15 +107,28 @@ type CodeEditor interface {
 	key_right()
 	word_left()
 	word_right()
+}
+type IEditorSearch interface {
+	//match
+	action_grep_word(selected bool)
+	Match()
+	OnFindInfile(fzf bool, noloop bool) string
+	OnFindInfileWordOption(fzf bool, noloop bool, whole bool) string
 
-	NextError(bool)
-	//undo
-	Undo()
-
+	//search
+	OnSearch(txt string, whole bool) []SearchPos
+	code_search(main MainService, qf *quick_view, changed bool)
+}
+type IEditorContent interface {
+	//selected
+	ResetSelection()
+	GetSelection() string
 	//delete
 	deleteline()
 	deleteword()
 	deltext()
+
+	Cut()
 
 	//code content
 	GetLines(begin, end int) []string
@@ -114,12 +138,6 @@ type CodeEditor interface {
 	GetCode(lsp.Location) (string, error)
 	Paste()
 
-	//InsertMode
-	InsertMode(yes bool)
-
-	//history
-	EditorPosition() *EditorPosition
-
-	//draw
-	// DrawNavigationBar(x int, y int, w int, screen tcell.Screen)
+	//undo
+	Undo()
 }

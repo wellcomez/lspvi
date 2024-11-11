@@ -10,32 +10,36 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 
-func format2(ret []lsp.TextEdit, code *CodeView) {
-	for i := range ret {
-		y := len(ret) - i - 1
-		v := ret[y]
-		if v.NewText == "\n" {
-
-		}
-		start, end := GetEditLoc(v)
-		startline := code.view.Buf.Line(start.Y)
-		endline := code.view.Buf.Line(end.Y)
-		debug.DebugLog("format", y, ">", []rune(v.NewText), "<", start.Y, ":", start.X, "->", end.Y, ":", end.X)
-		debug.DebugLog("format", y, "before-start", startline, len(startline))
-		yes := end.Y > start.Y
-		if yes {
-			continue
-		}
-		code.view.Buf.Replace(start, end, v.NewText)
-		x := code.view.Buf.Line(start.Y)
-		debug.DebugLog("format", y, "after       ", x, len(x))
-		if yes {
-			debug.DebugLog("format", y, "end       ", endline, len(endline))
-			x := code.view.Buf.Line(end.Y)
-			debug.DebugLog("format", y, "end-after ", x, len(x))
-		}
-	}
+func (code *codetextview) Replace(start, end femto.Loc, text string) {
+	start, end = ord_loc(start, end)
+	code.Buf.Replace(start, end, text)
 }
+// func format2(ret []lsp.TextEdit, code *CodeView) {
+// 	for i := range ret {
+// 		y := len(ret) - i - 1
+// 		v := ret[y]
+// 		if v.NewText == "\n" {
+
+// 		}
+// 		start, end := GetEditLoc(v)
+// 		startline := code.view.Buf.Line(start.Y)
+// 		endline := code.view.Buf.Line(end.Y)
+// 		debug.DebugLog("format", y, ">", []rune(v.NewText), "<", start.Y, ":", start.X, "->", end.Y, ":", end.X)
+// 		debug.DebugLog("format", y, "before-start", startline, len(startline))
+// 		yes := end.Y > start.Y
+// 		if yes {
+// 			continue
+// 		}
+// 		code.view.Replace(start, end, v.NewText)
+// 		x := code.view.Buf.Line(start.Y)
+// 		debug.DebugLog("format", y, "after       ", x, len(x))
+// 		if yes {
+// 			debug.DebugLog("format", y, "end       ", endline, len(endline))
+// 			x := code.view.Buf.Line(end.Y)
+// 			debug.DebugLog("format", y, "end-after ", x, len(x))
+// 		}
+// 	}
+// }
 
 func GetEditLoc(v lsp.TextEdit) (femto.Loc, femto.Loc) {
 	start := femto.Loc{
@@ -46,7 +50,7 @@ func GetEditLoc(v lsp.TextEdit) (femto.Loc, femto.Loc) {
 		X: v.Range.End.Character,
 		Y: v.Range.End.Line,
 	}
-	return start, end
+	return ord_loc(start, end)
 }
 
 func Format3(edits []lsp.TextEdit, code *CodeView) error {
@@ -58,6 +62,10 @@ type Format struct {
 	Lines *femto.Buffer
 }
 
+func (f *Format) Replace(start, end femto.Loc, text string) {
+	start, end = ord_loc(start, end)
+	f.Lines.Replace(start, end, text)
+}
 func (d *Format) Run(edits []lsp.TextEdit) error {
 	sort.SliceStable(edits, func(i, j int) bool {
 		// Compare lines first

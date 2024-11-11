@@ -42,6 +42,7 @@ type completemenu struct {
 	document      *LspTextView
 	helpview      *HelpBox
 	Util          lspcore.LspUtil
+	codecomplete  *lspcore.CompleteCodeLine
 }
 type complete_task struct {
 	current  lspcore.Complete
@@ -91,7 +92,8 @@ func Newcompletemenu(main MainService, txt *codetextview) CompleteMenu {
 		femto.Loc{X: 0, Y: 0},
 		0, 0,
 		txt, nil,
-		&LspTextView{Box: tview.NewBox(), main: main}, nil, lspcore.LspUtil{}}
+		&LspTextView{Box: tview.NewBox(), main: main}, nil, lspcore.LspUtil{},
+		nil}
 	return &ret
 }
 
@@ -346,6 +348,13 @@ func (c *completemenu) hanlde_help_signature(ret lsp.SignatureHelp, arg lspcore.
 	}
 }
 func (complete *completemenu) OnTrigeHelp(tg lspcore.TriggerChar) bool {
+	if complete.codecomplete == nil {
+		return false
+	}
+	if !complete.codecomplete.InRange(complete.loc.X) {
+		return false
+	}
+
 	sym := complete.editor.code.LspSymbol()
 	editor := complete.editor
 	loc := editor.Cursor.Loc
@@ -488,15 +497,23 @@ func (l *completemenu) Draw(screen tcell.Screen) {
 		}
 	}
 }
+func ord_loc(b, e femto.Loc) (femto.Loc, femto.Loc) {
+	if b.LessEqual(e) {
+		return b, e
+	} else {
+		return e, b
+	}
+}
 func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspret *lspcore.Complete) {
 	var editor = complete.editor
 	complete.show = false
 	var help *lspcore.SignatureHelp
+	complete.codecomplete = nil
 	if v.TextEdit != nil {
 		r := v.TextEdit.Range
 		newtext := v.TextEdit.NewText
 		debug.DebugLog("complete", "completereuslt", newtext, v.Kind, v.TextEdit)
-		code := lspcore.NewCompleteCode(newtext)
+		code := lspcore.NewCompleteCode(v.TextEdit)
 		sss := code.Text()
 		end := lsp.Position{Line: editor.Cursor.Loc.Y, Character: editor.Cursor.Loc.X}
 		if code.SnipCount() > 0 {
@@ -513,10 +530,9 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				}
 			}
 		}
-		editor.Buf.Replace(
-			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-			femto.Loc{X: end.Character, Y: end.Line},
-			sss)
+		b := femto.Loc{X: r.Start.Character, Y: r.Start.Line}
+		e := femto.Loc{X: end.Character, Y: end.Line}
+		editor.Replace(b, e, sss)
 		Event := []lspcore.TextChangeEvent{{
 			Type:  lspcore.TextChangeTypeReplace,
 			Range: lsp.Range{Start: r.Start, End: end},
@@ -525,6 +541,7 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 			File:   lspret.Sym.Filename,
 			Events: Event})
 		if help != nil {
+			complete.codecomplete = code
 			editor.Cursor.Loc = femto.Loc{X: help.Pos.Character, Y: help.Pos.Line}
 			x := editor.Buf.Line(help.Pos.Line)
 			help.TriggerCharacter = x[help.Pos.Character-1 : help.Pos.Character]

@@ -72,34 +72,22 @@ type rootlayout struct {
 	mainlayout  *MainLayout
 	// hide_cb     func()
 }
-
-type MainService interface {
-	// Dialogsize
-	Dialogsize() *project_diagnostic
-	//app
-	App() *tview.Application
-	//tty
-	RunInBrowser() bool
-	//quickview
-	Quickfix() *quick_view
-	//cmdline
+type ICmd interface {
 	CmdLine() *cmdline
 	Close()
 	quit()
-	//log
-	cleanlog()
-
-	//screen
+}
+type IViewManager interface {
 	ScreenSize() (w, h int)
-	//help
-	helpkey(bool) []string
-	//view manager
 	toggle_view(id view_id)
 	get_focus_view_id() view_id
 	set_viewid_focus(v view_id)
 	to_view_link(viewid view_id) *view_link
 	set_perfocus_view(viewid view_id)
 	IsHide(view_id) bool
+
+	//move window
+	move_to_window(direction)
 
 	//zoom
 	zoom(zoomin bool)
@@ -111,45 +99,19 @@ type MainService interface {
 	Term() *Term
 	Recent_open() *recent_open_file
 	Bookmark() *proj_bookmark
-
-	//editor
-	current_editor() CodeEditor
-	Codeview2() *CodeView
-	//open
-	OpenFileHistory(filename string, line *lsp.Location)
-
-	on_select_project(prj *Project)
-	// tab
-	switch_tab_view()
-	ActiveTab(id view_id, focused bool)
-	Tab() *tabmgr
-	// color
-	on_change_color(name string)
-	//keymap
-	key_map_space_menu() []cmditem
-	key_map_escape() []cmditem
-	key_map_leader() []cmditem
-	//lsp
-	Lspmgr() *lspcore.LspWorkspace
-	LspComplete()
-	get_callin_stack(loc lsp.Location, filepath string)
-	get_callin_stack_by_cursor(loc lsp.Location, filepath string)
-	get_refer(pos lsp.Range, filepath string)
-	get_implementation(pos lsp.Range, filepath string, line *lspcore.OpenOption)
-	get_define(pos lsp.Range, filepath string, line *lspcore.OpenOption)
-	get_declare(pos lsp.Range, filepath string)
-	OnSymbolistChanged(file *lspcore.Symbol_file, err error)
+	Quickfix() *quick_view
+	cleanlog()
+}
+type IApp interface {
+	App() *tview.Application
+	RunInBrowser() bool
+	Mode() mode
 	//clpboard
 	CopyToClipboard(s string)
 
-	//quickfix
-	save_qf_uirefresh(data qf_history_data) error
-	open_in_tabview(keys qf_history_data)
-	LoadQfData(item qf_history_data) (task *lspcore.CallInTask)
-
-	//dialog
-	Dialog() *fzfmain
-	//fzf picker
+	on_select_project(prj *Project)
+}
+type IPicker interface {
 	open_colorescheme()
 	open_qfh_query()
 	open_wks_query()
@@ -160,30 +122,107 @@ type MainService interface {
 	open_picker_ctrlp()
 	open_picker_refs()
 	open_picker_grep(word QueryOption, qf func(bool, ref_with_caller) bool) *greppicker
-
-	//move window
-	move_to_window(direction)
-
-	//history
+}
+type IKeyMap interface {
+	key_map_space_menu() []cmditem
+	key_map_escape() []cmditem
+	key_map_leader() []cmditem
+	helpkey(bool) []string
+}
+type ILsp interface {
+	Lspmgr() *lspcore.LspWorkspace
+	LspComplete()
+	get_callin_stack(loc lsp.Location, filepath string)
+	get_callin_stack_by_cursor(loc lsp.Location, filepath string)
+	get_refer(pos lsp.Range, filepath string)
+	get_implementation(pos lsp.Range, filepath string, line *lspcore.OpenOption)
+	get_define(pos lsp.Range, filepath string, line *lspcore.OpenOption)
+	get_declare(pos lsp.Range, filepath string)
+	OnSymbolistChanged(file *lspcore.Symbol_file, err error)
+}
+type ITab interface {
+	switch_tab_view()
+	ActiveTab(id view_id, focused bool)
+	Tab() *tabmgr
+}
+type IEditor interface {
+	current_editor() CodeEditor
+	Codeview2() *CodeView
+	OnCodeLineChange(x, y int, file string)
+	//open
+	OpenFileHistory(filename string, line *lsp.Location)
+}
+type IHistory interface {
 	GoBack()
 	GoForward()
 	Navigation() *BackForward
 	CanGoBack() bool
 	CanGoFoward() bool
-
-	//Search in whole project
+}
+type ISearch interface {
 	SearchInProject(QueryOption)
 	//search in current ui
 	OnSearch(option search_option)
 	Searchcontext() *GenericSearch
+}
+type MainService interface {
+	// Dialogsize
+	Dialogsize() *project_diagnostic
+	//app
+	IApp
+	//tty
+	//quickview
+	//cmdline
+	ICmd
+	//log
 
-	Mode() mode
+	//screen
 
-	OnCodeLineChange(x, y int, file string)
 
+	//view manager
+	IViewManager
+
+	//editor
+	IEditor
+
+	// tab
+	ITab
+
+	// color
+	on_change_color(name string)
+
+	//keymap
+	IKeyMap
+
+	//lsp
+	ILsp
+
+	//quickfix
+	IQuickfix
+
+	//fzf picker
+	IPicker
+
+	//history
+	IHistory
+
+	// Search in whole project
+	ISearch
+
+	IBaseWidget
+}
+type IBaseWidget interface {
 	//context menu
 	create_menu_item(id command_id, handle func()) context_menu_item
 	Right_context_menu() *contextmenu
+
+	//dialog
+	Dialog() *fzfmain
+}
+type IQuickfix interface {
+	save_qf_uirefresh(data qf_history_data) error
+	open_in_tabview(keys qf_history_data)
+	LoadQfData(item qf_history_data) (task *lspcore.CallInTask)
 }
 
 // editor_area_fouched

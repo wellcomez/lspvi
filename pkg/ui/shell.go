@@ -4,34 +4,24 @@
 package mainui
 
 import (
-	// "io"
 	"bytes"
 	"fmt"
-
-	// "encoding/hex"
-	"io"
 	"log"
 
-	// "strings"
-	"time"
+	"io"
+	// "log"
+
 	"unicode"
 
-	// "os/exec"
-
-	corepty "github.com/creack/pty"
-	// "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-
-	// "github.com/pgavlin/femto"
-	// v100 "golang.org/x/term"
 	"zen108.com/lspvi/pkg/debug"
-	"zen108.com/lspvi/pkg/pty"
+	"zen108.com/lspvi/pkg/ptyproxy"
 	terminal "zen108.com/lspvi/pkg/term"
 )
 
 type terminal_pty struct {
-	ptystdio  *pty.Pty
+	ptystdio  ptyproxy.LspPty
 	shellname string
 	ondata    func(*terminal_pty)
 	topline   int
@@ -41,10 +31,11 @@ type terminal_pty struct {
 
 func (t terminal_pty) displayname() string {
 	pid := ""
-	if t.ptystdio != nil && t.ptystdio.Cmd != nil {
-		pid = fmt.Sprintf("%d",
-			t.ptystdio.Cmd.Process.Pid)
+	pty := t.ptystdio
+	if pty == nil {
+		return ""
 	}
+	pid = pty.Pid()
 	return fmt.Sprintf("%s-%s", t.shellname, pid)
 }
 
@@ -69,17 +60,14 @@ func (ty ptyread) Write(p []byte) (n int, err error) {
 }
 
 func (t *terminal_pty) Kill() error {
-	if t.ptystdio.Cmd != nil {
-		return t.ptystdio.Cmd.Process.Kill()
-	}
-	return fmt.Errorf("not cmd")
+	return t.ptystdio.Kill()
 }
 
 // Write implements io.Writer.
 func (t *terminal_pty) Write(p []byte) (n int, err error) {
 	// not enough bytes for a full rune
 	if n, err := t.v100state(p); err != nil {
-		log.Println("vstate 100", err, n)
+		debug.ErrorLog("shell", "vstate 100", err, n)
 	} else {
 		// log.Println("write", n, hex.EncodeToString(p))
 	}
@@ -286,55 +274,53 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 	}
 	return action, event
 }
-
 func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty)) {
 	term.dest.Init()
-	term.dest.DebugLogger = log.Default()
+	term.dest.DebugLogger = nil
 	col := 80
 	row := 40
 	term.dest.Resize(col, row)
 	go func() {
-		ptyio := pty.RunNoStdin([]string{cmdline})
+		ptyio := ptyproxy.RunNoStdin([]string{cmdline})
 		if ptyio == nil {
 			debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
 			return
 		}
 		term.ptystdio = ptyio
-		term.ptystdio.Notify()
 		term.UpdateTermSize()
-		go func() {
-			for range ptyio.Ch {
-				timer := time.After(100 * time.Millisecond)
-				<-timer
-				term.UpdateTermSize()
-			}
-		}()
+
 		if end != nil {
 			end(true, term)
 		}
-		io.Copy(ptyread{term}, ptyio.File)
+		io.Copy(ptyread{term}, ptyio.File())
 		if end != nil {
 			end(false, term)
 		}
 	}()
 }
-
+func (v *Term) SetRect(x, y, width, height int) {
+	v.Box.SetRect(x, y, width, height)
+	for _, t := range v.termlist {
+		t.UpdateTermSize()
+	}
+}
 func (term *terminal_pty) UpdateTermSize() {
 	ptyio := term.ptystdio
+	if ptyio == nil {
+		return
+	}
 	_, _, w, h := term.ui.GetRect()
 	term.dest.Resize(w, h)
-	if err := corepty.Setsize(ptyio.File, &corepty.Winsize{Rows: uint16(h), Cols: uint16(w)}); err != nil {
-		log.Printf("error resizing pty: %s", err)
-	}
+	ptyio.UpdateSize(uint16(h), uint16(w))
 }
 func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		_, _, width, height := t.GetRect()
-		log.Println("term", "width", width, "height", height)
+		debug.DebugLog("term", "width", width, "height", height)
 		if t.current.ptystdio != nil {
 			var n int
 			var err error
-			ptyio := t.current.ptystdio.File
+			ptyio := t.current.ptystdio.File()
 			if buf := t.TypedKey(event); buf != nil {
 				n, err = ptyio.Write(buf.buf)
 			} else {
@@ -444,7 +430,9 @@ func (termui *Term) Draw(screen tcell.Screen) {
 	}
 	if width != cols || height != rows {
 		go func() {
-			t.ptystdio.UpdateSize(uint16(width), uint16(height))
+			if t.ptystdio != nil {
+				t.ptystdio.UpdateSize(uint16(width), uint16(height))
+			}
 		}()
 	}
 }
