@@ -209,9 +209,9 @@ type MainService interface {
 	// Search in whole project
 	ISearch
 
-	IBaseWideget
+	IBaseWidget
 }
-type IBaseWideget interface {
+type IBaseWidget interface {
 	//context menu
 	create_menu_item(id command_id, handle func()) context_menu_item
 	Right_context_menu() *contextmenu
