@@ -199,7 +199,7 @@ var tree_sitter_lang_map = []*ts_lang_def{
 		rs_outline(ts, yaml_group)
 	}),
 	new_tsdef("csharp", lsp_dummy{}, ts_csharp.Language()).set_ext([]string{"cs"}).setparser(rs_outline),
-	new_tsdef("swift", lsp_dummy{}, ts_swift.Language()).set_ext([]string{"swift"}).setparser(rs_outline),
+	new_tsdef("swift", lsp_dummy{}, ts_swift.Language()).set_ext([]string{"swift"}).setparser(swift_outline),
 	new_tsdef("proto", lsp_dummy{}, ts_protobuf.Language()).set_ext([]string{"proto"}).setparser(rs_outline),
 	new_tsdef("css", lsp_dummy{}, ts_css.Language()).set_ext([]string{"css"}).setparser(rs_outline),
 	// new_tsdef("dockerfile", lsp_dummy{}, ts_dockerfile.GetLanguage()).set_ext([]string{"dockfile"}).setparser(rs_outline),
