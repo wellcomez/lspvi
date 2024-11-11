@@ -78,6 +78,9 @@ type ICmd interface {
 	quit()
 }
 type IViewManager interface {
+	ScreenSize() (w, h int)
+
+
 	toggle_view(id view_id)
 	get_focus_view_id() view_id
 	set_viewid_focus(v view_id)
@@ -98,6 +101,7 @@ type IViewManager interface {
 	Term() *Term
 	Recent_open() *recent_open_file
 	Bookmark() *proj_bookmark
+	Quickfix() *quick_view
 }
 type IApp interface {
 	App() *tview.Application
@@ -124,6 +128,7 @@ type IKeyMap interface {
 	key_map_space_menu() []cmditem
 	key_map_escape() []cmditem
 	key_map_leader() []cmditem
+	helpkey(bool) []string
 }
 type ILsp interface {
 	Lspmgr() *lspcore.LspWorkspace
@@ -168,16 +173,13 @@ type MainService interface {
 	IApp
 	//tty
 	//quickview
-	Quickfix() *quick_view
 	//cmdline
 	ICmd
 	//log
 	cleanlog()
 
 	//screen
-	ScreenSize() (w, h int)
-	//help
-	helpkey(bool) []string
+
 
 	//view manager
 	IViewManager
@@ -209,9 +211,9 @@ type MainService interface {
 	// Search in whole project
 	ISearch
 
-	IWideget
+	IBaseWideget
 }
-type IWideget interface {
+type IBaseWideget interface {
 	//context menu
 	create_menu_item(id command_id, handle func()) context_menu_item
 	Right_context_menu() *contextmenu
