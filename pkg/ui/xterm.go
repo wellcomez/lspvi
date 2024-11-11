@@ -253,9 +253,7 @@ func (xterm_request) handle_xterm_resize(message []byte) {
 	err := json.Unmarshal(message, &res)
 
 	if err == nil {
-		if res.Rows != ptystdio.Rows || res.Cols != ptystdio.Cols {
-			ptystdio.UpdateSize(res.Rows, res.Cols)
-		}
+		ptystdio.UpdateSize(res.Rows, res.Cols)
 	}
 }
 

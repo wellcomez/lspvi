@@ -1,5 +1,5 @@
 //go:build linux
-// +build linux
+// +build linux darwin
 
 package ptyproxy
 
@@ -9,8 +9,8 @@ import (
 )
 
 func (pty *PtyCmd) OsUpdateSize(Rows uint16, Cols uint16) {
-	pty.Rows = Rows
-	pty.Cols = Cols
+	pty.rows = Rows
+	pty.cols = Cols
 	// pty.Ch <- syscall.SIGWINCH
 	pty.set_size_changed <- true
 }

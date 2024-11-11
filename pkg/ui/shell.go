@@ -4,27 +4,16 @@
 package mainui
 
 import (
-	// "io"
 	"bytes"
 	"fmt"
 
-	// "encoding/hex"
 	"io"
 	"log"
 
-	// "strings"
-	// "time"
 	"unicode"
 
-	// "os/exec"
-
-	// corepty "github.com/creack/pty"
-	// "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-
-	// "github.com/pgavlin/femto"
-	// v100 "golang.org/x/term"
 	"zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/ptyproxy"
 	terminal "zen108.com/lspvi/pkg/term"
@@ -41,10 +30,11 @@ type terminal_pty struct {
 
 func (t terminal_pty) displayname() string {
 	pid := ""
-	if t.ptystdio != nil && t.ptystdio.Cmd != nil {
-		pid = fmt.Sprintf("%d",
-			t.ptystdio.Cmd.Process.Pid)
+	pty := t.ptystdio
+	if pty == nil {
+		return ""
 	}
+	pid = pty.Pid()
 	return fmt.Sprintf("%s-%s", t.shellname, pid)
 }
 
@@ -69,10 +59,7 @@ func (ty ptyread) Write(p []byte) (n int, err error) {
 }
 
 func (t *terminal_pty) Kill() error {
-	if t.ptystdio.Cmd != nil {
-		return t.ptystdio.Cmd.Process.Kill()
-	}
-	return fmt.Errorf("not cmd")
+	return t.ptystdio.Kill()
 }
 
 // Write implements io.Writer.
@@ -293,39 +280,34 @@ func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty
 	col := 80
 	row := 40
 	term.dest.Resize(col, row)
-	go func() {
-		ptyio := ptyproxy.RunNoStdin([]string{cmdline})
-		if ptyio == nil {
-			debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
-			return
-		}
-		term.ptystdio = ptyio
-		term.ptystdio.Notify()
-		term.UpdateTermSize()
-		// go func() {
-		// 	for range ptyio.Ch {
-		// 		timer := time.After(100 * time.Millisecond)
-		// 		<-timer
-		// 		term.UpdateTermSize()
-		// 	}
-		// }()
-		// go func() {
-		// 	for range ptyio.Wch {
-		// 		timer := time.After(100 * time.Millisecond)
-		// 		<-timer
-		// 		term.UpdateTermSize()
-		// 	}
-		// }()
-		if end != nil {
-			end(true, term)
-		}
-		io.Copy(ptyread{term}, ptyio.File())
-		if end != nil {
-			end(false, term)
-		}
-	}()
-}
+	use_pty := true
+	if use_pty {
+		go func() {
+			ptyio := ptyproxy.RunNoStdin([]string{cmdline})
+			if ptyio == nil {
+				debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
+				return
+			}
+			term.ptystdio = ptyio
+			term.UpdateTermSize()
 
+			if end != nil {
+				end(true, term)
+			}
+			io.Copy(ptyread{term}, ptyio.File())
+			if end != nil {
+				end(false, term)
+			}
+		}()
+	} else {
+	}
+}
+func (v *Term) SetRect(x, y, width, height int) {
+	v.Box.SetRect(x, y, width, height)
+	for _, t := range v.termlist {
+		t.UpdateTermSize()
+	}
+}
 func (term *terminal_pty) UpdateTermSize() {
 	ptyio := term.ptystdio
 	_, _, w, h := term.ui.GetRect()
@@ -449,7 +431,9 @@ func (termui *Term) Draw(screen tcell.Screen) {
 	}
 	if width != cols || height != rows {
 		go func() {
-			t.ptystdio.UpdateSize(uint16(width), uint16(height))
+			if t.ptystdio != nil {
+				t.ptystdio.UpdateSize(uint16(width), uint16(height))
+			}
 		}()
 	}
 }

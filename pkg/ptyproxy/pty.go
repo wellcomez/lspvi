@@ -4,6 +4,7 @@ package ptyproxy
 // https://github.com/photostorm/pty
 // https://github.com/creack/pty/pull/155
 import (
+	"fmt"
 	"io"
 	"log"
 	"path/filepath"
@@ -27,46 +28,6 @@ type read_out struct {
 	handle func(p []byte) (n int, err error)
 }
 
-// func test(s string) error {
-// 	// Create arbitrary command.
-// 	c := exec.Command(s)
-
-// 	// Start the command with a pty.
-// 	ptmx, err := pty.Start(c)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	// Make sure to close the pty at the end.
-// 	defer func() { _ = ptmx.Close() }() // Best effort.
-
-// 	// Handle pty size.
-// 	ch := make(chan os.Signal, 1)
-// 	signal.Notify(ch, syscall.SIGWINCH)
-// 	go func() {
-// 		for range ch {
-// 			if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
-// 				debug.ErrorLogf("pty", "error resizing pty: %s", err)
-// 			}
-// 		}
-// 	}()
-// 	ch <- syscall.SIGWINCH                        // Initial resize.
-// 	defer func() { signal.Stop(ch); close(ch) }() // Cleanup signals when done.
-
-// 	// Set stdin in raw mode.
-// 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
-
-// 	// Copy stdin to the pty and the pty to stdout.
-// 	// NOTE: The goroutine will keep reading until the next keystroke before returning.
-// 	go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
-// 	_, _ = io.Copy(os.Stdout, ptmx)
-
-// 	return nil
-// }
-
 // Write implements io.Writer.
 func (r read_out) Write(p []byte) (n int, err error) {
 	if r.handle != nil {
@@ -83,13 +44,19 @@ func setupLogFile(filename string) (*os.File, error) {
 	return file, nil
 }
 
+type LspPty interface {
+	File() io.ReadWriteCloser
+	UpdateSize(Rows uint16, Cols uint16)
+	Kill() error
+	Notify()
+}
 type PtyCmd struct {
-	Cmd              *exec.Cmd
+	cmd              *exec.Cmd
 	file             io.ReadWriteCloser
 	ws_change_signal chan os.Signal
 	set_size_changed chan bool
-	Rows             uint16 // ws_row: Number of rows (in cells).
-	Cols             uint16 //
+	rows             uint16 // ws_row: Number of rows (in cells).
+	cols             uint16 //
 }
 
 func (pty *PtyCmd) File() io.ReadWriteCloser {
@@ -97,7 +64,9 @@ func (pty *PtyCmd) File() io.ReadWriteCloser {
 }
 
 func (pty *PtyCmd) UpdateSize(Rows uint16, Cols uint16) {
-	pty.OsUpdateSize(Rows, Cols)
+	if Rows != pty.rows || Cols != pty.cols {
+		pty.OsUpdateSize(Rows, Cols)
+	}
 }
 
 func Ptymain(Args []string) *PtyCmd {
@@ -122,9 +91,22 @@ func RunNoStdin(Args []string) *PtyCmd {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ret := &PtyCmd{Cmd: c, file: f, ws_change_signal: make(chan os.Signal, 1), set_size_changed: make(chan bool, 1)}
-	ret.MonitorSizeChanged(f)
+	ret := &PtyCmd{cmd: c, file: f, ws_change_signal: make(chan os.Signal, 1), set_size_changed: make(chan bool, 1)}
+	ret.monitorSizeChanged(f)
 	return ret
+}
+func (t *PtyCmd) Kill() error {
+	if t.cmd != nil {
+		return t.cmd.Process.Kill()
+	}
+	return fmt.Errorf("not cmd")
+}
+func (pty *PtyCmd) Pid() (pid string) {
+	if pty.cmd != nil {
+		pid = fmt.Sprintf("%d",
+			pty.cmd.Process.Pid)
+	}
+	return pid
 }
 
 func RunCommand(Args []string) *PtyCmd {
@@ -151,24 +133,24 @@ func RunCommand(Args []string) *PtyCmd {
 	ret.Notify()
 	// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
 	// }
-	ret.MonitorSizeChanged(f)
+	ret.monitorSizeChanged(f)
 	return ret
 }
 
-func (ptycmd *PtyCmd) MonitorSizeChanged(f pty.Pty) {
+func (ptycmd *PtyCmd) monitorSizeChanged(f pty.Pty) {
 	go func() {
 		for {
 			select {
 			case <-ptycmd.set_size_changed:
 				{
-					if err := pty.Setsize(f, &pty.Winsize{Rows: ptycmd.Rows, Cols: ptycmd.Cols}); err != nil {
+					if err := pty.Setsize(f, &pty.Winsize{Rows: ptycmd.rows, Cols: ptycmd.cols}); err != nil {
 						debug.DebugLogf("pty", "error resizing pty: %s", err)
 					}
 				}
 			case <-ptycmd.ws_change_signal:
 				{
 
-					if err := pty.Setsize(f, &pty.Winsize{Rows: ptycmd.Rows, Cols: ptycmd.Cols}); err != nil {
+					if err := pty.Setsize(f, &pty.Winsize{Rows: ptycmd.rows, Cols: ptycmd.cols}); err != nil {
 						log.Printf("error resizing pty: %s", err)
 					}
 				}
