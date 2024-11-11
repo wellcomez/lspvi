@@ -13,6 +13,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
+	"zen108.com/lspvi/pkg/devicon"
 	"zen108.com/lspvi/pkg/ui/filewalk"
 )
 
@@ -149,8 +150,14 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 		if i > 500 {
 			break
 		}
+		var icon = colortext{FileIcon(v) + " ", 0, 0}
+		if ic, err := devicon.FindIconPath(v); err == nil {
+			if r, g, b, err := HexToRGB(ic.Color); err == nil {
+				icon.color = tcell.NewRGBColor(int32(r), int32(g), int32(b))
+			}
+		}
 		impl.list.AddColorItem([]colortext{
-			{FileIcon(v) + " ", 0, 0},
+			icon,
 			{v, 0, 0},
 		}, nil, nil)
 		dir.select_index = append(dir.select_index, i)
