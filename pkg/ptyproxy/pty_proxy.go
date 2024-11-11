@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"path/filepath"
+	"strings"
 
 	// "log"
 	"os"
@@ -70,7 +71,7 @@ func (pty *PtyCmd) UpdateSize(Rows uint16, Cols uint16) {
 	}
 }
 
-func Ptymain(Args []string) *PtyCmd {
+func Ptymain(Args []string) LspPty {
 	defer logFile.Close()
 	log.SetOutput(logFile)
 
@@ -110,16 +111,28 @@ func (pty *PtyCmd) Pid() (pid string) {
 	return pid
 }
 
-func RunCommand(Args []string) *PtyCmd {
+func RunCommand(Args []string) LspPty {
+	// var stdout2 read_out
+	// Best effort.
+	// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
+	// }
+	use_aio_pty := true
+	if use_aio_pty {
+		return NewAioptyPtyCmd(strings.Join(Args, " "),true)
+	}
+	return use_creak_pty(Args)
+}
+
+func use_creak_pty(Args []string) LspPty {
 	c := exec.Command(Args[0])
 	c.Args = Args
 	f, err := pty.Start(c)
 	if err != nil {
 		log.Panic(err)
 	}
-	// var stdout2 read_out
+
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -132,8 +145,7 @@ func RunCommand(Args []string) *PtyCmd {
 	}()
 	ret := &PtyCmd{file: f, ws_change_signal: make(chan os.Signal, 1), set_size_changed: make(chan bool, 1)}
 	ret.Notify()
-	// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
-	// }
+
 	ret.monitorSizeChanged(f)
 	return ret
 }

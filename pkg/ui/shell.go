@@ -301,7 +301,7 @@ func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty
 		}()
 	} else {
 		go func() {
-			ptyio := ptyproxy.NewAioptyPtyCmd(cmdline)
+			ptyio := ptyproxy.NewAioptyPtyCmd(cmdline,false)
 			if ptyio == nil {
 				debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
 				return

@@ -106,8 +106,7 @@ func (c *AioPtyCmd) UpdateSize(Rows uint16, Cols uint16) {
 		Rows: Rows,
 	})
 }
-
-func NewAioptyPtyCmd(cmdline string) (cmd LspPty) {
+func NewAioptyPtyCmd(cmdline string, readstdin bool) (cmd LspPty) {
 	var argv = strings.Split(cmdline, " ")
 	Path := argv[0]
 	// open a pty with options
@@ -170,8 +169,14 @@ func NewAioptyPtyCmd(cmdline string) (cmd LspPty) {
 		defer t.Close()
 
 		// start data exchange between terminal and pty
-		exit := make(chan struct{}, 1)
-		// go func() { io.Copy(p, t); exit <- struct{}{} }()
+		cout := 1
+		if readstdin {
+			cout = 2
+		}
+		exit := make(chan struct{}, cout)
+		if readstdin {
+			go func() { io.Copy(p, t); exit <- struct{}{} }()
+		}
 		go func() { io.Copy(t, p); exit <- struct{}{} }()
 		<-exit
 	}()

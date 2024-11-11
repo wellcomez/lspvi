@@ -34,7 +34,7 @@
             "program": "${workspaceFolder}/main.go",
             "console": "externalTerminal",
             "args": [
-                "-gui",
+                "--gui",
             ]
         },
         {
