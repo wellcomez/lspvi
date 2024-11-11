@@ -18,7 +18,12 @@ replace github.com/tree-sitter-grammars/tree-sitter-yaml => ./pkg/tree-sitter-ya
 replace github.com/tree-sitter-grammars/tree-sitter-toml => ./pkg/tree-sitter-toml/bindings/go
 
 replace github.com/creack/pty => ./pkg/photostorm/pty
-replace git@github.com:iyzyi/aiopty.git => ./pkg/pkg/aiopty
+
+replace zen108.com/lspvi/pkg/aiopty => ./pkg/aiopty
+
+// replace zen108.com/lspvi/pkg/aiopty/pty => ./pkg/aiopty/pty
+
+// replace zen108.com/lspvi/pkg/aiopty/util/log => ./pkg/aiopty/util/log
 
 require (
 	github.com/charlievieth/fastwalk v1.0.8
@@ -76,6 +81,7 @@ require (
 	github.com/tree-sitter-grammars/tree-sitter-yaml v0.6.1 // indirect
 	github.com/tree-sitter-grammars/tree-sitter-zig v1.0.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	zen108.com/lspvi/pkg/aiopty v0.0.0-00010101000000-000000000000 // indirect
 )
 
 require (

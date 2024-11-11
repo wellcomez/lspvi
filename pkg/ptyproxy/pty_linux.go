@@ -1,11 +1,12 @@
 //go:build linux
-// +build linux darwin
+// +build linux
 
 package ptyproxy
 
 import (
 	"os/signal"
 	"syscall"
+	"zen108.com/lspvi/pkg/aiopty/pty"
 )
 
 func (pty *PtyCmd) OsUpdateSize(Rows uint16, Cols uint16) {
@@ -17,4 +18,7 @@ func (pty *PtyCmd) OsUpdateSize(Rows uint16, Cols uint16) {
 func (ret PtyCmd) Notify() {
 	signal.Notify(ret.ws_change_signal, syscall.SIGWINCH)
 
+}
+func get_aiopty_type() aio_option{
+	return  aio_option{pty.NIXPTY,false}
 }

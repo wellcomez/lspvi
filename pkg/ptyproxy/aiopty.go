@@ -8,13 +8,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/iyzyi/aiopty/pty"
-	"github.com/iyzyi/aiopty/term"
-	"github.com/iyzyi/aiopty/utils/log"
 	goterm "golang.org/x/term"
+	"zen108.com/lspvi/pkg/aiopty/pty"
+	"zen108.com/lspvi/pkg/aiopty/term"
+	"zen108.com/lspvi/pkg/aiopty/utils/log"
 	"zen108.com/lspvi/pkg/debug"
 )
 
+type aio_option struct {
+	pty_type    pty.PtyType
+	check_stdio bool
+}
 type term_stdio struct {
 	r, w *os.File
 }
@@ -45,7 +49,12 @@ type aipty_term_io struct {
 }
 
 func (t aipty_term_io) Close() error {
-	t.stdin.Close()
+	if t.stdin != nil {
+		t.stdin.Close()
+	}
+	if t.stdout != nil {
+		t.stdout.Close()
+	}
 	t.stdout.Close()
 	return nil
 }
@@ -110,6 +119,7 @@ func NewAioptyPtyCmd(cmdline string, readstdin bool) (cmd LspPty) {
 	var argv = strings.Split(cmdline, " ")
 	Path := argv[0]
 	// open a pty with options
+	aio_opt := get_aiopty_type()
 	opt := &pty.Options{
 		Path: Path,
 		Args: argv,
@@ -119,7 +129,7 @@ func NewAioptyPtyCmd(cmdline string, readstdin bool) (cmd LspPty) {
 			Cols: 120,
 			Rows: 30,
 		},
-		Type: "",
+		Type: aio_opt.pty_type,
 	}
 	// term_stdin := &term_stdin{new_term_stdio()}
 	term_stdout := &term_stdout{new_term_stdio()}
@@ -161,7 +171,7 @@ func NewAioptyPtyCmd(cmdline string, readstdin bool) (cmd LspPty) {
 		}
 		defer func() { _ = goterm.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 		defer cmd.File().Close()
-		t, err := term.Open(os.Stdin, term_stdout.w, onSizeChange)
+		t, err := term.Open(os.Stdin, term_stdout.w, aio_opt.check_stdio, onSizeChange)
 		if err != nil {
 			log.Error("Failed to enable terminal: %v", err)
 			return
@@ -183,61 +193,61 @@ func NewAioptyPtyCmd(cmdline string, readstdin bool) (cmd LspPty) {
 	return
 }
 
-func NewMain(argv []string) {
-	// var sss = aipty_term_io{}
-	// var io aiopty_pty_interface = sss
+// func NewMain(argv []string) {
+// 	// var sss = aipty_term_io{}
+// 	// var io aiopty_pty_interface = sss
 
-	Path := argv[0]
-	// open a pty with options
-	opt := &pty.Options{
-		Path: Path,
-		Args: argv,
-		// Args: []string{"ag", "main"},
-		Dir: "",
-		Env: nil,
-		Size: &pty.WinSize{
-			Cols: 120,
-			Rows: 30,
-		},
-		Type: "",
-	}
-	p, err := pty.OpenWithOptions(opt)
+// 	Path := argv[0]
+// 	// open a pty with options
+// 	opt := &pty.Options{
+// 		Path: Path,
+// 		Args: argv,
+// 		// Args: []string{"ag", "main"},
+// 		Dir: "",
+// 		Env: nil,
+// 		Size: &pty.WinSize{
+// 			Cols: 120,
+// 			Rows: 30,
+// 		},
+// 		Type: "",
+// 	}
+// 	p, err := pty.OpenWithOptions(opt)
 
-	// You can also open a pty simply like this:
-	// p, err := pty.Open(path)
+// 	// You can also open a pty simply like this:
+// 	// p, err := pty.Open(path)
 
-	if err != nil {
-		log.Error("Failed to create pty: %v", err)
-		return
-	}
-	defer p.Close()
+// 	if err != nil {
+// 		log.Error("Failed to create pty: %v", err)
+// 		return
+// 	}
+// 	defer p.Close()
 
-	// When the terminal window size changes, synchronize the size of the pty
-	onSizeChange := func(cols, rows uint16) {
-		size := &pty.WinSize{
-			Cols: cols,
-			Rows: rows,
-		}
-		p.SetSize(size)
-	}
-	term_stdout := term_stdout{new_term_stdio()}
-	defer term_stdout.Close()
-	term_stdout.start()
-	// scanner:= bufio.NewScanner(stdout)
-	// enable terminal
-	t, err := term.Open(os.Stdin, term_stdout.w, onSizeChange)
-	if err != nil {
-		log.Error("Failed to enable terminal: %v", err)
-		return
-	}
-	defer t.Close()
+// 	// When the terminal window size changes, synchronize the size of the pty
+// 	onSizeChange := func(cols, rows uint16) {
+// 		size := &pty.WinSize{
+// 			Cols: cols,
+// 			Rows: rows,
+// 		}
+// 		p.SetSize(size)
+// 	}
+// 	term_stdout := term_stdout{new_term_stdio()}
+// 	defer term_stdout.Close()
+// 	term_stdout.start()
+// 	// scanner:= bufio.NewScanner(stdout)
+// 	// enable terminal
+// 	t, err := term.Open(os.Stdin, term_stdout.w, get_aiopty_type().check_stdio, onSizeChange)
+// 	if err != nil {
+// 		log.Error("Failed to enable terminal: %v", err)
+// 		return
+// 	}
+// 	defer t.Close()
 
-	// start data exchange between terminal and pty
-	exit := make(chan struct{}, 2)
-	go func() { io.Copy(p, t); exit <- struct{}{} }()
-	go func() { io.Copy(t, p); exit <- struct{}{} }()
-	<-exit
-}
+// 	// start data exchange between terminal and pty
+// 	exit := make(chan struct{}, 2)
+// 	go func() { io.Copy(p, t); exit <- struct{}{} }()
+// 	go func() { io.Copy(t, p); exit <- struct{}{} }()
+// 	<-exit
+// }
 
 // func main() {
 // 	NewMain([]string{"bash"})
