@@ -49,6 +49,7 @@ type LspPty interface {
 	UpdateSize(Rows uint16, Cols uint16)
 	Kill() error
 	Notify()
+	Pid() string
 }
 type PtyCmd struct {
 	cmd              *exec.Cmd

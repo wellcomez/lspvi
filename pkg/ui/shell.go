@@ -6,9 +6,10 @@ package mainui
 import (
 	"bytes"
 	"fmt"
+	"log"
 
 	"io"
-	"log"
+	// "log"
 
 	"unicode"
 
@@ -20,7 +21,7 @@ import (
 )
 
 type terminal_pty struct {
-	ptystdio  *ptyproxy.PtyCmd
+	ptystdio  ptyproxy.LspPty
 	shellname string
 	ondata    func(*terminal_pty)
 	topline   int
@@ -66,7 +67,7 @@ func (t *terminal_pty) Kill() error {
 func (t *terminal_pty) Write(p []byte) (n int, err error) {
 	// not enough bytes for a full rune
 	if n, err := t.v100state(p); err != nil {
-		log.Println("vstate 100", err, n)
+		debug.ErrorLog("shell", "vstate 100", err, n)
 	} else {
 		// log.Println("write", n, hex.EncodeToString(p))
 	}
@@ -273,14 +274,13 @@ func (ret *Term) handle_mouse(action tview.MouseAction, app *tview.Application, 
 	}
 	return action, event
 }
-
 func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty)) {
 	term.dest.Init()
-	term.dest.DebugLogger = log.Default()
+	term.dest.DebugLogger = nil
 	col := 80
 	row := 40
 	term.dest.Resize(col, row)
-	use_pty := true
+	use_pty := false
 	if use_pty {
 		go func() {
 			ptyio := ptyproxy.RunNoStdin([]string{cmdline})
@@ -300,6 +300,23 @@ func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty
 			}
 		}()
 	} else {
+		go func() {
+			ptyio := ptyproxy.NewAioptyPtyCmd(cmdline)
+			if ptyio == nil {
+				debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
+				return
+			}
+			term.ptystdio = ptyio
+			term.UpdateTermSize()
+
+			if end != nil {
+				end(true, term)
+			}
+			io.Copy(ptyread{term}, ptyio.File())
+			if end != nil {
+				end(false, term)
+			}
+		}()
 	}
 }
 func (v *Term) SetRect(x, y, width, height int) {
@@ -317,7 +334,7 @@ func (term *terminal_pty) UpdateTermSize() {
 func (t *Term) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		_, _, width, height := t.GetRect()
-		log.Println("term", "width", width, "height", height)
+		debug.DebugLog("term", "width", width, "height", height)
 		if t.current.ptystdio != nil {
 			var n int
 			var err error
