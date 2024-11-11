@@ -18,6 +18,7 @@ replace github.com/tree-sitter-grammars/tree-sitter-yaml => ./pkg/tree-sitter-ya
 replace github.com/tree-sitter-grammars/tree-sitter-toml => ./pkg/tree-sitter-toml/bindings/go
 
 replace github.com/creack/pty => ./pkg/photostorm/pty
+replace git@github.com:iyzyi/aiopty.git => ./pkg/pkg/aiopty
 
 require (
 	github.com/charlievieth/fastwalk v1.0.8
