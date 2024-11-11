@@ -58,7 +58,11 @@ type symbol_colortheme struct {
 }
 
 func (c symbol_colortheme) select_style() *tcell.Style {
-	return c.get_color("selection")
+	 if style:=c.get_color("selection");style!=nil{
+		return style
+	 }
+	 s:= c.get_default_style()
+	 return s
 }
 func (mgr symbol_colortheme) get_styles(names []string) (tcell.Style, error) {
 	for _, v := range names {
