@@ -2,11 +2,13 @@ package lspcore
 
 import (
 	"fmt"
-	"log"
+	// "log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"zen108.com/lspvi/pkg/debug"
 )
 
 type PlanUmlBin struct {
@@ -24,7 +26,7 @@ func NewPlanUmlBin() (*PlanUmlBin, error) {
 		filepath.Dir(exec), jarPath)
 	javaCmd := findJavaBinary()
 	if _, err := os.Stat(jarPath); os.IsNotExist(err) {
-		log.Println(err)
+		debug.DebugLog(DebugTag, err)
 		return nil, err
 	}
 	return &PlanUmlBin{jarPath: jarPath, javaCmd: javaCmd}, nil

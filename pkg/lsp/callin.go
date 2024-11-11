@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	// "log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	// "log"
 	// "strings"
 
 	"github.com/tectiv3/go-lsp"
@@ -231,7 +230,7 @@ func NewCallInTask(loc lsp.Location, lsp lspclient, level int) *CallInTask {
 	if body, err := NewBody(loc); err == nil {
 		name = body.String()
 	} else {
-		log.Println(err)
+		debug.DebugLog(DebugTag,err)
 	}
 	callstack_task_id++
 	task := &CallInTask{

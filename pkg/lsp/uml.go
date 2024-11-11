@@ -2,10 +2,11 @@ package lspcore
 
 import (
 	"fmt"
-	"log"
+	// "log"
 	"strings"
 
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 )
 
 // 假设以下类型和函数已经被定义：
@@ -108,7 +109,7 @@ func (call CallStack) olduml() ([]string, string) {
 		}
 		right := rightPrefix + s.symboldefine_name()
 		if strings.Index(right, "ProcessInternal") > 0 {
-			log.Println(right, s.symboldefine_name(), s.uml_class_name())
+			debug.TraceLog(DebugTag, right, s.symboldefine_name(), s.uml_class_name())
 		}
 		if len(ret) == 0 {
 			title = fmt.Sprintf("==%s==", right)
