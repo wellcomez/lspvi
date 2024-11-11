@@ -1,9 +1,9 @@
 package ptyproxy
 func (pty *PtyCmd) OsUpdateSize(Rows uint16, Cols uint16) {
-	pty.Rows = Rows
-	pty.Cols = Cols
+	pty.rows = Rows
+	pty.cols = Cols
 	go func ()  {
-		pty.wch <- true 
+		pty.set_size_changed <- true 
 	}()
 }
 func (ret PtyCmd)Notify(){
