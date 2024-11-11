@@ -94,6 +94,7 @@ const (
 	cmd_reload
 	split_right
 	close_tab
+	open_externl
 )
 
 func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_item {
@@ -142,6 +143,12 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case close_tab:
 		return cmdactor{id, "CloseTab", func() bool {
 			SplitClose(m.current_editor()).handle()
+			return true
+		}}
+	case open_externl:
+		return cmdactor{id, "Open external", func() bool {
+			filename := m.current_editor().Path()
+			open_extenal(filename)
 			return true
 		}}
 	case split_right:
@@ -541,6 +548,14 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		return cmdactor{id,
 			"", nil,
 		}
+	}
+}
+
+func open_extenal(filename string) {
+	if proxy != nil {
+		proxy.open_in_web(filename)
+	} else {
+		openfile(filename)
 	}
 }
 

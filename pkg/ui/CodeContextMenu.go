@@ -13,7 +13,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
-	"zen108.com/lspvi/pkg/debug"
+//	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -211,19 +211,7 @@ func update_selection_menu(code *CodeView) {
 		{
 			item: create_menu_item("External open "),
 			handle: func() {
-				filename := code.Path()
-				yes, err := isDirectory(filename)
-				if err != nil {
-					return
-				}
-				debug.InfoLog("external open tty=", tty)
-				if proxy != nil {
-					proxy.open_in_web(filename)
-				} else {
-					if !yes {
-						openfile(filename)
-					}
-				}
+				get_cmd_actor(main, open_externl).handle()
 			},
 		},
 		{item: create_menu_item(menu_break_line), handle: func() {
