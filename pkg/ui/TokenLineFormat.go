@@ -55,6 +55,7 @@ func (format *TokenLineFormat) Run(replace bool) (code_change lspcore.CodeChange
 			} else {
 				s, e = line.Range()
 			}
+			s, e = ord_loc(s, e)
 			format.Buf.Replace(s, e, newline)
 			a := lspcore.TextChangeEvent{
 				Text: newline,

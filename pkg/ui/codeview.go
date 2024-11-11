@@ -1089,7 +1089,7 @@ func (code *CodeView) Paste() {
 		defer checker.End()
 		sel := code.view.Cursor.CurSelection
 		if sel[1].GreaterThan(sel[0]) {
-			code.view.Buf.Replace(sel[0], sel[1], text)
+			code.view.Replace(sel[0], sel[1], text)
 			return
 		}
 		if has_break {

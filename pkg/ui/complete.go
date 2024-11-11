@@ -488,6 +488,13 @@ func (l *completemenu) Draw(screen tcell.Screen) {
 		}
 	}
 }
+func ord_loc(b, e femto.Loc) (femto.Loc, femto.Loc) {
+	if b.LessEqual(e) {
+		return b, e
+	} else {
+		return e, b
+	}
+}
 func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspret *lspcore.Complete) {
 	var editor = complete.editor
 	complete.show = false
@@ -513,10 +520,9 @@ func (complete *completemenu) handle_complete_result(v lsp.CompletionItem, lspre
 				}
 			}
 		}
-		editor.Buf.Replace(
-			femto.Loc{X: r.Start.Character, Y: r.Start.Line},
-			femto.Loc{X: end.Character, Y: end.Line},
-			sss)
+		b := femto.Loc{X: r.Start.Character, Y: r.Start.Line}
+		e := femto.Loc{X: end.Character, Y: end.Line}
+		editor.Replace(b, e, sss)
 		Event := []lspcore.TextChangeEvent{{
 			Type:  lspcore.TextChangeTypeReplace,
 			Range: lsp.Range{Start: r.Start, End: end},

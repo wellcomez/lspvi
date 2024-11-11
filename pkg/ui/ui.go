@@ -79,8 +79,6 @@ type ICmd interface {
 }
 type IViewManager interface {
 	ScreenSize() (w, h int)
-
-
 	toggle_view(id view_id)
 	get_focus_view_id() view_id
 	set_viewid_focus(v view_id)
@@ -102,6 +100,7 @@ type IViewManager interface {
 	Recent_open() *recent_open_file
 	Bookmark() *proj_bookmark
 	Quickfix() *quick_view
+	cleanlog()
 }
 type IApp interface {
 	App() *tview.Application
@@ -176,7 +175,6 @@ type MainService interface {
 	//cmdline
 	ICmd
 	//log
-	cleanlog()
 
 	//screen
 
