@@ -13,3 +13,6 @@
 [submodule "pkg/tree-sitter-toml"]
 	path = pkg/tree-sitter-toml
 	url = git@github.com:tree-sitter-grammars/tree-sitter-toml.git
+[submodule "pkg/aiopty"]
+	path = pkg/aiopty
+	url = git@github.com:wellcomez/aiopty.git
