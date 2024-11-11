@@ -280,44 +280,23 @@ func (term *terminal_pty) start_pty(cmdline string, end func(bool, *terminal_pty
 	col := 80
 	row := 40
 	term.dest.Resize(col, row)
-	use_pty := false
-	if use_pty {
-		go func() {
-			ptyio := ptyproxy.RunNoStdin([]string{cmdline})
-			if ptyio == nil {
-				debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
-				return
-			}
-			term.ptystdio = ptyio
-			term.UpdateTermSize()
+	go func() {
+		ptyio := ptyproxy.RunNoStdin([]string{cmdline})
+		if ptyio == nil {
+			debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
+			return
+		}
+		term.ptystdio = ptyio
+		term.UpdateTermSize()
 
-			if end != nil {
-				end(true, term)
-			}
-			io.Copy(ptyread{term}, ptyio.File())
-			if end != nil {
-				end(false, term)
-			}
-		}()
-	} else {
-		go func() {
-			ptyio := ptyproxy.NewAioptyPtyCmd(cmdline,false)
-			if ptyio == nil {
-				debug.ErrorLog("terminal ", "ptyio=nil", cmdline)
-				return
-			}
-			term.ptystdio = ptyio
-			term.UpdateTermSize()
-
-			if end != nil {
-				end(true, term)
-			}
-			io.Copy(ptyread{term}, ptyio.File())
-			if end != nil {
-				end(false, term)
-			}
-		}()
-	}
+		if end != nil {
+			end(true, term)
+		}
+		io.Copy(ptyread{term}, ptyio.File())
+		if end != nil {
+			end(false, term)
+		}
+	}()
 }
 func (v *Term) SetRect(x, y, width, height int) {
 	v.Box.SetRect(x, y, width, height)
@@ -327,6 +306,9 @@ func (v *Term) SetRect(x, y, width, height int) {
 }
 func (term *terminal_pty) UpdateTermSize() {
 	ptyio := term.ptystdio
+	if ptyio == nil {
+		return
+	}
 	_, _, w, h := term.ui.GetRect()
 	term.dest.Resize(w, h)
 	ptyio.UpdateSize(uint16(h), uint16(w))

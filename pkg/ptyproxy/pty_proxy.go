@@ -79,7 +79,15 @@ func Ptymain(Args []string) LspPty {
 	// lspvi := "/Users/jialaizhu/dev/lspvi/lspvi"
 	return RunCommand(Args)
 }
-func RunNoStdin(Args []string) *PtyCmd {
+func RunNoStdin(Args []string) LspPty {
+	if Use_aio_pty {
+		cmdline := strings.Join(Args, " ")
+		return NewAioptyPtyCmd(cmdline, false)
+	} else {
+		return RunNoStdinCreak(Args)
+	}
+}
+func RunNoStdinCreak(Args []string) *PtyCmd {
 	c := exec.Command(Args[0])
 	c.Args = Args
 	f, err := pty.Start(c)
@@ -111,14 +119,15 @@ func (pty *PtyCmd) Pid() (pid string) {
 	return pid
 }
 
+var Use_aio_pty = true
+
 func RunCommand(Args []string) LspPty {
 	// var stdout2 read_out
 	// Best effort.
 	// if err := pty.InheritSize(os.Stdin, ret.File); err != nil {
 	// }
-	use_aio_pty := true
-	if use_aio_pty {
-		return NewAioptyPtyCmd(strings.Join(Args, " "),true)
+	if Use_aio_pty {
+		return NewAioptyPtyCmd(strings.Join(Args, " "), true)
 	}
 	return use_creak_pty(Args)
 }

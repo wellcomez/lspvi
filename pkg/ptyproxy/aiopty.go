@@ -98,11 +98,14 @@ type AioPtyCmd struct {
 	pty *pty.Pty
 }
 
-func (*AioPtyCmd) Kill() (err error) {
-	return nil
+func (t *AioPtyCmd) Kill() (err error) {
+	return t.pty.Kill()
 }
-func (*AioPtyCmd) Pid() (ret string) {
-	return
+func (t *AioPtyCmd) Pid() (ret string) {
+	if pid, err := t.pty.Pid(); err == nil {
+		return fmt.Sprintf("%d", pid)
+	}
+	return ""
 }
 func (c *AioPtyCmd) UpdateSize(Rows uint16, Cols uint16) {
 	if c.rows == Rows && c.cols == Cols {
