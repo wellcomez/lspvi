@@ -515,8 +515,12 @@ func (view *file_tree_view) opendir(root *tview.TreeNode, dir string) {
 		c := tview.NewTreeNode(prefix + " " + file.Name())
 		c.SetReference(fullpath)
 		if !yes {
-			// yes = lspcore.IsMe(fullpath, []string{"md", "Makefile", "json", "png", "puml", "utxt"}) || view.main.IsSource(fullpath)
 			c.SetColor(tview.Styles.PrimaryTextColor)
+		}
+		if icon, err := devicon.FindIconPath(fullpath); err == nil {
+			if color, err := hexToCellColor(icon.Color); err == nil {
+				c.SetColor(color)
+			}
 		}
 		root.AddChild(c)
 	}
