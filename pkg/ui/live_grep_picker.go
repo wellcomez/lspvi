@@ -103,6 +103,7 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 	}
 }
 
+var nf_cod_call_incoming= '\ueb92'
 var nf_md_call_received = '\U000f00fa'
 var nf_oct_search = '\uf422'
 var nf_fa_bookmark = '\uf02e'
