@@ -127,9 +127,6 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	file_include.SetBackgroundColor(tcell.ColorBlack)
 	pk.file_include = file_include
 	var searchIcon = fmt.Sprintf("%c", nerd.Nf_oct_search)
-	// searchIcon = "" // Search icon from Nerd Fonts
-	// searchIcon = fmt.Sprintf("%c %c %c %c", '\uF15B','\ue731','\uf0b0','\uf15c')+fmt.Sprintf("%c",'\uea6d')
-	// pk.listcustom.AddItem(searchIcon, "", nil)
 	search_btn := tview.NewButton(searchIcon)
 	set_color := func(btn *tview.Button) {
 		btn.SetTitleAlign(tview.AlignCenter)

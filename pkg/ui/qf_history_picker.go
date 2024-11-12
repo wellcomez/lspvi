@@ -71,14 +71,11 @@ func (t DateType) Icon() string {
 	case data_refs:
 		return fmt.Sprintf("%c", lspcore.Reference)
 	case data_bookmark:
-		// return fmt.Sprintf("%c", '\U000f0e15')
 		return fmt.Sprintf("%c", nerd.Nf_fa_bookmark)
 	case data_callin:
-		// return fmt.Sprintf("%c", '\ueb92')
 		return fmt.Sprintf("%c", nerd.Nf_md_call_received)
 	case data_grep_word:
 		return fmt.Sprintf("%c", nerd.Nf_oct_search)
-		// return fmt.Sprintf("%c", '\U000f0bff')
 	}
 	return ""
 }
