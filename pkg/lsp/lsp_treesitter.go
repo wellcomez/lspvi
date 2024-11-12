@@ -345,12 +345,13 @@ func swift_outline(ts *TreeSitter, cb outlinecb) {
 		// 		break
 		// 	}
 		// }
-		if is_class(sym.Kind) {
-			items.items = append([]*lsp.SymbolInformation{sym}, items.items...)
-		} else {
-			items.Add(sym)
-		}
+		items.Add(sym)
 	}
+	ss := items.items
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Location.Range.Start.Line < ss[j].Location.Range.Start.Line
+	})
+	items.items = ss
 	lang := lsp_dummy{}
 	core := &lspcore{lang: lang}
 	var s = Symbol_file{lsp: lsp_base{core: core}}
