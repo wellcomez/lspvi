@@ -40,7 +40,9 @@ var Constant = '󰏿'
 var Struct = '𝓢'
 var Event = ""
 var Operator = "󰆕"
-var TypeParameter = '󰊄'
+
+// var TypeParameter = '󰊄'
+var TypeParameter = '\uea92'
 var IconsRunne = map[int]rune{
 	1: '󰈙', //-- File
 	2: '', // -- Module
