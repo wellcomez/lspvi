@@ -12,6 +12,12 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 
+var nf_cod_symbol_class = '' // =\ueb5b
+var nf_cod_symbol_interface = ''
+var nf_cod_symbol_variable = ''  //=\uea88
+var nf_cod_symbol_method = ''    // =\uea8c
+var nf_cod_symbol_snippet = ''   // =\ueb66
+var nf_cod_symbol_structure = '' // =\uea91
 // var FolderEmoji = "\U0001f4c1"
 var FileIcon = "\U0001f4c4"
 var Text = '󰉿'
@@ -19,11 +25,17 @@ var Method = "ƒ"
 var Function = ""
 var Constructor = ""
 var Field = "󰜢"
-var Variable = "󰀫"
-var Class = "𝓒"
 
-var  Interface =  '󰜰'
-//var Interface = '\ueb61'
+// var Variable = "󰀫"
+// var Class = "𝓒"
+// var  Interface =  '󰜰'
+
+var Variable = nf_cod_symbol_variable
+var Class = nf_cod_symbol_class
+
+var Interface = nf_cod_symbol_interface
+
+// var Interface = '\ueb61'
 var Module = ""
 var Property = '󰜢'
 var Unit = '󰑭'
