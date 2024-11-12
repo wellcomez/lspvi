@@ -2627,8 +2627,8 @@ type extgroup struct {
 }
 
 var fileicons = []extgroup{
-	{"cxx", []string{"c", "cpp", "cc"}},
-	{"hxx", []string{"h", "hpp"}},
+	{"cxx", []string{"c", "cpp", "cc", "cxx"}},
+	{"hxx", []string{"h", "hpp", "hh", "hxx"}},
 	// {py_icon, []string{"py"}},
 	// {js_icon, []string{"js"}},
 	// {ts_icon, []string{"tsx", "ts"}},
