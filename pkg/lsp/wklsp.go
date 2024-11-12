@@ -55,7 +55,7 @@ var IconsRunne = map[int]rune{
 	9:  '', //-- Constructor
 	10: '󰕘', //-- Enum
 	//11: "󰕘 ", //-- Interface
-	//11: '"' ,
+	11: Interface,
 	12: '󰊕', //-- Function
 	13: '󰆧', //-- Variable
 	14: '󰏿', //-- Constant
