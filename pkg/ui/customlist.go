@@ -6,6 +6,7 @@ package mainui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"strings"
 )
 
 type customlist struct {
@@ -69,6 +70,9 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	bottomLimit := y + height
 	select_color := global_theme.search_highlight_color()
 	selected_style := tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor)
+	if s := global_theme.select_style(); s != nil {
+		selected_style = *s
+	}
 
 	style := tcell.StyleDefault.Foreground(tview.Styles.PrimaryTextColor).Background(tview.Styles.PrimitiveBackgroundColor)
 	stylehl := tcell.StyleDefault.Foreground(select_color).Background(tview.Styles.PrimitiveBackgroundColor)
@@ -126,6 +130,9 @@ func (l *customlist) Draw(screen tcell.Screen) {
 			if multiselected {
 				l.draw_item_color_new(main_text, screen, offset_x, y, width, theme_style)
 			} else if selected {
+				if left := width - len(main_text); left > 0 {
+					main_text = append(main_text, colortext{text: strings.Repeat(" ", left)})
+				}
 				l.draw_item_color_new(main_text, screen, offset_x, y, width, selected_style)
 			} else {
 				l.draw_item_color_new(main_text, screen, offset_x, y, width, style)
@@ -137,6 +144,9 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		}
 		if l.showSecondaryText && has_second {
 			if selected {
+				if left := width - len(second_text); left > 0 {
+					second_text = append(second_text, colortext{text: strings.Repeat(" ", left)})
+				}
 				l.draw_item_color_new(second_text, screen, offset_x, y, width, selected_style)
 			} else {
 				l.draw_item_color_new(second_text, screen, offset_x, y, width, style)
