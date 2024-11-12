@@ -290,6 +290,7 @@ func (c *SymbolTreeView) copycode() {
 }
 func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	symbol_tree := NewTree()
+	symbol_tree.SetGraphics(false)
 	ret := &SymbolTreeView{
 		view_link:         &view_link{id: view_outline_list, left: view_code, down: view_quickview},
 		main:              main,
