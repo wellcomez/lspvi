@@ -150,12 +150,7 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 		if i > 500 {
 			break
 		}
-		var icon = colortext{FileIcon(v) + " ", 0, 0}
-		if ic, err := devicon.FindIconPath(v); err == nil {
-			if r, g, b, err := HexToRGB(ic.Color); err == nil {
-				icon.color = tcell.NewRGBColor(int32(r), int32(g), int32(b))
-			}
-		}
+		icon := get_dev_fileicon(v)
 		impl.list.AddColorItem([]colortext{
 			icon,
 			{v, 0, 0},
@@ -179,6 +174,16 @@ func (dir *DirWalk) UpdateData(impl *fzflist_impl, file *filewalk.Filewalk) {
 	dir.update_title()
 	go dir.fzflist_impl.parent.app.QueueUpdateDraw(func() {
 	})
+}
+
+func get_dev_fileicon(v string) colortext {
+	var icon = colortext{FileIcon(v) + " ", 0, 0}
+	if ic, err := devicon.FindIconPath(v); err == nil {
+		if color, err := hexToCellColor(ic.Color); err == nil {
+			icon.color = color
+		}
+	}
+	return icon
 }
 
 func (wk *DirWalk) UpdateQuery(query string) {

@@ -207,7 +207,7 @@ func is_class(kind lsp.SymbolKind) bool {
 }
 func is_memeber(kind lsp.SymbolKind) bool {
 	switch kind {
-	case lsp.SymbolKindMethod, lsp.SymbolKindField, lsp.SymbolKindConstructor, lsp.SymbolKindEnumMember:
+	case lsp.SymbolKindMethod, lsp.SymbolKindField, lsp.SymbolKindConstructor, lsp.SymbolKindEnumMember,lsp.SymbolKindProperty:
 		return true
 	}
 	return false

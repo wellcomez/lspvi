@@ -74,8 +74,8 @@ func new_history_picker(v *fzfmain) history_picker {
 		h := v.newFunction1()
 		fzfdata = append(fzfdata, h.dispname)
 		items = append(items, h)
-		var sss = []colortext{{FileIcon(h.filepath.Path) + " ", 0,0}}
-		sym.impl.list.AddColorItem(append(sss, colortext{h.dispname, 0,0}), nil, nil)
+		var sss = []colortext{get_dev_fileicon(h.filepath.Path)}
+		sym.impl.list.AddColorItem(append(sss, colortext{h.dispname, 0, 0}), nil, nil)
 	}
 	if history.index < sym.impl.list.GetItemCount() {
 		sym.impl.list.SetCurrentItem(history.index)
@@ -126,7 +126,7 @@ func (pk history_picker) UpdateQuery(query string) {
 	for i, v := range fzf.selected_index {
 		file := pk.impl.listdata[v]
 		t1 := convert_string_colortext(fzf.selected_postion[i], file.dispname, 0, hl)
-		var sss = []colortext{{FileIcon(file.filepath.Path) + " ", 0,0}}
+		var sss = []colortext{{FileIcon(file.filepath.Path) + " ", 0, 0}}
 		fzf.listview.AddColorItem(append(sss, t1...),
 			nil, func() {})
 	}
