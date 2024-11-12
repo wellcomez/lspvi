@@ -68,7 +68,7 @@ func (t DateType) Icon() string {
 	case data_implementation:
 		return fmt.Sprintf("%c", '\U000f0b10')
 	case data_refs:
-		return fmt.Sprintf("%c", '\ueb36')
+		return fmt.Sprintf("%c", lspcore.Reference)
 	case data_bookmark:
 		return fmt.Sprintf("%c", '\U000f0e15')
 	case data_callin:
