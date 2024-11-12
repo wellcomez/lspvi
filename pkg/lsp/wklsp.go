@@ -22,8 +22,8 @@ var Field = "󰜢"
 var Variable = "󰀫"
 var Class = "𝓒"
 
-// var Interface = ""
-var Interface = '\ueb61'
+var  Interface =  '󰜰'
+//var Interface = '\ueb61'
 var Module = ""
 var Property = '󰜢'
 var Unit = '󰑭'
