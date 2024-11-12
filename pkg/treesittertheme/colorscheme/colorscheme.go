@@ -52,8 +52,8 @@ func main() {
 	// Sample YAML data as a string
 	x := "/home/z/dev/lsp/goui/pkg/treesittertheme/colorscheme/"
 	// os.getcwd()
-	x = "."
-	x = "/Users/jialaizhu/dev/lspvi/pkg/treesittertheme/colorscheme"
+	// x = "."
+	// x = "/Users/jialaizhu/dev/lspvi/pkg/treesittertheme/colorscheme"
 	dirs, err := os.ReadDir(x)
 	if err != nil {
 		return
@@ -112,12 +112,17 @@ func main() {
 		}
 		for _, v := range data.Data {
 			b := bg
+			Foreground := v.Foreground
+
 			if len(v.Background) > 0 {
 				b = v.Background
-			} else if v.Reverse != nil && *v.Reverse {
-				b = newFunction(b).CSS()
+			} else {
+				if v.Reverse != nil && *v.Reverse {
+					// b = colore_reverse(bg)
+					b = Foreground
+					Foreground = bg
+				}
 			}
-			Foreground := v.Foreground
 			// if strings.ToLower(v.Group) == "cursorline" {
 			// 	Foreground = b
 			// 	b = ""
@@ -145,11 +150,16 @@ func main() {
 		}
 	}
 }
-
-func newFunction(hex string) (cell tcell.Color) {
+func colore_reverse(hex string) string {
+	r, g, b, _ := hexToRGB(hex)
+	bb := tcell.NewRGBColor(255-r, 255-g, 255-b)
+	return bb.CSS()
+}
+func to_cell_style(hex string) (cell tcell.Style) {
 	r, g, b, _ := hexToRGB(hex)
 	bb := tcell.NewRGBColor(r, g, b)
-	_, ccc, _ := tcell.StyleDefault.Background(bb).Decompose()
-	cell = ccc
-	return
+	// _, ccc, _ :=
+	return tcell.StyleDefault.Background(bb)
+	// cell = ccc
+	// return
 }
