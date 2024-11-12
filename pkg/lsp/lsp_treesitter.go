@@ -118,6 +118,61 @@ func markdown_parser(ts *TreeSitter) {
 		return ts.Outline[i].SymInfo.Location.Range.Start.Line < ts.Outline[j].SymInfo.Location.Range.Start.Line
 	})
 }
+func SymbolSwift(o Outline, ts *TreeSitter) (ret *lsp.SymbolInformation, done bool) {
+	name := ""
+	for _, v := range o {
+		if v.CaptureName == "name" {
+			if v.Symbol == "pattern" || v.Symbol == "type_identifier" {
+				name = v.Code
+				break
+			}
+		}
+	}
+	if ind := o.find("item"); ind != -1 {
+
+		item := o[ind]
+		c := ts_to_symbol(item, ts)
+		ret = &c
+		switch item.Symbol {
+		case "property_identifier", "property_declaration":
+			c.Kind = lsp.SymbolKindProperty
+			if strings.Contains(item.Code, "{") {
+				c.Kind = lsp.SymbolKindMethod
+			}
+		case "interface_declaration", "protocol_declaration":
+			c.Kind = lsp.SymbolKindInterface
+		case "type_declaration":
+			c.Kind = lsp.SymbolKindClass
+		case "field_declaration", "public_field_definition":
+			c.Kind = lsp.SymbolKindField
+		case "enum_specifier":
+			c.Kind = lsp.SymbolKindEnum
+		case "method_elem", "method_declaration", "method_definition":
+			c.Kind = lsp.SymbolKindMethod
+		case "struct_specifier":
+			c.Kind = lsp.SymbolKindStruct
+		case "init_declaration", "deinit_declaration":
+			c.Kind = lsp.SymbolKindConstructor
+		case "class_specifier", "class_declaration":
+			c.Kind = lsp.SymbolKindClass
+		case "function_definition", "function_declaration", "function_item":
+			c.Kind = lsp.SymbolKindFunction
+		default:
+			debug.TraceLogf("query_result:%s| symbol:%20s    | code:%20s", item.CaptureName, item.Symbol, item.Code)
+		}
+		code := item.Code
+		c.Name = name
+		if len(code) > 0 {
+			if ts.symbol_resolve != nil {
+				if yes, _ := ts.symbol_resolve.resolve(o, ret, code); yes {
+					done = true
+				}
+			}
+		}
+
+	}
+	return
+}
 func (o Outline) Symbol(ts *TreeSitter) (ret *lsp.SymbolInformation, done bool) {
 	name := ""
 	if i := o.find("name"); i != -1 {
@@ -280,17 +335,21 @@ func swift_outline(ts *TreeSitter, cb outlinecb) {
 		}
 	}
 	for _, line := range ret {
-		sym, _ := line.Symbol(ts)
+		sym, _ := SymbolSwift(line, ts)
 		if sym == nil {
 			continue
 		}
-		for _, v := range line {
-			if v.Symbol == "pattern" || v.Symbol == "type_identifier" {
-				sym.Name = v.Code
-				break
-			}
+		// for _, v := range line {
+		// 	if v.Symbol == "pattern" || v.Symbol == "type_identifier" {
+		// 		sym.Name = v.Code
+		// 		break
+		// 	}
+		// }
+		if is_class(sym.Kind) {
+			items.items = append([]*lsp.SymbolInformation{sym}, items.items...)
+		} else {
+			items.Add(sym)
 		}
-		items.Add(sym)
 	}
 	lang := lsp_dummy{}
 	core := &lspcore{lang: lang}
