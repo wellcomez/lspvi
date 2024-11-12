@@ -103,6 +103,10 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 	}
 }
 
+var nf_md_call_received = '\U000f00fa'
+var nf_oct_search = '\uf422'
+var nf_fa_bookmark = '\uf02e'
+
 func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	layout := pk.prev_picker_impl.flex(input, 1)
 	x := tview.NewFlex()
@@ -124,7 +128,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
 	pk.file_include = file_include
-	var searchIcon = fmt.Sprintf("%c", '\ue68f')
+	var searchIcon = fmt.Sprintf("%c", nf_oct_search)
 	// searchIcon = "" // Search icon from Nerd Fonts
 	// searchIcon = fmt.Sprintf("%c %c %c %c", '\uF15B','\ue731','\uf0b0','\uf15c')+fmt.Sprintf("%c",'\uea6d')
 	// pk.listcustom.AddItem(searchIcon, "", nil)
