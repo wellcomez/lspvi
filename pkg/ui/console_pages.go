@@ -237,7 +237,7 @@ func (m *mainui) OnTabChanged(tab *TabButton) {
 }
 func (console *console_pages) new_tab_mgr(main *mainui) *tabmgr {
 	var tab_id = []view_id{}
-	for _, v := range []view_id{view_quickview, view_callin, view_log, view_uml, view_bookmark, view_recent_open_file, view_term, view_code_below} {
+	for _, v := range tab_view_id {
 		if v == view_uml {
 			if main.uml == nil {
 				continue

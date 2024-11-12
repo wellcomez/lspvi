@@ -518,7 +518,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case open_picker_help:
-		return cmdactor{id, "Help", func() bool {
+		return cmdactor{id, "Commonds", func() bool {
 			m.Dialog().OpenKeymapFzf()
 			return true
 		}}
@@ -743,7 +743,7 @@ func (k *keymap) global_key_map() []cmditem {
 		get_cmd_actor(m, open_picker_livegrep_line).tcell_key(tcell.KeyCtrlF),
 		get_cmd_actor(m, goto_forward).runne('O').Ctrl(),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
-		get_cmd_actor(m, open_picker_help).runne('p').Alt(),
+		get_cmd_actor(m, open_picker_help).tcell_key(tcell.KeyCtrlK),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTab),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTAB),
 		get_cmd_actor(m, zoomout).runne('+'),
