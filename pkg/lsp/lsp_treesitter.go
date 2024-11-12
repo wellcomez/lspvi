@@ -1068,11 +1068,69 @@ func (t *cpp_go_symbol_resolve) change_to_method(sym *lsp.SymbolInformation) boo
 	return false
 }
 
+type go_const_spec struct {
+	data        []*lsp.SymbolInformation
+	name        string
+	classsymbol *lsp.SymbolInformation
+}
+
+func (spec *go_const_spec) Is(s *lsp.SymbolInformation) bool {
+	v := spec.data[len(spec.data)-1]
+	if v.Location.Range.End.Line+1 == s.Location.Range.End.Line {
+		spec.data = append(spec.data, s)
+		spec.classsymbol.Location.Range.End = s.Location.Range.End
+		return true
+	}
+	return false
+}
+
 type ts_go_symbol_resolve struct {
+	class_object    []*lsp.SymbolInformation
+	enum_const      []*go_const_spec
+	last_enum_const *go_const_spec
 }
 
 // resolve implements ts_symbol_parser.
-func (t ts_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.SymbolInformation, code string) (done bool, err error) {
+func (t *ts_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.SymbolInformation, code string) (done bool, err error) {
+	is_const_spec := false
+	for _, v := range line {
+		if v.CaptureName == "item" {
+			if v.Symbol == "const_spec" {
+				found := false
+				is_const_spec = true
+				for i := range t.class_object {
+					c := t.class_object[i]
+					if strings.Contains(v.Code, c.Name) {
+						sym.Kind = lsp.SymbolKindEnumMember
+						t.last_enum_const = &go_const_spec{
+							name:        c.Name,
+							data:        []*lsp.SymbolInformation{sym},
+							classsymbol: c,
+						}
+						c.Location.Range.End = sym.Location.Range.End
+						c.Kind = lsp.SymbolKindEnum
+						t.enum_const = append(t.enum_const, t.last_enum_const)
+						found = true
+						break
+					}
+				}
+				if !found {
+					if t.last_enum_const != nil {
+						if t.last_enum_const.Is(sym) {
+							sym.Kind = lsp.SymbolKindEnumMember
+						}
+					}
+				}
+			}
+			break
+		}
+	}
+	if !is_const_spec {
+		t.last_enum_const = nil
+	}
+	if is_class(sym.Kind) {
+		t.class_object = append(t.class_object, sym)
+	}
 	done = false
 	if sym.Kind == lsp.SymbolKindMethod {
 		method_name := ""
@@ -1107,7 +1165,7 @@ func NewTreeSitter(name string, content []byte) *TreeSitter {
 	}
 	if lsp_lang_go.IsMe(lsp_lang_go{}, name) {
 		var golang ts_go_symbol_resolve
-		ret.symbol_resolve = golang
+		ret.symbol_resolve = &golang
 	} else if lsp_lang_cpp.IsMe(lsp_lang_cpp{}, name) {
 		var golang cpp_go_symbol_resolve
 		ret.symbol_resolve = &golang

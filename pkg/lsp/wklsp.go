@@ -66,8 +66,8 @@ var IconsRunne = map[int]rune{
 	19: '󰅩', //-- Object
 	20: '󰌋', //-- Key
 	21: '󰟢', //-- Null
-	//22: ' ', //-- EnumMember
-	//23:  "󰌗 ", //-- Struct
+	22: '', //-- EnumMember
+	// 23:  '󰌗', //-- Struct
 	23:  '𝓢', //-- Struct
 	24:  '', //-- Event
 	25:  '󰆕', //-- Operator
@@ -207,7 +207,7 @@ func is_class(kind lsp.SymbolKind) bool {
 }
 func is_memeber(kind lsp.SymbolKind) bool {
 	switch kind {
-	case lsp.SymbolKindMethod, lsp.SymbolKindField, lsp.SymbolKindConstructor, lsp.SymbolKindEnumMember,lsp.SymbolKindProperty:
+	case lsp.SymbolKindMethod, lsp.SymbolKindField, lsp.SymbolKindConstructor, lsp.SymbolKindEnumMember, lsp.SymbolKindProperty:
 		return true
 	}
 	return false
