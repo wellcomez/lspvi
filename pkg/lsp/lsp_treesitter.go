@@ -136,9 +136,9 @@ func SymbolSwift(o Outline, ts *TreeSitter) (ret *lsp.SymbolInformation, done bo
 		switch item.Symbol {
 		case "property_identifier", "property_declaration":
 			c.Kind = lsp.SymbolKindProperty
-			if strings.Contains(item.Code, "{") {
-				c.Kind = lsp.SymbolKindMethod
-			}
+			// if strings.Contains(item.Code, "{") {
+			// 	c.Kind = lsp.SymbolKindMethod
+			// }
 		case "interface_declaration", "protocol_declaration":
 			c.Kind = lsp.SymbolKindInterface
 		case "type_declaration":
