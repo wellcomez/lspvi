@@ -67,7 +67,7 @@ func (ret *LspviConfig) Load() (err error) {
 func NewLspviconfig() *LspviConfig {
 	disable := false
 	default_ret := LspviConfig{
-		Colorscheme: "darcula",
+		Colorscheme: "dracula",
 		Wrap:        false,
 		Color:       ColorConfig{},
 		Vim: &vimmode{
