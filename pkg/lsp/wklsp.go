@@ -18,13 +18,15 @@ var nf_cod_symbol_variable = ''  //=\uea88
 var nf_cod_symbol_method = ''    // =\uea8c
 var nf_cod_symbol_snippet = ''   // =\ueb66
 var nf_cod_symbol_structure = '' // =\uea91
+var nf_cod_symbol_namespace = '' // =\uea8b
 // var FolderEmoji = "\U0001f4c1"
 var FileIcon = "\U0001f4c4"
 var Text = '󰉿'
 var Method = "ƒ"
-var Function = ""
+var Function = ''
 var Constructor = ""
 var Field = "󰜢"
+var Namespace = nf_cod_symbol_namespace
 
 // var Variable = "󰀫"
 // var Class = "𝓒"
@@ -36,7 +38,7 @@ var Class = nf_cod_symbol_class
 var Interface = nf_cod_symbol_interface
 
 // var Interface = '\ueb61'
-var Module = ""
+var Module = ''
 var Property = '󰜢'
 var Unit = '󰑭'
 var Value = '󰎠'
@@ -50,17 +52,17 @@ var Folder = '󰉋'
 var EnumMember = ''
 var Constant = '󰏿'
 var Struct = '𝓢'
-var Event = ""
+var Event = ''
 var Operator = "󰆕"
 
 // var TypeParameter = '󰊄'
 var TypeParameter = '\uea92'
 var IconsRunne = map[int]rune{
-	1: '󰈙', //-- File
-	2: '', // -- Module
-	3: '󰌗', // -- Namespace
-	4: '', // -- Package
-	5: '𝓒', //-- Class
+	1: File,      //-- File
+	2: Module,    // -- Module
+	3: Namespace, // -- Namespace
+	4: '',       // -- Package
+	5: Class,     //-- Class
 	//5:   "󰌗 ", //-- Class
 	6: '󰆧', //-- Method
 	//6:  Method,
@@ -70,8 +72,8 @@ var IconsRunne = map[int]rune{
 	10: '󰕘', //-- Enum
 	//11: "󰕘 ", //-- Interface
 	11: Interface,
-	12: '󰊕',        //-- Function
-	13: '󰆧',        //-- Variable
+	12: Function,   //-- Function
+	13: Variable,   //-- Variable
 	14: Constant,   //-- Constant
 	15: '󰀬',        //-- String
 	16: '󰎠',        //-- Number
@@ -83,7 +85,7 @@ var IconsRunne = map[int]rune{
 	22: EnumMember, //-- EnumMember
 	// 23:  '󰌗', //-- Struct
 	23:  Struct,        //-- Struct
-	24:  '',           //-- Event
+	24:  Event,         //-- Event
 	25:  '󰆕',           //-- Operator
 	26:  TypeParameter, //-- TypeParameter
 	255: '󰉨',           //-- Macro
