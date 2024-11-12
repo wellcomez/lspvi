@@ -13,6 +13,7 @@ import (
 	"github.com/pgavlin/femto"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/devicon"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
@@ -84,7 +85,13 @@ func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 	for _, v := range FileWithIcon(name) + changemark + " " {
 		runes = append(runes, v)
 	}
-	sytle := code.IconStyle(code.main)
+
+	style := code.IconStyle(code.main)
+	codestyle:= code.IconStyle(code.main)
+	if icon,err:=devicon.FindIconPath(name);err==nil{
+		r,g,b,_:=hexToRGB(icon.Color)
+		codestyle= style.Foreground(tcell.NewRGBColor(r,g,b))
+	}
 	first := SplitCode.First() == code.code
 	var quick_btn icon = icon{
 		s: []rune{close_icon, ' '},
@@ -95,11 +102,11 @@ func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 			}
 		},
 		style: func() tcell.Style {
-			return sytle
+			return style
 		},
 	}
 	item := []icon{
-		{s: runes, style: func() tcell.Style { return sytle }, click: func() {}},
+		{s: runes, style: func() tcell.Style { return codestyle}, click: func() {}},
 	}
 	if vid != view_code {
 		item = append(item, quick_btn)
