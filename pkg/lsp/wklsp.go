@@ -14,7 +14,7 @@ import (
 
 // var FolderEmoji = "\U0001f4c1"
 var FileIcon = "\U0001f4c4"
-var Text = "󰉿"
+var Text = '󰉿'
 var Method = "ƒ"
 var Function = ""
 var Constructor = ""
@@ -25,22 +25,22 @@ var Class = "𝓒"
 // var Interface = ""
 var Interface = '\ueb61'
 var Module = ""
-var Property = "󰜢"
-var Unit = "󰑭"
-var Value = "󰎠"
+var Property = '󰜢'
+var Unit = '󰑭'
+var Value = '󰎠'
 var Enum = ""
-var Keyword = "󰌋"
-var Snippet = ""
-var Color = "󰏘"
-var File = "󰈙"
-var Reference = "󰈇"
-var Folder = "󰉋"
-var EnumMember = ""
-var Constant = "󰏿"
-var Struct = "𝓢"
+var Keyword = '󰌋'
+var Snippet = ''
+var Color = '󰏘'
+var File = '󰈙'
+var Reference = '󰈇'
+var Folder = '󰉋'
+var EnumMember = ''
+var Constant = '󰏿'
+var Struct = '𝓢'
 var Event = ""
 var Operator = "󰆕"
-var TypeParameter = ""
+var TypeParameter = '󰊄'
 var IconsRunne = map[int]rune{
 	1: '󰈙', //-- File
 	2: '', // -- Module
@@ -56,57 +56,34 @@ var IconsRunne = map[int]rune{
 	10: '󰕘', //-- Enum
 	//11: "󰕘 ", //-- Interface
 	11: Interface,
-	12: '󰊕', //-- Function
-	13: '󰆧', //-- Variable
-	14: '󰏿', //-- Constant
-	15: '󰀬', //-- String
-	16: '󰎠', //-- Number
-	17: '◩', //-- Boolean
-	18: '󰅪', //-- Array
-	19: '󰅩', //-- Object
-	20: '󰌋', //-- Key
-	21: '󰟢', //-- Null
-	22: '', //-- EnumMember
+	12: '󰊕',        //-- Function
+	13: '󰆧',        //-- Variable
+	14: Constant,   //-- Constant
+	15: '󰀬',        //-- String
+	16: '󰎠',        //-- Number
+	17: '◩',        //-- Boolean
+	18: '󰅪',        //-- Array
+	19: '󰅩',        //-- Object
+	20: '󰌋',        //-- Key
+	21: '󰟢',        //-- Null
+	22: EnumMember, //-- EnumMember
 	// 23:  '󰌗', //-- Struct
-	23:  '𝓢', //-- Struct
-	24:  '', //-- Event
-	25:  '󰆕', //-- Operator
-	26:  '󰊄', //-- TypeParameter
-	255: '󰉨', //-- Macro
+	23:  Struct,        //-- Struct
+	24:  '',           //-- Event
+	25:  '󰆕',           //-- Operator
+	26:  TypeParameter, //-- TypeParameter
+	255: '󰉨',           //-- Macro
 }
-var LspIcon = map[int]string{
-	1: "󰈙 ",  //-- File
-	2: " ",  // -- Module
-	3: "󰌗 ",  // -- Namespace
-	4: " ",  // -- Package
-	5: Class, //-- Class
-	//5:   "󰌗 ", //-- Class
-	6: "󰆧 ", //-- Method
-	//6:  Method,
-	7:  " ", //-- Property
-	8:  " ", //-- Field
-	9:  " ", //-- Constructor
-	10: "󰕘 ", //-- Enum
-	//11: "󰕘 ", //-- Interface
-	11: fmt.Sprintf("%c", Interface),
-	12: "󰊕 ", //-- Function
-	13: "󰆧 ", //-- Variable
-	14: "󰏿 ", //-- Constant
-	15: "󰀬 ", //-- String
-	16: "󰎠 ", //-- Number
-	17: "◩ ", //-- Boolean
-	18: "󰅪 ", //-- Array
-	19: "󰅩 ", //-- Object
-	20: "󰌋 ", //-- Key
-	21: "󰟢 ", //-- Null
-	22: " ", //-- EnumMember
-	//23:  "󰌗 ", //-- Struct
-	23:  Struct, //-- Struct
-	24:  " ",   //-- Event
-	25:  "󰆕 ",   //-- Operator
-	26:  "󰊄 ",   //-- TypeParameter
-	255: "󰉨 ",   //-- Macro
+
+func icon_run_to_string() (ret map[int]string) {
+	ret = make(map[int]string)
+	for k, v := range IconsRunne {
+		ret[k] = fmt.Sprintf("%c", v)
+	}
+	return
 }
+
+var LspIcon = icon_run_to_string()
 
 type Symbol struct {
 	SymInfo   lsp.SymbolInformation

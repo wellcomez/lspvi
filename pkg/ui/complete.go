@@ -269,7 +269,7 @@ func complete_icon(v lsp.CompletionItem) (symbol_kind lsp.SymbolKind, ret string
 
 	switch v.Kind {
 	case lsp.CompletionItemKindText:
-		ret = rune_string('\uf15c')
+		ret = rune_string(lspcore.Text)
 	case lsp.CompletionItemKindMethod:
 		symbol_kind = lsp.SymbolKindMethod
 	case lsp.CompletionItemKindFunction:
@@ -289,23 +289,23 @@ func complete_icon(v lsp.CompletionItem) (symbol_kind lsp.SymbolKind, ret string
 	case lsp.CompletionItemKindProperty:
 		symbol_kind = lsp.SymbolKindProperty
 	case lsp.CompletionItemKindUnit:
-		ret = rune_string('\U000f1501')
+		ret = rune_string(lspcore.Unit)
 	case lsp.CompletionItemKindValue:
-		symbol_kind = -1
+		ret = rune_string(lspcore.Value)
 	case lsp.CompletionItemKindEnum:
 		symbol_kind = lsp.SymbolKindEnum
 	case lsp.CompletionItemKindKeyword:
-		ret = rune_string('\ueb62')
+		ret = rune_string(lspcore.Keyword)
 	case lsp.CompletionItemKindSnippet:
-		ret = rune_string('\ueb66')
+		ret = rune_string(lspcore.Snippet)
 	case lsp.CompletionItemKindColor:
-		ret = rune_string('\ueb5c')
+		ret = rune_string(lspcore.Color)
 	case lsp.CompletionItemKindFile:
 		symbol_kind = lsp.SymbolKindFile
 	case lsp.CompletionItemKindReference:
-		ret = rune_string('\U000eb36b')
+		ret = rune_string(lspcore.Reference)
 	case lsp.CompletionItemKindFolder:
-		ret = rune_string('\ue5ff')
+		ret = rune_string(lspcore.Folder)
 	case lsp.CompletionItemKindEnumMember:
 		symbol_kind = lsp.SymbolKindEnumMember
 	case lsp.CompletionItemKindConstant:
