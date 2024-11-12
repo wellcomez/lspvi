@@ -19,6 +19,9 @@ var nf_cod_symbol_method = ''    // =\uea8c
 var nf_cod_symbol_snippet = ''   // =\ueb66
 var nf_cod_symbol_structure = '' // =\uea91
 var nf_cod_symbol_namespace = '' // =\uea8b
+var nf_cod_symbol_enum = ''      // =\uea95
+var nf_cod_symbol_keyword = ''   // =\ueb62
+var nf_cod_symbol_operator = ''  // =\ueb64
 // var FolderEmoji = "\U0001f4c1"
 var FileIcon = "\U0001f4c4"
 var Text = '󰉿'
@@ -31,7 +34,10 @@ var Namespace = nf_cod_symbol_namespace
 // var Variable = "󰀫"
 // var Class = "𝓒"
 // var  Interface =  '󰜰'
-
+// var Enum = ""
+// var Keyword = '󰌋'
+// var Struct = '𝓢'
+// var Operator = "󰆕"
 var Variable = nf_cod_symbol_variable
 var Class = nf_cod_symbol_class
 
@@ -42,8 +48,8 @@ var Module = ''
 var Property = '󰜢'
 var Unit = '󰑭'
 var Value = '󰎠'
-var Enum = ""
-var Keyword = '󰌋'
+var Enum = nf_cod_symbol_enum
+var Keyword = nf_cod_symbol_keyword
 var Snippet = ''
 var Color = '󰏘'
 var File = '󰈙'
@@ -51,9 +57,9 @@ var Reference = '󰈇'
 var Folder = '󰉋'
 var EnumMember = ''
 var Constant = '󰏿'
-var Struct = '𝓢'
+var Struct = nf_cod_symbol_structure
 var Event = ''
-var Operator = "󰆕"
+var Operator = nf_cod_symbol_operator
 
 // var TypeParameter = '󰊄'
 var TypeParameter = '\uea92'
