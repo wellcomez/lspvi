@@ -15,6 +15,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	nerd "zen108.com/lspvi/pkg/ui/icon"
 )
 
 var tag_quickview = "quickdata"
@@ -340,7 +341,7 @@ func (v *FlexTreeNode) ListItemColorString() (ret []colorstring) {
 	down := ""
 	// down := fmt.Sprintf("%c",'\U000f1464')
 	down = "▶"
-	down = fmt.Sprintf("%-2c", '\U000f004a')
+	down = fmt.Sprintf("%-2c", nerd.Nf_md_arrow_down_drop_circle)
 	m := v.HasMore()
 	lastIndex := len(v.child) - 1
 	for i, c := range v.child {
@@ -359,7 +360,7 @@ func (v *FlexTreeNode) ListItem() (ret []string) {
 	down := ""
 	// down := fmt.Sprintf("%c",'\U000f1464')
 	down = "▶"
-	down = fmt.Sprintf("%-2c", '\U000f004a')
+	down = fmt.Sprintf("%-2c", nerd.Nf_md_arrow_down_drop_circle)
 	m := v.HasMore()
 	lastIndex := len(v.child) - 1
 	for i, c := range v.child {

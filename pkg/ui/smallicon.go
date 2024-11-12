@@ -6,6 +6,7 @@ package mainui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	nerd "zen108.com/lspvi/pkg/ui/icon"
 )
 
 func get_style_hide(hide bool) tcell.Style {
@@ -60,11 +61,11 @@ var block_str = '■'
 // var str_back = '◀'
 // var str_forward = '▶'
 
-var left_sidebar_rune = '\U000f10aa'
-var right_sidebar_rune = '\U000f10ab'
+var left_sidebar_rune = nerd.Nf_md_dock_left
+var right_sidebar_rune = nerd.Nf_md_dock_right 
 
-var back_runne = '\U000f0b28'
-var forward_runne = '\U000f0b2a'
+var back_runne = nerd.Nf_md_chevron_left_circle 
+var forward_runne =nerd.Nf_md_chevron_right_circle
 
 type minitoolbar struct {
 	item  []icon

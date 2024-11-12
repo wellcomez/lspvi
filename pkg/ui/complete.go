@@ -16,6 +16,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	nerd "zen108.com/lspvi/pkg/ui/icon"
 )
 
 type CompleteMenu interface {
@@ -265,7 +266,7 @@ func rune_string(r rune) string {
 }
 func complete_icon(v lsp.CompletionItem) (symbol_kind lsp.SymbolKind, ret string) {
 	symbol_kind = -1
-	ret = rune_string('\ueb63')
+	ret = rune_string(nerd.Nf_cod_symbol_misc)
 
 	switch v.Kind {
 	case lsp.CompletionItemKindText:

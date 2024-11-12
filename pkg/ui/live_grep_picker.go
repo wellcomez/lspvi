@@ -15,6 +15,7 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	"zen108.com/lspvi/pkg/ui/grep"
+	"zen108.com/lspvi/pkg/ui/icon"
 )
 
 type grepresult struct {
@@ -103,11 +104,7 @@ func (pk *livewgreppicker) handle() func(event *tcell.EventKey, setFocus func(p 
 	}
 }
 
-var nf_cod_call_incoming= '\ueb92'
-var nf_md_call_received = '\U000f00fa'
-var nf_oct_search = '\uf422'
-var nf_fa_bookmark = '\uf02e'
-
+// =\uf02e
 func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	layout := pk.prev_picker_impl.flex(input, 1)
 	x := tview.NewFlex()
@@ -129,7 +126,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	})
 	file_include.SetBackgroundColor(tcell.ColorBlack)
 	pk.file_include = file_include
-	var searchIcon = fmt.Sprintf("%c", nf_oct_search)
+	var searchIcon = fmt.Sprintf("%c", nerd.Nf_oct_search)
 	// searchIcon = "" // Search icon from Nerd Fonts
 	// searchIcon = fmt.Sprintf("%c %c %c %c", '\uF15B','\ue731','\uf0b0','\uf15c')+fmt.Sprintf("%c",'\uea6d')
 	// pk.listcustom.AddItem(searchIcon, "", nil)
@@ -160,7 +157,7 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 		return action, event
 	})
 
-	var saveIcon = fmt.Sprintf("%c", '\uf0c7') // Floppy disk emoji
+	var saveIcon = rune_string(nerd.Nf_fa_save)
 	save_btn := tview.NewButton(saveIcon)
 	save_btn.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		if InRect(event, save_btn) {
@@ -177,21 +174,21 @@ func (pk *livewgreppicker) grid(input *tview.InputField) *tview.Flex {
 	input_filter := tview.NewFlex()
 	input_filter.SetDirection(tview.FlexColumn)
 
-	exclude := NewIconButton('\ueae5')
+	exclude := NewIconButton(nerd.Nf_cod_exclude)
 	exclude.selected = pk.impl.query_option.Exclude
 	exclude.click = func(b bool) {
 		pk.impl.query_option.Exclude = b
 		pk.__updatequery(pk.impl.query_option)
 	}
 
-	cap := NewIconButton('\ueab1')
+	cap := NewIconButton(nerd.Nf_cod_case_sensitive)
 	cap.selected = !pk.impl.query_option.Ignorecase
 	cap.click = func(b bool) {
 		pk.impl.query_option.Ignorecase = !b
 		pk.__updatequery(pk.impl.query_option)
 	}
 
-	word := NewIconButton('\ueb7e')
+	word := NewIconButton(nerd.Nf_cod_whole_word)
 	word.selected = pk.impl.query_option.Wholeword
 	word.click = func(b bool) {
 		pk.impl.query_option.Wholeword = b
