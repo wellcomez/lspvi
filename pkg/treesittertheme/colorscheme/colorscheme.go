@@ -2,20 +2,47 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+
 	// "log"
 	"os"
 	"path/filepath"
 
+	"github.com/gdamore/tcell/v2"
 	"gopkg.in/yaml.v2"
 	// "gopkg.in/yaml.v2"
 )
+
+func hexToRGB(hex string) (int32, int32, int32, error) {
+	if len(hex) != 7 || hex[0] != '#' {
+		return 0, 0, 0, fmt.Errorf("invalid hex color code")
+	}
+
+	r, err := strconv.ParseInt(hex[1:3], 16, 0)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	g, err := strconv.ParseInt(hex[3:5], 16, 0)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	b, err := strconv.ParseInt(hex[5:7], 16, 0)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	return int32(r), int32(g), int32(b), nil
+}
 
 // Define a struct to match the YAML structure
 type Item struct {
 	Group      string `yaml:"Group"`
 	Foreground string `yaml:"foreground"`
 	Background string `yaml:"background"`
+	Reverse    *bool  `yaml:"reverse"`
 }
 type File struct {
 	Data []Item `yaml:"Data"`
@@ -26,6 +53,7 @@ func main() {
 	x := "/home/z/dev/lsp/goui/pkg/treesittertheme/colorscheme/"
 	// os.getcwd()
 	x = "."
+	x = "/Users/jialaizhu/dev/lspvi/pkg/treesittertheme/colorscheme"
 	dirs, err := os.ReadDir(x)
 	if err != nil {
 		return
@@ -86,6 +114,8 @@ func main() {
 			b := bg
 			if len(v.Background) > 0 {
 				b = v.Background
+			} else if v.Reverse != nil && *v.Reverse {
+				b = newFunction(b).CSS()
 			}
 			Foreground := v.Foreground
 			// if strings.ToLower(v.Group) == "cursorline" {
@@ -98,9 +128,10 @@ func main() {
 				}
 				return c
 			}
-			if b == "#0" {
-				b = "#000000"
-			}
+			// if b == "#0" {
+			// 	b = "#000000"
+			// }
+
 			b = make6(b)
 			Foreground = make6(Foreground)
 			s := fmt.Sprintf("color-link %s \"%s,%s\"", strings.ToLower(v.Group), strings.ToUpper(Foreground), strings.ToUpper(b))
@@ -113,4 +144,12 @@ func main() {
 			fmt.Println(path, err)
 		}
 	}
+}
+
+func newFunction(hex string) (cell tcell.Color) {
+	r, g, b, _ := hexToRGB(hex)
+	bb := tcell.NewRGBColor(r, g, b)
+	_, ccc, _ := tcell.StyleDefault.Background(bb).Decompose()
+	cell = ccc
+	return
 }
