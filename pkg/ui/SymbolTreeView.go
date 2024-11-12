@@ -111,7 +111,8 @@ func (t *Tree) MouseHandler() func(action tview.MouseAction, event *tcell.EventM
 		return t.TreeView.MouseHandler()(action, event, setFocus)
 	}
 }
-
+var closemark ="▶"
+var openmark  = "▼"
 type SymbolTreeView struct {
 	*view_link
 	view *Tree
@@ -404,8 +405,6 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 }
 
 func expand_node_option(node *tview.TreeNode, expand bool) {
-	openmark := fmt.Sprintf("%c", '\ueab4')
-	closemark := fmt.Sprintf("%c", '\ueab6')
 	s := node.GetText()
 	s = strings.TrimPrefix(s, closemark)
 	s = strings.TrimPrefix(s, openmark)
@@ -423,8 +422,6 @@ func expand_node_option(node *tview.TreeNode, expand bool) {
 	}
 }
 func switch_expand_state(node *tview.TreeNode) {
-	openmark := fmt.Sprintf("%c", '\ueab4')
-	closemark := fmt.Sprintf("%c", '\ueab6')
 	s := node.GetText()
 	s = strings.TrimPrefix(s, closemark)
 	s = strings.TrimPrefix(s, openmark)
