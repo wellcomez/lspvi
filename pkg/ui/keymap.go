@@ -94,6 +94,7 @@ const (
 	cmd_reload
 	split_right
 	close_tab
+	open_externl
 )
 
 func (m *mainui) create_menu_item(id command_id, handle func()) context_menu_item {
@@ -142,6 +143,12 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 	case close_tab:
 		return cmdactor{id, "CloseTab", func() bool {
 			SplitClose(m.current_editor()).handle()
+			return true
+		}}
+	case open_externl:
+		return cmdactor{id, "Open external", func() bool {
+			filename := m.current_editor().Path()
+			open_extenal(filename)
 			return true
 		}}
 	case split_right:
@@ -511,7 +518,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case open_picker_help:
-		return cmdactor{id, "Help", func() bool {
+		return cmdactor{id, "Commands", func() bool {
 			m.Dialog().OpenKeymapFzf()
 			return true
 		}}
@@ -541,6 +548,14 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		return cmdactor{id,
 			"", nil,
 		}
+	}
+}
+
+func open_extenal(filename string) {
+	if proxy != nil {
+		proxy.open_in_web(filename)
+	} else {
+		openfile(filename)
 	}
 }
 
@@ -728,7 +743,7 @@ func (k *keymap) global_key_map() []cmditem {
 		get_cmd_actor(m, open_picker_livegrep_line).tcell_key(tcell.KeyCtrlF),
 		get_cmd_actor(m, goto_forward).runne('O').Ctrl(),
 		get_cmd_actor(m, open_picker_ctrlp).tcell_key(tcell.KeyCtrlP),
-		get_cmd_actor(m, open_picker_help).runne('p').Alt(),
+		get_cmd_actor(m, open_picker_help).tcell_key(tcell.KeyCtrlK),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTab),
 		get_cmd_actor(m, goto_tab).tcell_key(tcell.KeyTAB),
 		get_cmd_actor(m, zoomout).runne('+'),

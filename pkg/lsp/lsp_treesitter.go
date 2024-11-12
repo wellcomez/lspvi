@@ -4,6 +4,9 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"github.com/reinhrst/fzf-lib"
+	"github.com/tectiv3/go-lsp"
+	sitter "github.com/tree-sitter/go-tree-sitter"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,9 +14,6 @@ import (
 	"strings"
 	"time"
 	"zen108.com/lspvi/pkg/debug"
-	"github.com/reinhrst/fzf-lib"
-	sitter "github.com/tree-sitter/go-tree-sitter"
-	"github.com/tectiv3/go-lsp"
 )
 
 // import "github.com/tree-sitter-grammars/tree-sitter-toml"
@@ -97,7 +97,6 @@ const query_highlights = "highlights"
 const query_locals = "locals"
 const query_outline = "outline"
 
-
 func markdown_parser(ts *TreeSitter) {
 	if len(ts.Outline) > 0 {
 		return
@@ -144,7 +143,7 @@ func (o Outline) Symbol(ts *TreeSitter) (ret *lsp.SymbolInformation, done bool) 
 			c.Kind = lsp.SymbolKindMethod
 		case "struct_specifier":
 			c.Kind = lsp.SymbolKindStruct
-		case "class_specifier":
+		case "class_specifier", "class_declaration":
 			c.Kind = lsp.SymbolKindClass
 		case "function_definition", "function_declaration", "function_item":
 			c.Kind = lsp.SymbolKindFunction
@@ -266,6 +265,45 @@ type OutlineSymolList struct {
 
 func (o *OutlineSymolList) Add(item *lsp.SymbolInformation) {
 	o.items = append(o.items, item)
+}
+func swift_outline(ts *TreeSitter, cb outlinecb) {
+	if len(ts.Outline) > 0 {
+		return
+	}
+	items := OutlineSymolList{}
+	var ret []Outline
+	if ts.tsdef.outline != nil {
+		if r, err := ts.query_buf_outline(ts.tsdef.outline); err != nil {
+			return
+		} else {
+			ret = r
+		}
+	}
+	for _, line := range ret {
+		sym, _ := line.Symbol(ts)
+		if sym == nil {
+			continue
+		}
+		for _, v := range line {
+			if v.Symbol == "pattern" || v.Symbol == "type_identifier" {
+				sym.Name = v.Code
+				break
+			}
+		}
+		items.Add(sym)
+	}
+	lang := lsp_dummy{}
+	core := &lspcore{lang: lang}
+	var s = Symbol_file{lsp: lsp_base{core: core}}
+	document_symbol := []lsp.SymbolInformation{}
+	if cb != nil {
+		cb(ts, &items)
+	}
+	for _, v := range items.items {
+		document_symbol = append(document_symbol, *v)
+	}
+	s.build_class_symbol(document_symbol, 0, nil)
+	ts.Outline = s.Class_object
 }
 func rs_outline(ts *TreeSitter, cb outlinecb) {
 	if len(ts.Outline) > 0 {

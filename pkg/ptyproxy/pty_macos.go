@@ -1,5 +1,4 @@
-//go:build linux
-// +build linux drawin
+//go:build darwin
 
 package ptyproxy
 

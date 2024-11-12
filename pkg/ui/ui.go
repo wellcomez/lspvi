@@ -178,7 +178,6 @@ type MainService interface {
 
 	//screen
 
-
 	//view manager
 	IViewManager
 
@@ -1068,11 +1067,13 @@ func (main *mainui) create_main_layout(editor_area *flex_area, console_layout *f
 	main_layout.set_dir(tview.FlexRow)
 	editor_area.Height = 100
 	console_layout.Height = 80
-	main_layout.
+	var layout = main_layout.
 		AddItem(editor_area, 0, editor_area.Height, true).
 		AddItem(console_layout, 0, console_layout.Height, false).
-		AddItem(tab_area, 1, 0, false).
-		AddItem(main.cmdline.input, 3, 1, false)
+		AddItem(tab_area, 1, 0, false)
+	if main.CmdLine().Vim.Enable() {
+		layout.AddItem(main.cmdline.input, 3, 1, false)
+	}
 	// main_layout.SetBorder(true)
 	main.layout = &rootlayout{
 		editor_area: editor_area,
