@@ -518,7 +518,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			return true
 		}}
 	case open_picker_help:
-		return cmdactor{id, "Commonds", func() bool {
+		return cmdactor{id, "Commands", func() bool {
 			m.Dialog().OpenKeymapFzf()
 			return true
 		}}
