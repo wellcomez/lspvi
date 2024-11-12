@@ -12,6 +12,25 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 
+var nf_cod_symbol_array = ''    // =\uea8a
+var nf_cod_symbol_boolean = ''  // =\uea8f
+var nf_cod_symbol_color = ''    // =\ueb5c
+var nf_cod_symbol_constant = '' //=\ueb5d
+// var      nf_cod_symbol_enum  =\uea95
+var nf_cod_symbol_event = '' // =\uea86
+var nf_cod_symbol_field = '' //=\ueb5f
+
+var nf_cod_symbol_file = ''      //=\ueb60
+var nf_cod_symbol_key = ''       // =\uea93
+var nf_cod_symbol_misc = ''      // =\ueb63
+var nf_cod_symbol_numeric = ''   //=\uea90
+var nf_cod_symbol_parameter = '' // =\uea92
+var nf_cod_symbol_property = ''  // =\ueb65
+var nf_cod_symbol_ruler = ''     // =\uea96
+var nf_cod_symbol_string = ''    // =\ueb8d
+
+var nf_cod_symbol_enum_member = '' //=\ueb5e
+
 var nf_cod_symbol_class = '' // =\ueb5b
 var nf_cod_symbol_interface = ''
 var nf_cod_symbol_variable = ''  //=\uea88
@@ -38,6 +57,9 @@ var Namespace = nf_cod_symbol_namespace
 // var Keyword = '󰌋'
 // var Struct = '𝓢'
 // var Operator = "󰆕"
+// var Snippet = ''
+// var Color = '󰏘'
+var Color = nf_cod_symbol_color
 var Variable = nf_cod_symbol_variable
 var Class = nf_cod_symbol_class
 
@@ -50,8 +72,7 @@ var Unit = '󰑭'
 var Value = '󰎠'
 var Enum = nf_cod_symbol_enum
 var Keyword = nf_cod_symbol_keyword
-var Snippet = ''
-var Color = '󰏘'
+var Snippet = nf_cod_symbol_snippet
 var File = '󰈙'
 var Reference = '󰈇'
 var Folder = '󰉋'
@@ -70,25 +91,25 @@ var IconsRunne = map[int]rune{
 	4: '',       // -- Package
 	5: Class,     //-- Class
 	//5:   "󰌗 ", //-- Class
-	6: '󰆧', //-- Method
+	6: nf_cod_symbol_method, //-- Method
 	//6:  Method,
-	7:  '', //-- Property
-	8:  '', //-- Field
-	9:  '', //-- Constructor
-	10: '󰕘', //-- Enum
+	7:  nf_cod_symbol_property, //-- Property
+	8:  '',                    //-- Field
+	9:  '',                    //-- Constructor
+	10: '󰕘',                    //-- Enum
 	//11: "󰕘 ", //-- Interface
 	11: Interface,
-	12: Function,   //-- Function
-	13: Variable,   //-- Variable
-	14: Constant,   //-- Constant
-	15: '󰀬',        //-- String
-	16: '󰎠',        //-- Number
-	17: '◩',        //-- Boolean
-	18: '󰅪',        //-- Array
-	19: '󰅩',        //-- Object
-	20: '󰌋',        //-- Key
-	21: '󰟢',        //-- Null
-	22: EnumMember, //-- EnumMember
+	12: Function,              //-- Function
+	13: Variable,              //-- Variable
+	14: Constant,              //-- Constant
+	15: nf_cod_symbol_string,  //-- String
+	16: '󰎠',                   //-- Number
+	17: nf_cod_symbol_boolean, //-- Boolean
+	18: nf_cod_symbol_array,   //-- Array
+	19: '󰅩',                   //-- Object
+	20: '󰌋',                   //-- Key
+	21: '󰟢',                   //-- Null
+	22: EnumMember,            //-- EnumMember
 	// 23:  '󰌗', //-- Struct
 	23:  Struct,        //-- Struct
 	24:  Event,         //-- Event
