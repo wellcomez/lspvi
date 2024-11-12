@@ -87,10 +87,12 @@ func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 	}
 
 	style := code.IconStyle(code.main)
-	codestyle:= code.IconStyle(code.main)
-	if icon,err:=devicon.FindIconPath(name);err==nil{
-		r,g,b,_:=hexToRGB(icon.Color)
-		codestyle= style.Foreground(tcell.NewRGBColor(r,g,b))
+	codestyle := code.IconStyle(code.main)
+	if icon, err := devicon.FindIconPath(name); err == nil {
+		x := icon.Color
+		if c, e := hexToCellColor(x); e == nil {
+			codestyle = style.Foreground(c)
+		}
 	}
 	first := SplitCode.First() == code.code
 	var quick_btn icon = icon{
@@ -106,7 +108,7 @@ func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 		},
 	}
 	item := []icon{
-		{s: runes, style: func() tcell.Style { return codestyle}, click: func() {}},
+		{s: runes, style: func() tcell.Style { return codestyle }, click: func() {}},
 	}
 	if vid != view_code {
 		item = append(item, quick_btn)

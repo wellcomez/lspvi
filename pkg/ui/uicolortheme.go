@@ -58,11 +58,11 @@ type symbol_colortheme struct {
 }
 
 func (c symbol_colortheme) select_style() *tcell.Style {
-	 if style:=c.get_color("selection");style!=nil{
+	if style := c.get_color("selection"); style != nil {
 		return style
-	 }
-	 s:= c.get_default_style()
-	 return s
+	}
+	s := c.get_default_style()
+	return s
 }
 func (mgr symbol_colortheme) get_styles(names []string) (tcell.Style, error) {
 	for _, v := range names {
@@ -239,8 +239,8 @@ func (mgr *symbol_colortheme) set_currsor_line() {
 		mgr.colorscheme["cursor-line"] = ret.Foreground(bg)
 	}
 	if bg := global_config.Color.Cursorline; bg != nil {
-		if r, g, b, err := hexToRGB(*bg); err == nil {
-			s := tcell.StyleDefault.Background(tcell.NewRGBColor(r, g, b))
+		if color, err := hexToCellColor(*bg); err == nil {
+			s := tcell.StyleDefault.Background(color)
 			mgr.colorscheme["cursor-line"] = s
 		}
 	}
@@ -261,6 +261,15 @@ func (mgr *symbol_colortheme) set_currsor_line() {
 	}
 }
 
+func hexToCellColor(hex string) (ret tcell.Color, err error) {
+	if r, g, b, e := hexToRGB(hex); e != nil {
+		err = e
+		return
+	} else {
+		ret = tcell.NewRGBColor(r, g, b)
+		return
+	}
+}
 func hexToRGB(hex string) (int32, int32, int32, error) {
 	if len(hex) != 7 || hex[0] != '#' {
 		return 0, 0, 0, fmt.Errorf("invalid hex color code")
@@ -286,9 +295,8 @@ func hexToRGB(hex string) (int32, int32, int32, error) {
 func (mgr *symbol_colortheme) search_highlight_color_style() (ret tcell.Style) {
 	if global_config.Color.Highlight != nil {
 		if rgb := global_config.Color.Highlight.Search; rgb != "" {
-			if r, g, b, err := hexToRGB(rgb); err == nil {
-				v := tcell.NewRGBColor(r, g, b)
-				return mgr.get_default_style().Foreground(v)
+			if color, err := hexToCellColor(rgb); err == nil {
+				return mgr.get_default_style().Foreground(color)
 			}
 			// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
 		}
@@ -305,8 +313,8 @@ func (mgr *symbol_colortheme) search_highlight_color() tcell.Color {
 	if global_config.Color.Highlight != nil {
 
 		if rgb := global_config.Color.Highlight.Search; rgb != "" {
-			if r, g, b, err := hexToRGB(rgb); err == nil {
-				return tcell.NewRGBColor(r, g, b)
+			if r, err := hexToCellColor(rgb); err == nil {
+				return r
 			}
 			// r,g,b := femto.ParseHexColor(global_config.Color.Highlight.Search)
 		}
