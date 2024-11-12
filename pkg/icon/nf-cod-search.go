@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type s1 struct {
 	name string
@@ -10539,7 +10542,7 @@ var sss = []s1{
 }
 
 func main() {
-	for _, v := range sss {
-		fmt.Printf("%s %c\n",v.name, v.ch)	
-	}
+  for _, v := range sss {
+    fmt.Printf("%s %c =\\u%x \n",strings.ReplaceAll(v.name,"-","_"), v.ch,v.ch)	
+  }
 }
