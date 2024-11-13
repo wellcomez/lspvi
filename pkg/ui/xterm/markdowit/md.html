@@ -4,11 +4,22 @@
     <link rel="stylesheet" href="/static/highlightjs/styles/default.min.css">
     <script src="/static/mark.js"></script>
     <script src="/static/axios.min.js"></script>
+    <style>
+        img {
+            width: 80%;
+            height: auto;
+            max-width: 100%;
+            min-width: 50%;
+        }
+    </style>
     <script>
         let mdfile = "{{.MDFILE}}"
         let url = "https://" + window.location.host + "/" + mdfile
         axios.get(url, { responseType: "text" }).then((resp) => {
+            let { render, hl } = markjs
             let ss = render(resp.data)
+            document.body.innerHTML = ss
+            markjs.hl()
         });
     </script>
 </head>

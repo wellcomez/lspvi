@@ -27,4 +27,4 @@ var markjs = {
   render,
   hl
 }
-module.exports = markjs 
+export default markjs 

@@ -115,19 +115,27 @@ func (r *htmlRendererWithCSS) insertCSS(w util.BufWriter, source []byte, node as
 
 var css = "img { max-width: 100%;width: 90% }"
 
-func ChangeLink(source []byte, root string) (ret []byte, err error) {
+func ChangeLink(source []byte, css_on bool, root string) (ret []byte, err error) {
 	// LinkPattern: regexp.MustCompile(`TICKET-\d+`),
 	// ReplUrl:     []byte("https://example.com/TICKET?query=$0"),
 	// Goldmark supports multiple AST transformers and runs them sequentially in order of priority.
 	// Setup goldmark with the markdown renderer and our transformer
 	link_parser := create_link_parser(root)
-	x := css_extentsion()
-	gm := goldmark.New(
-		goldmark.WithRenderer(markdown.NewRenderer()),
-		goldmark.WithParserOptions(link_parser),
-		goldmark.WithExtensions(x),
-	)
-	// source := []byte(`[Link](./old-path.md)`)
+	var gm goldmark.Markdown
+	if css_on {
+		x := css_extentsion()
+		gm = goldmark.New(
+			goldmark.WithRenderer(markdown.NewRenderer()),
+			goldmark.WithParserOptions(link_parser),
+			goldmark.WithExtensions(x),
+		)
+	} else {
+		gm = goldmark.New(
+			goldmark.WithRenderer(markdown.NewRenderer()),
+			goldmark.WithParserOptions(link_parser),
+		)
+	}
+	// source = []byte(`[Link](./old-path.md)`)
 	reader := text.NewReader(source)
 	document := gm.Parser().Parse(reader)
 	var buf bytes.Buffer

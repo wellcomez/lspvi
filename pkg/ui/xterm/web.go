@@ -58,7 +58,8 @@ func NewRouter(root string) *mux.Router {
 	}).Methods("GET")
 	r.HandleFunc("/ws", serveWs)
 	r.HandleFunc("/md/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
-		read_mark(r, w)
+		// read_mark(r, w)
+		read_mark_index(r, w)
 	})
 	r.HandleFunc("/static/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		read_embbed(r, w)
@@ -73,8 +74,15 @@ func NewRouter(root string) *mux.Router {
 			if len(root) == 0 {
 				root, _ = filepath.Abs(".")
 			}
-			buf, _ := os.ReadFile(filepath.Join(root, path))
-			w.Write(buf)
+			buf, err := os.ReadFile(filepath.Join(root, path))
+			if filepath.Ext(path) == ".md" {
+				buf, err = ChangeLink(buf, false, "/")
+			}
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			} else {
+				w.Write(buf)
+			}
 		}
 	}).Methods("GET")
 	return r

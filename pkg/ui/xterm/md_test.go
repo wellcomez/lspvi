@@ -12,7 +12,7 @@ import (
 func TestXxx(t *testing.T) {
 	buf, _ := os.ReadFile("/home/z/dev/lsp/goui/README.md")
 	// web.(buf)
-	if b, e := web.ChangeLink(buf, "/md/"); e == nil {
+	if b, e := web.ChangeLink(buf, false, "/md/"); e == nil {
 		x := string(b)
 		fmt.Println(x)
 	}
