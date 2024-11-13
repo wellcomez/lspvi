@@ -108,7 +108,7 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 		{
 			var file Ws_open_prj
 			if err := json.Unmarshal(message, &file); err == nil {
-				log.SetPrefix(file.PrjRoot)
+				SetPjrRoot(file.PrjRoot)
 			}
 
 		}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"path/filepath"
 
 	// pty "zen108.com/lspvi/pkg/pty"
 	mainui "zen108.com/lspvi/pkg/ui"
@@ -32,7 +33,11 @@ func main() {
 		Help: *help,
 	}
 	if *gui {
-		web.SetPjrRoot(*root)
+		dir := *root
+		if dir == "" {
+			dir, _ = filepath.Abs(".")
+		}
+		web.SetPjrRoot(dir)
 		web.StartWebUI(*arg, nil)
 		return
 	}
