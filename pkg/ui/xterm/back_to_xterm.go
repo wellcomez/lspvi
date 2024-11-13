@@ -5,7 +5,7 @@ package web
 
 import (
 	"crypto/tls"
-	"path/filepath"
+
 	// "log"
 	"os"
 
@@ -153,21 +153,17 @@ func SetBrowserFont(zoom bool) {
 func OpenInPrj(file string) (yes bool) {
 	if yes = proxy != nil; yes {
 		proxy.open_in_prj(file)
-	}else{
+	} else {
 		debug.DebugLog(xtermtag, "proxy is nil")
 	}
 	return
 }
 func OpenInWeb(file string) (yes bool) {
 	yes = proxy != nil
-	ext := filepath.Ext(file)
-	open_in_image_set := []string{".png", ".md"}
-	for _, v := range open_in_image_set {
-		if v == ext && proxy != nil {
-			proxy.open_in_web(file)
-		}
+	if common.Is_open_as_md(file) {
+		return true
 	}
-	return
+	return common.Is_image(file)
 }
 func Set_browser_selection(s string) {
 	if proxy != nil {

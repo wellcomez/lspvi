@@ -16,6 +16,7 @@ import (
 	"github.com/rivo/tview"
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/common"
 	web "zen108.com/lspvi/pkg/ui/xterm"
 )
 
@@ -69,7 +70,7 @@ func (v *umlview) openfile(name string) {
 	}
 
 	v.preview.Clear()
-	if ext == ".md" {
+	if common.Is_open_as_md(name) {
 		if web.OpenInWeb(name) {
 			return
 		}

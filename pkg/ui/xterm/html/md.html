@@ -18,8 +18,9 @@
         axios.get(url, { responseType: "text" }).then((resp) => {
             let { render, hl } = markjs
             let ss = render(resp.data)
+            let title = mdfile.split("/").pop()
             document.body.innerHTML = ss
-            document.title = mdfile
+            document.title = title
             markjs.hl()
         });
     </script>

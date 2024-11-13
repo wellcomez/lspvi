@@ -15,6 +15,7 @@ import (
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
 	"go.abhg.dev/goldmark/toc"
+	"zen108.com/lspvi/pkg/ui/common"
 )
 
 func MarkdownFileToHTMLString(md string, roots string) (ret []byte, err error) {
@@ -85,8 +86,7 @@ func read_mark_index(r *http.Request, w http.ResponseWriter) {
 
 func read_mark(r *http.Request, w http.ResponseWriter) {
 	file := r.URL.Path
-	file = strings.TrimPrefix(file, "/md/")
-	if filepath.Ext(file) == ".md" {
+	if common.Is_open_as_md(file) {
 		if buf, err := MarkdownFileToHTMLString(filepath.Join(prj_root, file), "/md"); err == nil {
 			w.Write(buf)
 		} else {

@@ -15,7 +15,7 @@ function is_image(ext) {
 }
 
 function is_md(ext) {
-    return ["md"].includes(ext)
+    return ["md","puml"].includes(ext)
 }
 let rows = 50
 let cols = 80

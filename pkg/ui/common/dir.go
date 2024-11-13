@@ -96,3 +96,21 @@ func Trim_project_filename(x, y string) string {
 	}
 	return x
 }
+func Is_open_as_md(files string) bool {
+	var sss = []string{".md", ".puml"}
+	return newFunction(files, sss)
+}
+
+func newFunction(files string, sss []string) bool {
+	var ext = filepath.Ext(files)
+	for _, v := range sss {
+		if v == ext {
+			return true
+		}
+	}
+	return false
+}
+func Is_image(ext string) bool {
+	var sss = []string{".jpg", ".png", ".gif", ".jpeg", ".bmp"}
+	return newFunction(ext, sss)
+}
