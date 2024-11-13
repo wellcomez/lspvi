@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"zen108.com/lspvi/pkg/ui/common"
 )
+
 func read_embbed(r *http.Request, w http.ResponseWriter) {
 	file := r.URL.Path
 	if file == "/" {
@@ -56,6 +57,9 @@ func NewRouter(root string) *mux.Router {
 		w.Write(buf)
 	}).Methods("GET")
 	r.HandleFunc("/ws", serveWs)
+	r.HandleFunc("/md/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
+		read_mark(r, w)
+	})
 	r.HandleFunc("/static/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		read_embbed(r, w)
 	})

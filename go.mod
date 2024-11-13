@@ -19,8 +19,7 @@ replace github.com/tree-sitter-grammars/tree-sitter-toml => ./pkg/tree-sitter-to
 
 replace github.com/creack/pty => ./pkg/photostorm/pty
 
-replace  "github.com/iyzyi/aiopty" => ./pkg/aiopty
-
+replace github.com/iyzyi/aiopty => ./pkg/aiopty
 
 require (
 	github.com/charlievieth/fastwalk v1.0.8
@@ -53,6 +52,7 @@ require (
 require (
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/boyter/go-string v1.0.5
+	github.com/iyzyi/aiopty v0.1.0
 	github.com/sergi/go-diff v1.3.1
 	github.com/tectiv3/go-lsp v0.0.0-20240419022041-0a0a5672827e
 	github.com/tree-sitter-grammars/tree-sitter-lua v0.2.0
@@ -67,17 +67,21 @@ require (
 	github.com/tree-sitter/tree-sitter-ruby v0.21.1-0.20240818211811-7dbc1e2d0e2d
 	github.com/tree-sitter/tree-sitter-rust v0.21.3-0.20240818005432-2b43eafe6447
 	github.com/tree-sitter/tree-sitter-typescript v0.23.0
+	github.com/yuin/goldmark v1.4.15
 )
 
 require (
+	github.com/alecthomas/chroma/v2 v2.2.0 // indirect
+	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
-	github.com/iyzyi/aiopty v0.1.0 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82 // indirect
 	github.com/tree-sitter-grammars/tree-sitter-yaml v0.6.1 // indirect
 	github.com/tree-sitter-grammars/tree-sitter-zig v1.0.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc // indirect
+	go.abhg.dev/goldmark/toc v0.10.0 // indirect
 )
 
 require (
