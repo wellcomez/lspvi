@@ -16,10 +16,11 @@ import (
 )
 
 func MarkdownFileToHTMLString(md string) (ret []byte, err error) {
-	if buf, e := os.ReadFile(md); e == nil {
-		return MarkdownToHTMLStyle(buf)
-	} else {
-		err = e
+	var buf []byte
+	if buf, err = os.ReadFile(md); err == nil {
+		if buf, err = ChangeLink(buf, "/md/"); err == nil {
+			return MarkdownToHTMLStyle(buf)
+		}
 	}
 	return
 
@@ -62,9 +63,18 @@ func MarkdownToHTML(md []byte) (ret []byte, err error) {
 func read_mark(r *http.Request, w http.ResponseWriter) {
 	file := r.URL.Path
 	file = strings.TrimPrefix(file, "/md/")
-	if buf, err := MarkdownFileToHTMLString(filepath.Join(prj_root, file)); err == nil {
-		w.Write(buf)
+	if filepath.Ext(file) == ".md" {
+		if buf, err := MarkdownFileToHTMLString(filepath.Join(prj_root, file)); err == nil {
+			w.Write(buf)
+		} else {
+			w.Write([]byte(err.Error()))
+		}
 	} else {
-		w.Write([]byte(err.Error()))
+		filename := filepath.Join(prj_root, file)
+		if buf, err := os.ReadFile(filename); err == nil {
+			w.Write(buf)
+		} else {
+			w.Write([]byte(err.Error()))
+		}
 	}
 }
