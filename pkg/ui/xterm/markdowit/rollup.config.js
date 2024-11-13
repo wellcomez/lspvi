@@ -4,7 +4,7 @@ import babel from '@rollup/plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 const isProduction = process.env.NODE_ENV === 'production';
 export default {
-    input: 'main.js',
+    input: 'index.js',
     output: [
         {
             file: 'dist/mark.umd.js',
