@@ -4,7 +4,8 @@
   "main": "main.js",
   "module": "dist/mark.js",
   "scripts": {
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "dev": "NODE_ENV=development rollup -c"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
