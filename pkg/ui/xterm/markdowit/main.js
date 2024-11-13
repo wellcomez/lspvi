@@ -8,19 +8,7 @@ import HighlightJS from 'markdown-it-highlightjs'
 
 
 // Actual default values
-const md = markdownit({
-  highlight: function (str, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return '<pre><code class="hljs">' +
-          hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
-          '</code></pre>';
-      } catch (__) { }
-    }
-
-    return '<pre><code class="hljs">' + md.utils.escapeHtml(str) + '</code></pre>';
-  }
-});
+const md = markdownit({});
 md.use(plantuml);
 
 md.use(anchor.default); // Optional, but makes sense as you really want to link to something, see info about recommended plugins below
