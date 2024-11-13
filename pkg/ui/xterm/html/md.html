@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
     <style>
         .markdown-body {
             box-sizing: border-box;
@@ -12,9 +13,9 @@
             padding: 45px;
         }
 
-        @media (max-width: 767px) {
-            .markdown-body {
-                padding: 15px;
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #0d1117;
             }
         }
     </style>
@@ -23,6 +24,7 @@
     <script src="/static/mark.js"></script>
     <script src="/static/axios.min.js"></script>
     <link rel="stylesheet" href="/static/github-markdown-dark.css">
+    <!-- <link rel="stylesheet" href="/static/github-markdown.css"> -->
     <style>
         img {
             width: 80%;

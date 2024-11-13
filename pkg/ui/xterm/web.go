@@ -95,7 +95,8 @@ func open_prj_file(r *http.Request, w http.ResponseWriter) {
 		}
 		buf, err := os.ReadFile(filename)
 		if filepath.Ext(filename) == ".md" {
-			buf, err = ChangeLink(buf, false, "/")
+			newroot:=filepath.Dir(path)
+			buf, err = ChangeLink(buf, false, newroot)
 		}
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

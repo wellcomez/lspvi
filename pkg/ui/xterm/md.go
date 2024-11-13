@@ -87,13 +87,13 @@ func read_mark_index(r *http.Request, w http.ResponseWriter) {
 func read_mark(r *http.Request, w http.ResponseWriter) {
 	file := r.URL.Path
 	if common.Is_open_as_md(file) {
-		if buf, err := MarkdownFileToHTMLString(filepath.Join(prj_root, file), "/md"); err == nil {
+		if buf, err := MarkdownFileToHTMLString(filepath.Join(project_root, file), "/md"); err == nil {
 			w.Write(buf)
 		} else {
 			w.Write([]byte(err.Error()))
 		}
 	} else {
-		filename := filepath.Join(prj_root, file)
+		filename := filepath.Join(project_root, file)
 		if buf, err := os.ReadFile(filename); err == nil {
 			w.Write(buf)
 		} else {

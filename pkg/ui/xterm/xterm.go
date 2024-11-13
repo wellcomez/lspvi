@@ -97,13 +97,13 @@ func ForwardFromXterm[T any](message []byte, term *lspvi_backend) {
 type lspvi_command_forward struct {
 }
 
-var prj_root string
+// var prj_root string
 var workdir common.Workdir
 
 func SetPjrRoot(root string) {
-	prj_root = root
+	project_root = root
 	config_root, _ := common.GetLspviRoot()
-	workdir = common.NewWorkDir(config_root, prj_root)
+	workdir = common.NewWorkDir(config_root, project_root)
 }
 func (term lspvi_command_forward) process(method string, message []byte) bool {
 	switch method {
@@ -129,7 +129,7 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 
 			err := json.Unmarshal(message, &file)
 			if err == nil && wk != nil {
-				PrjName := common.Trim_project_filename(file.Filename, prj_root)
+				PrjName := common.Trim_project_filename(file.Filename, project_root)
 				if strings.HasPrefix(PrjName, workdir.Root) {
 					PrjName = strings.Replace(PrjName, workdir.Root, "$config", 1)
 				}
