@@ -99,13 +99,16 @@ type lspvi_command_forward struct {
 
 var prj_root string
 
+func SetPjrRoot(root string) {
+	prj_root = root
+}
 func (term lspvi_command_forward) process(method string, message []byte) bool {
 	switch method {
 	case backend_on_open_prj:
 		{
 			var file Ws_open_prj
 			if err := json.Unmarshal(message, &file); err == nil {
-				prj_root = file.PrjRoot
+				log.SetPrefix(file.PrjRoot)
 			}
 
 		}
@@ -319,15 +322,12 @@ func new_xterm_init(w init_call, conn *websocket.Conn) *xterm_request {
 	return &xterm_request{}
 }
 
-
 func reset_lsp_backend() {
 	sss.imp.ws = nil
 	if start_process == nil {
 		ptystdio = nil
 	}
 }
-
-
 
 var srv http.Server
 

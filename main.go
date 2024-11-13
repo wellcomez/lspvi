@@ -32,6 +32,7 @@ func main() {
 		Help: *help,
 	}
 	if *gui {
+		web.SetPjrRoot(*root)
 		web.StartWebUI(*arg, nil)
 		return
 	}
