@@ -160,10 +160,15 @@ func OpenInPrj(file string) (yes bool) {
 }
 func OpenInWeb(file string) (yes bool) {
 	yes = proxy != nil
-	if common.Is_open_as_md(file) {
-		return true
+	if !yes {
+		return
 	}
-	return common.Is_image(file)
+	if common.Is_open_as_md(file) || common.Is_image(file) {
+		proxy.open_in_web(file)
+	} else {
+		yes = false
+	}
+	return
 }
 func Set_browser_selection(s string) {
 	if proxy != nil {
