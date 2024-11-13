@@ -43,6 +43,7 @@ func MarkdownToHTMLStyle(source []byte, root string) (ret []byte, err error) {
 			highlighting.NewHighlighting(
 				highlighting.WithStyle("monokai"),
 			),
+			css_extentsion(),
 		),
 	)
 	var buf bytes.Buffer
