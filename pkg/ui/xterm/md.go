@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
@@ -42,6 +43,9 @@ func MarkdownToHTMLStyle(source []byte, root string) (ret []byte, err error) {
 		goldmark.WithExtensions(
 			highlighting.NewHighlighting(
 				highlighting.WithStyle("monokai"),
+				highlighting.WithFormatOptions(
+					chromahtml.WithLineNumbers(true),
+				),
 			),
 			css_extentsion(),
 		),
