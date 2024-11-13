@@ -329,7 +329,7 @@ func (m mainui) Mode() mode {
 func (main *mainui) LspLogOutput(s, s1 string) {
 	if main.lsp_log_file == nil {
 
-		filePath := filepath.Join(lspviroot.root, "lsp_notify.json")
+		filePath := filepath.Join(lspviroot.Root, "lsp_notify.json")
 		if file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644); err == nil {
 			main.lsp_log_file = file
 		}
@@ -394,7 +394,7 @@ func (m *mainui) OnFileChange(file []lsp.Location, line *lspcore.OpenOption) {
 func (m *mainui) on_select_project(prj *Project) {
 	prj.Load(&apparg, m)
 	m.fileexplorer.ChangeDir(prj.Root)
-	m.uml.file.rootdir = lspviroot.uml
+	m.uml.file.rootdir = lspviroot.UML
 	m.uml.Init()
 	load_from_history(m)
 }
@@ -850,7 +850,7 @@ func MainUI(arg *Arguments) {
 	// global_prj_root = root
 
 	main.cmdline = new_cmdline(main)
-	var logfile, _ = os.OpenFile(lspviroot.logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	var logfile, _ = os.OpenFile(lspviroot.Logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
 	GlobalApp = tview.NewApplication()
 	app := GlobalApp

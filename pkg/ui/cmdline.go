@@ -33,8 +33,8 @@ func new_cmdline(main *mainui) *cmdline {
 		},
 		main:            main,
 		input:           tview.NewInputField(),
-		command_history: &command_history{filepath: lspviroot.cmdhistory},
-		find_history:    &command_history{filepath: lspviroot.search_cmd_history},
+		command_history: &command_history{filepath: lspviroot.Cmdhistory},
+		find_history:    &command_history{filepath: lspviroot.Search_cmd_history},
 	}
 	code.command_history.init()
 	code.find_history.init()

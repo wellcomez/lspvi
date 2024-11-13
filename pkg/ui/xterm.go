@@ -28,7 +28,7 @@ import (
 
 var use_https = false
 var start_process func(int, string)
-var wk *workdir
+var wk *Workdir
 var httpport = 0
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
@@ -112,7 +112,7 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 			if err == nil && wk != nil {
 				name := filepath.Base(file.Filename)
 				x := "__" + name
-				tempfile := filepath.Join(wk.temp, x)
+				tempfile := filepath.Join(wk.Temp, x)
 				err := os.WriteFile(tempfile, file.Buf, 0666)
 				if err != nil {
 					debug.DebugLog("xterm ", err)
@@ -307,7 +307,7 @@ func new_xterm_init(w init_call, conn *websocket.Conn) *xterm_request {
 }
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()
-	ss := new_workdir(root)
+	ss := NewWorkdir(root)
 	wk = &ss
 	// staticDir := "./node_modules"
 	// fileServer := http.FileServer(http.Dir(staticDir))
@@ -320,7 +320,7 @@ func NewRouter(root string) *mux.Router {
 	}).Methods("GET")
 	r.HandleFunc("/temp/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		buf, _ := os.ReadFile(filepath.Join(wk.root, path))
+		buf, _ := os.ReadFile(filepath.Join(wk.Root, path))
 		w.Write(buf)
 	}).Methods("GET")
 	r.HandleFunc("/ws", serveWs)

@@ -277,7 +277,7 @@ func (ret *callinview) get_next_callin_callee_at_root(value interface{}, main Ma
 								// node := ret.newFunction1(callin_index_in_root, function_index_in_callroot, node_path_index)
 							})
 							stack.Resolve(symbolfile, func() {
-								callroot_task.Save(lspviroot.root)
+								callroot_task.Save(lspviroot.Root)
 								go ret.main.App().QueueUpdateDraw(func() {
 									ret.updatetask(callroot_task)
 									if n := ret.find_callin_node(ref); n != nil {
@@ -385,7 +385,7 @@ func (ret *callinview) get_next_callin_callee_at_leaf(value interface{}, main Ma
 								ret.updatetask(callroot_task)
 							})
 							stack.Resolve(symbolfile, func() {
-								callroot_task.Save(lspviroot.root)
+								callroot_task.Save(lspviroot.Root)
 								go ret.main.App().QueueUpdateDraw(func() {
 									ret.updatetask(callroot_task)
 								})
@@ -459,9 +459,9 @@ func (ret *callinview) DeleteNode(nodecurrent *tview.TreeNode) bool {
 					}
 					callnode.call.Allstack = Allstack
 					if len(Allstack) == 0 {
-						callnode.call.Delete(lspviroot.uml)
+						callnode.call.Delete(lspviroot.UML)
 					} else {
-						callnode.call.Save(lspviroot.uml)
+						callnode.call.Save(lspviroot.UML)
 					}
 					qf_index_view_update(view_callin)
 					if next != nil {
@@ -475,7 +475,7 @@ func (ret *callinview) DeleteNode(nodecurrent *tview.TreeNode) bool {
 			list1 := []CallNode{}
 			for i := range ret.task_list {
 				if i == task_index {
-					ret.task_list[i].call.Delete(lspviroot.uml)
+					ret.task_list[i].call.Delete(lspviroot.UML)
 					qf_index_view_update(view_callin)
 				} else {
 					list1 = append(list1, ret.task_list[i])

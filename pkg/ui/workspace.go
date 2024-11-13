@@ -28,7 +28,7 @@ var global_file_watch = NewFileWatch()
 
 func (prj *Project) Load(arg *Arguments, main *mainui) {
 	root := prj.Root
-	lspviroot = new_workdir(root)
+	lspviroot = NewWorkdir(root)
 	global_config = NewLspviconfig()
 	global_config.Load()
 	// go servmain(lspviroot.uml, 18080, func(port int) {
@@ -37,8 +37,8 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 
 	// handle := LspHandle{}
 	// var main = &mainui{
-	main.bf = NewBackForward(NewHistory(lspviroot.history))
-	main.bookmark = &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}, root: root}
+	main.bf = NewBackForward(NewHistory(lspviroot.History))
+	main.bookmark = &proj_bookmark{path: lspviroot.Bookmark, Bookmark: []bookmarkfile{}, root: root}
 	main.tty = arg.Tty
 	main.ws = arg.Ws
 	// }
@@ -50,13 +50,13 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)
 	}
-	ConfigFile := lspviroot.configfile
+	ConfigFile := lspviroot.Configfile
 	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{
-		Path:       root,
-		Export:     lspviroot.export,
-		Callback:   main,
+		Path:         root,
+		Export:       lspviroot.Export,
+		Callback:     main,
 		NotifyHanlde: main,
-		ConfigFile: ConfigFile})
+		ConfigFile:   ConfigFile})
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main
 	global_prj_root = root
@@ -205,21 +205,21 @@ func new_workspace_picker(v *fzfmain) *workspace_picker {
 	return ret
 }
 
-type workdir struct {
-	root               string
-	logfile            string
-	configfile         string
-	uml                string
-	history            string
-	cmdhistory         string
-	search_cmd_history string
-	export             string
-	temp               string
-	filelist           string
-	bookmark           string
+type Workdir struct {
+	Root               string
+	Logfile            string
+	Configfile         string
+	UML                string
+	History            string
+	Cmdhistory         string
+	Search_cmd_history string
+	Export             string
+	Temp               string
+	Filelist           string
+	Bookmark           string
 }
 
-func new_workdir(root string) workdir {
+func NewWorkdir(root string) Workdir {
 	config_root := false
 	globalroot, err := CreateLspviRoot()
 	if err == nil {
@@ -233,23 +233,23 @@ func new_workdir(root string) workdir {
 		root = filepath.Join(root, ".lspvi")
 	}
 	export := filepath.Join(root, "export")
-	wk := workdir{
-		root:               root,
-		configfile:         filepath.Join(globalroot, "config.yaml"),
-		logfile:            filepath.Join(root, "lspvi.log"),
-		history:            filepath.Join(root, "history.log"),
-		bookmark:           filepath.Join(root, "bookmark.json"),
-		cmdhistory:         filepath.Join(root, "cmdhistory.log"),
-		search_cmd_history: filepath.Join(root, "search_cmd_history.log"),
-		export:             export,
-		temp:               filepath.Join(root, "temp"),
-		uml:                filepath.Join(export, "uml"),
-		filelist:           filepath.Join(root, ".file"),
+	wk := Workdir{
+		Root:               root,
+		Configfile:         filepath.Join(globalroot, "config.yaml"),
+		Logfile:            filepath.Join(root, "lspvi.log"),
+		History:            filepath.Join(root, "history.log"),
+		Bookmark:           filepath.Join(root, "bookmark.json"),
+		Cmdhistory:         filepath.Join(root, "cmdhistory.log"),
+		Search_cmd_history: filepath.Join(root, "search_cmd_history.log"),
+		Export:             export,
+		Temp:               filepath.Join(root, "temp"),
+		UML:                filepath.Join(export, "uml"),
+		Filelist:           filepath.Join(root, ".file"),
 	}
 	ensure_dir(root)
 	ensure_dir(export)
-	ensure_dir(wk.temp)
-	ensure_dir(wk.uml)
+	ensure_dir(wk.Temp)
+	ensure_dir(wk.UML)
 	return wk
 }
 
@@ -261,5 +261,5 @@ func ensure_dir(root string) {
 	}
 }
 
-var lspviroot workdir
+var lspviroot Workdir
 var global_config *LspviConfig
