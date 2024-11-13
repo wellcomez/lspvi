@@ -67,7 +67,7 @@ require (
 	github.com/tree-sitter/tree-sitter-ruby v0.21.1-0.20240818211811-7dbc1e2d0e2d
 	github.com/tree-sitter/tree-sitter-rust v0.21.3-0.20240818005432-2b43eafe6447
 	github.com/tree-sitter/tree-sitter-typescript v0.23.0
-	github.com/yuin/goldmark v1.4.15
+	github.com/yuin/goldmark v1.5.4
 )
 
 require (
@@ -77,10 +77,12 @@ require (
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82 // indirect
+	github.com/teekennedy/goldmark-markdown v0.3.0 // indirect
 	github.com/tree-sitter-grammars/tree-sitter-yaml v0.6.1 // indirect
 	github.com/tree-sitter-grammars/tree-sitter-zig v1.0.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	go.abhg.dev/goldmark/toc v0.10.0 // indirect
 )
 
