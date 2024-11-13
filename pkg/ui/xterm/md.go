@@ -15,21 +15,22 @@ import (
 	"go.abhg.dev/goldmark/toc"
 )
 
-func MarkdownFileToHTMLString(md string) (ret []byte, err error) {
+func MarkdownFileToHTMLString(md string, roots string) (ret []byte, err error) {
 	var buf []byte
 	if buf, err = os.ReadFile(md); err == nil {
-		if buf, err = ChangeLink(buf, "/md/"); err == nil {
-			return MarkdownToHTMLStyle(buf)
-		}
+		// if buf, err = ChangeLink(buf, "/md/"); err == nil {
+		return MarkdownToHTMLStyle(buf, roots)
+		// }
 	}
 	return
 
 }
-func MarkdownToHTMLStyle(source []byte) (ret []byte, err error) {
+func MarkdownToHTMLStyle(source []byte, root string) (ret []byte, err error) {
 	md := goldmark.New(
 		goldmark.WithExtensions(extension.GFM),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
+			create_link_parser(root),
 		),
 		goldmark.WithRendererOptions(
 			html.WithHardWraps(),
@@ -64,7 +65,7 @@ func read_mark(r *http.Request, w http.ResponseWriter) {
 	file := r.URL.Path
 	file = strings.TrimPrefix(file, "/md/")
 	if filepath.Ext(file) == ".md" {
-		if buf, err := MarkdownFileToHTMLString(filepath.Join(prj_root, file)); err == nil {
+		if buf, err := MarkdownFileToHTMLString(filepath.Join(prj_root, file), "/md"); err == nil {
 			w.Write(buf)
 		} else {
 			w.Write([]byte(err.Error()))

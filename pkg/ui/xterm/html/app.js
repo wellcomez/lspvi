@@ -485,8 +485,8 @@ class Term {
                 let host = window.location.host
                 let url = "https://" + host + "/md/" + PrjName
                 window.open(url);
-                this.term.options.disableStdin = true
-                app.popmd(url);
+                // this.term.options.disableStdin = true
+                // app.popmd(url);
             } else {
                 this.term.options.disableStdin = true
                 app.popmd(data.Filename);
