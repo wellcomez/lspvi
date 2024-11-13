@@ -95,7 +95,13 @@ func (r *htmlRendererWithCSS) insertCSS(w util.BufWriter, source []byte, node as
 	if entering {
 		// Write the opening <head> tag
 		_, _ = w.WriteString("<head>")
-
+		sss := []string{
+			`<link rel="stylesheet" href="/static/highlightjs/styles/default.min.css">`,
+			`<script src="/static/highlightjs/highlight.min.js"></script>`,
+			`<script src="/static/highlightjs/languages/go.min.js"></script>`,
+			`<script >hljs.highlightAll();</script>`,
+		}
+		_, _ = w.WriteString(strings.Join(sss, "\n"))
 		// Write the CSS
 		_, _ = w.WriteString("<style>")
 		_, _ = w.WriteString(r.css)

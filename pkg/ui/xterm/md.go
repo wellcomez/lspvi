@@ -28,7 +28,10 @@ func MarkdownFileToHTMLString(md string, roots string) (ret []byte, err error) {
 }
 func MarkdownToHTMLStyle(source []byte, root string) (ret []byte, err error) {
 	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.Table,
+		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 			create_link_parser(root),
