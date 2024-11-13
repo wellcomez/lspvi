@@ -111,7 +111,8 @@ func (t *Tree) MouseHandler() func(action tview.MouseAction, event *tcell.EventM
 		return t.TreeView.MouseHandler()(action, event, setFocus)
 	}
 }
-
+var closemark ="▶"
+var openmark  = "▼"
 type SymbolTreeView struct {
 	*view_link
 	view *Tree
@@ -290,6 +291,7 @@ func (c *SymbolTreeView) copycode() {
 }
 func NewSymbolTreeView(main MainService, codeview CodeEditor) *SymbolTreeView {
 	symbol_tree := NewTree()
+	symbol_tree.SetGraphics(false)
 	ret := &SymbolTreeView{
 		view_link:         &view_link{id: view_outline_list, left: view_code, down: view_quickview},
 		main:              main,
@@ -403,8 +405,6 @@ func (symview *SymbolTreeView) OnClickSymobolNode(node *tview.TreeNode) {
 }
 
 func expand_node_option(node *tview.TreeNode, expand bool) {
-	openmark := fmt.Sprintf("%c", '\ueab4')
-	closemark := fmt.Sprintf("%c", '\ueab6')
 	s := node.GetText()
 	s = strings.TrimPrefix(s, closemark)
 	s = strings.TrimPrefix(s, openmark)
@@ -422,8 +422,6 @@ func expand_node_option(node *tview.TreeNode, expand bool) {
 	}
 }
 func switch_expand_state(node *tview.TreeNode) {
-	openmark := fmt.Sprintf("%c", '\ueab4')
-	closemark := fmt.Sprintf("%c", '\ueab6')
 	s := node.GetText()
 	s = strings.TrimPrefix(s, closemark)
 	s = strings.TrimPrefix(s, openmark)
@@ -654,57 +652,8 @@ type OutLineView interface {
 	update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file
 }
 
-func member_is_added(m lspcore.Symbol, class_symbol *lspcore.Symbol) bool {
-	for _, member := range class_symbol.Members {
-		if member.SymInfo.Name == m.SymInfo.Name {
-			return true
-		}
-	}
-	return false
-}
-func find_in_outline(outline []*lspcore.Symbol, class_symbol *lspcore.Symbol) bool {
-	for _, cls := range outline {
-		if cls.SymInfo.Location.Range.Overlaps(class_symbol.SymInfo.Location.Range) {
-			for _, m := range cls.Members {
-				if m.SymInfo.Location.Range.Overlaps(class_symbol.SymInfo.Location.Range) {
-					if !member_is_added(m, class_symbol) {
-						class_symbol.Members = append(class_symbol.Members, m)
-					}
-				}
-			}
-		}
-	}
-	return false
-}
 func (symboltree *SymbolTreeView) update_with_ts(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) {
-	ret := symboltree.merge_symbol(ts, symbol)
+	ret := lspcore.MergeSymbol(ts, symbol)
 	symboltree.update(ret)
 	return
-}
-
-func (symboltree *SymbolTreeView) merge_symbol(ts *lspcore.TreeSitter, symbol *lspcore.Symbol_file) *lspcore.Symbol_file {
-	var Current *lspcore.Symbol_file
-	if ts != nil {
-		Current = &lspcore.Symbol_file{
-			Class_object: ts.Outline,
-		}
-	}
-	if symbol != nil && symbol.HasLsp() {
-		if Current != nil {
-			merge_ts_to_lsp(symbol, Current)
-		}
-		return symbol
-	} else if Current != nil {
-		symboltree.update(Current)
-		return Current
-	}
-	return nil
-}
-
-func merge_ts_to_lsp(symbol *lspcore.Symbol_file, Current *lspcore.Symbol_file) {
-	for _, v := range symbol.Class_object {
-		if v.Is_class() {
-			find_in_outline(Current.Class_object, v)
-		}
-	}
 }

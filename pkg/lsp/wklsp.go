@@ -12,101 +12,126 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 )
 
+var nf_cod_symbol_array = ''    // =\uea8a
+var nf_cod_symbol_boolean = ''  // =\uea8f
+var nf_cod_symbol_color = ''    // =\ueb5c
+var nf_cod_symbol_constant = '' //=\ueb5d
+// var      nf_cod_symbol_enum  =\uea95
+var nf_cod_symbol_event = '' // =\uea86
+var nf_cod_symbol_field = '' //=\ueb5f
+
+var nf_cod_symbol_file = ''      //=\ueb60
+var nf_cod_symbol_key = ''       // =\uea93
+var nf_cod_symbol_misc = ''      // =\ueb63
+var nf_cod_symbol_numeric = ''   //=\uea90
+var nf_cod_symbol_parameter = '' // =\uea92
+var nf_cod_symbol_property = ''  // =\ueb65
+var nf_cod_symbol_ruler = ''     // =\uea96
+var nf_cod_symbol_string = ''    // =\ueb8d
+
+var nf_cod_symbol_enum_member = '' //=\ueb5e
+
+var nf_cod_symbol_class = '' // =\ueb5b
+var nf_cod_symbol_interface = ''
+var nf_cod_symbol_variable = ''  //=\uea88
+var nf_cod_symbol_method = ''    // =\uea8c
+var nf_cod_symbol_snippet = ''   // =\ueb66
+var nf_cod_symbol_structure = '' // =\uea91
+var nf_cod_symbol_namespace = '' // =\uea8b
+var nf_cod_symbol_enum = ''      // =\uea95
+var nf_cod_symbol_keyword = ''   // =\ueb62
+var nf_cod_symbol_operator = ''  // =\ueb64
+var nf_cod_folder = ''           //=\uea83
 // var FolderEmoji = "\U0001f4c1"
 var FileIcon = "\U0001f4c4"
-var Text = "󰉿"
-var Method = "ƒ"
-var Function = ""
+var Text = '󰉿'
+
+// var Method = "ƒ"
+var Method = nf_cod_symbol_method
+var Function = ''
 var Constructor = ""
 var Field = "󰜢"
-var Variable = "󰀫"
-var Class = "𝓒"
+var Namespace = nf_cod_symbol_namespace
 
-// var Interface = ""
-var Interface = '\ueb61'
-var Module = ""
-var Property = "󰜢"
-var Unit = "󰑭"
-var Value = "󰎠"
-var Enum = ""
-var Keyword = "󰌋"
-var Snippet = ""
-var Color = "󰏘"
-var File = "󰈙"
-var Reference = "󰈇"
-var Folder = "󰉋"
-var EnumMember = ""
-var Constant = "󰏿"
-var Struct = "𝓢"
-var Event = ""
-var Operator = "󰆕"
-var TypeParameter = ""
+// var Variable = "󰀫"
+// var Class = "𝓒"
+// var  Interface =  '󰜰'
+// var Enum = ""
+// var Keyword = '󰌋'
+// var Struct = '𝓢'
+// var Operator = "󰆕"
+// var Snippet = ''
+// var Color = '󰏘'
+// var Folder = '󰉋'
+var Color = nf_cod_symbol_color
+var Variable = nf_cod_symbol_variable
+var Class = nf_cod_symbol_class
+
+var Interface = nf_cod_symbol_interface
+
+// var Interface = '\ueb61'
+var Module = ''
+var Property = '󰜢'
+var Unit = '󰑭'
+var Value = '󰎠'
+var Enum = nf_cod_symbol_enum
+var Keyword = nf_cod_symbol_keyword
+var Snippet = nf_cod_symbol_snippet
+var File = '󰈙'
+var Reference = '󰈇'
+var Folder = nf_cod_folder
+var EnumMember = ''
+var Constant = '󰏿'
+var Struct = nf_cod_symbol_structure
+var Event = ''
+var Operator = nf_cod_symbol_operator
+
+// var TypeParameter = '󰊄'
+// var TypeParameter = '\uea92'
+var TypeParameter = nf_cod_symbol_parameter
 var IconsRunne = map[int]rune{
-	1: '󰈙', //-- File
-	2: '', // -- Module
-	3: '󰌗', // -- Namespace
-	4: '', // -- Package
-	5: '𝓒', //-- Class
+	1: File,      //-- File
+	2: Module,    // -- Module
+	3: Namespace, // -- Namespace
+	4: '',       // -- Package
+	5: Class,     //-- Class
 	//5:   "󰌗 ", //-- Class
-	6: '󰆧', //-- Method
+	6: Method, //-- Method
 	//6:  Method,
-	7:  '', //-- Property
-	8:  '', //-- Field
-	9:  '', //-- Constructor
-	10: '󰕘', //-- Enum
+	7:  nf_cod_symbol_property, //-- Property
+	8:  '',                    //-- Field
+	9:  '',                    //-- Constructor
+	10: '󰕘',                    //-- Enum
 	//11: "󰕘 ", //-- Interface
-	//11: '"' ,
-	12: '󰊕', //-- Function
-	13: '󰆧', //-- Variable
-	14: '󰏿', //-- Constant
-	15: '󰀬', //-- String
-	16: '󰎠', //-- Number
-	17: '◩', //-- Boolean
-	18: '󰅪', //-- Array
-	19: '󰅩', //-- Object
-	20: '󰌋', //-- Key
-	21: '󰟢', //-- Null
-	//22: ' ', //-- EnumMember
-	//23:  "󰌗 ", //-- Struct
-	23:  '𝓢', //-- Struct
-	24:  '', //-- Event
-	25:  '󰆕', //-- Operator
-	26:  '󰊄', //-- TypeParameter
-	255: '󰉨', //-- Macro
+	11: Interface,
+	12: Function,              //-- Function
+	13: Variable,              //-- Variable
+	14: Constant,              //-- Constant
+	15: nf_cod_symbol_string,  //-- String
+	16: '󰎠',                   //-- Number
+	17: nf_cod_symbol_boolean, //-- Boolean
+	18: nf_cod_symbol_array,   //-- Array
+	19: '󰅩',                   //-- Object
+	20: '󰌋',                   //-- Key
+	21: '󰟢',                   //-- Null
+	22: EnumMember,            //-- EnumMember
+	// 23:  '󰌗', //-- Struct
+	23:  Struct,        //-- Struct
+	24:  Event,         //-- Event
+	25:  '󰆕',           //-- Operator
+	26:  TypeParameter, //-- TypeParameter
+	255: '󰉨',           //-- Macro
 }
-var LspIcon = map[int]string{
-	1: "󰈙 ",  //-- File
-	2: " ",  // -- Module
-	3: "󰌗 ",  // -- Namespace
-	4: " ",  // -- Package
-	5: Class, //-- Class
-	//5:   "󰌗 ", //-- Class
-	6: "󰆧 ", //-- Method
-	//6:  Method,
-	7:  " ", //-- Property
-	8:  " ", //-- Field
-	9:  " ", //-- Constructor
-	10: "󰕘 ", //-- Enum
-	//11: "󰕘 ", //-- Interface
-	11: fmt.Sprintf("%c", Interface),
-	12: "󰊕 ", //-- Function
-	13: "󰆧 ", //-- Variable
-	14: "󰏿 ", //-- Constant
-	15: "󰀬 ", //-- String
-	16: "󰎠 ", //-- Number
-	17: "◩ ", //-- Boolean
-	18: "󰅪 ", //-- Array
-	19: "󰅩 ", //-- Object
-	20: "󰌋 ", //-- Key
-	21: "󰟢 ", //-- Null
-	22: " ", //-- EnumMember
-	//23:  "󰌗 ", //-- Struct
-	23:  Struct, //-- Struct
-	24:  " ",   //-- Event
-	25:  "󰆕 ",   //-- Operator
-	26:  "󰊄 ",   //-- TypeParameter
-	255: "󰉨 ",   //-- Macro
+
+func icon_run_to_string() (ret map[int]string) {
+	ret = make(map[int]string)
+	for k, v := range IconsRunne {
+		ret[k] = fmt.Sprintf("%c", v)
+	}
+	return
 }
+
+var LspIcon = icon_run_to_string()
 
 type Symbol struct {
 	SymInfo   lsp.SymbolInformation
@@ -207,7 +232,7 @@ func is_class(kind lsp.SymbolKind) bool {
 }
 func is_memeber(kind lsp.SymbolKind) bool {
 	switch kind {
-	case lsp.SymbolKindMethod, lsp.SymbolKindField, lsp.SymbolKindConstructor, lsp.SymbolKindEnumMember,lsp.SymbolKindProperty:
+	case lsp.SymbolKindMethod, lsp.SymbolKindField, lsp.SymbolKindConstructor, lsp.SymbolKindEnumMember, lsp.SymbolKindProperty:
 		return true
 	}
 	return false

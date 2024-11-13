@@ -137,7 +137,7 @@ func new_outline_picker(v *fzfmain, code CodeEditor) symbolpicker {
 	symbolview.parent = v
 	symbolview.SymbolTreeView.view.SetSelectedFunc(symbolview.OnClickSymobolNode)
 	symbolview.collapse_children = false
-	sym.impl.symbol = symbolview.merge_symbol(code.TreeSitter(), code.LspSymbol())
+	sym.impl.symbol = lspcore.MergeSymbol(code.TreeSitter(), code.LspSymbol())
 	if sym.impl.symbol != nil {
 		symbolview.update_in_main_sync(sym.impl.symbol)
 		symbolview.view.GetRoot().ExpandAll()

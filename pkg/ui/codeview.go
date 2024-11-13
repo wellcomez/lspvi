@@ -23,6 +23,7 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 
+	"zen108.com/lspvi/pkg/ui/xterm"
 	"zen108.com/lspvi/pkg/debug"
 	// "github.com/gdamore/tcell"
 )
@@ -1043,11 +1044,11 @@ func (code *CodeView) word_left() {
 	code.update_with_line_changed()
 }
 func (m *mainui) CopyToClipboard(s string) {
-	if proxy != nil {
-		proxy.set_browser_selection(s)
-	}
+	web.Set_browser_selection(s)
 	clipboard.WriteAll(s)
 }
+
+
 func (code *CodeView) Save() error {
 	view := code.view
 	data := view.Buf.SaveString(false)

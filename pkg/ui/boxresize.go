@@ -124,7 +124,7 @@ func (e *editor_mouse_resize) save() error {
 
 func (e *editor_mouse_resize) config_filename() string {
 	name := e.layout.view_link.id.getname() + "_layout.json"
-	filename := filepath.Join(lspviroot.root, name)
+	filename := filepath.Join(lspviroot.Root, name)
 	return filename
 }
 func (e *editor_mouse_resize) set_heigth(link *view_link, a int) {

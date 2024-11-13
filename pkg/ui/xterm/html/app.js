@@ -15,7 +15,7 @@ function is_image(ext) {
 }
 
 function is_md(ext) {
-    return ["md"].includes(ext)
+    return ["md","puml"].includes(ext)
 }
 let rows = 50
 let cols = 80
@@ -480,8 +480,17 @@ class Term {
             this.term.options.disableStdin = true
             app.popimage(data.Filename);
         } else if (is_md(ext)) {
-            this.term.options.disableStdin = true
-            app.popmd(data.Filename);
+            const { PrjName } = data
+            if (PrjName) {
+                let host = window.location.host
+                let url = "https://" + host + "/md/" + PrjName
+                window.open(url);
+                // this.term.options.disableStdin = true
+                // app.popmd(url);
+            } else {
+                this.term.options.disableStdin = true
+                app.popmd(data.Filename);
+            }
         }
     }
     handle_backend_command(Call, data, app) {

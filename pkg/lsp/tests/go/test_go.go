@@ -1,5 +1,9 @@
 package main
-
+type const11 int 
+const (
+	b1  const11 = iota
+	b2 
+)
 type inf interface {
 	call1()
 	call2()

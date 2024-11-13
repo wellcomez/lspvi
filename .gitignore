@@ -4,3 +4,4 @@ uml/**
 xterm/node_modules/**
 __debug_bin**
 lspvi
+pkg/ui/xterm/markdowit/node_modules/**

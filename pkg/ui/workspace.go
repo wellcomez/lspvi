@@ -11,7 +11,10 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/common"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 )
 
 type Project struct {
@@ -26,9 +29,13 @@ var gload_workspace_list workspace_list
 var global_prj_root string
 var global_file_watch = NewFileWatch()
 
-func (prj *Project) Load(arg *Arguments, main *mainui) {
+func (prj *Project) Load(arg *common.Arguments, main *mainui) {
 	root := prj.Root
-	lspviroot = new_workdir(root)
+	var err error
+	if lspviroot, err = common.NewMkWorkdir(root); err != nil {
+		debug.DebugLog("workspace", "load project error", err)
+		panic(err)
+	}
 	global_config = NewLspviconfig()
 	global_config.Load()
 	// go servmain(lspviroot.uml, 18080, func(port int) {
@@ -37,8 +44,8 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 
 	// handle := LspHandle{}
 	// var main = &mainui{
-	main.bf = NewBackForward(NewHistory(lspviroot.history))
-	main.bookmark = &proj_bookmark{path: lspviroot.bookmark, Bookmark: []bookmarkfile{}, root: root}
+	main.bf = NewBackForward(NewHistory(lspviroot.History))
+	main.bookmark = &proj_bookmark{path: lspviroot.Bookmark, Bookmark: []bookmarkfile{}, root: root}
 	main.tty = arg.Tty
 	main.ws = arg.Ws
 	// }
@@ -50,16 +57,17 @@ func (prj *Project) Load(arg *Arguments, main *mainui) {
 	if !filepath.IsAbs(root) {
 		root, _ = filepath.Abs(root)
 	}
-	ConfigFile := lspviroot.configfile
+	ConfigFile := lspviroot.Configfile
 	lspmgr := lspcore.NewLspWk(lspcore.WorkSpace{
-		Path:       root,
-		Export:     lspviroot.export,
-		Callback:   main,
+		Path:         root,
+		Export:       lspviroot.Export,
+		Callback:     main,
 		NotifyHanlde: main,
-		ConfigFile: ConfigFile})
+		ConfigFile:   ConfigFile})
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main
 	global_prj_root = root
+	go web.OpenInPrj(root)
 	if !global_file_watch.started {
 		go global_file_watch.Run(global_prj_root)
 	} else {
@@ -120,25 +128,12 @@ func (wk *workspace_list) Load() error {
 }
 
 func (*workspace_list) get_config_file() (string, error) {
-	root, err := CreateLspviRoot()
+	root, err := common.CreateLspviRoot()
 	if err != nil {
 		return "", err
 	}
 	config := filepath.Join(root, "workspace.json")
 	return config, nil
-}
-
-func CreateLspviRoot() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	root := filepath.Join(home, ".lspvi")
-	os.Mkdir(root, 0755)
-	if _, err := os.Stat(root); err != nil {
-		return "", err
-	}
-	return root, nil
 }
 
 type wk_picker_impl struct {
@@ -205,61 +200,5 @@ func new_workspace_picker(v *fzfmain) *workspace_picker {
 	return ret
 }
 
-type workdir struct {
-	root               string
-	logfile            string
-	configfile         string
-	uml                string
-	history            string
-	cmdhistory         string
-	search_cmd_history string
-	export             string
-	temp               string
-	filelist           string
-	bookmark           string
-}
-
-func new_workdir(root string) workdir {
-	config_root := false
-	globalroot, err := CreateLspviRoot()
-	if err == nil {
-		full, err := filepath.Abs(root)
-		if err == nil {
-			root = filepath.Join(globalroot, filepath.Base(full))
-			config_root = true
-		}
-	}
-	if !config_root {
-		root = filepath.Join(root, ".lspvi")
-	}
-	export := filepath.Join(root, "export")
-	wk := workdir{
-		root:               root,
-		configfile:         filepath.Join(globalroot, "config.yaml"),
-		logfile:            filepath.Join(root, "lspvi.log"),
-		history:            filepath.Join(root, "history.log"),
-		bookmark:           filepath.Join(root, "bookmark.json"),
-		cmdhistory:         filepath.Join(root, "cmdhistory.log"),
-		search_cmd_history: filepath.Join(root, "search_cmd_history.log"),
-		export:             export,
-		temp:               filepath.Join(root, "temp"),
-		uml:                filepath.Join(export, "uml"),
-		filelist:           filepath.Join(root, ".file"),
-	}
-	ensure_dir(root)
-	ensure_dir(export)
-	ensure_dir(wk.temp)
-	ensure_dir(wk.uml)
-	return wk
-}
-
-func ensure_dir(root string) {
-	if _, err := os.Stat(root); err != nil {
-		if err := os.MkdirAll(root, 0755); err != nil {
-			panic(err)
-		}
-	}
-}
-
-var lspviroot workdir
+var lspviroot common.Workdir
 var global_config *LspviConfig

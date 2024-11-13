@@ -33,11 +33,11 @@ type LspviConfig struct {
 }
 
 func (ret *LspviConfig) Load() (err error) {
-	if _, err := os.Stat(lspviroot.configfile); err != nil {
+	if _, err := os.Stat(lspviroot.Configfile); err != nil {
 		var defaultcfg = NewLspviconfig()
 		defaultcfg.Save()
 	}
-	if buf, e := os.ReadFile(lspviroot.configfile); e != nil {
+	if buf, e := os.ReadFile(lspviroot.Configfile); e != nil {
 		debug.ErrorLog("config", err)
 		return e
 	} else {
@@ -80,7 +80,7 @@ func NewLspviconfig() *LspviConfig {
 }
 func (config LspviConfig) Save() error {
 	if buf, err := yaml.Marshal(&config); err == nil {
-		return os.WriteFile(lspviroot.configfile, buf, 0644)
+		return os.WriteFile(lspviroot.Configfile, buf, 0644)
 	} else {
 		return err
 	}

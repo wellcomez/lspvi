@@ -15,6 +15,7 @@ import (
 	"github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/devicon"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	nerd "zen108.com/lspvi/pkg/ui/icon"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -70,8 +71,8 @@ func (view *codetextview) IconStyle(main MainService) tcell.Style {
 	return style
 }
 
-var close_icon = '\uf2d3'
-var split_icon = '\ueb56'
+var close_icon = nerd.Nf_fa_window_close
+var split_icon = nerd.Nf_cod_split_horizontal
 
 func new_textcode_left_toolbar(code *codetextview) *minitoolbar {
 	vid := code.code.vid()
@@ -194,7 +195,7 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 
 	var outline = OutlineIconButton(code.main)
 	var buttom = icon{
-		s: []rune{'\U000f10a9', ' '},
+		s: []rune{nerd.Nf_md_dock_bottom, ' '},
 		click: func() {
 			main.toggle_view(view_console_area)
 		},
@@ -213,7 +214,7 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 		item = append(item, bf...)
 		if code.main.RunInBrowser() {
 			zoom_out := icon{
-				s: []rune{'\ueb81', ' '},
+				s: []rune{nerd.Nf_cod_zoom_in, ' '},
 				style: func() tcell.Style {
 					return get_style_hide(false)
 				},
@@ -222,7 +223,7 @@ func new_textcode_toolbar(code *codetextview) *minitoolbar {
 				},
 			}
 			zoom_in := icon{
-				s: []rune{'\ueb82', ' '},
+				s: []rune{nerd.Nf_cod_zoom_out, ' '},
 				style: func() tcell.Style {
 					return get_style_hide(false)
 				},
@@ -499,7 +500,7 @@ func (root *codetextview) draw_line_number(screen tcell.Screen, x int) {
 	_, topY, _, _ := root.GetInnerRect()
 	bottom := root.Bottomline()
 	mark := root.bookmark
-	bookmark_icon := '\uf02e'
+	bookmark_icon := nerd.Nf_fa_bookmark
 	root.draw_line_mark(mark, bookmark_icon, bottom, screen, x, topY, style)
 	root.draw_line_mark(root.linechange, '*', bottom, screen, x, topY, style)
 	dialogsize := root.code.Dianostic()

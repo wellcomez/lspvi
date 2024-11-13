@@ -1,13 +1,14 @@
 // Copyright 2024 wellcomez
 // SPDX-License-Identifier: gplv3
 
-package mainui
+package web
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"zen108.com/lspvi/pkg/ui/common"
 )
 
 type Cert struct {
@@ -17,7 +18,7 @@ type Cert struct {
 }
 
 func NewCert() *Cert {
-	root, err := CreateLspviRoot()
+	root, err := common.CreateLspviRoot()
 	if err != nil {
 		return nil
 	}

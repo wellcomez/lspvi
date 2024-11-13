@@ -1,10 +1,11 @@
 // Copyright 2024 wellcomez
 // SPDX-License-Identifier: gplv3
 
-package mainui
+package web
 
 import (
 	"crypto/tls"
+
 	// "log"
 	"os"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"zen108.com/lspvi/pkg/debug"
+	"zen108.com/lspvi/pkg/ui/common"
 )
 
 const xtermtag = "xterm"
@@ -31,6 +33,11 @@ func (proxy *backend_of_xterm) open_in_web(filename string) {
 		debug.InfoLog(xtermtag, backend_on_openfile, filename)
 	} else {
 		debug.ErrorLog(xtermtag, backend_on_openfile, filename, err)
+	}
+}
+func (proxy *backend_of_xterm) open_in_prj(global_prj_root string) {
+	if err := SendJsonMessage[Ws_open_prj](proxy.con, Ws_open_prj{PrjRoot: global_prj_root, Call: backend_on_open_prj}); err != nil {
+		debug.ErrorLog(xtermtag, backend_on_open_prj, err)
 	}
 }
 
@@ -130,11 +137,39 @@ func (*backend_of_xterm) process_xterm_command(w init_call, message []byte) {
 
 var proxy *backend_of_xterm
 
-func start_lspvi_proxy(arg *Arguments, listen bool) {
+func Start_lspvi_proxy(arg *common.Arguments, listen bool) {
 	var p = &backend_of_xterm{address: arg.Ws}
 	if err := p.Open(listen); err == nil {
 		proxy = p
 	} else {
 		debug.ErrorLog(xtermtag, "start lspvi proxy failed", err)
+	}
+}
+func SetBrowserFont(zoom bool) {
+	if proxy != nil {
+		proxy.set_browser_font(zoom)
+	}
+}
+func OpenInPrj(file string) (yes bool) {
+	if yes = proxy != nil; yes {
+		proxy.open_in_prj(file)
+	} else {
+		debug.DebugLog(xtermtag, "proxy is nil")
+	}
+	return
+}
+func OpenInWeb(file string) (yes bool) {
+	yes = proxy != nil
+	if yes {
+		yes = common.Is_open_as_md(file) || common.Is_image(file)
+		if yes {
+			proxy.open_in_web(file)
+		}
+	}
+	return
+}
+func Set_browser_selection(s string) {
+	if proxy != nil {
+		proxy.set_browser_selection(s)
 	}
 }

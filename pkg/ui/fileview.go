@@ -16,6 +16,9 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"zen108.com/lspvi/pkg/devicon"
+	lspcore "zen108.com/lspvi/pkg/lsp"
+	nerd "zen108.com/lspvi/pkg/ui/icon"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 )
 
 type dir_open_mode int
@@ -55,30 +58,11 @@ type filetree_context struct {
 	main      *mainui
 }
 
-var normal_file = fmt.Sprintf("%c", '\uf15c')
+var go_icon = rune_string(nerd.Nf_fa_square_google_plus)
 
-// var go_icon = fmt.Sprintf("%c", '\uf1a0')
-var go_icon = fmt.Sprintf("%c", '\uf0d4')
-var c_icon = ""
-var h_icon = fmt.Sprintf("%c", '\U0000f0fd')
-var py_icon = fmt.Sprintf("%c", '\ue73c')
-var js_icon = fmt.Sprintf("%c", '\ue74f')
-var ts_icon = fmt.Sprintf("%c", '\U000f03e6')
-var html_icon = fmt.Sprintf("%c", '\U000f0c01')
-
-// var cpp_icon = fmt.Sprintf("%c", '\U000f03e4')
-var css_icon = fmt.Sprintf("%c", '\U000f03e7')
-var png_icon = fmt.Sprintf("%c", '\uf1c5')
-var json_icon = fmt.Sprintf("%c", '\ueb0f')
-var txt_icon = fmt.Sprintf("%c", '\U000f03eA')
-var go_mod_icon = fmt.Sprintf("%c", '\U000f03eB')
-var markdown_icon = fmt.Sprintf("%c", '\ueb1d')
-var file_icon = fmt.Sprintf("%c", '\U000f03eD')
-var closed_folder_icon = fmt.Sprintf("%c", '\ue6ad')
-var lua_icon = fmt.Sprintf("%c", '\ue620')
-var java_icon = fmt.Sprintf("%c", '\U000f03eE')
-var rust_icon = fmt.Sprintf("%c", '\U000f0c20')
-var binary_icon = fmt.Sprintf("%c", '\ueae8')
+var file_icon = rune_string(lspcore.File)
+var closed_folder_icon = rune_string(lspcore.Folder)
+var binary_icon = rune_string(nerd.Nf_cod_file_binary)
 
 type extset struct {
 	icon string
@@ -95,20 +79,13 @@ var fileicons = []extset{
 	// {html_icon, []string{"html"}},
 	// {json_icon, []string{"json"}},
 	// {txt_icon, []string{"txt"}},
-	{go_mod_icon, []string{"go.mod"}},
+	// {go_mod_icon, []string{"go.mod"}},
 	// {markdown_icon, []string{"md"}},
 	// {png_icon, []string{"png"}},
 	// {css_icon, []string{"css"}},
 	// {lua_icon, []string{"lua"}},
 	// {java_icon, []string{"java", "jar"}},
-	// {fmt.Sprintf("%c", '\ue673'), []string{"makefile"}},
-	// {fmt.Sprintf("%c", '\uebca'), []string{"sh"}},
-	// {fmt.Sprintf("%c", '\uf1c1'), []string{"pdf"}},
-	// {fmt.Sprintf("%c", '\uf1c2'), []string{"doc"}},
-	// {fmt.Sprintf("%c", '\ueefc'), []string{"csv"}},
-	// {fmt.Sprintf("%c", '\uf1c6'), []string{"zip", "gz", "tar", "rar", "bz2", "7z", "tgz"}},
 	// {rust_icon, []string{"rs"}},
-	// {fmt.Sprintf("%c", '\U000f0b02'), []string{"uml"}},
 }
 
 func verifyBinary(buf []byte) bool {
@@ -225,6 +202,7 @@ func new_file_tree(main *mainui, name string, rootdir string, handle func(filena
 	menu_item := []context_menu_item{
 		external_open,
 		menu_copy_path(ret, false),
+		menu_delete_path(ret, false),
 		menu_open_prj(ret, false),
 		menu_open_parent(ret),
 		menu_zoom(ret, false),
@@ -303,6 +281,28 @@ func menu_open_prj(ret *file_tree_view, hide bool) context_menu_item {
 	}
 	return external_open
 }
+
+func menu_delete_path(ret *file_tree_view, hide bool) context_menu_item {
+	external_open := context_menu_item{
+		item: create_menu_item("Delete "),
+		handle: func() {
+			node := ret.view.GetCurrentNode()
+			if node != nil {
+				value := node.GetReference()
+				if value != nil {
+					filename := value.(string)
+					if yes, _ := isDirectory(filename); yes {
+						os.RemoveAll(filename)
+					} else {
+						os.Remove(filename)
+					}
+				}
+			}
+		},
+		hide: hide,
+	}
+	return external_open
+}
 func menu_copy_path(ret *file_tree_view, hide bool) context_menu_item {
 	external_open := context_menu_item{
 		item: create_menu_item("Copy path name "),
@@ -330,9 +330,7 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 			if value != nil {
 				filename := value.(string)
 				log.Println("external open tty=", ret.main.tty)
-				if proxy != nil {
-					proxy.open_in_web(filename)
-				} else {
+				if !web.OpenInWeb(filename){
 					openfile(filename)
 				}
 			}

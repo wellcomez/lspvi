@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	// "log"
@@ -118,8 +119,11 @@ func (pty *PtyCmd) Pid() (pid string) {
 	}
 	return pid
 }
+func use_aio() bool {
+	return runtime.GOOS == "windows"
+}
 
-var Use_aio_pty = true
+var Use_aio_pty = use_aio()
 
 func RunCommand(Args []string) LspPty {
 	// var stdout2 read_out

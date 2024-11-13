@@ -1,7 +1,7 @@
 // Copyright 2024 wellcomez
 // SPDX-License-Identifier: gplv3
 
-package mainui
+package web
 
 import (
 	"crypto/tls"
@@ -19,16 +19,18 @@ import (
 
 	// "time"
 	// "github.com/tinylib/msgp/msgp"
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/rivo/tview"
 	"github.com/vmihailenco/msgpack/v5"
 	"zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/ptyproxy"
+	"zen108.com/lspvi/pkg/ui/common"
 )
 
+var GlobalApp *tview.Application
 var use_https = false
 var start_process func(int, string)
-var wk *workdir
+var wk *common.Workdir
 var httpport = 0
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
@@ -95,8 +97,24 @@ func ForwardFromXterm[T any](message []byte, term *lspvi_backend) {
 type lspvi_command_forward struct {
 }
 
+// var prj_root string
+var workdir common.Workdir
+
+func SetPjrRoot(root string) {
+	project_root = root
+	config_root, _ := common.GetLspviRoot()
+	workdir = common.NewWorkDir(config_root, project_root)
+}
 func (term lspvi_command_forward) process(method string, message []byte) bool {
 	switch method {
+	case backend_on_open_prj:
+		{
+			var file Ws_open_prj
+			if err := json.Unmarshal(message, &file); err == nil {
+				SetPjrRoot(file.PrjRoot)
+			}
+
+		}
 	case backend_on_copy:
 		{
 			ForwardFromLspvi[Ws_on_selection](sss.imp, message)
@@ -108,17 +126,23 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 	case backend_on_openfile:
 		{
 			var file Ws_open_file
+
 			err := json.Unmarshal(message, &file)
 			if err == nil && wk != nil {
+				PrjName := common.Trim_project_filename(file.Filename, project_root)
+				if strings.HasPrefix(PrjName, workdir.Root) {
+					PrjName = strings.Replace(PrjName, workdir.Root, "$config", 1)
+				}
 				name := filepath.Base(file.Filename)
 				x := "__" + name
-				tempfile := filepath.Join(wk.temp, x)
+				tempfile := filepath.Join(wk.Temp, x)
 				err := os.WriteFile(tempfile, file.Buf, 0666)
 				if err != nil {
 					debug.DebugLog("xterm ", err)
 				} else {
 					buf, err := msgpack.Marshal(Ws_open_file{
 						Filename: filepath.Join("/temp", x),
+						PrjName:  PrjName,
 						Call:     "openfile",
 					})
 					if err == nil {
@@ -305,44 +329,6 @@ func new_xterm_init(w init_call, conn *websocket.Conn) *xterm_request {
 	}()
 	return &xterm_request{}
 }
-func NewRouter(root string) *mux.Router {
-	r := mux.NewRouter()
-	ss := new_workdir(root)
-	wk = &ss
-	// staticDir := "./node_modules"
-	// fileServer := http.FileServer(http.Dir(staticDir))
-	// r.Handle("/static/", http.StripPrefix("/static/", fileServer))
-	r.HandleFunc("/node_modules/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		// println(path)
-		buf, _ := os.ReadFile(filepath.Join(".", path))
-		w.Write(buf)
-	}).Methods("GET")
-	r.HandleFunc("/temp/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		buf, _ := os.ReadFile(filepath.Join(wk.root, path))
-		w.Write(buf)
-	}).Methods("GET")
-	r.HandleFunc("/ws", serveWs)
-	r.HandleFunc("/static/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
-		read_embbed(r, w)
-	})
-	r.HandleFunc("/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		if path == "/" {
-			reset_lsp_backend()
-			read_embbed(r, w)
-		} else {
-			var root = project_root
-			if len(root) == 0 {
-				root, _ = filepath.Abs(".")
-			}
-			buf, _ := os.ReadFile(filepath.Join(root, path))
-			w.Write(buf)
-		}
-	}).Methods("GET")
-	return r
-}
 
 func reset_lsp_backend() {
 	sss.imp.ws = nil
@@ -351,37 +337,9 @@ func reset_lsp_backend() {
 	}
 }
 
-func read_embbed(r *http.Request, w http.ResponseWriter) {
-	file := r.URL.Path
-	if file == "/" {
-		file = "index.html"
-	}
-	if s, ok := strings.CutPrefix(file, "/static/"); ok {
-		file = s
-	}
-	if devroot, err := filepath.Abs("."); err == nil {
-		var file_under_dev = filepath.Join(devroot, "pkg", "ui", "html", file)
-		if _, err := os.Stat(file_under_dev); err == nil {
-			buf, err := os.ReadFile(file_under_dev)
-			if err == nil {
-				w.Write(buf)
-				return
-			}
-		}
-
-	}
-	p := filepath.Join("html", file)
-	buf, err := uiFS.Open(p)
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
-	io.Copy(w, buf)
-}
-
 var srv http.Server
 
-func StartServer(root string, port int) {
+func startServer(root string, port int) {
 	r := NewRouter(root)
 	cert := NewCert()
 	if cert != nil {
@@ -507,7 +465,7 @@ var argnew []string
 var project_root string
 
 // main
-func StartWebUI(arg Arguments, cb func(int, string)) {
+func StartWebUI(arg common.Arguments, cb func(int, string)) {
 	project_root = arg.Root
 	start_process = cb
 	argnew = []string{os.Args[0], "-tty"}
@@ -519,7 +477,7 @@ func StartWebUI(arg Arguments, cb func(int, string)) {
 	argnew = append(argnew, args...)
 	sss.imp.files.Files = []open_file{}
 	wg.Add(1)
-	StartServer(filepath.Dir(os.Args[0]), 13000)
+	startServer(filepath.Dir(os.Args[0]), 13000)
 }
 
 func create_lspvi_backend(host string, cmdline string) {

@@ -410,7 +410,7 @@ func (colorscheme *symbol_colortheme) set_widget_theme(fg, bg tcell.Color, main 
 	main.codeview2.set_codeview_colortheme(colorscheme)
 	main.fileexplorer.ChangeDir(main.fileexplorer.rootdir)
 	main.uml.file.view.SetBackgroundColor(bg)
-	main.uml.file.ChangeDir(filepath.Join(lspviroot.export, "uml"))
+	main.uml.file.ChangeDir(filepath.Join(lspviroot.Export, "uml"))
 }
 
 func (c symbol_colortheme) update_dialog_color(x1 *fzfmain) {

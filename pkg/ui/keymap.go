@@ -12,6 +12,7 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"zen108.com/lspvi/pkg/debug"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 )
 
 type command_id int
@@ -513,7 +514,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 		}}
 	case open_lspvi_configfile:
 		return cmdactor{id, "lspvi config file", func() bool {
-			m.OpenFileHistory(lspviroot.configfile, nil)
+			m.OpenFileHistory(lspviroot.Configfile, nil)
 			m.current_editor().Acitve()
 			return true
 		}}
@@ -552,9 +553,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 }
 
 func open_extenal(filename string) {
-	if proxy != nil {
-		proxy.open_in_web(filename)
-	} else {
+	if  !web.OpenInWeb(filename){
 		openfile(filename)
 	}
 }
