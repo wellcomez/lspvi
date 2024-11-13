@@ -290,7 +290,11 @@ func menu_delete_path(ret *file_tree_view, hide bool) context_menu_item {
 				value := node.GetReference()
 				if value != nil {
 					filename := value.(string)
-					os.Remove(filename)
+					if yes, _ := isDirectory(filename); yes {
+						os.RemoveAll(filename)
+					} else {
+						os.Remove(filename)
+					}
 				}
 			}
 		},

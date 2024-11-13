@@ -381,7 +381,7 @@ func read_embbed(r *http.Request, w http.ResponseWriter) {
 
 var srv http.Server
 
-func StartServer(root string, port int) {
+func startServer(root string, port int) {
 	r := NewRouter(root)
 	cert := NewCert()
 	if cert != nil {
@@ -519,7 +519,7 @@ func StartWebUI(arg Arguments, cb func(int, string)) {
 	argnew = append(argnew, args...)
 	sss.imp.files.Files = []open_file{}
 	wg.Add(1)
-	StartServer(filepath.Dir(os.Args[0]), 13000)
+	startServer(filepath.Dir(os.Args[0]), 13000)
 }
 
 func create_lspvi_backend(host string, cmdline string) {
