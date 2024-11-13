@@ -23,8 +23,8 @@ function render(text) {
 function hl() {
   hljs.highlightAll()
 }
-var markjs= {
+var markjs = {
   render,
   hl
 }
-export default markjs 
+module.exports = markjs 
