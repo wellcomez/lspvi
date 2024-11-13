@@ -160,13 +160,11 @@ func OpenInPrj(file string) (yes bool) {
 }
 func OpenInWeb(file string) (yes bool) {
 	yes = proxy != nil
-	if !yes {
-		return
-	}
-	if common.Is_open_as_md(file) || common.Is_image(file) {
-		proxy.open_in_web(file)
-	} else {
-		yes = false
+	if yes {
+		yes = common.Is_open_as_md(file) || common.Is_image(file)
+		if yes {
+			proxy.open_in_web(file)
+		}
 	}
 	return
 }
