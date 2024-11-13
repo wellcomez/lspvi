@@ -1,0 +1,19 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="/static/highlightjs/styles/default.min.css">
+    <script src="/static/mark.js"></script>
+    <script src="/static/axios.min.js"></script>
+    <script>
+        let mdfile = "{{.MDFILE}}"
+        let url = "https://" + window.location.host + "/" + mdfile
+        axios.get(url, { responseType: "text" }).then((resp) => {
+            let ss = render(resp.data)
+        });
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>

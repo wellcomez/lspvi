@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -69,6 +70,19 @@ func MarkdownToHTML(md []byte) (ret []byte, err error) {
 	}
 	return
 }
+func read_mark_index(r *http.Request, w http.ResponseWriter) {
+	file := r.URL.Path
+	file = strings.TrimPrefix(file, "/md/")
+	p := "md.html"
+	tmpl := template.Must(template.ParseFS(uiFS, "html/"+p))
+	err := tmpl.Execute(w, map[string]interface{}{
+		"MDFILE": file,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func read_mark(r *http.Request, w http.ResponseWriter) {
 	file := r.URL.Path
 	file = strings.TrimPrefix(file, "/md/")
@@ -83,7 +97,7 @@ func read_mark(r *http.Request, w http.ResponseWriter) {
 		if buf, err := os.ReadFile(filename); err == nil {
 			w.Write(buf)
 		} else {
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
 }

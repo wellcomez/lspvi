@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@mdit/plugin-img-size": "^0.13.1",
+    "@mdit/plugin-plantuml": "^0.13.1",
     "highlight.js": "^11.10.0",
     "markdown-it": "^14.1.0"
   },
