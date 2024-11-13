@@ -4,12 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "rel": "webpack --mode=production",
+    "dev": "webpack --mode=development",
+    "build2": "npx webpack "
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "highlight.js": "^11.10.0",
     "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "babel-loader": "^9.2.1",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4"
   }
 }
