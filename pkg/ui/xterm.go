@@ -24,11 +24,12 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/ptyproxy"
+	"zen108.com/lspvi/pkg/ui/common"
 )
 
 var use_https = false
 var start_process func(int, string)
-var wk *Workdir
+var wk *common.Workdir
 var httpport = 0
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
@@ -307,7 +308,7 @@ func new_xterm_init(w init_call, conn *websocket.Conn) *xterm_request {
 }
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()
-	ss := NewWorkdir(root)
+	ss := common.NewWorkdir(root)
 	wk = &ss
 	// staticDir := "./node_modules"
 	// fileServer := http.FileServer(http.Dir(staticDir))
