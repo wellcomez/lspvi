@@ -98,9 +98,12 @@ type lspvi_command_forward struct {
 }
 
 var prj_root string
+var workdir common.Workdir
 
 func SetPjrRoot(root string) {
 	prj_root = root
+	config_root, _ := common.GetLspviRoot()
+	workdir = common.NewWorkDir(config_root, prj_root)
 }
 func (term lspvi_command_forward) process(method string, message []byte) bool {
 	switch method {
@@ -123,8 +126,13 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 	case backend_on_openfile:
 		{
 			var file Ws_open_file
+
 			err := json.Unmarshal(message, &file)
 			if err == nil && wk != nil {
+				PrjName := common.Trim_project_filename(file.Filename, prj_root)
+				if strings.HasPrefix(PrjName, workdir.Root) {
+					PrjName = strings.Replace(PrjName, workdir.Root, "$config", 1)
+				}
 				name := filepath.Base(file.Filename)
 				x := "__" + name
 				tempfile := filepath.Join(wk.Temp, x)
@@ -134,7 +142,7 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 				} else {
 					buf, err := msgpack.Marshal(Ws_open_file{
 						Filename: filepath.Join("/temp", x),
-						PrjName:  common.Trim_project_filename(file.Filename, prj_root),
+						PrjName:  PrjName,
 						Call:     "openfile",
 					})
 					if err == nil {

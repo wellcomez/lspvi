@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/ui/common"
 )
 
@@ -40,7 +41,13 @@ func read_embbed(r *http.Request, w http.ResponseWriter) {
 }
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()
-	ss := common.NewWorkdir(root)
+	var ss common.Workdir
+	var err error
+	if ss, err = common.NewMkWorkdir(root); err != nil {
+		debug.ErrorLog("web", "NewWorkdir", err)
+		panic(err)
+	}
+
 	wk = &ss
 	// staticDir := "./node_modules"
 	// fileServer := http.FileServer(http.Dir(staticDir))
@@ -74,8 +81,14 @@ func NewRouter(root string) *mux.Router {
 			if len(root) == 0 {
 				root, _ = filepath.Abs(".")
 			}
-			buf, err := os.ReadFile(filepath.Join(root, path))
-			if filepath.Ext(path) == ".md" {
+			var filename string
+			if strings.HasPrefix(path, "/$config") {
+				filename = strings.Replace(path, "/$config", wk.Root, 1)
+			} else {
+				filename = filepath.Join(root, path)
+			}
+			buf, err := os.ReadFile(filename)
+			if filepath.Ext(filename) == ".md" {
 				buf, err = ChangeLink(buf, false, "/")
 			}
 			if err != nil {

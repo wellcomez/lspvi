@@ -11,6 +11,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	"zen108.com/lspvi/pkg/ui/common"
 	web "zen108.com/lspvi/pkg/ui/xterm"
@@ -30,7 +31,11 @@ var global_file_watch = NewFileWatch()
 
 func (prj *Project) Load(arg *common.Arguments, main *mainui) {
 	root := prj.Root
-	lspviroot = common.NewWorkdir(root)
+	var err error
+	if lspviroot, err = common.NewMkWorkdir(root); err != nil {
+		debug.DebugLog("workspace", "load project error", err)
+		panic(err)
+	}
 	global_config = NewLspviconfig()
 	global_config.Load()
 	// go servmain(lspviroot.uml, 18080, func(port int) {
@@ -131,8 +136,6 @@ func (*workspace_list) get_config_file() (string, error) {
 	return config, nil
 }
 
-
-
 type wk_picker_impl struct {
 	*fzflist_impl
 }
@@ -196,10 +199,6 @@ func new_workspace_picker(v *fzfmain) *workspace_picker {
 	})
 	return ret
 }
-
-
-
-
 
 var lspviroot common.Workdir
 var global_config *LspviConfig

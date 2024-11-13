@@ -30,49 +30,55 @@ type Workdir struct {
 	Bookmark           string
 }
 
-func CreateLspviRoot() (string, error) {
-	home, err := os.UserHomeDir()
+func GetLspviRoot() (root string, err error) {
+	var home string
+	home, err = os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	root := filepath.Join(home, ".lspvi")
+	root = filepath.Join(home, ".lspvi")
+	return
+}
+func CreateLspviRoot() (root string, err error) {
+	root, err = GetLspviRoot()
+	if err != nil {
+		return
+	}
 	os.Mkdir(root, 0755)
 	if _, err := os.Stat(root); err != nil {
 		return "", err
 	}
 	return root, nil
 }
-func NewWorkdir(root string) Workdir {
-	config_root := false
-	globalroot, err := CreateLspviRoot()
-	if err == nil {
-		full, err := filepath.Abs(root)
-		if err == nil {
-			root = filepath.Join(globalroot, filepath.Base(full))
-			config_root = true
-		}
+func NewMkWorkdir(root string) (wk Workdir, err error) {
+	var globalroot string
+	globalroot, err = CreateLspviRoot()
+	if err != nil {
+		return
 	}
-	if !config_root {
-		root = filepath.Join(root, ".lspvi")
-	}
-	export := filepath.Join(root, "export")
-	wk := Workdir{
-		Root:               root,
-		Configfile:         filepath.Join(globalroot, "config.yaml"),
-		Logfile:            filepath.Join(root, "lspvi.log"),
-		History:            filepath.Join(root, "history.log"),
-		Bookmark:           filepath.Join(root, "bookmark.json"),
-		Cmdhistory:         filepath.Join(root, "cmdhistory.log"),
-		Search_cmd_history: filepath.Join(root, "search_cmd_history.log"),
-		Export:             export,
-		Temp:               filepath.Join(root, "temp"),
-		UML:                filepath.Join(export, "uml"),
-		Filelist:           filepath.Join(root, ".file"),
-	}
-	ensure_dir(root)
-	ensure_dir(export)
+	wk = NewWorkDir(globalroot, root)
+	ensure_dir(wk.Export)
 	ensure_dir(wk.Temp)
 	ensure_dir(wk.UML)
+	return
+}
+
+func NewWorkDir(globalroot string, root string) (wk Workdir) {
+	root_under_config := filepath.Join(globalroot, filepath.Base(root))
+	export := filepath.Join(root_under_config, "export")
+	wk = Workdir{
+		Root:               root_under_config,
+		Configfile:         filepath.Join(globalroot, "config.yaml"),
+		Logfile:            filepath.Join(root_under_config, "lspvi.log"),
+		History:            filepath.Join(root_under_config, "history.log"),
+		Bookmark:           filepath.Join(root_under_config, "bookmark.json"),
+		Cmdhistory:         filepath.Join(root_under_config, "cmdhistory.log"),
+		Search_cmd_history: filepath.Join(root_under_config, "search_cmd_history.log"),
+		Export:             export,
+		Temp:               filepath.Join(root_under_config, "temp"),
+		UML:                filepath.Join(export, "uml"),
+		Filelist:           filepath.Join(root_under_config, ".file"),
+	}
 	return wk
 }
 func ensure_dir(root string) {
@@ -84,7 +90,7 @@ func ensure_dir(root string) {
 }
 
 func Trim_project_filename(x, y string) string {
-	if strings.Index(x, y) == 0 {
+	if strings.HasPrefix(x, y) {
 		x = strings.TrimPrefix(x, y)
 		x = strings.TrimPrefix(x, "/")
 	}
