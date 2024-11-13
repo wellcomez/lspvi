@@ -4,6 +4,16 @@ import (
 	"os"
 	"path/filepath"
 )
+type Arguments struct {
+	File string
+	Root string
+	Ws   string
+	Tty  bool
+	Cert string
+	Grep bool
+	Help bool
+}
+
 type Workdir struct {
 	Root               string
 	Logfile            string

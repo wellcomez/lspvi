@@ -16,6 +16,7 @@ import (
 	"github.com/rivo/tview"
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 )
 
 type umlview struct {
@@ -69,13 +70,11 @@ func (v *umlview) openfile(name string) {
 
 	v.preview.Clear()
 	if ext == ".md" {
-		if proxy != nil {
-			proxy.open_in_web(name)
+		if web.OpenInWeb(name) {
 			return
 		}
 	} else if ext == ".png" {
-		if proxy != nil {
-			proxy.open_in_web(name)
+		if web.OpenInWeb(name) {
 			return
 		}
 		image := tview.NewImage()

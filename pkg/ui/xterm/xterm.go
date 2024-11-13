@@ -1,7 +1,7 @@
 // Copyright 2024 wellcomez
 // SPDX-License-Identifier: gplv3
 
-package mainui
+package web
 
 import (
 	"crypto/tls"
@@ -21,12 +21,14 @@ import (
 	// "github.com/tinylib/msgp/msgp"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/rivo/tview"
 	"github.com/vmihailenco/msgpack/v5"
 	"zen108.com/lspvi/pkg/debug"
 	"zen108.com/lspvi/pkg/ptyproxy"
 	"zen108.com/lspvi/pkg/ui/common"
 )
 
+var GlobalApp *tview.Application
 var use_https = false
 var start_process func(int, string)
 var wk *common.Workdir
@@ -508,7 +510,7 @@ var argnew []string
 var project_root string
 
 // main
-func StartWebUI(arg Arguments, cb func(int, string)) {
+func StartWebUI(arg common.Arguments, cb func(int, string)) {
 	project_root = arg.Root
 	start_process = cb
 	argnew = []string{os.Args[0], "-tty"}

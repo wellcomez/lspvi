@@ -27,7 +27,7 @@ var gload_workspace_list workspace_list
 var global_prj_root string
 var global_file_watch = NewFileWatch()
 
-func (prj *Project) Load(arg *Arguments, main *mainui) {
+func (prj *Project) Load(arg *common.Arguments, main *mainui) {
 	root := prj.Root
 	lspviroot = common.NewWorkdir(root)
 	global_config = NewLspviconfig()

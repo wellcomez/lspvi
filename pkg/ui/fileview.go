@@ -18,6 +18,7 @@ import (
 	"zen108.com/lspvi/pkg/devicon"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	nerd "zen108.com/lspvi/pkg/ui/icon"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 )
 
 type dir_open_mode int
@@ -329,9 +330,7 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 			if value != nil {
 				filename := value.(string)
 				log.Println("external open tty=", ret.main.tty)
-				if proxy != nil {
-					proxy.open_in_web(filename)
-				} else {
+				if !web.OpenInWeb(filename){
 					openfile(filename)
 				}
 			}

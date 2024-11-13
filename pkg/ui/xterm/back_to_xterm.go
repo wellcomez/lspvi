@@ -1,10 +1,11 @@
 // Copyright 2024 wellcomez
 // SPDX-License-Identifier: gplv3
 
-package mainui
+package web
 
 import (
 	"crypto/tls"
+	"path/filepath"
 	// "log"
 	"os"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"zen108.com/lspvi/pkg/debug"
+	"zen108.com/lspvi/pkg/ui/common"
 )
 
 const xtermtag = "xterm"
@@ -130,11 +132,32 @@ func (*backend_of_xterm) process_xterm_command(w init_call, message []byte) {
 
 var proxy *backend_of_xterm
 
-func start_lspvi_proxy(arg *Arguments, listen bool) {
+func Start_lspvi_proxy(arg *common.Arguments, listen bool) {
 	var p = &backend_of_xterm{address: arg.Ws}
 	if err := p.Open(listen); err == nil {
 		proxy = p
 	} else {
 		debug.ErrorLog(xtermtag, "start lspvi proxy failed", err)
+	}
+}
+func SetBrowserFont(zoom bool) {
+	if proxy != nil {
+		proxy.set_browser_font(zoom)
+	}
+}
+func OpenInWeb(file string)(yes bool) {
+	yes = proxy!=nil
+	ext := filepath.Ext(file)
+	open_in_image_set := []string{".png", ".md"}
+	for _, v := range open_in_image_set {
+		if v == ext && proxy != nil {
+			proxy.open_in_web(file)
+		}
+	}
+	return
+}
+func Set_browser_selection(s string) {
+	if proxy != nil {
+		proxy.set_browser_selection(s)
 	}
 }

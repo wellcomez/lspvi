@@ -31,7 +31,9 @@ import (
 
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/common"
 	fileloader "zen108.com/lspvi/pkg/ui/fileload"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 )
 
 // var appname = "lspvi"
@@ -665,10 +667,10 @@ func (m *mainui) open_wks_query() {
 	m.Dialog().open_wks_query(code)
 }
 func (m *mainui) ZoomWeb(zoom bool) {
-	if proxy != nil {
-		proxy.set_browser_font(zoom)
-	}
+	web.SetBrowserFont(zoom)
 }
+
+
 func (m *mainui) OpenFileHistory(file string, loc *lsp.Location) {
 	m.open_in_tty(file)
 	m.open_file_to_history_option(file, loc, nil)
@@ -683,17 +685,13 @@ func (m *mainui) open_file_to_history_option(file string, loc *lsp.Location, lin
 func (m *mainui) open_in_tty(file string) bool {
 	x := m.RunInBrowser()
 	if x {
-		ext := filepath.Ext(file)
-		open_in_image_set := []string{".png", ".md"}
-		for _, v := range open_in_image_set {
-			if v == ext && proxy != nil {
-				proxy.open_in_web(file)
-			}
-		}
+		web.OpenInWeb(file)
 
 	}
 	return false
 }
+
+
 
 func (m *mainui) RunInBrowser() bool {
 	x := m.tty
@@ -742,24 +740,24 @@ func (m *mainui) open_file_to_history(file string, navi *navigation_loc, addhist
 	code.open_file_lspon_line_option(file, loc, true, option)
 }
 
-type Arguments struct {
-	File string
-	Root string
-	Ws   string
-	Tty  bool
-	Cert string
-	Grep bool
-	Help bool
-}
+// type Arguments struct {
+// 	File string
+// 	Root string
+// 	Ws   string
+// 	Tty  bool
+// 	Cert string
+// 	Grep bool
+// 	Help bool
+// }
 
 func (main *mainui) update_log_view(s string) {
 	main.log.update_log_view(s)
 }
 
-var apparg Arguments
+var apparg common.Arguments
 var GlobalApp *tview.Application
 
-func MainUI(arg *Arguments) {
+func MainUI(arg *common.Arguments) {
 	// go func() {
 	// 	fmt.Println(http.ListenAndServe("localhost:6060", nil))
 	// }()
@@ -821,15 +819,16 @@ func MainUI(arg *Arguments) {
 	// main.code_navigation_bar = new_small_icon(main)
 	global_theme = new_ui_theme(global_config.Colorscheme, main)
 	global_theme.update_default_color()
-
+	GlobalApp = tview.NewApplication()
+	web.GlobalApp = GlobalApp
 	main.recent_open = new_recent_openfile(main)
 	if arg.Ws != "" {
 		main.ws = arg.Ws
 		main.tty = true
-		start_lspvi_proxy(arg, true)
+		web.Start_lspvi_proxy(arg, true)
 
 	} else {
-		go StartWebUI(*arg, func(port int, url string) {
+		go web.StartWebUI(*arg, func(port int, url string) {
 			if len(url) > 0 {
 				main.ws = url
 				main.tty = true
@@ -837,7 +836,7 @@ func MainUI(arg *Arguments) {
 			if port > 0 {
 				httport = port
 			}
-			start_lspvi_proxy(arg, false)
+			web.Start_lspvi_proxy(arg, false)
 		})
 	}
 	// main.bookmark.load()
@@ -852,7 +851,6 @@ func MainUI(arg *Arguments) {
 	main.cmdline = new_cmdline(main)
 	var logfile, _ = os.OpenFile(lspviroot.Logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logfile)
-	GlobalApp = tview.NewApplication()
 	app := GlobalApp
 	main.app = GlobalApp
 

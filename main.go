@@ -5,6 +5,8 @@ import (
 
 	// pty "zen108.com/lspvi/pkg/pty"
 	mainui "zen108.com/lspvi/pkg/ui"
+	"zen108.com/lspvi/pkg/ui/common"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 )
 
 type arg struct {
@@ -21,7 +23,7 @@ func main() {
 	root := flag.String("root", "", "root-dir")
 	file := flag.String("file", "", "source file")
 	flag.Parse()
-	var arg = &mainui.Arguments{
+	var arg = &common.Arguments{
 		Root: *root,
 		File: *file,
 		Tty:  *tty,
@@ -30,7 +32,7 @@ func main() {
 		Help: *help,
 	}
 	if *gui {
-		mainui.StartWebUI(*arg, nil)
+		web.StartWebUI(*arg, nil)
 		return
 	}
 	mainui.MainUI(arg)
