@@ -19,6 +19,7 @@
             let { render, hl } = markjs
             let ss = render(resp.data)
             document.body.innerHTML = ss
+            document.title = mdfile
             markjs.hl()
         });
     </script>

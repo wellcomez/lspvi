@@ -72,31 +72,35 @@ func NewRouter(root string) *mux.Router {
 		read_embbed(r, w)
 	})
 	r.HandleFunc("/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		if path == "/" {
-			reset_lsp_backend()
-			read_embbed(r, w)
-		} else {
-			var root = project_root
-			if len(root) == 0 {
-				root, _ = filepath.Abs(".")
-			}
-			var filename string
-			if strings.HasPrefix(path, "/$config") {
-				filename = strings.Replace(path, "/$config", wk.Root, 1)
-			} else {
-				filename = filepath.Join(root, path)
-			}
-			buf, err := os.ReadFile(filename)
-			if filepath.Ext(filename) == ".md" {
-				buf, err = ChangeLink(buf, false, "/")
-			}
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			} else {
-				w.Write(buf)
-			}
-		}
+		open_prj_file(r, w)
 	}).Methods("GET")
 	return r
+}
+
+func open_prj_file(r *http.Request, w http.ResponseWriter) {
+	path := r.URL.Path
+	if path == "/" {
+		reset_lsp_backend()
+		read_embbed(r, w)
+	} else {
+		var root = project_root
+		if len(root) == 0 {
+			root, _ = filepath.Abs(".")
+		}
+		var filename string
+		if strings.HasPrefix(path, "/$config") {
+			filename = strings.Replace(path, "/$config", wk.Root, 1)
+		} else {
+			filename = filepath.Join(root, path)
+		}
+		buf, err := os.ReadFile(filename)
+		if filepath.Ext(filename) == ".md" {
+			buf, err = ChangeLink(buf, false, "/")
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		} else {
+			w.Write(buf)
+		}
+	}
 }
