@@ -22,7 +22,28 @@ const md = markdownit({
     return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
   }
 })
+// md.renderer.rules.paragraph_open = function (tokens, idx, options, env, self) {
+//   return '<p class="markdown-class">';
+// };
 
+// // 自定义段落关闭标签
+// md.renderer.rules.paragraph_close = function (tokens, idx, options, env, self) {
+//   return '</p>';
+// };
+
+// // 自定义标题渲染器
+// md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+//   const token = tokens[idx];
+//   const level = token.tag.slice(1);
+//   return `<h${level} class="markdown-heading">`;
+// };
+
+// // 自定义标题关闭标签
+// md.renderer.rules.heading_close = function (tokens, idx, options, env, self) {
+//   const token = tokens[idx];
+//   const level = token.tag.slice(1);
+//   return `</h${level}>`;
+// };
 md.use(plantuml);
 
 md.use(anchor.default); // Optional, but makes sense as you really want to link to something, see info about recommended plugins below
