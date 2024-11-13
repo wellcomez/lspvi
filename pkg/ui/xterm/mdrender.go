@@ -117,17 +117,14 @@ func (l *LinkPathReplacer) RenderNode(w util.BufWriter, source []byte, node ast.
 	return ast.WalkContinue, nil
 }
 func ChangeLink(source []byte, root string) (ret []byte, err error) {
-	transformer := RegexpLinkTransformer{
-		// LinkPattern: regexp.MustCompile(`TICKET-\d+`),
-		// ReplUrl:     []byte("https://example.com/TICKET?query=$0"),
-		root: "/md/",
-	}
+	// LinkPattern: regexp.MustCompile(`TICKET-\d+`),
+	// ReplUrl:     []byte("https://example.com/TICKET?query=$0"),
 	// Goldmark supports multiple AST transformers and runs them sequentially in order of priority.
-	prioritizedTransformer := util.Prioritized(&transformer, 0)
 	// Setup goldmark with the markdown renderer and our transformer
+	link_parser := create_link_parser(root)
 	gm := goldmark.New(
 		goldmark.WithRenderer(markdown.NewRenderer()),
-		goldmark.WithParserOptions(parser.WithASTTransformers(prioritizedTransformer)),
+		goldmark.WithParserOptions(link_parser),
 	)
 	// source := []byte(`[Link](./old-path.md)`)
 	reader := text.NewReader(source)
@@ -138,6 +135,15 @@ func ChangeLink(source []byte, root string) (ret []byte, err error) {
 		ret = buf.Bytes()
 	}
 	return
+}
+
+func create_link_parser(root string) parser.Option {
+	transformer := RegexpLinkTransformer{
+		root: root,
+	}
+	prioritizedTransformer := util.Prioritized(&transformer, 0)
+	x := parser.WithASTTransformers(prioritizedTransformer)
+	return x
 }
 func Replace(source []byte) (ret []byte, err error) {
 	// Create a new Goldmark instance with the custom extension
