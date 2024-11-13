@@ -1001,7 +1001,7 @@ func (call *callinview) itemdisp(c *lspcore.CallStackEntry) string {
 }
 
 func trim_project_filename(x, y string) string {
-	if strings.Index(x, global_prj_root) == 0 {
+	if strings.Index(x, y) == 0 {
 		x = strings.TrimPrefix(x, y)
 		x = strings.TrimPrefix(x, "/")
 	}

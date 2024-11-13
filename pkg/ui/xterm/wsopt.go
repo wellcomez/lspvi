@@ -15,9 +15,14 @@ type Ws_font_size struct {
 	Call string
 	Zoom bool
 }
+type Ws_open_prj struct {
+	Call    string
+	PrjRoot string
+}
 type Ws_open_file struct {
 	Call     string
 	Filename string
+	PrjName  string
 	Buf      []byte
 }
 type wsresp struct {
@@ -57,6 +62,7 @@ const lspvi_backend_start = "xterm_lspvi_start"
 const backend_on_command = "call_term_command"
 const backend_on_zoom = "zoom"
 const backend_on_copy = "onselected"
+const backend_on_open_prj = "openprj"
 const backend_on_openfile = "openfile"
 
 type xterm_forward_cmd_refresh struct {

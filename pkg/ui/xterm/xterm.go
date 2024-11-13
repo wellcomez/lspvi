@@ -98,8 +98,18 @@ func ForwardFromXterm[T any](message []byte, term *lspvi_backend) {
 type lspvi_command_forward struct {
 }
 
+var prj_root string
+
 func (term lspvi_command_forward) process(method string, message []byte) bool {
 	switch method {
+	case backend_on_open_prj:
+		{
+			var file Ws_open_prj
+			if err := json.Unmarshal(message, &file); err == nil {
+				prj_root = file.PrjRoot
+			}
+
+		}
 	case backend_on_copy:
 		{
 			ForwardFromLspvi[Ws_on_selection](sss.imp, message)
@@ -122,6 +132,7 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 				} else {
 					buf, err := msgpack.Marshal(Ws_open_file{
 						Filename: filepath.Join("/temp", x),
+						PrjName:  common.Trim_project_filename(file.Filename, prj_root),
 						Call:     "openfile",
 					})
 					if err == nil {

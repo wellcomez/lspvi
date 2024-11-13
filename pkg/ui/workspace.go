@@ -9,10 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"zen108.com/lspvi/pkg/ui/common"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/common"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 )
 
 type Project struct {
@@ -61,6 +62,7 @@ func (prj *Project) Load(arg *common.Arguments, main *mainui) {
 	main.lspmgr = lspmgr
 	main.lspmgr.Handle = main
 	global_prj_root = root
+	go web.OpenInPrj(root)
 	if !global_file_watch.started {
 		go global_file_watch.Run(global_prj_root)
 	} else {

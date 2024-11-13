@@ -670,7 +670,6 @@ func (m *mainui) ZoomWeb(zoom bool) {
 	web.SetBrowserFont(zoom)
 }
 
-
 func (m *mainui) OpenFileHistory(file string, loc *lsp.Location) {
 	m.open_in_tty(file)
 	m.open_file_to_history_option(file, loc, nil)
@@ -690,8 +689,6 @@ func (m *mainui) open_in_tty(file string) bool {
 	}
 	return false
 }
-
-
 
 func (m *mainui) RunInBrowser() bool {
 	x := m.tty
@@ -822,23 +819,7 @@ func MainUI(arg *common.Arguments) {
 	GlobalApp = tview.NewApplication()
 	web.GlobalApp = GlobalApp
 	main.recent_open = new_recent_openfile(main)
-	if arg.Ws != "" {
-		main.ws = arg.Ws
-		main.tty = true
-		web.Start_lspvi_proxy(arg, true)
-
-	} else {
-		go web.StartWebUI(*arg, func(port int, url string) {
-			if len(url) > 0 {
-				main.ws = url
-				main.tty = true
-			}
-			if port > 0 {
-				httport = port
-			}
-			web.Start_lspvi_proxy(arg, false)
-		})
-	}
+	main.start_web_server(arg)
 	// main.bookmark.load()
 	// handle.main = main
 	// if !filepath.IsAbs(root) {
@@ -960,6 +941,27 @@ func MainUI(arg *common.Arguments) {
 	if err := app.SetRoot(main_layout, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
+}
+
+func (main *mainui) start_web_server(arg *common.Arguments) {
+	if arg.Ws != "" {
+		main.ws = arg.Ws
+		main.tty = true
+		web.Start_lspvi_proxy(arg, true)
+
+	} else {
+		go web.StartWebUI(*arg, func(port int, url string) {
+			if len(url) > 0 {
+				main.ws = url
+				main.tty = true
+			}
+			if port > 0 {
+				httport = port
+			}
+			web.Start_lspvi_proxy(arg, false)
+		})
+	}
+	go web.OpenInPrj(global_prj_root)
 }
 func (main *mainui) on_change_color(name string) {
 	global_config.Colorscheme = name

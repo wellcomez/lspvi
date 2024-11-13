@@ -35,6 +35,11 @@ func (proxy *backend_of_xterm) open_in_web(filename string) {
 		debug.ErrorLog(xtermtag, backend_on_openfile, filename, err)
 	}
 }
+func (proxy *backend_of_xterm) open_in_prj(global_prj_root string) {
+	if err := SendJsonMessage[Ws_open_prj](proxy.con, Ws_open_prj{PrjRoot: global_prj_root, Call: backend_on_open_prj}); err != nil {
+		debug.ErrorLog(xtermtag, backend_on_open_prj, err)
+	}
+}
 
 type backend_of_xterm struct {
 	address string
@@ -145,8 +150,16 @@ func SetBrowserFont(zoom bool) {
 		proxy.set_browser_font(zoom)
 	}
 }
-func OpenInWeb(file string)(yes bool) {
-	yes = proxy!=nil
+func OpenInPrj(file string) (yes bool) {
+	if yes = proxy != nil; yes {
+		proxy.open_in_prj(file)
+	}else{
+		debug.DebugLog(xtermtag, "proxy is nil")
+	}
+	return
+}
+func OpenInWeb(file string) (yes bool) {
+	yes = proxy != nil
 	ext := filepath.Ext(file)
 	open_in_image_set := []string{".png", ".md"}
 	for _, v := range open_in_image_set {

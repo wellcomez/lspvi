@@ -3,7 +3,9 @@ package common
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
+
 type Arguments struct {
 	File string
 	Root string
@@ -27,6 +29,7 @@ type Workdir struct {
 	Filelist           string
 	Bookmark           string
 }
+
 func CreateLspviRoot() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -78,4 +81,12 @@ func ensure_dir(root string) {
 			panic(err)
 		}
 	}
+}
+
+func Trim_project_filename(x, y string) string {
+	if strings.Index(x, y) == 0 {
+		x = strings.TrimPrefix(x, y)
+		x = strings.TrimPrefix(x, "/")
+	}
+	return x
 }
