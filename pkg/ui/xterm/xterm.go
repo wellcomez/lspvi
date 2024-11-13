@@ -19,7 +19,6 @@ import (
 
 	// "time"
 	// "github.com/tinylib/msgp/msgp"
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/rivo/tview"
 	"github.com/vmihailenco/msgpack/v5"
@@ -328,33 +327,7 @@ func reset_lsp_backend() {
 	}
 }
 
-func read_embbed(r *http.Request, w http.ResponseWriter) {
-	file := r.URL.Path
-	if file == "/" {
-		file = "index.html"
-	}
-	if s, ok := strings.CutPrefix(file, "/static/"); ok {
-		file = s
-	}
-	if devroot, err := filepath.Abs("."); err == nil {
-		var file_under_dev = filepath.Join(devroot, "pkg", "ui", "html", file)
-		if _, err := os.Stat(file_under_dev); err == nil {
-			buf, err := os.ReadFile(file_under_dev)
-			if err == nil {
-				w.Write(buf)
-				return
-			}
-		}
 
-	}
-	p := filepath.Join("html", file)
-	buf, err := uiFS.Open(p)
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
-	io.Copy(w, buf)
-}
 
 var srv http.Server
 
