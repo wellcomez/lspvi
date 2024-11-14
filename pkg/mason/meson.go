@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -33,8 +34,10 @@ const (
 )
 
 type software_task struct {
-	Type pkgtype
-	data string
+	Type   pkgtype
+	data   string
+	onend  func()
+	Config Config
 }
 
 // Write implements io.Writer.
@@ -236,6 +239,7 @@ func Load(yamlFile []byte, s string) (task software_task, err error) {
 		pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
 		app.data = pkg
 	}
+	task.Config = config
 	task = app
 	return
 	// println(app.data)
@@ -243,7 +247,8 @@ func Load(yamlFile []byte, s string) (task software_task, err error) {
 
 type SoftManager struct {
 	wk   common.Workdir
-	task []software_task
+	task []*software_task
+	app  string
 }
 type ToolType int
 
@@ -273,21 +278,56 @@ var ToolMap = []soft_config_file{
 }
 
 func NewSoftManager(wk common.Workdir) *SoftManager {
+	app := filepath.Join(wk.Root, "app")
 	return &SoftManager{
-		wk: wk,
+		wk:  wk,
+		app: app,
 	}
+}
+func (v soft_config_file) Load() (ret software_task,err error) {
+	file := fmt.Sprintf("config/%s/package.yaml", v.dir)
+	var buf []byte
+	buf, err = uiFS.ReadFile(file)
+	if err == nil {
+		ret, err = Load(buf, "")
+		return
+	}
+	return
 }
 
 //go:embed  config
 var uiFS embed.FS
+func (s *SoftManager) GetAll()(ret []software_task) {
+	for _, v := range ToolMap {
+		task, err := v.Load()
+		if err==nil{
+			ret = append(ret,task)
+		}
+	}
+	return
+}
 
-func (s SoftManager) Run(t ToolType) {
+
+func (s *SoftManager) Run(t ToolType) {
 	for _, v := range ToolMap {
 		if v.ToolType == t {
 			file := fmt.Sprintf("config/%s/package.yaml", v.dir)
+			dest := filepath.Join(s.app, v.dir)
+			os.MkdirAll(dest, 0755)
 			if buf, err := uiFS.ReadFile(file); err != nil {
 				if task, err := Load(buf, file); err == nil {
-					s.task = append(s.task, task)
+					new_task := &task
+					s.task = append(s.task, new_task)
+					go task.run(dest)
+					task.onend = func() {
+						var tasks []*software_task
+						for _, v := range s.task {
+							if v != new_task {
+								tasks = append(tasks, v)
+							}
+						}
+						s.task = tasks
+					}
 				}
 			}
 		}
