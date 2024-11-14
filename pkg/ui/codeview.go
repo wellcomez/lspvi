@@ -6,13 +6,12 @@ package mainui
 import (
 	"errors"
 	"fmt"
+	"github.com/atotto/clipboard"
 	"log"
 	"os"
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/atotto/clipboard"
 
 	"github.com/fsnotify/fsnotify"
 
@@ -254,6 +253,8 @@ func (code *CodeView) Reload() {
 	}
 }
 
+
+
 // OnFileChange implements change_reciever.
 func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool {
 	if event.Op&fsnotify.Write != fsnotify.Write {
@@ -261,7 +262,12 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 	}
 
 	changefile := NewFile(file)
-	if code.file.SamePath(file) && changefile.modtime != code.file.modtime {
+	var tv = code.file.modtime.Unix() - changefile.modtime.Unix()
+	if tv < 0 {
+		tv = -tv
+	}
+	var changed = (changefile.modtime.Equal(code.file.modtime) || tv < 5)
+	if code.file.SamePath(file) && !changed {
 		code.Reload()
 		return true
 	}
@@ -1063,6 +1069,7 @@ func (code *CodeView) Save() (err error) {
 	view := code.view
 	data := view.Buf.SaveString(false)
 	code.main.Bookmark().udpate(&code.view.bookmark)
+	code.file.modtime = time.Now()
 	if err = os.WriteFile(code.Path(), []byte(data), 0644); err == nil {
 		var t time.Time
 		t, err = code.file.GetChangeTime()

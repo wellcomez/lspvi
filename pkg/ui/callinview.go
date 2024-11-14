@@ -17,6 +17,7 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	"zen108.com/lspvi/pkg/ui/common"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 	// "zen108.com/lspvi/pkg/ui/common"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
@@ -196,7 +197,7 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 			}
 		}, hide: hide_define},
 		{item: cmditem{Cmd: cmdactor{desc: "UML"}}, handle: func() {
-			if open_from_callstack(nodepath, callnode, main, top) == true {
+			if open_from_callstack(nodepath, callnode, main, top) {
 				return
 			}
 			s := main.Lspmgr().Wk.Export
@@ -262,8 +263,13 @@ func open_from_callstack(nodepath []*tview.TreeNode, callnode *tview.TreeNode, m
 			// name := fmt.Sprintf("%d.%s", index, s.Items[0].DirName())
 			name := lspcore.Get_stackfile_name(index, s)
 			if yes, err := isDirectory(root); err == nil && yes {
-				fielname := filepath.Join(root, name+".png")
-				external_open_file(fielname)
+				if web.InWebMode() {
+					fielname := filepath.Join(root, name+".png")
+					external_open_file(fielname)
+				} else {
+					fielname := filepath.Join(root, name+".png")
+					external_open_file(fielname)
+				}
 				return true
 			}
 		}

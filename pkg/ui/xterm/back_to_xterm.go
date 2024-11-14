@@ -158,6 +158,10 @@ func OpenInPrj(file string) (yes bool) {
 	}
 	return
 }
+func InWebMode() (yes bool) {
+	yes = proxy != nil
+	return
+}
 func OpenInWeb(file string) (yes bool) {
 	yes = proxy != nil
 	if yes {
