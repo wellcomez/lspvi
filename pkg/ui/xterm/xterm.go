@@ -30,7 +30,7 @@ import (
 var GlobalApp *tview.Application
 var use_https = false
 var start_process func(int, string)
-var wk *common.Workdir
+// var wk common.Workdir
 var httpport = 0
 var sss = ptyout{&ptyout_impl{unsend: []byte{}}}
 var wg sync.WaitGroup
@@ -99,11 +99,17 @@ type lspvi_command_forward struct {
 
 // var prj_root string
 var workdir common.Workdir
+var project_root string
 
 func SetPjrRoot(root string) {
+	debug.InfoLogf("web", "set project root %s", root)
+	if root == "" {
+		root, _ = filepath.Abs(".")
+	}
 	project_root = root
 	config_root, _ := common.GetLspviRoot()
 	workdir = common.NewWorkDir(config_root, project_root)
+	debug.DebugLog("web", "workdir", workdir)
 }
 func (term lspvi_command_forward) process(method string, message []byte) bool {
 	switch method {
@@ -128,14 +134,14 @@ func (term lspvi_command_forward) process(method string, message []byte) bool {
 			var file Ws_open_file
 
 			err := json.Unmarshal(message, &file)
-			if err == nil && wk != nil {
+			if err == nil  {
 				PrjName := common.Trim_project_filename(file.Filename, project_root)
 				if strings.HasPrefix(PrjName, workdir.Root) {
 					PrjName = strings.Replace(PrjName, workdir.Root, "$config", 1)
 				}
 				name := filepath.Base(file.Filename)
 				x := "__" + name
-				tempfile := filepath.Join(wk.Temp, x)
+				tempfile := filepath.Join(workdir.Temp, x)
 				err := os.WriteFile(tempfile, file.Buf, 0666)
 				if err != nil {
 					debug.DebugLog("xterm ", err)
@@ -462,11 +468,10 @@ func (p ptyout) Write(s []byte) (n int, err error) {
 }
 
 var argnew []string
-var project_root string
 
 // main
 func StartWebUI(arg common.Arguments, cb func(int, string)) {
-	project_root = arg.Root
+	SetPjrRoot(arg.Root)
 	start_process = cb
 	argnew = []string{os.Args[0], "-tty"}
 

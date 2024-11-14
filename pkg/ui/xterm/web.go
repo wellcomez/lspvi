@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -41,14 +42,8 @@ func read_embbed(r *http.Request, w http.ResponseWriter) {
 }
 func NewRouter(root string) *mux.Router {
 	r := mux.NewRouter()
-	var ss common.Workdir
-	var err error
-	if ss, err = common.NewMkWorkdir(root); err != nil {
-		debug.ErrorLog("web", "NewWorkdir", err)
-		panic(err)
-	}
-
-	wk = &ss
+	wk := workdir
+	// wk = &ss
 	// staticDir := "./node_modules"
 	// fileServer := http.FileServer(http.Dir(staticDir))
 	// r.Handle("/static/", http.StripPrefix("/static/", fileServer))
@@ -78,27 +73,31 @@ func NewRouter(root string) *mux.Router {
 }
 
 func open_prj_file(r *http.Request, w http.ResponseWriter) {
+	debug.InfoLog("web", "open_prj_file", r.URL.Path)
 	path := r.URL.Path
 	if path == "/" {
 		reset_lsp_backend()
 		read_embbed(r, w)
 	} else {
-		var root = project_root
-		if len(root) == 0 {
-			root, _ = filepath.Abs(".")
-		}
+		// var root = project_root
 		var filename string
 		if strings.HasPrefix(path, "/$config") {
-			filename = strings.Replace(path, "/$config", wk.Root, 1)
+			filename = strings.Replace(path, "/$config", workdir.Root, 1)
 		} else {
-			filename = filepath.Join(root, path)
+			filename = filepath.Join(project_root, path)
 		}
 		buf, err := os.ReadFile(filename)
-		if filepath.Ext(filename) == ".md" {
-			newroot:=filepath.Dir(path)
+		if common.Is_open_as_md(filename) {
+			newroot := filepath.Dir(path)
 			buf, err = ChangeLink(buf, false, newroot)
+			debug.DebugLog("web", "ChangeLink",
+				"prjroot", strconv.Quote(project_root),
+				"prj_config_root", strconv.Quote(workdir.Root),
+				"filename", filename,
+				"newroot", newroot, err, string(buf))
 		}
 		if err != nil {
+			debug.ErrorLog("web", "read file", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		} else {
 			w.Write(buf)
