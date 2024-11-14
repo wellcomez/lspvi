@@ -11,7 +11,7 @@ func (code CodeView) GetLineCommentChar() (commentChar string) {
 	ext := filepath.Ext(code.FileName())
 	switch ext {
 	case ".go", ".c", ".cpp", ".h", ".hpp", ".cc", ".hxx", ".cxx", ".java", ".js", ".ts", ".tsx", ".rs", ".sh", ".bash", ".zsh", ".fish", ".php", ".html", ".css", ".xml", ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf", ".md", ".rst", ".tex", ".bib", ".bibtex", ".biblate":
-		commentChar = "//"
+		commentChar = "// "
 	case ".py":
 		commentChar = "#"
 	}
