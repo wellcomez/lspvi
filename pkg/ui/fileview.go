@@ -330,14 +330,18 @@ func menu_open_external(ret *file_tree_view, hide bool) context_menu_item {
 			if value != nil {
 				filename := value.(string)
 				log.Println("external open tty=", ret.main.tty)
-				if !web.OpenInWeb(filename){
-					openfile(filename)
-				}
+				external_open_file(filename)
 			}
 		},
 		hide: hide,
 	}
 	return external_open
+}
+
+func external_open_file(filename string) {
+	if !web.OpenInWeb(filename) {
+		openfile(filename)
+	}
 }
 
 func CheckIfDir(path string) (bool, error) {

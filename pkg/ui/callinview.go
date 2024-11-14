@@ -6,12 +6,16 @@ package mainui
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/tectiv3/go-lsp"
+	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
+	"zen108.com/lspvi/pkg/ui/common"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -145,6 +149,26 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 			hidecallin = (hidecallin || callroot == node)
 		}
 	}
+	var get_sym = func(node *tview.TreeNode) (ret *lsp.CallHierarchyItem, err error) {
+		if value := node.GetReference(); value != nil {
+			if ref, ok := value.(dom_node); ok {
+				ret = &ref.call
+				return
+
+			}
+		}
+		err = fmt.Errorf("not a callin node")
+		return
+	}
+	var top *lsp.CallHierarchyItem
+	var tail *lsp.CallHierarchyItem
+	if len(node.GetChildren()) == 0 {
+		if len(nodepath) > 1 {
+			top, _ = get_sym(nodepath[1])
+			tail, _ = get_sym(node)
+		}
+	}
+	hide_uml := top == nil || tail == nil
 
 	menuitem := []context_menu_item{
 		{item: cmditem{Cmd: cmdactor{desc: "Reload"}}, handle: func() {
@@ -157,7 +181,6 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 			}
 		}, hide: hiderefresh},
 		{item: cmditem{Cmd: cmdactor{desc: "GotoDefine"}}, handle: func() {
-			node := ret.view.GetCurrentNode()
 			value := node.GetReference()
 			if value != nil {
 				if ref, ok := value.(dom_node); ok {
@@ -167,8 +190,20 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 				}
 			}
 		}, hide: hide_define},
+		{item: cmditem{Cmd: cmdactor{desc: "UML"}}, handle: func() {
+			s := main.Lspmgr().Wk.Export
+			root := filepath.Join(s, "uml", top.Name)
+			if files, err := os.ReadDir(root); err == nil {
+				for _, f := range files {
+					if strings.Contains(f.Name(), tail.Name) && common.Is_image(f.Name()) {
+						external_open_file(filepath.Join(root, f.Name()))
+					}
+				}
+			}
+			debug.DebugLog("UML", "xx")
+
+		}, hide: hide_uml},
 		{item: cmditem{Cmd: cmdactor{desc: "GotoReference"}}, handle: func() {
-			node := ret.view.GetCurrentNode()
 			value := node.GetReference()
 			if value != nil {
 				if ref, ok := value.(dom_node); ok {
