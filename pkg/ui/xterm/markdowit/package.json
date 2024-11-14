@@ -4,24 +4,15 @@
   "main": "main.js",
   "module": "dist/mark.js",
   "scripts": {
-    "build": "rollup -c",
-    "dev": "NODE_ENV=development rollup -c"
+    "build": "npx webpack",
+    "dev": "NODE_ENV=development npx webpack"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
     "@eslint/js": "^9.14.0",
-    "@rollup/plugin-babel": "^5.3.1",
-    "@rollup/plugin-commonjs": "^28.0.1",
-    "@rollup/plugin-node-resolve": "^15.3.0",
-    "@rollup/plugin-terser": "^0.4.4",
     "eslint": "^9.14.0",
     "globals": "^15.12.0",
-    "rollup": "^2.79.2",
-    "rollup-plugin-babel": "^4.4.0",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-polyfill-node": "^0.13.0",
     "webpack": "^5.96.1",
     "webpack-cli": "^5.1.4"
   },
@@ -36,7 +27,9 @@
     "github-markdown-css": "^5.7.0",
     "highlight.js": "^11.10.0",
     "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.2.0",
     "markdown-it-highlightjs": "^4.2.0",
+    "markdown-it-table-of-contents": "^0.8.0",
     "msgpack5": "^6.0.2",
     "process": "^0.11.10",
     "vue": "2"
