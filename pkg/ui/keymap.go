@@ -87,6 +87,7 @@ const (
 	vi_line_head
 	vi_line_end
 	lsp_complete
+	lsp_comment_line
 	handle_ctrl_c
 	handle_ctrl_v
 	cmd_quit
@@ -523,6 +524,13 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.Dialog().OpenKeymapFzf()
 			return true
 		}}
+	case lsp_comment_line:
+		{
+			return cmdactor{id, "Comment lines", func() bool {
+				m.current_editor().CommentLine()
+				return true
+			}}
+		}
 	case lsp_complete:
 		{
 			return cmdactor{id, "Lsp complete", func() bool {
@@ -553,7 +561,7 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 }
 
 func open_extenal(filename string) {
-	if  !web.OpenInWeb(filename){
+	if !web.OpenInWeb(filename) {
 		openfile(filename)
 	}
 }
@@ -737,6 +745,7 @@ func (k *keymap) global_key_map() []cmditem {
 	m := k.main
 	k.global = []cmditem{
 		get_cmd_actor(m, handle_ctrl_c).tcell_key(tcell.KeyCtrlC),
+		get_cmd_actor(m, lsp_comment_line).tcell_key(tcell.KeyCtrlUnderscore),
 		get_cmd_actor(m, handle_ctrl_v).tcell_key(tcell.KeyCtrlV),
 		get_cmd_actor(m, goto_back).tcell_key(tcell.KeyCtrlO),
 		get_cmd_actor(m, open_picker_livegrep_line).tcell_key(tcell.KeyCtrlF),

@@ -6,7 +6,6 @@ import (
 	"github.com/tectiv3/go-lsp"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	fileloader "zen108.com/lspvi/pkg/ui/fileload"
-
 )
 
 type ICompleteCodeEditor interface {
@@ -29,6 +28,7 @@ type IEditorLoad interface {
 	update_with_line_changed()
 }
 type IEditorLsp interface {
+	CommentLine()
 	//Dianostic
 	Dianostic() (diagnostic editor_diagnostic)
 	NextError(bool)
