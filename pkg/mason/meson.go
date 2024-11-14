@@ -33,12 +33,21 @@ const (
 	pkg_pypi
 )
 
+type install_result int
+
+const (
+	install_success install_result = iota
+	install_fail
+)
+
+type SoftInstallResult func(software_task, install_result)
 type software_task struct {
-	Type   pkgtype
-	data   string
-	onend  func()
-	Config Config
-	Id     ToolType
+	Type     pkgtype
+	data     string
+	onend    SoftInstallResult
+	onupdate func(string)
+	Config   Config
+	Id       ToolType
 }
 
 // Write implements io.Writer.
@@ -58,7 +67,7 @@ const (
 func (s *software_task) download(dest string) {
 }
 
-func (s *software_task) run(dest string) {
+func (s *software_task) run_install_task(dest string) {
 	var action = soft_action_none
 	cmd := ""
 	switch s.Type {
@@ -247,9 +256,10 @@ func Load(yamlFile []byte, s string) (task software_task, err error) {
 }
 
 type SoftManager struct {
-	wk   common.Workdir
-	task []*software_task
-	app  string
+	wk       common.Workdir
+	task     []*software_task
+	app      string
+	OnResult SoftInstallResult
 }
 type ToolType int
 
@@ -320,8 +330,8 @@ func (s *SoftManager) Run(t ToolType) {
 				if task, err := Load(buf, file); err == nil {
 					new_task := &task
 					s.task = append(s.task, new_task)
-					go task.run(dest)
-					task.onend = func() {
+					go task.run_install_task(dest)
+					task.onend = func(software_task, install_result) {
 						var tasks []*software_task
 						for _, v := range s.task {
 							if v != new_task {
