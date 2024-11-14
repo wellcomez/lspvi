@@ -439,6 +439,9 @@ func rs_outline(ts *TreeSitter, cb outlinecb) {
 	for _, v := range items.items {
 		document_symbol = append(document_symbol, *v)
 	}
+	sort.Slice(document_symbol, func(i, j int) bool {
+		return document_symbol[i].Location.Range.Start.Line < document_symbol[j].Location.Range.Start.Line
+	})
 	s.build_class_symbol(document_symbol, 0, nil)
 	ts.Outline = s.Class_object
 }
@@ -1071,12 +1074,18 @@ func (t *cpp_go_symbol_resolve) change_to_method(sym *lsp.SymbolInformation) boo
 type go_const_spec struct {
 	data        []*lsp.SymbolInformation
 	name        string
-	classsymbol *lsp.SymbolInformation
+	classsymbol lsp.SymbolInformation
+	context     TreeSitterSymbol
 }
 
-func (spec *go_const_spec) Is(s *lsp.SymbolInformation) bool {
+func (spec *go_const_spec) Is(s *lsp.SymbolInformation, context *TreeSitterSymbol) bool {
 	v := spec.data[len(spec.data)-1]
-	if v.Location.Range.End.Line+1 == s.Location.Range.End.Line {
+	yes := false
+	if context != nil {
+		yes = spec.context == *context
+
+	}
+	if yes || v.Location.Range.End.Line+1 == s.Location.Range.End.Line {
 		spec.data = append(spec.data, s)
 		spec.classsymbol.Location.Range.End = s.Location.Range.End
 		return true
@@ -1096,6 +1105,14 @@ func (t *ts_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.SymbolI
 	for _, v := range line {
 		if v.CaptureName == "item" {
 			if v.Symbol == "const_spec" {
+				var context *TreeSitterSymbol
+				for i := range line {
+					c := line[i]
+					if c.CaptureName == "context" {
+						context = &c
+						break
+					}
+				}
 				found := false
 				is_const_spec = true
 				for i := range t.class_object {
@@ -1105,10 +1122,17 @@ func (t *ts_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.SymbolI
 						t.last_enum_const = &go_const_spec{
 							name:        c.Name,
 							data:        []*lsp.SymbolInformation{sym},
-							classsymbol: c,
+							classsymbol: *c,
 						}
-						c.Location.Range.End = sym.Location.Range.End
-						c.Kind = lsp.SymbolKindEnum
+						classsymbol := &t.last_enum_const.classsymbol
+						classsymbol.Name = classsymbol.Name+ " (const enum)" 
+						classsymbol.Location.Range.Start.Line = sym.Location.Range.Start.Line - 1
+						if context != nil {
+							t.last_enum_const.context = *context
+							classsymbol.Location.Range.Start = lsp.Position{Line: int(context.Begin.Row), Character: int(context.Begin.Column)}
+						}
+						classsymbol.Location.Range.End = sym.Location.Range.End
+						classsymbol.Kind = lsp.SymbolKindEnum
 						t.enum_const = append(t.enum_const, t.last_enum_const)
 						found = true
 						break
@@ -1116,7 +1140,7 @@ func (t *ts_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.SymbolI
 				}
 				if !found {
 					if t.last_enum_const != nil {
-						if t.last_enum_const.Is(sym) {
+						if t.last_enum_const.Is(sym, context) {
 							sym.Kind = lsp.SymbolKindEnumMember
 						}
 					}

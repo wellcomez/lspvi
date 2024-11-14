@@ -163,6 +163,7 @@ func (s *ts_lang_def) is_me(file string) bool {
 var tree_sitter_lang_map = []*ts_lang_def{
 	new_tsdef("go", lsp_lang_go{}, ts_go.Language()).setparser(func(ts *TreeSitter, o outlinecb) {
 		rs_outline(ts, func(ts *TreeSitter, si *OutlineSymolList) {
+
 			if len(si.items) > 0 {
 				lines := []string{}
 				if len(ts.sourceCode) > 0 {
@@ -183,6 +184,13 @@ var tree_sitter_lang_map = []*ts_lang_def{
 						if strings.Index(v.Name, "(().") == 0 {
 							v.Name = strings.Replace(v.Name, "(().", "", 1)
 						}
+					}
+				}
+				var data = ts.symbol_resolve.(*ts_go_symbol_resolve)
+				if data != nil {
+					for i := range data.enum_const {
+						v := data.enum_const[i]
+						ret = append(ret, &v.classsymbol)
 					}
 				}
 				si.items = ret
