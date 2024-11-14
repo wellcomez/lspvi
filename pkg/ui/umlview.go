@@ -132,7 +132,7 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 	}
 	file := new_uml_tree(main, "uml", ex.Dir)
 	layout := tview.NewFlex()
-	layout.AddItem(file.view, 0, 3, false)
+	layout.AddItem(file.view, 0, 5, false)
 	preview := tview.NewFlex()
 	layout.AddItem(preview, 0, 7, false)
 	ret := &umlview{
@@ -146,6 +146,8 @@ func NewUmlView(main *mainui, wk *lspcore.WorkSpace) (*umlview, error) {
 	file_right_context := uml_filetree_context{qk: file, main: main}
 	// update_filetree_menu(ret)
 	file.openfile = ret.openfile
+	file.view.SetGraphics(false)
+	file.view.SetAlign(true)
 	file.view.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
 		menu := main.Right_context_menu()
 		if file.view.InRect(event.Position()) {

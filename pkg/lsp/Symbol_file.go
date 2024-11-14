@@ -518,7 +518,7 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_reco
 		name := "callin"
 		if len(s.Items) > 0 {
 			if rename != nil {
-				name = fmt.Sprintf("%d.%s-%d", index, s.Items[0].DirName(), s.UID)
+				name = fmt.Sprintf("%d.%s", index, s.Items[0].DirName())
 				if d, ok := rename.rename[name]; ok {
 					rename.rename[name] = d + 1
 					name = fmt.Sprintf("%d_%s", d, name)
