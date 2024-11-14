@@ -267,6 +267,14 @@ func (v *fzfmain) symbol_picker_2(code CodeEditor) {
 	v.currentpicker = sym
 	v.create_dialog_content(x, sym)
 }
+func (v *fzfmain) OpenSoftware() {
+	currentpicker, err := NewSoftwarepciker(v)
+	if err != nil {
+		return
+	}
+	grid := currentpicker.grid(v.input)
+	v.create_dialog_content(grid, currentpicker)
+}
 func (v *fzfmain) OpenUIPicker() {
 	currentpicker := new_uipciker(v)
 	grid := currentpicker.grid(v.input)
@@ -274,7 +282,7 @@ func (v *fzfmain) OpenUIPicker() {
 }
 func (v *fzfmain) OpenDiagnosPicker() {
 	currentpicker := new_diagnospicker_picker(v)
-	grid := currentpicker.flex(v.input,1)
+	grid := currentpicker.flex(v.input, 1)
 	v.create_dialog_content(grid, currentpicker)
 }
 

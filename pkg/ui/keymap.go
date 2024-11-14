@@ -21,6 +21,7 @@ const (
 	open_picker_document_symbol command_id = iota
 	open_picker_bookmark
 	open_picker_refs
+	open_picker_install
 	open_picker_colorscheme
 	open_picker_workspace
 	open_picker_qfh
@@ -198,6 +199,12 @@ func get_cmd_actor(m MainService, id command_id) cmdactor {
 			m.Dialog().OpenWorkspaceFzf()
 			return true
 		}}
+	case open_picker_install:
+		return cmdactor{id, "Install", func() bool {
+			m.Dialog().OpenSoftware()
+			return true
+		}}
+
 	case open_picker_refs:
 		return cmdactor{id, "Reference", func() bool {
 			m.open_picker_refs()
@@ -690,6 +697,7 @@ func (k *keymap) key_map_space_menu() {
 		get_cmd_actor(m, open_picker_qfh).menu_key(split("q")),
 		get_cmd_actor(m, open_picker_ui).menu_key(split("u")),
 		get_cmd_actor(m, open_picker_diagnos).menu_key(split("e")),
+		get_cmd_actor(m, open_picker_install).menu_key(split("I")),
 		get_cmd_actor(m, open_picker_refs).menu_key(split(chr_goto_refer)),
 		get_cmd_actor(m, open_picker_bookmark).menu_key(split(chr_bookmark)),
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),

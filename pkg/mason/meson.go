@@ -173,9 +173,11 @@ type Bin struct {
 
 // Config represents the entire YAML configuration.
 type Config struct {
-	Source  Source  `yaml:"source"`
-	Schemas Schemas `yaml:"schemas"`
-	Bin     Bin     `yaml:"bin"`
+	Source      Source  `yaml:"source"`
+	Schemas     Schemas `yaml:"schemas"`
+	Bin         Bin     `yaml:"bin"`
+	Name        string  `yaml:"name"`
+	Description string  `yaml:"description"`
 }
 
 func get_target() string {
@@ -235,9 +237,10 @@ func Load(yamlFile []byte, s string) (task software_task, err error) {
 					if t == target {
 						ss := fmt.Sprintf(download_url_template, account, version, v.File)
 						app.data = ss
-						println(ss)
-						return
 					}
+				}
+				if len(app.data) > 0 {
+					break
 				}
 			}
 		}
@@ -249,7 +252,7 @@ func Load(yamlFile []byte, s string) (task software_task, err error) {
 		pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
 		app.data = pkg
 	}
-	task.Config = config
+	app.Config = config
 	task = app
 	return
 	// println(app.data)
