@@ -12,13 +12,10 @@ import (
 	"strings"
 	"time"
 
-
-
-
-
-
 	"github.com/atotto/clipboard"
+
 	"github.com/fsnotify/fsnotify"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
 	"github.com/pgavlin/femto/runtime"
@@ -139,17 +136,10 @@ func (data right_menu_data) SelectInEditor(c *femto.Cursor) bool {
 	return len(c.GetSelection()) > 1
 }
 
-
-
 type File struct {
 	filepathname string
 	filename     string
 	modtime      time.Time
-
-
-
-
-	
 }
 
 func (f File) GetChangeTime() (ret time.Time, err error) {
