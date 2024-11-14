@@ -18,6 +18,8 @@ func (code CodeView) GetLineCommentChar() (commentChar string) {
 	return
 }
 func (code *CodeView) CommentLine() {
+	checker := code.NewChangeChecker()
+	defer checker.End()
 	sel := code.view.Cursor.CurSelection
 	line := []int{}
 	for i := min(sel[0].Y, sel[1].Y); i <= max(sel[0].Y, sel[1].Y); i++ {
