@@ -34,8 +34,8 @@ func (u *softwarepicker) close() {
 // handle implements picker.
 func (u *softwarepicker) handle() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	// panic("unimplemented")
+
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-		u.list.InputHandler()(event, setFocus)
 	}
 }
 
@@ -63,16 +63,28 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 	for i := range apps {
 		v := apps[i]
 		status := " Not installed"
-		if yes, err := v.Installed(); err == nil {
-			if yes {
-				status = " installed"
+		if yes, err := v.GetBin(); err == nil {
+			if len(yes.Path) > 0 {
+				status = yes.Path
 			}
-		} else {
-			status = " unknown"
 		}
-		ret.list.AddItem(v.Config.Name+status, "", nil)
+		ret.list.AddItem(fmt.Sprintf("%s %s", v.Config.Name, status), "", nil)
 		data = append(data, v.Config.Name)
 	}
+	ret.list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'i' {
+			x := ret.list.GetCurrentItem()
+			a := apps[x]
+			software.Start(&a, func(s string) {
+				ret.list.SetItemText(x, fmt.Sprintf("%s %s", a.Config.Name, s), "")
+				go dialog.main.App().QueueUpdate(func() {
+					dialog.main.App().ForceDraw()
+				})
+			})
+			return nil
+		}
+		return event
+	})
 	ret.fzf = new_fzf_on_list_data(ret.list, data, true)
 	ret.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
 	})

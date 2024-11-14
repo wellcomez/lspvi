@@ -2,8 +2,13 @@ package mason
 
 import (
 	"embed"
-	"errors"
+	"time"
+
+	grab "github.com/cavaliergopher/grab/v3"
+
+	// "errors"
 	"fmt"
+
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,18 +44,24 @@ type install_result int
 const (
 	install_success install_result = iota
 	install_fail
+	install_break
 )
 
-type SoftInstallResult func(software_task, install_result)
+type SoftInstallResult func(software_task, install_result, error)
 type software_task struct {
-	Type     pkgtype
-	data     string
-	bin      string
+	Type pkgtype
+	data string
+
+	//for asset field
+	asset_bin  string
+	asset_file string
+
 	excute   bool
 	onend    SoftInstallResult
 	onupdate func(string)
 	Config   Config
 	Id       ToolType
+	zipdir   string
 }
 
 func isExecutableInPath(executable string) bool {
@@ -58,21 +69,46 @@ func isExecutableInPath(executable string) bool {
 	return err == nil
 }
 
-func (s software_task) Installed() (ret bool, err error) {
+type Executable struct {
+	Path string
+}
+
+func (s software_task) GetBin() (bin Executable, err error) {
 	if s.Config.Bin.Value == "{{source.asset.bin}}" {
-		if len(s.bin) > 0 {
-			if ret = isExecutableInPath(filepath.Base(s.bin)); ret {
+		if len(s.asset_bin) > 0 {
+			path := filepath.Join(s.zipdir, s.asset_bin)
+			if fi, e := os.Stat(path); e == nil && !fi.IsDir() {
+				bin.Path = path
+				return
+			}
+			bin.Path, err = exec.LookPath(filepath.Base(s.asset_bin))
+			if err == nil {
 				return
 			}
 		}
 	}
-	if ret = isExecutableInPath(s.Config.Bin.Key); ret {
-		ss, _ := exec.LookPath(s.Config.Bin.Key)
-		debug.DebugLog("mason", "isExecutableInPath", ss)
+	bin.Path, err = exec.LookPath(s.Config.Bin.Key)
+	if err == nil {
 		return
 	}
-	return false, errors.New("not support")
+	return
 }
+
+// func (s software_task) Installed() (ret bool, err error) {
+// 	if s.Config.Bin.Value == "{{source.asset.bin}}" {
+// 		if len(s.bin) > 0 {
+// 			if ret = isExecutableInPath(filepath.Base(s.bin)); ret {
+// 				return
+// 			}
+// 		}
+// 	}
+// 	if ret = isExecutableInPath(s.Config.Bin.Key); ret {
+// 		ss, _ := exec.LookPath(s.Config.Bin.Key)
+// 		debug.DebugLog("mason", "isExecutableInPath", ss)
+// 		return
+// 	}
+// 	return false, errors.New("not support")
+// }
 
 // Write implements io.Writer.
 func (s software_task) Write(p []byte) (n int, err error) {
@@ -88,10 +124,64 @@ const (
 	soft_action_install
 )
 
-func (s *software_task) download(dest string) {
+// func (s *software_task) TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) (body io.ReadCloser) {
+// 	debug.InfoLogf("sw", src, currentSize, totalSize)
+// 	return stream
+
+// }
+func (s *software_task) download(dest string, link string) {
+	client := grab.NewClient()
+	req, err := grab.NewRequest(dest, link)
+	var on_error = func(err error) {
+		if s.onend != nil {
+			s.onend(*s, install_fail, err)
+		}
+	}
+	if err != nil {
+		if s.onend != nil {
+			on_error(err)
+		}
+		return
+	}
+	resp := client.Do(req)
+	var update_progress = func(x string) {
+		if s.onupdate != nil {
+			s.onupdate(x)
+		}
+	}
+
+	t := time.NewTicker(time.Second)
+	defer t.Stop()
+
+	for {
+		select {
+		case <-t.C:
+			debug.DebugLogf("sw", "%.02f%% complete\n", resp.Progress()*100)
+			x := fmt.Sprintf("%.02f%%  %d", resp.Progress()*100, resp.BytesComplete())
+			update_progress(x)
+
+		case <-resp.Done:
+			if err := resp.Err(); err != nil {
+				// ...
+				on_error(err)
+			} else {
+				update_progress(fmt.Sprintf("%s %.02f%%  %d", dest, resp.Progress()*100, resp.BytesComplete()))
+				if s.onend != nil {
+					err := Extract(dest, filepath.Dir(dest))
+					var rc = install_fail
+					if err == nil {
+						rc = install_success
+					}
+					s.onend(*s, rc, err)
+				}
+			}
+			return
+		}
+	}
 }
 
 func (s *software_task) run_install_task(dest string) {
+	s.zipdir = dest
 	var action = soft_action_none
 	cmd := ""
 	switch s.Type {
@@ -119,7 +209,7 @@ func (s *software_task) run_install_task(dest string) {
 		cmd.Stderr = *s
 		cmd.Run()
 	case soft_action_down:
-		s.download(cmd)
+		s.download(filepath.Join(dest, s.asset_file), cmd)
 	}
 }
 
@@ -274,11 +364,22 @@ func Load(yamlFile []byte, s string) (task software_task, err error) {
 			target := get_target()
 			for _, v := range config.Source.Asset {
 				for _, t := range v.Target {
-					if t == target {
+					yes := t == target
+					if !yes {
+						if t == "darwin" {
+							yes = strings.Contains(target, "darwin")
+						} else if t == "unix" {
+							yes = !strings.Contains(target, "win")
+						} else if t == "win" {
+							yes = strings.Contains(target, "win")
+						}
+					}
+					if yes {
 						ss := fmt.Sprintf(download_url_template, account, version, v.File)
 						app.data = ss
-						app.bin = v.Bin
+						app.asset_bin = v.Bin
 						app.excute = true
+						app.asset_file = v.File
 						break
 					}
 				}
@@ -335,7 +436,8 @@ var ToolMap = []soft_config_file{
 }
 
 func NewSoftManager(wk common.Workdir) *SoftManager {
-	app := filepath.Join(wk.Root, "app")
+	root := filepath.Dir(wk.Configfile)
+	app := filepath.Join(root, ".software")
 	return &SoftManager{
 		wk:  wk,
 		app: app,
@@ -359,6 +461,7 @@ var uiFS embed.FS
 func (s *SoftManager) GetAll() (ret []software_task) {
 	for _, v := range ToolMap {
 		task, err := v.Load()
+		task.zipdir = filepath.Join(s.app, v.dir)
 		if err == nil {
 			ret = append(ret, task)
 		}
@@ -366,28 +469,59 @@ func (s *SoftManager) GetAll() (ret []software_task) {
 	return
 }
 
-func (s *SoftManager) Run(t ToolType) {
-	for _, v := range ToolMap {
-		if v.id == t {
-			file := fmt.Sprintf("config/%s/package.yaml", v.dir)
-			dest := filepath.Join(s.app, v.dir)
-			os.MkdirAll(dest, 0755)
-			if buf, err := uiFS.ReadFile(file); err != nil {
-				if task, err := Load(buf, file); err == nil {
-					new_task := &task
-					s.task = append(s.task, new_task)
-					go task.run_install_task(dest)
-					task.onend = func(software_task, install_result) {
-						var tasks []*software_task
-						for _, v := range s.task {
-							if v != new_task {
-								tasks = append(tasks, v)
-							}
-						}
-						s.task = tasks
-					}
-				}
+func (mrg *SoftManager) Start(newtask *software_task, update func(string)) {
+
+	mrg.task = append(mrg.task, newtask)
+	newtask.onupdate = update
+	newtask.onend = func(s software_task, i install_result, err error) {
+		var tasks []*software_task
+		for _, v := range mrg.task {
+			if v != newtask {
+				tasks = append(tasks, v)
 			}
+		}
+		mrg.task = tasks
+	}
+	for _, v := range ToolMap {
+		if v.id == newtask.Id {
+			dest := filepath.Join(mrg.app, v.dir)
+			os.MkdirAll(dest, 0755)
+			go newtask.run_install_task(dest)
+			break
 		}
 	}
 }
+
+// func (s *SoftManager) Run(t ToolType, update func(string)) {
+// 	for _, v := range ToolMap {
+// 		if v.id == t {
+// 			file := fmt.Sprintf("config/%s/package.yaml", v.dir)
+// 			dest := filepath.Join(s.app, v.dir)
+// 			os.MkdirAll(dest, 0755)
+// 			if buf, err := uiFS.ReadFile(file); err == nil {
+// 				if task, err := Load(buf, file); err == nil {
+// 					new_task := &task
+// 					new_task.onupdate = func(s string) {
+// 						if update != nil {
+// 							update(s)
+// 						}
+// 						debug.InfoLog("update", s)
+// 					}
+// 					s.task = append(s.task, new_task)
+// 					go task.run_install_task(dest)
+// 					task.onend = func(software_task, install_result,err error) {
+// 						var tasks []*software_task
+// 						for _, v := range s.task {
+// 							if v != new_task {
+// 								tasks = append(tasks, v)
+// 							}
+// 						}
+// 						s.task = tasks
+// 					}
+// 				}
+// 			} else {
+// 				debug.ErrorLog("mason", err)
+// 			}
+// 		}
+// 	}
+// }

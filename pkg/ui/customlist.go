@@ -18,7 +18,6 @@ type customlist struct {
 	main_color_text   [][]colortext
 	second_color_text [][]colortext
 }
-
 func (l *customlist) Clear() *customlist {
 	l.List.Clear()
 	l.main_color_text = [][]colortext{}
