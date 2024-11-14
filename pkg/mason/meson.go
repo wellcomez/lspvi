@@ -38,6 +38,7 @@ type software_task struct {
 	data   string
 	onend  func()
 	Config Config
+	Id     ToolType
 }
 
 // Write implements io.Writer.
@@ -263,8 +264,8 @@ const (
 )
 
 type soft_config_file struct {
-	ToolType ToolType
-	dir      string
+	id  ToolType
+	dir string
 }
 
 var ToolMap = []soft_config_file{
@@ -284,12 +285,13 @@ func NewSoftManager(wk common.Workdir) *SoftManager {
 		app: app,
 	}
 }
-func (v soft_config_file) Load() (ret software_task,err error) {
+func (v soft_config_file) Load() (ret software_task, err error) {
 	file := fmt.Sprintf("config/%s/package.yaml", v.dir)
 	var buf []byte
 	buf, err = uiFS.ReadFile(file)
 	if err == nil {
 		ret, err = Load(buf, "")
+		ret.Id = v.id
 		return
 	}
 	return
@@ -297,20 +299,20 @@ func (v soft_config_file) Load() (ret software_task,err error) {
 
 //go:embed  config
 var uiFS embed.FS
-func (s *SoftManager) GetAll()(ret []software_task) {
+
+func (s *SoftManager) GetAll() (ret []software_task) {
 	for _, v := range ToolMap {
 		task, err := v.Load()
-		if err==nil{
-			ret = append(ret,task)
+		if err == nil {
+			ret = append(ret, task)
 		}
 	}
 	return
 }
 
-
 func (s *SoftManager) Run(t ToolType) {
 	for _, v := range ToolMap {
-		if v.ToolType == t {
+		if v.id == t {
 			file := fmt.Sprintf("config/%s/package.yaml", v.dir)
 			dest := filepath.Join(s.app, v.dir)
 			os.MkdirAll(dest, 0755)
