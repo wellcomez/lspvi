@@ -90,11 +90,13 @@ func open_prj_file(r *http.Request, w http.ResponseWriter) {
 		if common.Is_open_as_md(filename) && err == nil {
 			newroot := filepath.Dir(path)
 			buf, err = ChangeLink(buf, false, newroot)
-			debug.DebugLog("web", "ChangeLink",
-				"prjroot", strconv.Quote(project_root),
-				"prj_config_root", strconv.Quote(workdir.Root),
-				"filename", filename,
-				"newroot", newroot, err, string(buf))
+			if len(buf) == 0 {
+				debug.DebugLog("web", "ChangeLink",
+					"prjroot", strconv.Quote(project_root),
+					"prj_config_root", strconv.Quote(workdir.Root),
+					"filename", filename,
+					"newroot", newroot, err, string(buf))
+			}
 		}
 		if err != nil {
 			debug.ErrorLog("web", "read file", err)
