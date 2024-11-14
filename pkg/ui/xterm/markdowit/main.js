@@ -1,6 +1,7 @@
 import markdownit from 'markdown-it'
 import hljs from 'highlight.js' // https://highlightjs.org
 import { plantuml } from "@mdit/plugin-plantuml";
+import axios from 'axios'
 // import anchor from "markdown-it-anchor"
 // import toc from "markdown-it-table-of-contents"
 // import 'highlight.js/styles/github-dark.min.css';
@@ -58,6 +59,17 @@ function render(text) {
 // function hl() {
 //   hljs.highlightAll()
 // }
+function render_file(mdfile) {
+  let url = "https://" + window.location.host + "/" + mdfile
+  axios.get(url, { responseType: "text" }).then((resp) => {
+    let ss = render(resp.data)
+    let title = mdfile.split("/").pop()
+    document.body.innerHTML = ss
+    document.title = title
+    // new Term()
+    // markjs.hl()
+  });
+}
 export default {
-  render,
+  render_file
 }

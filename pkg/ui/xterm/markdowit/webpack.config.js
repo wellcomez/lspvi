@@ -17,7 +17,9 @@ module.exports = {
     },
     plugins: [
         new webpack.ProvidePlugin({
-            process: 'process/browser',
+            // process: 'process/browser',
+            process: require.resolve('process/browser'),
+
             // 如果你需要提供全局变量，可以在这里配置
         }),
         new TerserPlugin() // 用于压缩输出文件
