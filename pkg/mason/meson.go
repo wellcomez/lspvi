@@ -3,6 +3,7 @@ package mason
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 
@@ -35,18 +36,52 @@ type software struct {
 	data string
 }
 
+// Write implements io.Writer.
+func (s software) Write(p []byte) (n int, err error) {
+	// panic("unimplemented")
+	return len(p), nil
+}
+
+type soft_action int
+
+const (
+	soft_action_none soft_action = iota
+	soft_action_down
+	soft_action_install
+)
+
+func (s *software) download(dest string) {
+}
+
 func (s *software) run(dest string) {
+	var action = soft_action_none
+	cmd := ""
 	switch s.Type {
 	case pkg_github:
+		cmd = s.data
+		action = soft_action_down
 	case pkg_go:
-		cmd := fmt.Sprintf("go  install %s", s.data)
+		cmd = fmt.Sprintf("go  install %s", s.data)
 		debug.InfoLog("mason", cmd)
+		action = soft_action_install
 	case pkg_npm:
-		cmd := fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
+		cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
 		debug.InfoLog("mason", cmd)
+		action = soft_action_install
 	case pkg_pypi:
-		cmd := fmt.Sprintf("pip install --target %s %s", dest, s.data)
+		cmd = fmt.Sprintf("pip install --target %s %s", dest, s.data)
 		debug.InfoLog("mason", cmd)
+		action = soft_action_install
+	}
+	switch action {
+	case soft_action_install:
+		args := strings.Split(cmd, " ")
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Stdout = *s
+		cmd.Stderr = *s
+		cmd.Run()
+	case soft_action_down:
+		s.download(cmd)
 	}
 }
 
@@ -205,9 +240,32 @@ func Load(s string) error {
 type SoftManager struct {
 	wk common.Workdir
 }
+type ToolType int
 
-"clangd",          "go"                      ,           "rust-analyzer"   "typescript-language-server"
-  "kotlin-language-server"  "python-lsp-server"  "swift-mesonlsp"
+const (
+	ToolLsp_go ToolType = iota
+	ToolLsp_clangd
+	ToolLsp_py
+	ToolLsp_ts
+	ToolLsp_rust
+	ToolLsp_swift
+	ToolLsp_kotlin
+)
+
+type soft_config_file struct {
+	ToolType ToolType
+	dir      string
+}
+
+var ToolMap = []soft_config_file{
+	{ToolLsp_clangd, "clangd"},
+	{ToolLsp_go, "go"},
+	{ToolLsp_rust, "rust-analyzer"},
+	{ToolLsp_ts, "typescript-language-server"},
+	{ToolLsp_kotlin, "kotlin-language-server"},
+	{ToolLsp_py, "python-lsp-server"},
+	{ToolLsp_swift, "swift-mesonlsp"},
+}
 
 func NewSoftManager(wk common.Workdir) *SoftManager {
 	return &SoftManager{
