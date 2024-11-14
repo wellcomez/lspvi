@@ -68,6 +68,7 @@ type callinview struct {
 	cmd_search_key string
 	callee_at_root bool
 	cq             *CodeOpenQueue
+	prev_current *tview.TreeNode
 }
 type dom_click_state int
 
@@ -543,6 +544,8 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 			break
 		}
 	}
+	current_again:= view.view.GetCurrentNode() == view.prev_current
+	view.prev_current = node
 	is_top := len(node.GetChildren()) == 0
 	if is_click_callroot {
 		is_top = false
@@ -550,7 +553,9 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 	if value != nil {
 		if ref, ok := value.(dom_node); ok {
 			if is_top {
-				go view.get_next_callin(value, view.main)
+				if current_again{
+					go view.get_next_callin(value, view.main)
+				}
 			} else if is_click_callroot {
 				ExpandNode(node)
 			} else {
