@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
+
 	"github.com/fsnotify/fsnotify"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/pgavlin/femto"
 	"github.com/pgavlin/femto/runtime"
@@ -23,8 +25,8 @@ import (
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	fileloader "zen108.com/lspvi/pkg/ui/fileload"
 
-	"zen108.com/lspvi/pkg/ui/xterm"
 	"zen108.com/lspvi/pkg/debug"
+	web "zen108.com/lspvi/pkg/ui/xterm"
 	// "github.com/gdamore/tcell"
 )
 
@@ -137,20 +139,27 @@ func (data right_menu_data) SelectInEditor(c *femto.Cursor) bool {
 type File struct {
 	filepathname string
 	filename     string
-	modTiem      time.Time
+	modtime      time.Time
 }
 
+func (f File) GetChangeTime() (ret time.Time, err error) {
+	if fileInfo, e := os.Stat(f.filepathname); e == nil {
+		ret = fileInfo.ModTime()
+	} else {
+		err = e
+	}
+	return
+}
 func (f File) SamePath(filename string) bool {
 	return filename == f.filepathname
 }
 func NewFile(filename string) File {
 	file := trim_project_filename(filename, global_prj_root)
-	fileInfo, err := os.Stat(filename)
-	modTime := time.Time{}
-	if err == nil {
-		modTime = fileInfo.ModTime()
+	ret := File{filepathname: filename, filename: file}
+	if modTime, err := ret.GetChangeTime(); err == nil {
+		ret.modtime = modTime
 	}
-	return File{filepathname: filename, filename: file, modTiem: modTime}
+	return ret
 }
 func (s File) Same(s1 File) bool {
 	return s == s1
@@ -250,7 +259,9 @@ func (code *CodeView) OnWatchFileChange(file string, event fsnotify.Event) bool 
 	if event.Op&fsnotify.Write != fsnotify.Write {
 		return false
 	}
-	if code.file.SamePath(file) {
+
+	changefile := NewFile(file)
+	if code.file.SamePath(file) && changefile.modtime != code.file.modtime {
 		code.Reload()
 		return true
 	}
@@ -1048,12 +1059,19 @@ func (m *mainui) CopyToClipboard(s string) {
 	clipboard.WriteAll(s)
 }
 
-
-func (code *CodeView) Save() error {
+func (code *CodeView) Save() (err error) {
 	view := code.view
 	data := view.Buf.SaveString(false)
 	code.main.Bookmark().udpate(&code.view.bookmark)
-	return os.WriteFile(code.Path(), []byte(data), 0644)
+	if err = os.WriteFile(code.Path(), []byte(data), 0644); err == nil {
+		var t time.Time
+		t, err = code.file.GetChangeTime()
+		if err == nil {
+			code.file.modtime = t
+			return
+		}
+	}
+	return
 }
 func (code *CodeView) Undo() {
 	checker := code.NewChangeChecker()
