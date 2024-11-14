@@ -206,6 +206,9 @@ type SoftManager struct {
 	wk common.Workdir
 }
 
+"clangd",          "go"                      ,           "rust-analyzer"   "typescript-language-server"
+  "kotlin-language-server"  "python-lsp-server"  "swift-mesonlsp"
+
 func NewSoftManager(wk common.Workdir) *SoftManager {
 	return &SoftManager{
 		wk: wk,
