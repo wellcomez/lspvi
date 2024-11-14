@@ -2,6 +2,7 @@ package mason
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -44,10 +45,33 @@ type SoftInstallResult func(software_task, install_result)
 type software_task struct {
 	Type     pkgtype
 	data     string
+	bin      string
+	excute   bool
 	onend    SoftInstallResult
 	onupdate func(string)
 	Config   Config
 	Id       ToolType
+}
+
+func isExecutableInPath(executable string) bool {
+	_, err := exec.LookPath(executable)
+	return err == nil
+}
+
+func (s software_task) Installed() (ret bool, err error) {
+	if s.Config.Bin.Value == "{{source.asset.bin}}" {
+		if len(s.bin) > 0 {
+			if ret = isExecutableInPath(filepath.Base(s.bin)); ret {
+				return
+			}
+		}
+	}
+	if ret = isExecutableInPath(s.Config.Bin.Key); ret {
+		ss, _ := exec.LookPath(s.Config.Bin.Key)
+		debug.DebugLog("mason", "isExecutableInPath", ss)
+		return
+	}
+	return false, errors.New("not support")
 }
 
 // Write implements io.Writer.
@@ -169,6 +193,22 @@ type Schemas struct {
 // Bin represents the bin section of the YAML configuration.
 type Bin struct {
 	Clangd string `yaml:"clangd"`
+	Key    string
+	Value  string
+}
+
+func (a *Bin) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var Database map[string]string
+	err := unmarshal(&Database)
+	if err != nil {
+		return err
+	}
+	for k, v := range Database {
+		a.Value = v
+		a.Key = k
+		break
+	}
+	return nil
 }
 
 // Config represents the entire YAML configuration.
@@ -237,6 +277,9 @@ func Load(yamlFile []byte, s string) (task software_task, err error) {
 					if t == target {
 						ss := fmt.Sprintf(download_url_template, account, version, v.File)
 						app.data = ss
+						app.bin = v.Bin
+						app.excute = true
+						break
 					}
 				}
 				if len(app.data) > 0 {

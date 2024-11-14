@@ -62,7 +62,15 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 	data := []string{}
 	for i := range apps {
 		v := apps[i]
-		ret.list.AddItem(v.Config.Name, "", nil)
+		status := " Not installed"
+		if yes, err := v.Installed(); err == nil {
+			if yes {
+				status = " installed"
+			}
+		} else {
+			status = " unknown"
+		}
+		ret.list.AddItem(v.Config.Name+status, "", nil)
 		data = append(data, v.Config.Name)
 	}
 	ret.fzf = new_fzf_on_list_data(ret.list, data, true)
