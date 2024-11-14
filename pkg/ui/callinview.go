@@ -4,6 +4,7 @@
 package mainui
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"zen108.com/lspvi/pkg/debug"
 	lspcore "zen108.com/lspvi/pkg/lsp"
 	"zen108.com/lspvi/pkg/ui/common"
+	// "zen108.com/lspvi/pkg/ui/common"
 	// lspcore "zen108.com/lspvi/pkg/lsp"
 )
 
@@ -68,7 +70,7 @@ type callinview struct {
 	cmd_search_key string
 	callee_at_root bool
 	cq             *CodeOpenQueue
-	prev_current *tview.TreeNode
+	prev_current   *tview.TreeNode
 }
 type dom_click_state int
 
@@ -163,8 +165,10 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 	}
 	var top *lsp.CallHierarchyItem
 	var tail *lsp.CallHierarchyItem
+	var callnode *tview.TreeNode
 	if len(node.GetChildren()) == 0 {
 		if len(nodepath) > 1 {
+			callnode = nodepath[1]
 			top, _ = get_sym(nodepath[1])
 			tail, _ = get_sym(node)
 		}
@@ -192,6 +196,9 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 			}
 		}, hide: hide_define},
 		{item: cmditem{Cmd: cmdactor{desc: "UML"}}, handle: func() {
+			if open_from_callstack(nodepath, callnode, main, top) == true {
+				return
+			}
 			s := main.Lspmgr().Wk.Export
 			root := filepath.Join(s, "uml", top.Name)
 			if files, err := os.ReadDir(root); err == nil {
@@ -227,6 +234,40 @@ func (ret *callinview) get_menu(main MainService) []context_menu_item {
 		}},
 	}
 	return menuitem
+}
+
+func open_from_callstack(nodepath []*tview.TreeNode, callnode *tview.TreeNode, main MainService, top *lsp.CallHierarchyItem) (ret bool) {
+	ret = false
+	if len(nodepath) < 3 {
+		return
+	}
+	stack_node := nodepath[2]
+	var index = 1
+	for i, v := range callnode.GetChildren() {
+		if stack_node == v {
+			index = i
+			break
+		}
+	}
+	if index == -1 {
+		return
+	}
+	s := main.Lspmgr().Wk.Export
+	root := filepath.Join(s, "uml", top.Name)
+	statckfile := filepath.Join(root, "callstack.json")
+	if buf, err := os.ReadFile(statckfile); err == nil {
+		var stack lspcore.CallInTask
+		if err = json.Unmarshal(buf, &stack); err == nil {
+			s := stack.Allstack[index]
+			name := fmt.Sprintf("%d.%s", index, s.Items[0].DirName())
+			if yes, err := isDirectory(root); err == nil && yes {
+				fielname := filepath.Join(root, name+".png")
+				external_open_file(fielname)
+				return true
+			}
+		}
+	}
+	return
 }
 
 func reload_callin(ret *callinview, taskindex int, node *tview.TreeNode) {
@@ -544,7 +585,7 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 			break
 		}
 	}
-	current_again:= view.view.GetCurrentNode() == view.prev_current
+	current_again := view.view.GetCurrentNode() == view.prev_current
 	view.prev_current = node
 	is_top := len(node.GetChildren()) == 0
 	if is_click_callroot {
@@ -553,7 +594,7 @@ func (view *callinview) node_selected_callee_top(node *tview.TreeNode) {
 	if value != nil {
 		if ref, ok := value.(dom_node); ok {
 			if is_top {
-				if current_again{
+				if current_again {
 					go view.get_next_callin(value, view.main)
 				}
 			} else if is_click_callroot {
