@@ -1,4 +1,4 @@
-import Terminal from '@xterm/xterm';
+import { Terminal } from '@xterm/xterm';
 import { WebglAddon } from '@xterm/addon-webgl';
 import { FitAddon } from '@xterm/addon-fit';
 import clip from './clipboard'
@@ -42,6 +42,79 @@ class RemoteTermStatus {
     constructor() {
     }
 }
+class LocalTerm {
+    constructor(term, conn) {
+        this.term = term
+        this.conn = conn
+        this.prompt = "bash# "
+        this.term.clear()
+        this.newline();
+        let lsp = (cmd) => {
+            if (cmd.indexOf("lspvi") == 0) {
+                this.conn.start_lspvi(cmd)
+                return true
+            }
+        }
+        lsp = lsp.bind(this)
+        this.local_cmd_matcher = [lsp]
+    }
+    newline() {
+        this.term.write(this.prompt);
+    }
+    // Assuming you have an xterm.js instance created as 'terminal'
+
+    getCurrentLineText = () => {
+        // Get the cursor position
+        const cursorY = this.term.buffer.active.cursorY;
+
+        // Get the text of the current line
+        const lineText = this.term.buffer.active.getLine(cursorY).translateToString().trim();
+
+        return lineText;
+    };
+
+    // Usage example
+    handleCommand(cmdline) {
+        //let args = cmdline
+        let matched = false;
+        this.local_cmd_matcher.forEach(element => {
+            if (matched) return;
+            if (element(cmdline)) {
+                matched = true;
+                return;
+            }
+        });
+        return false;
+    }
+    ondata(data) {
+        const { term } = this
+        const currentBuffer = term.buffer.active;
+        if (data == '\r') {
+            let line = this.getCurrentLineText()
+            if (line.indexOf(this.prompt) == 0) {
+                if (this.handleCommand(line.substring(this.prompt.length))) {
+
+                    return
+                }
+
+            }
+            this.term.write('\r\n')
+            this.newline()
+            return
+        } else if (data === '\x7F') { // Delete key or similar
+            if (currentBuffer.cursorX > this.prompt.length) {
+                term.write('\x08'); // Backspace
+                term.write(' ');    // Replace with space
+                term.write('\x08'); // Backspace again to move cursor back
+            }
+        }
+        this.term.write(data)
+    }
+}
+
+
+
+
 
 class Term {
     constructor(term) {
@@ -65,26 +138,21 @@ class Term {
         this.app = app
         let obj = this
         window.addEventListener("contextmenu", function (ev) {
-            if (app.on_mouse(ev)) {
-            } else {
+            if (app.on_mouse(ev)) { /* empty */ } else {
                 ev.preventDefault();
             }
         })
         document.addEventListener("mouseup", (ev) => {
-            if (app.on_mouse(ev)) {
-            }
+            if (app.on_mouse(ev)) { /* empty */ }
         })
         document.addEventListener("mousedown", (ev) => {
-            if (app.on_mouse(ev)) {
-            }
+            if (app.on_mouse(ev)) { /* empty */ }
         })
         document.addEventListener("mousemove", function (ev) {
-            if (app.on_mouse(ev)) {
-            }
+            if (app.on_mouse(ev)) { /* empty */ }
         })
         document.addEventListener("click", function (ev) {
-            if (app.on_mouse(ev)) {
-            }
+            if (app.on_mouse(ev)) { /* empty */ }
             if (app.is_hide()) {
                 obj.term.options.disableStdin = false
             }
@@ -180,13 +248,21 @@ class Term {
             }
         }
     }
+    handle_copy_data(data) {
+        let text = data.SelectedString;
+        let txt = document.getElementById("bar");
+        txt.innerText = text;
+        let btn = document.getElementById("clip");
+        btn.click();
+        return text
+    }
     handle_backend_command(Call, data, app) {
         if (Call == backend_on_zoom) {
             this.handle_command_zoom(data);
         } else if (Call == backend_on_openfile) {
             this.handle_command_openfile(data, app);
         } else if (backend_on_copy == Call) {
-            this.clipdata = handle_copy_data(data);
+            this.clipdata = this.handle_copy_data(data);
         } else if (Call == backend_on_command) {
             return this.handle_user_command(data);
         } else {
@@ -320,7 +396,7 @@ const term_init = (termobj, app) => {
     };
     let fontSize = get_font_size();
     set_font_size(fontSize)
-    let term = new Terminal.Terminal({
+    let term = new Terminal({
         allowProposedApi: true,
         cursorStyle: 'bar',  // 默认为块状光标
         allowTransparency: true,
@@ -341,9 +417,9 @@ const term_init = (termobj, app) => {
         // minimumContrastRatio: 1,
     });
     termobj.set_term_ui(term)
-    let wl = new WebglAddon.WebglAddon()
+    let wl = new WebglAddon()
     term.loadAddon(wl)
-    let fit = new FitAddon.FitAddon()
+    let fit = new FitAddon()
     term.loadAddon(fit);
     term.onData(function (data) {
         termobj.onData(data);
@@ -364,7 +440,7 @@ const term_init = (termobj, app) => {
     //     let word = term.getSelection()
     //     console.error("word:", word)
     // })
-    old = ""
+    // old = ""
     term.open(document.getElementById('terminal'));
     // LoadLigaturesAddon();
     let f = new full.fullscreen_check(term)
@@ -373,6 +449,7 @@ const term_init = (termobj, app) => {
     termobj.fit = fit
     term.focus()
 
+    // eslint-disable-next-line no-unused-vars
     const resize_handle = function (evt) {
         let f = new full.fullscreen_check(term);
         f.resize();
@@ -391,4 +468,4 @@ function get_font_size() {
     }
     return fontSize;
 }
-export default { Term }
+export { Term }

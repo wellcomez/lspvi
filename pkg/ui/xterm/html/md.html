@@ -37,12 +37,12 @@
         let mdfile = "{{.MDFILE}}"
         let url = "https://" + window.location.host + "/" + mdfile
         axios.get(url, { responseType: "text" }).then((resp) => {
-            let { render, hl ,Term} = markjs
+            let { render, hl ,Term} = markjs.default
             let ss = render(resp.data)
             let title = mdfile.split("/").pop()
             document.body.innerHTML = ss
             document.title = title
-            new Term()
+            // new Term()
             // markjs.hl()
         });
     </script>
