@@ -518,7 +518,7 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_reco
 		name := "callin"
 		if len(s.Items) > 0 {
 			if rename != nil {
-				name = fmt.Sprintf("%d.%s", index, s.Items[0].DirName())
+				name = Get_stackfile_name(index, s)
 				if d, ok := rename.rename[name]; ok {
 					rename.rename[name] = d + 1
 					name = fmt.Sprintf("%d_%s", d, name)
@@ -548,6 +548,10 @@ func (s *CallStack) Resolve(sym *Symbol_file, hanlde func(), rename *Rename_reco
 		task.Save(export_root.Dir)
 		hanlde()
 	}
+}
+
+func Get_stackfile_name(index int, s *CallStack) string {
+	return fmt.Sprintf("%d.%s", index, s.Items[0].DirName())
 }
 func (sym *Symbol_file) __load_symbol_impl(reload bool) error {
 	if sym.lsp == nil {

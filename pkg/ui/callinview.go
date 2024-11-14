@@ -259,7 +259,8 @@ func open_from_callstack(nodepath []*tview.TreeNode, callnode *tview.TreeNode, m
 		var stack lspcore.CallInTask
 		if err = json.Unmarshal(buf, &stack); err == nil {
 			s := stack.Allstack[index]
-			name := fmt.Sprintf("%d.%s", index, s.Items[0].DirName())
+			// name := fmt.Sprintf("%d.%s", index, s.Items[0].DirName())
+			name := lspcore.Get_stackfile_name(index, s)
 			if yes, err := isDirectory(root); err == nil && yes {
 				fielname := filepath.Join(root, name+".png")
 				external_open_file(fielname)
