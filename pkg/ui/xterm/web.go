@@ -87,7 +87,7 @@ func open_prj_file(r *http.Request, w http.ResponseWriter) {
 			filename = filepath.Join(project_root, path)
 		}
 		buf, err := os.ReadFile(filename)
-		if common.Is_open_as_md(filename) {
+		if common.Is_open_as_md(filename) && err == nil {
 			newroot := filepath.Dir(path)
 			buf, err = ChangeLink(buf, false, newroot)
 			debug.DebugLog("web", "ChangeLink",
