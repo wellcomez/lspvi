@@ -1,6 +1,7 @@
 package mason
 
 import (
+	"embed"
 	"fmt"
 	"os"
 	"os/exec"
@@ -31,13 +32,13 @@ const (
 	pkg_pypi
 )
 
-type software struct {
+type software_task struct {
 	Type pkgtype
 	data string
 }
 
 // Write implements io.Writer.
-func (s software) Write(p []byte) (n int, err error) {
+func (s software_task) Write(p []byte) (n int, err error) {
 	// panic("unimplemented")
 	return len(p), nil
 }
@@ -50,10 +51,10 @@ const (
 	soft_action_install
 )
 
-func (s *software) download(dest string) {
+func (s *software_task) download(dest string) {
 }
 
-func (s *software) run(dest string) {
+func (s *software_task) run(dest string) {
 	var action = soft_action_none
 	cmd := ""
 	switch s.Type {
@@ -178,12 +179,14 @@ func get_target() string {
 	}
 	return ""
 }
-func Load(s string) error {
+func Load(yamlFile []byte, s string) (task software_task, err error) {
 	// Read the YAML file
-	yamlFile, err := os.ReadFile(s)
-	if err != nil {
-		debug.DebugLogf("mason", "Error reading YAML file: %v", err)
-		return err
+	if len(yamlFile) == 0 {
+		yamlFile, err = os.ReadFile(s)
+		if err != nil {
+			debug.DebugLogf("mason", "Error reading YAML file: %v", err)
+			return
+		}
 	}
 
 	// Print the content of the YAML file for debugging
@@ -197,7 +200,7 @@ func Load(s string) error {
 	if err != nil {
 		debug.DebugLogf("mason",
 			"Error unmarshaling YAML file: %v", err)
-		return err
+		return
 	}
 	version, account, pktype := get_version_account(config.Source.ID)
 	data := strings.ReplaceAll(string(yamlFile), "{{version}}", version)
@@ -205,9 +208,9 @@ func Load(s string) error {
 	if err != nil {
 		debug.DebugLogf("mason",
 			"Error unmarshaling YAML file: %v", err)
-		return err
+		return
 	}
-	var app software
+	var app software_task
 	app.Type = pktype
 	switch pktype {
 	case pkg_github:
@@ -220,7 +223,7 @@ func Load(s string) error {
 						ss := fmt.Sprintf(download_url_template, account, version, v.File)
 						app.data = ss
 						println(ss)
-						return nil
+						return
 					}
 				}
 			}
@@ -233,12 +236,14 @@ func Load(s string) error {
 		pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
 		app.data = pkg
 	}
-	println(app.data)
-	return nil
+	task = app
+	return
+	// println(app.data)
 }
 
 type SoftManager struct {
-	wk common.Workdir
+	wk   common.Workdir
+	task []software_task
 }
 type ToolType int
 
@@ -270,5 +275,21 @@ var ToolMap = []soft_config_file{
 func NewSoftManager(wk common.Workdir) *SoftManager {
 	return &SoftManager{
 		wk: wk,
+	}
+}
+
+//go:embed  config
+var uiFS embed.FS
+
+func (s SoftManager) Run(t ToolType) {
+	for _, v := range ToolMap {
+		if v.ToolType == t {
+			file := fmt.Sprintf("config/%s/package.yaml", v.dir)
+			if buf, err := uiFS.ReadFile(file); err != nil {
+				if task, err := Load(buf, file); err == nil {
+					s.task = append(s.task, task)
+				}
+			}
+		}
 	}
 }
