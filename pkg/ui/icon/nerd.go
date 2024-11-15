@@ -26,3 +26,4 @@ var Nf_md_chevron_right_circle = '󰬪'   // =\uf0b2a
 var Nf_md_chevron_left_circle = '󰬨'    // =\uf0b28
 // var 7207:   {"nf-fa-google_plus_square", '\uf0d4'},
 var Nf_fa_square_google_plus = '' // =\uf0d4
+var Nf_fa_download = '' //\uf019 

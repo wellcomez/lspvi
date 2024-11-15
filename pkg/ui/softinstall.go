@@ -7,6 +7,7 @@ import (
 	"github.com/rivo/tview"
 	"zen108.com/lspvi/pkg/mason"
 	"zen108.com/lspvi/pkg/ui/common"
+	nerd "zen108.com/lspvi/pkg/ui/icon"
 )
 
 var software *mason.SoftManager
@@ -62,12 +63,7 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 	data := []string{}
 	for i := range apps {
 		v := apps[i]
-		status := " Not installed"
-		if yes, err := v.GetBin(); err == nil {
-			if len(yes.Path) > 0 {
-				status = yes.Path
-			}
-		}
+		status := TaskState(v)
 		ret.list.AddItem(fmt.Sprintf("%s %s", v.Config.Name, status), "", nil)
 		data = append(data, v.Config.Name)
 	}
@@ -80,6 +76,8 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 				go dialog.main.App().QueueUpdate(func() {
 					dialog.main.App().ForceDraw()
 				})
+			}, func(i mason.InstallResult, err error) {
+				ret.list.SetItemText(x, fmt.Sprintf("%s %s", a.Config.Name, TaskState(a)), "")
 			})
 			return nil
 		}
@@ -89,4 +87,22 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 	ret.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
 	})
 	return
+}
+
+func TaskState(v mason.SoftwareTask) string {
+	status := " Not installed"
+	if yes, err := v.GetBin(); err == nil {
+		installed := ">[X]"
+		if len(yes.Path) > 0 {
+			installed = " > " + yes.Path
+		}
+		download := ""
+		if !yes.DownloadOk {
+			download = ">" + rune_string(nerd.Nf_fa_download)
+		} else {
+			download = ">" + yes.Download
+		}
+		status = fmt.Sprintf("%s %s", installed, download)
+	}
+	return status
 }

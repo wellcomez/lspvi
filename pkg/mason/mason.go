@@ -39,16 +39,16 @@ const (
 	pkg_pypi
 )
 
-type install_result int
+type InstallResult int
 
 const (
-	install_success install_result = iota
-	install_fail
-	install_break
+	InstallSuccess InstallResult = iota
+	InstallFail
+	InstallBreak
 )
 
-type SoftInstallResult func(software_task, install_result, error)
-type software_task struct {
+type SoftInstallResult func(SoftwareTask, InstallResult, error)
+type SoftwareTask struct {
 	Type pkgtype
 	data string
 
@@ -70,19 +70,23 @@ func isExecutableInPath(executable string) bool {
 }
 
 type Executable struct {
-	Path string
+	Path       string
+	Download   string
+	DownloadOk bool
 }
 
-func (s software_task) GetBin() (bin Executable, err error) {
+func (s SoftwareTask) GetBin() (bin Executable, err error) {
 	if s.Config.Bin.Value == "{{source.asset.bin}}" {
 		if len(s.asset_bin) > 0 {
 			path := filepath.Join(s.zipdir, s.asset_bin)
+			bin.Path, _ = exec.LookPath(filepath.Base(s.asset_bin))
+			bin.Download = path
+			bin.DownloadOk = false
 			if fi, e := os.Stat(path); e == nil && !fi.IsDir() {
-				bin.Path = path
+				bin.DownloadOk = true
 				return
 			}
-			bin.Path, err = exec.LookPath(filepath.Base(s.asset_bin))
-			if err == nil {
+			if len(bin.Path) > 0 {
 				return
 			}
 		}
@@ -111,8 +115,11 @@ func (s software_task) GetBin() (bin Executable, err error) {
 // }
 
 // Write implements io.Writer.
-func (s software_task) Write(p []byte) (n int, err error) {
+func (s SoftwareTask) Write(p []byte) (n int, err error) {
 	// panic("unimplemented")
+	if s.onupdate != nil {
+		s.onupdate(string(p))
+	}
 	return len(p), nil
 }
 
@@ -129,12 +136,12 @@ const (
 // 	return stream
 
 // }
-func (s *software_task) download(dest string, link string) {
+func (s *SoftwareTask) download(dest string, link string) {
 	client := grab.NewClient()
 	req, err := grab.NewRequest(dest, link)
 	var on_error = func(err error) {
 		if s.onend != nil {
-			s.onend(*s, install_fail, err)
+			s.onend(*s, InstallFail, err)
 		}
 	}
 	if err != nil {
@@ -167,10 +174,11 @@ func (s *software_task) download(dest string, link string) {
 			} else {
 				update_progress(fmt.Sprintf("%s %.02f%%  %d", dest, resp.Progress()*100, resp.BytesComplete()))
 				if s.onend != nil {
+					os.Chmod(dest, 0755)
 					err := Extract(dest, filepath.Dir(dest))
-					var rc = install_fail
+					var rc = InstallFail
 					if err == nil {
-						rc = install_success
+						rc = InstallSuccess
 					}
 					s.onend(*s, rc, err)
 				}
@@ -180,7 +188,7 @@ func (s *software_task) download(dest string, link string) {
 	}
 }
 
-func (s *software_task) run_install_task(dest string) {
+func (s *SoftwareTask) run_install_task(dest string) {
 	s.zipdir = dest
 	var action = soft_action_none
 	cmd := ""
@@ -207,7 +215,14 @@ func (s *software_task) run_install_task(dest string) {
 		cmd := exec.Command(args[0], args[1:]...)
 		cmd.Stdout = *s
 		cmd.Stderr = *s
-		cmd.Run()
+		err := cmd.Run()
+		if s.onend != nil {
+			if err != nil {
+				s.onend(*s, InstallFail, err)
+			} else {
+				s.onend(*s, InstallSuccess, err)
+			}
+		}
 	case soft_action_down:
 		s.download(filepath.Join(dest, s.asset_file), cmd)
 	}
@@ -324,7 +339,7 @@ func get_target() string {
 	}
 	return ""
 }
-func Load(yamlFile []byte, s string) (task software_task, err error) {
+func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 	// Read the YAML file
 	if len(yamlFile) == 0 {
 		yamlFile, err = os.ReadFile(s)
@@ -355,7 +370,7 @@ func Load(yamlFile []byte, s string) (task software_task, err error) {
 			"Error unmarshaling YAML file: %v", err)
 		return
 	}
-	var app software_task
+	var app SoftwareTask
 	app.Type = pktype
 	switch pktype {
 	case pkg_github:
@@ -404,7 +419,7 @@ func Load(yamlFile []byte, s string) (task software_task, err error) {
 
 type SoftManager struct {
 	wk       common.Workdir
-	task     []*software_task
+	task     []*SoftwareTask
 	app      string
 	OnResult SoftInstallResult
 }
@@ -432,7 +447,7 @@ var ToolMap = []soft_config_file{
 	{ToolLsp_ts, "typescript-language-server"},
 	{ToolLsp_kotlin, "kotlin-language-server"},
 	{ToolLsp_py, "python-lsp-server"},
-	{ToolLsp_swift, "swift-mesonlsp"},
+	// {ToolLsp_swift, "swift-mesonlsp"},
 }
 
 func NewSoftManager(wk common.Workdir) *SoftManager {
@@ -443,7 +458,7 @@ func NewSoftManager(wk common.Workdir) *SoftManager {
 		app: app,
 	}
 }
-func (v soft_config_file) Load() (ret software_task, err error) {
+func (v soft_config_file) Load() (ret SoftwareTask, err error) {
 	file := fmt.Sprintf("config/%s/package.yaml", v.dir)
 	var buf []byte
 	buf, err = uiFS.ReadFile(file)
@@ -458,7 +473,7 @@ func (v soft_config_file) Load() (ret software_task, err error) {
 //go:embed  config
 var uiFS embed.FS
 
-func (s *SoftManager) GetAll() (ret []software_task) {
+func (s *SoftManager) GetAll() (ret []SoftwareTask) {
 	for _, v := range ToolMap {
 		task, err := v.Load()
 		task.zipdir = filepath.Join(s.app, v.dir)
@@ -469,18 +484,21 @@ func (s *SoftManager) GetAll() (ret []software_task) {
 	return
 }
 
-func (mrg *SoftManager) Start(newtask *software_task, update func(string)) {
+func (mrg *SoftManager) Start(newtask *SoftwareTask, update func(string), onend func(InstallResult, error)) {
 
 	mrg.task = append(mrg.task, newtask)
 	newtask.onupdate = update
-	newtask.onend = func(s software_task, i install_result, err error) {
-		var tasks []*software_task
+	newtask.onend = func(s SoftwareTask, result InstallResult, err error) {
+		var tasks []*SoftwareTask
 		for _, v := range mrg.task {
 			if v != newtask {
 				tasks = append(tasks, v)
 			}
 		}
 		mrg.task = tasks
+		if onend != nil {
+			onend(result, err)
+		}
 	}
 	for _, v := range ToolMap {
 		if v.id == newtask.Id {
