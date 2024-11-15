@@ -325,6 +325,40 @@ type Config struct {
 	Description string  `yaml:"description"`
 }
 
+func match_arch(target string) bool {
+	switch runtime.GOARCH {
+	case "amd64":
+		return strings.Contains(target, "x64") || !strings.Contains(target, "arm64")
+	case "arm64":
+		return strings.Contains(target, "arm64") || !strings.Contains(target, "x64")
+	case "arm":
+		debug.DebugLog("mason", "arm", "not support")
+	case "386":
+		debug.DebugLog("mason", "386", "not support")
+	}
+	return false
+}
+func match_os(target string) bool {
+	switch runtime.GOOS {
+	case "windows":
+		return strings.Contains(target, "win")
+	case "linux":
+		return strings.Contains(target, "linux") || strings.Contains(target, "unix")
+	case "darwin":
+		return strings.Contains(target, "darwin") || strings.Contains(target, "unix")
+	}
+	return false
+}
+func match_target(targets []string) (ret string, err error) {
+	for _, v := range targets {
+		if match_arch(v) && match_os(v) {
+			ret = v
+			return
+		}
+	}
+	err = fmt.Errorf("not found target")
+	return
+}
 func get_target() string {
 	switch runtime.GOOS {
 	case "windows":
@@ -376,29 +410,13 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 	case pkg_github:
 		{
 			var download_url_template = "https://github.com/%s/releases/download/%s/%s"
-			target := get_target()
 			for _, v := range config.Source.Asset {
-				for _, t := range v.Target {
-					yes := t == target
-					if !yes {
-						if t == "darwin" {
-							yes = strings.Contains(target, "darwin")
-						} else if t == "unix" {
-							yes = !strings.Contains(target, "win")
-						} else if t == "win" {
-							yes = strings.Contains(target, "win")
-						}
-					}
-					if yes {
-						ss := fmt.Sprintf(download_url_template, account, version, v.File)
-						app.data = ss
-						app.asset_bin = v.Bin
-						app.excute = true
-						app.asset_file = v.File
-						break
-					}
-				}
-				if len(app.data) > 0 {
+				if _, err := match_target(v.Target); err == nil {
+					ss := fmt.Sprintf(download_url_template, account, version, v.File)
+					app.data = ss
+					app.asset_bin = v.Bin
+					app.excute = true
+					app.asset_file = v.File
 					break
 				}
 			}
