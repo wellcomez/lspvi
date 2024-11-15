@@ -56,10 +56,18 @@ type SoftInstallResult func(SoftwareTask, InstallResult, error)
 func rune_string(r rune) string {
 	return fmt.Sprintf("%c", r)
 }
+func (v SoftwareTask) Executable() string {
+	bin,_:=v.get_bin()
+	if bin.Path!=""{return bin.Path} 
+	if is_file_ok(bin.Download) {
+		return bin.Download
+	}
+	return ""
+}
 func (v SoftwareTask) TaskState(state string) string {
 	status := " Not installed"
 	check := rune_string(nerd.Nf_seti_checkbox_unchecked)
-	yes, _ := v.GetBin()
+	yes, _ := v.get_bin()
 	installed := ">[?]"
 	if len(yes.Path) > 0 {
 		installed = ">" + yes.Path
@@ -101,7 +109,7 @@ type SoftwareTask struct {
 	zipdir   string
 }
 
-func isExecutableInPath(executable string) bool {
+func IsExecutableInPath(executable string) bool {
 	_, err := exec.LookPath(executable)
 	return err == nil
 }
@@ -113,7 +121,7 @@ type Executable struct {
 	DownloadOk bool
 }
 
-func (s SoftwareTask) GetBin() (bin Executable, err error) {
+func (s SoftwareTask) get_bin() (bin Executable, err error) {
 	// bin.Url = s.data
 	if key := s.Config.Bin.GetValue("{{source.build.bin.lsp}}"); len(key) > 0 {
 		bin.Download = s.assert.File
@@ -644,6 +652,21 @@ func (v soft_package_file) Load() (ret SoftwareTask, err error) {
 //go:embed  config
 var uiFS embed.FS
 
+func (s *SoftManager) FindLsp(id ToolType) (task SoftwareTask, err error) {
+	for _, v := range ToolMap {
+		if v.id != id {
+			continue
+		}
+		task, err = v.Load()
+		if err == nil {
+			task.zipdir = filepath.Join(s.app, v.dir)
+			task.Icon = v.icon
+			return
+		}
+	}
+	err = fmt.Errorf("not found software")
+	return
+}
 func (s *SoftManager) GetAll() (ret []SoftwareTask) {
 	for _, v := range ToolMap {
 		task, err := v.Load()

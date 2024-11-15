@@ -476,6 +476,7 @@ type LspConfig struct {
 	C          LangConfig `yaml:"c"`
 	Golang     LangConfig `yaml:"go"`
 	Py         LangConfig `yaml:"py"`
+	Java       LangConfig `yaml:"java"`
 	Javascript LangConfig `yaml:"javascript"`
 	Typescript LangConfig `yaml:"typescript"`
 }
@@ -493,11 +494,12 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 	golang := create_lang_lsp(wk, GO, lsp_lang_go{}, lsp_config.Golang)
 	rs := create_lang_lsp(wk, RUST, lsp_lang_rs{}, lsp_config.Golang)
 	py := create_lang_lsp(wk, PYTHON, lsp_lang_py{}, lsp_config.Py)
+	java := create_lang_lsp(wk, JAVA, lsp_lang_jedi{}, lsp_config.Java)
 	ts := create_lang_lsp(wk, TYPE_SCRIPT, lsp_ts{LanguageID: string(TYPE_SCRIPT)}, lsp_config.Typescript)
 	js := create_lang_lsp(wk, JAVASCRIPT, lsp_ts{LanguageID: string(JAVASCRIPT)}, lsp_config.Javascript)
 	ret := &LspWorkspace{
 		clients: []lspclient{
-			cpp, py, golang, ts, js, rs,
+			cpp, py, golang, ts, js, rs, java,
 		},
 		Wk:              wk,
 		lock_symbol_map: &sync.Mutex{},
