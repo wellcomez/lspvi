@@ -697,7 +697,7 @@ func (k *keymap) key_map_space_menu() {
 		get_cmd_actor(m, open_picker_qfh).menu_key(split("q")),
 		get_cmd_actor(m, open_picker_ui).menu_key(split("u")),
 		get_cmd_actor(m, open_picker_diagnos).menu_key(split("e")),
-		get_cmd_actor(m, open_picker_install).menu_key(split("I")),
+		// get_cmd_actor(m, open_picker_install).menu_key(split("I")),
 		get_cmd_actor(m, open_picker_refs).menu_key(split(chr_goto_refer)),
 		get_cmd_actor(m, open_picker_bookmark).menu_key(split(chr_bookmark)),
 		get_cmd_actor(m, open_picker_livegrep).menu_key(split(key_picker_live_grep)),

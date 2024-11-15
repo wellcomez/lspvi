@@ -31,6 +31,7 @@ type PackSpec struct {
 type Source struct {
 	ID    string  `yaml:"id"`
 	Asset []Asset `yaml:"asset"`
+	Build []Build `yaml:"build"`
 }
 type pkgtype int
 
@@ -54,10 +55,12 @@ type SoftwareTask struct {
 	Type pkgtype
 	data string
 
+	Icon devicon.Icon
 	//for asset field
-	asset_bin  string
-	asset_file string
-
+	// asset_bin  string
+	// asset_file string
+	build    Build
+	assert   Asset
 	excute   bool
 	onend    SoftInstallResult
 	onupdate func(string)
@@ -74,17 +77,25 @@ func isExecutableInPath(executable string) bool {
 type Executable struct {
 	Path       string
 	Download   string
+	Url        string
 	DownloadOk bool
 }
 
 func (s SoftwareTask) GetBin() (bin Executable, err error) {
-	if s.Config.Bin.Value == "{{source.asset.bin}}" {
-		if len(s.asset_bin) > 0 {
-			path := filepath.Join(s.zipdir, s.asset_bin)
-			bin.Path, _ = exec.LookPath(filepath.Base(s.asset_bin))
+	bin.Url= s.data
+	if key := s.Config.Bin.GetValue("{{source.build.bin.lsp}}"); len(key) > 0 {
+		bin.Download = s.build.Bin.Lsp
+		path := filepath.Join(s.zipdir, s.build.Bin.Lsp)
+		if is_file_ok(path) {
+			bin.DownloadOk = true
+		}
+	} else if key := s.Config.Bin.GetValue("{{source.asset.bin}}"); len(key) > 0 {
+		if len(s.assert.Bin) > 0 {
+			path := filepath.Join(s.zipdir, s.assert.Bin)
+			bin.Path, _ = exec.LookPath(filepath.Base(s.assert.Bin))
 			bin.Download = path
 			bin.DownloadOk = false
-			if fi, e := os.Stat(path); e == nil && !fi.IsDir() {
+			if is_file_ok(path) {
 				bin.DownloadOk = true
 				return
 			}
@@ -93,11 +104,18 @@ func (s SoftwareTask) GetBin() (bin Executable, err error) {
 			}
 		}
 	}
-	bin.Path, err = exec.LookPath(s.Config.Bin.Key)
-	if err == nil {
-		return
+	for _, v := range s.Config.Bin.data {
+		bin.Path, err = exec.LookPath(v.Key)
+		if err == nil {
+			return
+		}
 	}
 	return
+}
+
+func is_file_ok(path string) bool {
+	fi, e := os.Stat(path)
+	return e == nil && !fi.IsDir()
 }
 
 // func (s software_task) Installed() (ret bool, err error) {
@@ -226,7 +244,7 @@ func (s *SoftwareTask) run_install_task(dest string) {
 			}
 		}
 	case soft_action_down:
-		s.download(filepath.Join(dest, s.asset_file), cmd)
+		s.download(filepath.Join(dest, s.assert.File), cmd)
 	}
 }
 
@@ -253,6 +271,46 @@ func get_version_account(id string) (version string, account string, t pkgtype) 
 		}
 	}
 	return
+}
+
+type BuildBin struct {
+	Lsp string `yaml:"lsp"`
+	Dap string `yaml:"dap"`
+}
+type buildanystruct struct {
+	Target any      `yaml:"target"`
+	Run    string   `yaml:"run"`
+	Bin    BuildBin `yaml:"bin"`
+}
+type Build struct {
+	Target []string `yaml:"target"`
+	Run    string   `yaml:"file"`
+	Bin    BuildBin `yaml:"bin"`
+}
+
+func (a *Build) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var p buildanystruct
+
+	if err := unmarshal(&p); err != nil {
+		return err
+	}
+
+	// Check if target is a single string
+	switch t := p.Target.(type) {
+	case string:
+		a.Target = []string{t}
+	case []interface{}:
+		for _, v := range t {
+			if s, ok := v.(string); ok {
+				a.Target = append(a.Target, s)
+			}
+		}
+	default:
+		return fmt.Errorf("unexpected type for Target: %T", t)
+	}
+	a.Bin = p.Bin
+	a.Run = p.Run
+	return nil
 }
 
 // Asset represents an asset within the source section.
@@ -296,12 +354,24 @@ func (a *Asset) UnmarshalYAML(unmarshal func(interface{}) error) error {
 type Schemas struct {
 	LSP string `yaml:"lsp"`
 }
+type BinDefine struct {
+	Key   string
+	Value string
+}
 
 // Bin represents the bin section of the YAML configuration.
 type Bin struct {
 	Clangd string `yaml:"clangd"`
-	Key    string
-	Value  string
+	data   []BinDefine
+}
+
+func (b *Bin) GetValue(value string) string {
+	for _, v := range b.data {
+		if v.Value == value {
+			return v.Key
+		}
+	}
+	return ""
 }
 
 func (a *Bin) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -311,8 +381,7 @@ func (a *Bin) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 	for k, v := range Database {
-		a.Value = v
-		a.Key = k
+		a.data = append(a.data, BinDefine{Value: v, Key: k})
 		break
 	}
 	return nil
@@ -412,13 +481,24 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 	case pkg_github:
 		{
 			var download_url_template = "https://github.com/%s/releases/download/%s/%s"
+			for _, v := range config.Source.Build {
+				if _, err := match_target(v.Target); err == nil {
+					ss := fmt.Sprintf(download_url_template, account, version, v.Bin.Lsp)
+					app.data = ss
+					app.build = v
+					app.excute = true
+					break
+				}
+			}
+			if app.data != "" {
+				break
+			}
 			for _, v := range config.Source.Asset {
 				if _, err := match_target(v.Target); err == nil {
 					ss := fmt.Sprintf(download_url_template, account, version, v.File)
 					app.data = ss
-					app.asset_bin = v.Bin
+					app.assert = v
 					app.excute = true
-					app.asset_file = v.File
 					break
 				}
 			}
@@ -462,7 +542,7 @@ const (
 	ToolLsp_java
 )
 
-type soft_config_file struct {
+type soft_package_file struct {
 	id   ToolType
 	dir  string
 	icon devicon.Icon
@@ -475,7 +555,7 @@ func get_icon(file string) devicon.Icon {
 	return devicon.Icon{Icon: fmt.Sprintf("%c", nerd.Nf_cod_file_binary)}
 }
 
-var ToolMap = []soft_config_file{
+var ToolMap = []soft_package_file{
 	{ToolLsp_clangd, "clangd", get_icon(".cpp")},
 	{ToolLsp_go, "go", get_icon(".go")},
 	{ToolLsp_rust, "rust-analyzer", get_icon(".rs")},
@@ -500,7 +580,7 @@ func NewSoftManager(wk common.Workdir) *SoftManager {
 		app: app,
 	}
 }
-func (v soft_config_file) Load() (ret SoftwareTask, err error) {
+func (v soft_package_file) Load() (ret SoftwareTask, err error) {
 	file := fmt.Sprintf("config/%s/package.yaml", v.dir)
 	var buf []byte
 	buf, err = uiFS.ReadFile(file)
@@ -519,6 +599,7 @@ func (s *SoftManager) GetAll() (ret []SoftwareTask) {
 	for _, v := range ToolMap {
 		task, err := v.Load()
 		task.zipdir = filepath.Join(s.app, v.dir)
+		task.Icon = v.icon
 		if err == nil {
 			ret = append(ret, task)
 		}

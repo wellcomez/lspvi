@@ -15,6 +15,7 @@ var software *mason.SoftManager
 type softwarepicker struct {
 	*fzflist_impl
 	fzf *fzf_on_listview
+	app []mason.SoftwareTask
 }
 
 // UpdateQuery implements picker.
@@ -56,25 +57,38 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 		err = fmt.Errorf("can not create workdir")
 		return
 	}
-	apps := software.GetAll()
 	ret = &softwarepicker{
 		fzflist_impl: new_fzflist_impl(dialog),
 	}
+	ret.app = software.GetAll()
 	data := []string{}
-	for i := range apps {
-		v := apps[i]
+	selectindex := []int{}
+	for i := range ret.app {
+		v := ret.app[i]
+		selectindex = append(selectindex, i)
+		data = append(data, v.Config.Name)
+	}
+	ret.updatelist(selectindex)
+	ret.fzf = new_fzf_on_list_data(ret.list, data, true)
+	ret.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+	})
+	return
+}
+
+func (ret *softwarepicker) updatelist(selectindex []int) {
+	for i := range selectindex {
+		v := ret.app[i]
 		s := TaskState(v)
 		ret.list.AddItem(s, "", nil)
-		data = append(data, v.Config.Name)
 	}
 	ret.list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'i' {
 			x := ret.list.GetCurrentItem()
-			a := apps[x]
+			a := ret.app[x]
 			software.Start(&a, func(s string) {
 				ret.list.SetItemText(x, TaskState(a)+s, "")
-				go dialog.main.App().QueueUpdate(func() {
-					dialog.main.App().ForceDraw()
+				go ret.parent.main.App().QueueUpdate(func() {
+					ret.parent.main.App().ForceDraw()
 				})
 			}, func(i mason.InstallResult, err error) {
 				ret.list.SetItemText(x, TaskState(a), "")
@@ -83,16 +97,12 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 		}
 		return event
 	})
-	ret.fzf = new_fzf_on_list_data(ret.list, data, true)
-	ret.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
-	})
-	return
 }
 
 func TaskState(v mason.SoftwareTask) string {
 	status := " Not installed"
 	check := rune_string(nerd.Nf_seti_checkbox_unchecked)
-	if yes, err := v.GetBin(); err == nil {
+	if yes, _ := v.GetBin(); yes.Path != "" || yes.Download != "" {
 		installed := ">[?]"
 		if len(yes.Path) > 0 {
 			installed = ">" + yes.Path
@@ -100,11 +110,11 @@ func TaskState(v mason.SoftwareTask) string {
 		}
 		download := ""
 		if !yes.DownloadOk {
-			download = ">" + rune_string(nerd.Nf_fa_download)
+			download = ">" + rune_string(nerd.Nf_fa_download) + " " + yes.Url
 		} else {
-			download = ">" + yes.Download
+			download = yes.Download
 		}
 		status = fmt.Sprintf("%s %s", installed, download)
 	}
-	return fmt.Sprintf("%s %s %s", check, v.Config.Name, status)
+	return fmt.Sprintf("%s %s %s %s", check, v.Icon.Icon, v.Config.Name, status)
 }

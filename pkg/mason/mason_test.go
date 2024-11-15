@@ -36,5 +36,10 @@ func TestRust(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-
+func TestJava(t *testing.T) {
+	_, err := mason.Load(nil, "/home/z/dev/lsp/goui/pkg/mason/config/java-language-server/package.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 //
