@@ -116,8 +116,8 @@ type Executable struct {
 func (s SoftwareTask) GetBin() (bin Executable, err error) {
 	// bin.Url = s.data
 	if key := s.Config.Bin.GetValue("{{source.build.bin.lsp}}"); len(key) > 0 {
-		bin.Download = s.build.Bin.Lsp
-		path := filepath.Join(s.zipdir, s.build.Bin.Lsp)
+		bin.Download = s.assert.File
+		path := filepath.Join(s.zipdir, s.assert.File)
 		if is_file_ok(path) {
 			bin.DownloadOk = true
 		}
@@ -531,6 +531,8 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 					ss := fmt.Sprintf(download_url_template, account, version)
 					app.data = ss
 					app.build = v
+					filename:=strings.Split(account,"/")[1]
+					app.assert.File = fmt.Sprintf("%s-%s.zip",filename, version[1:])
 					app.excute = true
 					break
 				}
