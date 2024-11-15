@@ -17,7 +17,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 	"zen108.com/lspvi/pkg/debug"
+	"zen108.com/lspvi/pkg/devicon"
 	"zen108.com/lspvi/pkg/ui/common"
+	nerd "zen108.com/lspvi/pkg/ui/icon"
 )
 
 type PackSpec struct {
@@ -451,20 +453,42 @@ const (
 	ToolLsp_rust
 	ToolLsp_swift
 	ToolLsp_kotlin
+	ToolLsp_bash
+	ToolLsp_cmake
+	ToolLsp_java_jedi
+	ToolLsp_lua
+	ToolLsp_vue
+	ToolLsp_csharp
+	ToolLsp_java
 )
 
 type soft_config_file struct {
-	id  ToolType
-	dir string
+	id   ToolType
+	dir  string
+	icon devicon.Icon
+}
+
+func get_icon(file string) devicon.Icon {
+	if ret, err := devicon.FindIconPath(file); err == nil {
+		return ret
+	}
+	return devicon.Icon{Icon: fmt.Sprintf("%c", nerd.Nf_cod_file_binary)}
 }
 
 var ToolMap = []soft_config_file{
-	{ToolLsp_clangd, "clangd"},
-	{ToolLsp_go, "go"},
-	{ToolLsp_rust, "rust-analyzer"},
-	{ToolLsp_ts, "typescript-language-server"},
-	{ToolLsp_kotlin, "kotlin-language-server"},
-	{ToolLsp_py, "python-lsp-server"},
+	{ToolLsp_clangd, "clangd", get_icon(".cpp")},
+	{ToolLsp_go, "go", get_icon(".go")},
+	{ToolLsp_rust, "rust-analyzer", get_icon(".rs")},
+	{ToolLsp_ts, "typescript-language-server", get_icon(".ts")},
+	{ToolLsp_kotlin, "kotlin-language-server", get_icon(".kt")},
+	{ToolLsp_py, "python-lsp-server", get_icon(".py")},
+	{ToolLsp_bash, "bash-language-server", get_icon(".sh")},
+	{ToolLsp_cmake, "cmake-language-server", get_icon("cmakelists.txt")},
+	{ToolLsp_java_jedi, "jedi-language-server", get_icon(".java")},
+	{ToolLsp_lua, "lua-language-server", get_icon(".lua")},
+	{ToolLsp_vue, "vue-language-server", get_icon(".vue")},
+	{ToolLsp_csharp, "csharp-language-server", get_icon(".cs")},
+	{ToolLsp_java, "java-language-server", get_icon(".java")},
 	// {ToolLsp_swift, "swift-mesonlsp"},
 }
 
