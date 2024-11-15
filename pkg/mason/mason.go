@@ -40,6 +40,7 @@ const (
 	pkg_go
 	pkg_npm
 	pkg_pypi
+	pkg_nuget
 )
 
 type InstallResult int
@@ -51,6 +52,34 @@ const (
 )
 
 type SoftInstallResult func(SoftwareTask, InstallResult, error)
+
+func rune_string(r rune) string {
+	return fmt.Sprintf("%c", r)
+}
+func (v SoftwareTask) TaskState() string {
+	status := " Not installed"
+	check := rune_string(nerd.Nf_seti_checkbox_unchecked)
+	yes, _ := v.GetBin()
+	installed := ">[?]"
+	if len(yes.Path) > 0 {
+		installed = ">" + yes.Path
+		check = rune_string(nerd.Nf_seti_checkbox)
+	}
+	download := ""
+	cmd, action := v.newMethod()
+	if action == soft_action_down {
+		if !yes.DownloadOk {
+			download = " " + rune_string(nerd.Nf_fa_download) + " " + cmd
+		} else {
+			download = yes.Download
+		}
+	} else {
+		download = " " + rune_string(nerd.Nf_cod_debug_rerun) + " " + cmd
+	}
+	status = fmt.Sprintf("%s %s", installed, download)
+	return fmt.Sprintf("%s %s %s %s", check, v.Icon.Icon, v.Config.Name, status)
+}
+
 type SoftwareTask struct {
 	Type pkgtype
 	data string
@@ -75,14 +104,14 @@ func isExecutableInPath(executable string) bool {
 }
 
 type Executable struct {
-	Path       string
-	Download   string
-	Url        string
+	Path     string
+	Download string
+	// Url        string
 	DownloadOk bool
 }
 
 func (s SoftwareTask) GetBin() (bin Executable, err error) {
-	bin.Url= s.data
+	// bin.Url = s.data
 	if key := s.Config.Bin.GetValue("{{source.build.bin.lsp}}"); len(key) > 0 {
 		bin.Download = s.build.Bin.Lsp
 		path := filepath.Join(s.zipdir, s.build.Bin.Lsp)
@@ -208,27 +237,9 @@ func (s *SoftwareTask) download(dest string, link string) {
 	}
 }
 
-func (s *SoftwareTask) run_install_task(dest string) {
-	s.zipdir = dest
-	var action = soft_action_none
-	cmd := ""
-	switch s.Type {
-	case pkg_github:
-		cmd = s.data
-		action = soft_action_down
-	case pkg_go:
-		cmd = fmt.Sprintf("go  install %s", s.data)
-		debug.InfoLog("mason", cmd)
-		action = soft_action_install
-	case pkg_npm:
-		cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
-		debug.InfoLog("mason", cmd)
-		action = soft_action_install
-	case pkg_pypi:
-		cmd = fmt.Sprintf("pip install --target %s %s", dest, s.data)
-		debug.InfoLog("mason", cmd)
-		action = soft_action_install
-	}
+func (s *SoftwareTask) run_idestnstall_task() {
+	dest := s.zipdir
+	cmd, action := s.newMethod()
 	switch action {
 	case soft_action_install:
 		args := strings.Split(cmd, " ")
@@ -246,6 +257,29 @@ func (s *SoftwareTask) run_install_task(dest string) {
 	case soft_action_down:
 		s.download(filepath.Join(dest, s.assert.File), cmd)
 	}
+}
+
+func (s *SoftwareTask) newMethod() (cmd string, action soft_action) {
+	dest := s.zipdir
+	switch s.Type {
+	case pkg_github:
+		cmd = s.data
+		action = soft_action_down
+	case pkg_go:
+		cmd = fmt.Sprintf("go  install %s", s.data)
+		action = soft_action_install
+	case pkg_npm:
+		cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
+		action = soft_action_install
+	case pkg_pypi:
+		cmd = fmt.Sprintf("pip install --target %s %s", dest, s.data)
+		action = soft_action_install
+	case pkg_nuget:
+		cmd = fmt.Sprintf("nuget %s %s", dest, s.data)
+		action = soft_action_install
+	}
+	debug.InfoLog("mason", cmd)
+	return cmd, action
 }
 
 func get_version_account(id string) (version string, account string, t pkgtype) {
@@ -266,6 +300,13 @@ func get_version_account(id string) (version string, account string, t pkgtype) 
 	if strings.HasPrefix(ss[0], "pkg:pypi/") {
 		t = pkg_pypi
 		account = strings.TrimPrefix(ss[0], "pkg:pypi/")
+		if idx := strings.Index(version, "?"); idx > 0 {
+			version = version[:idx]
+		}
+	}
+	if strings.HasPrefix(ss[0], "pkg:nuget/") {
+		t = pkg_nuget
+		account = strings.TrimPrefix(ss[0], "pkg:nuget/")
 		if idx := strings.Index(version, "?"); idx > 0 {
 			version = version[:idx]
 		}
@@ -482,8 +523,9 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 		{
 			var download_url_template = "https://github.com/%s/releases/download/%s/%s"
 			for _, v := range config.Source.Build {
+				var download_url_template = "https://github.com/%s/archive/refs/tags/%s.zip"
 				if _, err := match_target(v.Target); err == nil {
-					ss := fmt.Sprintf(download_url_template, account, version, v.Bin.Lsp)
+					ss := fmt.Sprintf(download_url_template, account, version)
 					app.data = ss
 					app.build = v
 					app.excute = true
@@ -625,9 +667,9 @@ func (mrg *SoftManager) Start(newtask *SoftwareTask, update func(string), onend 
 	}
 	for _, v := range ToolMap {
 		if v.id == newtask.Id {
-			dest := filepath.Join(mrg.app, v.dir)
+			dest := newtask.zipdir
 			os.MkdirAll(dest, 0755)
-			go newtask.run_install_task(dest)
+			go newtask.run_idestnstall_task()
 			break
 		}
 	}

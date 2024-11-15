@@ -28,8 +28,9 @@ var Nf_md_chevron_left_circle = '󰬨'    // =\uf0b28
 var Nf_fa_square_google_plus = '' // =\uf0d4
 var Nf_fa_download = ''           //\uf019
 var Nf_fa_ok_sign = ''            //\uf058
-// var Nf_oct_checkbox = '' //\uf4a7 
+// var Nf_oct_checkbox = '' //\uf4a7
 // 2627:nf-seti-checkbox 
 // 6928:nf-seti-checkbox_unchecked 
-var Nf_seti_checkbox = '' //\ue63f 
-var Nf_seti_checkbox_unchecked = '' //\ue640 
+var Nf_seti_checkbox = ''           //\ue63f
+var Nf_seti_checkbox_unchecked = '' //\ue640
+var Nf_cod_debug_rerun = ''         //\uebc0

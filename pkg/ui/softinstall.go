@@ -7,7 +7,6 @@ import (
 	"github.com/rivo/tview"
 	"zen108.com/lspvi/pkg/mason"
 	"zen108.com/lspvi/pkg/ui/common"
-	nerd "zen108.com/lspvi/pkg/ui/icon"
 )
 
 var software *mason.SoftManager
@@ -78,7 +77,7 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 func (ret *softwarepicker) updatelist(selectindex []int) {
 	for i := range selectindex {
 		v := ret.app[i]
-		s := TaskState(v)
+		s := v.TaskState()
 		ret.list.AddItem(s, "", nil)
 	}
 	ret.list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -86,12 +85,12 @@ func (ret *softwarepicker) updatelist(selectindex []int) {
 			x := ret.list.GetCurrentItem()
 			a := ret.app[x]
 			software.Start(&a, func(s string) {
-				ret.list.SetItemText(x, TaskState(a)+s, "")
+				ret.list.SetItemText(x, a.TaskState()+s, "")
 				go ret.parent.main.App().QueueUpdate(func() {
 					ret.parent.main.App().ForceDraw()
 				})
 			}, func(i mason.InstallResult, err error) {
-				ret.list.SetItemText(x, TaskState(a), "")
+				ret.list.SetItemText(x, a.TaskState(), "")
 			})
 			return nil
 		}
@@ -99,22 +98,21 @@ func (ret *softwarepicker) updatelist(selectindex []int) {
 	})
 }
 
-func TaskState(v mason.SoftwareTask) string {
-	status := " Not installed"
-	check := rune_string(nerd.Nf_seti_checkbox_unchecked)
-	if yes, _ := v.GetBin(); yes.Path != "" || yes.Download != "" {
-		installed := ">[?]"
-		if len(yes.Path) > 0 {
-			installed = ">" + yes.Path
-			check = rune_string(nerd.Nf_seti_checkbox)
-		}
-		download := ""
-		if !yes.DownloadOk {
-			download = ">" + rune_string(nerd.Nf_fa_download) + " " + yes.Url
-		} else {
-			download = yes.Download
-		}
-		status = fmt.Sprintf("%s %s", installed, download)
-	}
-	return fmt.Sprintf("%s %s %s %s", check, v.Icon.Icon, v.Config.Name, status)
-}
+// func TaskState(v mason.SoftwareTask) string {
+// 	status := " Not installed"
+// 	check := rune_string(nerd.Nf_seti_checkbox_unchecked)
+// 	yes, _ := v.GetBin()
+// 	installed := ">[?]"
+// 	if len(yes.Path) > 0 {
+// 		installed = ">" + yes.Path
+// 		check = rune_string(nerd.Nf_seti_checkbox)
+// 	}
+// 	download := ""
+// 	if !yes.DownloadOk {
+// 		download = ">" + rune_string(nerd.Nf_fa_download) + " " + yes.Url
+// 	} else {
+// 		download = yes.Download
+// 	}
+// 	status = fmt.Sprintf("%s %s", installed, download)
+// 	return fmt.Sprintf("%s %s %s %s", check, v.Icon.Icon, v.Config.Name, status)
+// }
