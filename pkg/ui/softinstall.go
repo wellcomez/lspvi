@@ -37,6 +37,10 @@ func (u *softwarepicker) handle() func(event *tcell.EventKey, setFocus func(p tv
 	// panic("unimplemented")
 
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+		switch event.Key() {
+		case tcell.KeyDown,tcell.KeyUp:
+			u.list.InputHandler()(event, setFocus)
+		}
 	}
 }
 
@@ -77,7 +81,7 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 func (ret *softwarepicker) updatelist(selectindex []int) {
 	for i := range selectindex {
 		v := ret.app[i]
-		s := v.TaskState()
+		s := v.TaskState("")
 		ret.list.AddItem(s, "", nil)
 	}
 	ret.list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -85,16 +89,25 @@ func (ret *softwarepicker) updatelist(selectindex []int) {
 			x := ret.list.GetCurrentItem()
 			a := ret.app[x]
 			software.Start(&a, func(s string) {
-				ret.list.SetItemText(x, a.TaskState()+s, "")
-				go ret.parent.main.App().QueueUpdate(func() {
-					ret.parent.main.App().ForceDraw()
-				})
+				ret.list.SetItemText(x, a.TaskState(s), "")
+				refreshlist(ret)
 			}, func(i mason.InstallResult, err error) {
-				ret.list.SetItemText(x, a.TaskState(), "")
+				if err != nil {
+					ret.list.SetItemText(x, a.TaskState(err.Error()), "")
+				} else {
+					ret.list.SetItemText(x, a.TaskState(""), "")
+				}
+				refreshlist(ret)
 			})
 			return nil
 		}
 		return event
+	})
+}
+
+func refreshlist(ret *softwarepicker) {
+	go ret.parent.main.App().QueueUpdate(func() {
+		ret.parent.main.App().ForceDraw()
 	})
 }
 

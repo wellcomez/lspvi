@@ -56,7 +56,7 @@ type SoftInstallResult func(SoftwareTask, InstallResult, error)
 func rune_string(r rune) string {
 	return fmt.Sprintf("%c", r)
 }
-func (v SoftwareTask) TaskState() string {
+func (v SoftwareTask) TaskState(state string) string {
 	status := " Not installed"
 	check := rune_string(nerd.Nf_seti_checkbox_unchecked)
 	yes, _ := v.GetBin()
@@ -67,6 +67,9 @@ func (v SoftwareTask) TaskState() string {
 	}
 	download := ""
 	cmd, action := v.newMethod()
+	if state!=""{
+		cmd =state 
+	}
 	if action == soft_action_down {
 		if !yes.DownloadOk {
 			download = " " + rune_string(nerd.Nf_fa_download) + " " + cmd
