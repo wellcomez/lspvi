@@ -17,7 +17,9 @@ type customlist struct {
 	selected          []int
 	main_color_text   [][]colortext
 	second_color_text [][]colortext
+	active_index      []int
 }
+
 func (l *customlist) Clear() *customlist {
 	l.List.Clear()
 	l.main_color_text = [][]colortext{}
@@ -25,7 +27,7 @@ func (l *customlist) Clear() *customlist {
 	return l
 }
 func new_customlist(two bool) *customlist {
-	ret := &customlist{default_color: global_theme.search_highlight_color()}
+	ret := &customlist{default_color: global_theme.search_highlight_color(), active_index: nil}
 	ret.List = NewList()
 	ret.ShowSecondaryText(two)
 	ret.main_color_text = [][]colortext{}
@@ -34,6 +36,11 @@ func new_customlist(two bool) *customlist {
 	}
 	ret.fuzz = false
 	return ret
+}
+func (l *customlist) SetColorItem(index int, main, second []colortext) *customlist {
+	l.main_color_text[index] = main
+	l.second_color_text[index] = second
+	return l
 }
 func (l *customlist) AddColorItem(main, second []colortext, selected func()) *customlist {
 	l.main_color_text = append(l.main_color_text, main)
@@ -92,6 +99,13 @@ func (l *customlist) Draw(screen tcell.Screen) {
 	for index := itemoffset; index < l.GetItemCount(); index++ {
 		var main_text, second_text []colortext
 		selected := index == l.List.GetCurrentItem()
+		active := false
+		for _, v := range l.active_index {
+			if index == v {
+				active = true
+				break
+			}
+		}
 		var has_main, has_second bool
 		if len(l.main_color_text) > 0 {
 			main_text = append([]colortext{}, l.main_color_text[index]...)
@@ -128,6 +142,8 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		if has_main {
 			if multiselected {
 				l.draw_item_color_new(main_text, screen, offset_x, y, width, theme_style)
+			} else if active {
+				l.draw_item_color_new(main_text, screen, offset_x, y, width, style)
 			} else if selected {
 				if left := width - len(main_text); left > 0 {
 					main_text = append(main_text, colortext{text: strings.Repeat(" ", left)})

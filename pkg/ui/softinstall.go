@@ -21,7 +21,9 @@ type softwarepicker struct {
 func (u *softwarepicker) UpdateQuery(query string) {
 	// panic("unimplemented")
 	u.fzf.OnSearch(query, false)
-	UpdateColorFzfList(u.fzf).SetCurrentItem(0)
+	UpdateColorFzfList(u.fzf)
+	u.list.Clear()
+	u.updatelist(u.fzf.selected_index)
 }
 func (pk *softwarepicker) grid(input *tview.InputField) *tview.Grid {
 	return pk.fzflist_impl.grid(input)
@@ -38,8 +40,7 @@ func (u *softwarepicker) handle() func(event *tcell.EventKey, setFocus func(p tv
 
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		switch event.Key() {
-		case tcell.KeyDown,tcell.KeyUp:
-			u.list.InputHandler()(event, setFocus)
+		case tcell.KeyDown, tcell.KeyUp:
 		}
 	}
 }
@@ -73,7 +74,19 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 	}
 	ret.updatelist(selectindex)
 	ret.fzf = new_fzf_on_list_data(ret.list, data, true)
+	last := -1
+	selected := -11
+	ret.list.SetChangedFunc(func(i int, s1, s2 string, r rune) {
+		last = i
+	})
 	ret.list.SetSelectedFunc(func(i int, s1, s2 string, r rune) {
+		if selected == i {
+			return
+		}
+		if last == i {
+			ret.run_start_i(i)
+			selected = i
+		}
 	})
 	return
 }
@@ -87,21 +100,28 @@ func (ret *softwarepicker) updatelist(selectindex []int) {
 	ret.list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'i' {
 			x := ret.list.GetCurrentItem()
-			a := ret.app[x]
-			software.Start(&a, func(s string) {
-				ret.list.SetItemText(x, a.TaskState(s), "")
-				refreshlist(ret)
-			}, func(i mason.InstallResult, err error) {
-				if err != nil {
-					ret.list.SetItemText(x, a.TaskState(err.Error()), "")
-				} else {
-					ret.list.SetItemText(x, a.TaskState(""), "")
-				}
-				refreshlist(ret)
-			})
+			ret.run_start_i(x)
 			return nil
 		}
 		return event
+	})
+}
+
+func (ret *softwarepicker) run_start_i(x int) {
+	if i := ret.fzf.get_data_index(x); i != -1 {
+		x = i
+	}
+	a := ret.app[x]
+	software.Start(&a, func(s string) {
+		ret.list.SetItemText(x, a.TaskState(s), "")
+		refreshlist(ret)
+	}, func(i mason.InstallResult, err error) {
+		if err != nil {
+			ret.list.SetItemText(x, a.TaskState(err.Error()), "")
+		} else {
+			ret.list.SetItemText(x, a.TaskState(""), "")
+		}
+		refreshlist(ret)
 	})
 }
 
