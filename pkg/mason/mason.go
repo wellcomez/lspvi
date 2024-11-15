@@ -66,9 +66,9 @@ func (v SoftwareTask) TaskState(state string) string {
 		check = rune_string(nerd.Nf_seti_checkbox)
 	}
 	download := ""
-	cmd, action := v.newMethod()
-	if state!=""{
-		cmd =state 
+	cmd, action := v.get_cmd()
+	if state != "" {
+		cmd = state
 	}
 	if action == soft_action_down {
 		if !yes.DownloadOk {
@@ -242,7 +242,7 @@ func (s *SoftwareTask) download(dest string, link string) {
 
 func (s *SoftwareTask) run_idestnstall_task() {
 	dest := s.zipdir
-	cmd, action := s.newMethod()
+	cmd, action := s.get_cmd()
 	switch action {
 	case soft_action_install:
 		args := strings.Split(cmd, " ")
@@ -262,7 +262,7 @@ func (s *SoftwareTask) run_idestnstall_task() {
 	}
 }
 
-func (s *SoftwareTask) newMethod() (cmd string, action soft_action) {
+func (s *SoftwareTask) get_cmd() (cmd string, action soft_action) {
 	dest := s.zipdir
 	switch s.Type {
 	case pkg_github:
@@ -275,7 +275,7 @@ func (s *SoftwareTask) newMethod() (cmd string, action soft_action) {
 		cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
 		action = soft_action_install
 	case pkg_pypi:
-		cmd = fmt.Sprintf("pip install --target %s %s", dest, s.data)
+		cmd = fmt.Sprintf("pip  %s", s.data)
 		action = soft_action_install
 	case pkg_nuget:
 		cmd = fmt.Sprintf("nuget %s %s", dest, s.data)
@@ -354,7 +354,7 @@ func (a *Build) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	a.Bin = p.Bin
 	a.Bin.Lsp = strings.TrimPrefix(a.Bin.Lsp, "exec:")
-	a.Bin.Dap= strings.TrimPrefix(a.Bin.Dap, "exec:")
+	a.Bin.Dap = strings.TrimPrefix(a.Bin.Dap, "exec:")
 	a.Run = p.Run
 	return nil
 }
@@ -533,8 +533,8 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 					ss := fmt.Sprintf(download_url_template, account, version)
 					app.data = ss
 					app.build = v
-					filename:=strings.Split(account,"/")[1]
-					app.assert.File = fmt.Sprintf("%s-%s.zip",filename, version[1:])
+					filename := strings.Split(account, "/")[1]
+					app.assert.File = fmt.Sprintf("%s-%s.zip", filename, version[1:])
 					app.excute = true
 					break
 				}
