@@ -63,8 +63,8 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 	data := []string{}
 	for i := range apps {
 		v := apps[i]
-		status := TaskState(v)
-		ret.list.AddItem(fmt.Sprintf("%s %s", v.Config.Name, status), "", nil)
+		s := TaskState(v)
+		ret.list.AddItem(s, "", nil)
 		data = append(data, v.Config.Name)
 	}
 	ret.list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -72,12 +72,12 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 			x := ret.list.GetCurrentItem()
 			a := apps[x]
 			software.Start(&a, func(s string) {
-				ret.list.SetItemText(x, fmt.Sprintf("%s %s", a.Config.Name, s), "")
+				ret.list.SetItemText(x, TaskState(a)+s, "")
 				go dialog.main.App().QueueUpdate(func() {
 					dialog.main.App().ForceDraw()
 				})
 			}, func(i mason.InstallResult, err error) {
-				ret.list.SetItemText(x, fmt.Sprintf("%s %s", a.Config.Name, TaskState(a)), "")
+				ret.list.SetItemText(x, TaskState(a), "")
 			})
 			return nil
 		}
@@ -91,10 +91,12 @@ func NewSoftwarepciker(dialog *fzfmain) (ret *softwarepicker, err error) {
 
 func TaskState(v mason.SoftwareTask) string {
 	status := " Not installed"
+	check := rune_string(nerd.Nf_seti_checkbox_unchecked)
 	if yes, err := v.GetBin(); err == nil {
-		installed := ">[X]"
+		installed := ">[?]"
 		if len(yes.Path) > 0 {
-			installed = " > " + yes.Path
+			installed = ">" + yes.Path
+			check = rune_string(nerd.Nf_seti_checkbox)
 		}
 		download := ""
 		if !yes.DownloadOk {
@@ -104,5 +106,5 @@ func TaskState(v mason.SoftwareTask) string {
 		}
 		status = fmt.Sprintf("%s %s", installed, download)
 	}
-	return status
+	return fmt.Sprintf("%s %s %s", check, v.Config.Name, status)
 }
