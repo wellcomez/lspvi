@@ -38,8 +38,12 @@ func new_customlist(two bool) *customlist {
 	return ret
 }
 func (l *customlist) SetColorItem(index int, main, second []colortext) *customlist {
-	l.main_color_text[index] = main
-	l.second_color_text[index] = second
+	if index < len(l.main_color_text) {
+		l.main_color_text[index] = main
+	}
+	if index < len(l.second_color_text) {
+		l.second_color_text[index] = second
+	}
 	return l
 }
 func (l *customlist) AddColorItem(main, second []colortext, selected func()) *customlist {

@@ -41,6 +41,7 @@ func (u *softwarepicker) handle() func(event *tcell.EventKey, setFocus func(p tv
 	return func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		switch event.Key() {
 		case tcell.KeyDown, tcell.KeyUp:
+			u.list.InputHandler()(event, setFocus)
 		}
 	}
 }
@@ -95,7 +96,9 @@ func (ret *softwarepicker) updatelist(selectindex []int) {
 	for i := range selectindex {
 		v := ret.app[i]
 		s := v.TaskState("")
-		ret.list.AddItem(s, "", nil)
+		var c colorstring
+		c.add_color_text(colortext{text: s})
+		ret.list.AddColorItem(c.line, nil, nil)
 	}
 	ret.list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'i' {
@@ -108,18 +111,40 @@ func (ret *softwarepicker) updatelist(selectindex []int) {
 }
 
 func (ret *softwarepicker) run_start_i(x int) {
+	dataindex := x
 	if i := ret.fzf.get_data_index(x); i != -1 {
-		x = i
+		dataindex = i
 	}
-	a := ret.app[x]
+	a := ret.app[dataindex]
+	set_text := func(s string, active int) {
+		var c colorstring
+		text := a.TaskState(s)
+		if active == 1 {
+			c.add_color_text(colortext{text: text, color: tcell.ColorGreen, bg: tcell.ColorWhite})
+			ret.list.active_index = append(ret.list.active_index, x)
+			ret.list.SetColorItem(x, c.line, nil)
+		} else if active == -1 {
+			c.add_color_text(colortext{text: text})
+			var ss = []int{}
+			for _, v := range ret.list.active_index {
+				if v != x {
+					ss = append(ss, v)
+				}
+			}
+			ret.list.active_index = ss
+			ret.list.SetColorItem(x, c.line, nil)
+		}
+		refreshlist(ret)
+	}
+	set_text("Starting", 1)
 	software.Start(&a, func(s string) {
-		ret.list.SetItemText(x, a.TaskState(s), "")
+		set_text(s, 0)
 		refreshlist(ret)
 	}, func(i mason.InstallResult, err error) {
 		if err != nil {
-			ret.list.SetItemText(x, a.TaskState(err.Error()), "")
+			set_text(err.Error(), -1)
 		} else {
-			ret.list.SetItemText(x, a.TaskState(""), "")
+			set_text("", -1)
 		}
 		refreshlist(ret)
 	})
