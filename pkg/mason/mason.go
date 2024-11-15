@@ -353,6 +353,8 @@ func (a *Build) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return fmt.Errorf("unexpected type for Target: %T", t)
 	}
 	a.Bin = p.Bin
+	a.Bin.Lsp = strings.TrimPrefix(a.Bin.Lsp, "exec:")
+	a.Bin.Dap= strings.TrimPrefix(a.Bin.Dap, "exec:")
 	a.Run = p.Run
 	return nil
 }
