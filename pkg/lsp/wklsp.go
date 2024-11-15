@@ -361,7 +361,7 @@ func (wk *LspWorkspace) openbuffer(filename string, content string) (*Symbol_fil
 	if token, err := ret.lsp.Semantictokens_full(filename); err == nil {
 		ret.tokens = token
 	} else {
-		return ret, is_new, err
+		debug.WarnLog(DebugTag, "Semantictokens_full", err)
 	}
 	return ret, is_new, nil
 }
