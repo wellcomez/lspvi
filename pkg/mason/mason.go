@@ -22,14 +22,12 @@ import (
 	nerd "zen108.com/lspvi/pkg/ui/icon"
 )
 
-
-
 // Source represents the source section of the YAML configuration.
 type Source struct {
-  ID    string  `yaml:"id"`
-  Asset []Asset `yaml:"asset"`
-  Build []Build `yaml:"build"`
-  Extra_packages []string  `yaml:"extra_packages"`
+	ID             string   `yaml:"id"`
+	Asset          []Asset  `yaml:"asset"`
+	Build          []Build  `yaml:"build"`
+	Extra_packages []string `yaml:"extra_packages"`
 }
 type pkgtype int
 
@@ -90,21 +88,13 @@ func (v SoftwareTask) TaskState(state string) string {
 	status = fmt.Sprintf("%s %s", installed, download)
 	return fmt.Sprintf("%s %s %s %s", check, v.Icon.Icon, v.Config.Name, status)
 }
-type Subtask struct{
-  action soft_action
-}
-type SubtaskCmd struct{
-  *Subtask
-}
-type SubtaskDownload struct{
-  *Subtask
-}
 
 type SoftwareTask struct {
 	Type pkgtype
-	data string
+	// data string
 
 	Icon devicon.Icon
+	data []SubTask
 	//for asset field
 	// asset_bin  string
 	// asset_file string
@@ -116,7 +106,7 @@ type SoftwareTask struct {
 	Config   Config
 	Id       ToolType
 	zipdir   string
-	cwd      string
+	Desc     string
 }
 
 func IsExecutableInPath(executable string) bool {
@@ -206,7 +196,25 @@ const (
 // 	return stream
 
 // }
-func (s *SoftwareTask) download(dest string, link string) {
+type SubTask interface {
+	Run(*SoftwareTask)
+}
+type SubTaskCmd struct {
+	main    *SoftwareTask
+	cmdline string
+}
+type SubTaskDownload struct {
+	main *SoftwareTask
+	dest string
+	link string
+}
+
+func (s *SubTaskDownload) Run(m *SoftwareTask) {
+	s.main = m
+	s.download(s.dest, s.link)
+}
+func (sub *SubTaskDownload) download(dest string, link string) {
+	s := sub.main
 	client := grab.NewClient()
 	req, err := grab.NewRequest(dest, link)
 	var on_error = func(err error) {
@@ -259,79 +267,142 @@ func (s *SoftwareTask) download(dest string, link string) {
 }
 
 func (s *SoftwareTask) run_ide_stnstall_task() {
-	dest := s.zipdir
-  changedir :=false
-  switch (s.Type){
-  case pkg_npm:
-    changedir = true
-  }
-  current,_:=os.Getwd()
-  defer func() {
-    if changedir{
-      os.Chdir(current)
-    }
-  }()
-  if changedir{
-    os.Chdir(s.zipdir)
-  }
-	cmdline, action := s.get_cmd()
-	switch action {
-	case soft_action_install:
-    ssss := strings.Split(cmdline, " ")
-    s.Write([]byte(cmdline))
-    var args []string
-		for _, v := range ssss {
-			if v == "" {
-				continue
-			} else {
-				args = append(args, v)
-			}
+	changedir := false
+	switch s.Type {
+	case pkg_npm:
+		changedir = true
+	}
+	current, _ := os.Getwd()
+	defer func() {
+		if changedir {
+			os.Chdir(current)
 		}
-		ss, err :=
-			exec.LookPath(args[0])
-		if err != nil {
-			debug.ErrorLog("mason", err)
-			s.onend(*s, InstallFail, err)
-			return
-		}
-		cmd := exec.Command(ss, args[1:]...)
-		cmd.Stdout = *s
-		cmd.Stderr = *s
-		err = cmd.Run()
-		if s.onend != nil {
-			if err != nil {
-				s.onend(*s, InstallFail, err)
-			} else {
-				s.onend(*s, InstallSuccess, err)
-			}
-		}
-	case soft_action_down:
-		s.download(filepath.Join(dest, s.assert.File), cmdline)
+	}()
+	if changedir {
+		os.Chdir(s.zipdir)
+	}
+	task := s.get_sub_task()
+	for _, v := range task {
+		v.Run(s)
 	}
 }
 
-func (s *SoftwareTask) get_cmd() (cmd string, action soft_action) {
+func (s *SoftwareTask) NewSubCmd(cmdline string) *SubTaskCmd {
+	s.Desc = cmdline
+	d := SubTaskCmd{s, cmdline}
+	return &d
+}
+func (sub *SubTaskCmd) Run(s *SoftwareTask) {
+	sub.main = s
+	sub.run_cmdline(sub.cmdline)
+}
+
+func (sub *SubTaskCmd) run_cmdline(cmdline string) bool {
+	maintask := sub.main
+	ssss := strings.Split(cmdline, " ")
+	maintask.Write([]byte(cmdline))
+	var args []string
+	for _, v := range ssss {
+		if v == "" {
+			continue
+		} else {
+			args = append(args, v)
+		}
+	}
+	ss, err :=
+		exec.LookPath(args[0])
+	if err != nil {
+		debug.ErrorLog("mason", err)
+		maintask.onend(*maintask, InstallFail, err)
+		return true
+	}
+	cmd := exec.Command(ss, args[1:]...)
+	cmd.Stdout = *maintask
+	cmd.Stderr = *maintask
+	err = cmd.Run()
+	if maintask.onend != nil {
+		if err != nil {
+			maintask.onend(*maintask, InstallFail, err)
+			return false
+		} else {
+			maintask.onend(*maintask, InstallSuccess, err)
+		}
+	}
+	return true
+}
+
+func (s *SoftwareTask) NewDownloadTask(link string) *SubTaskDownload {
+
 	dest := s.zipdir
+	s.Desc = link
+	t := SubTaskDownload{s, filepath.Join(dest, s.assert.File), link}
+	return &t
+}
+
+//	func  get_sub_task(Type pkgtype, data string,s SoftwareTask ) (ret SubTask) {
+//		// var cmd string
+//		// var  action soft_action
+//		switch Type {
+//		case pkg_go:
+//			cmd := fmt.Sprintf("npm install  %s", data)
+//				return s.NewSubCmd(cmd)
+//			// action = soft_action_install
+//		case pkg_pypi:
+//			cmd := fmt.Sprintf("pip  %s", data)
+//				return s.NewSubCmd(cmd)
+//		case pkg_nuget:
+//			// cmd := fmt.Sprintf("nuget %s %s", dest, data)
+//			return  s.NewSubCmd(cmd)
+//		}
+//		return ret
+//	}
+func (s *SoftwareTask) get_sub_task() (ret []SubTask) {
+	return s.data
+}
+
+// func run_cmdline(data string)
+// var cmd string
+// var  action soft_action
+// dest := s.zipdir
+// switch s.Type {
+// case pkg_github:
+// 	cmd := s.data
+// 	// action = soft_action_down
+// 	ret = append(ret, s.NewDownloadTask(cmd))
+// case pkg_go:
+// 	cmd := fmt.Sprintf("go  install %s", s.data)
+// 	ret = append(ret, s.NewSubCmd(cmd))
+// 	// action = soft_action_install
+// case pkg_npm:
+// 	// cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
+// 	cmd := fmt.Sprintf("npm install  %s", s.data)
+// 	ret = append(ret, s.NewSubCmd(cmd))
+// 	// action = soft_action_install
+// case pkg_pypi:
+// 	cmd := fmt.Sprintf("pip  %s", s.data)
+// 	ret = append(ret, s.NewSubCmd(cmd))
+// case pkg_nuget:
+// 	cmd := fmt.Sprintf("nuget %s %s", dest, s.data)
+// 	ret = append(ret, s.NewSubCmd(cmd))
+// }
+// return ret
+// }
+
+func (s *SoftwareTask) get_cmd() (cmd string, action soft_action) {
+	cmd = s.Desc
 	switch s.Type {
 	case pkg_github:
-		cmd = s.data
 		action = soft_action_down
 	case pkg_go:
-		cmd = fmt.Sprintf("go  install %s", s.data)
 		action = soft_action_install
 	case pkg_npm:
-		// cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
-		cmd = fmt.Sprintf("npm install  %s", s.data)
 		action = soft_action_install
 	case pkg_pypi:
-		cmd = fmt.Sprintf("pip  %s", s.data)
 		action = soft_action_install
 	case pkg_nuget:
-		cmd = fmt.Sprintf("nuget %s %s", dest, s.data)
 		action = soft_action_install
 	}
-	debug.InfoLog("mason", cmd)
-	return cmd, action
+	return
 }
 
 func get_version_account(id string) (version string, account string, t pkgtype) {
@@ -525,21 +596,22 @@ func match_target(targets []string) (ret string, err error) {
 	err = fmt.Errorf("not found target")
 	return
 }
-func get_target() string {
-	switch runtime.GOOS {
-	case "windows":
-		return "win_x64"
-	case "linux":
-		return "linux_x64_gnu"
-	case "darwin":
-		if runtime.GOARCH == "arm64" {
-			return "darwin_arm64"
-		}
-		return "darwin_x64"
-	}
-	return ""
-}
-func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
+
+//	func get_target() string {
+//		switch runtime.GOOS {
+//		case "windows":
+//			return "win_x64"
+//		case "linux":
+//			return "linux_x64_gnu"
+//		case "darwin":
+//			if runtime.GOARCH == "arm64" {
+//				return "darwin_arm64"
+//			}
+//			return "darwin_x64"
+//		}
+//		return ""
+//	}
+func Load(yamlFile []byte, s string) (app SoftwareTask, err error) {
 	// Read the YAML file
 	if len(yamlFile) == 0 {
 		yamlFile, err = os.ReadFile(s)
@@ -570,7 +642,6 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 			"Error unmarshaling YAML file: %v", err)
 		return
 	}
-	var app SoftwareTask
 	app.Type = pktype
 	switch pktype {
 	case pkg_github:
@@ -580,7 +651,7 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 				var download_url_template = "https://github.com/%s/archive/refs/tags/%s.zip"
 				if _, err := match_target(v.Target); err == nil {
 					ss := fmt.Sprintf(download_url_template, account, version)
-					app.data = ss
+					app.data = append(app.data, app.NewDownloadTask(ss))
 					app.build = v
 					filename := strings.Split(account, "/")[1]
 					app.assert.File = fmt.Sprintf("%s-%s.zip", filename, version[1:])
@@ -588,34 +659,40 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 					break
 				}
 			}
-			if app.data != "" {
+			if len(app.data) > 0 {
 				break
 			}
 			for _, v := range config.Source.Asset {
 				if _, err := match_target(v.Target); err == nil {
 					ss := fmt.Sprintf(download_url_template, account, version, v.File)
-					app.data = ss
 					app.assert = v
 					app.excute = true
+					app.data = append(app.data, app.NewDownloadTask(ss))
 					break
 				}
 			}
 		}
 	case pkg_pypi:
-		app.data = account
+		data := account
+		cmd := fmt.Sprintf("pip  %s", data)
+		app.data = append(app.data, app.NewSubCmd(cmd))
 	case pkg_go:
-		app.data = strings.TrimPrefix(config.Source.ID, "pkg:golang/")
+		data := strings.TrimPrefix(config.Source.ID, "pkg:golang/")
+		cmd := fmt.Sprintf("go  install %s", data)
+		app.data = append(app.data, app.NewSubCmd(cmd))
 	case pkg_npm:
 		pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
-    if len(config.Source.Extra_packages)>0{
-      packages :=[]string{pkg}
-      packages = append(packages, config.Source.Extra_packages...)
-      pkg = strings.Join(packages, " ")
-    }
-		app.data = pkg
+		if len(config.Source.Extra_packages) > 0 {
+			packages := []string{pkg}
+			packages = append(packages, config.Source.Extra_packages...)
+			pkg = strings.Join(packages, " ")
+		}
+		data := pkg
+		// dest:=app.zipdir
+		cmd := fmt.Sprintf("npm install   %s", data)
+		app.data = append(app.data, app.NewSubCmd(cmd))
 	}
 	app.Config = config
-	task = app
 	return
 	// println(app.data)
 }

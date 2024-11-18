@@ -31,15 +31,15 @@ func (l lsp_lang_jedi) Launch_Lsp_Server(core *lspcore, wk WorkSpace) (err error
 		if err != nil {
 			return
 		}
-		var soft mason.SoftwareTask
-		soft, err = mason.NewSoftManager(w).FindLsp(mason.ToolLsp_java_jedi)
-		if err != nil {
+		if soft, e := mason.NewSoftManager(w).FindLsp(mason.ToolLsp_java_jedi); e != nil {
+			err = e
 			return
-		}
-		path = soft.Executable()
-		if path == "" {
-			err = fmt.Errorf("not found jedi-language-server")
-			return
+		} else {
+			path = soft.Executable()
+			if path == "" {
+				err = fmt.Errorf("not found jedi-language-server")
+				return
+			}
 		}
 	}
 	core.cmd = exec.Command(path)
