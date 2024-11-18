@@ -57,8 +57,10 @@ func rune_string(r rune) string {
 	return fmt.Sprintf("%c", r)
 }
 func (v SoftwareTask) Executable() string {
-	bin,_:=v.get_bin()
-	if bin.Path!=""{return bin.Path} 
+	bin, _ := v.get_bin()
+	if bin.Path != "" {
+		return bin.Path
+	}
 	if is_file_ok(bin.Download) {
 		return bin.Download
 	}
@@ -253,11 +255,26 @@ func (s *SoftwareTask) run_idestnstall_task() {
 	cmd, action := s.get_cmd()
 	switch action {
 	case soft_action_install:
-		args := strings.Split(cmd, " ")
-		cmd := exec.Command(args[0], args[1:]...)
+		ssss := strings.Split(cmd, " ")
+		var args []string
+		for _, v := range ssss {
+			if v == "" {
+				continue
+			} else {
+				args = append(args, v)
+			}
+		}
+		ss, err :=
+			exec.LookPath(args[0])
+		if err != nil {
+			debug.ErrorLog("mason", err)
+			s.onend(*s, InstallFail, err)
+			return
+		}
+		cmd := exec.Command(ss, args[1:]...)
 		cmd.Stdout = *s
 		cmd.Stderr = *s
-		err := cmd.Run()
+		err = cmd.Run()
 		if s.onend != nil {
 			if err != nil {
 				s.onend(*s, InstallFail, err)
@@ -563,7 +580,7 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 	case pkg_pypi:
 		app.data = account
 	case pkg_go:
-		app.data = strings.TrimPrefix(config.Source.ID, "pkg:")
+		app.data = strings.TrimPrefix(config.Source.ID, "pkg:golang/")
 	case pkg_npm:
 		pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
 		app.data = pkg

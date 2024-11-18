@@ -117,6 +117,9 @@ func (ret *softwarepicker) run_start_i(x int) {
 	}
 	a := ret.app[dataindex]
 	set_text := func(s string, active int) {
+		go ret.parent.main.App().QueueUpdateDraw(func() {
+			ret.parent.main.update_log_view(s)
+		})
 		var c colorstring
 		text := a.TaskState(s)
 		if active == 1 {

@@ -168,6 +168,10 @@ type ISearch interface {
 	Searchcontext() *GenericSearch
 }
 type MainService interface {
+
+	update_log_view(s string) 
+
+
 	// Dialogsize
 	Dialogsize() *project_diagnostic
 	//app
