@@ -168,6 +168,7 @@ func (s SoftwareTask) Write(p []byte) (n int, err error) {
 }
 
 type soft_action int
+type task_end func()
 
 const (
 	soft_action_none soft_action = iota
@@ -176,7 +177,7 @@ const (
 )
 
 type SubTask interface {
-	Run(*SoftwareTask)
+	Run(*SoftwareTask, task_end)
 }
 type SubTaskCmd struct {
 	main    *SoftwareTask
@@ -186,8 +187,9 @@ type SubChdir struct {
 	dest string
 }
 
-func (s *SubChdir) Run(m *SoftwareTask) {
+func (s *SubChdir) Run(m *SoftwareTask, end task_end) {
 	os.Chdir(s.dest)
+	end()
 }
 
 type SubTaskDownload struct {
@@ -195,10 +197,12 @@ type SubTaskDownload struct {
 	dest    string
 	link    string
 	extract bool
+	end     task_end
 }
 
-func (s *SubTaskDownload) Run(m *SoftwareTask) {
+func (s *SubTaskDownload) Run(m *SoftwareTask, end task_end) {
 	s.main = m
+	s.end = end
 	s.download(s.dest, s.link)
 }
 func (sub *SubTaskDownload) download(dest string, link string) {
@@ -209,11 +213,12 @@ func (sub *SubTaskDownload) download(dest string, link string) {
 		if s.onend != nil {
 			s.onend(*s, InstallFail, err)
 		}
+		if sub.end != nil {
+			sub.end()
+		}
 	}
 	if err != nil {
-		if s.onend != nil {
-			on_error(err)
-		}
+		on_error(err)
 		return
 	}
 	resp := client.Do(req)
@@ -240,13 +245,18 @@ func (sub *SubTaskDownload) download(dest string, link string) {
 			} else {
 				update_progress(fmt.Sprintf("%s %.02f%%  %d", dest, resp.Progress()*100, resp.BytesComplete()))
 				if s.onend != nil {
-					os.Chmod(dest, 0755)
-					err := Extract(dest, filepath.Dir(dest))
-					var rc = InstallFail
-					if err == nil {
-						rc = InstallSuccess
+					if sub.extract {
+						os.Chmod(dest, 0755)
+						err := Extract(dest, filepath.Dir(dest))
+						var rc = InstallFail
+						if err == nil {
+							rc = InstallSuccess
+						}
+						s.onend(*s, rc, err)
 					}
-					s.onend(*s, rc, err)
+				}
+				if sub.end != nil {
+					sub.end()
 				}
 			}
 			return
@@ -270,8 +280,17 @@ func (s *SoftwareTask) run_ide_stnstall_task() {
 		os.Chdir(s.zipdir)
 	}
 	task := s.get_sub_task()
-	for _, v := range task {
-		v.Run(s)
+	i := 0
+	var nextcb = func() {
+		i++
+		if i < len(task) {
+			task[i].Run(s, func() {
+			})
+		}
+	}
+	if len(task) > 0 {
+		v := task[i]
+		v.Run(s, nextcb)
 	}
 }
 
@@ -280,9 +299,11 @@ func (s *SoftwareTask) NewSubCmd(cmdline string) *SubTaskCmd {
 	d := SubTaskCmd{s, cmdline}
 	return &d
 }
-func (sub *SubTaskCmd) Run(s *SoftwareTask) {
+func (sub *SubTaskCmd) Run(s *SoftwareTask, end task_end) {
 	sub.main = s
+	s.Write([]byte(sub.cmdline))
 	sub.run_cmdline(sub.cmdline)
+	end()
 }
 
 func (sub *SubTaskCmd) run_cmdline(cmdline string) bool {
@@ -323,7 +344,7 @@ func (s *SoftwareTask) NewDownloadTask(link string) *SubTaskDownload {
 
 	dest := s.zipdir
 	s.Desc = link
-	t := SubTaskDownload{s, filepath.Join(dest, s.assert.File), link, true}
+	t := SubTaskDownload{s, filepath.Join(dest, s.assert.File), link, true, nil}
 	return &t
 }
 
@@ -498,11 +519,11 @@ func (a *Bin) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // Config represents the entire YAML configuration.
 type Config struct {
-	Source      Source `yaml:"source"`
-	Schemas     string `yaml:"schemas"`
-	Bin         Bin    `yaml:"bin"`
-	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
+	Source      Source  `yaml:"source"`
+	Schemas     Schemas `yaml:"schemas"`
+	Bin         Bin     `yaml:"bin"`
+	Name        string  `yaml:"name"`
+	Description string  `yaml:"description"`
 }
 
 func match_arch(target string) bool {
@@ -635,21 +656,26 @@ func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error
 }
 
 func LoadNpm(config Config, app *SoftwareTask) {
-	if config.Schemas != "" {
-		t := app.NewDownloadTask(config.Schemas)
+	if config.Schemas.LSP != "" {
+		t := app.NewDownloadTask(strings.TrimPrefix(config.Schemas.LSP, "vscode:"))
+		t.extract = false
+		fielname := filepath.Base(t.link)
+		t.dest = filepath.Join(app.zipdir, fielname)
 		app.data = append(app.data, t)
 	}
+	dest, _ := os.Getwd()
+	app.data = append(app.data, &SubChdir{dest: app.zipdir})
+
 	pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
 	if len(config.Source.Extra_packages) > 0 {
 		packages := []string{pkg}
 		packages = append(packages, config.Source.Extra_packages...)
 		pkg = strings.Join(packages, " ")
 	}
-	dest, _ := os.Getwd()
-	app.data = append(app.data, &SubChdir{dest: app.zipdir})
 	data := pkg
 	cmd := fmt.Sprintf("npm install   %s", data)
 	app.data = append(app.data, app.NewSubCmd(cmd))
+
 	app.data = append(app.data, &SubChdir{dest: dest})
 }
 
