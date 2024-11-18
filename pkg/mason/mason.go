@@ -22,14 +22,12 @@ import (
 	nerd "zen108.com/lspvi/pkg/ui/icon"
 )
 
-
-
 // Source represents the source section of the YAML configuration.
 type Source struct {
-  ID    string  `yaml:"id"`
-  Asset []Asset `yaml:"asset"`
-  Build []Build `yaml:"build"`
-  Extra_packages []string  `yaml:"extra_packages"`
+	ID             string   `yaml:"id"`
+	Asset          []Asset  `yaml:"asset"`
+	Build          []Build  `yaml:"build"`
+	Extra_packages []string `yaml:"extra_packages"`
 }
 type pkgtype int
 
@@ -90,33 +88,25 @@ func (v SoftwareTask) TaskState(state string) string {
 	status = fmt.Sprintf("%s %s", installed, download)
 	return fmt.Sprintf("%s %s %s %s", check, v.Icon.Icon, v.Config.Name, status)
 }
-type Subtask struct{
-  action soft_action
-}
-type SubtaskCmd struct{
-  *Subtask
-}
-type SubtaskDownload struct{
-  *Subtask
-}
 
 type SoftwareTask struct {
 	Type pkgtype
-	data string
+	// data string
 
-	Icon devicon.Icon
+	Icon  devicon.Icon
+	tasks []SubTask
 	//for asset field
 	// asset_bin  string
 	// asset_file string
-	build    Build
-	assert   Asset
-	excute   bool
+	build  Build
+	assert Asset
+	//excute   bool
 	onend    SoftInstallResult
 	onupdate func(string)
 	Config   Config
 	Id       ToolType
 	zipdir   string
-	cwd      string
+	Desc     string
 }
 
 func IsExecutableInPath(executable string) bool {
@@ -160,6 +150,26 @@ func (s SoftwareTask) get_bin() (bin Executable, err error) {
 			return
 		}
 	}
+	if s.Type == pkg_npm {
+		var dirs = []string{
+			filepath.Join(s.zipdir, "node_modules", ".bin"),
+			filepath.Join(s.zipdir, "node_modules", "bin")}
+		var is_has = func(f string) string {
+			for _, dir := range dirs {
+				file := filepath.Join(dir, f)
+				if is_file_ok(file) {
+					return file
+				}
+			}
+			return ""
+		}
+		for _, f := range s.Config.Bin.data {
+			bin.Path=is_has(f.Key)
+			if bin.Path!= "" {
+                return
+            }
+		}
+	}
 	return
 }
 
@@ -167,22 +177,6 @@ func is_file_ok(path string) bool {
 	fi, e := os.Stat(path)
 	return e == nil && !fi.IsDir()
 }
-
-// func (s software_task) Installed() (ret bool, err error) {
-// 	if s.Config.Bin.Value == "{{source.asset.bin}}" {
-// 		if len(s.bin) > 0 {
-// 			if ret = isExecutableInPath(filepath.Base(s.bin)); ret {
-// 				return
-// 			}
-// 		}
-// 	}
-// 	if ret = isExecutableInPath(s.Config.Bin.Key); ret {
-// 		ss, _ := exec.LookPath(s.Config.Bin.Key)
-// 		debug.DebugLog("mason", "isExecutableInPath", ss)
-// 		return
-// 	}
-// 	return false, errors.New("not support")
-// }
 
 // Write implements io.Writer.
 func (s SoftwareTask) Write(p []byte) (n int, err error) {
@@ -194,6 +188,7 @@ func (s SoftwareTask) Write(p []byte) (n int, err error) {
 }
 
 type soft_action int
+type task_end func()
 
 const (
 	soft_action_none soft_action = iota
@@ -201,23 +196,61 @@ const (
 	soft_action_install
 )
 
-// func (s *software_task) TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) (body io.ReadCloser) {
-// 	debug.InfoLogf("sw", src, currentSize, totalSize)
-// 	return stream
+type SubTask interface {
+	Run(*SoftwareTask, task_end)
+}
+type SubTaskCmd struct {
+	main    *SoftwareTask
+	cmdline string
+}
+type SubChdir struct {
+	dest string
+}
 
-// }
-func (s *SoftwareTask) download(dest string, link string) {
+func (s *SubChdir) Run(m *SoftwareTask, end task_end) {
+	os.Chdir(s.dest)
+	end()
+}
+
+type SubTaskDownload struct {
+	main    *SoftwareTask
+	dest    string
+	link    string
+	extract bool
+	end     task_end
+}
+type SubTaskCB struct {
+	cb func(*SoftwareTask, task_end)
+}
+
+func (s *SubTaskCB) Run(m *SoftwareTask, end task_end) {
+	if s.cb != nil {
+		s.cb(m, end)
+	} else {
+		if end != nil {
+			end()
+		}
+	}
+}
+func (s *SubTaskDownload) Run(m *SoftwareTask, end task_end) {
+	s.main = m
+	s.end = end
+	s.download(s.dest, s.link)
+}
+func (sub *SubTaskDownload) download(dest string, link string) {
+	s := sub.main
 	client := grab.NewClient()
 	req, err := grab.NewRequest(dest, link)
 	var on_error = func(err error) {
 		if s.onend != nil {
 			s.onend(*s, InstallFail, err)
 		}
+		if sub.end != nil {
+			sub.end()
+		}
 	}
 	if err != nil {
-		if s.onend != nil {
-			on_error(err)
-		}
+		on_error(err)
 		return
 	}
 	resp := client.Do(req)
@@ -244,13 +277,18 @@ func (s *SoftwareTask) download(dest string, link string) {
 			} else {
 				update_progress(fmt.Sprintf("%s %.02f%%  %d", dest, resp.Progress()*100, resp.BytesComplete()))
 				if s.onend != nil {
-					os.Chmod(dest, 0755)
-					err := Extract(dest, filepath.Dir(dest))
-					var rc = InstallFail
-					if err == nil {
-						rc = InstallSuccess
+					if sub.extract {
+						os.Chmod(dest, 0755)
+						err := Extract(dest, filepath.Dir(dest))
+						var rc = InstallFail
+						if err == nil {
+							rc = InstallSuccess
+						}
+						s.onend(*s, rc, err)
 					}
-					s.onend(*s, rc, err)
+				}
+				if sub.end != nil {
+					sub.end()
 				}
 			}
 			return
@@ -259,79 +297,108 @@ func (s *SoftwareTask) download(dest string, link string) {
 }
 
 func (s *SoftwareTask) run_ide_stnstall_task() {
-	dest := s.zipdir
-  changedir :=false
-  switch (s.Type){
-  case pkg_npm:
-    changedir = true
-  }
-  current,_:=os.Getwd()
-  defer func() {
-    if changedir{
-      os.Chdir(current)
-    }
-  }()
-  if changedir{
-    os.Chdir(s.zipdir)
-  }
-	cmdline, action := s.get_cmd()
-	switch action {
-	case soft_action_install:
-    ssss := strings.Split(cmdline, " ")
-    s.Write([]byte(cmdline))
-    var args []string
-		for _, v := range ssss {
-			if v == "" {
-				continue
-			} else {
-				args = append(args, v)
-			}
+	changedir := false
+	switch s.Type {
+	case pkg_npm:
+		changedir = true
+	}
+	current, _ := os.Getwd()
+	defer func() {
+		if changedir {
+			os.Chdir(current)
 		}
-		ss, err :=
-			exec.LookPath(args[0])
-		if err != nil {
-			debug.ErrorLog("mason", err)
-			s.onend(*s, InstallFail, err)
-			return
+	}()
+	if changedir {
+		os.Chdir(s.zipdir)
+	}
+	task := s.get_sub_task()
+	i := 0
+	var nextcb = func() {
+		i++
+		if i < len(task) {
+			task[i].Run(s, func() {
+			})
 		}
-		cmd := exec.Command(ss, args[1:]...)
-		cmd.Stdout = *s
-		cmd.Stderr = *s
-		err = cmd.Run()
-		if s.onend != nil {
-			if err != nil {
-				s.onend(*s, InstallFail, err)
-			} else {
-				s.onend(*s, InstallSuccess, err)
-			}
-		}
-	case soft_action_down:
-		s.download(filepath.Join(dest, s.assert.File), cmdline)
+	}
+	if len(task) > 0 {
+		v := task[i]
+		v.Run(s, nextcb)
 	}
 }
 
-func (s *SoftwareTask) get_cmd() (cmd string, action soft_action) {
+func (s *SoftwareTask) NewSubCmd(cmdline string) *SubTaskCmd {
+	s.Desc = cmdline
+	d := SubTaskCmd{s, cmdline}
+	return &d
+}
+func (sub *SubTaskCmd) Run(s *SoftwareTask, end task_end) {
+	sub.main = s
+	s.Write([]byte(sub.cmdline))
+	sub.run_cmdline(sub.cmdline)
+	end()
+}
+
+func (sub *SubTaskCmd) run_cmdline(cmdline string) bool {
+	maintask := sub.main
+	ssss := strings.Split(cmdline, " ")
+	maintask.Write([]byte(cmdline))
+	var args []string
+	for _, v := range ssss {
+		if v == "" {
+			continue
+		} else {
+			args = append(args, v)
+		}
+	}
+	ss, err :=
+		exec.LookPath(args[0])
+	if err != nil {
+		debug.ErrorLog("mason", err)
+		maintask.onend(*maintask, InstallFail, err)
+		return true
+	}
+	cmd := exec.Command(ss, args[1:]...)
+	cmd.Stdout = *maintask
+	cmd.Stderr = *maintask
+	err = cmd.Run()
+	if maintask.onend != nil {
+		if err != nil {
+			maintask.onend(*maintask, InstallFail, err)
+			return false
+		} else {
+			maintask.onend(*maintask, InstallSuccess, err)
+		}
+	}
+	return true
+}
+
+func (s *SoftwareTask) NewDownloadTask(link string) *SubTaskDownload {
+
 	dest := s.zipdir
+	s.Desc = link
+	t := SubTaskDownload{s, filepath.Join(dest, s.assert.File), link, true, nil}
+	return &t
+}
+
+func (s *SoftwareTask) get_sub_task() (ret []SubTask) {
+	return s.tasks
+}
+
+func (s *SoftwareTask) get_cmd() (cmd string, action soft_action) {
+	cmd = s.Desc
 	switch s.Type {
 	case pkg_github:
-		cmd = s.data
 		action = soft_action_down
 	case pkg_go:
-		cmd = fmt.Sprintf("go  install %s", s.data)
 		action = soft_action_install
 	case pkg_npm:
-		// cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
-		cmd = fmt.Sprintf("npm install  %s", s.data)
 		action = soft_action_install
 	case pkg_pypi:
-		cmd = fmt.Sprintf("pip  %s", s.data)
 		action = soft_action_install
 	case pkg_nuget:
-		cmd = fmt.Sprintf("nuget %s %s", dest, s.data)
 		action = soft_action_install
 	}
-	debug.InfoLog("mason", cmd)
-	return cmd, action
+	return
 }
 
 func get_version_account(id string) (version string, account string, t pkgtype) {
@@ -525,22 +592,25 @@ func match_target(targets []string) (ret string, err error) {
 	err = fmt.Errorf("not found target")
 	return
 }
-func get_target() string {
-	switch runtime.GOOS {
-	case "windows":
-		return "win_x64"
-	case "linux":
-		return "linux_x64_gnu"
-	case "darwin":
-		if runtime.GOARCH == "arm64" {
-			return "darwin_arm64"
-		}
-		return "darwin_x64"
-	}
-	return ""
-}
-func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
+
+//	func get_target() string {
+//		switch runtime.GOOS {
+//		case "windows":
+//			return "win_x64"
+//		case "linux":
+//			return "linux_x64_gnu"
+//		case "darwin":
+//			if runtime.GOARCH == "arm64" {
+//				return "darwin_arm64"
+//			}
+//			return "darwin_x64"
+//		}
+//		return ""
+//	}
+func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error) {
 	// Read the YAML file
+	app.zipdir = zipdir
+
 	if len(yamlFile) == 0 {
 		yamlFile, err = os.ReadFile(s)
 		if err != nil {
@@ -570,7 +640,6 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 			"Error unmarshaling YAML file: %v", err)
 		return
 	}
-	var app SoftwareTask
 	app.Type = pktype
 	switch pktype {
 	case pkg_github:
@@ -580,44 +649,66 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 				var download_url_template = "https://github.com/%s/archive/refs/tags/%s.zip"
 				if _, err := match_target(v.Target); err == nil {
 					ss := fmt.Sprintf(download_url_template, account, version)
-					app.data = ss
+					app.tasks = append(app.tasks, app.NewDownloadTask(ss))
 					app.build = v
 					filename := strings.Split(account, "/")[1]
 					app.assert.File = fmt.Sprintf("%s-%s.zip", filename, version[1:])
-					app.excute = true
+					//app.excute = true
 					break
 				}
 			}
-			if app.data != "" {
+			if len(app.tasks) > 0 {
 				break
 			}
 			for _, v := range config.Source.Asset {
 				if _, err := match_target(v.Target); err == nil {
 					ss := fmt.Sprintf(download_url_template, account, version, v.File)
-					app.data = ss
 					app.assert = v
-					app.excute = true
+					//app.excute = true
+					app.tasks = append(app.tasks, app.NewDownloadTask(ss))
 					break
 				}
 			}
 		}
 	case pkg_pypi:
-		app.data = account
+		data := account
+		cmd := fmt.Sprintf("pip  install %s", data)
+		app.tasks = append(app.tasks, app.NewSubCmd(cmd))
 	case pkg_go:
-		app.data = strings.TrimPrefix(config.Source.ID, "pkg:golang/")
+		data := strings.TrimPrefix(config.Source.ID, "pkg:golang/")
+		cmd := fmt.Sprintf("go  install %s", data)
+		app.tasks = append(app.tasks, app.NewSubCmd(cmd))
 	case pkg_npm:
-		pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
-    if len(config.Source.Extra_packages)>0{
-      packages :=[]string{pkg}
-      packages = append(packages, config.Source.Extra_packages...)
-      pkg = strings.Join(packages, " ")
-    }
-		app.data = pkg
+		// dest:=app.zipdir
+		LoadNpm(config, &app)
 	}
 	app.Config = config
-	task = app
 	return
 	// println(app.data)
+}
+
+func LoadNpm(config Config, app *SoftwareTask) {
+	// if config.Schemas.LSP != "" {
+	// 	t := app.NewDownloadTask(strings.TrimPrefix(config.Schemas.LSP, "vscode:"))
+	// 	t.extract = false
+	// 	fielname := filepath.Base(t.link)
+	// 	t.dest = filepath.Join(app.zipdir, fielname)
+	// 	app.data = append(app.data, t)
+	// }
+	dest, _ := os.Getwd()
+	app.tasks = append(app.tasks, &SubChdir{dest: app.zipdir})
+
+	pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
+	if len(config.Source.Extra_packages) > 0 {
+		packages := []string{pkg}
+		packages = append(packages, config.Source.Extra_packages...)
+		pkg = strings.Join(packages, " ")
+	}
+	data := pkg
+	cmd := fmt.Sprintf("npm install   %s", data)
+	app.tasks = append(app.tasks, app.NewSubCmd(cmd))
+
+	app.tasks = append(app.tasks, &SubChdir{dest: dest})
 }
 
 type SoftManager struct {
@@ -683,13 +774,16 @@ func NewSoftManager(wk common.Workdir) *SoftManager {
 		app: app,
 	}
 }
-func (v soft_package_file) Load() (ret SoftwareTask, err error) {
+func (v soft_package_file) Load(app string) (ret SoftwareTask, err error) {
 	file := fmt.Sprintf("config/%s/package.yaml", v.dir)
 	var buf []byte
 	buf, err = uiFS.ReadFile(file)
+
+	zipdir := filepath.Join(app, v.dir)
 	if err == nil {
-		ret, err = Load(buf, "")
+		ret, err = Load(buf, "", zipdir)
 		ret.Id = v.id
+		ret.Icon = v.icon
 		return
 	}
 	return
@@ -703,7 +797,9 @@ func (s *SoftManager) FindLsp(id ToolType) (task SoftwareTask, err error) {
 		if v.id != id {
 			continue
 		}
-		task, err = v.Load()
+		task.zipdir = filepath.Join(s.app, v.dir)
+		task.Icon = v.icon
+		task, err = v.Load(s.app)
 		if err == nil {
 			task.zipdir = filepath.Join(s.app, v.dir)
 			task.Icon = v.icon
@@ -715,9 +811,7 @@ func (s *SoftManager) FindLsp(id ToolType) (task SoftwareTask, err error) {
 }
 func (s *SoftManager) GetAll() (ret []SoftwareTask) {
 	for _, v := range ToolMap {
-		task, err := v.Load()
-		task.zipdir = filepath.Join(s.app, v.dir)
-		task.Icon = v.icon
+		task, err := v.Load(s.app)
 		if err == nil {
 			ret = append(ret, task)
 		}
@@ -750,37 +844,3 @@ func (mrg *SoftManager) Start(newtask *SoftwareTask, update func(string), onend 
 		}
 	}
 }
-
-// func (s *SoftManager) Run(t ToolType, update func(string)) {
-// 	for _, v := range ToolMap {
-// 		if v.id == t {
-// 			file := fmt.Sprintf("config/%s/package.yaml", v.dir)
-// 			dest := filepath.Join(s.app, v.dir)
-// 			os.MkdirAll(dest, 0755)
-// 			if buf, err := uiFS.ReadFile(file); err == nil {
-// 				if task, err := Load(buf, file); err == nil {
-// 					new_task := &task
-// 					new_task.onupdate = func(s string) {
-// 						if update != nil {
-// 							update(s)
-// 						}
-// 						debug.InfoLog("update", s)
-// 					}
-// 					s.task = append(s.task, new_task)
-// 					go task.run_install_task(dest)
-// 					task.onend = func(software_task, install_result,err error) {
-// 						var tasks []*software_task
-// 						for _, v := range s.task {
-// 							if v != new_task {
-// 								tasks = append(tasks, v)
-// 							}
-// 						}
-// 						s.task = tasks
-// 					}
-// 				}
-// 			} else {
-// 				debug.ErrorLog("mason", err)
-// 			}
-// 		}
-// 	}
-// }

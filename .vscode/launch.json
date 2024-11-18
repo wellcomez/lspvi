@@ -43,7 +43,9 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
-            "console": "externalTerminal",
+            // "console": "externalTerminal",
+            "console": "integratedTerminal",
+
             "args": [
                 // "-gui",
                 // "-tty",

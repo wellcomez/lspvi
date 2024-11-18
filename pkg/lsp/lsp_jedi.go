@@ -23,29 +23,41 @@ func (l lsp_lang_jedi) Launch_Lsp_Server(core *lspcore, wk WorkSpace) (err error
 	if core.started {
 		return nil
 	}
+
+	x := mason.ToolLsp_java_jedi
+	x1 := "jedi-language-server"
 	var path string
-	path, err = exec.LookPath("jedi-language-server")
-	if err != nil {
-		var w common.Workdir
-		w, err = common.NewMkWorkdir(wk.Path)
-		if err != nil {
-			return
-		}
-		var soft mason.SoftwareTask
-		soft, err = mason.NewSoftManager(w).FindLsp(mason.ToolLsp_java_jedi)
-		if err != nil {
-			return
-		}
-		path = soft.Executable()
-		if path == "" {
-			err = fmt.Errorf("not found jedi-language-server")
-			return
-		}
+	path, err = wk.GetLspBin(x1, x)
+	if err!= nil {
+		return 
 	}
 	core.cmd = exec.Command(path)
 	err = core.Launch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
+}
+
+func (wk WorkSpace)GetLspBin(x1 string, Type mason.ToolType) (path string, err error) {
+	root:=wk.Path
+	path, err = exec.LookPath(x1)
+	if err != nil {
+		var w common.Workdir
+		w, err = common.NewMkWorkdir(root)
+		if err != nil {
+			return
+		}
+		if soft, e := mason.NewSoftManager(w).FindLsp(Type); e != nil {
+			err = e
+			return
+		} else {
+			path = soft.Executable()
+			if path == "" {
+				err = fmt.Errorf("not found jedi-language-server")
+				return
+			}
+		}
+	}
+	return path, nil
 }
 
 func (l lsp_lang_jedi) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {
