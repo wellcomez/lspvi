@@ -158,22 +158,6 @@ func is_file_ok(path string) bool {
 	return e == nil && !fi.IsDir()
 }
 
-// func (s software_task) Installed() (ret bool, err error) {
-// 	if s.Config.Bin.Value == "{{source.asset.bin}}" {
-// 		if len(s.bin) > 0 {
-// 			if ret = isExecutableInPath(filepath.Base(s.bin)); ret {
-// 				return
-// 			}
-// 		}
-// 	}
-// 	if ret = isExecutableInPath(s.Config.Bin.Key); ret {
-// 		ss, _ := exec.LookPath(s.Config.Bin.Key)
-// 		debug.DebugLog("mason", "isExecutableInPath", ss)
-// 		return
-// 	}
-// 	return false, errors.New("not support")
-// }
-
 // Write implements io.Writer.
 func (s SoftwareTask) Write(p []byte) (n int, err error) {
 	// panic("unimplemented")
@@ -191,11 +175,6 @@ const (
 	soft_action_install
 )
 
-// func (s *software_task) TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) (body io.ReadCloser) {
-// 	debug.InfoLogf("sw", src, currentSize, totalSize)
-// 	return stream
-
-// }
 type SubTask interface {
 	Run(*SoftwareTask)
 }
@@ -339,54 +318,9 @@ func (s *SoftwareTask) NewDownloadTask(link string) *SubTaskDownload {
 	return &t
 }
 
-//	func  get_sub_task(Type pkgtype, data string,s SoftwareTask ) (ret SubTask) {
-//		// var cmd string
-//		// var  action soft_action
-//		switch Type {
-//		case pkg_go:
-//			cmd := fmt.Sprintf("npm install  %s", data)
-//				return s.NewSubCmd(cmd)
-//			// action = soft_action_install
-//		case pkg_pypi:
-//			cmd := fmt.Sprintf("pip  %s", data)
-//				return s.NewSubCmd(cmd)
-//		case pkg_nuget:
-//			// cmd := fmt.Sprintf("nuget %s %s", dest, data)
-//			return  s.NewSubCmd(cmd)
-//		}
-//		return ret
-//	}
 func (s *SoftwareTask) get_sub_task() (ret []SubTask) {
 	return s.data
 }
-
-// func run_cmdline(data string)
-// var cmd string
-// var  action soft_action
-// dest := s.zipdir
-// switch s.Type {
-// case pkg_github:
-// 	cmd := s.data
-// 	// action = soft_action_down
-// 	ret = append(ret, s.NewDownloadTask(cmd))
-// case pkg_go:
-// 	cmd := fmt.Sprintf("go  install %s", s.data)
-// 	ret = append(ret, s.NewSubCmd(cmd))
-// 	// action = soft_action_install
-// case pkg_npm:
-// 	// cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
-// 	cmd := fmt.Sprintf("npm install  %s", s.data)
-// 	ret = append(ret, s.NewSubCmd(cmd))
-// 	// action = soft_action_install
-// case pkg_pypi:
-// 	cmd := fmt.Sprintf("pip  %s", s.data)
-// 	ret = append(ret, s.NewSubCmd(cmd))
-// case pkg_nuget:
-// 	cmd := fmt.Sprintf("nuget %s %s", dest, s.data)
-// 	ret = append(ret, s.NewSubCmd(cmd))
-// }
-// return ret
-// }
 
 func (s *SoftwareTask) get_cmd() (cmd string, action soft_action) {
 	cmd = s.Desc
@@ -611,8 +545,10 @@ func match_target(targets []string) (ret string, err error) {
 //		}
 //		return ""
 //	}
-func Load(yamlFile []byte, s string) (app SoftwareTask, err error) {
+func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error) {
 	// Read the YAML file
+	app.zipdir = zipdir
+
 	if len(yamlFile) == 0 {
 		yamlFile, err = os.ReadFile(s)
 		if err != nil {
@@ -674,27 +610,31 @@ func Load(yamlFile []byte, s string) (app SoftwareTask, err error) {
 		}
 	case pkg_pypi:
 		data := account
-		cmd := fmt.Sprintf("pip  %s", data)
+		cmd := fmt.Sprintf("pip  install %s", data)
 		app.data = append(app.data, app.NewSubCmd(cmd))
 	case pkg_go:
 		data := strings.TrimPrefix(config.Source.ID, "pkg:golang/")
 		cmd := fmt.Sprintf("go  install %s", data)
 		app.data = append(app.data, app.NewSubCmd(cmd))
 	case pkg_npm:
-		pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
-		if len(config.Source.Extra_packages) > 0 {
-			packages := []string{pkg}
-			packages = append(packages, config.Source.Extra_packages...)
-			pkg = strings.Join(packages, " ")
-		}
-		data := pkg
 		// dest:=app.zipdir
-		cmd := fmt.Sprintf("npm install   %s", data)
-		app.data = append(app.data, app.NewSubCmd(cmd))
+		LoadNpm(config, &app)
 	}
 	app.Config = config
 	return
 	// println(app.data)
+}
+
+func LoadNpm(config Config, app *SoftwareTask) {
+	pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
+	if len(config.Source.Extra_packages) > 0 {
+		packages := []string{pkg}
+		packages = append(packages, config.Source.Extra_packages...)
+		pkg = strings.Join(packages, " ")
+	}
+	data := pkg
+	cmd := fmt.Sprintf("npm install   %s", data)
+	app.data = append(app.data, app.NewSubCmd(cmd))
 }
 
 type SoftManager struct {
@@ -760,13 +700,16 @@ func NewSoftManager(wk common.Workdir) *SoftManager {
 		app: app,
 	}
 }
-func (v soft_package_file) Load() (ret SoftwareTask, err error) {
+func (v soft_package_file) Load(app string) (ret SoftwareTask, err error) {
 	file := fmt.Sprintf("config/%s/package.yaml", v.dir)
 	var buf []byte
 	buf, err = uiFS.ReadFile(file)
+
+	zipdir := filepath.Join(app, v.dir)
 	if err == nil {
-		ret, err = Load(buf, "")
+		ret, err = Load(buf, "", zipdir)
 		ret.Id = v.id
+		ret.Icon = v.icon
 		return
 	}
 	return
@@ -780,7 +723,9 @@ func (s *SoftManager) FindLsp(id ToolType) (task SoftwareTask, err error) {
 		if v.id != id {
 			continue
 		}
-		task, err = v.Load()
+		task.zipdir = filepath.Join(s.app, v.dir)
+		task.Icon = v.icon
+		task, err = v.Load(s.app)
 		if err == nil {
 			task.zipdir = filepath.Join(s.app, v.dir)
 			task.Icon = v.icon
@@ -792,9 +737,7 @@ func (s *SoftManager) FindLsp(id ToolType) (task SoftwareTask, err error) {
 }
 func (s *SoftManager) GetAll() (ret []SoftwareTask) {
 	for _, v := range ToolMap {
-		task, err := v.Load()
-		task.zipdir = filepath.Join(s.app, v.dir)
-		task.Icon = v.icon
+		task, err := v.Load(s.app)
 		if err == nil {
 			ret = append(ret, task)
 		}
@@ -827,37 +770,3 @@ func (mrg *SoftManager) Start(newtask *SoftwareTask, update func(string), onend 
 		}
 	}
 }
-
-// func (s *SoftManager) Run(t ToolType, update func(string)) {
-// 	for _, v := range ToolMap {
-// 		if v.id == t {
-// 			file := fmt.Sprintf("config/%s/package.yaml", v.dir)
-// 			dest := filepath.Join(s.app, v.dir)
-// 			os.MkdirAll(dest, 0755)
-// 			if buf, err := uiFS.ReadFile(file); err == nil {
-// 				if task, err := Load(buf, file); err == nil {
-// 					new_task := &task
-// 					new_task.onupdate = func(s string) {
-// 						if update != nil {
-// 							update(s)
-// 						}
-// 						debug.InfoLog("update", s)
-// 					}
-// 					s.task = append(s.task, new_task)
-// 					go task.run_install_task(dest)
-// 					task.onend = func(software_task, install_result,err error) {
-// 						var tasks []*software_task
-// 						for _, v := range s.task {
-// 							if v != new_task {
-// 								tasks = append(tasks, v)
-// 							}
-// 						}
-// 						s.task = tasks
-// 					}
-// 				}
-// 			} else {
-// 				debug.ErrorLog("mason", err)
-// 			}
-// 		}
-// 	}
-// }
