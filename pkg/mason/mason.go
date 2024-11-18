@@ -93,14 +93,14 @@ type SoftwareTask struct {
 	Type pkgtype
 	// data string
 
-	Icon devicon.Icon
-	data []SubTask
+	Icon  devicon.Icon
+	tasks []SubTask
 	//for asset field
 	// asset_bin  string
 	// asset_file string
-	build    Build
-	assert   Asset
-	excute   bool
+	build  Build
+	assert Asset
+	//excute   bool
 	onend    SoftInstallResult
 	onupdate func(string)
 	Config   Config
@@ -148,6 +148,26 @@ func (s SoftwareTask) get_bin() (bin Executable, err error) {
 		bin.Path, err = exec.LookPath(v.Key)
 		if err == nil {
 			return
+		}
+	}
+	if s.Type == pkg_npm {
+		var dirs = []string{
+			filepath.Join(s.zipdir, "node_modules", ".bin"),
+			filepath.Join(s.zipdir, "node_modules", "bin")}
+		var is_has = func(f string) string {
+			for _, dir := range dirs {
+				file := filepath.Join(dir, f)
+				if is_file_ok(file) {
+					return file
+				}
+			}
+			return ""
+		}
+		for _, f := range s.Config.Bin.data {
+			bin.Path=is_has(f.Key)
+			if bin.Path!= "" {
+                return
+            }
 		}
 	}
 	return
@@ -199,7 +219,19 @@ type SubTaskDownload struct {
 	extract bool
 	end     task_end
 }
+type SubTaskCB struct {
+	cb func(*SoftwareTask, task_end)
+}
 
+func (s *SubTaskCB) Run(m *SoftwareTask, end task_end) {
+	if s.cb != nil {
+		s.cb(m, end)
+	} else {
+		if end != nil {
+			end()
+		}
+	}
+}
 func (s *SubTaskDownload) Run(m *SoftwareTask, end task_end) {
 	s.main = m
 	s.end = end
@@ -349,7 +381,7 @@ func (s *SoftwareTask) NewDownloadTask(link string) *SubTaskDownload {
 }
 
 func (s *SoftwareTask) get_sub_task() (ret []SubTask) {
-	return s.data
+	return s.tasks
 }
 
 func (s *SoftwareTask) get_cmd() (cmd string, action soft_action) {
@@ -617,23 +649,23 @@ func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error
 				var download_url_template = "https://github.com/%s/archive/refs/tags/%s.zip"
 				if _, err := match_target(v.Target); err == nil {
 					ss := fmt.Sprintf(download_url_template, account, version)
-					app.data = append(app.data, app.NewDownloadTask(ss))
+					app.tasks = append(app.tasks, app.NewDownloadTask(ss))
 					app.build = v
 					filename := strings.Split(account, "/")[1]
 					app.assert.File = fmt.Sprintf("%s-%s.zip", filename, version[1:])
-					app.excute = true
+					//app.excute = true
 					break
 				}
 			}
-			if len(app.data) > 0 {
+			if len(app.tasks) > 0 {
 				break
 			}
 			for _, v := range config.Source.Asset {
 				if _, err := match_target(v.Target); err == nil {
 					ss := fmt.Sprintf(download_url_template, account, version, v.File)
 					app.assert = v
-					app.excute = true
-					app.data = append(app.data, app.NewDownloadTask(ss))
+					//app.excute = true
+					app.tasks = append(app.tasks, app.NewDownloadTask(ss))
 					break
 				}
 			}
@@ -641,11 +673,11 @@ func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error
 	case pkg_pypi:
 		data := account
 		cmd := fmt.Sprintf("pip  install %s", data)
-		app.data = append(app.data, app.NewSubCmd(cmd))
+		app.tasks = append(app.tasks, app.NewSubCmd(cmd))
 	case pkg_go:
 		data := strings.TrimPrefix(config.Source.ID, "pkg:golang/")
 		cmd := fmt.Sprintf("go  install %s", data)
-		app.data = append(app.data, app.NewSubCmd(cmd))
+		app.tasks = append(app.tasks, app.NewSubCmd(cmd))
 	case pkg_npm:
 		// dest:=app.zipdir
 		LoadNpm(config, &app)
@@ -656,15 +688,15 @@ func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error
 }
 
 func LoadNpm(config Config, app *SoftwareTask) {
-	if config.Schemas.LSP != "" {
-		t := app.NewDownloadTask(strings.TrimPrefix(config.Schemas.LSP, "vscode:"))
-		t.extract = false
-		fielname := filepath.Base(t.link)
-		t.dest = filepath.Join(app.zipdir, fielname)
-		app.data = append(app.data, t)
-	}
+	// if config.Schemas.LSP != "" {
+	// 	t := app.NewDownloadTask(strings.TrimPrefix(config.Schemas.LSP, "vscode:"))
+	// 	t.extract = false
+	// 	fielname := filepath.Base(t.link)
+	// 	t.dest = filepath.Join(app.zipdir, fielname)
+	// 	app.data = append(app.data, t)
+	// }
 	dest, _ := os.Getwd()
-	app.data = append(app.data, &SubChdir{dest: app.zipdir})
+	app.tasks = append(app.tasks, &SubChdir{dest: app.zipdir})
 
 	pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
 	if len(config.Source.Extra_packages) > 0 {
@@ -674,9 +706,9 @@ func LoadNpm(config Config, app *SoftwareTask) {
 	}
 	data := pkg
 	cmd := fmt.Sprintf("npm install   %s", data)
-	app.data = append(app.data, app.NewSubCmd(cmd))
+	app.tasks = append(app.tasks, app.NewSubCmd(cmd))
 
-	app.data = append(app.data, &SubChdir{dest: dest})
+	app.tasks = append(app.tasks, &SubChdir{dest: dest})
 }
 
 type SoftManager struct {
