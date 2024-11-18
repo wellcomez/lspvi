@@ -182,10 +182,19 @@ type SubTaskCmd struct {
 	main    *SoftwareTask
 	cmdline string
 }
-type SubTaskDownload struct {
-	main *SoftwareTask
+type SubChdir struct {
 	dest string
-	link string
+}
+
+func (s *SubChdir) Run(m *SoftwareTask) {
+	os.Chdir(s.dest)
+}
+
+type SubTaskDownload struct {
+	main    *SoftwareTask
+	dest    string
+	link    string
+	extract bool
 }
 
 func (s *SubTaskDownload) Run(m *SoftwareTask) {
@@ -314,7 +323,7 @@ func (s *SoftwareTask) NewDownloadTask(link string) *SubTaskDownload {
 
 	dest := s.zipdir
 	s.Desc = link
-	t := SubTaskDownload{s, filepath.Join(dest, s.assert.File), link}
+	t := SubTaskDownload{s, filepath.Join(dest, s.assert.File), link, true}
 	return &t
 }
 
@@ -489,11 +498,11 @@ func (a *Bin) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // Config represents the entire YAML configuration.
 type Config struct {
-	Source      Source  `yaml:"source"`
-	Schemas     Schemas `yaml:"schemas"`
-	Bin         Bin     `yaml:"bin"`
-	Name        string  `yaml:"name"`
-	Description string  `yaml:"description"`
+	Source      Source `yaml:"source"`
+	Schemas     string `yaml:"schemas"`
+	Bin         Bin    `yaml:"bin"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
 }
 
 func match_arch(target string) bool {
@@ -626,15 +635,22 @@ func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error
 }
 
 func LoadNpm(config Config, app *SoftwareTask) {
+	if config.Schemas != "" {
+		t := app.NewDownloadTask(config.Schemas)
+		app.data = append(app.data, t)
+	}
 	pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
 	if len(config.Source.Extra_packages) > 0 {
 		packages := []string{pkg}
 		packages = append(packages, config.Source.Extra_packages...)
 		pkg = strings.Join(packages, " ")
 	}
+	dest, _ := os.Getwd()
+	app.data = append(app.data, &SubChdir{dest: app.zipdir})
 	data := pkg
 	cmd := fmt.Sprintf("npm install   %s", data)
 	app.data = append(app.data, app.NewSubCmd(cmd))
+	app.data = append(app.data, &SubChdir{dest: dest})
 }
 
 type SoftManager struct {
