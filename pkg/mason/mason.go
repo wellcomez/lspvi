@@ -22,16 +22,14 @@ import (
 	nerd "zen108.com/lspvi/pkg/ui/icon"
 )
 
-type PackSpec struct {
-	Name   string `yaml:"name"`
-	Source string `yaml:"source"`
-}
+
 
 // Source represents the source section of the YAML configuration.
 type Source struct {
-	ID    string  `yaml:"id"`
-	Asset []Asset `yaml:"asset"`
-	Build []Build `yaml:"build"`
+  ID    string  `yaml:"id"`
+  Asset []Asset `yaml:"asset"`
+  Build []Build `yaml:"build"`
+  Extra_packages []string  `yaml:"extra_packages"`
 }
 type pkgtype int
 
@@ -92,6 +90,15 @@ func (v SoftwareTask) TaskState(state string) string {
 	status = fmt.Sprintf("%s %s", installed, download)
 	return fmt.Sprintf("%s %s %s %s", check, v.Icon.Icon, v.Config.Name, status)
 }
+type Subtask struct{
+  action soft_action
+}
+type SubtaskCmd struct{
+  *Subtask
+}
+type SubtaskDownload struct{
+  *Subtask
+}
 
 type SoftwareTask struct {
 	Type pkgtype
@@ -109,6 +116,7 @@ type SoftwareTask struct {
 	Config   Config
 	Id       ToolType
 	zipdir   string
+	cwd      string
 }
 
 func IsExecutableInPath(executable string) bool {
@@ -250,13 +258,28 @@ func (s *SoftwareTask) download(dest string, link string) {
 	}
 }
 
-func (s *SoftwareTask) run_idestnstall_task() {
+func (s *SoftwareTask) run_ide_stnstall_task() {
 	dest := s.zipdir
-	cmd, action := s.get_cmd()
+  changedir :=false
+  switch (s.Type){
+  case pkg_npm:
+    changedir = true
+  }
+  current,_:=os.Getwd()
+  defer func() {
+    if changedir{
+      os.Chdir(current)
+    }
+  }()
+  if changedir{
+    os.Chdir(s.zipdir)
+  }
+	cmdline, action := s.get_cmd()
 	switch action {
 	case soft_action_install:
-		ssss := strings.Split(cmd, " ")
-		var args []string
+    ssss := strings.Split(cmdline, " ")
+    s.Write([]byte(cmdline))
+    var args []string
 		for _, v := range ssss {
 			if v == "" {
 				continue
@@ -283,7 +306,7 @@ func (s *SoftwareTask) run_idestnstall_task() {
 			}
 		}
 	case soft_action_down:
-		s.download(filepath.Join(dest, s.assert.File), cmd)
+		s.download(filepath.Join(dest, s.assert.File), cmdline)
 	}
 }
 
@@ -297,7 +320,8 @@ func (s *SoftwareTask) get_cmd() (cmd string, action soft_action) {
 		cmd = fmt.Sprintf("go  install %s", s.data)
 		action = soft_action_install
 	case pkg_npm:
-		cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
+		// cmd = fmt.Sprintf("npm install --prefx %s %s", dest, s.data)
+		cmd = fmt.Sprintf("npm install  %s", s.data)
 		action = soft_action_install
 	case pkg_pypi:
 		cmd = fmt.Sprintf("pip  %s", s.data)
@@ -583,6 +607,11 @@ func Load(yamlFile []byte, s string) (task SoftwareTask, err error) {
 		app.data = strings.TrimPrefix(config.Source.ID, "pkg:golang/")
 	case pkg_npm:
 		pkg := strings.TrimPrefix(config.Source.ID, "pkg:npm/")
+    if len(config.Source.Extra_packages)>0{
+      packages :=[]string{pkg}
+      packages = append(packages, config.Source.Extra_packages...)
+      pkg = strings.Join(packages, " ")
+    }
 		app.data = pkg
 	}
 	app.Config = config
@@ -716,7 +745,7 @@ func (mrg *SoftManager) Start(newtask *SoftwareTask, update func(string), onend 
 		if v.id == newtask.Id {
 			dest := newtask.zipdir
 			os.MkdirAll(dest, 0755)
-			go newtask.run_idestnstall_task()
+			go newtask.run_ide_stnstall_task()
 			break
 		}
 	}
