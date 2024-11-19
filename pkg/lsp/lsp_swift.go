@@ -53,8 +53,25 @@ func (l lsp_swift) InitializeLsp(core *lspcore, wk WorkSpace) (err error) {
 		return
 	}
 	capabilities := map[string]interface{}{
-		"workspace": map[string]interface{}{
-			"workspaceFolders": true,
+		// "workspace": map[string]interface{}{
+		// 	"workspaceFolders": true,
+		// },
+		"textDocument": map[string]interface{}{
+			"completion": map[string]interface{}{
+				"completionItem": map[string]interface{}{
+					"commitCharactersSupport": true,
+					"documentationFormat":     []interface{}{"markdown", "plaintext"},
+					"snippetSupport":          true,
+				},
+			},
+		},
+		"textDocumentSync": map[string]interface{}{
+			"openClose": true,                                // Notify server when documents are opened/closed
+			"change":    lsp.TextDocumentSyncKindIncremental, // Send incremental updates
+			"willSave":  true,                                // Notify before saving
+			"save": map[string]interface{}{
+				"includeText": true, // Send full document content when saving
+			},
 		},
 	}
 	core.capabilities = capabilities
