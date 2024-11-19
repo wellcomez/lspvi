@@ -98,8 +98,9 @@ type SoftwareTask struct {
 	//for asset field
 	// asset_bin  string
 	// asset_file string
-	build  Build
-	assert Asset
+	build      Build
+	assert     Asset
+	pcakge_bin string
 	//excute   bool
 	onend    SoftInstallResult
 	onupdate func(string)
@@ -170,11 +171,9 @@ func (s SoftwareTask) get_bin() (bin Executable, err error) {
 			}
 		}
 	} else if s.Type == pkg_go {
-		if gopath, yes := os.LookupEnv("GOPATH"); yes {
-			if path := filepath.Join(gopath, "bin", "gopls"); is_file_ok(path) {
-				// bin.Path = path
-				return
-			}
+		if path := s.pcakge_bin; is_file_ok(path) {
+			bin.Path = path
+			return
 		}
 	}
 	return
@@ -691,7 +690,7 @@ func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error
 		app.tasks = append(app.tasks, app.NewSubCmd(cmd))
 		if gopath, yes := os.LookupEnv("GOPATH"); yes {
 			if path := filepath.Join(gopath, "bin", "gopls"); is_file_ok(path) {
-				app.assert.Bin = path
+				app.pcakge_bin = path
 			}
 		}
 	case pkg_npm:
