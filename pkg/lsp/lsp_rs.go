@@ -77,10 +77,10 @@ func (l lsp_lang_rs) InitializeLsp(core *lspcore, wk WorkSpace) error {
 	if err != nil {
 		return err
 	}
-	core.get_sync_option(result)
 	if result.ServerInfo.Name != "rust-analyzer" {
 		return fmt.Errorf("worng rust lsp %s", result.ServerInfo.Name)
 	}
+	core.get_sync_option(result)
 	core.inited = true
 	return nil
 	// }

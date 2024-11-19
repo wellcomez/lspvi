@@ -684,7 +684,7 @@ func convert_result_to_lsp_location(result []interface{}) ([]lsp.Location, error
 }
 
 type document_symbol struct {
-	DocumentSymbols   []lsp.DocumentSymbol
+	// DocumentSymbols   []lsp.DocumentSymbol
 	SymbolInformation []lsp.SymbolInformation
 }
 type symbol_location struct {
@@ -794,15 +794,26 @@ func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 		return nil, err
 	}
 	var documentSymbols []lsp.DocumentSymbol
+	var SymbolInformation []lsp.SymbolInformation
 	if err := json.Unmarshal(resp, &documentSymbols); err == nil {
-		return &document_symbol{
-			DocumentSymbols: documentSymbols,
-		}, nil
+		for _, v := range documentSymbols {
+			SymbolInformation = append(SymbolInformation, lsp.SymbolInformation{
+				Name: v.Name,
+				Kind: v.Kind,
+				Location: lsp.Location{
+					URI:   uri,
+					Range: v.Range,
+				},
+			})
+		}
 	}
 	var sym []lsp.SymbolInformation
 	if err := json.Unmarshal(resp, &sym); err == nil {
+		SymbolInformation = append(SymbolInformation, sym...)
+	}
+	if len(SymbolInformation) > 0 {
 		return &document_symbol{
-			SymbolInformation: sym,
+			SymbolInformation: SymbolInformation,
 		}, nil
 	}
 	return nil, fmt.Errorf("not found")

@@ -8,7 +8,7 @@ import (
 	"zen108.com/lspvi/pkg/mason"
 )
 
-func (l lsp_ts) IsSource(filename string) bool {
+func (l lsp_swift) IsSource(filename string) bool {
 	return false
 }
 
@@ -22,33 +22,33 @@ func (l lsp_ts) IsSource(filename string) bool {
 // 	".git",
 // }
 
-type lsp_ts struct {
+type lsp_swift struct {
 	lsp_lang_common
 	LanguageID string
 }
 
 // Launch_Lsp_Server implements lsplang.
-func (l lsp_ts) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
+func (l lsp_swift) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	if core.started {
 		return nil
 	}
-	cmd, err := wk.GetLspBin("typescript-language-server", mason.ToolLsp_ts)
+	cmd, err := wk.GetLspBin("sourcekit-lsp", mason.ToolLsp_swift)
 	if err != nil {
 		return err
 	}
 
 	if !core.RunComandInConfig() {
-		core.cmd = exec.Command(cmd, "--stdio")
+		core.cmd = exec.Command(cmd)
 	}
 	err = core.Launch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
 }
 
-func (l lsp_ts) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {
+func (l lsp_swift) Resolve(sym lsp.SymbolInformation, symfile *Symbol_file) bool {
 	return false
 }
-func (l lsp_ts) InitializeLsp(core *lspcore, wk WorkSpace) (err error) {
+func (l lsp_swift) InitializeLsp(core *lspcore, wk WorkSpace) (err error) {
 	if core.inited {
 		return
 	}
@@ -58,11 +58,11 @@ func (l lsp_ts) InitializeLsp(core *lspcore, wk WorkSpace) (err error) {
 		},
 	}
 	core.capabilities = capabilities
-	if result, er := core.Initialize(wk); er == nil {
-		core.get_sync_option(result)
+	if result, e := core.Initialize(wk); e == nil {
 		core.inited = true
+		core.get_sync_option(result)
 	} else {
-		err = er
+		err = e
 	}
 	return
 }
@@ -72,12 +72,6 @@ func (l lsp_ts) InitializeLsp(core *lspcore, wk WorkSpace) (err error) {
 // Resolve implements lsplang.
 
 // IsMe implements lsplang.
-func (l lsp_ts) IsMe(filename string) bool {
-	if l.LanguageID == "tsx" {
-		return IsMe(filename, []string{"tsx"})
-	}
-	if l.LanguageID == string(JAVASCRIPT) {
-		return IsMe(filename, []string{"js"})
-	}
-	return IsMe(filename, []string{"ts", "tsx", "js"})
+func (l lsp_swift) IsMe(filename string) bool {
+	return IsMe(filename, []string{"swift"})
 }
