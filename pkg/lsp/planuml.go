@@ -24,9 +24,8 @@ func NewPlanUmlBin() (*PlanUmlBin, error) {
 	}
 	jarPath = filepath.Join(
 		filepath.Dir(exec), jarPath)
-	javaCmd := findJavaBinary()
-	if _, err := os.Stat(jarPath); os.IsNotExist(err) {
-		debug.DebugLog(DebugTag, err)
+	javaCmd, err := findJavaBinary()
+	if err != nil {
 		return nil, err
 	}
 	return &PlanUmlBin{jarPath: jarPath, javaCmd: javaCmd}, nil
@@ -35,34 +34,36 @@ func NewPlanUmlBin() (*PlanUmlBin, error) {
 func (p *PlanUmlBin) Convert(uml string) (output_utxt, output_uml string, ret error) {
 
 	if p.javaCmd == "" {
-		return "", "", fmt.Errorf("exception java not found")
+		ret = fmt.Errorf("exception java not found")
+		return
 	}
 	root := filepath.Dir(uml)
 	// if _, err := os.Stat(p.javaCmd); os.IsNotExist(err) {
 	// 	return fmt.Errorf("exception java not found")
 	// }
 	cmd := exec.Command(p.javaCmd, "-jar", p.jarPath, uml)
-	if err := cmd.Run(); err == nil {
+	if ret = cmd.Run(); ret == nil {
 		output_uml = filepath.Join(root, strings.Split(filepath.Base(uml), ".")[0]+".png")
 	} else {
-		ret = err
+		debug.DebugLogf("uml", "Error:", ret, uml)
 	}
 	cmd = exec.Command(p.javaCmd, "-jar", p.jarPath, uml, "-utxt")
-	if err := cmd.Run(); err == nil {
+	if ret = cmd.Run(); ret == nil {
 		output_utxt = filepath.Join(root, strings.Split(filepath.Base(uml), ".")[0]+".utxt")
 	} else {
-		ret = err
+		debug.DebugLogf("uml", "Error:", ret, uml)
 	}
-	return output_utxt, output_uml, ret
+	return
 }
 
 // findJavaBinary is a placeholder function to find the Java binary.
 // You should implement this function according to your needs.
-func findJavaBinary() string {
+func findJavaBinary() (string, error) {
 	// Implement logic to find the Java binary path here.
 	// This could be a simple check for the "java" command in PATH,
 	// or a more complex search through known installation directories.
-	return "java" // Placeholder value
+	return exec.LookPath("java")
+	// return "java" // Placeholder value
 }
 
 type export_root struct {

@@ -12,6 +12,7 @@ import (
 
 	lsp "github.com/tectiv3/go-lsp"
 	"zen108.com/lspvi/pkg/debug"
+	"zen108.com/lspvi/pkg/mason"
 )
 
 type lsp_lang_go struct {
@@ -35,12 +36,16 @@ func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 	Launch_Lsp_Server++
 	logifle := filepath.Join(
 		filepath.Dir(wk.Export), "gopls.log")
+	cmd, err := wk.GetLspBin("gopls", mason.ToolLsp_go)
+	if err!= nil {
+        return err
+    }
 	if !core.RunComandInConfig() {
 		debug := false
 		if !debug {
-			core.cmd = exec.Command("gopls")
+			core.cmd = exec.Command(cmd)
 		} else {
-			core.cmd = exec.Command("gopls", "-rpc.trace",
+			core.cmd = exec.Command(cmd, "-rpc.trace",
 				"-logfile", logifle,
 				"-v")
 			core.cmd.Env = append(os.Environ(),
@@ -49,7 +54,7 @@ func (l lsp_lang_go) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 			)
 		}
 	}
-	err := core.Launch_Lsp_Server(core.cmd)
+	err = core.Launch_Lsp_Server(core.cmd)
 	core.started = err == nil
 	return err
 }

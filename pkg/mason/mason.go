@@ -164,10 +164,17 @@ func (s SoftwareTask) get_bin() (bin Executable, err error) {
 			return ""
 		}
 		for _, f := range s.Config.Bin.data {
-			bin.Path=is_has(f.Key)
-			if bin.Path!= "" {
-                return
-            }
+			bin.Path = is_has(f.Key)
+			if bin.Path != "" {
+				return
+			}
+		}
+	} else if s.Type == pkg_go {
+		if gopath, yes := os.LookupEnv("GOPATH"); yes {
+			if path := filepath.Join(gopath, "bin", "gopls"); is_file_ok(path) {
+				bin.Path = path
+				return
+			}
 		}
 	}
 	return
@@ -767,7 +774,7 @@ var ToolMap = []soft_package_file{
 	{ToolLsp_vue, "vue-language-server", get_icon(".vue")},
 	{ToolLsp_csharp, "csharp-language-server", get_icon(".cs")},
 	{ToolLsp_java, "java-language-server", get_icon(".java")},
-	{ToolLsp_swift, "sourcekit-lsp",get_icon(".swift")},
+	{ToolLsp_swift, "sourcekit-lsp", get_icon(".swift")},
 }
 
 func NewSoftManager(wk common.Workdir) *SoftManager {
