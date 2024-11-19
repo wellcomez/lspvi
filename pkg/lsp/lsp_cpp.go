@@ -10,7 +10,9 @@ import (
 	// "zen108.com/lspvi/pkg/debug"
 )
 
-var file_extensions = []string{"cc", "cpp", "h", "hpp", "cxx", "hxx",
+var file_extensions = []string{
+    "m","mm",
+	"cc", "cpp", "h", "hpp", "cxx", "hxx",
 	"inl", "c", "cpp", "objc", "objcpp", "cuda", "proto"}
 var root_files = []string{
 
