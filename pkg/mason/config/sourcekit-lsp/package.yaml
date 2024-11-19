@@ -1,0 +1,25 @@
+name:  sourcekit-lsp
+description: |
+  sourcekit-lsp
+homepage: https://github.com/swiftlang/sourcekit-lsp
+licenses:
+  - Apache-2.0
+languages:
+  - SWIFT
+categories:
+  - LSP
+# https://github.com/wellcomez/sourcekit-lsp/releases/download/v10/sourcekit-lsp-macos-amd64
+source:
+  id: pkg:github/wellcomez/sourcekit-lsp@v6.1
+  asset:
+    - target: [darwin_x64,darwin_arm64]
+      file: sourcekit-lsp-mac
+      bin: sourcekit-lsp-mac
+    - target: linux_x64_gnu
+      file: sourcekit-lsp-linux-amd64 
+      bin: sourcekit-lsp-linux-amd64 
+    - target: win_x64
+      file: sourcekit-windows-macos-amd64 
+      bin: sourcekit-windows-macos-amd64 
+bin:
+  sourcekit-lsp: "{{source.asset.bin}}"

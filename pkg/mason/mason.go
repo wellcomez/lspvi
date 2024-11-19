@@ -295,6 +295,9 @@ func (sub *SubTaskDownload) download(dest string, link string) {
 		}
 	}
 }
+func (s *SoftwareTask) Run() {
+	s.run_ide_stnstall_task()
+}
 
 func (s *SoftwareTask) run_ide_stnstall_task() {
 	changedir := false
@@ -644,6 +647,7 @@ func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error
 	switch pktype {
 	case pkg_github:
 		{
+			// https://github.com/wellcomez/sourcekit-lsp/releases/download/v10/sourcekit-lsp-macos-amd64
 			var download_url_template = "https://github.com/%s/releases/download/%s/%s"
 			for _, v := range config.Source.Build {
 				var download_url_template = "https://github.com/%s/archive/refs/tags/%s.zip"
@@ -763,7 +767,7 @@ var ToolMap = []soft_package_file{
 	{ToolLsp_vue, "vue-language-server", get_icon(".vue")},
 	{ToolLsp_csharp, "csharp-language-server", get_icon(".cs")},
 	{ToolLsp_java, "java-language-server", get_icon(".java")},
-	// {ToolLsp_swift, "swift-mesonlsp"},
+	{ToolLsp_swift, "sourcekit-lsp",get_icon(".swift")},
 }
 
 func NewSoftManager(wk common.Workdir) *SoftManager {
