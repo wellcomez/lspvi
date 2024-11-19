@@ -172,7 +172,7 @@ func (s SoftwareTask) get_bin() (bin Executable, err error) {
 	} else if s.Type == pkg_go {
 		if gopath, yes := os.LookupEnv("GOPATH"); yes {
 			if path := filepath.Join(gopath, "bin", "gopls"); is_file_ok(path) {
-				bin.Path = path
+				// bin.Path = path
 				return
 			}
 		}
@@ -689,6 +689,11 @@ func Load(yamlFile []byte, s string, zipdir string) (app SoftwareTask, err error
 		data := strings.TrimPrefix(config.Source.ID, "pkg:golang/")
 		cmd := fmt.Sprintf("go  install %s", data)
 		app.tasks = append(app.tasks, app.NewSubCmd(cmd))
+		if gopath, yes := os.LookupEnv("GOPATH"); yes {
+			if path := filepath.Join(gopath, "bin", "gopls"); is_file_ok(path) {
+				app.assert.Bin = path
+			}
+		}
 	case pkg_npm:
 		// dest:=app.zipdir
 		LoadNpm(config, &app)
