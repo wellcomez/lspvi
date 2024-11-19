@@ -45,13 +45,13 @@ func (p *PlanUmlBin) Convert(uml string) (output_utxt, output_uml string, ret er
 	if ret = cmd.Run(); ret == nil {
 		output_uml = filepath.Join(root, strings.Split(filepath.Base(uml), ".")[0]+".png")
 	} else {
-		debug.DebugLogf("uml", "Error:", ret, uml)
+		debug.DebugLog("uml", "Error:", ret, uml)
 	}
 	cmd = exec.Command(p.javaCmd, "-jar", p.jarPath, uml, "-utxt")
 	if ret = cmd.Run(); ret == nil {
 		output_utxt = filepath.Join(root, strings.Split(filepath.Base(uml), ".")[0]+".utxt")
 	} else {
-		debug.DebugLogf("uml", "Error:", ret, uml)
+		debug.DebugLog("uml", "Error:", ret, uml)
 	}
 	return
 }
