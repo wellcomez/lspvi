@@ -8,19 +8,17 @@ import (
 	"zen108.com/lspvi/pkg/mason"
 )
 
+func find_git_ancestor(filename string) (dir string, err error) {
+	return
+}
+
+var rootpattern = []string{"buildServer.json", "*.xcodeproj", "*.xcworkspace", "Package.swift"}
+
 func (l lsp_swift) IsSource(filename string) bool {
 	return false
 }
 
-// var rootFiles = []string{
-// 	"pyproject.toml",
-// 	"setup.py",
-// 	"setup.cfg",
-// 	"requirements.txt",
-// 	"Pipfile",
-// 	"pyrightconfig.json",
-// 	".git",
-// }
+
 
 type lsp_swift struct {
 	lsp_lang_common
@@ -37,7 +35,9 @@ func (l lsp_swift) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 		return err
 	}
 
-	if !core.RunComandInConfig() {
+	if len(core.cmd.Args) > 0 {
+		core.cmd = exec.Command(cmd, core.cmd.Args...)
+	} else if !core.RunComandInConfig() {
 		core.cmd = exec.Command(cmd)
 	}
 	err = core.Launch_Lsp_Server(core.cmd)

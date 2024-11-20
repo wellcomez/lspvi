@@ -463,10 +463,16 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	return ret, err
 
 }
+// var LanguageClient_serverCommands = []string{
+// 	"-Xswiftc", "-sdk",
+// 	"-Xswiftc", "/Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator13.0.sdk",
+// 	"-Xswiftc", "-target",
+// 	"-Xswiftc", "x86_64-apple-ios12.1-simulator"}
 
 type LangConfig struct {
-	Cmd string `yaml:"cmd"`
-	Log string `yaml:"log"`
+	Cmd  string   `yaml:"cmd"`
+	Log  string   `yaml:"log"`
+	Args []string `yaml:"args"`
 }
 
 type ConfigLspPart struct {
