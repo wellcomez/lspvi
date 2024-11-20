@@ -168,9 +168,7 @@ type ISearch interface {
 	Searchcontext() *GenericSearch
 }
 type MainService interface {
-
-	update_log_view(s string) 
-
+	update_log_view(s string)
 
 	// Dialogsize
 	Dialogsize() *project_diagnostic
@@ -1111,7 +1109,10 @@ func (main *mainui) current_editor() CodeEditor {
 func (main *mainui) create_menu_bar(tab_area *tview.Flex) *tview.Button {
 	main.add_statusbar_to_tabarea(tab_area)
 
-	mainmenu := tview.NewButton("Menu")
+	mainmenu := tview.NewButton(" Menu ")
+	a := default_btn_style.Background(tview.Styles.PrimitiveBackgroundColor).Foreground(tview.Styles.PrimaryTextColor).Reverse(true)
+	mainmenu.SetActivatedStyle(a.Reverse(true))
+	mainmenu.SetStyle(a)
 	mainmenu.SetSelectedFunc(func() {
 		if spacemenu := main.layout.mainlayout.spacemenu; spacemenu != nil {
 			if spacemenu.visible {
