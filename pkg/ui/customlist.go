@@ -124,14 +124,14 @@ func (l *customlist) Draw(screen tcell.Screen) {
 		has_main = len(main_text) > 0
 		has_second = len(second_text) > 0
 		if selected &&(!active) {
-			for i := range main_text {
-				main_text[i].color = 0
-				main_text[i].bg = 0
-			}
-			for i := range second_text {
-				second_text[i].color = 0
-				second_text[i].bg = 0
-			}
+			// for i := range main_text {
+			// 	main_text[i].color = 0
+			// 	main_text[i].bg = 0
+			// }
+			// for i := range second_text {
+			// 	second_text[i].color = 0
+			// 	second_text[i].bg = 0
+			// }
 		}
 
 		multiselected := false
