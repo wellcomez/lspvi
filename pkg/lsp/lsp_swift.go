@@ -18,8 +18,6 @@ func (l lsp_swift) IsSource(filename string) bool {
 	return false
 }
 
-
-
 type lsp_swift struct {
 	lsp_lang_common
 	LanguageID string
@@ -35,8 +33,8 @@ func (l lsp_swift) Launch_Lsp_Server(core *lspcore, wk WorkSpace) error {
 		return err
 	}
 
-	if len(core.cmd.Args) > 0 {
-		core.cmd = exec.Command(cmd, core.cmd.Args...)
+	if args := core.config.Args; len(args) > 0 {
+		core.cmd = exec.Command(cmd, args...)
 	} else if !core.RunComandInConfig() {
 		core.cmd = exec.Command(cmd)
 	}

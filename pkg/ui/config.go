@@ -4,6 +4,7 @@
 package mainui
 
 import (
+	"embed"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -32,34 +33,44 @@ type LspviConfig struct {
 	Keyboard    lspvi_command_map `yaml:"keyboard"`
 }
 
+//go:embed  config
+var uiFS embed.FS
+
 func (ret *LspviConfig) Load() (err error) {
 	if _, err := os.Stat(lspviroot.Configfile); err != nil {
 		var defaultcfg = NewLspviconfig()
 		defaultcfg.Save()
 	}
-	if buf, e := os.ReadFile(lspviroot.Configfile); e != nil {
+	var buf []byte
+	if buf, err = os.ReadFile(lspviroot.Configfile); err != nil {
 		debug.ErrorLog("config", err)
-		return e
-	} else {
-		err = yaml.Unmarshal(buf, ret)
-		if err == nil {
-			if ret.Vim == nil {
-				ret.enablevim = true
-				ret.Vim = &vimmode{
-					Leadkey: "space",
-					Enable:  &ret.enablevim,
-				}
-			} else {
-				ret.enablevim = true
-				if ret.Vim.Enable != nil {
-					ret.enablevim = *ret.Vim.Enable
-				} else {
-					ret.enablevim = true
-				}
+		buf, err = uiFS.ReadFile("config/config.yaml")
+		if err != nil {
+			debug.ErrorLog("config", "embed", err)
+			return
+		} else {
+			os.WriteFile(lspviroot.Configfile, buf, 0644)
+		}
+	}
+
+	err = yaml.Unmarshal(buf, ret)
+	if err == nil {
+		if ret.Vim == nil {
+			ret.enablevim = true
+			ret.Vim = &vimmode{
+				Leadkey: "space",
+				Enable:  &ret.enablevim,
 			}
 		} else {
-			debug.ErrorLog("config", err)
+			ret.enablevim = true
+			if ret.Vim.Enable != nil {
+				ret.enablevim = *ret.Vim.Enable
+			} else {
+				ret.enablevim = true
+			}
 		}
+	} else {
+		debug.ErrorLog("config", err)
 	}
 	return
 }
