@@ -816,7 +816,7 @@ func (core *lspcore) GetDocumentSymbol(file string) (*document_symbol, error) {
 			SymbolInformation: SymbolInformation,
 		}, nil
 	}
-	return nil, fmt.Errorf("not found")
+	return &document_symbol{}, nil
 }
 func mainxx2() {
 	// 启动clangd进程
