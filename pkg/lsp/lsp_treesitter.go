@@ -122,7 +122,7 @@ func SymbolSwift(o Outline, ts *TreeSitter) (ret *lsp.SymbolInformation, done bo
 	name := ""
 	for _, v := range o {
 		if v.CaptureName == "name" {
-			if v.Symbol == "pattern" || v.Symbol == "type_identifier" {
+			if v.Symbol == "pattern" || v.Symbol == "type_identifier" || v.Symbol == "init" {
 				name = v.Code
 				break
 			}
@@ -1125,7 +1125,7 @@ func (t *ts_go_symbol_resolve) resolve(line []TreeSitterSymbol, sym *lsp.SymbolI
 							classsymbol: *c,
 						}
 						classsymbol := &t.last_enum_const.classsymbol
-						classsymbol.Name = classsymbol.Name+ " (const enum)" 
+						classsymbol.Name = classsymbol.Name + " (const enum)"
 						classsymbol.Location.Range.Start.Line = sym.Location.Range.Start.Line - 1
 						if context != nil {
 							t.last_enum_const.context = *context
