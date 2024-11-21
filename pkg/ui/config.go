@@ -6,6 +6,7 @@ package mainui
 import (
 	"embed"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v2"
 	"zen108.com/lspvi/pkg/debug"
@@ -36,37 +37,63 @@ type LspviConfig struct {
 //go:embed  config
 var uiFS embed.FS
 
-func (ret *LspviConfig) Load() (err error) {
-	if _, err := os.Stat(lspviroot.Configfile); err != nil {
-		var defaultcfg = NewLspviconfig()
-		defaultcfg.Save()
+func is_file_ok(path string) bool {
+	fi, e := os.Stat(path)
+	return e == nil && !fi.IsDir()
+}
+func (ret *LspviConfig) Load(prjroot string) (err error) {
+	filename := lspviroot.Configfile
+	err = ret.newMethod(filename, true)
+	var prj LspviConfig
+	if e := prj.newMethod(filepath.Join(prjroot, ".lspvi.yaml"), false); e == nil {
+		ret.merge(&prj)
+	}
+	return
+}
+
+func (ret *LspviConfig) merge(prj *LspviConfig) {
+	ret.Lsp.Merge(&prj.Lsp)
+}
+func (ret *LspviConfig) newMethod(filename string, created bool) (err error) {
+	if _, err := os.Stat(filename); err != nil {
+		if created {
+			var defaultcfg = NewLspviconfig()
+			defaultcfg.Save()
+		}
 	}
 	var buf []byte
-	if buf, err = os.ReadFile(lspviroot.Configfile); err != nil {
+	if buf, err = os.ReadFile(filename); err != nil {
 		debug.ErrorLog("config", err)
-		buf, err = uiFS.ReadFile("config/config.yaml")
-		if err != nil {
-			debug.ErrorLog("config", "embed", err)
+		if is_file_ok(filename) {
 			return
-		} else {
-			os.WriteFile(lspviroot.Configfile, buf, 0644)
+		}
+		if created {
+			buf, err = uiFS.ReadFile("config/config.yaml")
+			if err != nil {
+				debug.ErrorLog("config", "embed", err)
+			} else {
+				os.WriteFile(lspviroot.Configfile, buf, 0644)
+			}
+			return
 		}
 	}
 
 	err = yaml.Unmarshal(buf, ret)
 	if err == nil {
-		if ret.Vim == nil {
-			ret.enablevim = true
-			ret.Vim = &vimmode{
-				Leadkey: "space",
-				Enable:  &ret.enablevim,
-			}
-		} else {
-			ret.enablevim = true
-			if ret.Vim.Enable != nil {
-				ret.enablevim = *ret.Vim.Enable
+		if created {
+			if ret.Vim == nil {
+				ret.enablevim = true
+				ret.Vim = &vimmode{
+					Leadkey: "space",
+					Enable:  &ret.enablevim,
+				}
 			} else {
 				ret.enablevim = true
+				if ret.Vim.Enable != nil {
+					ret.enablevim = *ret.Vim.Enable
+				} else {
+					ret.enablevim = true
+				}
 			}
 		}
 	} else {

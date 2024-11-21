@@ -463,6 +463,7 @@ func (wk *LspWorkspace) Open(filename string) (*Symbol_file, error) {
 	return ret, err
 
 }
+
 // var LanguageClient_serverCommands = []string{
 // 	"-Xswiftc", "-sdk",
 // 	"-Xswiftc", "/Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator13.0.sdk",
@@ -475,17 +476,46 @@ type LangConfig struct {
 	Args []string `yaml:"args"`
 }
 
+func (c *LangConfig) merge(l *LangConfig) {
+	if l == nil {
+		return
+	}
+	if l.Cmd != "" {
+		c.Cmd = l.Cmd
+	}
+	if l.Log != "" {
+		c.Log = l.Log
+	}
+	if len(l.Args) > 0 {
+		c.Args = l.Args
+	}
+}
+func merge(c *LangConfig, l *LangConfig) {
+	if c != nil {
+		c.merge(l)
+	}
+}
+func (c *LspConfig) Merge(l *LspConfig) {
+	merge(c.C, l.C)
+	merge(c.Golang, l.Golang)
+	merge(c.Py, l.Py)
+	merge(c.Java, l.Java)
+	merge(c.Swift, l.Swift)
+	merge(c.Javascript, l.Javascript)
+	merge(c.Typescript, l.Typescript)
+}
+
 type ConfigLspPart struct {
 	Lsp LspConfig `yaml:"lsp"`
 }
 type LspConfig struct {
-	C          LangConfig `yaml:"c"`
-	Golang     LangConfig `yaml:"go"`
-	Py         LangConfig `yaml:"py"`
-	Java       LangConfig `yaml:"java"`
-	Swift      LangConfig `yaml:"swift"`
-	Javascript LangConfig `yaml:"javascript"`
-	Typescript LangConfig `yaml:"typescript"`
+	C          *LangConfig `yaml:"c"`
+	Golang     *LangConfig `yaml:"go"`
+	Py         *LangConfig `yaml:"py"`
+	Java       *LangConfig `yaml:"java"`
+	Swift      *LangConfig `yaml:"swift"`
+	Javascript *LangConfig `yaml:"javascript"`
+	Typescript *LangConfig `yaml:"typescript"`
 }
 
 func NewLspWk(wk WorkSpace) *LspWorkspace {
@@ -516,13 +546,17 @@ func NewLspWk(wk WorkSpace) *LspWorkspace {
 	return ret
 }
 
-func create_lang_lsp(wk WorkSpace, lang LanguageIdentifier, l lsplang, config LangConfig) lsp_base {
+func create_lang_lsp(wk WorkSpace, lang LanguageIdentifier, l lsplang, config *LangConfig) lsp_base {
+	lsp_config := LangConfig{}
+	if config != nil {
+		lsp_config = *config
+	}
 	cpp := lsp_base{
 		wk: &wk,
 		core: &lspcore{
 			lsp_stderr: lsp_server_errorlog{lsp_log: wk.Callback, lang: string(lang)},
 			lang:       l,
-			config:     config,
+			config:     lsp_config,
 			handle:     wk,
 			LanguageID: string(lang)},
 	}

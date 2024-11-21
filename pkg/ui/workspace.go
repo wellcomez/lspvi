@@ -37,7 +37,7 @@ func (prj *Project) Load(arg *common.Arguments, main *mainui) {
 		panic(err)
 	}
 	global_config = NewLspviconfig()
-	global_config.Load()
+	global_config.Load(arg.Root)
 	// go servmain(lspviroot.uml, 18080, func(port int) {
 	// 	httport = port
 	// })
