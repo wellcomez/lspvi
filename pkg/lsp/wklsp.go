@@ -491,8 +491,10 @@ func (c *LangConfig) merge(l *LangConfig) {
 	}
 }
 func merge(c *LangConfig, l *LangConfig) {
-	if c != nil {
-		c.merge(l)
+	if c != nil && l != nil {
+		c.Cmd = l.Cmd
+		c.Log = l.Log
+		c.Args = l.Args
 	}
 }
 func (c *LspConfig) Merge(l *LspConfig) {
@@ -501,6 +503,7 @@ func (c *LspConfig) Merge(l *LspConfig) {
 	merge(c.Py, l.Py)
 	merge(c.Java, l.Java)
 	merge(c.Swift, l.Swift)
+	merge(c.Rust, l.Rust)
 	merge(c.Javascript, l.Javascript)
 	merge(c.Typescript, l.Typescript)
 }
@@ -509,13 +512,14 @@ type ConfigLspPart struct {
 	Lsp LspConfig `yaml:"lsp"`
 }
 type LspConfig struct {
-	C          *LangConfig `yaml:"c"`
-	Golang     *LangConfig `yaml:"go"`
-	Py         *LangConfig `yaml:"py"`
-	Java       *LangConfig `yaml:"java"`
-	Swift      *LangConfig `yaml:"swift"`
-	Javascript *LangConfig `yaml:"javascript"`
-	Typescript *LangConfig `yaml:"typescript"`
+	C          *LangConfig `yaml:"c,omitempty"`
+	Golang     *LangConfig `yaml:"go,omitempty"`
+	Py         *LangConfig `yaml:"py,omitempty"`
+	Java       *LangConfig `yaml:"java,omitempty"`
+	Swift      *LangConfig `yaml:"swift,omitempty"`
+	Rust       *LangConfig `yaml:"rust,omitempty"`
+	Javascript *LangConfig `yaml:"javascript,omitempty"`
+	Typescript *LangConfig `yaml:"typescript,omitempty"`
 }
 
 func NewLspWk(wk WorkSpace) *LspWorkspace {

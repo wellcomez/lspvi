@@ -55,26 +55,22 @@ func (ret *LspviConfig) merge(prj *LspviConfig) {
 	ret.Lsp.Merge(&prj.Lsp)
 }
 func (ret *LspviConfig) newMethod(filename string, created bool) (err error) {
-	if _, err := os.Stat(filename); err != nil {
-		if created {
-			var defaultcfg = NewLspviconfig()
-			defaultcfg.Save()
-		}
-	}
 	var buf []byte
-	if buf, err = os.ReadFile(filename); err != nil {
-		debug.ErrorLog("config", err)
-		if is_file_ok(filename) {
+	if _, err = os.Stat(filename); err != nil {
+		if created {
+			buf = load_internal_data(buf, err)
+			os.WriteFile(filename, buf, 0644)
+		} else {
 			return
 		}
-		if created {
-			buf, err = uiFS.ReadFile("config/config.yaml")
-			if err != nil {
-				debug.ErrorLog("config", "embed", err)
+	} else {
+		if buf, err = os.ReadFile(filename); err != nil {
+			if created {
+				buf = load_internal_data(buf, err)
+				os.WriteFile(filename, buf, 0644)
 			} else {
-				os.WriteFile(lspviroot.Configfile, buf, 0644)
+				return
 			}
-			return
 		}
 	}
 
@@ -102,12 +98,32 @@ func (ret *LspviConfig) newMethod(filename string, created bool) (err error) {
 	return
 }
 
+func load_internal_data(buf []byte, err error) []byte {
+	buf, err = uiFS.ReadFile("config/config.yaml")
+	if err != nil {
+		debug.ErrorLog("config", "embed", err)
+	} else {
+		os.WriteFile(lspviroot.Configfile, buf, 0644)
+	}
+	return buf
+}
+
 func NewLspviconfig() *LspviConfig {
 	disable := false
+	lang_config := &lspcore.LangConfig{}
 	default_ret := LspviConfig{
 		Colorscheme: "dracula",
 		Wrap:        false,
-		Color:       ColorConfig{},
+		Lsp: lspcore.LspConfig{
+			C:          lang_config,
+			Golang:     lang_config,
+			Py:         lang_config,
+			Rust:       lang_config,
+			Typescript: lang_config,
+			Javascript: lang_config,
+			Swift:      lang_config,
+		},
+		Color: ColorConfig{},
 		Vim: &vimmode{
 			Enable:  &disable,
 			Leadkey: "space",
