@@ -122,7 +122,7 @@ func SymbolSwift(o Outline, ts *TreeSitter) (ret *lsp.SymbolInformation, done bo
 	name := ""
 	for _, v := range o {
 		if v.CaptureName == "name" {
-			if v.Symbol == "pattern" || v.Symbol == "type_identifier" || v.Symbol == "init" {
+			if v.Symbol == "pattern" || v.Symbol == "type_identifier" || v.Symbol == "init" || v.Symbol == "deinit" {
 				name = v.Code
 				break
 			}
